@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+task (run, dependsOn: 'classes', type: JavaExec) {
+    main = '';
+    classpath = sourceSets.main.runtimeClasspath;
+}
+
+repositories {
+    mavenLocal();
+    mavenCentral();
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.10';
+}
