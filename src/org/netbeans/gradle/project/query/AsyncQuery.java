@@ -1,8 +1,7 @@
 package org.netbeans.gradle.project.query;
 
-public interface AsyncQuery<InputType, ResultType> {
-    public AsyncNoArgQuery<ResultType> getQuery(InputType input);
+import org.netbeans.gradle.project.Openable;
 
-    public void open();
-    public void close();
+public interface AsyncQuery<InputType, ResultType> extends Openable {
+    public AsyncNoArgQuery<ResultType> getQuery(InputType input);
 }

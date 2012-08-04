@@ -50,6 +50,10 @@ public final class GradleClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
+        LOGGER.log(Level.INFO, "findClassPath called from: {0}, {1}", new Object[]{
+            Thread.currentThread().getName(),
+            SwingUtilities.isEventDispatchThread() ? "EDT" : "Background thread"});
+
         if (ClassPath.SOURCE.equals(type)) {
             ClassPath result = compileClassPath.get();
             if (result == null) {
