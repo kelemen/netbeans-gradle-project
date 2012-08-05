@@ -12,7 +12,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProgressEvent;
+import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -31,6 +35,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.RequestProcessor;
 import org.openide.util.lookup.Lookups;
 
@@ -68,11 +73,22 @@ public final class NbGradleProject implements Project {
         gradleModel = null;
     }
 
-    private NbProjectModel parseProject() {
-        LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", getProjectDirectory());
+    private static <T extends Model> T getModelWithProgress(
+            final ProgressHandle progress,
+            ProjectConnection projectConnection,
+            Class<T> model) {
+        ModelBuilder<T> builder = projectConnection.model(model);
+        builder.addProgressListener(new ProgressListener() {
+            @Override
+            public void statusChanged(ProgressEvent pe) {
+                progress.progress(pe.getDescription());
+            }
+        });
 
-        // TODO: show progress ...
+        return builder.get();
+    }
 
+    private NbProjectModel parseProjectWitProgress(ProgressHandle progress) {
         GradleConnector gradleConnector = GradleConnector.newConnector();
         gradleConnector.forProjectDirectory(FileUtil.toFile(getProjectDirectory()));
         ProjectConnection projectConnection = null;
@@ -80,9 +96,9 @@ public final class NbGradleProject implements Project {
             projectConnection = gradleConnector.connect();
 
             final EclipseProject eclipseModel
-                    = projectConnection.getModel(EclipseProject.class);
+                    = getModelWithProgress(progress, projectConnection, EclipseProject.class);
             final IdeaProject ideaModel
-                    = projectConnection.getModel(IdeaProject.class);
+                    = getModelWithProgress(progress, projectConnection, IdeaProject.class);
             return new NbProjectModel() {
                 @Override
                 public EclipseProject getEclipseModel() {
@@ -98,6 +114,20 @@ public final class NbGradleProject implements Project {
             if (projectConnection != null) {
                 projectConnection.close();
             }
+        }
+    }
+
+    private NbProjectModel parseProject() {
+        FileObject projectDir = getProjectDirectory();
+        LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
+
+        ProgressHandle progress = ProgressHandleFactory.createHandle(
+                NbBundle.getMessage(NbGradleProject.class, "LBL_LoadingProject", projectDir.getNameExt()));
+        try {
+            progress.start();
+            return parseProjectWitProgress(progress);
+        } finally {
+            progress.finish();
         }
     }
 
