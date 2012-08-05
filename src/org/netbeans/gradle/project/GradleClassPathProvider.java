@@ -316,7 +316,12 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         testBootPaths.addAll(jdk);
         setClassPathResources(ClassPathType.BOOT_FOR_TEST, testBootPaths);
 
-        changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+            }
+        });
     }
 
     private void loadClassPath(ClassPathType classPathType) {
@@ -325,9 +330,7 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                 ClassPathFactory.createClassPath(new GradleClassPaths(classPathType)));
     }
 
-    private void loadClassPaths(NbProjectModel projectModel) {
-        loadPathResources(projectModel);
-
+    private void loadClassPaths() {
         loadClassPath(ClassPathType.COMPILE);
         loadClassPath(ClassPathType.COMPILE_FOR_TEST);
         loadClassPath(ClassPathType.RUNTIME);
@@ -346,6 +349,10 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                         "findClassPath has been called from the EDT: {0}",
                         Arrays.toString(Thread.currentThread().getStackTrace()));
             }
+
+            DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
+            delayedClassPaths.startFetchingPaths();
+            return ClassPathFactory.createClassPath(delayedClassPaths);
         }
 
         NbProjectModel projectModel = project.loadProject();
@@ -360,7 +367,8 @@ public final class GradleClassPathProvider implements ClassPathProvider {
             return result;
         }
 
-        loadClassPaths(projectModel);
+        loadPathResources(projectModel);
+        loadClassPaths();
 
         return classpaths.get(classPathType);
     }
@@ -376,6 +384,49 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         @Override
         public List<PathResourceImplementation> getResources() {
             return classpathResources.get(classPathType);
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
+        }
+    }
+
+    private class DelayedClassPaths implements ClassPathImplementation {
+        private final FileObject file;
+        private final String type;
+        private volatile ClassPathType classPathType;
+
+        public DelayedClassPaths(FileObject file, String type) {
+            this.file = file;
+            this.type = type;
+            this.classPathType = null;
+        }
+
+        public void startFetchingPaths() {
+            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    NbProjectModel projectModel = project.loadProject();
+                    classPathType = getClassPathType(projectModel, file, type);
+
+                    loadPathResources(projectModel);
+                    loadClassPaths();
+                }
+            });
+        }
+
+        @Override
+        public List<PathResourceImplementation> getResources() {
+            ClassPathType currentType = classPathType;
+            return currentType != null
+                    ? classpathResources.get(currentType)
+                    : Collections.<PathResourceImplementation>emptyList();
         }
 
         @Override
