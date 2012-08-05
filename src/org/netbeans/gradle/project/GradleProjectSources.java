@@ -54,14 +54,13 @@ public final class GradleProjectSources implements Sources {
     }
 
     private static SourceGroup createSourceGroup(File sourceDir, String caption) {
-        sourceDir.mkdirs();
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
-            return new GradleSourceGroup(groupRoot, caption);
+            if (groupRoot != null) {
+                return new GradleSourceGroup(groupRoot, caption);
+            }
         }
-        else {
-            return null;
-        }
+        return null;
     }
 
     public static Map<SourceFileType, List<File>> getSourceRoots(IdeaModule module) {
@@ -106,7 +105,10 @@ public final class GradleProjectSources implements Sources {
     private static SourceGroup[] toSourceGroup(String displayName, List<File> rootDirs) {
         List<SourceGroup> result = new ArrayList<SourceGroup>(rootDirs.size());
         for (File dir: rootDirs) {
-            result.add(createSourceGroup(dir, displayName));
+            SourceGroup group = createSourceGroup(dir, displayName);
+            if (group != null) {
+                result.add(group);
+            }
         }
         return result.toArray(NO_SOURCE_GROUPS);
     }

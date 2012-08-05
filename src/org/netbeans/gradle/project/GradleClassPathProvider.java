@@ -72,7 +72,8 @@ public final class GradleClassPathProvider implements ClassPathProvider {
 
         for (Map.Entry<SourceFileType, List<File>> entry: sourceRoots.entrySet()) {
             for (File sourceRoot: entry.getValue()) {
-                if (FileUtil.getRelativePath(FileUtil.toFileObject(sourceRoot), file) != null) {
+                FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
+                if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, file) != null) {
                     return sourceTypeToFileType(entry.getKey());
                 }
             }

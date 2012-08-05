@@ -39,11 +39,11 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
             return Sharability.UNKNOWN;
         }
 
-        if (FileUtil.getRelativePath(buildDir, queriedFile) != null) {
+        if (buildDir != null && FileUtil.getRelativePath(buildDir, queriedFile) != null) {
             return Sharability.NOT_SHARABLE;
         }
 
-        if (FileUtil.getRelativePath(projectDir, queriedFile) != null) {
+        if (projectDir != null && FileUtil.getRelativePath(projectDir, queriedFile) != null) {
             return Sharability.SHARABLE;
         }
 
