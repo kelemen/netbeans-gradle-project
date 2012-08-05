@@ -168,6 +168,7 @@ public final class NbGradleProject implements Project {
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
                 new GradleProjectSources(this),
+                new GradleActionProvider(this),
                 cpProvider,
                 new GradleSourceLevelQueryImplementation(this),
                 new NbUnitTestFinder(this),

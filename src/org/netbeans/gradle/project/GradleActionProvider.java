@@ -1,0 +1,165 @@
+package org.netbeans.gradle.project;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.gradle.tooling.model.idea.IdeaContentRoot;
+import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.netbeans.spi.project.ActionProvider;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
+import org.openide.util.Lookup;
+
+import static org.netbeans.spi.project.ActionProvider.*;
+
+public final class GradleActionProvider implements ActionProvider {
+    private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
+
+    private static final String COMMAND_JAVADOC = "javadoc";
+
+    private static final String[] SUPPORTED_ACTIONS = new String[]{
+        COMMAND_BUILD,
+        COMMAND_TEST,
+        COMMAND_CLEAN,
+        COMMAND_RUN,
+        COMMAND_JAVADOC,
+        COMMAND_REBUILD,
+        COMMAND_TEST_SINGLE,
+        COMMAND_DEBUG_TEST_SINGLE
+    };
+
+    private final NbGradleProject project;
+
+    public GradleActionProvider(NbGradleProject project) {
+        this.project = project;
+    }
+
+    @Override
+    public String[] getSupportedActions() {
+        return SUPPORTED_ACTIONS.clone();
+    }
+
+    @Override
+    public void invokeAction(String command, Lookup context) {
+        Runnable task = createAction(command, context);
+        if (task != null) {
+            task.run();
+        }
+    }
+
+    @Override
+    public boolean isActionEnabled(String command, Lookup context) {
+        return createAction(command, context) != null;
+    }
+
+    private static List<FileObject> getFilesOfContext(Lookup context) {
+        List<FileObject> files = new LinkedList<FileObject>();
+        for (DataObject dataObj: context.lookupAll(DataObject.class)) {
+            FileObject file = dataObj.getPrimaryFile();
+            if (file != null) {
+                files.add(file);
+            }
+        }
+        return files;
+    }
+
+    private Runnable createAction(String command, Lookup context) {
+        if (COMMAND_BUILD.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "build");
+        }
+        else if (COMMAND_TEST.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "cleanTest", "test");
+        }
+        else if (COMMAND_CLEAN.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "clean");
+        }
+        else if (COMMAND_REBUILD.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "clean", "build");
+        }
+        else if (COMMAND_RUN.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "run");
+        }
+        else if (COMMAND_JAVADOC.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "javadoc");
+        }
+        else if (COMMAND_TEST_SINGLE.equals(command) || COMMAND_DEBUG_TEST_SINGLE.equals(command)) {
+            List<FileObject> files = getFilesOfContext(context);
+            if (files.isEmpty()) {
+                return null;
+            }
+            final FileObject file = files.get(0);
+            if (!"java".equals(file.getExt().toLowerCase(Locale.US))) {
+                return null;
+            }
+
+            return new TestSingleTask(file, COMMAND_DEBUG_TEST_SINGLE.equals(command));
+        }
+
+        return null;
+    }
+
+    private class TestSingleTask implements Runnable {
+        private final FileObject file;
+        private final boolean debug;
+
+        public TestSingleTask(FileObject file, boolean debug) {
+            this.file = file;
+            this.debug = debug;
+        }
+
+        @Override
+        public void run() {
+            NbGradleProject.TASK_EXECUTOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    NbProjectModel projectModel = project.loadProject();
+                    IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
+                    if (mainModule == null) {
+                        LOGGER.warning("No main module has been found while trying to execute a task.");
+                        return;
+                    }
+
+                    String testFileName = null;
+                    for (IdeaContentRoot contentRoot: mainModule.getContentRoots()) {
+                        List<IdeaSourceDirectory> dirs = new LinkedList<IdeaSourceDirectory>();
+                        dirs.addAll(contentRoot.getSourceDirectories());
+                        dirs.addAll(contentRoot.getTestDirectories());
+
+                        for (IdeaSourceDirectory ideaSrcDir: dirs) {
+                            FileObject root = FileUtil.toFileObject(ideaSrcDir.getDirectory());
+                            if (root != null) {
+                                String relPath = FileUtil.getRelativePath(root, file);
+                                if (relPath != null) {
+                                    // Remove the ".java" from the end of
+                                    // the file name
+                                    testFileName = relPath.substring(0, relPath.length() - 5);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (testFileName != null) {
+                        String testArg = "-Dtest.single=" + testFileName;
+                        String[] args = debug
+                                ? new String[]{testArg, "-Dtest.debug"}
+                                : new String[]{testArg};
+
+                        Runnable task = GradleTasks.createAsyncGradleTask(
+                                project,
+                                new String[]{"cleanTest", "test"},
+                                args);
+                        task.run();
+                    }
+                    else {
+                        LOGGER.log(Level.WARNING, "Failed to find test file to execute: {0}", file);
+                    }
+                }
+            });
+        }
+    }
+}
