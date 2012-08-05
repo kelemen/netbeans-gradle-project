@@ -1,16 +1,9 @@
 package org.netbeans.gradle.project;
 
-import java.awt.EventQueue;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
@@ -25,15 +18,10 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
-import org.netbeans.spi.project.ActionProvider;
-import org.netbeans.spi.project.CopyOperationImplementation;
-import org.netbeans.spi.project.DeleteOperationImplementation;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
-import org.netbeans.spi.project.ui.support.DefaultProjectOperations;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.RequestProcessor;
@@ -118,7 +106,6 @@ public final class NbGradleProject implements Project {
     }
 
     private NbProjectModel parseProject() {
-        FileObject projectDir = getProjectDirectory();
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
         ProgressHandle progress = ProgressHandleFactory.createHandle(
@@ -183,6 +170,8 @@ public final class NbGradleProject implements Project {
                 new GradleProjectSources(this),
                 cpProvider,
                 new GradleSourceLevelQueryImplementation(this),
+                new NbUnitTestFinder(this),
+                new GradleSharabilityQuery(this),
                 //new OpenHook(),
             });
             lookupRef.compareAndSet(null, newLookup);
@@ -195,6 +184,8 @@ public final class NbGradleProject implements Project {
         private ClassPath[] sourcePaths;
         private ClassPath[] compilePaths;
         private ClassPath[] bootPaths;
+
+        // TODO: the current implementation is wrong
 
         @Override
         protected void projectOpened() {
@@ -212,115 +203,6 @@ public final class NbGradleProject implements Project {
             GlobalPathRegistry.getDefault().unregister(ClassPath.BOOT, bootPaths);
             GlobalPathRegistry.getDefault().unregister(ClassPath.COMPILE, compilePaths);
             GlobalPathRegistry.getDefault().unregister(ClassPath.SOURCE, sourcePaths);
-        }
-    }
-
-    private final class GradleActionProvider implements ActionProvider {
-
-        private String[] supported = new String[]{
-            ActionProvider.COMMAND_RUN,
-            ActionProvider.COMMAND_DELETE,
-            ActionProvider.COMMAND_COPY,};
-
-        @Override
-        public String[] getSupportedActions() {
-            return supported;
-        }
-
-        @Override
-        public void invokeAction(String string, Lookup lookup) throws IllegalArgumentException {
-            if (string.equalsIgnoreCase(ActionProvider.COMMAND_DELETE)) {
-                DefaultProjectOperations.performDefaultDeleteOperation(NbGradleProject.this);
-            }
-            if (string.equalsIgnoreCase(ActionProvider.COMMAND_RUN)) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ProgressHandle h = ProgressHandleFactory.createHandle("Running...", new Cancellable() {
-                            @Override
-                            public boolean cancel() {
-                                return true;
-                            }
-                        });
-                        h.start();
-                        GradleConnector gradleConnector = GradleConnector.newConnector();
-                        gradleConnector.forProjectDirectory(FileUtil.toFile(getProjectDirectory()));
-                        ProjectConnection projectConnection = gradleConnector.connect();
-                        BuildLauncher buildLauncher = projectConnection.newBuild();
-                        buildLauncher.forTasks("run");
-                        buildLauncher.run();
-                        h.finish();
-                    }
-                });
-            }
-            if (string.equalsIgnoreCase(ActionProvider.COMMAND_COPY)) {
-                DefaultProjectOperations.performDefaultCopyOperation(NbGradleProject.this);
-            }
-        }
-
-        @Override
-        public boolean isActionEnabled(String command, Lookup lookup) throws IllegalArgumentException {
-            if ((command.equals(ActionProvider.COMMAND_DELETE))) {
-                return true;
-            } else if ((command.equals(ActionProvider.COMMAND_COPY))) {
-                return true;
-            } else if ((command.equals(ActionProvider.COMMAND_RUN))) {
-                return true;
-            } else {
-                throw new IllegalArgumentException(command);
-            }
-        }
-    }
-
-    private final class GradleProjectDeleteOperation implements DeleteOperationImplementation {
-
-        @Override
-        public void notifyDeleting() throws IOException {
-        }
-
-        @Override
-        public void notifyDeleted() throws IOException {
-        }
-
-        @Override
-        public List<FileObject> getMetadataFiles() {
-            List<FileObject> dataFiles = new ArrayList<FileObject>();
-            return dataFiles;
-        }
-
-        @Override
-        public List<FileObject> getDataFiles() {
-            List<FileObject> dataFiles = new ArrayList<FileObject>();
-            return dataFiles;
-        }
-    }
-
-    private final class GradleProjectCopyOperation implements CopyOperationImplementation {
-
-        private final NbGradleProject project;
-        private final FileObject projectDir;
-
-        public GradleProjectCopyOperation(NbGradleProject project) {
-            this.project = project;
-            this.projectDir = project.getProjectDirectory();
-        }
-
-        @Override
-        public List<FileObject> getMetadataFiles() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<FileObject> getDataFiles() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void notifyCopying() throws IOException {
-        }
-
-        @Override
-        public void notifyCopied(Project arg0, File arg1, String arg2) throws IOException {
         }
     }
 }

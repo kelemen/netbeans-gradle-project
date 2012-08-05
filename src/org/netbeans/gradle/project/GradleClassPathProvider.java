@@ -52,6 +52,16 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         this.changes = new PropertyChangeSupport(this);
     }
 
+    // These PropertyChangeListener methods are declared because
+    // for some reason, NetBeans want to use them through reflection.
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changes.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        changes.removePropertyChangeListener(listener);
+    }
+
     private static FileObject getIdeaModuleDir(NbProjectModel projectModel, IdeaModule module) {
         File contentRoot = NbProjectModelUtils.getIdeaModuleDir(projectModel, module);
         return contentRoot != null ? FileUtil.toFileObject(contentRoot) : null;
@@ -343,6 +353,8 @@ public final class GradleClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
+        NbProjectModel projectModel = project.tryGetCachedProject();
+
         if (SwingUtilities.isEventDispatchThread()) {
             if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.log(Level.WARNING,
@@ -350,12 +362,16 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                         Arrays.toString(Thread.currentThread().getStackTrace()));
             }
 
-            DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
-            delayedClassPaths.startFetchingPaths();
-            return ClassPathFactory.createClassPath(delayedClassPaths);
+            if (projectModel == null) {
+                DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
+                delayedClassPaths.startFetchingPaths();
+                return ClassPathFactory.createClassPath(delayedClassPaths);
+            }
         }
 
-        NbProjectModel projectModel = project.loadProject();
+        if (projectModel == null) {
+            projectModel = project.loadProject();
+        }
 
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
         if (classPathType == null) {
