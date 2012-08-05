@@ -70,6 +70,9 @@ public final class NbGradleProject implements Project {
 
     private NbProjectModel parseProject() {
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", getProjectDirectory());
+
+        // TODO: show progress ...
+
         GradleConnector gradleConnector = GradleConnector.newConnector();
         gradleConnector.forProjectDirectory(FileUtil.toFile(getProjectDirectory()));
         ProjectConnection projectConnection = null;

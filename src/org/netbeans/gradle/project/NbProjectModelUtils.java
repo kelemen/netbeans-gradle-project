@@ -1,11 +1,14 @@
 package org.netbeans.gradle.project;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.eclipse.EclipseProjectDependency;
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject;
+import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
@@ -84,6 +87,27 @@ public final class NbProjectModelUtils {
         }
 
         return null;
+    }
+
+    public static File getIdeaModuleDir(NbProjectModel projectModel, IdeaModule module) {
+        DomainObjectSet<? extends IdeaContentRoot> contentRoots = module.getContentRoots();
+        if (contentRoots.isEmpty()) {
+            String path = module.getGradleProject().getPath();
+            EclipseProject mainProject = projectModel.getEclipseModel();
+            if (path.equals(mainProject.getGradleProject().getPath())) {
+                return mainProject.getProjectDirectory();
+            }
+            for (EclipseProject project: mainProject.getChildren()) {
+                if (path.equals(project.getGradleProject().getPath())) {
+                    return project.getProjectDirectory();
+                }
+            }
+
+            return null;
+        }
+        else {
+            return contentRoots.getAt(0).getRootDirectory();
+        }
     }
 
     private NbProjectModelUtils() {

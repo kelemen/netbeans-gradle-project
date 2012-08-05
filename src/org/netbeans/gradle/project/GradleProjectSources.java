@@ -4,7 +4,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,10 +31,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.NbBundle;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class GradleProjectSources implements Sources {
     private static final Logger LOGGER = Logger.getLogger(GradleProjectSources.class.getName());
 
@@ -66,6 +64,53 @@ public final class GradleProjectSources implements Sources {
         }
     }
 
+    public static Map<SourceFileType, List<File>> getSourceRoots(IdeaModule module) {
+        List<File> sources = new LinkedList<File>();
+        List<File> resources = new LinkedList<File>();
+        List<File> testSources = new LinkedList<File>();
+        List<File> testResources = new LinkedList<File>();
+
+        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
+            for (IdeaSourceDirectory sourceDir: contentRoot.getSourceDirectories()) {
+                File dir = sourceDir.getDirectory();
+
+                if (NbProjectModelUtils.isResourcePath(sourceDir)) {
+                    resources.add(dir);
+                }
+                else {
+                    sources.add(dir);
+                }
+            }
+            for (IdeaSourceDirectory sourceDir: contentRoot.getTestDirectories()) {
+                File dir = sourceDir.getDirectory();
+
+                if (NbProjectModelUtils.isResourcePath(sourceDir)) {
+                    testResources.add(dir);
+                }
+                else {
+                    testSources.add(dir);
+                }
+            }
+        }
+
+        Map<SourceFileType, List<File>> result
+                = new EnumMap<SourceFileType, List<File>>(SourceFileType.class);
+
+        result.put(SourceFileType.SOURCE, sources);
+        result.put(SourceFileType.RESOURCE, resources);
+        result.put(SourceFileType.TEST_RESOURCE, testResources);
+        result.put(SourceFileType.TEST_SOURCE, testSources);
+        return result;
+    }
+
+    private static SourceGroup[] toSourceGroup(String displayName, List<File> rootDirs) {
+        List<SourceGroup> result = new ArrayList<SourceGroup>(rootDirs.size());
+        for (File dir: rootDirs) {
+            result.add(createSourceGroup(dir, displayName));
+        }
+        return result.toArray(NO_SOURCE_GROUPS);
+    }
+
     private static Map<String, SourceGroup[]> findSourceGroups(NbGradleProject project) {
         NbProjectModel projectModel = project.loadProject();
 
@@ -76,48 +121,22 @@ public final class GradleProjectSources implements Sources {
         String testGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_TestJava");
         String testResourceGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_TestResources");
 
-        List<SourceGroup> sources = new LinkedList<SourceGroup>();
-        List<SourceGroup> resources = new LinkedList<SourceGroup>();
-        List<SourceGroup> testSources = new LinkedList<SourceGroup>();
-        List<SourceGroup> testResources = new LinkedList<SourceGroup>();
-
         IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-
         if (mainModule != null) {
-            for (IdeaContentRoot contentRoot: mainModule.getContentRoots()) {
-                for (IdeaSourceDirectory sourceDir: contentRoot.getSourceDirectories()) {
-                    File dir = sourceDir.getDirectory();
+            Map<SourceFileType, List<File>> sourcePaths = getSourceRoots(mainModule);
 
-                    if (NbProjectModelUtils.isResourcePath(sourceDir)) {
-                        SourceGroup group = createSourceGroup(dir, resourceGroupCaption);
-                        if (group != null) resources.add(group);
-                    }
-                    else {
-                        SourceGroup group = createSourceGroup(dir, sourceGroupCaption);
-                        if (group != null) sources.add(group);
-                    }
-                }
-                for (IdeaSourceDirectory sourceDir: contentRoot.getTestDirectories()) {
-                    File dir = sourceDir.getDirectory();
+            SourceGroup[] sources = toSourceGroup(sourceGroupCaption, sourcePaths.get(SourceFileType.SOURCE));
+            SourceGroup[] resources = toSourceGroup(resourceGroupCaption, sourcePaths.get(SourceFileType.RESOURCE));
+            SourceGroup[] testSources = toSourceGroup(testGroupCaption, sourcePaths.get(SourceFileType.TEST_SOURCE));
+            SourceGroup[] testResources = toSourceGroup(testResourceGroupCaption, sourcePaths.get(SourceFileType.TEST_RESOURCE));
 
-                    if (NbProjectModelUtils.isResourcePath(sourceDir)) {
-                        SourceGroup group = createSourceGroup(dir, testResourceGroupCaption);
-                        if (group != null) testResources.add(group);
-                    }
-                    else {
-                        SourceGroup group = createSourceGroup(dir, testGroupCaption);
-                        if (group != null) testSources.add(group);
-                    }
-                }
-            }
+            groups.put(GradleProjectConstants.SOURCES, sources);
+            groups.put(GradleProjectConstants.RESOURCES, resources);
+            groups.put(GradleProjectConstants.TEST_SOURCES, testSources);
+            groups.put(GradleProjectConstants.TEST_RESOURCES, testResources);
         }
 
-        // TODO: add settings.gradle to TYPE_GENERIC
         groups.put(Sources.TYPE_GENERIC, new SourceGroup[] {new GradleSourceGroup(project.getProjectDirectory(), project.getDisplayName())});
-        groups.put(GradleProjectConstants.SOURCES, sources.toArray(NO_SOURCE_GROUPS));
-        groups.put(GradleProjectConstants.RESOURCES, resources.toArray(NO_SOURCE_GROUPS));
-        groups.put(GradleProjectConstants.TEST_SOURCES, testSources.toArray(NO_SOURCE_GROUPS));
-        groups.put(GradleProjectConstants.TEST_RESOURCES, testResources.toArray(NO_SOURCE_GROUPS));
 
         return groups;
     }
