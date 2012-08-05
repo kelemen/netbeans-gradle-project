@@ -28,13 +28,10 @@ Current Limitations
 - It is not possible to specify the Gradle installation directory, only the
   bundled Gradle version can be used (i.e.: 1.0). I don't know how to do this
   because I'm not familiar with class loading mechanism of NetBeans.
-- In its current state this plugin does not add any support for unit tests,
-  although new classes can be added manually (and can also be edited). The
-  class path for unit tests are set appropriatelly (hopefully) however.
-- Every directory for every sourceset will automatically be created. Note that
-  the *java* plugin of Gradle implictly defines four source sets
-  (namely: compile, resources, test compile and test resources). The directories
-  are created so that you can add new files to every source set conveniently.
+- Single class test runs cannot be done from the IDE. Also debugging is not
+  supported.
+- In case a directory for a source set does not exists it will be unavailable
+  in the IDE and you cannot add files to it from the IDE.
 - Exclusion of directories from source sets are ignored. I don't see how it
   is possible in NetBeans (efficiently) because you cannot create your own
   ClassPath implementation.
