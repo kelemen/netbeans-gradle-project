@@ -21,6 +21,7 @@ import javax.swing.event.ChangeListener;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.SourceGroup;
@@ -113,6 +114,21 @@ public final class GradleProjectSources implements Sources {
         return result.toArray(NO_SOURCE_GROUPS);
     }
 
+    private static SourceGroup[] mergeGroups(SourceGroup[]... groups) {
+        int size = 0;
+        for (SourceGroup[] group: groups) {
+            size += group.length;
+        }
+
+        SourceGroup[] result = new SourceGroup[size];
+        int offset = 0;
+        for (SourceGroup[] group: groups) {
+            System.arraycopy(group, 0, result, offset, group.length);
+            offset += group.length;
+        }
+        return result;
+    }
+
     private static Map<String, SourceGroup[]> findSourceGroups(NbGradleProject project) {
         NbProjectModel projectModel = project.loadProject();
 
@@ -131,6 +147,14 @@ public final class GradleProjectSources implements Sources {
             SourceGroup[] resources = toSourceGroup(resourceGroupCaption, sourcePaths.get(SourceFileType.RESOURCE));
             SourceGroup[] testSources = toSourceGroup(testGroupCaption, sourcePaths.get(SourceFileType.TEST_SOURCE));
             SourceGroup[] testResources = toSourceGroup(testResourceGroupCaption, sourcePaths.get(SourceFileType.TEST_RESOURCE));
+
+            if (sources.length > 0) {
+                groups.put(JavaProjectConstants.SOURCES_HINT_MAIN, new SourceGroup[]{sources[0]});
+            }
+
+            groups.put(JavaProjectConstants.SOURCES_TYPE_JAVA, mergeGroups(sources, testSources));
+            groups.put(JavaProjectConstants.SOURCES_HINT_TEST, testSources);
+            groups.put(JavaProjectConstants.SOURCES_TYPE_RESOURCES, mergeGroups(resources, testResources));
 
             groups.put(GradleProjectConstants.SOURCES, sources);
             groups.put(GradleProjectConstants.RESOURCES, resources);

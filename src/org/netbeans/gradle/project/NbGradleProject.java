@@ -173,12 +173,36 @@ public final class NbGradleProject implements Project {
                 new GradleSourceLevelQueryImplementation(this),
                 new NbUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
+                new GradleSourceForBinaryQuery(this),
+                new GradleBinaryForSourceQuery(this),
                 //new OpenHook(),
             });
             lookupRef.compareAndSet(null, newLookup);
             result = lookupRef.get();
         }
         return result;
+    }
+
+    // equals and hashCode is provided, so that NetBeans doesn't load the
+    // same project multiple times.
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 67 * hash + (this.projectDir != null ? this.projectDir.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final NbGradleProject other = (NbGradleProject)obj;
+        if (this.projectDir != other.projectDir && (this.projectDir == null || !this.projectDir.equals(other.projectDir)))
+            return false;
+        return true;
     }
 
     private class OpenHook extends ProjectOpenedHook {

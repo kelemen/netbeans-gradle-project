@@ -32,8 +32,8 @@ import org.openide.filesystems.FileUtil;
 public final class GradleClassPathProvider implements ClassPathProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
 
-    private static final String RELATIVE_OUTPUT_PATH = "build/classes/main/";
-    private static final String RELATIVE_TEST_OUTPUT_PATH = "build/classes/test/";
+    public static final String RELATIVE_OUTPUT_PATH = "build/classes/main/";
+    public static final String RELATIVE_TEST_OUTPUT_PATH = "build/classes/test/";
 
     private final NbGradleProject project;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
@@ -201,7 +201,6 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         for (IdeaModule module: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
             sourceRoots = GradleProjectSources.getSourceRoots(module);
             sources.addAll(sourceRoots.get(SourceFileType.SOURCE));
-            testSources.addAll(sourceRoots.get(SourceFileType.TEST_SOURCE));
         }
 
         @SuppressWarnings("unchecked")
@@ -245,7 +244,7 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         List<File> testRuntime = new LinkedList<File>();
 
         IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-        addModuleClassPaths(projectModel, mainModule, compile, testCompile);
+        addModuleClassPaths(projectModel, mainModule, runtime, testRuntime);
 
         for (IdeaDependency dependency: NbProjectModelUtils.getIdeaDependencies(mainModule)) {
             String scope = dependency.getScope().getScope();
@@ -256,7 +255,7 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                 else if (dependency instanceof IdeaModuleDependency) {
                     IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
                     addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            compile, null);
+                            runtime, null);
                 }
             }
             else if ("RUNTIME".equals(scope)) {
@@ -269,19 +268,21 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                             runtime, null);
                 }
             }
-            else if ("TEST".equals(scope)) {
-                // FIXME: This should only be applied to first level dependencies
+        }
+
+        for (IdeaDependency dependency: mainModule.getDependencies()) {
+            String scope = dependency.getScope().getScope();
+            if ("TEST".equals(scope)) {
                 if (dependency instanceof ExternalDependency) {
                     addExternalClassPaths((ExternalDependency)dependency, testCompile);
                 }
                 else if (dependency instanceof IdeaModuleDependency) {
                     IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
                     addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            testCompile, null);
+                            testRuntime, null);
                 }
             }
             else {
-                // FIXME: This should only be applied to first level dependencies
                 if (dependency instanceof ExternalDependency) {
                     addExternalClassPaths((ExternalDependency)dependency, testRuntime);
                 }
@@ -291,11 +292,6 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                             testRuntime, null);
                 }
             }
-        }
-
-        List<PathResourceImplementation> jdk = new LinkedList<PathResourceImplementation>();
-        for (ClassPath.Entry entry: JavaPlatform.getDefault().getBootstrapLibraries().entries()) {
-            jdk.add(ClassPathSupport.createResource(entry.getURL()));
         }
 
         @SuppressWarnings("unchecked")
@@ -315,17 +311,13 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                 compile, testCompile, runtime, testRuntime);
         setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
 
-        List<PathResourceImplementation> bootPaths = new ArrayList<PathResourceImplementation>(
-                runtimePaths.size() + jdk.size());
-        bootPaths.addAll(runtimePaths);
-        bootPaths.addAll(jdk);
-        setClassPathResources(ClassPathType.BOOT, bootPaths);
+        List<PathResourceImplementation> jdk = new LinkedList<PathResourceImplementation>();
+        for (ClassPath.Entry entry: JavaPlatform.getDefault().getBootstrapLibraries().entries()) {
+            jdk.add(ClassPathSupport.createResource(entry.getURL()));
+        }
 
-        List<PathResourceImplementation> testBootPaths = new ArrayList<PathResourceImplementation>(
-                runtimePaths.size() + jdk.size());
-        testBootPaths.addAll(testRuntimePaths);
-        testBootPaths.addAll(jdk);
-        setClassPathResources(ClassPathType.BOOT_FOR_TEST, testBootPaths);
+        setClassPathResources(ClassPathType.BOOT, jdk);
+        setClassPathResources(ClassPathType.BOOT_FOR_TEST, jdk);
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
