@@ -52,6 +52,24 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         this.changes = new PropertyChangeSupport(this);
     }
 
+    private ClassPath getPaths(ClassPathType classPathType) {
+        ClassPath result = classpaths.get(classPathType);
+        if (result == null) {
+            result = ClassPathFactory.createClassPath(new GradleClassPaths(classPathType));
+        }
+        return result;
+    }
+
+    public ClassPath getSourcePaths() {
+        // Test paths contain all paths
+        return getPaths(ClassPathType.SOURCES_FOR_TEST);
+    }
+
+    public ClassPath getCompilePaths() {
+        // Test paths contain all paths
+        return getPaths(ClassPathType.COMPILE_FOR_TEST);
+    }
+
     // These PropertyChangeListener methods are declared because
     // for some reason, NetBeans want to use them through reflection.
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -392,7 +410,10 @@ public final class GradleClassPathProvider implements ClassPathProvider {
 
         @Override
         public List<PathResourceImplementation> getResources() {
-            return classpathResources.get(classPathType);
+            List<PathResourceImplementation> result = classpathResources.get(classPathType);
+            return result != null
+                    ? result
+                    : Collections.<PathResourceImplementation>emptyList();
         }
 
         @Override

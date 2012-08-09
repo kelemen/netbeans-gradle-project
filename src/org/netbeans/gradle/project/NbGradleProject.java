@@ -1,9 +1,12 @@
 package org.netbeans.gradle.project;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
@@ -17,7 +20,6 @@ import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
-import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
@@ -43,7 +45,7 @@ public final class NbGradleProject implements Project {
     private final ReentrantLock projectLoadLock;
     private volatile NbProjectModel gradleModel;
 
-    private final ClassPathProvider cpProvider;
+    private final GradleClassPathProvider cpProvider;
 
     public NbGradleProject(FileObject projectDir, ProjectState state) {
         this.projectDir = projectDir;
@@ -175,7 +177,7 @@ public final class NbGradleProject implements Project {
                 new GradleSharabilityQuery(this),
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),
-                //new OpenHook(),
+                new OpenHook(),
             });
             lookupRef.compareAndSet(null, newLookup);
             result = lookupRef.get();
@@ -205,29 +207,88 @@ public final class NbGradleProject implements Project {
         return true;
     }
 
-    private class OpenHook extends ProjectOpenedHook {
+    // OpenHook is important for debugging because the debugger relies on the
+    // globally registered source class paths for source stepping.
+
+    // SwingUtilities.invokeLater is used only to guarantee the order of events.
+    // Actually any executor which executes tasks in the order they were
+    // submitted to it is good (using SwingUtilities.invokeLater was only
+    // convenient to use because registering paths is cheap enough).
+    private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
+        private boolean opened;
         private ClassPath[] sourcePaths;
         private ClassPath[] compilePaths;
-        private ClassPath[] bootPaths;
 
-        // TODO: the current implementation is wrong
+        public OpenHook() {
+            this.opened = false;
+            this.sourcePaths = null;
+            this.compilePaths = null;
+        }
 
         @Override
         protected void projectOpened() {
-            sourcePaths = new ClassPath[] {cpProvider.findClassPath(null, ClassPath.SOURCE)};
-            compilePaths = new ClassPath[] {cpProvider.findClassPath(null, ClassPath.COMPILE)};
-            bootPaths = new ClassPath[] {cpProvider.findClassPath(null, ClassPath.BOOT)};
+            cpProvider.addPropertyChangeListener(this);
 
-            GlobalPathRegistry.getDefault().register(ClassPath.BOOT, bootPaths);
-            GlobalPathRegistry.getDefault().register(ClassPath.COMPILE, compilePaths);
-            GlobalPathRegistry.getDefault().register(ClassPath.SOURCE, sourcePaths);
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    opened = true;
+                    doRegisterClassPaths();
+                }
+            });
         }
 
         @Override
         protected void projectClosed() {
-            GlobalPathRegistry.getDefault().unregister(ClassPath.BOOT, bootPaths);
-            GlobalPathRegistry.getDefault().unregister(ClassPath.COMPILE, compilePaths);
-            GlobalPathRegistry.getDefault().unregister(ClassPath.SOURCE, sourcePaths);
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    opened = false;
+                    doUnregisterPaths();
+                }
+            });
+
+            cpProvider.removePropertyChangeListener(this);
+        }
+
+        private void doUnregisterPaths() {
+            assert SwingUtilities.isEventDispatchThread();
+
+            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
+            if (compilePaths != null) {
+                registry.unregister(ClassPath.COMPILE, compilePaths);
+                compilePaths = null;
+            }
+            if (sourcePaths != null) {
+                registry.unregister(ClassPath.SOURCE, sourcePaths);
+                sourcePaths = null;
+            }
+        }
+
+        private void doRegisterClassPaths() {
+            assert SwingUtilities.isEventDispatchThread();
+
+            doUnregisterPaths();
+
+            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
+
+            compilePaths = new ClassPath[]{cpProvider.getCompilePaths()};
+            registry.register(ClassPath.COMPILE, compilePaths);
+
+            sourcePaths = new ClassPath[]{cpProvider.getSourcePaths()};
+            registry.register(ClassPath.SOURCE, sourcePaths);
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (opened) {
+                        doRegisterClassPaths();
+                    }
+                }
+            });
         }
     }
 }
