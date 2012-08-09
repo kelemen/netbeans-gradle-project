@@ -6,7 +6,13 @@ The implementation is based on [Geertjan Wielenga's](https://blogs.oracle.com/ge
 You can open a folder as a project in NetBeans like with any other project and
 start editing the code without actually generating any other NetBeans project files.
 
-In its current state this project is roughly usable but is far from being done.
+The project is actually usable, with the following major limitations:
+
+- The only way to reload the project is to restart NetBeans. Currently this plugin
+  makes no attempt to automatically reload the project. Reloading the project is
+  actually necessary if the source sets or the dependencies change.
+- Only the default JDK can be used for source and targe compatibility.
+
 
 Current Limitations
 ===================
@@ -28,8 +34,10 @@ Current Limitations
 - It is not possible to specify the Gradle installation directory, only the
   bundled Gradle version can be used (i.e.: 1.0). I don't know how to do this
   because I'm not familiar with class loading mechanism of NetBeans.
-- Single class test runs cannot be done from the IDE. Also debugging is not
-  supported.
+- Debugging is only possible by manually attaching to the process. To run a project
+  in debug mode a task must be defined to start the project in debug mode and listen
+  on a particular port. Single test run can be started by right clicking the file in
+  the project view but attaching to the process must still be done manually.
 - In case a directory for a source set does not exists it will be unavailable
   in the IDE and you cannot add files to it from the IDE.
 - Exclusion of directories from source sets are ignored. I don't see how it
@@ -42,20 +50,17 @@ Current Limitations
   a performance issue (but not much since loading the models by the
   tooling API takes a lot more time) because tasks are executed by Gradle itself
   which of course considers these.
-- There is no support for debugging. You can define a task which starts the
-  application in debug and then attach to the process but NetBeans will not be
-  able to find the sources (so debugging is limited). Finding the sources
-  can be remedied probably without too much effort.
 - Resource directories are detected based on their name because I could not
   find any reliable way to do it with the tooling API. So every source
   directory whose last directory in its path starts with "resource"
   (not case-sensitive) is considered a resource directory.
 - The default JDK will be used for the project. I could not find a good way
-  to retrieve the *targetCompatibility* attribute with the tooling API.
-- Only a single task can be executed. Custom tasks will be needed to make
-  the project really usable. Also global custom tasks like with the Maven
-  plugin would be nice as well. Allowing to execute custom tasks is relatively
-  straightforward to implement.
+  to retrieve the *sourceCompatibility* and the *targetCompatibility* attribute
+  with the tooling API.
+- Only a single task can be executed (and the built-in tasks, like rebuild). Custom
+  tasks will be needed to make the project really usable. Also global custom tasks
+  like with the Maven plugin would be nice as well. Allowing to execute custom tasks
+  is relatively straightforward to implement.
 - Sources for dependencies cannot be downloaded nor attached. This could only
   be implemented like in the Maven plugin if the tooling API is updated.
 - This might be not a limitation for the user but the code base needs a major
