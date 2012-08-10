@@ -88,20 +88,24 @@ public final class NbGradleModule {
 
     public static final class Properties {
         private final File moduleDir;
+        private final NbOutput output;
         private final String uniqueName;
         private final String name;
         private final Collection<String> tasks;
 
         public Properties(
-                File moduleDir,
                 String uniqueName,
+                File moduleDir,
+                NbOutput output,
                 Collection<String> tasks) {
-            if (moduleDir == null) throw new NullPointerException("moduleDir");
             if (uniqueName == null) throw new NullPointerException("uniqueName");
+            if (moduleDir == null) throw new NullPointerException("moduleDir");
+            if (output == null) throw new NullPointerException("output");
             if (tasks == null) throw new NullPointerException("tasks");
 
-            this.moduleDir = moduleDir;
             this.uniqueName = uniqueName;
+            this.moduleDir = moduleDir;
+            this.output = output;
             this.name = getNameFromUniqueName(uniqueName);
 
             List<String> clonedTasks = new ArrayList<String>(new HashSet<String>(tasks));
@@ -111,6 +115,10 @@ public final class NbGradleModule {
             for (String task: this.tasks) {
                 if (task == null) throw new NullPointerException("task");
             }
+        }
+
+        public NbOutput getOutput() {
+            return output;
         }
 
         public File getModuleDir() {
