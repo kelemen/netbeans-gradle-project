@@ -10,6 +10,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
@@ -44,11 +45,13 @@ extends
 
         final Sources sources = ProjectUtils.getSources(project);
         sources.addChangeListener(changeListener);
+        project.addModelChangeListener(changeListener);
 
         Runnable prevTask = cleanupTaskRef.getAndSet(new Runnable() {
             @Override
             public void run() {
                 sources.removeChangeListener(changeListener);
+                project.removeModelChangeListener(changeListener);
             }
         });
         if (prevTask != null) {
@@ -93,7 +96,6 @@ extends
             FileObject file,
             List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
         final DataObject fileData = DataObject.find(file);
-        //fileData.getLookup().lookup(DataEditorSupport.class).setMIMEType("text/x-groovy");
 
         toPopulate.add(new SingleNodeFactory() {
             @Override
@@ -119,25 +121,12 @@ extends
         });
     }
 
-    private FileObject findSettingsGradle(FileObject rootDir) {
-        if (rootDir == null) {
-            return null;
-        }
-
-        FileObject settingsGradle = rootDir.getFileObject("settings.gradle");
-        if (settingsGradle != null && !settingsGradle.isVirtual()) {
-            return settingsGradle;
-        }
-        else {
-            return findSettingsGradle(rootDir.getParent());
-        }
-    }
-
     private void addProjectFiles(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-        FileObject buildGradle = project.getProjectDirectory().getFileObject("build.gradle");
+        NbGradleModel model = project.getCurrentModel();
+        FileObject buildGradle = model.getBuildFile();
         addGradleFile(buildGradle, toPopulate);
 
-        FileObject settingsGradle = findSettingsGradle(project.getProjectDirectory());
+        FileObject settingsGradle = model.getSettingsFile();
         if (settingsGradle != null) {
             addGradleFile(settingsGradle, toPopulate);
         }
