@@ -8,10 +8,8 @@ start editing the code without actually generating any other NetBeans project fi
 
 The project is actually usable, with the following major limitations:
 
-- The only way to reload the project is to restart NetBeans. Currently this plugin
-  makes no attempt to automatically reload the project. Reloading the project is
-  actually necessary if the source sets or the dependencies change.
 - Only the default JDK can be used for source and targe compatibility.
+- The character encoding of the source files cannot be set.
 
 
 Current Limitations
@@ -22,15 +20,15 @@ Current Limitations
   returning models to work on. This is especially painful on the first
   project open because it will actually download every single dependency
   before returning (even test dependencies).
-- NetBeans needs to be restarted if *build.gradle* or *settings.gradle* changes
-  (and also if something changes which changes the result of build.gradle).
-  To change this the code needs some refactorings to be able to safely add
-  these features. Note that it is impossible to detect every changes when
-  the project need to be reloaded, so a *Reload* button will also be needed.
-- The code does not check for any errors while loading the the project, so
-  errors in *build.gradle* (etc.) will cause NetBeans to pop-up a dialog
-  reporting an unexpected exception (which you should not report to
-  NetBeans developers of course).
+- The character encoding for the source file is implicitly determined by NetBeans
+  and cannot be changed. The source encoding specified in the Gradle script is
+  ignored.
+- It is not detected automtically when the project needs to be reloaded.
+  The "Reload Project" action must be executed manually (from the project's
+  popup menu). No automatic detection is done because reloading the project is
+  slow (just like opening it).
+- Errors occurring while loading the project is not displayed to the user but
+  only emitted as *WARNING* level logs.
 - It is not possible to specify the Gradle installation directory, only the
   bundled Gradle version can be used (i.e.: 1.0). I don't know how to do this
   because I'm not familiar with class loading mechanism of NetBeans.
@@ -63,5 +61,3 @@ Current Limitations
   is relatively straightforward to implement.
 - Sources for dependencies cannot be downloaded nor attached. This could only
   be implemented like in the Maven plugin if the tooling API is updated.
-- This might be not a limitation for the user but the code base needs a major
-  cleanup.
