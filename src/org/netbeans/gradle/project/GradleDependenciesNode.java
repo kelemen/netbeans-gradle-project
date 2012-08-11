@@ -1,10 +1,16 @@
 package org.netbeans.gradle.project;
 
 import java.awt.Image;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -113,6 +119,40 @@ public final class GradleDependenciesNode extends AbstractNode {
             });
         }
 
+        private static List<NbDependency> orderDependencies(Collection<NbDependency> dependencies) {
+            List<NbDependency> result = new ArrayList<NbDependency>(dependencies);
+            final Collator textComparer = Collator.getInstance(Locale.US);
+            final Map<Class<?>, Integer> classOrder = new HashMap<Class<?>, Integer>();
+            classOrder.put(NbModuleDependency.class, 0);
+            classOrder.put(NbUriDependency.class, 1);
+
+            Collections.sort(result, new Comparator<NbDependency>() {
+                @Override
+                public int compare(NbDependency o1, NbDependency o2) {
+                    if (o1.getClass() != o2.getClass()) {
+                        Integer index1 = classOrder.get(o1.getClass());
+                        Integer index2 = classOrder.get(o2.getClass());
+
+                        if (index1 == null) {
+                            if (index2 != null) {
+                                return 1;
+                            }
+                        }
+                        else if (index2 == null) {
+                            // index1 != null
+                            return -1;
+                        }
+                        else {
+                            return Integer.compare(index1, index2);
+                        }
+                    }
+
+                    return textComparer.compare(o1.getShortName(), o2.getShortName());
+                }
+            });
+            return result;
+        }
+
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
             NbGradleModule mainModule = project.getCurrentModel().getMainModule();
 
@@ -131,13 +171,13 @@ public final class GradleDependenciesNode extends AbstractNode {
             testCompile.removeAll(compile);
 
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_CompileDependencies"),
-                    compile, toPopulate);
+                    orderDependencies(compile), toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_RuntimeDependencies"),
-                    runtime, toPopulate);
+                    orderDependencies(runtime), toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestCompileDependencies"),
-                    testCompile, toPopulate);
+                    orderDependencies(testCompile), toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestRuntimeDependencies"),
-                    testRuntime, toPopulate);
+                    orderDependencies(testRuntime), toPopulate);
 
             LOGGER.fine("Dependencies for the Gradle project were found.");
         }
