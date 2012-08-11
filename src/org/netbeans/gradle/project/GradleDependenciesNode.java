@@ -238,7 +238,7 @@ public final class GradleDependenciesNode extends AbstractNode {
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
-                    return fileObject.getNodeDelegate();
+                    return fileObject.getNodeDelegate().cloneNode();
                 }
             });
         }
