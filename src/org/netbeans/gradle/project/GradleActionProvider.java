@@ -5,9 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.gradle.tooling.model.idea.IdeaContentRoot;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -116,30 +115,20 @@ public final class GradleActionProvider implements ActionProvider {
             NbGradleProject.TASK_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    NbProjectModel projectModel = project.loadProject();
-                    IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-                    if (mainModule == null) {
-                        LOGGER.warning("No main module has been found while trying to execute a task.");
-                        return;
-                    }
+                    NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+
+                    List<FileObject> sources = new LinkedList<FileObject>();
+                    sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
+                    sources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFileObjects());
 
                     String testFileName = null;
-                    for (IdeaContentRoot contentRoot: mainModule.getContentRoots()) {
-                        List<IdeaSourceDirectory> dirs = new LinkedList<IdeaSourceDirectory>();
-                        dirs.addAll(contentRoot.getSourceDirectories());
-                        dirs.addAll(contentRoot.getTestDirectories());
-
-                        for (IdeaSourceDirectory ideaSrcDir: dirs) {
-                            FileObject root = FileUtil.toFileObject(ideaSrcDir.getDirectory());
-                            if (root != null) {
-                                String relPath = FileUtil.getRelativePath(root, file);
-                                if (relPath != null) {
-                                    // Remove the ".java" from the end of
-                                    // the file name
-                                    testFileName = relPath.substring(0, relPath.length() - 5);
-                                    break;
-                                }
-                            }
+                    for (FileObject sourceFile: sources) {
+                        String relPath = FileUtil.getRelativePath(sourceFile, file);
+                        if (relPath != null) {
+                            // Remove the ".java" from the end of
+                            // the file name
+                            testFileName = relPath.substring(0, relPath.length() - 5);
+                            break;
                         }
                     }
 

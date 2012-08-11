@@ -6,32 +6,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.util.Utilities;
 
 public final class NbSourceGroup {
-    public static final NbSourceGroup EMPTY = new NbSourceGroup(Collections.<URI>emptyList());
+    public static final NbSourceGroup EMPTY = new NbSourceGroup(Collections.<File>emptyList());
 
-    private final List<URI> uris;
+    private final List<File> paths;
 
-    public NbSourceGroup(List<URI> uris) {
-        if (uris == null) throw new NullPointerException("uris");
-        this.uris = Collections.unmodifiableList(new ArrayList<URI>(uris));
+    public NbSourceGroup(List<File> paths) {
+        if (paths == null) throw new NullPointerException("paths");
+        this.paths = Collections.unmodifiableList(new ArrayList<File>(paths));
     }
 
-    public List<File> getFiles() {
-        List<File> result = new ArrayList<File>(uris.size());
-        for (URI uri: uris) {
-            File file = NbModelUtils.uriToFile(uri);
-            if (file != null) {
-                result.add(file);
-            }
-        }
-        return result;
+    public List<File> getPaths() {
+        return paths;
     }
 
     public List<FileObject> getFileObjects() {
-        List<FileObject> result = new ArrayList<FileObject>(uris.size());
-        for (URI uri: uris) {
-            FileObject fileObject = NbModelUtils.uriToFileObject(uri);
+        List<FileObject> result = new ArrayList<FileObject>(paths.size());
+        for (File path: paths) {
+            FileObject fileObject = FileUtil.toFileObject(path);
             if (fileObject != null) {
                 result.add(fileObject);
             }
@@ -40,6 +35,10 @@ public final class NbSourceGroup {
     }
 
     public List<URI> getUris() {
-        return uris;
+        List<URI> result = new ArrayList<URI>(paths.size());
+        for (File path: paths) {
+            result.add(Utilities.toURI(path));
+        }
+        return result;
     }
 }

@@ -8,19 +8,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.gradle.tooling.model.idea.IdeaContentRoot;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.Utilities;
 
-public final class GradleBinaryForSourceQuery implements BinaryForSourceQueryImplementation {
+public final class GradleBinaryForSourceQuery
+implements
+        BinaryForSourceQueryImplementation,
+        ProjectChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
 
     private static final URL[] NO_ROOTS = new URL[0];
@@ -36,58 +39,53 @@ public final class GradleBinaryForSourceQuery implements BinaryForSourceQueryImp
         this.cache = new ConcurrentHashMap<FileObject, BinaryForSourceQuery.Result>();
     }
 
-    private static SourceType getSourceRootType(IdeaModule module, FileObject root) {
-        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
-            for (IdeaSourceDirectory ideaSrcDir: contentRoot.getSourceDirectories()) {
-                FileObject src = FileUtil.toFileObject(ideaSrcDir.getDirectory());
-                if (src != null && FileUtil.getRelativePath(src, root) != null) {
-                    return SourceType.NORMAL;
-                }
+    private static SourceType getSourceRootType(NbGradleModule module, FileObject root) {
+        for (FileObject src: module.getSources(NbSourceType.SOURCE).getFileObjects()) {
+            if (FileUtil.getRelativePath(src, root) != null) {
+                return SourceType.NORMAL;
             }
-
-            for (IdeaSourceDirectory ideaSrcDir: contentRoot.getTestDirectories()) {
-                FileObject src = FileUtil.toFileObject(ideaSrcDir.getDirectory());
-                if (src != null && FileUtil.getRelativePath(src, root) != null) {
-                    return SourceType.TEST;
-                }
+        }
+        for (FileObject src: module.getSources(NbSourceType.TEST_SOURCE).getFileObjects()) {
+            if (FileUtil.getRelativePath(src, root) != null) {
+                return SourceType.TEST;
             }
         }
 
         return SourceType.UNKNOWN;
     }
 
-    private static URL[] getBinariesOfModule(NbProjectModel projectModel, IdeaModule module) {
-        File moduleDir = NbProjectModelUtils.getIdeaModuleDir(projectModel, module);
+    private static URL[] getBinariesOfModule(NbGradleModule module) {
+        File buildDir = module.getProperties().getOutput().getBuildDir();
         try {
-            URL url = Utilities.toURI(new File(moduleDir, GradleClassPathProvider.RELATIVE_OUTPUT_PATH)).toURL();
+            URL url = Utilities.toURI(buildDir).toURL();
             return new URL[]{url};
         } catch (MalformedURLException ex) {
-            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + moduleDir, ex);
+            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + buildDir, ex);
         }
 
         return NO_ROOTS;
     }
 
-    private static URL[] getTestBinariesOfModule(NbProjectModel projectModel, IdeaModule module) {
-        File moduleDir = NbProjectModelUtils.getIdeaModuleDir(projectModel, module);
+    private static URL[] getTestBinariesOfModule(NbGradleModule module) {
+        File testBuildDir = module.getProperties().getOutput().getTestBuildDir();
         try {
-            URL url = Utilities.toURI(new File(moduleDir, GradleClassPathProvider.RELATIVE_TEST_OUTPUT_PATH)).toURL();
+            URL url = Utilities.toURI(testBuildDir).toURL();
             return new URL[]{url};
         } catch (MalformedURLException ex) {
-            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + moduleDir, ex);
+            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + testBuildDir, ex);
         }
 
         return NO_ROOTS;
     }
 
     private static URL[] tryGetRoots(
-            NbProjectModel projectModel, IdeaModule module, FileObject root) {
+            NbGradleModule module, FileObject root) {
         SourceType sourceType = getSourceRootType(module, root);
         switch (sourceType) {
             case NORMAL:
-                return getBinariesOfModule(projectModel, module);
+                return getBinariesOfModule(module);
             case TEST:
-                return getTestBinariesOfModule(projectModel, module);
+                return getTestBinariesOfModule(module);
             case UNKNOWN:
                 return null;
             default:
@@ -96,32 +94,13 @@ public final class GradleBinaryForSourceQuery implements BinaryForSourceQueryImp
         }
     }
 
-    private void fetchSources() {
-        if (project.tryGetCachedProject() == null) {
-            if (SwingUtilities.isEventDispatchThread()) {
-                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        fetchSources();
-                    }
-                });
-            }
-            else {
-                project.loadProject();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        changes.fireChange();
-                    }
-                });
-            }
-        }
+    @Override
+    public void projectChanged() {
+        changes.fireChange();
     }
 
     @Override
     public BinaryForSourceQuery.Result findBinaryRoots(URL sourceRoot) {
-        fetchSources();
-
         File sourceRootFile = FileUtil.archiveOrDirForURL(sourceRoot);
         if (sourceRootFile == null) {
             return null;
@@ -139,23 +118,15 @@ public final class GradleBinaryForSourceQuery implements BinaryForSourceQueryImp
         result = new BinaryForSourceQuery.Result() {
             @Override
             public URL[] getRoots() {
-                NbProjectModel projectModel = project.tryGetCachedProject();
-                if (projectModel == null) {
-                    return NO_ROOTS;
-                }
+                NbGradleModule mainModule = project.getCurrentModel().getMainModule();
 
-                IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-                if (mainModule == null) {
-                    return NO_ROOTS;
-                }
-
-                URL[] roots = tryGetRoots(projectModel, mainModule, sourceRootObj);
+                URL[] roots = tryGetRoots(mainModule, sourceRootObj);
                 if (roots != null) {
                     return roots;
                 }
 
-                for (IdeaModule dependency: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
-                    URL[] depRoots = tryGetRoots(projectModel, dependency, sourceRootObj);
+                for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(mainModule)) {
+                    URL[] depRoots = tryGetRoots(dependency, sourceRootObj);
                     if (depRoots != null) {
                         return depRoots;
                     }

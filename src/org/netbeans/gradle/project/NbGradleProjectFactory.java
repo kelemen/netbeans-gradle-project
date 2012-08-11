@@ -20,7 +20,7 @@ public class NbGradleProjectFactory implements ProjectFactory {
     //Specifies when the project will be opened, i.e.,
     //if the project exists:
     @Override
-    public Project loadProject(FileObject dir, ProjectState state) {
+    public Project loadProject(FileObject dir, ProjectState state) throws IOException {
         // Note: Netbeans might call this method without calling isProject
         //  first on directories within the project. If this method throws
         //  an exception in this case, NetBeans will fail to check for the class

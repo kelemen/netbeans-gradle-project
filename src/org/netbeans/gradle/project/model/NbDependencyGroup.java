@@ -38,4 +38,16 @@ public final class NbDependencyGroup {
     public List<NbUriDependency> getUriDependencies() {
         return uriDependencies;
     }
+
+    public List<NbDependency> getAllDependencies() {
+        List<NbDependency> result = new ArrayList<NbDependency>(
+                moduleDependencies.size() + uriDependencies.size());
+        result.addAll(moduleDependencies);
+        result.addAll(uriDependencies);
+        return result;
+    }
+
+    public boolean isEmpty() {
+        return moduleDependencies.isEmpty() && uriDependencies.isEmpty();
+    }
 }

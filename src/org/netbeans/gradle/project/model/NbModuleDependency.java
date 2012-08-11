@@ -16,6 +16,11 @@ public final class NbModuleDependency implements NbDependency {
     }
 
     @Override
+    public String getShortName() {
+        return module.getName();
+    }
+
+    @Override
     public boolean isTransitive() {
         return transitive;
     }

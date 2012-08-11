@@ -4,7 +4,11 @@ import java.io.File;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-import org.gradle.tooling.model.idea.IdeaModule;
+import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.spi.java.queries.MultipleRootsUnitTestForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -19,8 +23,8 @@ public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQue
         this.project = project;
     }
 
-    private static boolean hasSource(IdeaModule module, FileObject source) {
-        for (File srcDirFile: GradleProjectSources.getSourceRoots(module).get(SourceFileType.SOURCE)) {
+    private static boolean hasSource(NbGradleModule module, FileObject source) {
+        for (File srcDirFile: module.getSources(NbSourceType.SOURCE).getPaths()) {
             FileObject srcDir = FileUtil.toFileObject(srcDirFile);
             if (srcDir != null && FileUtil.getRelativePath(srcDir, source) != null) {
                 return true;
@@ -29,8 +33,8 @@ public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQue
         return false;
     }
 
-    private static boolean hasTest(IdeaModule module, FileObject source) {
-        for (File srcDirFile: GradleProjectSources.getSourceRoots(module).get(SourceFileType.TEST_SOURCE)) {
+    private static boolean hasTest(NbGradleModule module, FileObject source) {
+        for (File srcDirFile: module.getSources(NbSourceType.TEST_SOURCE).getPaths()) {
             FileObject srcDir = FileUtil.toFileObject(srcDirFile);
             if (srcDir != null && FileUtil.getRelativePath(srcDir, source) != null) {
                 return true;
@@ -39,18 +43,18 @@ public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQue
         return false;
     }
 
-    private static URL[] getSourceRoots(IdeaModule module) {
+    private static URL[] getSourceRoots(NbGradleModule module) {
         List<URL> result = new LinkedList<URL>();
-        for (File srcDirFile: GradleProjectSources.getSourceRoots(module).get(SourceFileType.SOURCE)) {
+        for (File srcDirFile: module.getSources(NbSourceType.SOURCE).getPaths()) {
             result.add(FileUtil.urlForArchiveOrDir(srcDirFile));
         }
 
         return result.toArray(NO_URL);
     }
 
-    private static URL[] getTestRoots(IdeaModule module) {
+    private static URL[] getTestRoots(NbGradleModule module) {
         List<URL> result = new LinkedList<URL>();
-        for (File srcDirFile: GradleProjectSources.getSourceRoots(module).get(SourceFileType.TEST_SOURCE)) {
+        for (File srcDirFile: module.getSources(NbSourceType.TEST_SOURCE).getPaths()) {
             result.add(FileUtil.urlForArchiveOrDir(srcDirFile));
         }
 
@@ -60,17 +64,14 @@ public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQue
 
     @Override
     public URL[] findUnitTests(FileObject source) {
-        NbProjectModel projectModel = project.tryGetCachedProject();
-        if (projectModel == null) {
-            return null;
-        }
+        NbGradleModel projectModel = project.getCurrentModel();
 
-        IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
+        NbGradleModule mainModule = projectModel.getMainModule();
         if (hasSource(mainModule, source)) {
             return getTestRoots(mainModule);
         }
 
-        for (IdeaModule module: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
+        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
             if (hasSource(module, source)) {
                 return getTestRoots(module);
             }
@@ -81,17 +82,14 @@ public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQue
 
     @Override
     public URL[] findSources(FileObject unitTest) {
-        NbProjectModel projectModel = project.tryGetCachedProject();
-        if (projectModel == null) {
-            return null;
-        }
+        NbGradleModel projectModel = project.getCurrentModel();
 
-        IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
+        NbGradleModule mainModule = projectModel.getMainModule();
         if (hasTest(mainModule, unitTest)) {
             return getSourceRoots(mainModule);
         }
 
-        for (IdeaModule module: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
+        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
             if (hasTest(module, unitTest)) {
                 return getSourceRoots(module);
             }

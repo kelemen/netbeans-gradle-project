@@ -3,19 +3,14 @@ package org.netbeans.gradle.project;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Collection;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
-import org.gradle.tooling.model.GradleTask;
-import org.gradle.tooling.model.idea.IdeaModule;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
 import org.openide.loaders.DataFolder;
@@ -105,37 +100,36 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     private static class TasksActionMenu extends AbstractAction implements Presenter.Popup {
         private final NbGradleProject project;
         private final JMenu tasksMenu;
+        private NbGradleModel lastUsedModel; // used only on the EDT.
 
         public TasksActionMenu(NbGradleProject project) {
             this.project = project;
             this.tasksMenu = new JMenu("Tasks");
+            this.lastUsedModel = null;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Do nothing it's just a menu.
+            scanForTasks();
         }
-
 
         public void scanForTasks() {
             NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    NbProjectModel projectModel = project.loadProject();
-                    IdeaModule module = NbProjectModelUtils.getMainIdeaModule(projectModel);
-                    Set<String> tasks = new HashSet<String>();
-                    for (GradleTask task: module.getGradleProject().getTasks()) {
-                        tasks.add(task.getName());
+                    NbGradleModel projectModel = project.getCurrentModel();
+                    if (lastUsedModel == projectModel) {
+                        return;
                     }
+                    lastUsedModel = projectModel;
 
-                    final List<String> taskList = new ArrayList<String>(tasks);
-                    Collections.sort(taskList);
+                    final Collection<String> tasks = projectModel.getMainModule().getTasks();
 
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             tasksMenu.removeAll();
-                            for (final String task: taskList) {
+                            for (final String task: tasks) {
                                 tasksMenu.add(task).addActionListener(new ActionListener() {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {

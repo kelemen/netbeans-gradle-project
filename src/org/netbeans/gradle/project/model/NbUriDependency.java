@@ -27,6 +27,13 @@ public final class NbUriDependency implements NbDependency {
     }
 
     @Override
+    public String getShortName() {
+        File file = tryGetAsFile();
+        String result = file != null ? file.getName() : uri.getPath();
+        return result != null ? result : "?";
+    }
+
+    @Override
     public boolean isTransitive() {
         return transitive;
     }

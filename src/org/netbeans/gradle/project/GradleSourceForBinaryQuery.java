@@ -3,23 +3,27 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.gradle.tooling.model.idea.IdeaContentRoot;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
+import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.model.NbOutput;
+import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
-public final class GradleSourceForBinaryQuery implements SourceForBinaryQueryImplementation2 {
+public final class GradleSourceForBinaryQuery
+implements
+        SourceForBinaryQueryImplementation2,
+        ProjectChangeListener {
     // You would think that this is an important query for the debugger to
     // find the source files. Well, no ...
     //
@@ -57,58 +61,36 @@ public final class GradleSourceForBinaryQuery implements SourceForBinaryQueryImp
     }
 
     private static BinaryType getBinaryRootType(
-            NbProjectModel projectModel, IdeaModule module, FileObject root) {
-        File moduleDir = NbProjectModelUtils.getIdeaModuleDir(projectModel, module);
-        FileObject moduleDirObj = FileUtil.toFileObject(moduleDir);
-        if (moduleDirObj != null) {
-            FileObject normalPath = moduleDirObj.getFileObject(GradleClassPathProvider.RELATIVE_OUTPUT_PATH);
-            if (normalPath != null && FileUtil.getRelativePath(normalPath, root) != null) {
-                return BinaryType.NORMAL;
-            }
+            NbGradleModule module, FileObject root) {
+        NbOutput output = module.getProperties().getOutput();
 
-            FileObject testPath = moduleDirObj.getFileObject(GradleClassPathProvider.RELATIVE_TEST_OUTPUT_PATH);
-            if (testPath != null && FileUtil.getRelativePath(testPath, root) != null) {
-                return BinaryType.TEST;
-            }
+        FileObject normalPath = FileUtil.toFileObject(output.getBuildDir());
+        if (normalPath != null && FileUtil.getRelativePath(normalPath, root) != null) {
+            return BinaryType.NORMAL;
+        }
+
+        FileObject testPath = FileUtil.toFileObject(output.getTestBuildDir());
+        if (testPath != null && FileUtil.getRelativePath(testPath, root) != null) {
+            return BinaryType.TEST;
         }
 
         // We don't have sources for any external dependencies.
         return BinaryType.UNKNOWN;
     }
 
-    private static FileObject[] getSourcesOfModule(IdeaModule module) {
-        List<FileObject> result = new LinkedList<FileObject>();
-        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
-            for (IdeaSourceDirectory srcDir: contentRoot.getSourceDirectories()) {
-                if (!NbProjectModelUtils.isResourcePath(srcDir)) {
-                    FileObject dir = FileUtil.toFileObject(srcDir.getDirectory());
-                    if (dir != null) {
-                        result.add(dir);
-                    }
-                }
-            }
-        }
+    private static FileObject[] getSourcesOfModule(NbGradleModule module) {
+        List<FileObject> result = module.getSources(NbSourceType.SOURCE).getFileObjects();
         return result.toArray(NO_ROOTS);
     }
 
-    private static FileObject[] getTestSourcesOfModule(IdeaModule module) {
-        List<FileObject> result = new LinkedList<FileObject>();
-        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
-            for (IdeaSourceDirectory srcDir: contentRoot.getTestDirectories()) {
-                if (!NbProjectModelUtils.isResourcePath(srcDir)) {
-                    FileObject dir = FileUtil.toFileObject(srcDir.getDirectory());
-                    if (dir != null) {
-                        result.add(dir);
-                    }
-                }
-            }
-        }
+    private static FileObject[] getTestSourcesOfModule(NbGradleModule module) {
+        List<FileObject> result = module.getSources(NbSourceType.TEST_SOURCE).getFileObjects();
         return result.toArray(NO_ROOTS);
     }
 
     private static FileObject[] tryGetRoots(
-            NbProjectModel projectModel, IdeaModule module, FileObject root) {
-        BinaryType binaryType = getBinaryRootType(projectModel, module, root);
+            NbGradleModule module, FileObject root) {
+        BinaryType binaryType = getBinaryRootType(module, root);
         switch (binaryType) {
             case NORMAL:
                 return getSourcesOfModule(module);
@@ -122,31 +104,13 @@ public final class GradleSourceForBinaryQuery implements SourceForBinaryQueryImp
         }
     }
 
-    private void fetchSources() {
-        if (project.tryGetCachedProject() == null) {
-            if (SwingUtilities.isEventDispatchThread()) {
-                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        fetchSources();
-                    }
-                });
-            }
-            else {
-                project.loadProject();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        changes.fireChange();
-                    }
-                });
-            }
-        }
+    @Override
+    public void projectChanged() {
+        changes.fireChange();
     }
 
     @Override
     public SourceForBinaryQueryImplementation2.Result findSourceRoots2(URL binaryRoot) {
-        fetchSources();
 
         File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
         if (binaryRootFile == null) {
@@ -170,23 +134,16 @@ public final class GradleSourceForBinaryQuery implements SourceForBinaryQueryImp
 
             @Override
             public FileObject[] getRoots() {
-                NbProjectModel projectModel = project.tryGetCachedProject();
-                if (projectModel == null) {
-                    return NO_ROOTS;
-                }
+                NbGradleModel projectModel = project.getCurrentModel();
+                NbGradleModule mainModule = projectModel.getMainModule();
 
-                IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-                if (mainModule == null) {
-                    return NO_ROOTS;
-                }
-
-                FileObject[] roots = tryGetRoots(projectModel, mainModule, binaryRootObj);
+                FileObject[] roots = tryGetRoots(mainModule, binaryRootObj);
                 if (roots != null) {
                     return roots;
                 }
 
-                for (IdeaModule dependency: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
-                    FileObject[] depRoots = tryGetRoots(projectModel, dependency, binaryRootObj);
+                for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(mainModule)) {
+                    FileObject[] depRoots = tryGetRoots(dependency, binaryRootObj);
                     if (depRoots != null) {
                         return depRoots;
                     }

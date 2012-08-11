@@ -5,7 +5,6 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,12 +14,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.gradle.tooling.model.ExternalDependency;
-import org.gradle.tooling.model.idea.IdeaDependency;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.model.NbDependency;
+import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.model.NbModuleDependency;
+import org.netbeans.gradle.project.model.NbOutput;
+import org.netbeans.gradle.project.model.NbSourceGroup;
+import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.model.NbUriDependency;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -29,11 +34,11 @@ import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-public final class GradleClassPathProvider implements ClassPathProvider {
+public final class GradleClassPathProvider
+implements
+        ClassPathProvider,
+        ProjectChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
-
-    public static final String RELATIVE_OUTPUT_PATH = "build/classes/main/";
-    public static final String RELATIVE_TEST_OUTPUT_PATH = "build/classes/test/";
 
     private final NbGradleProject project;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
@@ -70,6 +75,11 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         return getPaths(ClassPathType.COMPILE_FOR_TEST);
     }
 
+    @Override
+    public void projectChanged() {
+        changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+    }
+
     // These PropertyChangeListener methods are declared because
     // for some reason, NetBeans want to use them through reflection.
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -80,16 +90,9 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         changes.removePropertyChangeListener(listener);
     }
 
-    private static FileObject getIdeaModuleDir(NbProjectModel projectModel, IdeaModule module) {
-        File contentRoot = NbProjectModelUtils.getIdeaModuleDir(projectModel, module);
-        return contentRoot != null ? FileUtil.toFileObject(contentRoot) : null;
-    }
-
-    private FileType getTypeOfFile(NbProjectModel projectModel, IdeaModule module, FileObject file) {
-        Map<SourceFileType, List<File>> sourceRoots = GradleProjectSources.getSourceRoots(module);
-
-        for (Map.Entry<SourceFileType, List<File>> entry: sourceRoots.entrySet()) {
-            for (File sourceRoot: entry.getValue()) {
+    private FileType getTypeOfFile(NbGradleModule module, FileObject file) {
+        for (Map.Entry<NbSourceType, NbSourceGroup> entry: module.getSources().entrySet()) {
+            for (File sourceRoot: entry.getValue().getPaths()) {
                 FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
                 if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, file) != null) {
                     return sourceTypeToFileType(entry.getKey());
@@ -97,17 +100,14 @@ public final class GradleClassPathProvider implements ClassPathProvider {
             }
         }
 
-        FileObject contentRoot = getIdeaModuleDir(projectModel, module);
-        if (contentRoot == null) {
-            return null;
-        }
+        NbOutput output = module.getProperties().getOutput();
 
-        FileObject outputDir = contentRoot.getFileObject(RELATIVE_OUTPUT_PATH);
+        FileObject outputDir = FileUtil.toFileObject(output.getBuildDir());
         if (outputDir != null && FileUtil.getRelativePath(outputDir, file) != null) {
             return FileType.COMPILED;
         }
 
-        FileObject testOutputDir = contentRoot.getFileObject(RELATIVE_TEST_OUTPUT_PATH);
+        FileObject testOutputDir = FileUtil.toFileObject(output.getTestBuildDir());
         if (testOutputDir != null && FileUtil.getRelativePath(testOutputDir, file) != null) {
             return FileType.COMPILED_TEST;
         }
@@ -115,7 +115,7 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         return null;
     }
 
-    private static FileType sourceTypeToFileType(SourceFileType sourceType) {
+    private static FileType sourceTypeToFileType(NbSourceType sourceType) {
         switch (sourceType) {
             case RESOURCE:
                 return FileType.RESOURCE;
@@ -125,23 +125,23 @@ public final class GradleClassPathProvider implements ClassPathProvider {
                 return FileType.TEST_RESOURCE;
             case TEST_SOURCE:
                 return FileType.TEST_SOURCE;
+            case OTHER:
+                return FileType.RESOURCE;
             default:
                 throw new AssertionError("Unexpected source type: " + sourceType);
         }
     }
 
-    private FileType getTypeOfFile(NbProjectModel projectModel, FileObject file) {
-        IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-        if (mainModule != null) {
-            FileType result = getTypeOfFile(projectModel, mainModule, file);
-            if (result != null) {
-                return result;
-            }
-            for (IdeaModule dependency: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
-                FileType depResult = getTypeOfFile(projectModel, dependency, file);
-                if (depResult != null) {
-                    return depResult;
-                }
+    private FileType getTypeOfFile(NbGradleModel projectModel, FileObject file) {
+        NbGradleModule mainModule = projectModel.getMainModule();
+        FileType result = getTypeOfFile(mainModule, file);
+        if (result != null) {
+            return result;
+        }
+        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
+            FileType depResult = getTypeOfFile(module, file);
+            if (depResult != null) {
+                return depResult;
             }
         }
 
@@ -177,7 +177,7 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         return null;
     }
 
-    private ClassPathType getClassPathType(NbProjectModel projectModel, FileObject file, String type) {
+    private ClassPathType getClassPathType(NbGradleModel projectModel, FileObject file, String type) {
         FileType fileType = getTypeOfFile(projectModel, file);
         return getClassPathType(fileType, type);
     }
@@ -204,21 +204,17 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         classpathResources.put(classPathType, Collections.unmodifiableList(paths));
     }
 
-    private void loadPathResourcesForSources(NbProjectModel projectModel) {
+    private void loadPathResourcesForSources(NbGradleModel projectModel) {
         List<File> sources = new LinkedList<File>();
         List<File> testSources = new LinkedList<File>();
 
-        Map<SourceFileType, List<File>> sourceRoots;
+        NbGradleModule mainModule = projectModel.getMainModule();
 
-        IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
+        sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getPaths());
+        testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getPaths());
 
-        sourceRoots = GradleProjectSources.getSourceRoots(mainModule);
-        sources.addAll(sourceRoots.get(SourceFileType.SOURCE));
-        testSources.addAll(sourceRoots.get(SourceFileType.TEST_SOURCE));
-
-        for (IdeaModule module: NbProjectModelUtils.getIdeaProjectDependencies(mainModule)) {
-            sourceRoots = GradleProjectSources.getSourceRoots(module);
-            sources.addAll(sourceRoots.get(SourceFileType.SOURCE));
+        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
+            sources.addAll(module.getSources(NbSourceType.SOURCE).getPaths());
         }
 
         @SuppressWarnings("unchecked")
@@ -231,29 +227,33 @@ public final class GradleClassPathProvider implements ClassPathProvider {
     }
 
     private static void addModuleClassPaths(
-            NbProjectModel projectModel,
-            IdeaModule project,
+            NbGradleModule module,
             List<File> paths,
             List<File> testPaths) {
-
-        File projectDir = NbProjectModelUtils.getIdeaModuleDir(projectModel, project);
+        NbOutput output = module.getProperties().getOutput();
 
         if (paths != null) {
-            paths.add(new File(projectDir, RELATIVE_OUTPUT_PATH));
+            paths.add(output.getBuildDir());
         }
 
         if (testPaths != null) {
-            testPaths.add(new File(projectDir, RELATIVE_TEST_OUTPUT_PATH));
+            testPaths.add(output.getTestBuildDir());
         }
     }
 
     private static void addExternalClassPaths(
-            ExternalDependency dependency,
+            NbUriDependency dependency,
             List<File> paths) {
-        paths.add(dependency.getFile());
+        File file = dependency.tryGetAsFile();
+        if (file != null) {
+            paths.add(file);
+        }
+        else {
+            LOGGER.log(Level.WARNING, "Dependency cannot be added to classpath: {0}", dependency.getUri());
+        }
     }
 
-    private void loadPathResources(NbProjectModel projectModel) {
+    private void loadPathResources(NbGradleModel projectModel) {
         loadPathResourcesForSources(projectModel);
 
         List<File> compile = new LinkedList<File>();
@@ -261,54 +261,43 @@ public final class GradleClassPathProvider implements ClassPathProvider {
         List<File> runtime = new LinkedList<File>();
         List<File> testRuntime = new LinkedList<File>();
 
-        IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-        addModuleClassPaths(projectModel, mainModule, runtime, testRuntime);
+        NbGradleModule mainModule = projectModel.getMainModule();
+        addModuleClassPaths(mainModule, runtime, testRuntime);
 
-        for (IdeaDependency dependency: NbProjectModelUtils.getIdeaDependencies(mainModule)) {
-            String scope = dependency.getScope().getScope();
-            if ("COMPILE".equals(scope)) {
-                if (dependency instanceof ExternalDependency) {
-                    addExternalClassPaths((ExternalDependency)dependency, compile);
-                }
-                else if (dependency instanceof IdeaModuleDependency) {
-                    IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
-                    addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            runtime, null);
-                }
+        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
+            if (dependency instanceof NbUriDependency) {
+                addExternalClassPaths((NbUriDependency)dependency, compile);
             }
-            else if ("RUNTIME".equals(scope)) {
-                if (dependency instanceof ExternalDependency) {
-                    addExternalClassPaths((ExternalDependency)dependency, runtime);
-                }
-                else if (dependency instanceof IdeaModuleDependency) {
-                    IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
-                    addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            runtime, null);
-                }
+            else if (dependency instanceof NbModuleDependency) {
+                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
+                addModuleClassPaths(moduleDep.getModule(), runtime, null);
             }
         }
-
-        for (IdeaDependency dependency: mainModule.getDependencies()) {
-            String scope = dependency.getScope().getScope();
-            if ("TEST".equals(scope)) {
-                if (dependency instanceof ExternalDependency) {
-                    addExternalClassPaths((ExternalDependency)dependency, testCompile);
-                }
-                else if (dependency instanceof IdeaModuleDependency) {
-                    IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
-                    addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            testRuntime, null);
-                }
+        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
+            if (dependency instanceof NbUriDependency) {
+                addExternalClassPaths((NbUriDependency)dependency, runtime);
             }
-            else {
-                if (dependency instanceof ExternalDependency) {
-                    addExternalClassPaths((ExternalDependency)dependency, testRuntime);
-                }
-                else if (dependency instanceof IdeaModuleDependency) {
-                    IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
-                    addModuleClassPaths(projectModel, moduleDep.getDependencyModule(),
-                            testRuntime, null);
-                }
+            else if (dependency instanceof NbModuleDependency) {
+                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
+                addModuleClassPaths(moduleDep.getModule(), runtime, null);
+            }
+        }
+        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
+            if (dependency instanceof NbUriDependency) {
+                addExternalClassPaths((NbUriDependency)dependency, testCompile);
+            }
+            else if (dependency instanceof NbModuleDependency) {
+                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
+                addModuleClassPaths(moduleDep.getModule(), testRuntime, null);
+            }
+        }
+        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {
+            if (dependency instanceof NbUriDependency) {
+                addExternalClassPaths((NbUriDependency)dependency, testRuntime);
+            }
+            else if (dependency instanceof NbModuleDependency) {
+                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
+                addModuleClassPaths(moduleDep.getModule(), testRuntime, null);
             }
         }
 
@@ -364,29 +353,11 @@ public final class GradleClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        NbProjectModel projectModel = project.tryGetCachedProject();
-
-        if (SwingUtilities.isEventDispatchThread()) {
-            if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.log(Level.WARNING,
-                        "findClassPath has been called from the EDT: {0}",
-                        Arrays.toString(Thread.currentThread().getStackTrace()));
-            }
-
-            if (projectModel == null) {
-                DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
-                delayedClassPaths.startFetchingPaths();
-                return ClassPathFactory.createClassPath(delayedClassPaths);
-            }
-        }
-
-        if (projectModel == null) {
-            projectModel = project.loadProject();
-        }
-
+        NbGradleModel projectModel = project.getCurrentModel();
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
         if (classPathType == null) {
-            return null;
+            DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
+            return ClassPathFactory.createClassPath(delayedClassPaths);
         }
 
         ClassPath result = classpaths.get(classPathType);
@@ -430,33 +401,23 @@ public final class GradleClassPathProvider implements ClassPathProvider {
     private class DelayedClassPaths implements ClassPathImplementation {
         private final FileObject file;
         private final String type;
-        private volatile ClassPathType classPathType;
 
         public DelayedClassPaths(FileObject file, String type) {
             this.file = file;
             this.type = type;
-            this.classPathType = null;
-        }
-
-        public void startFetchingPaths() {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
-                @Override
-                public void run() {
-                    NbProjectModel projectModel = project.loadProject();
-                    classPathType = getClassPathType(projectModel, file, type);
-
-                    loadPathResources(projectModel);
-                    loadClassPaths();
-                }
-            });
         }
 
         @Override
         public List<PathResourceImplementation> getResources() {
-            ClassPathType currentType = classPathType;
-            return currentType != null
-                    ? classpathResources.get(currentType)
-                    : Collections.<PathResourceImplementation>emptyList();
+            NbGradleModel projectModel = project.getCurrentModel();
+            ClassPathType classPathType = getClassPathType(projectModel, file, type);
+            List<PathResourceImplementation> result = classPathType != null
+                    ? classpathResources.get(classPathType)
+                    : null;
+            if (result == null) {
+                result = Collections.<PathResourceImplementation>emptyList();
+            }
+            return result;
         }
 
         @Override

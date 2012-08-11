@@ -1,21 +1,24 @@
 package org.netbeans.gradle.project;
 
 import java.awt.Image;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.ExternalDependency;
-import org.gradle.tooling.model.idea.IdeaContentRoot;
-import org.gradle.tooling.model.idea.IdeaDependency;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaModuleDependency;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.gradle.project.model.NbDependency;
+import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.model.NbModuleDependency;
+import org.netbeans.gradle.project.model.NbUriDependency;
+import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
@@ -52,7 +55,11 @@ public final class GradleDependenciesNode extends AbstractNode {
         return NbBundle.getMessage(GradleDependenciesNode.class, "LBL_Dependencies");
     }
 
-    private static class DependenciesChildFactory extends ChildFactory.Detachable<SingleNodeFactory> {
+    private static class DependenciesChildFactory
+    extends
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            ChangeListener {
         private final NbGradleProject project;
 
         public DependenciesChildFactory(NbGradleProject project) {
@@ -60,16 +67,23 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         @Override
+        public void stateChanged(ChangeEvent e) {
+            refresh(false);
+        }
+
+        @Override
         protected void addNotify() {
+            project.addModelChangeListener(this);
         }
 
         @Override
         protected void removeNotify() {
+            project.removeModelChangeListener(this);
         }
 
         private void addDependencyGroup(
                 final String groupName,
-                final Collection<IdeaDependency> dependencies,
+                final Collection<NbDependency> dependencies,
                 List<SingleNodeFactory> toPopulate) {
 
             if (dependencies.isEmpty()) {
@@ -99,57 +113,31 @@ public final class GradleDependenciesNode extends AbstractNode {
             });
         }
 
-        private static void addUniqueDependency(IdeaDependency dependency, Map<Object, IdeaDependency> toAdd) {
-            Object key = dependency;
-            if (dependency instanceof ExternalDependency) {
-                key = new ExternalDependencyKey((ExternalDependency)dependency);
-            }
-            if (dependency instanceof IdeaModuleDependency) {
-                key = new ModuleDependencyKey((IdeaModuleDependency)dependency);
-            }
-            if (!toAdd.containsKey(key)) {
-                toAdd.put(key, dependency);
-            }
-        }
-
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            NbProjectModel projectModel = project.loadProject();
-            IdeaModule mainModule = NbProjectModelUtils.getMainIdeaModule(projectModel);
-            if (mainModule == null) {
-                return;
-            }
+            NbGradleModule mainModule = project.getCurrentModel().getMainModule();
 
-            final Map<Object, IdeaDependency> compile = new LinkedHashMap<Object, IdeaDependency>();
-            final Map<Object, IdeaDependency> runtime = new LinkedHashMap<Object, IdeaDependency>();
-            final Map<Object, IdeaDependency> testCompile = new LinkedHashMap<Object, IdeaDependency>();
-            final Map<Object, IdeaDependency> testRuntime = new LinkedHashMap<Object, IdeaDependency>();
+            Set<NbDependency> compile = new LinkedHashSet<NbDependency>(
+                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE));
+            Set<NbDependency> runtime = new LinkedHashSet<NbDependency>(
+                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME));
+            Set<NbDependency> testCompile = new LinkedHashSet<NbDependency>(
+                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE));
+            Set<NbDependency> testRuntime = new LinkedHashSet<NbDependency>(
+                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME));
 
-            for (IdeaDependency dependency: NbProjectModelUtils.getIdeaDependencies(mainModule)) {
-                String scope = dependency.getScope().getScope();
-                Map<Object, IdeaDependency> choosenGroup;
-                if ("COMPILE".equals(scope)) {
-                    choosenGroup = compile;
-                }
-                else if ("RUNTIME".equals(scope)) {
-                    choosenGroup = runtime;
-                }
-                else if ("TEST".equals(scope)) {
-                    choosenGroup = testCompile;
-                }
-                else {
-                    choosenGroup = testRuntime;
-                }
-                addUniqueDependency(dependency, choosenGroup);
-            }
+            testRuntime.removeAll(runtime);
+            testRuntime.removeAll(testCompile);
+            runtime.removeAll(compile);
+            testCompile.removeAll(compile);
 
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_CompileDependencies"),
-                    compile.values(), toPopulate);
+                    compile, toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_RuntimeDependencies"),
-                    runtime.values(), toPopulate);
+                    runtime, toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestCompileDependencies"),
-                    testCompile.values(), toPopulate);
+                    testCompile, toPopulate);
             addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestRuntimeDependencies"),
-                    testRuntime.values(), toPopulate);
+                    testRuntime, toPopulate);
 
             LOGGER.fine("Dependencies for the Gradle project were found.");
         }
@@ -176,24 +164,20 @@ public final class GradleDependenciesNode extends AbstractNode {
     }
 
     private static class DependencyGroupChildFactory extends ChildFactory<SingleNodeFactory> {
-        private final List<IdeaDependency> dependencies;
+        private final List<NbDependency> dependencies;
 
-        public DependencyGroupChildFactory(Collection<IdeaDependency> dependencies) {
-            this.dependencies = new ArrayList<IdeaDependency>(dependencies);
+        public DependencyGroupChildFactory(Collection<NbDependency> dependencies) {
+            this.dependencies = new ArrayList<NbDependency>(dependencies);
         }
 
         private void addModuleDependency(
-                IdeaModuleDependency dependency,
+                final NbModuleDependency dependency,
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
-            final String moduleName = dependency.getDependencyModule().getGradleProject().getPath();
+            FileObject moduleRoot = FileUtil.toFileObject(dependency.getModule().getModuleDir());
 
-            DomainObjectSet<? extends IdeaContentRoot> contentRoots
-                    = dependency.getDependencyModule().getContentRoots();
-
-            if (!contentRoots.isEmpty()) {
-                File dependecyRoot = contentRoots.getAt(0).getRootDirectory();
-                final DataObject fileObject = DataObject.find(FileUtil.toFileObject(dependecyRoot));
+            if (moduleRoot != null) {
+                final DataObject fileObject = DataObject.find(moduleRoot);
                 toPopulate.add(new SingleNodeFactory() {
                     @Override
                     public Node createNode() {
@@ -210,7 +194,7 @@ public final class GradleDependenciesNode extends AbstractNode {
 
                             @Override
                             public String getDisplayName() {
-                                return moduleName;
+                                return dependency.getModule().getName();
                             }
                         };
                     }
@@ -233,7 +217,7 @@ public final class GradleDependenciesNode extends AbstractNode {
 
                             @Override
                             public String getDisplayName() {
-                                return moduleName;
+                                return dependency.getModule().getName();
                             }
                         };
                     }
@@ -242,10 +226,15 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         private void addFileDependency(
-                ExternalDependency dependency,
+                NbUriDependency dependency,
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
-            final DataObject fileObject = DataObject.find(FileUtil.toFileObject(dependency.getFile()));
+            FileObject file = dependency.tryGetAsFileObject();
+            if (file == null) {
+                LOGGER.log(Level.WARNING, "Dependency is not available: {0}", dependency.getUri());
+                return;
+            }
+            final DataObject fileObject = DataObject.find(file);
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
@@ -255,7 +244,7 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         private void addGenericDependency(
-                IdeaDependency dependency,
+                NbDependency dependency,
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
             final String nodeCaption = dependency.toString();
@@ -283,12 +272,12 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         protected void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            for (IdeaDependency dependency: dependencies) {
-                if (dependency instanceof IdeaModuleDependency) {
-                    addModuleDependency((IdeaModuleDependency)dependency, toPopulate);
+            for (NbDependency dependency: dependencies) {
+                if (dependency instanceof NbModuleDependency) {
+                    addModuleDependency((NbModuleDependency)dependency, toPopulate);
                 }
-                else if (dependency instanceof ExternalDependency) {
-                    addFileDependency((ExternalDependency)dependency, toPopulate);
+                else if (dependency instanceof NbUriDependency) {
+                    addFileDependency((NbUriDependency)dependency, toPopulate);
                 }
                 else {
                     addGenericDependency(dependency, toPopulate);
@@ -309,66 +298,6 @@ public final class GradleDependenciesNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
-        }
-    }
-
-    private static class ModuleDependencyKey {
-        private final String path;
-
-        public ModuleDependencyKey(IdeaModuleDependency dependency) {
-            this.path = dependency.getDependencyModule().getGradleProject().getPath();
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 3;
-            hash = 17 * hash + (this.path != null ? this.path.hashCode() : 0);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final ModuleDependencyKey other = (ModuleDependencyKey)obj;
-            if ((this.path == null) ? (other.path != null) : !this.path.equals(other.path)) {
-                return false;
-            }
-            return true;
-        }
-    }
-
-    private static class ExternalDependencyKey {
-        private final File path;
-
-        public ExternalDependencyKey(ExternalDependency dependency) {
-            this.path = dependency.getFile();
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 5;
-            hash = 97 * hash + (this.path != null ? this.path.hashCode() : 0);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final ExternalDependencyKey other = (ExternalDependencyKey)obj;
-            if (this.path != other.path && (this.path == null || !this.path.equals(other.path))) {
-                return false;
-            }
-            return true;
         }
     }
 }
