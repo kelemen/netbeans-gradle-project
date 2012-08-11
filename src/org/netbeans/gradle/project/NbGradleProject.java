@@ -20,6 +20,8 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.gradle.tooling.BuildException;
+import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
@@ -124,6 +126,10 @@ public final class NbGradleProject implements Project {
                     currentModel = loadModel(projectDir);
                 } catch (IOException ex) {
                     LOGGER.log(Level.WARNING, "Failed to load the project.", ex);
+                } catch (BuildException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to build the project.", ex);
+                } catch (GradleConnectionException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to connect to the gradle daemon.", ex);
                 }
 
                 SwingUtilities.invokeLater(new Runnable() {
