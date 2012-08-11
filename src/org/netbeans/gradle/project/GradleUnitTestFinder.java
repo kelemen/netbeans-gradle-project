@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
