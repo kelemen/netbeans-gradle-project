@@ -9,15 +9,19 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
+import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -34,9 +38,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     @Override
     public Node createLogicalView() {
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
-        GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate());
-        result.scanProject();
-        return result;
+        return new GradleProjectNode(projectFolder.getNodeDelegate());
     }
 
     private Children createChildren() {
@@ -49,6 +51,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 rootNode.getLookup());
     }
 
+    private static Action createProjectAction(String command, String label) {
+        return ProjectSensitiveActions.projectCommandAction(command, label, null);
+    }
+
     private final class GradleProjectNode extends FilterNode {
         private final TasksActionMenu tasksAction;
         private final Action[] actions;
@@ -58,15 +64,27 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             this.tasksAction = new TasksActionMenu(project);
             this.actions = new Action[] {
-                //ProjectSensitiveActions.projectCommandAction(ActionProvider.COMMAND_RUN, "Run", null),
                 CommonProjectActions.newFileAction(),
+                null,
+                createProjectAction(
+                    ActionProvider.COMMAND_BUILD,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Build")),
+                createProjectAction(
+                    ActionProvider.COMMAND_CLEAN,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Clean")),
+                createProjectAction(
+                    ActionProvider.COMMAND_REBUILD,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Rebuild")),
+                createProjectAction(
+                    GradleActionProvider.COMMAND_JAVADOC,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Javadoc")),
                 this.tasksAction,
+                null,
+                createProjectAction(
+                    GradleActionProvider.COMMAND_RELOAD,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_ReloadProject")),
                 CommonProjectActions.closeProjectAction(),
             };
-        }
-
-        public void scanProject() {
-            tasksAction.scanForTasks();
         }
 
         @Override
@@ -99,53 +117,84 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     @SuppressWarnings("serial") // don't care about serialization
     private static class TasksActionMenu extends AbstractAction implements Presenter.Popup {
         private final NbGradleProject project;
-        private final JMenu tasksMenu;
-        private NbGradleModel lastUsedModel; // used only on the EDT.
+        private JMenu cachedMenu;
 
         public TasksActionMenu(NbGradleProject project) {
             this.project = project;
-            this.tasksMenu = new JMenu("Tasks");
-            this.lastUsedModel = null;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            scanForTasks();
-        }
-
-        public void scanForTasks() {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
-                @Override
-                public void run() {
-                    NbGradleModel projectModel = project.getCurrentModel();
-                    if (lastUsedModel == projectModel) {
-                        return;
-                    }
-                    lastUsedModel = projectModel;
-
-                    final Collection<String> tasks = projectModel.getMainModule().getTasks();
-
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            tasksMenu.removeAll();
-                            for (final String task: tasks) {
-                                tasksMenu.add(task).addActionListener(new ActionListener() {
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        GradleTasks.createAsyncGradleTask(project, task).run();
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            });
+            this.cachedMenu = null;
         }
 
         @Override
         public JMenuItem getPopupPresenter() {
-            return tasksMenu;
+            if (cachedMenu == null) {
+                cachedMenu = createMenu();
+            }
+            return cachedMenu;
+        }
+
+        private JMenu createMenu() {
+            JMenu menu = new JMenu(NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Tasks"));
+            final TasksMenuBuilder builder = new TasksMenuBuilder(project, menu);
+            menu.addMenuListener(new MenuListener() {
+                @Override
+                public void menuSelected(MenuEvent e) {
+                    builder.updateMenuContent();
+                }
+
+                @Override
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                @Override
+                public void menuCanceled(MenuEvent e) {
+                }
+            });
+            return menu;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+    }
+
+    private static class TasksMenuBuilder {
+        private final NbGradleProject project;
+        private final JMenu menu;
+        private NbGradleModel lastUsedModel;
+
+        public TasksMenuBuilder(NbGradleProject project, JMenu menu) {
+            if (project == null) throw new NullPointerException("project");
+            if (menu == null) throw new NullPointerException("menu");
+
+            this.project = project;
+            this.menu = menu;
+            this.lastUsedModel = null;
+        }
+
+
+        public void updateMenuContent() {
+            NbGradleModel projectModel = project.getCurrentModel();
+            if (lastUsedModel == projectModel) {
+                return;
+            }
+
+            if (lastUsedModel != projectModel) {
+                lastUsedModel = projectModel;
+
+                Collection<String> tasks = projectModel.getMainModule().getTasks();
+
+                menu.removeAll();
+                for (final String task: tasks) {
+                    JMenuItem menuItem = new JMenuItem(task);
+                    menuItem.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            GradleTasks.createAsyncGradleTask(project, task).run();
+                        }
+                    });
+                    menu.add(menuItem);
+                }
+            }
         }
     }
 }

@@ -18,7 +18,8 @@ import static org.netbeans.spi.project.ActionProvider.*;
 public final class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
-    private static final String COMMAND_JAVADOC = "javadoc";
+    public static final String COMMAND_JAVADOC = "javadoc";
+    public static final String COMMAND_RELOAD = "reload";
 
     private static final String[] SUPPORTED_ACTIONS = new String[]{
         COMMAND_BUILD,
@@ -27,6 +28,7 @@ public final class GradleActionProvider implements ActionProvider {
         COMMAND_RUN,
         COMMAND_JAVADOC,
         COMMAND_REBUILD,
+        COMMAND_RELOAD,
         COMMAND_TEST_SINGLE,
         COMMAND_DEBUG_TEST_SINGLE
     };
@@ -78,6 +80,14 @@ public final class GradleActionProvider implements ActionProvider {
         }
         else if (COMMAND_REBUILD.equals(command)) {
             return GradleTasks.createAsyncGradleTask(project, "clean", "build");
+        }
+        else if (COMMAND_RELOAD.equals(command)) {
+            return new Runnable() {
+                @Override
+                public void run() {
+                    project.reloadProject();
+                }
+            };
         }
         else if (COMMAND_RUN.equals(command)) {
             return GradleTasks.createAsyncGradleTask(project, "run");
