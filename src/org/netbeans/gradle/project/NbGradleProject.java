@@ -299,7 +299,6 @@ public final class NbGradleProject implements Project {
     private static NbGradleModule tryParseModule(IdeaModule module, Set<String> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
         if (parsedModules.contains(uniqueName)) {
-            LOGGER.log(Level.WARNING, "Circular dependency: {0}", uniqueName);
             return null;
         }
         parsedModules.add(uniqueName);
