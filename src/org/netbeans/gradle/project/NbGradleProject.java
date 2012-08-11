@@ -401,7 +401,7 @@ public final class NbGradleProject implements Project {
                 new GradleActionProvider(this),
                 cpProvider,
                 new GradleSourceLevelQueryImplementation(this),
-                new NbUnitTestFinder(this),
+                new GradleUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),

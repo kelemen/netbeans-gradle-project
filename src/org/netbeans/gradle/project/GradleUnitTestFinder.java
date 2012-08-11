@@ -13,12 +13,12 @@ import org.netbeans.spi.java.queries.MultipleRootsUnitTestForSourceQueryImplemen
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-public final class NbUnitTestFinder implements MultipleRootsUnitTestForSourceQueryImplementation {
+public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourceQueryImplementation {
     private static final URL[] NO_URL = new URL[0];
 
     private final NbGradleProject project;
 
-    public NbUnitTestFinder(NbGradleProject project) {
+    public GradleUnitTestFinder(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
     }
