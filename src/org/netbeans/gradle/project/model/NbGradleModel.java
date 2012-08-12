@@ -19,30 +19,42 @@ public final class NbGradleModel {
     public NbGradleModel(
             FileObject projectDir,
             NbGradleModule mainModule) throws IOException {
+        this(projectDir, findSettingsGradle(projectDir), mainModule);
+    }
+
+    public NbGradleModel(
+            FileObject projectDir,
+            FileObject settingsFile,
+            NbGradleModule mainModule) throws IOException {
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (mainModule == null) throw new NullPointerException("mainModule");
 
         this.projectDir = projectDir;
         this.mainModule = mainModule;
 
-        this.buildFile = projectDir.getFileObject("build.gradle");
-        if (this.buildFile == null) {
-            throw new IOException("Missing build.gradle in the project directory: " + projectDir);
-        }
-        this.settingsFile = findSettingsGradle(projectDir);
+        this.buildFile = getBuildFile(projectDir);
+        this.settingsFile = settingsFile;
     }
 
-    private static FileObject findSettingsGradle(FileObject rootDir) {
-        if (rootDir == null) {
+    public static FileObject getBuildFile(FileObject projectDir) throws IOException {
+        FileObject buildFile = projectDir.getFileObject("build.gradle");
+        if (buildFile == null) {
+            throw new IOException("Missing build.gradle in the project directory: " + projectDir);
+        }
+        return buildFile;
+    }
+
+    public static FileObject findSettingsGradle(FileObject projectDir) {
+        if (projectDir == null) {
             return null;
         }
 
-        FileObject settingsGradle = rootDir.getFileObject("settings.gradle");
+        FileObject settingsGradle = projectDir.getFileObject("settings.gradle");
         if (settingsGradle != null && !settingsGradle.isVirtual()) {
             return settingsGradle;
         }
         else {
-            return findSettingsGradle(rootDir.getParent());
+            return findSettingsGradle(projectDir.getParent());
         }
     }
 

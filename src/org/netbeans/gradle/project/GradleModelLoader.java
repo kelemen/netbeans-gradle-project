@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.BuildException;
@@ -50,11 +49,20 @@ import org.openide.util.Utilities;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    public static final RequestProcessor PROJECT_LOADER
+    private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
+
+    private static GradleModelCache CACHE = new GradleModelCache(100);
 
     public static void fetchModel(
             final FileObject projectDir,
+            final ModelRetrievedListener listener) {
+        fetchModel(projectDir, false, listener);
+    }
+
+    public static void fetchModel(
+            final FileObject projectDir,
+            final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (listener == null) throw new NullPointerException("listener");
@@ -65,7 +73,20 @@ public final class GradleModelLoader {
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
-                    model = loadModel(projectDir);
+                    if (mayFetchFromCache) {
+                        File buildFile = FileUtil.toFile(NbGradleModel.getBuildFile(projectDir));
+                        FileObject settingFileObj = NbGradleModel.findSettingsGradle(projectDir);
+                        File settingsFile = settingFileObj != null
+                                ? FileUtil.toFile(settingFileObj)
+                                : null;
+
+                        if (buildFile != null) {
+                            model = CACHE.tryGet(buildFile, settingsFile);
+                        }
+                    }
+                    if (model == null) {
+                        model = loadModel(projectDir);
+                    }
                 } catch (IOException ex) {
                     error = ex;
                 } catch (BuildException ex) {
@@ -135,7 +156,7 @@ public final class GradleModelLoader {
     }
 
     private static Map<NbDependencyType, NbDependencyGroup> getDependencies(
-            IdeaModule module, Set<String> parsedModules) {
+            IdeaModule module, Map<String, NbGradleModule> parsedModules) {
 
         DependencyBuilder dependencies = new DependencyBuilder();
 
@@ -233,12 +254,18 @@ public final class GradleModelLoader {
         return groups;
     }
 
-    private static NbGradleModule tryParseModule(IdeaModule module, Set<String> parsedModules) {
+    private static NbGradleModule tryParseModule(IdeaModule module,
+            Map<String, NbGradleModule> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
-        if (parsedModules.contains(uniqueName)) {
-            return null;
+
+        if (parsedModules.containsKey(uniqueName)) {
+            NbGradleModule parsedModule = parsedModules.get(uniqueName);
+            if (parsedModule == null) {
+                LOGGER.log(Level.WARNING, "Circular or missing dependency: {0}", uniqueName);
+            }
+            return parsedModule;
         }
-        parsedModules.add(uniqueName);
+        parsedModules.put(uniqueName, null);
 
         Map<NbDependencyType, NbDependencyGroup> dependencies
                 = getDependencies(module, parsedModules);
@@ -262,7 +289,9 @@ public final class GradleModelLoader {
                 createDefaultOutput(moduleDir),
                 taskNames);
 
-        return new NbGradleModule(properties, sources, dependencies);
+        NbGradleModule result = new NbGradleModule(properties, sources, dependencies);
+        parsedModules.put(uniqueName, result);
+        return result;
     }
 
     private static NbGradleModel parseFromIdeaModel(
@@ -272,11 +301,38 @@ public final class GradleModelLoader {
             throw new IOException("Unable to find the main project in the model.");
         }
 
-        NbGradleModule parsedMainModule = tryParseModule(mainModule, new HashSet<String>());
+        Map<String, NbGradleModule> parsedModules = new HashMap<String, NbGradleModule>();
+        NbGradleModule parsedMainModule = tryParseModule(mainModule, parsedModules);
         if (parsedMainModule == null) {
             throw new IOException("Unable to parse the main project from the model.");
         }
-        return new NbGradleModel(projectDir, parsedMainModule);
+
+        for (IdeaModule module: ideaModel.getModules()) {
+            String uniqueName = module.getGradleProject().getPath();
+            if (!parsedModules.containsKey(uniqueName)) {
+                tryParseModule(module, parsedModules);
+            }
+        }
+
+        NbGradleModel mainModel = new NbGradleModel(projectDir, parsedMainModule);
+        FileObject settings = mainModel.getSettingsFile();
+
+        for (NbGradleModule module: parsedModules.values()) {
+            if (module != null && module != parsedMainModule) {
+                FileObject moduleDir = FileUtil.toFileObject(module.getModuleDir());
+                try {
+                    if (moduleDir != null) {
+                        NbGradleModel model = new NbGradleModel(moduleDir, settings, module);
+                        CACHE.addToCache(model);
+                    }
+                } catch (IOException ex) {
+                    LOGGER.log(Level.INFO, "Gradle project without build.gradle: {0}", module.getUniqueName());
+                }
+            }
+        }
+        CACHE.addToCache(mainModel);
+
+        return mainModel;
     }
 
     private static NbGradleModel loadModelWithProgress(

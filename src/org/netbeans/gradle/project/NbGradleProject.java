@@ -39,7 +39,7 @@ public final class NbGradleProject implements Project {
 
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
-    private volatile NbGradleModel currentModel;
+    private final AtomicReference<NbGradleModel> currentModelRef;
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
@@ -49,7 +49,7 @@ public final class NbGradleProject implements Project {
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.modelChanges = new ChangeSupport(this);
-        this.currentModel = GradleModelLoader.createEmptyModel(projectDir);
+        this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
     }
 
     public void addModelChangeListener(ChangeListener listener) {
@@ -61,37 +61,46 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleModel getCurrentModel() {
-        loadProject(true);
-        return currentModel;
+        loadProject(true, true);
+        return currentModelRef.get();
     }
 
     public void reloadProject() {
-        loadProject(false);
+        reloadProject(false);
     }
 
-    private void loadProject(boolean onlyIfNotLoaded) {
+    private void reloadProject(boolean mayUseCache) {
+        loadProject(false, mayUseCache);
+    }
+
+    private void loadProject(boolean onlyIfNotLoaded, boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
                 return;
             }
         }
 
-        GradleModelLoader.fetchModel(projectDir, new ModelRetrievedListener() {
+        GradleModelLoader.fetchModel(projectDir, mayUseCache, new ModelRetrievedListener() {
             @Override
             public void onComplete(NbGradleModel model, Throwable error) {
+                boolean hasChanged = false;
                 if (model != null) {
-                    currentModel = model;
+                    NbGradleModel lastModel = currentModelRef.getAndSet(model);
+                    hasChanged = lastModel != model;
                 }
+
                 if (error != null) {
                     LOGGER.log(Level.WARNING, "Error while loading the project model.", error);
                 }
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        modelChanges.fireChange();
-                    }
-                });
+                if (hasChanged) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            modelChanges.fireChange();
+                        }
+                    });
+                }
             }
         });
     }
@@ -198,7 +207,7 @@ public final class NbGradleProject implements Project {
 
         @Override
         protected void projectOpened() {
-            reloadProject();
+            reloadProject(true);
 
             cpProvider.addPropertyChangeListener(this);
 
