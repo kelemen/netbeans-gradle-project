@@ -12,6 +12,7 @@ import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
@@ -110,7 +111,12 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
     @Override
     public Node findPath(Node root, Object target) {
-        //leave unimplemented for now
+        for (Node child: root.getChildren().getNodes(true)) {
+            Node found = PackageView.findPath(child, target);
+            if (found != null) {
+                return found;
+            }
+        }
         return null;
     }
 
