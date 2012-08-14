@@ -93,29 +93,7 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        GradleModelLoader.fetchModel(projectDir, mayUseCache, new ModelRetrievedListener() {
-            @Override
-            public void onComplete(NbGradleModel model, Throwable error) {
-                boolean hasChanged = false;
-                if (model != null) {
-                    NbGradleModel lastModel = currentModelRef.getAndSet(model);
-                    hasChanged = lastModel != model;
-                }
-
-                if (error != null) {
-                    LOGGER.log(Level.WARNING, "Error while loading the project model.", error);
-                }
-
-                if (hasChanged) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            onModelChange();
-                        }
-                    });
-                }
-            }
-        });
+        GradleModelLoader.fetchModel(projectDir, mayUseCache, new ModelRetrievedListenerImpl());
     }
 
     public String getName() {
@@ -222,6 +200,7 @@ public final class NbGradleProject implements Project {
     // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
         private final List<GlobalPathReg> paths;
+        private final ChangeListener cacheListener;
         private boolean opened;
 
         public OpenHook() {
@@ -232,10 +211,20 @@ public final class NbGradleProject implements Project {
             this.paths.add(new GlobalPathReg(ClassPath.BOOT));
             this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
             this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
+
+            this.cacheListener = new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    GradleModelLoader.tryGetModelFromCache(
+                            getProjectDirectory(),
+                            new ModelRetrievedListenerImpl());
+                }
+            };
         }
 
         @Override
         protected void projectOpened() {
+            GradleModelLoader.addCacheChangeListener(cacheListener);
             reloadProject(true);
 
             cpProvider.addPropertyChangeListener(this);
@@ -259,6 +248,7 @@ public final class NbGradleProject implements Project {
                 }
             });
 
+            GradleModelLoader.removeCacheChangeListener(cacheListener);
             cpProvider.removePropertyChangeListener(this);
         }
 
@@ -321,6 +311,30 @@ public final class NbGradleProject implements Project {
 
         public void unregister() {
             replaceRegistration(null);
+        }
+    }
+
+    private class ModelRetrievedListenerImpl implements ModelRetrievedListener {
+        @Override
+        public void onComplete(NbGradleModel model, Throwable error) {
+            boolean hasChanged = false;
+            if (model != null) {
+                NbGradleModel lastModel = currentModelRef.getAndSet(model);
+                hasChanged = lastModel != model;
+            }
+
+            if (error != null) {
+                LOGGER.log(Level.WARNING, "Error while loading the project model.", error);
+            }
+
+            if (hasChanged) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        onModelChange();
+                    }
+                });
+            }
         }
     }
 }

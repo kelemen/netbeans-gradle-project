@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.event.ChangeListener;
 import org.gradle.tooling.BuildException;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -54,6 +55,49 @@ public final class GradleModelLoader {
 
     private static GradleModelCache CACHE = new GradleModelCache(100);
 
+    public static void addCacheChangeListener(ChangeListener listener) {
+        CACHE.addChangeListener(listener);
+    }
+
+    public static void removeCacheChangeListener(ChangeListener listener) {
+        CACHE.removeChangeListener(listener);
+    }
+
+    private static NbGradleModel tryGetFromCache(FileObject projectDir) {
+        try {
+            File buildFile = FileUtil.toFile(NbGradleModel.getBuildFile(projectDir));
+            FileObject settingFileObj = NbGradleModel.findSettingsGradle(projectDir);
+            File settingsFile = settingFileObj != null
+                    ? FileUtil.toFile(settingFileObj)
+                    : null;
+
+            return buildFile != null
+                    ? CACHE.tryGet(buildFile, settingsFile)
+                    : null;
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING,
+                    "Failure to read project directory while attempting to"
+                    + " retrieve the model from the cache: " + projectDir, ex);
+            return null;
+        }
+    }
+
+    public static void tryGetModelFromCache(
+            final FileObject projectDir,
+            final ModelRetrievedListener listener) {
+        PROJECT_LOADER.execute(new Runnable() {
+            @Override
+            public void run() {
+                NbGradleModel model = null;
+                try {
+                    model = tryGetFromCache(projectDir);
+                } finally {
+                    listener.onComplete(model, null);
+                }
+            }
+        });
+    }
+
     public static void fetchModel(
             final FileObject projectDir,
             final ModelRetrievedListener listener) {
@@ -74,15 +118,7 @@ public final class GradleModelLoader {
                 Throwable error = null;
                 try {
                     if (mayFetchFromCache) {
-                        File buildFile = FileUtil.toFile(NbGradleModel.getBuildFile(projectDir));
-                        FileObject settingFileObj = NbGradleModel.findSettingsGradle(projectDir);
-                        File settingsFile = settingFileObj != null
-                                ? FileUtil.toFile(settingFileObj)
-                                : null;
-
-                        if (buildFile != null) {
-                            model = CACHE.tryGet(buildFile, settingsFile);
-                        }
+                        model = tryGetFromCache(projectDir);
                     }
                     if (model == null) {
                         model = loadModel(projectDir);
