@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project;
 
 import java.net.URI;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
@@ -24,8 +23,6 @@ public final class GradleFileOwnerQuery implements FileOwnerQueryImplementation 
 
     @Override
     public Project getOwner(URI file) {
-        LOGGER.log(Level.INFO, "Getting the owner of URI: {0}", file);
-
         for (Project openedProject: OpenProjects.getDefault().getOpenProjects()) {
             NbGradleProject project = openedProject.getLookup().lookup(NbGradleProject.class);
             if (project == null) {
@@ -54,26 +51,12 @@ public final class GradleFileOwnerQuery implements FileOwnerQueryImplementation 
                     return project;
                 }
             }
-
-//            NbGradleModule mainModule = project.getCurrentModel().getMainModule();
-//            for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
-//                if (dependency instanceof NbUriDependency) {
-//                    NbUriDependency uriDependency = (NbUriDependency)dependency;
-//                    if (file.equals(uriDependency.getUri())) {
-//                        return project;
-//                    }
-//                    if (file.equals(uriDependency.getSrcUri())) {
-//                        return project;
-//                    }
-//                }
-//            }
         }
         return null;
     }
 
     @Override
     public Project getOwner(FileObject file) {
-        LOGGER.log(Level.INFO, "Getting the owner of FileObject: {0}", file);
         return getOwner(file.toURI());
     }
 }
