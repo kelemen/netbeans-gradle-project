@@ -98,6 +98,10 @@ public final class NbModelUtils {
         return dependencies;
     }
 
+    public static Collection<NbDependency> getAllDependencies(NbGradleModule module) {
+        return getAllDependencies(module, NbDependencyType.TEST_RUNTIME);
+    }
+
     public static Collection<NbGradleModule> getAllModuleDependencies(
             NbGradleModule module, NbDependencyType type) {
         List<NbGradleModule> result = new LinkedList<NbGradleModule>();

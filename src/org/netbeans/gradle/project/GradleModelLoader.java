@@ -101,7 +101,7 @@ public final class GradleModelLoader {
     }
 
     private static NbOutput createDefaultOutput(File projectDir) {
-        File buildDir = new File(projectDir, "build" + File.pathSeparator + "classes");
+        File buildDir = new File(projectDir, "build" + File.separatorChar + "classes");
 
         return new NbOutput(
                 new File(buildDir, "main"),
@@ -190,9 +190,14 @@ public final class GradleModelLoader {
                 ExternalDependency externalDep = (ExternalDependency)dependency;
                 URI uri = Utilities.toURI(externalDep.getFile());
 
+                File src = externalDep.getSource();
+                URI srcUri = src != null
+                        ? Utilities.toURI(src)
+                        : null;
+
                 dependencies.addUriDependency(
                         dependencyType,
-                        new NbUriDependency(uri, true));
+                        new NbUriDependency(uri, srcUri, true));
             }
             else {
                 LOGGER.log(Level.WARNING, "Unknown dependency: {0}", dependency);

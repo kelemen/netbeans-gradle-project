@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
@@ -65,14 +66,23 @@ implements
         return result;
     }
 
-    public ClassPath getSourcePaths() {
+    public ClassPath getClassPaths(String type) {
         // Test paths contain all paths
-        return getPaths(ClassPathType.SOURCES_FOR_TEST);
-    }
-
-    public ClassPath getCompilePaths() {
-        // Test paths contain all paths
-        return getPaths(ClassPathType.COMPILE_FOR_TEST);
+        if (ClassPath.SOURCE.equals(type)) {
+            return getPaths(ClassPathType.SOURCES_FOR_TEST);
+        }
+        else if (ClassPath.BOOT.equals(type)) {
+            return getPaths(ClassPathType.BOOT_FOR_TEST);
+        }
+        else if (ClassPath.COMPILE.equals(type)) {
+            return getPaths(ClassPathType.COMPILE_FOR_TEST);
+        }
+        else if (ClassPath.EXECUTE.equals(type)) {
+            return getPaths(ClassPathType.RUNTIME_FOR_TEST);
+        }
+        else {
+            return ClassPath.EMPTY;
+        }
     }
 
     @Override
@@ -172,6 +182,11 @@ implements
             return fileType.isTest()
                     ? ClassPathType.RUNTIME_FOR_TEST
                     : ClassPathType.RUNTIME;
+        }
+        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
+            return fileType.isTest()
+                    ? ClassPathType.COMPILE_FOR_TEST
+                    : ClassPathType.COMPILE;
         }
 
         return null;

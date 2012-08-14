@@ -59,5 +59,3 @@ Current Limitations
   tasks will be needed to make the project really usable. Also global custom tasks
   like with the Maven plugin would be nice as well. Allowing to execute custom tasks
   is relatively straightforward to implement.
-- Sources for dependencies cannot be downloaded nor attached. This could only
-  be implemented like in the Maven plugin if the tooling API is updated.

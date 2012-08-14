@@ -3,6 +3,8 @@ package org.netbeans.gradle.project;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -73,6 +75,17 @@ public final class NbGradleProject implements Project {
         loadProject(false, mayUseCache);
     }
 
+    private void onModelChange() {
+        assert SwingUtilities.isEventDispatchThread();
+
+        try {
+            modelChanges.fireChange();
+        } finally {
+            GradleCacheSourceForBinaryQuery.notifyCacheChange();
+            GradleCacheBinaryForSourceQuery.notifyCacheChange();
+        }
+    }
+
     private void loadProject(boolean onlyIfNotLoaded, boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
@@ -97,7 +110,7 @@ public final class NbGradleProject implements Project {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            modelChanges.fireChange();
+                            onModelChange();
                         }
                     });
                 }
@@ -135,9 +148,22 @@ public final class NbGradleProject implements Project {
                 new GradleSourceLevelQueryImplementation(this),
                 new GradleUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
+                new OpenHook(),
+                // The following two queries are not really useful but since
+                // they were implemented I will add them anyway.
+                // The real job to look up the sources of binaries is done by:
+                // GradleCacheSourceForBinaryQuery. This however must be
+                // registered to the default lookup, which is where NetBeans
+                // looks for it.
+                // GradleCacheBinaryForSourceQuery is provided as well and it
+                // is also registered using the ServiceProviders annotation.
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),
-                new OpenHook(),
+
+                // FileOwnerQueryImplementation cannot be added to the project's
+                // lookup, since NetBeans will ignore it. It must be added
+                // using the ServiceProviders annotation. Our implementation is
+                // GradleFileOwnerQuery and is added using the annotation.
             });
 
             if (lookupRef.compareAndSet(null, newLookup)) {
@@ -195,14 +221,17 @@ public final class NbGradleProject implements Project {
     // submitted to it is good (using SwingUtilities.invokeLater was only
     // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
+        private final List<GlobalPathReg> paths;
         private boolean opened;
-        private ClassPath[] sourcePaths;
-        private ClassPath[] compilePaths;
 
         public OpenHook() {
             this.opened = false;
-            this.sourcePaths = null;
-            this.compilePaths = null;
+
+            this.paths = new LinkedList<GlobalPathReg>();
+            this.paths.add(new GlobalPathReg(ClassPath.SOURCE));
+            this.paths.add(new GlobalPathReg(ClassPath.BOOT));
+            this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
+            this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
         }
 
         @Override
@@ -236,29 +265,17 @@ public final class NbGradleProject implements Project {
         private void doUnregisterPaths() {
             assert SwingUtilities.isEventDispatchThread();
 
-            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
-            if (compilePaths != null) {
-                registry.unregister(ClassPath.COMPILE, compilePaths);
-                compilePaths = null;
-            }
-            if (sourcePaths != null) {
-                registry.unregister(ClassPath.SOURCE, sourcePaths);
-                sourcePaths = null;
+            for (GlobalPathReg pathReg: paths) {
+                pathReg.unregister();
             }
         }
 
         private void doRegisterClassPaths() {
             assert SwingUtilities.isEventDispatchThread();
 
-            doUnregisterPaths();
-
-            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
-
-            compilePaths = new ClassPath[]{cpProvider.getCompilePaths()};
-            registry.register(ClassPath.COMPILE, compilePaths);
-
-            sourcePaths = new ClassPath[]{cpProvider.getSourcePaths()};
-            registry.register(ClassPath.SOURCE, sourcePaths);
+            for (GlobalPathReg pathReg: paths) {
+                pathReg.register();
+            }
         }
 
         @Override
@@ -271,6 +288,39 @@ public final class NbGradleProject implements Project {
                     }
                 }
             });
+        }
+    }
+
+    private class GlobalPathReg {
+        private final String type;
+        // Note that using AtomicReference does not really make the methods
+        // thread-safe but is only convenient to use.
+        private final AtomicReference<ClassPath[]> paths;
+
+        public GlobalPathReg(String type) {
+            this.type = type;
+            this.paths = new AtomicReference<ClassPath[]>(null);
+        }
+
+        private void replaceRegistration(ClassPath[] newPaths) {
+            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
+
+            ClassPath[] oldPaths = paths.getAndSet(newPaths);
+            if (oldPaths != null) {
+                registry.unregister(type, oldPaths);
+            }
+            if (newPaths != null) {
+                registry.register(type, newPaths);
+            }
+        }
+
+        public void register() {
+            ClassPath[] newPaths = new ClassPath[]{cpProvider.getClassPaths(type)};
+            replaceRegistration(newPaths);
+        }
+
+        public void unregister() {
+            replaceRegistration(null);
         }
     }
 }

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -9,17 +10,19 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
-import org.netbeans.gradle.project.model.NbDependencyType;
+import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.gradle.project.model.NbOutput;
 import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.model.NbUriDependency;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
+//@ServiceProviders({@ServiceProvider(service=SourceForBinaryQueryImplementation2.class), @ServiceProvider(service=SourceForBinaryQueryImplementation.class)})
 public final class GradleSourceForBinaryQuery
 implements
         SourceForBinaryQueryImplementation2,
@@ -74,7 +77,6 @@ implements
             return BinaryType.TEST;
         }
 
-        // We don't have sources for any external dependencies.
         return BinaryType.UNKNOWN;
     }
 
@@ -88,6 +90,25 @@ implements
         return result.toArray(NO_ROOTS);
     }
 
+    private static FileObject[] getDependencySources(NbGradleModule module, FileObject root) {
+        for (NbDependencyGroup dependency: module.getDependencies().values()) {
+            for (NbUriDependency uriDep: dependency.getUriDependencies()) {
+                URI srcUri = uriDep.getSrcUri();
+                if (srcUri != null) {
+                    URI uri = uriDep.getUri();
+                    FileObject depRoot = NbModelUtils.uriToFileObject(uri);
+                    if (root.equals(depRoot)) {
+                        FileObject src = NbModelUtils.uriToFileObject(srcUri);
+                        if (src != null) {
+                            return new FileObject[]{src};
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private static FileObject[] tryGetRoots(
             NbGradleModule module, FileObject root) {
         BinaryType binaryType = getBinaryRootType(module, root);
@@ -97,7 +118,7 @@ implements
             case TEST:
                 return getTestSourcesOfModule(module);
             case UNKNOWN:
-                return null;
+                return getDependencySources(module, root);
             default:
                 throw new AssertionError(binaryType.name());
 
@@ -111,7 +132,6 @@ implements
 
     @Override
     public SourceForBinaryQueryImplementation2.Result findSourceRoots2(URL binaryRoot) {
-
         File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
         if (binaryRootFile == null) {
             return null;

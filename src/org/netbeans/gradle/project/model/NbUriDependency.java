@@ -6,11 +6,13 @@ import org.openide.filesystems.FileObject;
 
 public final class NbUriDependency implements NbDependency {
     private final URI uri;
+    private final URI srcUri;
     private final boolean transitive;
 
-    public NbUriDependency(URI uri, boolean transitive) {
+    public NbUriDependency(URI uri, URI srcUri, boolean transitive) {
         if (uri == null) throw new NullPointerException("uri");
         this.uri = uri;
+        this.srcUri = srcUri;
         this.transitive = transitive;
     }
 
@@ -24,6 +26,10 @@ public final class NbUriDependency implements NbDependency {
 
     public URI getUri() {
         return uri;
+    }
+
+    public URI getSrcUri() {
+        return srcUri;
     }
 
     @Override

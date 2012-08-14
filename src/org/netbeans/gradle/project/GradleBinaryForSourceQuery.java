@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,9 +11,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.model.NbUriDependency;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -77,6 +80,28 @@ implements
         return NO_ROOTS;
     }
 
+    private static URL[] getDependencyBinaries(NbGradleModule module, FileObject root) {
+        for (NbDependencyGroup dependency: module.getDependencies().values()) {
+            for (NbUriDependency uriDep: dependency.getUriDependencies()) {
+                URI srcUri = uriDep.getSrcUri();
+                if (srcUri != null) {
+                    FileObject srcRoot = NbModelUtils.uriToFileObject(srcUri);
+                    if (srcRoot != null && srcRoot.equals(root)) {
+                        try {
+                            return new URL[]{uriDep.getUri().toURL()};
+                        } catch (MalformedURLException ex) {
+                            // This should not happend but we cannot do anything
+                            // in this case.
+                            LOGGER.log(Level.SEVERE, "Cannot convert URI to URL: " + uriDep.getUri(), ex);
+                            return null;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private static URL[] tryGetRoots(
             NbGradleModule module, FileObject root) {
         SourceType sourceType = getSourceRootType(module, root);
@@ -86,7 +111,7 @@ implements
             case TEST:
                 return getTestBinariesOfModule(module);
             case UNKNOWN:
-                return null;
+                return getDependencyBinaries(module, root);
             default:
                 throw new AssertionError(sourceType.name());
 
