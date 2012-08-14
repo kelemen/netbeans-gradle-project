@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,6 +18,8 @@ import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
@@ -79,6 +82,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 createProjectAction(
                     GradleActionProvider.COMMAND_JAVADOC,
                     NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Javadoc")),
+                new CustomTaskAction(project),
                 this.tasksAction,
                 null,
                 createProjectAction(
@@ -118,6 +122,38 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             }
         }
         return null;
+    }
+
+    @SuppressWarnings("serial") // don't care about serialization
+    private static class CustomTaskAction extends AbstractAction {
+        private final NbGradleProject project;
+
+        public CustomTaskAction(NbGradleProject project) {
+            super(NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_CustomTasks"));
+            this.project = project;
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            CustomActionPanel panel = new CustomActionPanel();
+            DialogDescriptor dlgDescriptor = new DialogDescriptor(
+                    panel,
+                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_CustomActionTitle"),
+                    true,
+                    DialogDescriptor.OK_CANCEL_OPTION,
+                    DialogDescriptor.OK_OPTION,
+                    null);
+            Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
+            dlg.setVisible(true);
+            if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
+                String[] tasks = panel.getTasks();
+                String[] args = panel.getArguments();
+                String[] jvmArgs = panel.getJvmArguments();
+
+                if (tasks.length > 0) {
+                    GradleTasks.createAsyncGradleTask(project, tasks, args, jvmArgs).run();
+                }
+            }
+        }
     }
 
     @SuppressWarnings("serial") // don't care about serialization
