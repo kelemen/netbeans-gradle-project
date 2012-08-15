@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +32,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModel;

@@ -15,6 +15,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;

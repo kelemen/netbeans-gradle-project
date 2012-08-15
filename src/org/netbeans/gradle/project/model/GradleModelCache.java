@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.util.Iterator;
