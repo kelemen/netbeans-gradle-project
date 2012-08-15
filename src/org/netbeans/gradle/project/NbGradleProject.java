@@ -18,11 +18,13 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
+import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
 import org.netbeans.gradle.project.query.GradleUnitTestFinder;
@@ -54,12 +56,14 @@ public final class NbGradleProject implements Project {
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
+    private final ProjectProperties properties;
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.cpProvider = new GradleClassPathProvider(this);
+        this.properties = new ProjectProperties();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.modelChanges = new ChangeSupport(this);
@@ -108,6 +112,10 @@ public final class NbGradleProject implements Project {
         GradleModelLoader.fetchModel(projectDir, mayUseCache, new ModelRetrievedListenerImpl());
     }
 
+    public ProjectProperties getProperties() {
+        return properties;
+    }
+
     public String getName() {
         return getProjectDirectory().getName();
     }
@@ -138,6 +146,7 @@ public final class NbGradleProject implements Project {
                 new GradleSourceLevelQueryImplementation(this),
                 new GradleUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
+                new GradleSourceEncodingQuery(this),
                 new OpenHook(),
                 // The following two queries are not really useful but since
                 // they were implemented I will add them anyway.
@@ -157,23 +166,8 @@ public final class NbGradleProject implements Project {
             });
 
             if (lookupRef.compareAndSet(null, newLookup)) {
-                // FIXME: There is a theoretical chance that these objects will
-                //        not be notified of the change in the project model:
-                //        Another concurrent getLookup() call may return these
-                //        objects and may cause them to fetch the curren model.
-                //        If it happens before registering and the model also
-                //        changes before registering but after the lookup object
-                //        retrieved the current model, it will miss this event.
-                for (final ProjectChangeListener listener: newLookup.lookupAll(ProjectChangeListener.class)) {
-                    // Note that there is no reason to unregister these
-                    // listeners because we only register them once, so they
-                    // cannot accumulate over time causing a memory leak.
-                    modelChanges.addChangeListener(new ChangeListener() {
-                        @Override
-                        public void stateChanged(ChangeEvent e) {
-                            listener.projectChanged();
-                        }
-                    });
+                for (ProjectInitListener listener: newLookup.lookupAll(ProjectInitListener.class)) {
+                    listener.onInitProject();
                 }
             }
             result = lookupRef.get();

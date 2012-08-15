@@ -14,11 +14,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectChangeListener;
+import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -40,7 +42,7 @@ import org.openide.filesystems.FileUtil;
 public final class GradleClassPathProvider
 implements
         ClassPathProvider,
-        ProjectChangeListener {
+        ProjectInitListener {
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
 
     private final NbGradleProject project;
@@ -48,11 +50,13 @@ implements
     private final ConcurrentMap<ClassPathType, ClassPath> classpaths;
 
     private final PropertyChangeSupport changes;
+    private volatile JavaPlatform currentPlatform;
 
     // EnumMap is not a ConcurrentMap, so it cannot be used.
     @SuppressWarnings("MapReplaceableByEnumMap")
     public GradleClassPathProvider(NbGradleProject project) {
         this.project = project;
+        this.currentPlatform = project.getProperties().getPlatform().getValue();
 
         int classPathTypeCount = ClassPathType.values().length;
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
@@ -87,9 +91,31 @@ implements
         }
     }
 
+    private void onModelChange() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+            }
+        });
+    }
+
     @Override
-    public void projectChanged() {
-        changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+    public void onInitProject() {
+        onModelChange();
+        project.addModelChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                onModelChange();
+            }
+        });
+        project.getProperties().getPlatform().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                currentPlatform = project.getProperties().getPlatform().getValue();
+                onModelChange();
+            }
+        });
     }
 
     // These PropertyChangeListener methods are declared because
@@ -336,7 +362,7 @@ implements
         setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
 
         List<PathResourceImplementation> jdk = new LinkedList<PathResourceImplementation>();
-        for (ClassPath.Entry entry: JavaPlatform.getDefault().getBootstrapLibraries().entries()) {
+        for (ClassPath.Entry entry: currentPlatform.getBootstrapLibraries().entries()) {
             jdk.add(ClassPathSupport.createResource(entry.getURL()));
         }
 

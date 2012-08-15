@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
@@ -27,7 +28,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
-public final class GradleProjectSources implements Sources, ProjectChangeListener {
+public final class GradleProjectSources implements Sources, ProjectInitListener {
     private static final Logger LOGGER = Logger.getLogger(GradleProjectSources.class.getName());
 
     private static final SourceGroup[] NO_SOURCE_GROUPS = new SourceGroup[0];
@@ -127,9 +128,24 @@ public final class GradleProjectSources implements Sources, ProjectChangeListene
         return groups;
     }
 
+    private void onModelChange() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                scanForSources();
+            }
+        });
+    }
+
     @Override
-    public void projectChanged() {
-        scanForSources();
+    public void onInitProject() {
+        onModelChange();
+        project.addModelChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                onModelChange();
+            }
+        });
     }
 
     public void scanForSources() {

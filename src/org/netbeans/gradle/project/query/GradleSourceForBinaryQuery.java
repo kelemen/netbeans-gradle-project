@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectChangeListener;
+import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -27,7 +29,7 @@ import org.openide.util.ChangeSupport;
 public final class GradleSourceForBinaryQuery
 implements
         SourceForBinaryQueryImplementation2,
-        ProjectChangeListener {
+        ProjectInitListener {
     // You would think that this is an important query for the debugger to
     // find the source files. Well, no ...
     //
@@ -126,9 +128,24 @@ implements
         }
     }
 
+    private void onModelChange() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                changes.fireChange();
+            }
+        });
+    }
+
     @Override
-    public void projectChanged() {
-        changes.fireChange();
+    public void onInitProject() {
+        onModelChange();
+        project.addModelChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                onModelChange();
+            }
+        });
     }
 
     @Override

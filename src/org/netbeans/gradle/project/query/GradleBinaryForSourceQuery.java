@@ -9,10 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectChangeListener;
+import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
@@ -27,7 +29,7 @@ import org.openide.util.Utilities;
 public final class GradleBinaryForSourceQuery
 implements
         BinaryForSourceQueryImplementation,
-        ProjectChangeListener {
+        ProjectInitListener {
     private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
 
     private static final URL[] NO_ROOTS = new URL[0];
@@ -120,9 +122,24 @@ implements
         }
     }
 
+    private void onModelChange() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                changes.fireChange();
+            }
+        });
+    }
+
     @Override
-    public void projectChanged() {
-        changes.fireChange();
+    public void onInitProject() {
+        onModelChange();
+        project.addModelChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                onModelChange();
+            }
+        });
     }
 
     @Override
