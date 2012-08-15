@@ -24,6 +24,8 @@ import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
 import org.netbeans.gradle.project.query.GradleUnitTestFinder;
+import org.netbeans.gradle.project.view.GradleActionProvider;
+import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;

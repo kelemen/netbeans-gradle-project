@@ -1,10 +1,12 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.view;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.project.GradleTasks;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.spi.project.ActionProvider;

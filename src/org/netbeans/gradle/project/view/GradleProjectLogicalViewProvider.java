@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.view;
 
 import java.awt.Dialog;
 import java.awt.Image;
@@ -12,6 +12,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.netbeans.gradle.project.GradleTasks;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;

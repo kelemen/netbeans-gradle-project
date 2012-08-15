@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.util.List;
@@ -8,6 +8,9 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.netbeans.gradle.project.GradleProjectConstants;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;

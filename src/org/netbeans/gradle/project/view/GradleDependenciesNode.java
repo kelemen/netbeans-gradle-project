@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.text.Collator;
@@ -16,6 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModule;
