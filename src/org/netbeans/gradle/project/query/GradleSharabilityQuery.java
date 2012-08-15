@@ -1,13 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import org.netbeans.api.queries.SharabilityQuery.Sharability;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

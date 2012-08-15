@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URL;

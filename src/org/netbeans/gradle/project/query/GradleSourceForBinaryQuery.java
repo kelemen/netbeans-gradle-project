@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URI;
@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.ProjectChangeListener;
 import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -22,7 +24,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
-//@ServiceProviders({@ServiceProvider(service=SourceForBinaryQueryImplementation2.class), @ServiceProvider(service=SourceForBinaryQueryImplementation.class)})
 public final class GradleSourceForBinaryQuery
 implements
         SourceForBinaryQueryImplementation2,

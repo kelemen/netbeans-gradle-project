@@ -1,8 +1,9 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.util.regex.Pattern;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -11,6 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.ProjectChangeListener;
 import org.netbeans.gradle.project.model.NbDependencyGroup;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;

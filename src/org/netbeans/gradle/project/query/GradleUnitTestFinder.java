@@ -1,9 +1,10 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;

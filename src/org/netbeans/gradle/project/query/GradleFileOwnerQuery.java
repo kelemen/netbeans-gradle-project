@@ -1,9 +1,10 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.query;
 
 import java.net.URI;
 import java.util.logging.Logger;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.gradle.project.model.NbOutput;
