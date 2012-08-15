@@ -8,17 +8,11 @@ import org.openide.filesystems.FileObject;
 
 @org.openide.util.lookup.ServiceProvider(service = ProjectFactory.class)
 public class NbGradleProjectFactory implements ProjectFactory {
-    public static final String PROJECT_DIR = "build.gradle";
-
-    //Specifies when a project is a project, i.e.,
-    //if the project directory "texts" is present:
     @Override
     public boolean isProject(FileObject projectDirectory) {
-        return projectDirectory.getFileObject(PROJECT_DIR) != null;
+        return projectDirectory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null;
     }
 
-    //Specifies when the project will be opened, i.e.,
-    //if the project exists:
     @Override
     public Project loadProject(FileObject dir, ProjectState state) throws IOException {
         // Note: Netbeans might call this method without calling isProject

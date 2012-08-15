@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.IOException;
+import org.netbeans.gradle.project.GradleProjectConstants;
 import org.openide.filesystems.FileObject;
 
 /**
@@ -37,7 +38,7 @@ public final class NbGradleModel {
     }
 
     public static FileObject getBuildFile(FileObject projectDir) throws IOException {
-        FileObject buildFile = projectDir.getFileObject("build.gradle");
+        FileObject buildFile = projectDir.getFileObject(GradleProjectConstants.BUILD_FILE_NAME);
         if (buildFile == null) {
             throw new IOException("Missing build.gradle in the project directory: " + projectDir);
         }
@@ -49,7 +50,7 @@ public final class NbGradleModel {
             return null;
         }
 
-        FileObject settingsGradle = projectDir.getFileObject("settings.gradle");
+        FileObject settingsGradle = projectDir.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME);
         if (settingsGradle != null && !settingsGradle.isVirtual()) {
             return settingsGradle;
         }
