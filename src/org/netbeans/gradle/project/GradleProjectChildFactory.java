@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
@@ -18,7 +16,6 @@ import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle;
 
 public final class GradleProjectChildFactory
 extends
@@ -147,15 +144,10 @@ extends
 
     @Override
     protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-        ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbBundle.getMessage(GradleProjectChildFactory.class, "LBL_LoadingProjectLayout"));
-        progress.start();
         try {
             readKeys(toPopulate);
         } catch (DataObjectNotFoundException ex) {
             throw new RuntimeException(ex);
-        } finally {
-            progress.finish();
         }
         return true;
     }

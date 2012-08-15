@@ -20,7 +20,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.NbBundle;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
@@ -45,7 +44,7 @@ public final class GradleTasks {
             String[] arguments,
             String[] jvmArguments) {
         ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbBundle.getMessage(GradleClassPathProvider.class, "LBL_ExecutingGradleTasks"));
+                NbStrings.getExecuteTasksText());
         try {
             progress.start();
             doGradleTasksWithProgress(progress, project, taskNames, arguments, jvmArguments);
@@ -109,15 +108,12 @@ public final class GradleTasks {
            InputOutput io = IOProvider.getDefault().getIO("Gradle: " + printableName, false);
            OutputWriter buildOutput = io.getOut();
            try {
-               buildOutput.println(NbBundle.getMessage(
-                       GradleProjectLogicalViewProvider.class, "MSG_ExecutingTask", command));
+               buildOutput.println(NbStrings.getExecutingTaskMessage(command));
                if (arguments.length > 0) {
-                   buildOutput.println(NbBundle.getMessage(
-                       GradleProjectLogicalViewProvider.class, "MSG_TaskArguments", Arrays.toString(arguments)));
+                   buildOutput.println(NbStrings.getTaskArgumentsMessage(arguments));
                }
                if (jvmArguments.length > 0) {
-                   buildOutput.println(NbBundle.getMessage(
-                       GradleProjectLogicalViewProvider.class, "MSG_TaskJvmArguments", Arrays.toString(jvmArguments)));
+                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(arguments));
                }
 
                buildOutput.println();

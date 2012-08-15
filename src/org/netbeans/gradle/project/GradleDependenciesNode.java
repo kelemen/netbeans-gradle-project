@@ -16,8 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -33,7 +31,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle;
 
 public final class GradleDependenciesNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(GradleDependenciesNode.class.getName());
@@ -58,7 +55,7 @@ public final class GradleDependenciesNode extends AbstractNode {
 
     @Override
     public String getDisplayName() {
-        return NbBundle.getMessage(GradleDependenciesNode.class, "LBL_Dependencies");
+        return NbStrings.getDependenciesNodeCaption();
     }
 
     private static class DependenciesChildFactory
@@ -170,13 +167,13 @@ public final class GradleDependenciesNode extends AbstractNode {
             runtime.removeAll(compile);
             testCompile.removeAll(compile);
 
-            addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_CompileDependencies"),
+            addDependencyGroup(NbStrings.getCompileDependenciesNodeCaption(),
                     orderDependencies(compile), toPopulate);
-            addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_RuntimeDependencies"),
+            addDependencyGroup(NbStrings.getRuntimeDependenciesNodeCaption(),
                     orderDependencies(runtime), toPopulate);
-            addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestCompileDependencies"),
+            addDependencyGroup(NbStrings.getTestCompileDependenciesNodeCaption(),
                     orderDependencies(testCompile), toPopulate);
-            addDependencyGroup(NbBundle.getMessage(GradleDependenciesNode.class, "LBL_TestRuntimeDependencies"),
+            addDependencyGroup(NbStrings.getTestRuntimeDependenciesNodeCaption(),
                     orderDependencies(testRuntime), toPopulate);
 
             LOGGER.fine("Dependencies for the Gradle project were found.");
@@ -184,15 +181,10 @@ public final class GradleDependenciesNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-            ProgressHandle progress = ProgressHandleFactory.createHandle(
-                    NbBundle.getMessage(GradleProjectChildFactory.class, "LBL_LookUpExternalDependencies"));
-            progress.start();
             try {
                 readKeys(toPopulate);
             } catch (DataObjectNotFoundException ex) {
                 throw new RuntimeException(ex);
-            } finally {
-                progress.finish();
             }
             return true;
         }

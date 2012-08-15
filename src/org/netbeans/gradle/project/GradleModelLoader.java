@@ -43,7 +43,6 @@ import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.gradle.project.model.NbUriDependency;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.NbBundle;
 import org.openide.util.RequestProcessor;
 import org.openide.util.Utilities;
 
@@ -402,7 +401,7 @@ public final class GradleModelLoader {
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
         ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbBundle.getMessage(NbGradleProject.class, "LBL_LoadingProject", projectDir.getNameExt()));
+                NbStrings.getLoadingProjectText(projectDir.getNameExt()));
         try {
             progress.start();
             return loadModelWithProgress(projectDir, progress);

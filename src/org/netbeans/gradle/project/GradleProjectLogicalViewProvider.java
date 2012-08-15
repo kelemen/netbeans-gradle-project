@@ -25,7 +25,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -72,22 +71,22 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 null,
                 createProjectAction(
                     ActionProvider.COMMAND_BUILD,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Build")),
+                    NbStrings.getBuildCommandCaption()),
                 createProjectAction(
                     ActionProvider.COMMAND_CLEAN,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Clean")),
+                    NbStrings.getCleanCommandCaption()),
                 createProjectAction(
                     ActionProvider.COMMAND_REBUILD,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Rebuild")),
+                    NbStrings.getRebuildCommandCaption()),
                 createProjectAction(
                     GradleActionProvider.COMMAND_JAVADOC,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Javadoc")),
+                    NbStrings.getJavadocCommandCaption()),
                 new CustomTaskAction(project),
                 this.tasksAction,
                 null,
                 createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_ReloadProject")),
+                    NbStrings.getReloadCommandCaption()),
                 CommonProjectActions.closeProjectAction(),
             };
         }
@@ -129,7 +128,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         private final NbGradleProject project;
 
         public CustomTaskAction(NbGradleProject project) {
-            super(NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_CustomTasks"));
+            super(NbStrings.getCustomTasksCommandCaption());
             this.project = project;
         }
         @Override
@@ -137,7 +136,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             CustomActionPanel panel = new CustomActionPanel();
             DialogDescriptor dlgDescriptor = new DialogDescriptor(
                     panel,
-                    NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_CustomActionTitle"),
+                    NbStrings.getCustomTaskDlgTitle(),
                     true,
                     DialogDescriptor.OK_CANCEL_OPTION,
                     DialogDescriptor.OK_OPTION,
@@ -175,7 +174,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         }
 
         private JMenu createMenu() {
-            JMenu menu = new JMenu(NbBundle.getMessage(GradleProjectLogicalViewProvider.class, "LBL_Tasks"));
+            JMenu menu = new JMenu(NbStrings.getTasksMenuCaption());
             final TasksMenuBuilder builder = new TasksMenuBuilder(project, menu);
             menu.addMenuListener(new MenuListener() {
                 @Override

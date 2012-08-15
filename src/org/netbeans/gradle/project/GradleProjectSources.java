@@ -17,8 +17,6 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
@@ -28,7 +26,6 @@ import org.netbeans.gradle.project.model.NbSourceType;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
-import org.openide.util.NbBundle;
 
 public final class GradleProjectSources implements Sources, ProjectChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleProjectSources.class.getName());
@@ -94,10 +91,10 @@ public final class GradleProjectSources implements Sources, ProjectChangeListene
 
         Map<String, SourceGroup[]> groups = new HashMap<String, SourceGroup[]>();
 
-        String sourceGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_SrcJava");
-        String resourceGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_Resources");
-        String testGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_TestJava");
-        String testResourceGroupCaption = NbBundle.getMessage(GradleProjectSources.class, "LBL_TestResources");
+        String sourceGroupCaption = NbStrings.getSrcPackageCaption();
+        String resourceGroupCaption = NbStrings.getResourcesPackageCaption();
+        String testGroupCaption = NbStrings.getTestPackageCaption();
+        String testResourceGroupCaption = NbStrings.getTestResourcesPackageCaption();
 
         SourceGroup[] sources = toSourceGroup(
                 sourceGroupCaption,
@@ -161,26 +158,17 @@ public final class GradleProjectSources implements Sources, ProjectChangeListene
             public void run() {
                 scanRequestId.compareAndSet(requestId, null);
 
-                ProgressHandle progress = null;
-                try {
-                    progress = ProgressHandleFactory.createHandle(
-                            NbBundle.getMessage(GradleProjectSources.class, "LBL_ScanningForSource"));
-                    progress.start();
+                Map<String, SourceGroup[]> groups = findSourceGroups(project);
 
-                    Map<String, SourceGroup[]> groups = findSourceGroups(project);
+                currentGroups = groups;
+                LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", project.getName());
 
-                    currentGroups = groups;
-                    LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", project.getName());
-
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            changeSupport.fireChange();
-                        }
-                    });
-                } finally {
-                    progress.finish();
-                }
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        changeSupport.fireChange();
+                    }
+                });
             }
         });
     }
