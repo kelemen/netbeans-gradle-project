@@ -26,6 +26,15 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems));
     }
 
+    public void initFromProperties(ProjectProperties properties) {
+        JavaPlatform currentPlatform = properties.getPlatform().getValue();
+        jPlatformCombo.setSelectedItem(new PlatformComboItem(currentPlatform));
+
+        jSourceEncoding.setText(properties.getSourceEncoding().getValue().name());
+
+        jSourceLevelCombo.setSelectedItem(properties.getSourceLevel().getValue());
+    }
+
     public void updateProperties(ProjectProperties properties) {
         PlatformComboItem selected = (PlatformComboItem)jPlatformCombo.getSelectedItem();
         if (selected != null) {
@@ -40,6 +49,11 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             LOGGER.log(Level.WARNING, "Illegal character set: " + charsetName, ex);
         } catch (UnsupportedCharsetException ex) {
             LOGGER.log(Level.WARNING, "Unsupported character set: " + charsetName, ex);
+        }
+
+        String sourceLevel = (String)jSourceLevelCombo.getSelectedItem();
+        if (sourceLevel != null) {
+            properties.getSourceLevel().setValue(sourceLevel);
         }
     }
 
@@ -56,13 +70,6 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         } catch (UnsupportedCharsetException ex) {
             return ProjectProperties.DEFAULT_SOURCE_ENCODING;
         }
-    }
-
-    public void initFromProperties(ProjectProperties properties) {
-        JavaPlatform currentPlatform = properties.getPlatform().getValue();
-        jPlatformCombo.setSelectedItem(new PlatformComboItem(currentPlatform));
-
-        jSourceEncoding.setText(properties.getSourceEncoding().getValue().name());
     }
 
     private class PlatformComboItem {
@@ -117,12 +124,18 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jSourceEncoding = new javax.swing.JTextField();
         jPlatformCaption = new javax.swing.JLabel();
         jPlatformCombo = new javax.swing.JComboBox();
+        jSourceLevelCaption = new javax.swing.JLabel();
+        jSourceLevelCombo = new javax.swing.JComboBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceEncodingCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jSourceEncodingCaption.text")); // NOI18N
 
         jSourceEncoding.setText(org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jSourceEncoding.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jPlatformCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jPlatformCaption.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jSourceLevelCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jSourceLevelCaption.text")); // NOI18N
+
+        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -132,12 +145,14 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSourceEncoding)
+                    .addComponent(jPlatformCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jSourceEncodingCaption)
-                            .addComponent(jPlatformCaption))
+                            .addComponent(jPlatformCaption)
+                            .addComponent(jSourceLevelCaption))
                         .addGap(0, 303, Short.MAX_VALUE))
-                    .addComponent(jPlatformCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jSourceLevelCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -151,6 +166,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 .addComponent(jPlatformCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPlatformCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSourceLevelCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSourceLevelCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -159,5 +178,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox jPlatformCombo;
     private javax.swing.JTextField jSourceEncoding;
     private javax.swing.JLabel jSourceEncodingCaption;
+    private javax.swing.JLabel jSourceLevelCaption;
+    private javax.swing.JComboBox jSourceLevelCombo;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,18 +1,37 @@
 package org.netbeans.gradle.project.query;
 
 import java.util.regex.Pattern;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.ChangeSupport;
 
-public final class GradleSourceLevelQueryImplementation implements SourceLevelQueryImplementation2 {
+public final class GradleSourceLevelQueryImplementation
+implements
+        SourceLevelQueryImplementation2,
+        ProjectInitListener {
+
     private final NbGradleProject project;
+    private final ChangeSupport changes;
 
     public GradleSourceLevelQueryImplementation(NbGradleProject project) {
         this.project = project;
+        this.changes = new ChangeSupport(this);
+    }
+
+    @Override
+    public void onInitProject() {
+        project.getProperties().getSourceLevel().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                changes.fireChange();
+            }
+        });
     }
 
     @Override
@@ -22,31 +41,20 @@ public final class GradleSourceLevelQueryImplementation implements SourceLevelQu
             return null;
         }
 
-        String version = JavaPlatform.getDefault().getSpecification().getVersion().toString();
-        String[] parts = version.split(Pattern.quote("."), 3);
-
-        final String normalizedVersion = parts.length >= 2
-                ? parts[0] + "." + parts[1]
-                : null;
-
-        if (normalizedVersion == null) {
-            return null;
-        }
-
         return new Result() {
             @Override
             public String getSourceLevel() {
-                return normalizedVersion;
+                return project.getProperties().getSourceLevel().getValue();
             }
 
             @Override
             public void addChangeListener(ChangeListener listener) {
-                // No changes
+                changes.addChangeListener(listener);
             }
 
             @Override
             public void removeChangeListener(ChangeListener listener) {
-                // No changes
+                changes.addChangeListener(listener);
             }
         };
     }
