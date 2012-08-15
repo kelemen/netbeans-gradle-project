@@ -143,7 +143,7 @@ public final class GradleDependenciesNode extends AbstractNode {
                             return -1;
                         }
                         else {
-                            return Integer.compare(index1, index2);
+                            return index1 == index2 ? 0 : (index1 < index2 ? -1 : 1);
                         }
                     }
 
