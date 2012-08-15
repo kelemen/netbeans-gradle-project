@@ -92,6 +92,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()),
                 CommonProjectActions.closeProjectAction(),
+                null,
+                CommonProjectActions.customizeProjectAction()
             };
         }
 

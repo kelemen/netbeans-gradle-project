@@ -98,6 +98,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_CustomTaskTitle");
     }
 
+    public static String getProjectPropertiesDlgTitle(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ProjectPropertiesTitle", projectName);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

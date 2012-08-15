@@ -23,7 +23,7 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
         for (NbSourceGroup srcGroup: mainModule.getSources().values()) {
             for (File srcDir: srcGroup.getPaths()) {
                 FileObject srcDirObj = FileUtil.toFileObject(srcDir);
-                if (FileUtil.isParentOf(srcDirObj, file)) {
+                if (srcDirObj != null && FileUtil.isParentOf(srcDirObj, file)) {
                     return project.getProperties().getSourceEncoding().getValue();
                 }
             }

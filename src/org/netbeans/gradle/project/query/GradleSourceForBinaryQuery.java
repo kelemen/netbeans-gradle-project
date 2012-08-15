@@ -139,13 +139,17 @@ implements
 
     @Override
     public void onInitProject() {
-        onModelChange();
         project.addModelChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 onModelChange();
             }
         });
+        // This is not called because it would trigger the loading of the
+        // project even if it just shown in the project open dialog.
+        // Although it should be called to ensure correct behaviour in every
+        // case.
+        // onModelChange();
     }
 
     @Override

@@ -18,6 +18,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -62,12 +63,13 @@ public final class NbGradleProject implements Project {
         this.projectDir = projectDir;
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
-        this.cpProvider = new GradleClassPathProvider(this);
         this.properties = new ProjectProperties();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.modelChanges = new ChangeSupport(this);
         this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
+
+        this.cpProvider = new GradleClassPathProvider(this);
     }
 
     public void addModelChangeListener(ChangeListener listener) {
@@ -147,6 +149,7 @@ public final class NbGradleProject implements Project {
                 new GradleUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
                 new GradleSourceEncodingQuery(this),
+                new GradleCustomizer(this),
                 new OpenHook(),
                 // The following two queries are not really useful but since
                 // they were implemented I will add them anyway.

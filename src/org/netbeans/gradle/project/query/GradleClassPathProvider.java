@@ -56,7 +56,7 @@ implements
     @SuppressWarnings("MapReplaceableByEnumMap")
     public GradleClassPathProvider(NbGradleProject project) {
         this.project = project;
-        this.currentPlatform = project.getProperties().getPlatform().getValue();
+        this.currentPlatform = null;
 
         int classPathTypeCount = ClassPathType.values().length;
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
@@ -92,17 +92,16 @@ implements
     }
 
     private void onModelChange() {
-        SwingUtilities.invokeLater(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+                loadPathResources(project.getCurrentModel());
             }
         });
     }
 
     @Override
     public void onInitProject() {
-        onModelChange();
         project.addModelChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -116,6 +115,11 @@ implements
                 onModelChange();
             }
         });
+        // This is not called because it would trigger the loading of the
+        // project even if it just shown in the project open dialog.
+        // Although it should be called to ensure correct behaviour in every
+        // case.
+        // onModelChange();
     }
 
     // These PropertyChangeListener methods are declared because
@@ -362,7 +366,11 @@ implements
         setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
 
         List<PathResourceImplementation> jdk = new LinkedList<PathResourceImplementation>();
-        for (ClassPath.Entry entry: currentPlatform.getBootstrapLibraries().entries()) {
+        JavaPlatform platform = currentPlatform;
+        if (platform == null) {
+            platform = project.getProperties().getPlatform().getValue();
+        }
+        for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
             jdk.add(ClassPathSupport.createResource(entry.getURL()));
         }
 
