@@ -32,6 +32,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         dlg.setVisible(true);
         if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
             panel.updateProperties(project.getProperties());
+            project.saveProperties();
         }
     }
 }

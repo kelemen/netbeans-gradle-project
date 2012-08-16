@@ -18,6 +18,8 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.persistent.PropertiesPersister;
+import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
@@ -58,18 +60,25 @@ public final class NbGradleProject implements Project {
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectProperties properties;
+    private final PropertiesPersister propertiesPersister;
+
+    private volatile boolean loadedAtLeastOnce;
+    private boolean saveOnLoad; // access from the EDT
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectProperties();
+        this.propertiesPersister = new XmlPropertiesPersister(this);
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.modelChanges = new ChangeSupport(this);
         this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
 
         this.cpProvider = new GradleClassPathProvider(this);
+        this.loadedAtLeastOnce = false;
+        this.saveOnLoad = false;
     }
 
     public void addModelChangeListener(ChangeListener listener) {
@@ -93,10 +102,35 @@ public final class NbGradleProject implements Project {
         loadProject(false, mayUseCache);
     }
 
+    public void saveProperties() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            throw new IllegalStateException("This method may only be called from the EDT.");
+        }
+
+        if (loadedAtLeastOnce) {
+            propertiesPersister.save(properties);
+        }
+        else {
+            saveOnLoad = true;
+        }
+    }
+
+    public boolean hasLoadedProject() {
+        return loadedAtLeastOnce;
+    }
+
     private void onModelChange() {
         assert SwingUtilities.isEventDispatchThread();
 
         try {
+            loadedAtLeastOnce = true;
+            if (saveOnLoad) {
+                saveOnLoad = false;
+                propertiesPersister.save(properties);
+            }
+            else {
+                propertiesPersister.load(properties);
+            }
             modelChanges.fireChange();
         } finally {
             GradleCacheSourceForBinaryQuery.notifyCacheChange();
