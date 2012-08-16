@@ -6,10 +6,8 @@ The implementation is based on [Geertjan Wielenga's](https://blogs.oracle.com/ge
 You can open a folder as a project in NetBeans like with any other project and
 start editing the code without actually generating any other NetBeans project files.
 
-The project is actually usable, with the following major limitations:
-
-- Only the default JDK can be used for source and targe compatibility.
-- The character encoding of the source files cannot be set.
+The project is usable with no major limitations. Open a new issue if you believe something needs
+to be fixed.
 
 
 Current Limitations
@@ -20,9 +18,9 @@ Current Limitations
   returning models to work on. This is especially painful on the first
   project open because it will actually download every single dependency
   before returning (even test dependencies).
-- The character encoding for the source file is implicitly determined by NetBeans
-  and cannot be changed. The source encoding specified in the Gradle script is
-  ignored.
+- The character encoding for the source file is not read from the Gradle
+  script but can be set separately in project properties (stored with the
+  *settings.gradle* in *.nb-gradle-properties*).
 - It is not detected automtically when the project needs to be reloaded.
   The "Reload Project" action must be executed manually (from the project's
   popup menu). No automatic detection is done because reloading the project is
@@ -52,9 +50,9 @@ Current Limitations
   find any reliable way to do it with the tooling API. So every source
   directory whose last directory in its path starts with "resource"
   (not case-sensitive) is considered a resource directory.
-- The default JDK will be used for the project. I could not find a good way
-  to retrieve the *sourceCompatibility* and the *targetCompatibility* attribute
-  with the tooling API.
+- The *sourceCompatibility* and the *targetCompatibility* in the build script are ignored
+  but these can be set separately in project properties (stored with the
+  *settings.gradle* in *.nb-gradle-properties*).
 - Only a single task can be executed (and the built-in tasks, like rebuild). Custom
   tasks will be needed to make the project really usable. Also global custom tasks
   like with the Maven plugin would be nice as well. Allowing to execute custom tasks
