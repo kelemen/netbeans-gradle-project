@@ -74,6 +74,13 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 CommonProjectActions.newFileAction(),
                 null,
                 createProjectAction(
+                    ActionProvider.COMMAND_RUN,
+                    NbStrings.getRunCommandCaption()),
+                createProjectAction(
+                    ActionProvider.COMMAND_DEBUG,
+                    NbStrings.getDebugCommandCaption()),
+                null,
+                createProjectAction(
                     ActionProvider.COMMAND_BUILD,
                     NbStrings.getBuildCommandCaption()),
                 createProjectAction(

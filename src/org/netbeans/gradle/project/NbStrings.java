@@ -66,6 +66,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_TestRuntimeDependencies");
     }
 
+    public static String getRunCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Run");
+    }
+
+    public static String getDebugCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Debug");
+    }
+
     public static String getBuildCommandCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_Build");
     }

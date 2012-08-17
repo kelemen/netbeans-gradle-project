@@ -28,6 +28,7 @@ public final class GradleActionProvider implements ActionProvider {
         COMMAND_TEST,
         COMMAND_CLEAN,
         COMMAND_RUN,
+        COMMAND_DEBUG,
         COMMAND_JAVADOC,
         COMMAND_REBUILD,
         COMMAND_RELOAD,
@@ -93,6 +94,9 @@ public final class GradleActionProvider implements ActionProvider {
         }
         else if (COMMAND_RUN.equals(command)) {
             return GradleTasks.createAsyncGradleTask(project, "run");
+        }
+        else if (COMMAND_DEBUG.equals(command)) {
+            return GradleTasks.createAsyncGradleTask(project, "debug");
         }
         else if (COMMAND_JAVADOC.equals(command)) {
             return GradleTasks.createAsyncGradleTask(project, "javadoc");
