@@ -153,11 +153,11 @@ public final class NbGradleProject implements Project {
     }
 
     public String getName() {
-        return getProjectDirectory().getName();
+        return getProjectDirectory().getNameExt();
     }
 
     public String getDisplayName() {
-        return getProjectDirectory().getName();
+        return getProjectDirectory().getNameExt();
     }
 
     @Override
