@@ -72,7 +72,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    private class PlatformComboItem {
+    private static class PlatformComboItem {
         private final JavaPlatform platform;
 
         public PlatformComboItem(JavaPlatform platform) {

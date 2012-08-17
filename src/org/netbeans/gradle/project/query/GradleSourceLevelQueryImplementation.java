@@ -1,9 +1,7 @@
 package org.netbeans.gradle.project.query;
 
-import java.util.regex.Pattern;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
