@@ -11,12 +11,16 @@ import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
@@ -32,6 +36,10 @@ extends
 
         this.project = project;
         this.cleanupTaskRef = new AtomicReference<Runnable>(null);
+    }
+
+    private NbGradleModule getShownModule() {
+        return project.getCurrentModel().getMainModule();
     }
 
     @Override
@@ -115,7 +123,6 @@ extends
                     public Image getOpenedIcon(int type) {
                         return getIcon(type);
                     }
-
                 };
             }
         });
@@ -132,14 +139,67 @@ extends
         }
     }
 
+    private Node createSimpleNode() {
+        DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
+        return projectFolder.getNodeDelegate().cloneNode();
+    }
 
-    private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+    private Children createSubprojectsChild(List<NbGradleModule> children) {
+        return Children.create(new SubProjectsChildFactory(project, children), true);
+    }
+
+    private void addChildren(List<SingleNodeFactory> toPopulate) {
+        final List<NbGradleModule> children = getShownModule().getChildren();
+        if (children.isEmpty()) {
+            return;
+        }
+
+        toPopulate.add(new SingleNodeFactory() {
+            @Override
+            public Node createNode() {
+                return new FilterNode(createSimpleNode(), createSubprojectsChild(children)) {
+                    @Override
+                    public String getName() {
+                        return "SubProjectsNode_" + getShownModule().getUniqueName();
+                    }
+
+                    @Override
+                    public String getDisplayName() {
+                        return NbStrings.getSubProjectsCaption();
+                    }
+
+                    @Override
+                    public Image getIcon(int type) {
+                        return NbIcons.getGradleIcon();
+                    }
+
+                    @Override
+                    public Image getOpenedIcon(int type) {
+                        return getIcon(type);
+                    }
+
+                    @Override
+                    public boolean canRename() {
+                        return false;
+                    }
+                };
+            }
+        });
+    }
+
+    private void addSources(List<SingleNodeFactory> toPopulate) {
         Sources sources = ProjectUtils.getSources(project);
 
         addSourceGroups(sources.getSourceGroups(GradleProjectConstants.SOURCES), toPopulate);
         addSourceGroups(sources.getSourceGroups(GradleProjectConstants.RESOURCES), toPopulate);
         addSourceGroups(sources.getSourceGroups(GradleProjectConstants.TEST_SOURCES), toPopulate);
         addSourceGroups(sources.getSourceGroups(GradleProjectConstants.TEST_RESOURCES), toPopulate);
+    }
+
+    private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+        addSources(toPopulate);
+
+        addChildren(toPopulate);
 
         addDependencies(toPopulate);
         addProjectFiles(toPopulate);

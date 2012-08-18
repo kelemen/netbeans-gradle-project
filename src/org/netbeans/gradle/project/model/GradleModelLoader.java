@@ -3,13 +3,16 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -22,7 +25,9 @@ import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.ExternalDependency;
+import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
+import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
@@ -146,7 +151,8 @@ public final class GradleModelLoader {
 
         NbGradleModule mainModule = new NbGradleModule(properties,
                 Collections.<NbSourceType, NbSourceGroup>emptyMap(),
-                Collections.<NbDependencyType, NbDependencyGroup>emptyMap());
+                Collections.<NbDependencyType, NbDependencyGroup>emptyMap(),
+                Collections.<NbGradleModule>emptyList());
 
         return new NbGradleModel(projectDir, mainModule);
     }
@@ -286,6 +292,22 @@ public final class GradleModelLoader {
         return groups;
     }
 
+    private static List<IdeaModule> getChildModules(IdeaModule mainModule) {
+        Collection<? extends GradleProject> children = mainModule.getGradleProject().getChildren();
+        Set<String> childrenPaths = new HashSet<String>(2 * children.size());
+        for (GradleProject child: children) {
+            childrenPaths.add(child.getPath());
+        }
+
+        List<IdeaModule> result = new LinkedList<IdeaModule>();
+        for (IdeaModule module: mainModule.getProject().getModules()) {
+            if (childrenPaths.contains(module.getGradleProject().getPath())) {
+                result.add(module);
+            }
+        }
+        return result;
+    }
+
     private static NbGradleModule tryParseModule(IdeaModule module,
             Map<String, NbGradleModule> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
@@ -315,13 +337,24 @@ public final class GradleModelLoader {
             taskNames.add(task.getName());
         }
 
+        List<NbGradleModule> children = new LinkedList<NbGradleModule>();
+        for (IdeaModule child: getChildModules(module)) {
+            NbGradleModule parsedChild = tryParseModule(child, parsedModules);
+            if (parsedChild == null) {
+                LOGGER.log(Level.WARNING, "Failed to parse a child module: {0}", child.getName());
+            }
+            else {
+                children.add(parsedChild);
+            }
+        }
+
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
                 uniqueName,
                 moduleDir,
                 createDefaultOutput(moduleDir),
                 taskNames);
 
-        NbGradleModule result = new NbGradleModule(properties, sources, dependencies);
+        NbGradleModule result = new NbGradleModule(properties, sources, dependencies, children);
         parsedModules.put(uniqueName, result);
         return result;
     }

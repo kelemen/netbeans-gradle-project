@@ -13,17 +13,26 @@ public final class NbGradleModule {
     private final Properties properties;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
+    private final List<NbGradleModule> children;
 
     public NbGradleModule(
             Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
-            Map<NbDependencyType, NbDependencyGroup> dependencies) {
+            Map<NbDependencyType, NbDependencyGroup> dependencies,
+            Collection<NbGradleModule> children) {
+
         if (properties == null) throw new NullPointerException("properties");
         if (dependencies == null) throw new NullPointerException("dependencies");
+        if (children == null) throw new NullPointerException("children");
 
         this.properties = properties;
         this.sources = asImmutable(NbSourceType.class, sources);
         this.dependencies = asImmutable(NbDependencyType.class, dependencies);
+        this.children = Collections.unmodifiableList(new ArrayList<NbGradleModule>(children));
+
+        for (NbGradleModule child: this.children) {
+            if (child == null) throw new NullPointerException("child");
+        }
     }
 
     private static <K extends Enum<K>, V> Map<K, V> asImmutable(
@@ -84,6 +93,10 @@ public final class NbGradleModule {
 
     public Map<NbDependencyType, NbDependencyGroup> getDependencies() {
         return dependencies;
+    }
+
+    public List<NbGradleModule> getChildren() {
+        return children;
     }
 
     public static final class Properties {

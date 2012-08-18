@@ -69,6 +69,7 @@ public final class GradleDependenciesNode extends AbstractNode {
         private final NbGradleProject project;
 
         public DependenciesChildFactory(NbGradleProject project) {
+            if (project == null) throw new NullPointerException("project");
             this.project = project;
         }
 

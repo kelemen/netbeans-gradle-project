@@ -20,6 +20,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_TestResources");
     }
 
+    public static String getSubProjectsCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_SubProjects");
+    }
+
     public static String getLoadingProjectText(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "LBL_LoadingProject", projectName);
     }
@@ -100,6 +104,10 @@ public final class NbStrings {
 
     public static String getReloadCommandCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReloadProject");
+    }
+
+    public static String getOpenSubProjectCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OpenSubProject");
     }
 
     public static String getCustomTaskDlgTitle() {

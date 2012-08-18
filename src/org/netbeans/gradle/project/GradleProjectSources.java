@@ -7,6 +7,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -86,11 +87,9 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
         return result;
     }
 
-    private static Map<String, SourceGroup[]> findSourceGroups(NbGradleProject project) {
-        NbGradleModel projectModel = project.getCurrentModel();
-        NbGradleModule mainModule = projectModel.getMainModule();
-
-        Map<String, SourceGroup[]> groups = new HashMap<String, SourceGroup[]>();
+    private static Map<String, SourceGroup[]> findSourceGroupsOfModule(
+            NbGradleModule module) {
+        Map<String, SourceGroup[]> groups = new LinkedHashMap<String, SourceGroup[]>(8);
 
         String sourceGroupCaption = NbStrings.getSrcPackageCaption();
         String resourceGroupCaption = NbStrings.getResourcesPackageCaption();
@@ -99,16 +98,35 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
 
         SourceGroup[] sources = toSourceGroup(
                 sourceGroupCaption,
-                mainModule.getSources(NbSourceType.SOURCE).getPaths());
+                module.getSources(NbSourceType.SOURCE).getPaths());
         SourceGroup[] resources = toSourceGroup(
                 resourceGroupCaption,
-                mainModule.getSources(NbSourceType.RESOURCE).getPaths());
+                module.getSources(NbSourceType.RESOURCE).getPaths());
         SourceGroup[] testSources = toSourceGroup(
                 testGroupCaption,
-                mainModule.getSources(NbSourceType.TEST_SOURCE).getPaths());
+                module.getSources(NbSourceType.TEST_SOURCE).getPaths());
         SourceGroup[] testResources = toSourceGroup(
                 testResourceGroupCaption,
-                mainModule.getSources(NbSourceType.TEST_RESOURCE).getPaths());
+                module.getSources(NbSourceType.TEST_RESOURCE).getPaths());
+
+        groups.put(GradleProjectConstants.SOURCES, sources);
+        groups.put(GradleProjectConstants.RESOURCES, resources);
+        groups.put(GradleProjectConstants.TEST_SOURCES, testSources);
+        groups.put(GradleProjectConstants.TEST_RESOURCES, testResources);
+        return groups;
+    }
+
+    private static Map<String, SourceGroup[]> findSourceGroups(NbGradleProject project) {
+        NbGradleModel projectModel = project.getCurrentModel();
+        NbGradleModule mainModule = projectModel.getMainModule();
+
+        Map<String, SourceGroup[]> moduleSources = findSourceGroupsOfModule(mainModule);
+        SourceGroup[] sources = moduleSources.get(GradleProjectConstants.SOURCES);
+        SourceGroup[] resources = moduleSources.get(GradleProjectConstants.RESOURCES);
+        SourceGroup[] testSources = moduleSources.get(GradleProjectConstants.TEST_SOURCES);
+        SourceGroup[] testResources = moduleSources.get(GradleProjectConstants.TEST_RESOURCES);
+
+        Map<String, SourceGroup[]> groups = new HashMap<String, SourceGroup[]>();
 
         if (sources.length > 0) {
             groups.put(JavaProjectConstants.SOURCES_HINT_MAIN, new SourceGroup[]{sources[0]});
