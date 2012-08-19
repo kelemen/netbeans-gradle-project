@@ -20,6 +20,7 @@ public class NbGradleProjectFactory implements ProjectFactory {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
     private static ConcurrentMap<File, Counter> SAFE_TO_OPEN_PROJECTS = new ConcurrentHashMap<File, Counter>();
+    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     public static Closeable safeToOpen(FileObject projectDir) {
         File projectDirFile = FileUtil.toFile(projectDir);
@@ -57,6 +58,20 @@ public class NbGradleProjectFactory implements ProjectFactory {
     public boolean isProject(FileObject projectDirectory) {
         if (isSafeToOpen(projectDirectory)) {
             return true;
+        }
+
+        // We will not load projects from the temporary directory simply
+        // because NetBeans has a habit to put temporary gradle files to
+        // them and then tries to load it which will fail because NetBeans will
+        // delete them soon.
+        if (TEMP_DIR != null) {
+            File tempDir = FileUtil.normalizeFile(new File(TEMP_DIR));
+            FileObject tempDirObj = FileUtil.toFileObject(tempDir);
+            if (tempDirObj != null) {
+                if (FileUtil.getRelativePath(tempDirObj, projectDirectory) != null) {
+                    return false;
+                }
+            }
         }
 
         return projectDirectory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null;
