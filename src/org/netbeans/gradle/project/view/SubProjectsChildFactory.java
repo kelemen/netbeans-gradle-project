@@ -5,7 +5,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.Closeable;
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +34,7 @@ import org.openide.util.lookup.Lookups;
 
 public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactory> {
     private static final Logger LOGGER = Logger.getLogger(SubProjectsChildFactory.class.getName());
+    private static final Collator STR_SMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final List<NbGradleModule> modules;
@@ -40,10 +44,20 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
 
         this.project = project;
         this.modules = new ArrayList<NbGradleModule>(modules);
+        sortModules(this.modules);
 
         for (NbGradleModule module: this.modules) {
             if (module == null) throw new NullPointerException("module");
         }
+    }
+
+    private static void sortModules(List<NbGradleModule> modules) {
+        Collections.sort(modules, new Comparator<NbGradleModule>(){
+            @Override
+            public int compare(NbGradleModule o1, NbGradleModule o2) {
+                return STR_SMP.compare(o1.getName(), o2.getName());
+            }
+        });
     }
 
     @Override
