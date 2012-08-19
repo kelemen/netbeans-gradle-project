@@ -1,8 +1,15 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.ProjectUtils;
@@ -23,10 +30,14 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
 extends
         ChildFactory.Detachable<SingleNodeFactory> {
+    private static final Logger LOGGER = Logger.getLogger(GradleProjectChildFactory.class.getName());
 
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
@@ -159,10 +170,20 @@ extends
         toPopulate.add(new SingleNodeFactory() {
             @Override
             public Node createNode() {
-                return new FilterNode(createSimpleNode(), createSubprojectsChild(children)) {
+                return new FilterNode(
+                        createSimpleNode(),
+                        createSubprojectsChild(children),
+                        Lookups.fixed(children.toArray())) {
                     @Override
                     public String getName() {
                         return "SubProjectsNode_" + getShownModule().getUniqueName();
+                    }
+
+                    @Override
+                    public Action[] getActions(boolean context) {
+                        return new Action[] {
+                            new OpenProjectsAction(NbStrings.getOpenSubProjectsCaption(), children)
+                        };
                     }
 
                     @Override

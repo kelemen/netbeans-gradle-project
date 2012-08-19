@@ -24,12 +24,16 @@ public final class OpenProjectsAction extends AbstractAction {
 
     private final Collection<NbGradleModule> projects;
 
-    public OpenProjectsAction(Collection<NbGradleModule> projects) {
-        super(NbStrings.getOpenSubProjectCaption(projects));
+    public OpenProjectsAction(String caption, Collection<NbGradleModule> projects) {
+        super(caption);
         this.projects = new ArrayList<NbGradleModule>(projects);
         for (NbGradleModule project: this.projects) {
             if (project == null) throw new NullPointerException("project");
         }
+    }
+
+    public OpenProjectsAction(Collection<NbGradleModule> projects) {
+        this(NbStrings.getOpenSubProjectCaption(projects), projects);
     }
 
     private void openSubProject(NbGradleModule project) {

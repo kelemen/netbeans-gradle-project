@@ -108,6 +108,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReloadProject");
     }
 
+    public static String getOpenSubProjectsCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OpenEverySubProject");
+    }
+
     public static String getOpenSubProjectCaption(Collection<NbGradleModule> projects) {
         int numberOfProjects = projects.size();
         if (numberOfProjects == 1) {
