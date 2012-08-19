@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.view;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -151,14 +153,28 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
                     }
 
                     try {
-                        Project subProject = ProjectManager.getDefault().findProject(subProjectDir);
-                        if (subProject == null) {
-                            LOGGER.log(Level.WARNING,
-                                    "Subproject cannot be found: {0}",
-                                    module.getModuleDir());
-                            return;
+                        ProjectManager projectManager = ProjectManager.getDefault();
+
+                        Closeable safeToOpenKey = NbGradleProjectFactory.safeToOpen(subProjectDir);
+                        try {
+                            // We have to clear this list because if the project
+                            // does not have build.gradle, NetBeans might have
+                            // already determined that the directory does not
+                            // contain a project.
+                            projectManager.clearNonProjectCache();
+
+                            Project subProject = projectManager.findProject(subProjectDir);
+                            if (subProject == null) {
+                                LOGGER.log(Level.WARNING,
+                                        "Subproject cannot be found: {0}",
+                                        module.getModuleDir());
+                                return;
+                            }
+                            OpenProjects.getDefault().open(new Project[]{subProject}, false);
+
+                        } finally {
+                            safeToOpenKey.close();
                         }
-                        OpenProjects.getDefault().open(new Project[]{subProject}, false);
                     } catch (IOException ex) {
                         LOGGER.log(Level.WARNING,
                                 "Error while trying to load the project: " + module.getModuleDir(),

@@ -18,6 +18,9 @@ Current Limitations
   returning models to work on. This is especially painful on the first
   project open because it will actually download every single dependency
   before returning (even test dependencies).
+- It is not possible to directly open projects without a *build.gradle*.
+  To open such projects, open its parent project and find the project to
+  be opened in the *SubProjects* node, then right click/"Open Subproject".
 - The character encoding for the source file is not read from the Gradle
   script but can be set separately in project properties (stored with the
   *settings.gradle* in *.nb-gradle-properties*).
