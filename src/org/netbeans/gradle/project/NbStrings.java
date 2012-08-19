@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project;
 
 import java.util.Arrays;
+import java.util.Collection;
+import org.netbeans.gradle.project.model.NbGradleModule;
 import org.openide.util.NbBundle;
 
 public final class NbStrings {
@@ -106,8 +108,15 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReloadProject");
     }
 
-    public static String getOpenSubProjectCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OpenSubProject");
+    public static String getOpenSubProjectCaption(Collection<NbGradleModule> projects) {
+        int numberOfProjects = projects.size();
+        if (numberOfProjects == 1) {
+            String name = projects.iterator().next().getName();
+            return NbBundle.getMessage(NbStrings.class, "LBL_OpenSingleSubProject", name);
+        }
+        else {
+            return NbBundle.getMessage(NbStrings.class, "LBL_OpenMoreSubProject", numberOfProjects);
+        }
     }
 
     public static String getCustomTaskDlgTitle() {
