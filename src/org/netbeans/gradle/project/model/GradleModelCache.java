@@ -42,19 +42,18 @@ public final class GradleModelCache {
     public void addToCache(NbGradleModel model) {
         if (model == null) throw new NullPointerException("model");
 
-        File buildFile = FileUtil.toFile(model.getBuildFile());
+        File projectDir = FileUtil.toFile(model.getProjectDir());
 
         FileObject settingsFileObj = model.getSettingsFile();
         File settingsFile = settingsFileObj != null
                 ? FileUtil.toFile(settingsFileObj)
                 : null;
-        if (buildFile == null || (settingsFile == null && settingsFileObj != null)) {
-            // This can be null if the build file has been deleted as
-            // FileUtil.toFile returns null in this case.
+
+        if (projectDir == null || (settingsFile == null && settingsFileObj != null)) {
             return;
         }
 
-        CacheKey key = new CacheKey(buildFile, settingsFile);
+        CacheKey key = new CacheKey(projectDir, settingsFile);
 
         cacheLock.lock();
         try {
@@ -74,8 +73,8 @@ public final class GradleModelCache {
         }
     }
 
-    public NbGradleModel tryGet(File buildFile, File settingsFile) {
-        CacheKey key = new CacheKey(buildFile, settingsFile);
+    public NbGradleModel tryGet(File projectDir, File settingsFile) {
+        CacheKey key = new CacheKey(projectDir, settingsFile);
         cacheLock.lock();
         try {
             return cache.get(key);
@@ -85,19 +84,19 @@ public final class GradleModelCache {
     }
 
     private static class CacheKey {
-        private final File buildFile;
+        private final File projectDir;
         private final File settingsFile;
 
-        public CacheKey(File buildFile, File settingsFile) {
-            if (buildFile == null) throw new NullPointerException("buildFile");
-            this.buildFile = buildFile;
+        public CacheKey(File projectDir, File settingsFile) {
+            if (projectDir == null) throw new NullPointerException("buildFile");
+            this.projectDir = projectDir;
             this.settingsFile = settingsFile;
         }
 
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 89 * hash + this.buildFile.hashCode();
+            hash = 89 * hash + this.projectDir.hashCode();
             hash = 89 * hash + (this.settingsFile != null ? this.settingsFile.hashCode() : 0);
             return hash;
         }
@@ -114,7 +113,7 @@ public final class GradleModelCache {
                 return false;
             }
             final CacheKey other = (CacheKey)obj;
-            if (this.buildFile != other.buildFile && (!this.buildFile.equals(other.buildFile))) {
+            if (this.projectDir != other.projectDir && (!this.projectDir.equals(other.projectDir))) {
                 return false;
             }
             if (this.settingsFile != other.settingsFile && (this.settingsFile == null || !this.settingsFile.equals(other.settingsFile))) {

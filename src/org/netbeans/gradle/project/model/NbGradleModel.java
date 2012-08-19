@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.IOException;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.openide.filesystems.FileObject;
 
@@ -19,30 +18,34 @@ public final class NbGradleModel {
 
     public NbGradleModel(
             FileObject projectDir,
-            NbGradleModule mainModule) throws IOException {
+            NbGradleModule mainModule) {
         this(projectDir, findSettingsGradle(projectDir), mainModule);
     }
 
     public NbGradleModel(
             FileObject projectDir,
             FileObject settingsFile,
-            NbGradleModule mainModule) throws IOException {
+            NbGradleModule mainModule) {
+        this(projectDir, getBuildFile(projectDir), settingsFile, mainModule);
+    }
+
+    public NbGradleModel(
+            FileObject projectDir,
+            FileObject buildFile,
+            FileObject settingsFile,
+            NbGradleModule mainModule) {
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (mainModule == null) throw new NullPointerException("mainModule");
 
         this.projectDir = projectDir;
         this.mainModule = mainModule;
 
-        this.buildFile = getBuildFile(projectDir);
+        this.buildFile = buildFile;
         this.settingsFile = settingsFile;
     }
 
-    public static FileObject getBuildFile(FileObject projectDir) throws IOException {
-        FileObject buildFile = projectDir.getFileObject(GradleProjectConstants.BUILD_FILE_NAME);
-        if (buildFile == null) {
-            throw new IOException("Missing build.gradle in the project directory: " + projectDir);
-        }
-        return buildFile;
+    public static FileObject getBuildFile(FileObject projectDir) {
+        return projectDir.getFileObject(GradleProjectConstants.BUILD_FILE_NAME);
     }
 
     public static FileObject findSettingsGradle(FileObject projectDir) {

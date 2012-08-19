@@ -27,7 +27,6 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.ExternalDependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
-import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
@@ -60,22 +59,19 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleModel tryGetFromCache(FileObject projectDir) {
-        try {
-            File buildFile = FileUtil.toFile(NbGradleModel.getBuildFile(projectDir));
-            FileObject settingFileObj = NbGradleModel.findSettingsGradle(projectDir);
-            File settingsFile = settingFileObj != null
-                    ? FileUtil.toFile(settingFileObj)
-                    : null;
-
-            return buildFile != null
-                    ? CACHE.tryGet(buildFile, settingsFile)
-                    : null;
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING,
-                    "Failure to read project directory while attempting to"
-                    + " retrieve the model from the cache: " + projectDir, ex);
+        File projectDirFile = FileUtil.toFile(projectDir);
+        FileObject settingFileObj = NbGradleModel.findSettingsGradle(projectDir);
+        File settingsFile = settingFileObj != null
+                ? FileUtil.toFile(settingFileObj)
+                : null;
+        if (settingsFile == null && settingFileObj != null) {
+            LOGGER.log(Level.WARNING, "Settings file of the project disappeared: {0}", settingFileObj);
             return null;
         }
+
+        return projectDirFile != null
+                ? CACHE.tryGet(projectDirFile, settingsFile)
+                : null;
     }
 
     public static void tryGetModelFromCache(
@@ -385,13 +381,9 @@ public final class GradleModelLoader {
         for (NbGradleModule module: parsedModules.values()) {
             if (module != null && module != parsedMainModule) {
                 FileObject moduleDir = FileUtil.toFileObject(module.getModuleDir());
-                try {
-                    if (moduleDir != null) {
-                        NbGradleModel model = new NbGradleModel(moduleDir, settings, module);
-                        CACHE.addToCache(model);
-                    }
-                } catch (IOException ex) {
-                    LOGGER.log(Level.INFO, "Gradle project without build.gradle: {0}", module.getUniqueName());
+                if (moduleDir != null) {
+                    NbGradleModel model = new NbGradleModel(moduleDir, settings, module);
+                    CACHE.addToCache(model);
                 }
             }
         }

@@ -131,7 +131,9 @@ extends
     private void addProjectFiles(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
         NbGradleModel model = project.getCurrentModel();
         FileObject buildGradle = model.getBuildFile();
-        addGradleFile(buildGradle, toPopulate);
+        if (buildGradle != null) {
+            addGradleFile(buildGradle, toPopulate);
+        }
 
         FileObject settingsGradle = model.getSettingsFile();
         if (settingsGradle != null) {
