@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.GradleHomeRegistry;
 import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -91,8 +92,10 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
             if (classpath != null) {
                 return classpath;
             }
+
             classpath = ClassPathSupport.createClassPath(srcDir);
             sourcePathsCache.addToCache(gradleHome, classpath);
+
             return classpath;
         }
         else {
@@ -122,6 +125,8 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         if (!FileUtil.isParentOf(gradleHome, file)) {
             return null;
         }
+
+        GradleHomeRegistry.requireGradlePaths();
 
         if (ClassPath.SOURCE.equals(type)) {
             return getSourcePaths(gradleHome, file);
