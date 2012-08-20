@@ -1,10 +1,13 @@
 package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
@@ -40,13 +43,30 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         getPreferences().removePreferenceChangeListener(listener);
     }
 
-    public static String getGradleHome() {
+    public static String getGradleHomeStr() {
         String gradleHome = getPreferences().get(GRADLE_HOME_PROPERTY_NAME, "");
         if (gradleHome.isEmpty()) {
             gradleHome = System.getenv(GRADLE_HOME_ENV_VARIABLE);
             gradleHome = gradleHome != null ? gradleHome.trim() : "";
         }
         return gradleHome;
+    }
+
+    public static File getGradleHome() {
+        String homeStr = getGradleHomeStr();
+        if (homeStr.isEmpty()) {
+            return null;
+        }
+        return new File(homeStr);
+    }
+
+    public static FileObject getGradleHomeFileObject() {
+        File home = getGradleHome();
+        if (home == null) {
+            return null;
+        }
+
+        return FileUtil.toFileObject(home);
     }
 
     public void save() {

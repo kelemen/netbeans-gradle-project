@@ -44,23 +44,17 @@ public final class GradleHomeSourceForBinaryQuery implements SourceForBinaryQuer
             return null;
         }
 
-        String gradleHomeStr = GradleOptionsPanelController.getGradleHome();
-        if (gradleHomeStr.isEmpty()) {
+        File gradleHome = GradleOptionsPanelController.getGradleHome();
+        if (gradleHome == null) {
             return null;
         }
 
-        // We assume that the gradle home directory looks like this:
-        //
-        // binaries: GRADLE_HOME\\lib\\*.jar
-        // sources for all binaries: GRADLE_HOME\\src
-
-        File gradleHome = new File(gradleHomeStr);
         FileObject gradleHomeObj = FileUtil.toFileObject(gradleHome);
         if (gradleHomeObj == null) {
             return null;
         }
 
-        FileObject gradleLibs = gradleHomeObj.getFileObject("lib");
+        FileObject gradleLibs = GradleFileUtils.getLibDirOfGradle(gradleHomeObj);
         if (gradleLibs == null) {
             return null;
         }
@@ -74,7 +68,7 @@ public final class GradleHomeSourceForBinaryQuery implements SourceForBinaryQuer
             return result;
         }
 
-        final FileObject gradleSrc = gradleHomeObj.getFileObject("src");
+        final FileObject gradleSrc = GradleFileUtils.getSrcDirOfGradle(gradleHomeObj);
         if (gradleSrc == null) {
             return null;
         }

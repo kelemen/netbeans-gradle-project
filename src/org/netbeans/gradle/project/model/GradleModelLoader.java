@@ -61,7 +61,7 @@ public final class GradleModelLoader {
 
     public static GradleConnector createGradleConnector() {
         GradleConnector result = GradleConnector.newConnector();
-        String gradleHome = GradleOptionsPanelController.getGradleHome();
+        String gradleHome = GradleOptionsPanelController.getGradleHomeStr();
         if (!gradleHome.isEmpty()) {
             result.useGradleUserHomeDir(new File(gradleHome));
         }

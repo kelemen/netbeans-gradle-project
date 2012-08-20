@@ -75,7 +75,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private List<File> getGradleBinaries() {
-        String gradleHome = GradleOptionsPanelController.getGradleHome();
+        String gradleHome = GradleOptionsPanelController.getGradleHomeStr();
         if (gradleHome.isEmpty()) {
             return Collections.emptyList();
         }
@@ -85,7 +85,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             return Collections.emptyList();
         }
 
-        File binDir = new File(gradleHomeDir, "lib");
+        File binDir = GradleFileUtils.getLibDirOfGradle(gradleHomeDir);
         if (!binDir.isDirectory()) {
             return Collections.emptyList();
         }

@@ -12,7 +12,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     }
 
     public final void updateSettings() {
-        jGradlePathEdit.setText(GradleOptionsPanelController.getGradleHome());
+        jGradlePathEdit.setText(GradleOptionsPanelController.getGradleHomeStr());
     }
 
     public String getGradleHome() {

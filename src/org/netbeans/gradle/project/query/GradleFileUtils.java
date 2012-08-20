@@ -75,6 +75,27 @@ public final class GradleFileUtils {
         return null;
     }
 
+    // We assume that the gradle home directory looks like this:
+    //
+    // binaries: GRADLE_HOME\\lib\\*.jar
+    // sources for all binaries: GRADLE_HOME\\src
+
+    public static File getLibDirOfGradle(File gradleHome) {
+        return new File(gradleHome, "lib");
+    }
+
+    public static FileObject getLibDirOfGradle(FileObject gradleHome) {
+        return gradleHome.getFileObject("lib");
+    }
+
+    public static File getSrcDirOfGradle(File gradleHome) {
+        return new File(gradleHome, "src");
+    }
+
+    public static FileObject getSrcDirOfGradle(FileObject gradleHome) {
+        return gradleHome.getFileObject("src");
+    }
+
     private GradleFileUtils() {
         throw new AssertionError();
     }
