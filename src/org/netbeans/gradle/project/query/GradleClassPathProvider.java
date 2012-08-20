@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -405,21 +404,8 @@ implements
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        // case-insensitive check, so that there is no surprise on Windows.
-        if ("gradle".equals(file.getExt().toLowerCase(Locale.US))) {
-            ClassPath gradlePath = classpaths.get(ClassPathType.GRADLE);
-            if (gradlePath != null) {
-                return gradlePath;
-            }
-
-            JavaPlatform defaultJdk = JavaPlatform.getDefault();
-            if (defaultJdk == null) {
-                LOGGER.warning("There is no default JDK.");
-                return null;
-            }
-
-            classpaths.putIfAbsent(ClassPathType.GRADLE, defaultJdk.getBootstrapLibraries());
-            return classpaths.get(ClassPathType.GRADLE);
+        if (GradleFilesClassPathProvider.isGradleFile(file)) {
+            return null;
         }
 
         NbGradleModel projectModel = project.getCurrentModel();
@@ -527,7 +513,6 @@ implements
         BOOT,
         BOOT_FOR_TEST,
         COMPILE,
-        COMPILE_FOR_TEST,
-        GRADLE
+        COMPILE_FOR_TEST
     }
 }
