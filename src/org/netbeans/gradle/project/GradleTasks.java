@@ -18,6 +18,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.windows.IOProvider;
@@ -82,7 +83,7 @@ public final class GradleTasks {
 
         FileObject projectDir = project.getProjectDirectory();
 
-        GradleConnector gradleConnector = GradleConnector.newConnector();
+        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector();
         gradleConnector.forProjectDirectory(FileUtil.toFile(projectDir));
         ProjectConnection projectConnection = null;
         try {

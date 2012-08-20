@@ -17,7 +17,9 @@ Current Limitations
   because the Gradle Tooling API will do everything before actually
   returning models to work on. This is especially painful on the first
   project open because it will actually download every single dependency
-  before returning (even test dependencies).
+  before returning (even test dependencies). **To improve performance,
+  you should set the installation directory of Gradle.** It can be set in
+  the *Tools/Options/Miscellaneous/Groovy* panel.
 - It is not possible to directly open projects without a *build.gradle*.
   To open such projects, open its parent project and find the project to
   be opened in the *SubProjects* node, then right click/"Open Subproject".
@@ -30,9 +32,6 @@ Current Limitations
   slow (just like opening it).
 - Errors occurring while loading the project is not displayed to the user but
   only emitted as *WARNING* level logs.
-- It is not possible to specify the Gradle installation directory, only the
-  bundled Gradle version can be used (i.e.: 1.0). I don't know how to do this
-  because I'm not familiar with class loading mechanism of NetBeans.
 - Debugging is only possible by manually attaching to the process. To run a project
   in debug mode a task must be defined to start the project in debug mode and listen
   on a particular port. Single test run can be started by right clicking the file in
