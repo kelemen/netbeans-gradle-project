@@ -19,7 +19,7 @@ Current Limitations
   project open because it will actually download every single dependency
   before returning (even test dependencies). **To improve performance,
   you should set the installation directory of Gradle.** It can be set in
-  the *Tools/Options/Miscellaneous/Groovy* panel.
+  the *Tools/Options/Miscellaneous/Gradle* panel.
 - It is not possible to directly open projects without a *build.gradle*.
   To open such projects, open its parent project and find the project to
   be opened in the *SubProjects* node, then right click/"Open Subproject".
