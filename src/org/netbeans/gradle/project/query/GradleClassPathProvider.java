@@ -229,7 +229,7 @@ implements
         return getClassPathType(fileType, type);
     }
 
-    private List<PathResourceImplementation> getPathResources(List<File>... fileGroups) {
+    public static List<PathResourceImplementation> getPathResources(List<File>... fileGroups) {
         int size = 0;
         for (List<?> fileGroup: fileGroups) {
             size += fileGroup.size();

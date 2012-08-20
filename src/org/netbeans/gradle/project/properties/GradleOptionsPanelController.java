@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
+import java.util.prefs.PreferenceChangeListener;
+import java.util.prefs.Preferences;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
@@ -26,9 +28,20 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
+    private static Preferences getPreferences() {
+        return NbPreferences.forModule(GradleSettingsPanel.class);
+    }
+
+    public static void addSettingsChangeListener(PreferenceChangeListener listener) {
+        getPreferences().addPreferenceChangeListener(listener);
+    }
+
+    public static void removeSettingsChangeListener(PreferenceChangeListener listener) {
+        getPreferences().removePreferenceChangeListener(listener);
+    }
+
     public static String getGradleHome() {
-        String gradleHome = NbPreferences.forModule(GradleSettingsPanel.class)
-                .get(GRADLE_HOME_PROPERTY_NAME, "");
+        String gradleHome = getPreferences().get(GRADLE_HOME_PROPERTY_NAME, "");
         if (gradleHome.isEmpty()) {
             gradleHome = System.getenv(GRADLE_HOME_ENV_VARIABLE);
             gradleHome = gradleHome != null ? gradleHome.trim() : "";
@@ -37,8 +50,7 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
     }
 
     public void save() {
-        NbPreferences.forModule(GradleSettingsPanel.class)
-                .put(GRADLE_HOME_PROPERTY_NAME, getPanel().getGradleHome());
+        getPreferences().put(GRADLE_HOME_PROPERTY_NAME, getPanel().getGradleHome());
     }
 
     @Override
