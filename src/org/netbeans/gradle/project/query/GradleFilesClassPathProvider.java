@@ -18,14 +18,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -76,7 +76,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private static URL[] getGradleBinaries() {
-        FileObject gradleHome = GradleOptionsPanelController.getGradleHomeFileObject();
+        FileObject gradleHome = GlobalGradleSettings.getGradleHome().getValue();
         if (gradleHome == null) {
             return new URL[0];
         }
@@ -120,9 +120,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private void init() {
-        GradleOptionsPanelController.addSettingsChangeListener(new PreferenceChangeListener() {
+        GlobalGradleSettings.getGradleHome().addChangeListener(new ChangeListener() {
             @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
+            public void stateChanged(ChangeEvent e) {
                 NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
                     @Override
                     public void run() {

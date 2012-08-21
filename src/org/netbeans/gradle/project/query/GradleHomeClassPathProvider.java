@@ -15,7 +15,7 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.GradleHomeRegistry;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
@@ -117,7 +117,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        FileObject gradleHome = GradleOptionsPanelController.getGradleHomeFileObject();
+        FileObject gradleHome = GlobalGradleSettings.getGradleHome().getValue();
         if (gradleHome == null) {
             return null;
         }

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.query;
 
 import java.nio.charset.Charset;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -14,7 +14,7 @@ public final class GradleHomeSourceEncodingQuery extends FileEncodingQueryImplem
 
     @Override
     public Charset getEncoding(FileObject file) {
-        FileObject gradleHome = GradleOptionsPanelController.getGradleHomeFileObject();
+        FileObject gradleHome = GlobalGradleSettings.getGradleHome().getValue();
         if (gradleHome == null) {
             return null;
         }

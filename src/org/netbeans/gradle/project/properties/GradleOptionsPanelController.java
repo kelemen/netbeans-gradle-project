@@ -2,15 +2,12 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 
 @OptionsPanelController.SubRegistration(
         location = "Advanced",
@@ -18,10 +15,6 @@ import org.openide.util.NbPreferences;
         keywords = "#AdvancedOption_Keywords_Gradle",
         keywordsCategory = "Advanced/Gradle")
 public final class GradleOptionsPanelController extends OptionsPanelController {
-    // Fall-back to this variable if no set.
-    private static final String GRADLE_HOME_ENV_VARIABLE = "GRADLE_HOME";
-    private static final String GRADLE_HOME_PROPERTY_NAME = "gradle-home";
-
     private GradleSettingsPanel panel;
 
     private GradleSettingsPanel getPanel() {
@@ -31,57 +24,25 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
-    private static Preferences getPreferences() {
-        return NbPreferences.forModule(GradleSettingsPanel.class);
-    }
-
-    public static void addSettingsChangeListener(PreferenceChangeListener listener) {
-        getPreferences().addPreferenceChangeListener(listener);
-    }
-
-    public static void removeSettingsChangeListener(PreferenceChangeListener listener) {
-        getPreferences().removePreferenceChangeListener(listener);
-    }
-
-    public static String getGradleHomeStr() {
-        String gradleHome = getPreferences().get(GRADLE_HOME_PROPERTY_NAME, "");
-        if (gradleHome.isEmpty()) {
-            gradleHome = System.getenv(GRADLE_HOME_ENV_VARIABLE);
-            gradleHome = gradleHome != null ? gradleHome.trim() : "";
-        }
-        return gradleHome;
-    }
-
-    public static File getGradleHome() {
-        String homeStr = getGradleHomeStr();
-        if (homeStr.isEmpty()) {
-            return null;
-        }
-        return new File(homeStr);
-    }
-
-    public static FileObject getGradleHomeFileObject() {
-        File home = getGradleHome();
-        if (home == null) {
-            return null;
-        }
-
-        return FileUtil.toFileObject(home);
-    }
-
-    public void save() {
-        getPreferences().put(GRADLE_HOME_PROPERTY_NAME, getPanel().getGradleHome());
-    }
-
     @Override
     public void update() {
         getPanel().updateSettings();
     }
 
+    private static FileObject strToFileObject(String strPath) {
+        if (strPath.isEmpty()) {
+            return null;
+        }
+
+        File file = new File(strPath);
+        file = FileUtil.normalizeFile(file);
+        return FileUtil.toFileObject(file);
+    }
+
     @Override
     public void applyChanges() {
-        NbPreferences.forModule(GradleSettingsPanel.class)
-                .put(GRADLE_HOME_PROPERTY_NAME, getPanel().getGradleHome());
+        FileObject gradleHomeObj = strToFileObject(getPanel().getGradleHome());
+        GlobalGradleSettings.getGradleHome().setValue(gradleHomeObj);
     }
 
     @Override

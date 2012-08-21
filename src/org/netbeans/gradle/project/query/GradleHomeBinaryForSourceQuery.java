@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -41,13 +41,13 @@ public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQuer
             return null;
         }
 
-        File gradleHome = GradleOptionsPanelController.getGradleHome();
-        if (gradleHome == null) {
+        FileObject gradleHomeObj = GlobalGradleSettings.getGradleHome().getValue();
+        if (gradleHomeObj == null) {
             return null;
         }
 
-        FileObject gradleHomeObj = FileUtil.toFileObject(gradleHome);
-        if (gradleHomeObj == null) {
+        File gradleHome = FileUtil.toFile(gradleHomeObj);
+        if (gradleHome == null) {
             return null;
         }
 

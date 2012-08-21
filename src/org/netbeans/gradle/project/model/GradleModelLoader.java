@@ -37,7 +37,7 @@ import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
@@ -61,9 +61,11 @@ public final class GradleModelLoader {
 
     public static GradleConnector createGradleConnector() {
         GradleConnector result = GradleConnector.newConnector();
-        String gradleHome = GradleOptionsPanelController.getGradleHomeStr();
-        if (!gradleHome.isEmpty()) {
-            result.useGradleUserHomeDir(new File(gradleHome));
+        FileObject gradleHomeObj = GlobalGradleSettings.getGradleHome().getValue();
+        File gradleHome = gradleHomeObj != null ? FileUtil.toFile(gradleHomeObj) : null;
+
+        if (gradleHome != null) {
+            result.useGradleUserHomeDir(gradleHome);
         }
         return result;
     }

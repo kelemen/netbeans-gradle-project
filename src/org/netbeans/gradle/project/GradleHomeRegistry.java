@@ -8,12 +8,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
-import org.netbeans.gradle.project.properties.GradleOptionsPanelController;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.query.GradleHomeClassPathProvider;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -57,14 +57,14 @@ public final class GradleHomeRegistry {
 
     public static void requireGradlePaths() {
         if (USING_GLOBAL_PATHS.compareAndSet(false, true)) {
-            GradleOptionsPanelController.addSettingsChangeListener(new PreferenceChangeListener() {
+            GlobalGradleSettings.getGradleHome().addChangeListener(new ChangeListener() {
                 @Override
-                public void preferenceChange(PreferenceChangeEvent evt) {
+                public void stateChanged(ChangeEvent e) {
                     CHANGES.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
                 }
             });
 
-            FileObject gradleHome = GradleOptionsPanelController.getGradleHomeFileObject();
+            FileObject gradleHome = GlobalGradleSettings.getGradleHome().getValue();
             if (gradleHome != null) {
                 setGradleHome(gradleHome);
             }

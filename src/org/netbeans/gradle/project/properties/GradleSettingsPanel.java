@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import org.openide.filesystems.FileChooserBuilder;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 @SuppressWarnings("serial")
 public class GradleSettingsPanel extends javax.swing.JPanel {
@@ -12,7 +14,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     }
 
     public final void updateSettings() {
-        jGradlePathEdit.setText(GradleOptionsPanelController.getGradleHomeStr());
+        FileObject gradleHomeObj = GlobalGradleSettings.getGradleHome().getValue();
+        File gradleHome = gradleHomeObj != null ? FileUtil.toFile(gradleHomeObj) : null;
+        String gradleHomeStr = gradleHome != null ? gradleHome.getPath() : "";
+        jGradlePathEdit.setText(gradleHomeStr);
     }
 
     public String getGradleHome() {
