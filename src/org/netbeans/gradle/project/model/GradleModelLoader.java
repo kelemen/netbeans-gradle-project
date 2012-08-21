@@ -153,7 +153,7 @@ public final class GradleModelLoader {
                 name,
                 projectDirAsFile,
                 createDefaultOutput(projectDirAsFile),
-                Collections.<String>emptyList());
+                Collections.<NbGradleTask>emptyList());
 
         NbGradleModule mainModule = new NbGradleModule(properties,
                 Collections.<NbSourceType, NbSourceGroup>emptyMap(),
@@ -338,9 +338,13 @@ public final class GradleModelLoader {
             return null;
         }
 
-        List<String> taskNames = new LinkedList<String>();
+        List<NbGradleTask> taskNames = new LinkedList<NbGradleTask>();
         for (GradleTask task: module.getGradleProject().getTasks()) {
-            taskNames.add(task.getName());
+            String qualifiedName = task.getPath();
+            String description = task.getDescription();
+            if (description == null) description = "";
+
+            taskNames.add(new NbGradleTask(qualifiedName, description.trim()));
         }
 
         List<NbGradleModule> children = new LinkedList<NbGradleModule>();

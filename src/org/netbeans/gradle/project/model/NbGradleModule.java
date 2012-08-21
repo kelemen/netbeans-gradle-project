@@ -1,11 +1,12 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,7 @@ public final class NbGradleModule {
         return properties.getUniqueName();
     }
 
-    public Collection<String> getTasks() {
+    public Collection<NbGradleTask> getTasks() {
         return properties.getTasks();
     }
 
@@ -100,17 +101,19 @@ public final class NbGradleModule {
     }
 
     public static final class Properties {
+        private static final Collator STR_CMP = Collator.getInstance();
+
         private final File moduleDir;
         private final NbOutput output;
         private final String uniqueName;
         private final String name;
-        private final Collection<String> tasks;
+        private final Collection<NbGradleTask> tasks;
 
         public Properties(
                 String uniqueName,
                 File moduleDir,
                 NbOutput output,
-                Collection<String> tasks) {
+                Collection<NbGradleTask> tasks) {
             if (uniqueName == null) throw new NullPointerException("uniqueName");
             if (moduleDir == null) throw new NullPointerException("moduleDir");
             if (output == null) throw new NullPointerException("output");
@@ -121,11 +124,16 @@ public final class NbGradleModule {
             this.output = output;
             this.name = getNameFromUniqueName(uniqueName);
 
-            List<String> clonedTasks = new ArrayList<String>(new HashSet<String>(tasks));
-            Collections.sort(clonedTasks);
+            List<NbGradleTask> clonedTasks = new ArrayList<NbGradleTask>(tasks);
+            Collections.sort(clonedTasks, new Comparator<NbGradleTask>() {
+                @Override
+                public int compare(NbGradleTask o1, NbGradleTask o2) {
+                    return STR_CMP.compare(o1.getLocalName(), o2.getLocalName());
+                }
+            });
             this.tasks = Collections.unmodifiableList(clonedTasks);
 
-            for (String task: this.tasks) {
+            for (NbGradleTask task: this.tasks) {
                 if (task == null) throw new NullPointerException("task");
             }
         }
@@ -146,7 +154,7 @@ public final class NbGradleModule {
             return uniqueName;
         }
 
-        public Collection<String> getTasks() {
+        public Collection<NbGradleTask> getTasks() {
             return tasks;
         }
     }

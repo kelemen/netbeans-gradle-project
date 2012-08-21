@@ -17,6 +17,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
@@ -235,15 +236,15 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             if (lastUsedModel != projectModel) {
                 lastUsedModel = projectModel;
 
-                Collection<String> tasks = projectModel.getMainModule().getTasks();
+                Collection<NbGradleTask> tasks = projectModel.getMainModule().getTasks();
 
                 menu.removeAll();
-                for (final String task: tasks) {
-                    JMenuItem menuItem = new JMenuItem(task);
+                for (final NbGradleTask task: tasks) {
+                    JMenuItem menuItem = new JMenuItem(task.getLocalName());
                     menuItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            GradleTasks.createAsyncGradleTask(project, task).run();
+                            GradleTasks.createAsyncGradleTask(project, task.getQualifiedName()).run();
                         }
                     });
                     menu.add(menuItem);
