@@ -5,6 +5,12 @@ import org.openide.filesystems.FileChooserBuilder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
+// !!! Note: This file cannot be renamed, moved or deleted. !!!
+// This is required for backward compatibility because GlobalGradleSettings
+// relies on this class to store the global settings.
+// If this file is ever moved, check GlobalGradleSettings, so that it still
+// references the "org.netbeans.gradle.project.properties.GradleSettingsPanel"
+// class (and not something else which may happen due to automated refactoring).
 @SuppressWarnings("serial")
 public class GradleSettingsPanel extends javax.swing.JPanel {
     public GradleSettingsPanel() {
