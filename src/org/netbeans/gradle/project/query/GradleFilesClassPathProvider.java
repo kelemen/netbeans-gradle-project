@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.query;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.io.FilenameFilter;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -30,6 +30,7 @@ import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
+import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -74,41 +75,27 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         return ClassPathFactory.createClassPath(new GradleClassPaths(classPathType));
     }
 
-    private List<File> getGradleBinaries() {
-        String gradleHome = GradleOptionsPanelController.getGradleHomeStr();
-        if (gradleHome.isEmpty()) {
-            return Collections.emptyList();
+    private static URL[] getGradleBinaries() {
+        FileObject gradleHome = GradleOptionsPanelController.getGradleHomeFileObject();
+        if (gradleHome == null) {
+            return new URL[0];
         }
 
-        File gradleHomeDir = new File(gradleHome);
-        if (!gradleHomeDir.isDirectory()) {
-            return Collections.emptyList();
-        }
-
-        File binDir = GradleFileUtils.getLibDirOfGradle(gradleHomeDir);
-        if (!binDir.isDirectory()) {
-            return Collections.emptyList();
-        }
-
-        File[] jars = binDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                String lowerCaseName = name.toLowerCase(Locale.US);
-                return lowerCaseName.startsWith("gradle-") && lowerCaseName.endsWith(".jar");
-            }
-        });
-
-        return Arrays.asList(jars);
+        return GradleHomeClassPathProvider.getGradleBinaries(gradleHome);
     }
 
     private void updateClassPathResources() {
-        List<File> jars = getGradleBinaries();
-        LOGGER.log(Level.FINE,
-                "Updating the .gradle file classpaths to: {0}",
-                jars);
+        URL[] jars = getGradleBinaries();
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE,
+                    "Updating the .gradle file classpaths to: {0}",
+                    Arrays.toString(jars));
+        }
 
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> jarResources = GradleClassPathProvider.getPathResources(jars);
+        List<PathResourceImplementation> jarResources = new ArrayList<PathResourceImplementation>(jars.length);
+        for (URL jar: jars) {
+            jarResources.add(ClassPathSupport.createResource(jar));
+        }
 
         // ClassPathType.BOOT is never read from the classpathResources
         classpathResources.put(ClassPathType.COMPILE, jarResources);
