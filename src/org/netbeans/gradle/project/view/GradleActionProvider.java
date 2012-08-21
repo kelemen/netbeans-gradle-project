@@ -71,18 +71,33 @@ public final class GradleActionProvider implements ActionProvider {
         return files;
     }
 
+    private static String[] toQualifiedTaskName(NbGradleProject project, String... tasks) {
+        String qualifier = project.getCurrentModel().getMainModule().getUniqueName() + ":";
+
+        String[] qualified = new String[tasks.length];
+        for (int i = 0; i < tasks.length; i++) {
+            qualified[i] = qualifier + tasks[i];
+        }
+        return qualified;
+    }
+
+    private static Runnable createProjectTask(NbGradleProject project, String... tasks) {
+        String[] qualified = toQualifiedTaskName(project, tasks);
+        return GradleTasks.createAsyncGradleTask(project, qualified);
+    }
+
     private Runnable createAction(String command, Lookup context) {
         if (COMMAND_BUILD.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "build");
+            return createProjectTask(project, "build");
         }
         else if (COMMAND_TEST.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "cleanTest", "test");
+            return createProjectTask(project, "cleanTest", "test");
         }
         else if (COMMAND_CLEAN.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "clean");
+            return createProjectTask(project, "clean");
         }
         else if (COMMAND_REBUILD.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "clean", "build");
+            return createProjectTask(project, "clean", "build");
         }
         else if (COMMAND_RELOAD.equals(command)) {
             return new Runnable() {
@@ -93,13 +108,13 @@ public final class GradleActionProvider implements ActionProvider {
             };
         }
         else if (COMMAND_RUN.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "run");
+            return createProjectTask(project, "run");
         }
         else if (COMMAND_DEBUG.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "debug");
+            return createProjectTask(project, "debug");
         }
         else if (COMMAND_JAVADOC.equals(command)) {
-            return GradleTasks.createAsyncGradleTask(project, "javadoc");
+            return createProjectTask(project, "javadoc");
         }
         else if (COMMAND_TEST_SINGLE.equals(command) || COMMAND_DEBUG_TEST_SINGLE.equals(command)) {
             List<FileObject> files = getFilesOfContext(context);
@@ -156,7 +171,7 @@ public final class GradleActionProvider implements ActionProvider {
 
                         Runnable task = GradleTasks.createAsyncGradleTask(
                                 project,
-                                new String[]{"cleanTest", "test"},
+                                toQualifiedTaskName(project, "cleanTest", "test"),
                                 args);
                         task.run();
                     }
