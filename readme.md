@@ -1,5 +1,5 @@
 General Description
-===================
+-------------------
 
 This project is a NetBeans plugin able to open Gradle based Java projects.
 The implementation is based on [Geertjan Wielenga's](https://blogs.oracle.com/geertjan/) plugin.
@@ -9,17 +9,66 @@ start editing the code without actually generating any other NetBeans project fi
 The project is usable with no major limitations. Open a new issue if you believe something needs
 to be fixed.
 
+Troubeshooting
+--------------
+
+### Loading the project is too long ###
+
+There can be several causes for this problem:
+
+- On the first project load, Gradle will download every
+  dependency and this may take quite a lot of time if you have lots
+  of dependency.
+- If loading the project waits on "Load projects" then chances are that
+  the gradle daemon got corrupted. You should delete the "daemon" directory
+  in the ".gradle" directory of your home directory (System.getProperty("user.home")).
+  If it does not help, remove the entire ".gradle" directory (note that this will also
+  remove your local artifact cache).
+- If loading the project waits while trying to retrieving the dependency of a project,
+  you might need to configure the proxy settings in NetBeans.
+
+### Cannot load a project: The error message says that the Gradle daemon gave up after 100 attempts ###
+
+The Gradle daemon got corrupted. You should delete the "daemon" directory in the ".gradle"
+directory of your home directory (System.getProperty("user.home")). If it does not help,
+remove the entire ".gradle" directory (note that this will also remove your local
+artifact cache).
+
+### How can I speed up the project openning? ###
+
+The only thing you can do is to specify the installation directory of Gradle.
+This can be done on the *Tools/Options/Miscellaneous/Gradle* panel. This way
+you can even jump to the Gradle source code from a Gradle script (using ctrl + click).
+
+### I do not have a *build.gradle* file for every project. How can I open these projects? ###
+
+Open the parent project of the project you want to open. Once you have opened the parent project,
+you may right click on any of its child projects and open it even if it does not have
+a *build.gradle*.
+
+Not however, that I recommend to have a *build.gradle* file for every project
+(even if empty) you might want to open because even if you open projects without
+a *build.gradle*, these opened projects will not be opened the next time you
+start NetBeans.
+
+### I have a *build.gradle* file in a directory but NetBeans does not recognizes it as a project ###
+
+Gradle projects found in the temporary directory cannot be opened for techincal reasons.
+Move these projects from the temporary directory.
+
+### Classes of the Gradle API are not recognized by the editor ###
+
+I know of this problem but it seems that it is not possible (with reasonable effort)
+to solve this without a new NetBeans API. Don't despair, there is a hope that this change
+might get added (note however that this may not be trivial to add to NetBeans).
+
+### Every time a Gradle task fails NetBeans shows an error message ###
+
+I know but it seems Gradle itself needs to modified to prevent these messages.
 
 Current Limitations
-===================
+-------------------
 
-- It takes some time before you can actually start edit the code
-  because the Gradle Tooling API will do everything before actually
-  returning models to work on. This is especially painful on the first
-  project open because it will actually download every single dependency
-  before returning (even test dependencies). **To improve performance,
-  you should set the installation directory of Gradle.** It can be set in
-  the *Tools/Options/Miscellaneous/Gradle* panel.
 - It is not possible to directly open projects without a *build.gradle*.
   To open such projects, open its parent project and find the project to
   be opened in the *SubProjects* node, then right click/"Open Subproject".
