@@ -65,7 +65,7 @@ public final class GradleModelLoader {
         File gradleHome = gradleHomeObj != null ? FileUtil.toFile(gradleHomeObj) : null;
 
         if (gradleHome != null) {
-            result.useGradleUserHomeDir(gradleHome);
+            result.useInstallation(gradleHome);
         }
         return result;
     }
