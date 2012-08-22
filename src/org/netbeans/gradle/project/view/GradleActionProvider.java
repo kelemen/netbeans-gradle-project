@@ -143,7 +143,7 @@ public final class GradleActionProvider implements ActionProvider {
 
         @Override
         public void run() {
-            NbGradleProject.TASK_EXECUTOR.execute(new Runnable() {
+            GradleTasks.TASK_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     NbGradleModule mainModule = project.getCurrentModel().getMainModule();

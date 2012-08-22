@@ -47,9 +47,6 @@ public final class NbGradleProject implements Project {
     public static final RequestProcessor PROJECT_PROCESSOR
             = new RequestProcessor("Gradle-Project-Processor", 1, true);
 
-    public static final RequestProcessor TASK_EXECUTOR
-            = new RequestProcessor("Gradle-Task-Executor", 10, true);
-
     private final FileObject projectDir;
     private final ProjectState state;
     private final AtomicReference<Lookup> lookupRef;

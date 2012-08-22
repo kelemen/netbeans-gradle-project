@@ -21,11 +21,15 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.RequestProcessor;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class GradleTasks {
+    public static final RequestProcessor TASK_EXECUTOR
+            = new RequestProcessor("Gradle-Task-Executor", 10, true);
+
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final String[] NO_ARGS = new String[0];
 
@@ -150,7 +154,7 @@ public final class GradleTasks {
         final String[] taskNamesCopy = taskNames.clone();
         final String[] argumentsCopy = arguments.clone();
         final String[] jvmArgumentsCopy = jvmArguments.clone();
-        NbGradleProject.TASK_EXECUTOR.execute(new Runnable() {
+        TASK_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 doGradleTasks(project, taskNamesCopy, argumentsCopy, jvmArgumentsCopy);
