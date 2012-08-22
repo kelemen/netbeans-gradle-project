@@ -12,7 +12,7 @@ to be fixed.
 Troubeshooting
 --------------
 
-### Loading the project is too long ###
+### Loading the project takes too long ###
 
 There can be several causes for this problem:
 
