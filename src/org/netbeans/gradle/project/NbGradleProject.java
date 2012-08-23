@@ -197,6 +197,8 @@ public final class NbGradleProject implements Project {
                 // lookup, since NetBeans will ignore it. It must be added
                 // using the ServiceProviders annotation. Our implementation is
                 // GradleFileOwnerQuery and is added using the annotation.
+
+                new AnnotationProcessingQueryImpl(this),
             });
 
             if (lookupRef.compareAndSet(null, newLookup)) {
