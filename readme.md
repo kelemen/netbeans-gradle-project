@@ -18,7 +18,7 @@ There can be several causes for this problem:
 
 - On the first project load, Gradle will download every
   dependency and this may take quite a lot of time if you have lots
-  of dependency.
+  of dependencies.
 - If loading the project waits on "Load projects" then chances are that
   the gradle daemon got corrupted. You should delete the "daemon" directory
   in the ".gradle" directory of your home directory (System.getProperty("user.home")).
@@ -34,7 +34,7 @@ directory of your home directory (System.getProperty("user.home")). If it does n
 remove the entire ".gradle" directory (note that this will also remove your local
 artifact cache).
 
-### How can I speed up the project openning? ###
+### How can I speed up the project opening? ###
 
 The only thing you can do is to specify the installation directory of Gradle.
 This can be done on the *Tools/Options/Miscellaneous/Gradle* panel. This way
@@ -46,7 +46,7 @@ Open the parent project of the project you want to open. Once you have opened th
 you may right click on any of its child projects and open it even if it does not have
 a *build.gradle*.
 
-Not however, that I recommend to have a *build.gradle* file for every project
+Note however, that I recommend to have a *build.gradle* file for every project
 (even if empty) you might want to open because even if you open projects without
 a *build.gradle*, these opened projects will not be opened the next time you
 start NetBeans.
