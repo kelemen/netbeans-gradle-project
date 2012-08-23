@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -182,6 +183,7 @@ public final class NbGradleProject implements Project {
                 new GradleSourceEncodingQuery(this),
                 new GradleCustomizer(this),
                 new OpenHook(),
+                new GradleAnnotationProcessingQuery(),
                 // The following two queries are not really useful but since
                 // they were implemented I will add them anyway.
                 // The real job to look up the sources of binaries is done by:
