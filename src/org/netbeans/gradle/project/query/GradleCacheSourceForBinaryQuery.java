@@ -66,6 +66,25 @@ public final class GradleCacheSourceForBinaryQuery implements SourceForBinaryQue
             return null;
         }
 
+        FileObject hashDir = binaryRootObj.getParent();
+        if (hashDir == null) {
+            return null;
+        }
+
+        FileObject binDir = hashDir.getParent();
+        if (binDir == null) {
+            return null;
+        }
+
+        if (!GradleFileUtils.canBeBinaryDirName(binDir.getNameExt())) {
+            return null;
+        }
+
+        final FileObject artifactRoot = binDir.getParent();
+        if (artifactRoot == null) {
+            return null;
+        }
+
         result = new Result() {
             @Override
             public boolean preferSources() {
@@ -77,26 +96,7 @@ public final class GradleCacheSourceForBinaryQuery implements SourceForBinaryQue
                 // The cache directory of Gradle looks like this:
                 //
                 // ...... \\source\\HASH_OF_SOURCE\\binary-sources.jar
-                // ...... \\jar\\HASH_OF_BINARY\\binary.jar
-                FileObject hashDir = binaryRootObj.getParent();
-                if (hashDir == null) {
-                    return NO_ROOTS;
-                }
-
-                FileObject binDir = hashDir.getParent();
-                if (binDir == null) {
-                    return NO_ROOTS;
-                }
-
-                if (!GradleFileUtils.BINARY_DIR_NAME.equals(binDir.getNameExt())) {
-                    return NO_ROOTS;
-                }
-
-                FileObject artifactRoot = binDir.getParent();
-                if (artifactRoot == null) {
-                    return NO_ROOTS;
-                }
-
+                // ...... \\packaging type\\HASH_OF_BINARY\\binary.jar
                 FileObject srcDir = artifactRoot.getFileObject(GradleFileUtils.SOURCE_DIR_NAME);
                 if (srcDir == null) {
                     return NO_ROOTS;

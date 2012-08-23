@@ -2,6 +2,11 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -10,7 +15,9 @@ public final class GradleFileUtils {
     private static final Logger LOGGER = Logger.getLogger(GradleFileUtils.class.getName());
 
     public static final File GRADLE_CACHE_HOME = getGradleCacheDir();
-    public static final String BINARY_DIR_NAME = "jar";
+    public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList("jar", "bundle")));
+    public static final String POM_DIR_NAME = "pom";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
 
@@ -21,6 +28,19 @@ public final class GradleFileUtils {
             return null;
         }
         return new File(new File(userHome), ".gradle");
+    }
+
+    public static boolean canBeBinaryDirName(String dirName) {
+        if (dirName == null) throw new NullPointerException("dirName");
+
+        boolean result = !POM_DIR_NAME.equals(dirName)
+                && !SOURCE_DIR_NAME.equals(dirName);
+        if (result && LOGGER.isLoggable(Level.WARNING)) {
+            if (!BINARY_DIR_NAMES.contains(dirName)) {
+                LOGGER.log(Level.WARNING, "{0} is assumed to be a possible binary container folder of the cache.", dirName);
+            }
+        }
+        return result;
     }
 
     public static String binaryToSourceName(FileObject binaryPath) {

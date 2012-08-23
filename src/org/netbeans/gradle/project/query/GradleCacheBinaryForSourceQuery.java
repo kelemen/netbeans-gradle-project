@@ -63,49 +63,53 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
             return null;
         }
 
+        FileObject hashDir = sourceRootObj.getParent();
+        if (hashDir == null) {
+            return null;
+        }
+
+        FileObject srcDir = hashDir.getParent();
+        if (srcDir == null) {
+            return null;
+        }
+
+        if (!GradleFileUtils.SOURCE_DIR_NAME.equals(srcDir.getNameExt())) {
+            return null;
+        }
+
+        final FileObject artifactRoot = srcDir.getParent();
+        if (artifactRoot == null) {
+            return null;
+        }
+
+        final String binFileName = GradleFileUtils.sourceToBinaryName(sourceRootObj);
+        if (binFileName == null) {
+            return null;
+        }
+
         result = new Result() {
             @Override
             public URL[] getRoots() {
                 // The cache directory of Gradle looks like this:
                 //
                 // ...... \\source\\HASH_OF_SOURCE\\binary-sources.jar
-                // ...... \\jar\\HASH_OF_BINARY\\binary.jar
-                FileObject hashDir = sourceRootObj.getParent();
-                if (hashDir == null) {
-                    return NO_ROOTS;
-                }
+                // ...... \\packaging type\\HASH_OF_BINARY\\binary.jar
 
-                FileObject srcDir = hashDir.getParent();
-                if (srcDir == null) {
-                    return NO_ROOTS;
-                }
+                for (String binDirName: GradleFileUtils.BINARY_DIR_NAMES) {
+                    FileObject binDir = artifactRoot.getFileObject(binDirName);
+                    if (binDir == null) {
+                        continue;
+                    }
 
-                if (!GradleFileUtils.SOURCE_DIR_NAME.equals(srcDir.getNameExt())) {
-                    return NO_ROOTS;
+                    FileObject binFile = GradleFileUtils.getFileFromASubDir(binDir, binFileName);
+                    if (binFile != null) {
+                        return new URL[]{binFile.toURL()};
+                    }
+                    else {
+                        continue;
+                    }
                 }
-
-                FileObject artifactRoot = srcDir.getParent();
-                if (artifactRoot == null) {
-                    return NO_ROOTS;
-                }
-
-                FileObject binDir = artifactRoot.getFileObject(GradleFileUtils.BINARY_DIR_NAME);
-                if (binDir == null) {
-                    return NO_ROOTS;
-                }
-
-                String binFileName = GradleFileUtils.sourceToBinaryName(sourceRootObj);
-                if (binFileName == null) {
-                    return NO_ROOTS;
-                }
-
-                FileObject binFile = GradleFileUtils.getFileFromASubDir(binDir, binFileName);
-                if (binFile != null) {
-                    return new URL[]{binFile.toURL()};
-                }
-                else {
-                    return NO_ROOTS;
-                }
+                return NO_ROOTS;
             }
 
             @Override
