@@ -25,6 +25,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.openide.LifecycleManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
@@ -152,10 +153,15 @@ public final class GradleTasks {
         }
     }
 
+    private static void preSubmitGradleTask() {
+        LifecycleManager.getDefault().saveAll();
+    }
+
     private static void submitGradleTask(final NbGradleProject project,
             String[] taskNames,
             String[] arguments,
             String[] jvmArguments) {
+        preSubmitGradleTask();
 
         final String[] taskNamesCopy = taskNames.clone();
         final String[] argumentsCopy = arguments.clone();
