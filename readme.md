@@ -69,7 +69,7 @@ I know but it seems Gradle itself needs to modified to prevent these messages.
 ### I get the error: "Cannot rename file *settings.gradle* in XXXX to *build.gradle*" ###
 
 You might have an old Gradle plugin installed and it seems that they cannot co-exists.
-Remove the old plugin. See (Issue #4)[https://github.com/kelemen/netbeans-gradle-project/issues/4]
+Remove the old plugin. See [Issue #4](https://github.com/kelemen/netbeans-gradle-project/issues/4)
 for further information.
 
 ### Gradle files get renamed to *build.gradle* ###
@@ -77,7 +77,7 @@ for further information.
 The same as the previous issue:
 
 You might have an old Gradle plugin installed and it seems that they cannot co-exists.
-Remove the old plugin. See (Issue #4)[https://github.com/kelemen/netbeans-gradle-project/issues/4]
+Remove the old plugin. See [Issue #4](https://github.com/kelemen/netbeans-gradle-project/issues/4)
 for further information.
 
 Current Limitations
