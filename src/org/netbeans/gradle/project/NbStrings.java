@@ -135,6 +135,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_InvalidClassPathEntry", entryName);
     }
 
+    public static String getErrorCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Error");
+    }
+
+    public static String getWarningCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Warning");
+    }
+
+    public static String getInfoCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Info");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

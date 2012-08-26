@@ -185,9 +185,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 }
 
                 StringBuilder completeText = new StringBuilder(1024);
-                appendHtmlList("Error", infoMap.get(ProjectInfo.Kind.ERROR), completeText);
-                appendHtmlList("Warning", infoMap.get(ProjectInfo.Kind.WARNING), completeText);
-                appendHtmlList("Information", infoMap.get(ProjectInfo.Kind.INFO), completeText);
+                appendHtmlList(NbStrings.getErrorCaption(), infoMap.get(ProjectInfo.Kind.ERROR), completeText);
+                appendHtmlList(NbStrings.getWarningCaption(), infoMap.get(ProjectInfo.Kind.WARNING), completeText);
+                appendHtmlList(NbStrings.getInfoCaption(), infoMap.get(ProjectInfo.Kind.INFO), completeText);
 
                 icon = ImageUtilities.addToolTipToImage(icon, completeText.toString());
                 if (mostImportantKind.getImportance() >= ProjectInfo.Kind.WARNING.getImportance()) {
