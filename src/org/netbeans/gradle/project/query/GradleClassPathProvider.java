@@ -239,10 +239,13 @@ implements
         for (List<File> fileGroup: fileGroups) {
             for (File file: fileGroup) {
                 URL url = FileUtil.urlForArchiveOrDir(file);
-                
-                // Files are not necessarily directories
+
+                // Ignore non-existent or invalid classpath entries
                 if(url != null) {
                     result.add(ClassPathSupport.createResource(url));
+                }
+                else {
+                    LOGGER.log(Level.WARNING, "Class path entry does not exists: {0}", file);
                 }
             }
         }
