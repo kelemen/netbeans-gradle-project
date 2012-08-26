@@ -25,6 +25,9 @@ public final class NbIcons {
     @StaticResource
     private static final String LIBRARY_ICON_PATH = "org/netbeans/gradle/project/resources/libraries.png";
 
+    @StaticResource
+    private static final String WARNING_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/warning-badge.png";
+
     private static class GradleIconHolder {
         public static final Image IMAGE = loadIcon();
 
@@ -88,6 +91,23 @@ public final class NbIcons {
     public static Image getLibrariesBadge() {
         return LibrariesBadgeHolder.IMAGE;
     }
+
+    private static class WarningBadgeHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            Image result = ImageUtilities.loadImage(WARNING_BADGE_ICON_PATH);
+            if (result == null) {
+                LOGGER.warning("Failed to load the warning badge.");
+            }
+            return result;
+        }
+    }
+
+    public static Image getWarningBadge() {
+        return WarningBadgeHolder.IMAGE;
+    }
+
 
     private static class FolderIconHolder {
         public static final Image IMAGE = loadIcon();

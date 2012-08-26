@@ -23,6 +23,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
+import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.spi.java.project.support.ui.PackageView;
@@ -167,12 +168,19 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             if (!infos.isEmpty()) {
                 Map<ProjectInfo.Kind, List<String>> infoMap
                         = new EnumMap<ProjectInfo.Kind, List<String>>(ProjectInfo.Kind.class);
+
                 for (ProjectInfo.Kind kind: ProjectInfo.Kind.values()) {
                     infoMap.put(kind, new LinkedList<String>());
                 }
+
+                Kind mostImportantKind = Kind.INFO;
                 for (ProjectInfo info: infos) {
                     for (ProjectInfo.Entry entry: info.getEntries()) {
-                        infoMap.get(entry.getKind()).add(entry.getInfo());
+                        Kind kind = entry.getKind();
+                        if (mostImportantKind.getImportance() < kind.getImportance()) {
+                            mostImportantKind = kind;
+                        }
+                        infoMap.get(kind).add(entry.getInfo());
                     }
                 }
 
@@ -182,6 +190,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 appendHtmlList("Information", infoMap.get(ProjectInfo.Kind.INFO), completeText);
 
                 icon = ImageUtilities.addToolTipToImage(icon, completeText.toString());
+                if (mostImportantKind.getImportance() >= ProjectInfo.Kind.WARNING.getImportance()) {
+                    icon = ImageUtilities.mergeImages(icon, NbIcons.getWarningBadge(), 0, 0);
+                }
             }
             return icon;
         }

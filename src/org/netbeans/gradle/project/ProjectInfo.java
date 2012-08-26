@@ -40,8 +40,18 @@ public final class ProjectInfo {
     }
 
     public enum Kind {
-        INFO,
-        WARNING,
-        ERROR
+        INFO(1),
+        WARNING(2),
+        ERROR(3);
+
+        private final int importance;
+
+        private Kind(int importance) {
+            this.importance = importance;
+        }
+
+        public int getImportance() {
+            return importance;
+        }
     }
 }
