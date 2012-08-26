@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project;
 
-import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -23,6 +22,7 @@ import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
@@ -59,6 +59,7 @@ public final class NbGradleProject implements Project {
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectProperties properties;
     private final PropertiesPersister propertiesPersister;
+    private final ProjectInfoManager projectInfoManager;
 
     private volatile boolean loadedAtLeastOnce;
     private boolean saveOnLoad; // access from the EDT
@@ -68,6 +69,7 @@ public final class NbGradleProject implements Project {
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectProperties();
+        this.projectInfoManager = new ProjectInfoManager();
         this.propertiesPersister = new XmlPropertiesPersister(this);
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
@@ -77,6 +79,10 @@ public final class NbGradleProject implements Project {
         this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnce = false;
         this.saveOnLoad = false;
+    }
+
+    public ProjectInfoManager getProjectInfoManager() {
+        return projectInfoManager;
     }
 
     public void addModelChangeListener(ChangeListener listener) {

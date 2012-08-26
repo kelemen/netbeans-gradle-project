@@ -5,17 +5,24 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.netbeans.gradle.project.GradleTasks;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.spi.java.project.support.ui.PackageView;
@@ -29,6 +36,9 @@ import org.openide.loaders.DataFolder;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeAdapter;
+import org.openide.nodes.NodeEvent;
+import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ProxyLookup;
@@ -46,7 +56,24 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     @Override
     public Node createLogicalView() {
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
-        return new GradleProjectNode(projectFolder.getNodeDelegate());
+
+        final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
+        final ChangeListener changeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                result.fireInfoChangeEvent();
+            }
+        };
+
+        project.getProjectInfoManager().addChangeListener(changeListener);
+        result.addNodeListener(new NodeAdapter(){
+            @Override
+            public void nodeDestroyed(NodeEvent ev) {
+                project.getProjectInfoManager().removeChangeListener(changeListener);
+            }
+        });
+
+        return result;
     }
 
     private Children createChildren() {
@@ -105,14 +132,58 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             };
         }
 
+        public void fireInfoChangeEvent() {
+            fireIconChange();
+            fireOpenedIconChange();
+        }
+
         @Override
         public Action[] getActions(boolean context) {
             return actions.clone();
         }
 
+        private void appendHtmlList(String caption, List<String> toAdd, StringBuilder result) {
+            if (toAdd.isEmpty()) {
+                return;
+            }
+
+            result.append("<B>");
+            result.append(caption);
+            result.append("</B>:");
+            result.append("<ul>\n");
+            for (String info: toAdd) {
+                result.append("<li>");
+                // TODO: quote strings, so that they are valid for html
+                result.append(info);
+                result.append("</li>\n");
+            }
+            result.append("</ul>\n");
+        }
+
         @Override
         public Image getIcon(int type) {
-            return NbIcons.getGradleIcon();
+            Image icon = NbIcons.getGradleIcon();
+            Collection<ProjectInfo> infos = project.getProjectInfoManager().getInformations();
+            if (!infos.isEmpty()) {
+                Map<ProjectInfo.Kind, List<String>> infoMap
+                        = new EnumMap<ProjectInfo.Kind, List<String>>(ProjectInfo.Kind.class);
+                for (ProjectInfo.Kind kind: ProjectInfo.Kind.values()) {
+                    infoMap.put(kind, new LinkedList<String>());
+                }
+                for (ProjectInfo info: infos) {
+                    for (ProjectInfo.Entry entry: info.getEntries()) {
+                        infoMap.get(entry.getKind()).add(entry.getInfo());
+                    }
+                }
+
+                StringBuilder completeText = new StringBuilder(1024);
+                appendHtmlList("Error", infoMap.get(ProjectInfo.Kind.ERROR), completeText);
+                appendHtmlList("Warning", infoMap.get(ProjectInfo.Kind.WARNING), completeText);
+                appendHtmlList("Information", infoMap.get(ProjectInfo.Kind.INFO), completeText);
+
+                icon = ImageUtilities.addToolTipToImage(icon, completeText.toString());
+            }
+            return icon;
         }
 
         @Override

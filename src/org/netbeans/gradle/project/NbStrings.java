@@ -131,6 +131,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ProjectPropertiesTitle", projectName);
     }
 
+    public static String getInvalidClassPathEntry(String entryName) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_InvalidClassPathEntry", entryName);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
