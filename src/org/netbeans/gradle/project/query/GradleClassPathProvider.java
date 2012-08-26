@@ -239,7 +239,11 @@ implements
         for (List<File> fileGroup: fileGroups) {
             for (File file: fileGroup) {
                 URL url = FileUtil.urlForArchiveOrDir(file);
-                result.add(ClassPathSupport.createResource(url));
+                
+                // Files are not necessarily directories
+                if(url != null) {
+                    result.add(ClassPathSupport.createResource(url));
+                }
             }
         }
         return result;
