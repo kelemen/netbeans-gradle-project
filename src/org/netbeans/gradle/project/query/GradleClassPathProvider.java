@@ -241,9 +241,11 @@ implements
                 URL url = FileUtil.urlForArchiveOrDir(file);
                 
                 // Files are not necessarily directories
-                if(url != null) {
+		if(url == null) {
+		    LOGGER.log(Level.WARNING, "File path resource is not valid: {0}", file.toString());
+                } else {
                     result.add(ClassPathSupport.createResource(url));
-                }
+                } 
             }
         }
         return result;
