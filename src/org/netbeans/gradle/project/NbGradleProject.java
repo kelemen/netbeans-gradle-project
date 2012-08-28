@@ -3,6 +3,8 @@ package org.netbeans.gradle.project;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,6 +63,8 @@ public final class NbGradleProject implements Project {
     private final PropertiesPersister propertiesPersister;
     private final ProjectInfoManager projectInfoManager;
 
+    private final AtomicReference<ProjectInfoRef> loadErrorRef;
+
     private volatile boolean loadedAtLeastOnce;
     private boolean saveOnLoad; // access from the EDT
 
@@ -73,12 +77,22 @@ public final class NbGradleProject implements Project {
         this.propertiesPersister = new XmlPropertiesPersister(this);
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
+        this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
         this.modelChanges = new ChangeSupport(this);
         this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
 
         this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnce = false;
         this.saveOnLoad = false;
+    }
+
+    private ProjectInfoRef getLoadErrorRef() {
+        ProjectInfoRef result = loadErrorRef.get();
+        if (result == null) {
+            loadErrorRef.compareAndSet(null, getProjectInfoManager().createInfoRef());
+            result = loadErrorRef.get();
+        }
+        return result;
     }
 
     public ProjectInfoManager getProjectInfoManager() {
@@ -372,7 +386,14 @@ public final class NbGradleProject implements Project {
             }
 
             if (error != null) {
+                ProjectInfo.Entry entry = new ProjectInfo.Entry(
+                        ProjectInfo.Kind.ERROR,
+                        NbStrings.getErrorLoadingProject(error));
+                getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
                 LOGGER.log(Level.WARNING, "Error while loading the project model.", error);
+            }
+            else {
+                getLoadErrorRef().setInfo(null);
             }
 
             if (hasChanged) {

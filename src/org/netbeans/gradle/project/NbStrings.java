@@ -147,6 +147,20 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_Info");
     }
 
+    public static String getErrorLoadingProject(Throwable ex) {
+        StringBuilder errorText = new StringBuilder(1024);
+        errorText.append(ex.toString());
+
+        Throwable currentError = ex.getCause();
+        while (currentError != null) {
+            errorText.append("<br>");
+            errorText.append(currentError.toString());
+            currentError = currentError.getCause();
+        }
+
+        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorLoadingProject", errorText.toString());
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
