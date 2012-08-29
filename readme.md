@@ -62,10 +62,6 @@ I know of this problem but it seems that it is not possible (with reasonable eff
 to solve this without a new NetBeans API. Don't despair, there is a hope that this change
 might get added (note however that this may not be trivial to add to NetBeans).
 
-### Every time a Gradle task fails NetBeans shows an error message ###
-
-I know but it seems Gradle itself needs to modified to prevent these messages.
-
 ### I get the error: "Cannot rename file *settings.gradle* in XXXX to *build.gradle*" ###
 
 You might have an old Gradle plugin installed and it seems that they cannot co-exists.
@@ -93,8 +89,6 @@ Current Limitations
   The "Reload Project" action must be executed manually (from the project's
   popup menu). No automatic detection is done because reloading the project is
   slow (just like opening it).
-- Errors occurring while loading the project is not displayed to the user but
-  only emitted as *WARNING* level logs.
 - Debugging is only possible by manually attaching to the process. To run a project
   in debug mode a task must be defined to start the project in debug mode and listen
   on a particular port. Single test run can be started by right clicking the file in
@@ -118,7 +112,4 @@ Current Limitations
 - The *sourceCompatibility* and the *targetCompatibility* in the build script are ignored
   but these can be set separately in project properties (stored with the
   *settings.gradle* in *.nb-gradle-properties*).
-- Only a single task can be executed (and the built-in tasks, like rebuild). Custom
-  tasks will be needed to make the project really usable. Also global custom tasks
-  like with the Maven plugin would be nice as well. Allowing to execute custom tasks
-  is relatively straightforward to implement.
+- Global custom tasks cannot be added (as with the Maven plugin).
