@@ -9,7 +9,7 @@ start editing the code without actually generating any other NetBeans project fi
 The project is usable with no major limitations. Open a new issue if you believe something needs
 to be fixed.
 
-Troubeshooting
+Troubleshooting
 --------------
 
 ### Loading the project takes too long ###
