@@ -66,7 +66,7 @@ implements
             URL url = Utilities.toURI(buildDir).toURL();
             return new URL[]{url};
         } catch (MalformedURLException ex) {
-            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + buildDir, ex);
+            LOGGER.log(Level.INFO, "Cannot convert to URL: " + buildDir, ex);
         }
 
         return NO_ROOTS;
@@ -78,7 +78,7 @@ implements
             URL url = Utilities.toURI(testBuildDir).toURL();
             return new URL[]{url};
         } catch (MalformedURLException ex) {
-            LOGGER.log(Level.WARNING, "Cannot convert to URL: " + testBuildDir, ex);
+            LOGGER.log(Level.INFO, "Cannot convert to URL: " + testBuildDir, ex);
         }
 
         return NO_ROOTS;

@@ -46,9 +46,9 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             Charset newEncoding = Charset.forName(charsetName);
             properties.getSourceEncoding().setValue(newEncoding);
         } catch (IllegalCharsetNameException ex) {
-            LOGGER.log(Level.WARNING, "Illegal character set: " + charsetName, ex);
+            LOGGER.log(Level.INFO, "Illegal character set: " + charsetName, ex);
         } catch (UnsupportedCharsetException ex) {
-            LOGGER.log(Level.WARNING, "Unsupported character set: " + charsetName, ex);
+            LOGGER.log(Level.INFO, "Unsupported character set: " + charsetName, ex);
         }
 
         String sourceLevel = (String)jSourceLevelCombo.getSelectedItem();

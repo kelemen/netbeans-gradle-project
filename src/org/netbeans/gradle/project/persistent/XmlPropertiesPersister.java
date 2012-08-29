@@ -98,9 +98,9 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         try {
             return Charset.forName(name);
         } catch (IllegalCharsetNameException ex) {
-            LOGGER.log(Level.WARNING, "The name of the character set is invalid: " + name, ex);
+            LOGGER.log(Level.INFO, "The name of the character set is invalid: " + name, ex);
         } catch (UnsupportedCharsetException ex) {
-            LOGGER.log(Level.WARNING, "The character set is not supported: " + name, ex);
+            LOGGER.log(Level.INFO, "The character set is not supported: " + name, ex);
         }
 
         return null;
@@ -111,7 +111,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         try {
             version = new SpecificationVersion(versionStr);
         } catch (NumberFormatException ex) {
-            LOGGER.log(Level.WARNING, "Invalid platform version: " + versionStr, ex);
+            LOGGER.log(Level.INFO, "Invalid platform version: " + versionStr, ex);
             return null;
         }
 
@@ -230,9 +230,9 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 try {
                     saveDocument(document);
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to save the properties.", ex);
+                    LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
                 } catch (TransformerException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to save the properties.", ex);
+                    LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
                 }
             }
         });
@@ -273,10 +273,10 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
 
                         document = builder.parse(propertyFile);
                     } catch (SAXException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to parse the property file.", ex);
+                        LOGGER.log(Level.INFO, "Failed to parse the property file.", ex);
                         return;
                     } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to read the property file.", ex);
+                        LOGGER.log(Level.INFO, "Failed to read the property file.", ex);
                         return;
                     }
 

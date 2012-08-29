@@ -145,7 +145,7 @@ public final class GradleTasks {
            }
         } catch (BuildException ex) {
             // Gradle should have printed this one to stderr.
-            LOGGER.log(Level.WARNING, "Gradle build failure: " + command, ex);
+            LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();

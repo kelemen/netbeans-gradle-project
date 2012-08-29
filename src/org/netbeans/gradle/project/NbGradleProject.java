@@ -390,7 +390,7 @@ public final class NbGradleProject implements Project {
                         ProjectInfo.Kind.ERROR,
                         NbStrings.getErrorLoadingProject(error));
                 getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
-                LOGGER.log(Level.WARNING, "Error while loading the project model.", error);
+                LOGGER.log(Level.INFO, "Error while loading the project model.", error);
             }
             else {
                 getLoadErrorRef().setInfo(null);
