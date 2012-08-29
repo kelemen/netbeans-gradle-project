@@ -1,28 +1,13 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.event.KeyEvent;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
 import javax.swing.JTextArea;
+import org.netbeans.gradle.project.StringUtils;
 
 @SuppressWarnings("serial") // Don't care about serialization
 public class CustomActionPanel extends javax.swing.JPanel {
     public CustomActionPanel() {
         initComponents();
-    }
-
-    private String[] splitText(String text, String delimiters) {
-        StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
-        List<String> result = new LinkedList<String>();
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken().trim();
-            if (!token.isEmpty()) {
-                result.add(token);
-            }
-        }
-
-        return result.toArray(new String[result.size()]);
     }
 
     public String[] getTasks() {
@@ -31,7 +16,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return new String[0];
         }
 
-        return splitText(text, " \t\n\r\f");
+        return StringUtils.splitBySpaces(text);
     }
 
     public String[] getArguments() {
@@ -40,7 +25,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return new String[0];
         }
 
-        return splitText(text, "\n\r");
+        return StringUtils.splitLines(text);
     }
 
     public String[] getJvmArguments() {
@@ -49,7 +34,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return new String[0];
         }
 
-        return splitText(text, "\n\r");
+        return StringUtils.splitLines(text);
     }
 
     private void traverseWithTab(JTextArea textArea, KeyEvent event) {

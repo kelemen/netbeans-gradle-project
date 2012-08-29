@@ -1,24 +1,82 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 
 public final class GlobalGradleSettings {
-    private static final MutableProperty<FileObject> GRADLE_HOME;
+    private static final String[] NO_STRINGS = new String[0];
+
+    private static final StringBasedProperty<FileObject> GRADLE_HOME;
+    private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
 
     static {
         GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
+        GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
     }
 
-    public static MutableProperty<FileObject> getGradleHome() {
+    public static StringBasedProperty<FileObject> getGradleHome() {
         return GRADLE_HOME;
+    }
+
+    public static StringBasedProperty<List<String>> getGradleJvmArgs() {
+        return GRADLE_JVM_ARGS;
+    }
+
+    public static String[] getCurrentGradleJvmArgs() {
+        List<String> result = GRADLE_JVM_ARGS.getValue();
+        if (result == null) {
+            return NO_STRINGS;
+        }
+
+        return result.toArray(NO_STRINGS);
+    }
+
+    private enum StringToStringListConverter implements ValueConverter<List<String>> {
+        INSTANCE;
+
+        @Override
+        public List<String> toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty()) {
+                return null;
+            }
+
+            return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
+        }
+
+        @Override
+        public String toString(List<String> value) {
+            if (value == null || value.isEmpty()) {
+                return null;
+            }
+
+            int length = value.size() - 1;
+            for (String line: value) {
+                length += line.length();
+            }
+
+            StringBuilder result = new StringBuilder(length);
+            Iterator<String> valueItr = value.iterator();
+            // valueItr.next() should succeed since the list is not empty.
+            result.append(valueItr.next());
+
+            while (!valueItr.hasNext()) {
+                result.append('\n');
+                result.append(valueItr.next());
+            }
+            return result.toString();
+        }
     }
 
     private enum GradleHomeConverter implements ValueConverter<FileObject> {
@@ -61,7 +119,7 @@ public final class GlobalGradleSettings {
         public String toString(ValueType value);
     }
 
-    private static class GlobalProperty<ValueType> implements MutableProperty<ValueType> {
+    private static class GlobalProperty<ValueType> implements StringBasedProperty<ValueType> {
         private final String settingsName;
         private final ValueConverter<ValueType> converter;
 
@@ -81,17 +139,12 @@ public final class GlobalGradleSettings {
         @Override
         public void setValue(ValueType value) {
             String strValue = converter.toString(value);
-            if (strValue != null) {
-                getPreferences().put(settingsName, strValue);
-            }
-            else {
-                getPreferences().remove(settingsName);
-            }
+            setValueFromString(strValue);
         }
 
         @Override
         public ValueType getValue() {
-            return converter.toValue(getPreferences().get(settingsName, null));
+            return converter.toValue(getValueAsString());
         }
 
         @Override
@@ -108,6 +161,21 @@ public final class GlobalGradleSettings {
             // hope for the best as there is nothing else we can do.
             getPreferences().removePreferenceChangeListener(
                     new ChangeListenerWrapper(settingsName, listener));
+        }
+
+        @Override
+        public void setValueFromString(String strValue) {
+            if (strValue != null) {
+                getPreferences().put(settingsName, strValue);
+            }
+            else {
+                getPreferences().remove(settingsName);
+            }
+        }
+
+        @Override
+        public String getValueAsString() {
+            return getPreferences().get(settingsName, null);
         }
     }
 

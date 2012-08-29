@@ -2,8 +2,6 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import org.openide.filesystems.FileChooserBuilder;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 // !!! Note: This file cannot be renamed, moved or deleted. !!!
 // This is required for backward compatibility because GlobalGradleSettings
@@ -20,14 +18,17 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     }
 
     public final void updateSettings() {
-        FileObject gradleHomeObj = GlobalGradleSettings.getGradleHome().getValue();
-        File gradleHome = gradleHomeObj != null ? FileUtil.toFile(gradleHomeObj) : null;
-        String gradleHomeStr = gradleHome != null ? gradleHome.getPath() : "";
-        jGradlePathEdit.setText(gradleHomeStr);
+        jGradlePathEdit.setText(GlobalGradleSettings.getGradleHome().getValueAsString());
+        jGradleJVMArgs.setText(GlobalGradleSettings.getGradleJvmArgs().getValueAsString());
     }
 
     public String getGradleHome() {
         String result = jGradlePathEdit.getText();
+        return result != null ? result.trim() : "";
+    }
+
+    public String getGradleJvmArgs() {
+        String result = jGradleJVMArgs.getText();
         return result != null ? result.trim() : "";
     }
 
@@ -42,6 +43,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradlePathCaption = new javax.swing.JLabel();
         jGradlePathEdit = new javax.swing.JTextField();
         jBrowsePathButton = new javax.swing.JButton();
+        jGradleVMArgsCaption = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jGradleJVMArgs = new javax.swing.JTextArea();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -54,17 +58,29 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jGradleVMArgsCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleVMArgsCaption.text")); // NOI18N
+
+        jGradleJVMArgs.setColumns(20);
+        jGradleJVMArgs.setRows(5);
+        jScrollPane1.setViewportView(jGradleJVMArgs);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jGradlePathEdit, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 525, Short.MAX_VALUE)
-                    .addComponent(jGradlePathCaption, javax.swing.GroupLayout.Alignment.LEADING))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jBrowsePathButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jGradlePathEdit, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jGradlePathCaption, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jBrowsePathButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jGradleVMArgsCaption)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -76,7 +92,11 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jGradlePathEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jBrowsePathButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jGradleVMArgsCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(83, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -91,7 +111,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBrowsePathButton;
+    private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradlePathCaption;
     private javax.swing.JTextField jGradlePathEdit;
+    private javax.swing.JLabel jGradleVMArgsCaption;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,11 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import javax.swing.JComponent;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
@@ -29,20 +26,10 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         getPanel().updateSettings();
     }
 
-    private static FileObject strToFileObject(String strPath) {
-        if (strPath.isEmpty()) {
-            return null;
-        }
-
-        File file = new File(strPath);
-        file = FileUtil.normalizeFile(file);
-        return FileUtil.toFileObject(file);
-    }
-
     @Override
     public void applyChanges() {
-        FileObject gradleHomeObj = strToFileObject(getPanel().getGradleHome());
-        GlobalGradleSettings.getGradleHome().setValue(gradleHomeObj);
+        GlobalGradleSettings.getGradleHome().setValueFromString(getPanel().getGradleHome());
+        GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getPanel().getGradleJvmArgs());
     }
 
     @Override

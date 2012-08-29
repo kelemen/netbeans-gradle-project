@@ -170,6 +170,12 @@ public final class GradleModelLoader {
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
+
+        String[] globalJvmArgs = GlobalGradleSettings.getCurrentGradleJvmArgs();
+        if (globalJvmArgs.length > 0) {
+            builder.setJvmArguments(globalJvmArgs);
+        }
+
         builder.addProgressListener(new ProgressListener() {
             @Override
             public void statusChanged(ProgressEvent pe) {

@@ -25,6 +25,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -125,7 +126,7 @@ public final class GradleTasks {
                    buildOutput.println(NbStrings.getTaskArgumentsMessage(arguments));
                }
                if (jvmArguments.length > 0) {
-                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(arguments));
+                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(jvmArguments));
                }
 
                buildOutput.println();
@@ -137,15 +138,19 @@ public final class GradleTasks {
 
                     io.select();
                     buildLauncher.run();
+               } catch (BuildException ex) {
+                   // Gradle should have printed this one to stderr.
+                   LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
+               } catch (Throwable ex) {
+                   buildErrOutput.println();
+                   ex.printStackTrace(buildErrOutput);
+                   LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
                } finally {
                    buildErrOutput.close();
                }
            } finally {
                buildOutput.close();
            }
-        } catch (BuildException ex) {
-            // Gradle should have printed this one to stderr.
-            LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();
@@ -165,7 +170,12 @@ public final class GradleTasks {
 
         final String[] taskNamesCopy = taskNames.clone();
         final String[] argumentsCopy = arguments.clone();
-        final String[] jvmArgumentsCopy = jvmArguments.clone();
+
+        String[] globalJvmArgs = GlobalGradleSettings.getCurrentGradleJvmArgs();
+        final String[] jvmArgumentsCopy = new String[jvmArguments.length + globalJvmArgs.length];
+        System.arraycopy(jvmArguments, 0, jvmArgumentsCopy, 0, jvmArguments.length);
+        System.arraycopy(globalJvmArgs, 0, jvmArgumentsCopy, jvmArguments.length, globalJvmArgs.length);
+
         TASK_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
