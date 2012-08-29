@@ -144,7 +144,10 @@ public final class GradleTasks {
                } catch (Throwable ex) {
                    buildErrOutput.println();
                    ex.printStackTrace(buildErrOutput);
-                   LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
+                   LOGGER.log(
+                           ex instanceof Exception ? Level.INFO : Level.SEVERE,
+                           "Gradle build failure: " + command,
+                           ex);
                } finally {
                    buildErrOutput.close();
                }
