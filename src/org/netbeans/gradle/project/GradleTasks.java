@@ -133,11 +133,11 @@ public final class GradleTasks {
 
                OutputWriter buildErrOutput = io.getErr();
                try {
-                    buildLauncher.setStandardOutput(new WriterOutputStream(buildOutput));
-                    buildLauncher.setStandardError(new WriterOutputStream(buildErrOutput));
+                   buildLauncher.setStandardOutput(new WriterOutputStream(buildOutput));
+                   buildLauncher.setStandardError(new WriterOutputStream(buildErrOutput));
 
-                    io.select();
-                    buildLauncher.run();
+                   io.select();
+                   buildLauncher.run();
                } catch (BuildException ex) {
                    // Gradle should have printed this one to stderr.
                    LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
