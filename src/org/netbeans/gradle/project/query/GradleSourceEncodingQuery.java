@@ -19,7 +19,7 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
 
     @Override
     public Charset getEncoding(FileObject file) {
-        NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
         for (NbSourceGroup srcGroup: mainModule.getSources().values()) {
             for (File srcDir: srcGroup.getPaths()) {
                 FileObject srcDirObj = FileUtil.toFileObject(srcDir);

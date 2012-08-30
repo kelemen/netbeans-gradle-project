@@ -25,6 +25,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.MemProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -39,20 +40,31 @@ import org.xml.sax.SAXException;
 public final class XmlPropertiesPersister implements PropertiesPersister {
     private static final Logger LOGGER = Logger.getLogger(XmlPropertiesPersister.class.getName());
 
+    private static final String SETTINGS_FILENAME = ".nb-gradle-properties";
     private static final String ROOT_NODE = "gradle-project-properties";
     private static final String SOURCE_ENCODING_NODE = "source-encoding";
     private static final String PLATFORM_NODE = "target-platform";
     private static final String SOURCE_LEVEL_NODE = "source-level";
 
     private final NbGradleProject project;
+    private final File propertiesFile;
 
     public XmlPropertiesPersister(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
+
         this.project = project;
+        this.propertiesFile = null;
     }
 
-    private File getPropertyFile() throws IOException {
-        NbGradleModel model = project.getCurrentModel();
+    public XmlPropertiesPersister(File propertiesFile) {
+        if (propertiesFile == null) throw new NullPointerException("propertiesFile");
+
+        this.project = null;
+        this.propertiesFile = propertiesFile;
+    }
+
+    public static File getFileForProject(NbGradleProject project) {
+        NbGradleModel model = project.getAvailableModel();
         FileObject settingsFile = model.getSettingsFile();
         FileObject dir = settingsFile != null
                 ? settingsFile.getParent()
@@ -63,10 +75,14 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
 
         File outputDir = FileUtil.toFile(dir);
         if (outputDir == null) {
-            throw new IOException("Cannot save properties because the directory is missing: " + dir);
+            throw new IllegalArgumentException("Cannot get the properties file because the directory is missing: " + dir);
         }
 
-        return new File(outputDir, ".nb-gradle-properties");
+        return new File(outputDir, SETTINGS_FILENAME);
+    }
+
+    private File getPropertyFile() throws IOException {
+        return propertiesFile != null ? propertiesFile : getFileForProject(project);
     }
 
     private void checkEDT() {
@@ -217,13 +233,13 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
 
                 JavaPlatform defaultPlatform = JavaPlatform.getDefault();
 
-                if (!sourceEncoding.name().equals(ProjectProperties.DEFAULT_SOURCE_ENCODING.name())) {
+                if (!sourceEncoding.name().equals(MemProjectProperties.DEFAULT_SOURCE_ENCODING.name())) {
                     addSimpleChild(root, SOURCE_ENCODING_NODE, sourceEncoding.name());
                 }
                 if (!platform.equals(defaultPlatform)) {
                     addSimpleChild(root, PLATFORM_NODE, platform.getSpecification().getVersion().toString());
                 }
-                if (!sourceLevel.equals(ProjectProperties.getSourceLevelFromPlatform(defaultPlatform))) {
+                if (!sourceLevel.equals(MemProjectProperties.getSourceLevelFromPlatform(defaultPlatform))) {
                     addSimpleChild(root, SOURCE_LEVEL_NODE, sourceLevel);
                 }
 

@@ -3,7 +3,6 @@ package org.netbeans.gradle.project;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +23,7 @@ import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -72,7 +72,7 @@ public final class NbGradleProject implements Project {
         this.projectDir = projectDir;
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
-        this.properties = new ProjectProperties();
+        this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
         this.propertiesPersister = new XmlPropertiesPersister(this);
 
@@ -107,9 +107,13 @@ public final class NbGradleProject implements Project {
         modelChanges.removeChangeListener(listener);
     }
 
+    public NbGradleModel getAvailableModel() {
+        return currentModelRef.get();
+    }
+
     public NbGradleModel getCurrentModel() {
         loadProject(true, true);
-        return currentModelRef.get();
+        return getAvailableModel();
     }
 
     public void reloadProject() {

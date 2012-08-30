@@ -72,7 +72,7 @@ public final class GradleActionProvider implements ActionProvider {
     }
 
     private static String[] toQualifiedTaskName(NbGradleProject project, String... tasks) {
-        String qualifier = project.getCurrentModel().getMainModule().getUniqueName() + ":";
+        String qualifier = project.getAvailableModel().getMainModule().getUniqueName() + ":";
 
         String[] qualified = new String[tasks.length];
         for (int i = 0; i < tasks.length; i++) {

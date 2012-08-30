@@ -66,9 +66,9 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         try {
             return Charset.forName(jSourceEncoding.getText().trim());
         } catch (IllegalCharsetNameException ex) {
-            return ProjectProperties.DEFAULT_SOURCE_ENCODING;
+            return MemProjectProperties.DEFAULT_SOURCE_ENCODING;
         } catch (UnsupportedCharsetException ex) {
-            return ProjectProperties.DEFAULT_SOURCE_ENCODING;
+            return MemProjectProperties.DEFAULT_SOURCE_ENCODING;
         }
     }
 
