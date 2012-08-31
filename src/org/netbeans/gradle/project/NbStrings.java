@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.openide.util.NbBundle;
 
@@ -38,18 +38,12 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_ExecutingTask", command);
     }
 
-    private static String formatArgumentsOfMessage(String... arguments) {
-        return Arrays.toString(arguments);
+    public static String getTaskArgumentsMessage(List<String> arguments) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_TaskArguments", arguments);
     }
 
-    public static String getTaskArgumentsMessage(String... arguments) {
-        String formatted = formatArgumentsOfMessage(arguments);
-        return NbBundle.getMessage(NbStrings.class, "MSG_TaskArguments", formatted);
-    }
-
-    public static String getTaskJvmArgumentsMessage(String... arguments) {
-        String formatted = formatArgumentsOfMessage(arguments);
-        return NbBundle.getMessage(NbStrings.class, "MSG_TaskJvmArguments", formatted);
+    public static String getTaskJvmArgumentsMessage(List<String> arguments) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_TaskJvmArguments", arguments);
     }
 
     public static String getDependenciesNodeCaption() {

@@ -4,6 +4,7 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedList;
@@ -18,7 +19,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.netbeans.gradle.project.GradleTasks;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -26,6 +26,8 @@ import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleTask;
+import org.netbeans.gradle.project.tasks.GradleTaskDef;
+import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
@@ -239,13 +241,15 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     null);
             Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
             dlg.setVisible(true);
+
             if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
                 String[] tasks = panel.getTasks();
-                String[] args = panel.getArguments();
-                String[] jvmArgs = panel.getJvmArguments();
-
                 if (tasks.length > 0) {
-                    GradleTasks.createAsyncGradleTask(project, tasks, args, jvmArgs).run();
+                    GradleTaskDef.Builder builder = new GradleTaskDef.Builder(tasks);
+                    builder.setArguments(Arrays.asList(panel.getArguments()));
+                    builder.setJvmArguments(Arrays.asList(panel.getJvmArguments()));
+
+                    GradleTasks.createAsyncGradleTask(project, builder.create()).run();
                 }
             }
         }
@@ -326,7 +330,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     menuItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            GradleTasks.createAsyncGradleTask(project, task.getQualifiedName()).run();
+                            GradleTaskDef.Builder builder = new GradleTaskDef.Builder(task.getQualifiedName());
+                            GradleTasks.createAsyncGradleTask(project, builder.create()).run();
                         }
                     });
                     menu.add(menuItem);

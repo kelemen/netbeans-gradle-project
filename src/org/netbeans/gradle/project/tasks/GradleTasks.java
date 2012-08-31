@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.tasks;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,8 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +25,8 @@ import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
@@ -51,16 +54,12 @@ public final class GradleTasks {
         }
     }
 
-    private static void doGradleTasks(
-            NbGradleProject project,
-            String[] taskNames,
-            String[] arguments,
-            String[] jvmArguments) {
+    private static void doGradleTasks(NbGradleProject project, GradleTaskDef taskDef) {
         ProgressHandle progress = ProgressHandleFactory.createHandle(
                 NbStrings.getExecuteTasksText());
         try {
             progress.start();
-            doGradleTasksWithProgress(progress, project, taskNames, arguments, jvmArguments);
+            doGradleTasksWithProgress(progress, project, taskDef);
         } finally {
             progress.finish();
         }
@@ -69,19 +68,14 @@ public final class GradleTasks {
     private static void doGradleTasksWithProgress(
             final ProgressHandle progress,
             NbGradleProject project,
-            String[] taskNames,
-            String[] arguments,
-            String[] jvmArguments) {
-        if (taskNames.length < 1) {
-            throw new IllegalArgumentException("At least one task is required.");
-        }
-        String printableName = taskNames.length == 1
-                ? taskNames[0]
-                : Arrays.toString(taskNames);
+            GradleTaskDef taskDef) {
+        String printableName = taskDef.getTaskNames().size() == 1
+                ? taskDef.getTaskNames().get(0)
+                : taskDef.getTaskNames().toString();
 
         StringBuilder commandBuilder = new StringBuilder(128);
         commandBuilder.append("gradle");
-        for (String task: taskNames) {
+        for (String task: taskDef.getTaskNames()) {
             commandBuilder.append(' ');
             commandBuilder.append(task);
         }
@@ -90,7 +84,7 @@ public final class GradleTasks {
 
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, "Executing: {0}, Args = {1}, JvmArg = {2}",
-                    new Object[]{command, Arrays.toString(arguments), Arrays.toString(jvmArguments)});
+                    new Object[]{command, taskDef.getArguments(), taskDef.getJvmArguments()});
         }
 
         FileObject projectDir = project.getProjectDirectory();
@@ -102,11 +96,11 @@ public final class GradleTasks {
             projectConnection = gradleConnector.connect();
             BuildLauncher buildLauncher = projectConnection.newBuild();
             buildLauncher.setJavaHome(getJavaHome());
-            if (jvmArguments.length > 0) {
-                buildLauncher.setJvmArguments(jvmArguments);
+            if (!taskDef.getJvmArguments().isEmpty()) {
+                buildLauncher.setJvmArguments(taskDef.getJvmArgumentsArray());
             }
-            if (arguments.length > 0) {
-                buildLauncher.withArguments(arguments);
+            if (!taskDef.getArguments().isEmpty()) {
+                buildLauncher.withArguments(taskDef.getArgumentArray());
             }
 
             buildLauncher.addProgressListener(new ProgressListener() {
@@ -116,17 +110,17 @@ public final class GradleTasks {
                 }
             });
 
-           buildLauncher.forTasks(taskNames);
+           buildLauncher.forTasks(taskDef.getTaskNamesArray());
 
            InputOutput io = IOProvider.getDefault().getIO("Gradle: " + printableName, false);
            OutputWriter buildOutput = io.getOut();
            try {
                buildOutput.println(NbStrings.getExecutingTaskMessage(command));
-               if (arguments.length > 0) {
-                   buildOutput.println(NbStrings.getTaskArgumentsMessage(arguments));
+               if (!taskDef.getArguments().isEmpty()) {
+                   buildOutput.println(NbStrings.getTaskArgumentsMessage(taskDef.getArguments()));
                }
-               if (jvmArguments.length > 0) {
-                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(jvmArguments));
+               if (!taskDef.getJvmArguments().isEmpty()) {
+                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(taskDef.getJvmArguments()));
                }
 
                buildOutput.println();
@@ -165,74 +159,54 @@ public final class GradleTasks {
         LifecycleManager.getDefault().saveAll();
     }
 
-    private static void submitGradleTask(final NbGradleProject project,
-            String[] taskNames,
-            String[] arguments,
-            String[] jvmArguments) {
+    private static void submitGradleTask(final NbGradleProject project, GradleTaskDef taskDef) {
         preSubmitGradleTask();
 
-        final String[] taskNamesCopy = taskNames.clone();
-        final String[] argumentsCopy = arguments.clone();
+        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
 
-        String[] globalJvmArgs = GlobalGradleSettings.getCurrentGradleJvmArgs();
-        final String[] jvmArgumentsCopy = new String[jvmArguments.length + globalJvmArgs.length];
-        System.arraycopy(jvmArguments, 0, jvmArgumentsCopy, 0, jvmArguments.length);
-        System.arraycopy(globalJvmArgs, 0, jvmArgumentsCopy, jvmArguments.length, globalJvmArgs.length);
+        final GradleTaskDef newTaskDef;
+        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+            GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
+
+            List<String> combinedJvmArgs = new ArrayList<String>(
+                    taskDef.getJvmArguments().size() + globalJvmArgs.size());
+            combinedJvmArgs.addAll(taskDef.getJvmArguments());
+            combinedJvmArgs.addAll(globalJvmArgs);
+            builder.setJvmArguments(combinedJvmArgs);
+
+            newTaskDef = builder.create();
+        }
+        else {
+            newTaskDef = taskDef;
+        }
 
         TASK_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
-                doGradleTasks(project, taskNamesCopy, argumentsCopy, jvmArgumentsCopy);
+                doGradleTasks(project, newTaskDef);
             }
         });
     }
 
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            String[] taskNames,
-            String[] arguments,
-            String[] jvmArguments) {
-        return new AsyncGradleTask(project, taskNames, arguments, jvmArguments);
-    }
-
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            String[] taskNames,
-            String[] arguments) {
-        return createAsyncGradleTask(project, taskNames, arguments, NO_ARGS);
-    }
-
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            String... taskNames) {
-        return createAsyncGradleTask(project, taskNames, NO_ARGS, NO_ARGS);
+    public static Runnable createAsyncGradleTask(NbGradleProject project, GradleTaskDef taskDef) {
+        return new AsyncGradleTask(project, taskDef);
     }
 
     private static class AsyncGradleTask implements Runnable {
         private final NbGradleProject project;
-        private final String[] taskNames;
-        private final String[] arguments;
-        private final String[] jvmArguments;
+        private final GradleTaskDef taskDef;
 
-        public AsyncGradleTask(
-                NbGradleProject project,
-                String[] taskNames,
-                String[] arguments,
-                String[] jvmArguments) {
+        public AsyncGradleTask(NbGradleProject project, GradleTaskDef taskDef) {
             if (project == null) throw new NullPointerException("project");
-            if (taskNames == null) throw new NullPointerException("taskNames");
-            if (arguments == null) throw new NullPointerException("arguments");
-            if (jvmArguments == null) throw new NullPointerException("jvmArguments");
+            if (taskDef == null) throw new NullPointerException("taskDef");
 
             this.project = project;
-            this.taskNames = taskNames.clone();
-            this.arguments = arguments.clone();
-            this.jvmArguments = jvmArguments.clone();
+            this.taskDef = taskDef;
         }
 
         @Override
         public void run() {
-            submitGradleTask(project, taskNames, arguments, jvmArguments);
+            submitGradleTask(project, taskDef);
         }
     }
 

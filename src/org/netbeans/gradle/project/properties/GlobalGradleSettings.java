@@ -16,8 +16,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 
 public final class GlobalGradleSettings {
-    private static final String[] NO_STRINGS = new String[0];
-
     private static final StringBasedProperty<FileObject> GRADLE_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
 
@@ -32,15 +30,6 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<List<String>> getGradleJvmArgs() {
         return GRADLE_JVM_ARGS;
-    }
-
-    public static String[] getCurrentGradleJvmArgs() {
-        List<String> result = GRADLE_JVM_ARGS.getValue();
-        if (result == null) {
-            return NO_STRINGS;
-        }
-
-        return result.toArray(NO_STRINGS);
     }
 
     private enum StringToStringListConverter implements ValueConverter<List<String>> {

@@ -171,9 +171,10 @@ public final class GradleModelLoader {
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
 
-        String[] globalJvmArgs = GlobalGradleSettings.getCurrentGradleJvmArgs();
-        if (globalJvmArgs.length > 0) {
-            builder.setJvmArguments(globalJvmArgs);
+        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+
+        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+            builder.setJvmArguments(globalJvmArgs.toArray(new String[0]));
         }
 
         builder.addProgressListener(new ProgressListener() {

@@ -1,14 +1,17 @@
 package org.netbeans.gradle.project.view;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.netbeans.gradle.project.GradleTasks;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.tasks.GradleTaskDef;
+import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -71,19 +74,20 @@ public final class GradleActionProvider implements ActionProvider {
         return files;
     }
 
-    private static String[] toQualifiedTaskName(NbGradleProject project, String... tasks) {
+    private static List<String> toQualifiedTaskName(NbGradleProject project, String... tasks) {
         String qualifier = project.getAvailableModel().getMainModule().getUniqueName() + ":";
 
-        String[] qualified = new String[tasks.length];
-        for (int i = 0; i < tasks.length; i++) {
-            qualified[i] = qualifier + tasks[i];
+        List<String> qualified = new ArrayList<String>(tasks.length);
+        for (String task: tasks) {
+            qualified.add(qualifier + task);
         }
         return qualified;
     }
 
     private static Runnable createProjectTask(NbGradleProject project, String... tasks) {
-        String[] qualified = toQualifiedTaskName(project, tasks);
-        return GradleTasks.createAsyncGradleTask(project, qualified);
+        List<String> qualified = toQualifiedTaskName(project, tasks);
+        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualified);
+        return GradleTasks.createAsyncGradleTask(project, builder.create());
     }
 
     private Runnable createAction(String command, Lookup context) {
@@ -169,10 +173,14 @@ public final class GradleActionProvider implements ActionProvider {
                                 ? new String[]{testArg, "-Dtest.debug"}
                                 : new String[]{testArg};
 
-                        Runnable task = GradleTasks.createAsyncGradleTask(
-                                project,
-                                toQualifiedTaskName(project, "cleanTest", "test"),
-                                args);
+                        List<String> qualifiedTaskNames
+                                = toQualifiedTaskName(project, "cleanTest", "test");
+
+                        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualifiedTaskNames);
+                        builder.setArguments(Arrays.asList(args));
+
+                        Runnable task;
+                        task = GradleTasks.createAsyncGradleTask(project, builder.create());
                         task.run();
                     }
                     else {
