@@ -46,20 +46,11 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     private static final String PLATFORM_NODE = "target-platform";
     private static final String SOURCE_LEVEL_NODE = "source-level";
 
-    private final NbGradleProject project;
     private final File propertiesFile;
-
-    public XmlPropertiesPersister(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
-
-        this.project = project;
-        this.propertiesFile = null;
-    }
 
     public XmlPropertiesPersister(File propertiesFile) {
         if (propertiesFile == null) throw new NullPointerException("propertiesFile");
 
-        this.project = null;
         this.propertiesFile = propertiesFile;
     }
 
@@ -82,7 +73,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     private File getPropertyFile() throws IOException {
-        return propertiesFile != null ? propertiesFile : getFileForProject(project);
+        return propertiesFile;
     }
 
     private void checkEDT() {
@@ -204,7 +195,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     @Override
-    public void save(ProjectProperties properties) {
+    public void save(ProjectProperties properties, final Runnable onDone) {
         checkEDT();
 
         final Charset sourceEncoding = properties.getSourceEncoding().getValue();
@@ -249,13 +240,17 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                     LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
                 } catch (TransformerException ex) {
                     LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
+                } finally {
+                    if (onDone != null) {
+                        onDone.run();
+                    }
                 }
             }
         });
     }
 
     @Override
-    public void load(final ProjectProperties properties) {
+    public void load(final ProjectProperties properties, final Runnable onDone) {
         checkEDT();
 
         // We must listen for changes, so that we do not overwrite properties
@@ -321,6 +316,10 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             }
                             if (sourceEncoding != null && !sourceEncodingChanged.hasChanged()) {
                                 properties.getSourceEncoding().setValue(sourceEncoding);
+                            }
+
+                            if (onDone != null) {
+                                onDone.run();
                             }
                         }
                     });

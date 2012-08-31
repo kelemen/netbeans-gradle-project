@@ -19,8 +19,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.persistent.PropertiesPersister;
-import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
@@ -60,13 +58,11 @@ public final class NbGradleProject implements Project {
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectProperties properties;
-    private final PropertiesPersister propertiesPersister;
     private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
     private volatile boolean loadedAtLeastOnce;
-    private boolean saveOnLoad; // access from the EDT
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
@@ -74,7 +70,6 @@ public final class NbGradleProject implements Project {
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
-        this.propertiesPersister = new XmlPropertiesPersister(this);
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
@@ -83,7 +78,6 @@ public final class NbGradleProject implements Project {
 
         this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnce = false;
-        this.saveOnLoad = false;
     }
 
     private ProjectInfoRef getLoadErrorRef() {
@@ -124,19 +118,6 @@ public final class NbGradleProject implements Project {
         loadProject(false, mayUseCache);
     }
 
-    public void saveProperties() {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            throw new IllegalStateException("This method may only be called from the EDT.");
-        }
-
-        if (loadedAtLeastOnce) {
-            propertiesPersister.save(properties);
-        }
-        else {
-            saveOnLoad = true;
-        }
-    }
-
     public boolean hasLoadedProject() {
         return loadedAtLeastOnce;
     }
@@ -146,13 +127,6 @@ public final class NbGradleProject implements Project {
 
         try {
             loadedAtLeastOnce = true;
-            if (saveOnLoad) {
-                saveOnLoad = false;
-                propertiesPersister.save(properties);
-            }
-            else {
-                propertiesPersister.load(properties);
-            }
             modelChanges.fireChange();
         } finally {
             GradleCacheSourceForBinaryQuery.notifyCacheChange();

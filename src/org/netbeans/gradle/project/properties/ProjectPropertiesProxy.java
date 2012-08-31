@@ -17,7 +17,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.openide.util.ChangeSupport;
 
-public final class ProjectPropertiesProxy implements ProjectProperties {
+public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesProxy.class.getName());
 
     private final NbGradleProject project;

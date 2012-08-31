@@ -5,9 +5,7 @@ import java.util.regex.Pattern;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.openide.modules.SpecificationVersion;
 
-public final class MemProjectProperties implements ProjectProperties {
-    public static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
-
+public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<String> sourceLevel;
     private final MutableProperty<JavaPlatform> platform;
     private final MutableProperty<Charset> sourceEncoding;

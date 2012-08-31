@@ -5,6 +5,6 @@ import org.netbeans.gradle.project.properties.ProjectProperties;
 public interface PropertiesPersister {
     // These methods may only be called from the EDT
 
-    public void save(ProjectProperties properties);
-    public void load(ProjectProperties properties);
+    public void save(ProjectProperties properties, Runnable onDone);
+    public void load(ProjectProperties properties, Runnable onDone);
 }
