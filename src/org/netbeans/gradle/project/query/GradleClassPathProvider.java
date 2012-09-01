@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,6 +61,11 @@ implements
     private volatile JavaPlatform currentPlatform;
 
     private final AtomicReference<ProjectInfoRef> infoRefRef;
+    // This property is used to prevent eagrly loading a project due
+    // to changes in the project settings. That is, if this class path provider
+    // has never been used, there is no reason to calculate the classpath
+    // due to a change in the settings.
+    private final AtomicBoolean hasBeenUsed;
 
     // EnumMap is not a ConcurrentMap, so it cannot be used.
     @SuppressWarnings("MapReplaceableByEnumMap")
@@ -72,6 +78,7 @@ implements
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
         this.classpaths = new ConcurrentHashMap<ClassPathType, ClassPath>(classPathTypeCount);
         this.changes = new PropertyChangeSupport(this);
+        this.hasBeenUsed = new AtomicBoolean(false);
     }
 
     private ProjectInfoRef getInfoRef() {
@@ -131,7 +138,9 @@ implements
             @Override
             public void stateChanged(ChangeEvent e) {
                 currentPlatform = project.getProperties().getPlatform().getValue();
-                onModelChange();
+                if (hasBeenUsed.get()) {
+                    onModelChange();
+                }
             }
         });
         // This is not called because it would trigger the loading of the
@@ -460,6 +469,8 @@ implements
         if (GradleFilesClassPathProvider.isGradleFile(file)) {
             return null;
         }
+
+        hasBeenUsed.set(true);
 
         NbGradleModel projectModel = project.getCurrentModel();
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
