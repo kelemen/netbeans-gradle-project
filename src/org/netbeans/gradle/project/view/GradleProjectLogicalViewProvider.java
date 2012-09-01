@@ -4,6 +4,7 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.event.ChangeEvent;
@@ -27,6 +29,8 @@ import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
+import org.netbeans.gradle.project.properties.AddNewTaskPanel;
+import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTasks;
@@ -231,20 +235,97 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             super(NbStrings.getCustomTasksCommandCaption());
             this.project = project;
         }
+
+        private PredefinedTask createTaskDef(
+                CustomActionPanel actionPanel,
+                String displayName,
+                boolean tasksMustExist) {
+            String[] rawTaskNames = actionPanel.getTasks();
+            List<PredefinedTask.Name> names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
+            for (String name: rawTaskNames) {
+                names.add(new PredefinedTask.Name(name, tasksMustExist));
+            }
+
+            return new PredefinedTask(
+                    displayName,
+                    names,
+                    Arrays.asList(actionPanel.getArguments()),
+                    Arrays.asList(actionPanel.getJvmArguments()));
+        }
+
+        private boolean doSaveTask(CustomActionPanel actionPanel) {
+            AddNewTaskPanel panel = new AddNewTaskPanel();
+
+            DialogDescriptor dlgDescriptor = new DialogDescriptor(
+                    panel,
+                    NbStrings.getAddNewTaskDlgTitle(),
+                    true,
+                    new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
+                    DialogDescriptor.OK_OPTION,
+                    DialogDescriptor.BOTTOM_ALIGN,
+                    null,
+                    null);
+            Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
+            dlg.pack();
+            dlg.setVisible(true);
+            if (dlgDescriptor.getValue() != DialogDescriptor.OK_OPTION) {
+                return false;
+            }
+            String displayName = panel.getDisplayName();
+            if (displayName.isEmpty()) {
+                return false;
+            }
+
+            PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
+            if (newTaskDef.createTaskDef(project.getAvailableModel().getMainModule()) == null) {
+                newTaskDef = createTaskDef(actionPanel, displayName, false);
+            }
+
+            MutableProperty<List<PredefinedTask>> commonTasks = project.getProperties().getCommonTasks();
+
+            List<PredefinedTask> newTasks = new LinkedList<PredefinedTask>(commonTasks.getValue());
+            newTasks.add(newTaskDef);
+            commonTasks.setValue(newTasks);
+            return true;
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             CustomActionPanel panel = new CustomActionPanel();
+            JButton executeButton = new JButton(NbStrings.getExecuteLabel());
+            JButton saveAndExecuteButton = new JButton(NbStrings.getSaveAndExecuteLabel());
+
             DialogDescriptor dlgDescriptor = new DialogDescriptor(
-                    panel,
-                    NbStrings.getCustomTaskDlgTitle(),
-                    true,
-                    DialogDescriptor.OK_CANCEL_OPTION,
-                    DialogDescriptor.OK_OPTION,
-                    null);
+                panel,
+                NbStrings.getCustomTaskDlgTitle(),
+                true,
+                new Object[]{executeButton, saveAndExecuteButton, DialogDescriptor.CANCEL_OPTION},
+                executeButton,
+                DialogDescriptor.BOTTOM_ALIGN,
+                null,
+                null);
             Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
             dlg.setVisible(true);
 
-            if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
+            boolean doExecute = false;
+            boolean okToClose;
+            do {
+                okToClose = true;
+                Object selectedButton = dlgDescriptor.getValue();
+
+                if (saveAndExecuteButton == selectedButton) {
+                    okToClose = doSaveTask(panel);
+                    if (!okToClose) {
+                        dlg.setVisible(true);
+                    }
+                    doExecute = true;
+                }
+                else if (executeButton == selectedButton) {
+                    doExecute = true;
+                }
+            } while (!okToClose);
+
+            if (doExecute) {
                 String[] tasks = panel.getTasks();
                 if (tasks.length > 0) {
                     GradleTaskDef.Builder builder = new GradleTaskDef.Builder(tasks);
@@ -319,7 +400,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void updateMenuContent() {
             List<PredefinedTask> commonTasks = project.getProperties().getCommonTasks().getValue();
-            NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+            NbGradleModule mainModule = project.getAvailableModel().getMainModule();
             if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
                 return;
             }
@@ -327,6 +408,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             lastUsedTasks = commonTasks;
             lastUsedModule = mainModule;
 
+            boolean hasCustomTasks = false;
             menu.removeAll();
             for (final PredefinedTask task: commonTasks) {
                 if (task.createTaskDef(mainModule) == null) {
@@ -340,7 +422,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                         // recreate the task on every actionPerformed because
                         // the project might have changed since the menu item
                         // was created.
-                        NbGradleModule module = project.getCurrentModel().getMainModule();
+                        NbGradleModule module = project.getAvailableModel().getMainModule();
                         GradleTaskDef taskDef = task.createTaskDef(module);
                         if (taskDef != null) {
                             GradleTasks.createAsyncGradleTask(project, taskDef).run();
@@ -348,8 +430,11 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     }
                 });
                 menu.add(menuItem);
+                hasCustomTasks = true;
             }
-            menu.addSeparator();
+            if (hasCustomTasks) {
+                menu.addSeparator();
+            }
             menu.add(new CustomTaskAction(project));
         }
     }
@@ -413,7 +498,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
 
         public void updateMenuContent() {
-            NbGradleModel projectModel = project.getCurrentModel();
+            NbGradleModel projectModel = project.getAvailableModel();
             if (lastUsedModel == projectModel) {
                 return;
             }

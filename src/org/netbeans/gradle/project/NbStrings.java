@@ -149,6 +149,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_Info");
     }
 
+    public static String getExecuteLabel() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Execute");
+    }
+
+    public static String getSaveAndExecuteLabel() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_SaveAndExecute");
+    }
+
     public static String getErrorLoadingProject(Throwable ex) {
         StringBuilder errorText = new StringBuilder(1024);
         errorText.append(ex.toString());

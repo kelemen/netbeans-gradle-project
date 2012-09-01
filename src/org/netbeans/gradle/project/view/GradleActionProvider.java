@@ -150,7 +150,7 @@ public final class GradleActionProvider implements ActionProvider {
             GradleTasks.TASK_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+                    NbGradleModule mainModule = project.getAvailableModel().getMainModule();
 
                     List<FileObject> sources = new LinkedList<FileObject>();
                     sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
