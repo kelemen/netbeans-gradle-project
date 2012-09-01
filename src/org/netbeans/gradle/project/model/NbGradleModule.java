@@ -51,13 +51,6 @@ public final class NbGradleModule {
         return Collections.unmodifiableMap(clonedMap);
     }
 
-    private static String getNameFromUniqueName(String uniqueName) {
-        int lastSepIndex = uniqueName.lastIndexOf(':');
-        return lastSepIndex >= 0
-                ? uniqueName.substring(lastSepIndex + 1)
-                : uniqueName;
-    }
-
     public Properties getProperties() {
         return properties;
     }
@@ -108,6 +101,7 @@ public final class NbGradleModule {
         private final String uniqueName;
         private final String name;
         private final Collection<NbGradleTask> tasks;
+        private final List<String> nameParts;
 
         public Properties(
                 String uniqueName,
@@ -122,7 +116,9 @@ public final class NbGradleModule {
             this.uniqueName = uniqueName;
             this.moduleDir = moduleDir;
             this.output = output;
-            this.name = getNameFromUniqueName(uniqueName);
+            this.nameParts = Collections.unmodifiableList(new ArrayList<String>(
+                    NbModelUtils.getNameParts(uniqueName)));
+            this.name = this.nameParts.get(this.nameParts.size() - 1);
 
             List<NbGradleTask> clonedTasks = new ArrayList<NbGradleTask>(tasks);
             Collections.sort(clonedTasks, new Comparator<NbGradleTask>() {
@@ -152,6 +148,10 @@ public final class NbGradleModule {
 
         public String getUniqueName() {
             return uniqueName;
+        }
+
+        public List<String> getNameParts() {
+            return nameParts;
         }
 
         public Collection<NbGradleTask> getTasks() {

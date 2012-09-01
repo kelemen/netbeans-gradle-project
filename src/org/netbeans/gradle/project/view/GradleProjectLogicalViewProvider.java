@@ -25,7 +25,9 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
+import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.java.project.support.ui.PackageView;
@@ -94,13 +96,13 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     private final class GradleProjectNode extends FilterNode {
-        private final TasksActionMenu tasksAction;
         private final Action[] actions;
 
         public GradleProjectNode(Node node) {
             super(node, createChildren(), createLookup(node));
 
-            this.tasksAction = new TasksActionMenu(project);
+            TasksActionMenu tasksAction = new TasksActionMenu(project);
+            CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
             this.actions = new Action[] {
                 CommonProjectActions.newFileAction(),
                 null,
@@ -123,8 +125,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 createProjectAction(
                     GradleActionProvider.COMMAND_JAVADOC,
                     NbStrings.getJavadocCommandCaption()),
-                new CustomTaskAction(project),
-                this.tasksAction,
+                customTasksAction,
+                tasksAction,
                 null,
                 createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
@@ -256,6 +258,103 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     @SuppressWarnings("serial") // don't care about serialization
+    private static class CustomTasksActionMenu extends AbstractAction implements Presenter.Popup {
+        private final NbGradleProject project;
+        private JMenu cachedMenu;
+
+        public CustomTasksActionMenu(NbGradleProject project) {
+            this.project = project;
+            this.cachedMenu = null;
+        }
+
+        @Override
+        public JMenuItem getPopupPresenter() {
+            if (cachedMenu == null) {
+                cachedMenu = createMenu();
+            }
+            return cachedMenu;
+        }
+
+        private JMenu createMenu() {
+            JMenu menu = new JMenu(NbStrings.getCustomTasksCommandCaption());
+            final CustomTasksMenuBuilder builder = new CustomTasksMenuBuilder(project, menu);
+            menu.addMenuListener(new MenuListener() {
+                @Override
+                public void menuSelected(MenuEvent e) {
+                    builder.updateMenuContent();
+                }
+
+                @Override
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                @Override
+                public void menuCanceled(MenuEvent e) {
+                }
+            });
+            return menu;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+    }
+
+    private static class CustomTasksMenuBuilder {
+        private final NbGradleProject project;
+        private final JMenu menu;
+        private List<PredefinedTask> lastUsedTasks;
+        private NbGradleModule lastUsedModule;
+
+        public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
+            if (project == null) throw new NullPointerException("project");
+            if (menu == null) throw new NullPointerException("menu");
+
+            this.project = project;
+            this.menu = menu;
+            this.lastUsedTasks = null;
+            this.lastUsedModule = null;
+        }
+
+
+        public void updateMenuContent() {
+            List<PredefinedTask> commonTasks = project.getProperties().getCommonTasks().getValue();
+            NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+            if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
+                return;
+            }
+
+            lastUsedTasks = commonTasks;
+            lastUsedModule = mainModule;
+
+            menu.removeAll();
+            for (final PredefinedTask task: commonTasks) {
+                if (task.createTaskDef(mainModule) == null) {
+                    continue;
+                }
+
+                JMenuItem menuItem = new JMenuItem(task.getDisplayName());
+                menuItem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // recreate the task on every actionPerformed because
+                        // the project might have changed since the menu item
+                        // was created.
+                        NbGradleModule module = project.getCurrentModel().getMainModule();
+                        GradleTaskDef taskDef = task.createTaskDef(module);
+                        if (taskDef != null) {
+                            GradleTasks.createAsyncGradleTask(project, taskDef).run();
+                        }
+                    }
+                });
+                menu.add(menuItem);
+            }
+            menu.addSeparator();
+            menu.add(new CustomTaskAction(project));
+        }
+    }
+
+    @SuppressWarnings("serial") // don't care about serialization
     private static class TasksActionMenu extends AbstractAction implements Presenter.Popup {
         private final NbGradleProject project;
         private JMenu cachedMenu;
@@ -319,23 +418,21 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 return;
             }
 
-            if (lastUsedModel != projectModel) {
-                lastUsedModel = projectModel;
+            lastUsedModel = projectModel;
 
-                Collection<NbGradleTask> tasks = projectModel.getMainModule().getTasks();
+            Collection<NbGradleTask> tasks = projectModel.getMainModule().getTasks();
 
-                menu.removeAll();
-                for (final NbGradleTask task: tasks) {
-                    JMenuItem menuItem = new JMenuItem(task.getLocalName());
-                    menuItem.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            GradleTaskDef.Builder builder = new GradleTaskDef.Builder(task.getQualifiedName());
-                            GradleTasks.createAsyncGradleTask(project, builder.create()).run();
-                        }
-                    });
-                    menu.add(menuItem);
-                }
+            menu.removeAll();
+            for (final NbGradleTask task: tasks) {
+                JMenuItem menuItem = new JMenuItem(task.getLocalName());
+                menuItem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(task.getQualifiedName());
+                        GradleTasks.createAsyncGradleTask(project, builder.create()).run();
+                    }
+                });
+                menu.add(menuItem);
             }
         }
     }
