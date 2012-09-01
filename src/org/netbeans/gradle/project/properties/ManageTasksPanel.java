@@ -4,9 +4,7 @@ import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
@@ -18,10 +16,8 @@ import org.openide.DialogDisplayer;
 
 @SuppressWarnings("serial")
 public class ManageTasksPanel extends javax.swing.JPanel {
-    private static final Logger LOGGER = Logger.getLogger(ManageTasksPanel.class.getName());
-
     private final CustomActionPanel jActionPanel;
-    private ProjectProperties currentProperties;
+    private PredefinedTaskItem currentlyShown;
 
     /**
      * Creates new form ManageTasksPanel
@@ -31,7 +27,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         jActionPanel = new CustomActionPanel();
         jTaskSettingsHolder.add(jActionPanel);
-        currentProperties = null;
+        currentlyShown = null;
 
         showSelected();
         jDefinedTasks.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -58,32 +54,36 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         return (PredefinedTaskItem)jDefinedTasks.getSelectedValue();
     }
 
-    public boolean trySaveTask() {
-        if (currentProperties == null) {
-            LOGGER.warning("Project properties were not set.");
-            return false;
-        }
-
-        PredefinedTaskItem selected = getSelectedTask();
-        if (selected == null) {
-            return false;
-        }
-        String[] rawTaskNames = jActionPanel.getTasks();
-        if (rawTaskNames.length == 0) {
-            return false;
+    private PredefinedTask getShownTask() {
+        if (currentlyShown == null) {
+            return null;
         }
 
         boolean mustExist = jMustExistCheck.isSelected();
-        List<PredefinedTask.Name> names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
-        for (String name: rawTaskNames) {
-            names.add(new PredefinedTask.Name(name, mustExist));
+        String[] rawTaskNames = jActionPanel.getTasks();
+
+        List<PredefinedTask.Name> names;
+        if (rawTaskNames.length > 0) {
+            names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
+            for (String name: rawTaskNames) {
+                names.add(new PredefinedTask.Name(name, mustExist));
+            }
+        }
+        else {
+            names = currentlyShown.getTask().getTaskNames();
         }
 
-        PredefinedTask newTaskDef = new PredefinedTask(
-                selected.getTask().getDisplayName(),
+        return new PredefinedTask(
+                currentlyShown.getTask().getDisplayName(),
                 names,
                 Arrays.asList(jActionPanel.getArguments()),
                 Arrays.asList(jActionPanel.getJvmArguments()));
+    }
+
+    public void saveTasks(ProjectProperties properties) {
+        if (properties == null) throw new NullPointerException("properties");
+
+        updateShownInList();
 
         DefaultListModel listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
@@ -92,32 +92,49 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         for (int i = 0; i < elementCount; i++) {
             @SuppressWarnings("unchecked")
             PredefinedTaskItem current = (PredefinedTaskItem)listedTasks.getElementAt(i);
-            if (current == selected) {
-                newTasks.add(newTaskDef);
-                listedTasks.set(i, new PredefinedTaskItem(newTaskDef));
-            }
-            else {
-                newTasks.add(current.getTask());
-            }
+            newTasks.add(current.getTask());
         }
-        currentProperties.getCommonTasks().setValue(newTasks);
-        return true;
+        properties.getCommonTasks().setValue(newTasks);
     }
 
-    private void showSelected() {
-        PredefinedTaskItem selected = (PredefinedTaskItem)jDefinedTasks.getSelectedValue();
-        // TODO: disable/enable components depending on selected == null
-        if (selected == null) {
+    private void updateShownInList() {
+        PredefinedTask newTaskDef = getShownTask();
+        if (newTaskDef == null) {
             return;
         }
 
+        DefaultListModel listedTasks = getModelOfTaskList();
+        int elementCount = listedTasks.getSize();
+
+        for (int i = 0; i < elementCount; i++) {
+            @SuppressWarnings("unchecked")
+            PredefinedTaskItem current = (PredefinedTaskItem)listedTasks.getElementAt(i);
+            if (current == currentlyShown) {
+                currentlyShown = new PredefinedTaskItem(newTaskDef);
+                listedTasks.set(i, currentlyShown);
+                break;
+            }
+        }
+    }
+
+    private void showSelected() {
+        int selectedIndex = jDefinedTasks.getSelectedIndex();
+        // TODO: disable/enable components depending on the selection
+        if (selectedIndex < 0) {
+            return;
+        }
+
+        updateShownInList();
+
+        @SuppressWarnings("unchecked")
+        PredefinedTaskItem selected = (PredefinedTaskItem)getModelOfTaskList().getElementAt(selectedIndex);
+
+        currentlyShown = selected;
         jActionPanel.updatePanel(selected.getTask());
         jMustExistCheck.setSelected(selected.isMustExist());
     }
 
     public void initSettings(ProjectProperties properties) {
-        currentProperties = properties;
-
         List<PredefinedTask> commonTasks = properties.getCommonTasks().getValue();
 
         DefaultListModel listModel = getModelOfTaskList();
@@ -169,7 +186,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jAddNewButton = new javax.swing.JButton();
         jMustExistCheck = new javax.swing.JCheckBox();
         jRemoveButton = new javax.swing.JButton();
-        jSaveButton = new javax.swing.JButton();
 
         jScrollPane1.setViewportView(jDefinedTasks);
 
@@ -193,13 +209,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jSaveButton, org.openide.util.NbBundle.getMessage(ManageTasksPanel.class, "ManageTasksPanel.jSaveButton.text")); // NOI18N
-        jSaveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jSaveButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -214,12 +223,10 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                             .addComponent(jAddNewButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jRemoveButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jTasksCaption)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jMustExistCheck)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jSaveButton)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTasksCaption)
+                            .addComponent(jMustExistCheck))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
             .addComponent(jTaskSettingsHolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
@@ -238,32 +245,15 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jTaskSettingsHolder, javax.swing.GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jSaveButton)
-                    .addComponent(jMustExistCheck)))
+                .addComponent(jMustExistCheck))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jSaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jSaveButtonActionPerformed
-        trySaveTask();
-        // TODO: Show the user that we could not save the task
-        //  (with the reason) or disable the save button when a task cannot be
-        //  saved.
-    }//GEN-LAST:event_jSaveButtonActionPerformed
-
     private void jRemoveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRemoveButtonActionPerformed
         PredefinedTaskItem selected = getSelectedTask();
-        if (selected == null || currentProperties == null) {
+        if (selected == null) {
             return;
         }
-
-        List<PredefinedTask> newTasks = new LinkedList<PredefinedTask>();
-        for (PredefinedTask task: currentProperties.getCommonTasks().getValue()) {
-            if (task != selected.getTask()) {
-                newTasks.add(task);
-            }
-        }
-        currentProperties.getCommonTasks().setValue(newTasks);
 
         DefaultListModel listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
@@ -303,7 +293,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 PredefinedTaskItem item = new PredefinedTaskItem(newTask);
                 getModelOfTaskList().addElement(item);
                 jDefinedTasks.setSelectedValue(item, true);
-                showSelected();
             }
         }
     }//GEN-LAST:event_jAddNewButtonActionPerformed
@@ -313,7 +302,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     private javax.swing.JList jDefinedTasks;
     private javax.swing.JCheckBox jMustExistCheck;
     private javax.swing.JButton jRemoveButton;
-    private javax.swing.JButton jSaveButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel jTaskSettingsHolder;
     private javax.swing.JLabel jTasksCaption;

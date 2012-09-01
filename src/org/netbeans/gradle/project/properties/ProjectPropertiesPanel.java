@@ -4,16 +4,12 @@ import java.awt.Dialog;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.GradleTaskDef;
-import org.netbeans.gradle.project.tasks.GradleTasks;
-import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
@@ -211,7 +207,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 panel,
                 NbStrings.getManageTasksDlgTitle(),
                 true,
-                new Object[]{DialogDescriptor.OK_OPTION},
+                new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
                 DialogDescriptor.OK_OPTION,
                 DialogDescriptor.BOTTOM_ALIGN,
                 null,
@@ -219,6 +215,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
         dlg.pack();
         dlg.setVisible(true);
+
+        if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
+            panel.saveTasks(currentProperties);
+        }
     }//GEN-LAST:event_jManageTasksButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
