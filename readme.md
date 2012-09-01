@@ -112,4 +112,3 @@ Current Limitations
 - The *sourceCompatibility* and the *targetCompatibility* in the build script are ignored
   but these can be set separately in project properties (stored with the
   *settings.gradle* in *.nb-gradle-properties*).
-- Global custom tasks cannot be added (as with the Maven plugin).
