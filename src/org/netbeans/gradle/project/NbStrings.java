@@ -121,6 +121,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_CustomTaskTitle");
     }
 
+    public static String getManageTasksDlgTitle() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ManageTasksTitle");
+    }
+
+    public static String getAddNewTaskDlgTitle() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_AddNewTaskTitle");
+    }
+
     public static String getProjectPropertiesDlgTitle(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "LBL_ProjectPropertiesTitle", projectName);
     }

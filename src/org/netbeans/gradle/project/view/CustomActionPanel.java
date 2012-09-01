@@ -3,11 +3,36 @@ package org.netbeans.gradle.project.view;
 import java.awt.event.KeyEvent;
 import javax.swing.JTextArea;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.properties.PredefinedTask;
 
 @SuppressWarnings("serial") // Don't care about serialization
 public class CustomActionPanel extends javax.swing.JPanel {
     public CustomActionPanel() {
         initComponents();
+    }
+
+    public void updatePanel(PredefinedTask task) {
+        StringBuilder tasks = new StringBuilder(1024);
+
+        for (PredefinedTask.Name name: task.getTaskNames()) {
+            tasks.append(name.getName());
+            tasks.append(' ');
+        }
+        jTasksEdit.setText(tasks.toString());
+
+        StringBuilder arguments = new StringBuilder(1024);
+        for (String arg: task.getArguments()) {
+            arguments.append(arg);
+            arguments.append('\n');
+        }
+        jArgsTextArea.setText(arguments.toString());
+
+        StringBuilder jvmArguments = new StringBuilder(1024);
+        for (String arg: task.getJvmArguments()) {
+            jvmArguments.append(arg);
+            jvmArguments.append('\n');
+        }
+        jJvmArgsTextArea.setText(jvmArguments.toString());
     }
 
     public String[] getTasks() {
@@ -101,7 +126,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 472, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
                     .addComponent(jTasksEdit, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -126,8 +151,8 @@ public class CustomActionPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jJvmArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
