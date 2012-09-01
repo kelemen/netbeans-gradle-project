@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.persistent;
 
 import java.io.File;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -75,10 +74,12 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         final ChangeDetector platformChanged = new ChangeDetector();
         final ChangeDetector sourceEncodingChanged = new ChangeDetector();
         final ChangeDetector sourceLevelChanged = new ChangeDetector();
+        final ChangeDetector commonTasksChanged = new ChangeDetector();
 
         properties.getPlatform().addChangeListener(platformChanged);
         properties.getSourceEncoding().addChangeListener(sourceEncodingChanged);
         properties.getSourceLevel().addChangeListener(sourceLevelChanged);
+        properties.getCommonTasks().addChangeListener(commonTasksChanged);
 
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
@@ -98,6 +99,9 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             if (!sourceEncodingChanged.hasChanged()) {
                                 properties.getSourceEncoding().setValue(snapshot.getSourceEncoding());
                             }
+                            if (!commonTasksChanged.hasChanged()) {
+                                properties.getCommonTasks().setValue(snapshot.getCommonTasks());
+                            }
 
                             if (onDone != null) {
                                 onDone.run();
@@ -114,6 +118,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             properties.getPlatform().removeChangeListener(platformChanged);
                             properties.getSourceEncoding().removeChangeListener(sourceEncodingChanged);
                             properties.getSourceLevel().removeChangeListener(sourceLevelChanged);
+                            properties.getCommonTasks().removeChangeListener(commonTasksChanged);
                         }
                     });
                 }

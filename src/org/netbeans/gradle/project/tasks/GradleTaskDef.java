@@ -1,25 +1,15 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.netbeans.gradle.project.CollectionUtils;
 
 public final class GradleTaskDef {
     public static final class Builder {
         private final List<String> taskNames;
         private List<String> arguments;
         private List<String> jvmArguments;
-
-        private static List<String> wrapStringList(List<String> stringList) {
-            if (stringList == null) throw new NullPointerException("stringList");
-
-            List<String> wrapped = Collections.unmodifiableList(new ArrayList<String>(stringList));
-            for (String element: wrapped) {
-                if (element == null) throw new NullPointerException("element");
-            }
-            return wrapped;
-        }
 
         public Builder(GradleTaskDef taskDef) {
             this.taskNames = taskDef.getTaskNames();
@@ -36,7 +26,7 @@ public final class GradleTaskDef {
         }
 
         public Builder(List<String> taskNames) {
-            this.taskNames = wrapStringList(taskNames);
+            this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
 
@@ -54,7 +44,7 @@ public final class GradleTaskDef {
         }
 
         public void setArguments(List<String> arguments) {
-            this.arguments = wrapStringList(arguments);
+            this.arguments = CollectionUtils.copyNullSafeList(arguments);
         }
 
         public List<String> getJvmArguments() {
@@ -62,7 +52,7 @@ public final class GradleTaskDef {
         }
 
         public void setJvmArguments(List<String> jvmArguments) {
-            this.jvmArguments = wrapStringList(jvmArguments);
+            this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
         }
 
         public GradleTaskDef create() {

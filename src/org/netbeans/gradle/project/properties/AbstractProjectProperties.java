@@ -26,6 +26,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
         return Arrays.<MutableProperty<?>>asList(
                 getPlatform(),
                 getSourceEncoding(),
-                getSourceLevel());
+                getSourceLevel(),
+                getCommonTasks());
     }
 }

@@ -27,6 +27,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<String> sourceLevelProxy;
     private final MutablePropertyProxy<JavaPlatform> platformProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
+    private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
@@ -50,6 +51,12 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             @Override
             public MutableProperty<Charset> getProperty() {
                 return this.getProperties().getSourceEncoding();
+            }
+        });
+        this.commonTasksProxy = new MutablePropertyProxy<List<PredefinedTask>>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
+            @Override
+            public MutableProperty<List<PredefinedTask>> getProperty() {
+                return this.getProperties().getCommonTasks();
             }
         });
     }
@@ -96,6 +103,11 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     @Override
     public MutableProperty<Charset> getSourceEncoding() {
         return sourceEncodingProxy;
+    }
+
+    @Override
+    public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+        return commonTasksProxy;
     }
 
     private static interface MutablePropertyRef<ValueType> {
