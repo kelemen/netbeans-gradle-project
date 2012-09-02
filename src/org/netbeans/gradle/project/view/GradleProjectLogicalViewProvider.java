@@ -4,9 +4,12 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -382,6 +385,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     private static class CustomTasksMenuBuilder {
+        private static final Collator STR_CMP = Collator.getInstance();
+
         private final NbGradleProject project;
         private final JMenu menu;
         private List<PredefinedTask> lastUsedTasks;
@@ -407,6 +412,16 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             lastUsedTasks = commonTasks;
             lastUsedModule = mainModule;
+
+            commonTasks = new ArrayList<PredefinedTask>(commonTasks);
+            Collections.sort(commonTasks, new Comparator<PredefinedTask>() {
+                @Override
+                public int compare(PredefinedTask o1, PredefinedTask o2) {
+                    String name1 = o1.getDisplayName();
+                    String name2 = o2.getDisplayName();
+                    return STR_CMP.compare(name1, name2);
+                }
+            });
 
             boolean hasCustomTasks = false;
             menu.removeAll();
