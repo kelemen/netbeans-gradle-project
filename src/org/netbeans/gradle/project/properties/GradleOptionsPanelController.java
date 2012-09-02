@@ -30,6 +30,7 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
     public void applyChanges() {
         GlobalGradleSettings.getGradleHome().setValueFromString(getPanel().getGradleHome());
         GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getPanel().getGradleJvmArgs());
+        GlobalGradleSettings.getGradleJdk().setValue(getPanel().getJdk());
     }
 
     @Override

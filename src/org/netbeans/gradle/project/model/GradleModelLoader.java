@@ -67,6 +67,7 @@ public final class GradleModelLoader {
         if (gradleHome != null) {
             result.useInstallation(gradleHome);
         }
+
         return result;
     }
 
@@ -170,6 +171,12 @@ public final class GradleModelLoader {
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
+
+        FileObject jdkHomeObj = GlobalGradleSettings.getCurrentGradleJdkHome();
+        File jdkHome = jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
+        if (jdkHome != null) {
+            builder.setJavaHome(jdkHome);
+        }
 
         List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
 

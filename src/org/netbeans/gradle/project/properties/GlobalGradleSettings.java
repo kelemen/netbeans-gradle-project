@@ -2,26 +2,35 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 
 public final class GlobalGradleSettings {
+    private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
+
     private static final StringBasedProperty<FileObject> GRADLE_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
+    private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
 
     static {
         GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
+        GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
     }
 
     public static StringBasedProperty<FileObject> getGradleHome() {
@@ -30,6 +39,30 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<List<String>> getGradleJvmArgs() {
         return GRADLE_JVM_ARGS;
+    }
+
+    public static StringBasedProperty<JavaPlatform> getGradleJdk() {
+        return GRADLE_JDK;
+    }
+
+    public static FileObject getCurrentGradleJdkHome() {
+        JavaPlatform platform = GRADLE_JDK.getValue();
+        if (platform == null) {
+            return null;
+        }
+
+        Collection<FileObject> installFolders = platform.getInstallFolders();
+        int numberOfFolder = installFolders.size();
+        if (numberOfFolder == 0) {
+            LOGGER.log(Level.WARNING, "Selected platform contains no installation folders: {0}", platform.getDisplayName());
+            return null;
+        }
+
+        if (numberOfFolder > 1) {
+            LOGGER.log(Level.WARNING, "Selected platform contains multiple installation folders: {0}", platform.getDisplayName());
+        }
+
+        return installFolders.iterator().next();
     }
 
     private enum StringToStringListConverter implements ValueConverter<List<String>> {
@@ -63,6 +96,42 @@ public final class GlobalGradleSettings {
             while (!valueItr.hasNext()) {
                 result.append('\n');
                 result.append(valueItr.next());
+            }
+            return result.toString();
+        }
+    }
+
+    private enum JavaPlaformConverter implements ValueConverter<JavaPlatform> {
+        INSTANCE;
+
+        @Override
+        public JavaPlatform toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty()) {
+                return JavaPlatform.getDefault();
+            }
+
+            JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
+            for (JavaPlatform platform: platforms) {
+                if (strValue.equals(toString(platform))) {
+                    return platform;
+                }
+            }
+            return JavaPlatform.getDefault();
+        }
+
+        @Override
+        public String toString(JavaPlatform value) {
+            if (value == null) {
+                return null;
+            }
+
+            StringBuilder result = new StringBuilder(1024);
+            for (FileObject installFolder: value.getInstallFolders()) {
+                String path = installFolder.getPath();
+                if (result.length() > 0) {
+                    result.append(";");
+                }
+                result.append(path);
             }
             return result.toString();
         }

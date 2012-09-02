@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -97,30 +98,29 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             jarResources.add(ClassPathSupport.createResource(jar));
         }
 
-        // ClassPathType.BOOT is never read from the classpathResources
         classpathResources.put(ClassPathType.COMPILE, jarResources);
         classpathResources.put(ClassPathType.RUNTIME, jarResources);
+
+        JavaPlatform platform = GlobalGradleSettings.getGradleJdk().getValue();
+        if (platform != null) {
+            List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
+            for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
+                platformResources.add(ClassPathSupport.createResource(entry.getURL()));
+            }
+            classpathResources.put(ClassPathType.BOOT, platformResources);
+        }
     }
 
     private void setupClassPaths() {
-        JavaPlatform defaultJdk = JavaPlatform.getDefault();
-
-        if (defaultJdk != null) {
-            // This can never change, so don't bother with classpathResources
-            classpaths.put(ClassPathType.BOOT, defaultJdk.getBootstrapLibraries());
-        }
-        else {
-            LOGGER.warning("There is no default JDK.");
-        }
-
         updateClassPathResources();
 
+        classpaths.put(ClassPathType.BOOT, createClassPath(ClassPathType.BOOT));
         classpaths.put(ClassPathType.COMPILE, createClassPath(ClassPathType.COMPILE));
         classpaths.put(ClassPathType.RUNTIME, createClassPath(ClassPathType.RUNTIME));
     }
 
     private void init() {
-        GlobalGradleSettings.getGradleHome().addChangeListener(new ChangeListener() {
+        ChangeListener changeListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
@@ -136,7 +136,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
                     }
                 });
             }
-        });
+        };
+        GlobalGradleSettings.getGradleHome().addChangeListener(changeListener);
+        GlobalGradleSettings.getGradleJdk().addChangeListener(changeListener);
 
         setupClassPaths();
     }

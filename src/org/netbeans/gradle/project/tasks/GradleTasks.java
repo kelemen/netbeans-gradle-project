@@ -11,7 +11,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -22,7 +21,6 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -42,16 +40,10 @@ public final class GradleTasks {
             = new RequestProcessor("Gradle-Task-Executor", 10, true);
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
-    private static final String[] NO_ARGS = new String[0];
 
     private static File getJavaHome() {
-        Collection<FileObject> installFolders = JavaPlatform.getDefault().getInstallFolders();
-        if (installFolders.size() != 1) {
-            return null;
-        }
-        else {
-            return FileUtil.toFile(installFolders.iterator().next());
-        }
+        FileObject jdkHomeObj = GlobalGradleSettings.getCurrentGradleJdkHome();
+        return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 
     private static void doGradleTasks(NbGradleProject project, GradleTaskDef taskDef) {
@@ -95,7 +87,12 @@ public final class GradleTasks {
         try {
             projectConnection = gradleConnector.connect();
             BuildLauncher buildLauncher = projectConnection.newBuild();
-            buildLauncher.setJavaHome(getJavaHome());
+
+            File javaHome = getJavaHome();
+            if (javaHome != null) {
+                buildLauncher.setJavaHome(javaHome);
+            }
+
             if (!taskDef.getJvmArguments().isEmpty()) {
                 buildLauncher.setJvmArguments(taskDef.getJvmArgumentsArray());
             }
