@@ -39,11 +39,6 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         this.test = test;
     }
 
-    private ClassPath getClassPath(String type) {
-        GradleClassPathProvider provider = project.getLookup().lookup(GradleClassPathProvider.class);
-        return provider.getClassPaths(type);
-    }
-
     private ClassPath getSources() {
         NbGradleModule mainModule = project.getAvailableModel().getMainModule();
         List<FileObject> srcRoots = new LinkedList<FileObject>();
