@@ -127,8 +127,11 @@ public final class GradleTasks {
 
                OutputWriter buildErrOutput = io.getErr();
                try {
-                   buildLauncher.setStandardOutput(new WriterOutputStream(buildOutput));
-                   buildLauncher.setStandardError(new WriterOutputStream(buildErrOutput));
+                   Writer forwardedStdOut = new WriterForwarded(buildOutput, taskDef.getStdOutListener());
+                   Writer forwardedStdErr = new WriterForwarded(buildOutput, taskDef.getStdOutListener());
+
+                   buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
+                   buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
 
                    io.select();
                    buildLauncher.run();
@@ -382,6 +385,80 @@ public final class GradleTasks {
         @Override
         public void write(int b) throws IOException {
             write(new byte[]{(byte)b});
+        }
+    }
+
+    private static class WriterForwarded extends Writer {
+        private final Writer wrapped;
+        private final TaskOutputListener listener;
+
+        public WriterForwarded(Writer wrapped, TaskOutputListener listener) {
+            if (wrapped == null) throw new NullPointerException("wrapped");
+            if (listener == null) throw new NullPointerException("listener");
+
+            this.wrapped = wrapped;
+            this.listener = listener;
+        }
+
+        @Override
+        public void write(int c) throws IOException {
+            wrapped.write(c);
+        }
+
+        @Override
+        public void write(char[] cbuf) throws IOException {
+            listener.receiveOutput(cbuf, 0, cbuf.length);
+            wrapped.write(cbuf);
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            listener.receiveOutput(cbuf, off, len);
+            wrapped.write(cbuf, off, len);
+        }
+
+        @Override
+        public void write(String str) throws IOException {
+            char[] cbuf = str.toCharArray();
+            listener.receiveOutput(cbuf, 0, cbuf.length);
+            wrapped.write(str);
+        }
+
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            char[] cbuf = str.toCharArray();
+            listener.receiveOutput(cbuf, off, len);
+            wrapped.write(str, off, len);
+        }
+
+        @Override
+        public Writer append(CharSequence csq) throws IOException {
+            char[] cbuf = csq.toString().toCharArray();
+            listener.receiveOutput(cbuf, 0, cbuf.length);
+            return wrapped.append(csq);
+        }
+
+        @Override
+        public Writer append(CharSequence csq, int start, int end) throws IOException {
+            char[] cbuf = csq.toString().toCharArray();
+            listener.receiveOutput(cbuf, start, end - start);
+            return wrapped.append(csq, start, end);
+        }
+
+        @Override
+        public Writer append(char c) throws IOException {
+            listener.receiveOutput(new char[]{c}, 0, 1);
+            return wrapped.append(c);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            wrapped.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            wrapped.close();
         }
     }
 

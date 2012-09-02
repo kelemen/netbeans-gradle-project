@@ -11,10 +11,15 @@ public final class GradleTaskDef {
         private List<String> arguments;
         private List<String> jvmArguments;
 
+        private TaskOutputListener stdOutListener;
+        private TaskOutputListener stdErrListener;
+
         public Builder(GradleTaskDef taskDef) {
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
             this.jvmArguments = taskDef.getJvmArguments();
+            this.stdOutListener = taskDef.getStdOutListener();
+            this.stdErrListener = taskDef.getStdErrListener();
         }
 
         public Builder(String taskName) {
@@ -29,6 +34,8 @@ public final class GradleTaskDef {
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
+            this.stdOutListener = NoOpTaskOutputListener.INSTANCE;
+            this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
@@ -55,6 +62,24 @@ public final class GradleTaskDef {
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
         }
 
+        public TaskOutputListener getStdOutListener() {
+            return stdOutListener;
+        }
+
+        public void setStdOutListener(TaskOutputListener stdOutListener) {
+            if (stdOutListener == null) throw new NullPointerException("stdOutListener");
+            this.stdOutListener = stdOutListener;
+        }
+
+        public TaskOutputListener getStdErrListener() {
+            return stdErrListener;
+        }
+
+        public void setStdErrListener(TaskOutputListener stdErrListener) {
+            if (stdErrListener == null) throw new NullPointerException("stdErrListener");
+            this.stdErrListener = stdErrListener;
+        }
+
         public GradleTaskDef create() {
             return new GradleTaskDef(this);
         }
@@ -63,11 +88,15 @@ public final class GradleTaskDef {
     private final List<String> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
+    private final TaskOutputListener stdOutListener;
+    private final TaskOutputListener stdErrListener;
 
     private GradleTaskDef(Builder builder) {
         this.taskNames = builder.getTaskNames();
         this.arguments = builder.getArguments();
         this.jvmArguments = builder.getJvmArguments();
+        this.stdOutListener = builder.getStdOutListener();
+        this.stdErrListener = builder.getStdErrListener();
     }
 
     private static String[] stringListToArray(List<String> list) {
@@ -96,5 +125,21 @@ public final class GradleTaskDef {
 
     public String[] getJvmArgumentsArray() {
         return stringListToArray(jvmArguments);
+    }
+
+    public TaskOutputListener getStdOutListener() {
+        return stdOutListener;
+    }
+
+    public TaskOutputListener getStdErrListener() {
+        return stdErrListener;
+    }
+
+    private enum NoOpTaskOutputListener implements TaskOutputListener {
+        INSTANCE;
+
+        @Override
+        public void receiveOutput(char[] buffer, int offset, int length) {
+        }
     }
 }
