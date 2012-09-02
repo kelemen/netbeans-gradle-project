@@ -1,14 +1,9 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -30,8 +25,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.ContextAwareAction;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory

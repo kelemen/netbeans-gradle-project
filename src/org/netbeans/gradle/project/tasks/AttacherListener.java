@@ -21,7 +21,6 @@ import org.netbeans.gradle.project.model.NbModuleDependency;
 import org.netbeans.gradle.project.model.NbSourceGroup;
 import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.gradle.project.model.NbUriDependency;
-import org.netbeans.gradle.project.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
