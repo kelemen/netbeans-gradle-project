@@ -48,8 +48,8 @@ public final class GradleActionProvider implements ActionProvider {
         this.project = project;
     }
 
-    private TaskOutputListener debugeeListener() {
-        return new DebugTextListener(new AttacherListener(project));
+    private TaskOutputListener debugeeListener(boolean test) {
+        return new DebugTextListener(new AttacherListener(project, test));
     }
 
     @Override
@@ -93,18 +93,19 @@ public final class GradleActionProvider implements ActionProvider {
 
     private Runnable createProjectTask(
             boolean listenForDebugee,
+            boolean test,
             String... tasks) {
         List<String> qualified = toQualifiedTaskName(project, tasks);
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualified);
         if (listenForDebugee) {
-            builder.setStdOutListener(debugeeListener());
+            builder.setStdOutListener(debugeeListener(test));
         }
         return GradleTasks.createAsyncGradleTask(project, builder.create());
     }
 
     private Runnable createProjectTask(
             String... tasks) {
-        return createProjectTask(false, tasks);
+        return createProjectTask(false, false, tasks);
     }
 
     private Runnable createAction(String command, Lookup context) {
@@ -132,7 +133,7 @@ public final class GradleActionProvider implements ActionProvider {
             return createProjectTask("run");
         }
         else if (COMMAND_DEBUG.equals(command)) {
-            return createProjectTask(true, "debug");
+            return createProjectTask(true, false, "debug");
         }
         else if (COMMAND_JAVADOC.equals(command)) {
             return createProjectTask("javadoc");
@@ -196,7 +197,7 @@ public final class GradleActionProvider implements ActionProvider {
                         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualifiedTaskNames);
                         builder.setArguments(Arrays.asList(args));
                         if (debug) {
-                            builder.setStdOutListener(debugeeListener());
+                            builder.setStdOutListener(debugeeListener(true));
                         }
 
                         Runnable task;
