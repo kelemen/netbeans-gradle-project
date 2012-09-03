@@ -1,9 +1,11 @@
 package org.netbeans.gradle.project.properties;
 
 import java.awt.Dialog;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
@@ -16,6 +18,8 @@ import org.openide.DialogDisplayer;
 
 @SuppressWarnings("serial")
 public class ManageTasksPanel extends javax.swing.JPanel {
+    private static final Collator STR_CMP = Collator.getInstance();
+
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
@@ -36,6 +40,29 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 showSelected();
             }
         });
+    }
+
+    private void sortTasks() {
+        Object selected = jDefinedTasks.getSelectedValue();
+
+        DefaultListModel model = getModelOfTaskList();
+        int elementCount = model.getSize();
+        PredefinedTaskItem[] elements = new PredefinedTaskItem[elementCount];
+        for (int i = 0; i < elementCount; i++) {
+            elements[i] = (PredefinedTaskItem)model.get(i);
+        }
+        Arrays.sort(elements, new Comparator<PredefinedTaskItem>() {
+            @Override
+            public int compare(PredefinedTaskItem o1, PredefinedTaskItem o2) {
+                String name1 = o1.toString();
+                String name2 = o2.toString();
+                return STR_CMP.compare(name1, name2);
+            }
+        });
+        for (int i = 0; i < elementCount; i++) {
+            model.set(i, elements[i]);
+        }
+        jDefinedTasks.setSelectedValue(selected, true);
     }
 
     private DefaultListModel getModelOfTaskList() {
@@ -138,9 +165,11 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         List<PredefinedTask> commonTasks = properties.getCommonTasks().getValue();
 
         DefaultListModel listModel = getModelOfTaskList();
+        listModel.clear();
         for (PredefinedTask task: commonTasks) {
             listModel.addElement(new PredefinedTaskItem(task));
         }
+        sortTasks();
     }
 
     private static class PredefinedTaskItem {
@@ -187,6 +216,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jMustExistCheck = new javax.swing.JCheckBox();
         jRemoveButton = new javax.swing.JButton();
 
+        jDefinedTasks.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(jDefinedTasks);
 
         org.openide.awt.Mnemonics.setLocalizedText(jTasksCaption, org.openide.util.NbBundle.getMessage(ManageTasksPanel.class, "ManageTasksPanel.jTasksCaption.text")); // NOI18N
@@ -293,6 +323,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 PredefinedTaskItem item = new PredefinedTaskItem(newTask);
                 getModelOfTaskList().addElement(item);
                 jDefinedTasks.setSelectedValue(item, true);
+                sortTasks();
             }
         }
     }//GEN-LAST:event_jAddNewButtonActionPerformed
