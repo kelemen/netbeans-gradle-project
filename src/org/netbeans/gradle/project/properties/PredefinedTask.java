@@ -121,11 +121,6 @@ public final class PredefinedTask {
                 return true;
             }
 
-            for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(module)) {
-                if (isLocalTaskExists(dependency, localName))  {
-                    return true;
-                }
-            }
             return false;
         }
     }
