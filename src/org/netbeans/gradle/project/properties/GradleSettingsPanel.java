@@ -35,6 +35,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         if (currentJdk != null) {
             jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk));
         }
+
+        jSkipTestsCheck.setSelected(GlobalGradleSettings.getSkipTests().getValue());
     }
 
     public String getGradleHome() {
@@ -51,6 +53,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         @SuppressWarnings("unchecked")
         JavaPlatformItem selected = (JavaPlatformItem)jJdkCombo.getSelectedItem();
         return selected != null ? selected.getPlatform() : JavaPlatform.getDefault();
+    }
+
+    public boolean isSkipTests() {
+        return jSkipTestsCheck.isSelected();
     }
 
     private static class JavaPlatformItem {
@@ -112,6 +118,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleJVMArgs = new javax.swing.JTextArea();
         jJdkCombo = new javax.swing.JComboBox();
         jGradleJdkCaption = new javax.swing.JLabel();
+        jSkipTestsCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -132,6 +139,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleJdkCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleJdkCaption.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jSkipTestsCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jSkipTestsCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -149,6 +158,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                         .addComponent(jBrowsePathButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jSkipTestsCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption))
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -171,7 +181,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSkipTestsCheck)
+                .addContainerGap(61, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -193,5 +205,6 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jGradleVMArgsCaption;
     private javax.swing.JComboBox jJdkCombo;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JCheckBox jSkipTestsCheck;
     // End of variables declaration//GEN-END:variables
 }

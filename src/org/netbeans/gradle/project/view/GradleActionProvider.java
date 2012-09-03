@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugTextListener;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
@@ -94,32 +95,38 @@ public final class GradleActionProvider implements ActionProvider {
     private Runnable createProjectTask(
             boolean listenForDebugee,
             boolean test,
+            boolean addSkipTestIfNeeded,
             String... tasks) {
         List<String> qualified = toQualifiedTaskName(project, tasks);
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualified);
         if (listenForDebugee) {
             builder.setStdOutListener(debugeeListener(test));
         }
+        if (addSkipTestIfNeeded && GlobalGradleSettings.getSkipTests().getValue()) {
+            builder.setArguments(Arrays.asList("-x", "test"));
+        }
+
         return GradleTasks.createAsyncGradleTask(project, builder.create());
     }
 
     private Runnable createProjectTask(
+            boolean addSkipTestIfNeeded,
             String... tasks) {
-        return createProjectTask(false, false, tasks);
+        return createProjectTask(false, false, addSkipTestIfNeeded, tasks);
     }
 
     private Runnable createAction(String command, Lookup context) {
         if (COMMAND_BUILD.equals(command)) {
-            return createProjectTask("build");
+            return createProjectTask(true, "build");
         }
         else if (COMMAND_TEST.equals(command)) {
-            return createProjectTask("cleanTest", "test");
+            return createProjectTask(false, "cleanTest", "test");
         }
         else if (COMMAND_CLEAN.equals(command)) {
-            return createProjectTask("clean");
+            return createProjectTask(false, "clean");
         }
         else if (COMMAND_REBUILD.equals(command)) {
-            return createProjectTask("clean", "build");
+            return createProjectTask(true, "clean", "build");
         }
         else if (COMMAND_RELOAD.equals(command)) {
             return new Runnable() {
@@ -130,13 +137,13 @@ public final class GradleActionProvider implements ActionProvider {
             };
         }
         else if (COMMAND_RUN.equals(command)) {
-            return createProjectTask("run");
+            return createProjectTask(true, "run");
         }
         else if (COMMAND_DEBUG.equals(command)) {
-            return createProjectTask(true, false, "debug");
+            return createProjectTask(true, false, true, "debug");
         }
         else if (COMMAND_JAVADOC.equals(command)) {
-            return createProjectTask("javadoc");
+            return createProjectTask(false, "javadoc");
         }
         else if (COMMAND_TEST_SINGLE.equals(command) || COMMAND_DEBUG_TEST_SINGLE.equals(command)) {
             List<FileObject> files = getFilesOfContext(context);

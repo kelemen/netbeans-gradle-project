@@ -26,11 +26,13 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<FileObject> GRADLE_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
     private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
+    private static final StringBasedProperty<Boolean> SKIP_TESTS;
 
     static {
         GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
+        SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
     }
 
     public static StringBasedProperty<FileObject> getGradleHome() {
@@ -43,6 +45,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<JavaPlatform> getGradleJdk() {
         return GRADLE_JDK;
+    }
+
+    public static StringBasedProperty<Boolean> getSkipTests() {
+        return SKIP_TESTS;
     }
 
     public static FileObject getCurrentGradleJdkHome() {
@@ -98,6 +104,41 @@ public final class GlobalGradleSettings {
                 result.append(valueItr.next());
             }
             return result.toString();
+        }
+    }
+
+    private static class BooleanConverter implements ValueConverter<Boolean> {
+        private static String TRUE_STR = Boolean.TRUE.toString();
+        private static String FALSE_STR = Boolean.FALSE.toString();
+
+        private final Boolean defaultValue;
+
+        public BooleanConverter(Boolean defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public Boolean toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty()) {
+                return defaultValue;
+            }
+
+            if (TRUE_STR.equals(strValue)) return true;
+            if (FALSE_STR.equals(strValue)) return false;
+            return defaultValue;
+        }
+
+        @Override
+        public String toString(Boolean value) {
+            if (value != null && value.equals(defaultValue)) {
+                return null;
+            }
+            // This check only matters in case value and defaultValue are both nulls.
+            if (value == defaultValue) {
+                return null;
+            }
+
+            return value != null ? value.toString() : null;
         }
     }
 

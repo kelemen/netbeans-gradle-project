@@ -12,13 +12,13 @@ import org.openide.util.Lookup;
         keywords = "#AdvancedOption_Keywords_Gradle",
         keywordsCategory = "Advanced/Gradle")
 public final class GradleOptionsPanelController extends OptionsPanelController {
-    private GradleSettingsPanel panel;
+    private GradleSettingsPanel settingsPanel;
 
     private GradleSettingsPanel getPanel() {
-        if (panel == null) {
-            panel = new GradleSettingsPanel();
+        if (settingsPanel == null) {
+            settingsPanel = new GradleSettingsPanel();
         }
-        return panel;
+        return settingsPanel;
     }
 
     @Override
@@ -28,9 +28,12 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
 
     @Override
     public void applyChanges() {
-        GlobalGradleSettings.getGradleHome().setValueFromString(getPanel().getGradleHome());
-        GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getPanel().getGradleJvmArgs());
-        GlobalGradleSettings.getGradleJdk().setValue(getPanel().getJdk());
+        GradleSettingsPanel panel = getPanel();
+
+        GlobalGradleSettings.getGradleHome().setValueFromString(panel.getGradleHome());
+        GlobalGradleSettings.getGradleJvmArgs().setValueFromString(panel.getGradleJvmArgs());
+        GlobalGradleSettings.getGradleJdk().setValue(panel.getJdk());
+        GlobalGradleSettings.getSkipTests().setValue(panel.isSkipTests());
     }
 
     @Override
