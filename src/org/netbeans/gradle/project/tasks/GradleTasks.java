@@ -125,7 +125,7 @@ public final class GradleTasks {
                OutputWriter buildErrOutput = io.getErr();
                try {
                    Writer forwardedStdOut = new WriterForwarded(buildOutput, taskDef.getStdOutListener());
-                   Writer forwardedStdErr = new WriterForwarded(buildOutput, taskDef.getStdOutListener());
+                   Writer forwardedStdErr = new WriterForwarded(buildOutput, taskDef.getStdErrListener());
 
                    buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
                    buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
