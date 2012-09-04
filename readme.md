@@ -2,7 +2,7 @@ Downloads
 ---------
 
 The latest build (nbm file) can be downloaded from 
-(http://plugins.netbeans.org/plugin/44510/gradle-support)[http://plugins.netbeans.org/plugin/44510/gradle-support].
+[http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support).
 
 I will remove the binary from the downloads section of the GitHub page soon.
 
