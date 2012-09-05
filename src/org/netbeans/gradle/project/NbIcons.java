@@ -14,7 +14,7 @@ public final class NbIcons {
     private static final Logger LOGGER = Logger.getLogger(NbIcons.class.getName());
 
     @StaticResource
-    private static final String PROJECT_ICON_PATH = "org/netbeans/gradle/project/resources/gradle.png";
+    public static final String PROJECT_ICON_PATH = "org/netbeans/gradle/project/resources/gradle.png";
 
     @StaticResource
     private static final String TASK_ICON_PATH = "org/netbeans/gradle/project/resources/task.gif";
