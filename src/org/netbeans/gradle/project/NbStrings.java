@@ -171,6 +171,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_ErrorLoadingProject", errorText.toString());
     }
 
+    public static String getSelectProjectLocationCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_SelectProjectLocation");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

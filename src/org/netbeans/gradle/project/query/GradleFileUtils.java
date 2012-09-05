@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -114,6 +115,18 @@ public final class GradleFileUtils {
 
     public static FileObject getSrcDirOfGradle(FileObject gradleHome) {
         return gradleHome.getFileObject("src");
+    }
+
+    public static void createDefaultSourceDirs(FileObject projectDir) throws IOException {
+        FileObject srcDir = projectDir.createFolder("src");
+        FileObject mainDir = srcDir.createFolder("main");
+        FileObject testDir = srcDir.createFolder("test");
+
+        mainDir.createFolder("java");
+        mainDir.createFolder("resources");
+
+        testDir.createFolder("java");
+        testDir.createFolder("resources");
     }
 
     private GradleFileUtils() {
