@@ -202,12 +202,20 @@ public final class NewProjectUtils {
         };
     }
 
-    public static Validator<String> createClassNameValidator() {
+    public static Validator<String> createClassNameValidator(final boolean optional) {
         final Validator<String> varNameValidator = createVariableNameValidator();
 
         return new Validator<String>() {
             @Override
             public Problem validateInput(String inputType) {
+                if (optional && inputType.isEmpty()) {
+                    return null;
+                }
+
+                if (inputType.endsWith(".")) {
+                    return Problem.severe(NewProjectStrings.getIllegalIdentifier());
+                }
+
                 String[] parts = inputType.split(Pattern.quote("."));
                 for (String part: parts) {
                     Problem problem = varNameValidator.validateInput(part);

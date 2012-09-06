@@ -22,11 +22,11 @@ public final class Problem {
     }
 
     public static Problem warning(String message) {
-        return new Problem(Level.SEVERE, message);
+        return new Problem(Level.WARNING, message);
     }
 
     public static Problem info(String message) {
-        return new Problem(Level.SEVERE, message);
+        return new Problem(Level.INFO, message);
     }
 
     private final Level level;

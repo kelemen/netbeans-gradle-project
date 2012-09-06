@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.newproject;
 
 import java.io.File;
+import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -10,9 +11,12 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbPreferences;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
+    private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
+
     private final GroupValidator validators;
     private final BackgroundValidator bckgValidator;
 
@@ -32,8 +36,15 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 NewProjectUtils.createNewFolderValidator(),
                 NewProjectUtils.createCollector(jProjectFolderEdit));
         validators.addValidator(
-                NewProjectUtils.createClassNameValidator(),
+                NewProjectUtils.createClassNameValidator(true),
                 NewProjectUtils.createCollector(jMainClassEdit));
+
+        String defaultDir = getPreferences().get(DEFAULT_PROJECTDIR_SETTINGS_KEY, "");
+        if (defaultDir.isEmpty()) {
+            defaultDir = new File(System.getProperty("user.home"), "Projects").getAbsolutePath();
+        }
+
+        jProjectLocationEdit.setText(defaultDir);
 
         jInformationLabel.setText("");
         bckgValidator.addChangeListener(new ChangeListener() {
@@ -115,6 +126,10 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         jMainClassEdit.getDocument().addDocumentListener(validationPerformer);
     }
 
+    private Preferences getPreferences() {
+        return NbPreferences.forModule(NewProjectUtils.class);
+    }
+
     public void startValidation() {
         bckgValidator.setValidators(validators);
     }
@@ -136,6 +151,8 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         if (projectName.isEmpty() || projectDirStr.isEmpty()) {
             return null;
         }
+
+        getPreferences().put(DEFAULT_PROJECTDIR_SETTINGS_KEY, jProjectLocationEdit.getText().trim());
 
         File projectDir = new File(projectDirStr);
         return new GradleSingleProjectConfig(projectName, projectDir, mainClass);
