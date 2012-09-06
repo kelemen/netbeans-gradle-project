@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.newproject;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
@@ -60,20 +61,25 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 else {
                     assert currentProblem != null;
                     String title;
+                    Color labelColor;
                     switch (currentProblem.getLevel()) {
                         case INFO:
+                            labelColor = Color.BLACK;
                             title = NbStrings.getInfoCaption();
                             break;
                         case WARNING:
+                            labelColor = Color.ORANGE.darker();
                             title = NbStrings.getWarningCaption();
                             break;
                         case SEVERE:
+                            labelColor = Color.RED;
                             title = NbStrings.getErrorCaption();
                             break;
                         default:
                             throw new AssertionError(currentProblem.getLevel().name());
                     }
 
+                    jInformationLabel.setForeground(labelColor);
                     jInformationLabel.setText(title + ": " + message);
                 }
             }
