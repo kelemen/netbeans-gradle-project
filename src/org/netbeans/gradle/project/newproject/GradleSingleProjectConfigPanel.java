@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.newproject;
 
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
@@ -38,6 +39,7 @@ public final class GradleSingleProjectConfigPanel implements WizardDescriptor.Pa
 
     @Override
     public void readSettings(WizardDescriptor settings) {
+        getPanel().startValidation();
     }
 
     @Override

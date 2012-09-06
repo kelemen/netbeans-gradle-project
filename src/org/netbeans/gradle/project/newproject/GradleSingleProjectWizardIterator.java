@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.newproject;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +16,6 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
-import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -34,7 +32,6 @@ implements
 
     @StaticResource
     private static final String SINGLE_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/single-project.gradle";
-    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
@@ -51,7 +48,9 @@ implements
             GradleSingleProjectConfig config) throws IOException {
         String mainClass = config.getMainClass();
 
-        String buildGradleContent = StringUtils.getResourceAsString(SINGLE_PROJECT_BUILD_GRADLE, UTF8);
+        String buildGradleContent = StringUtils.getResourceAsString(
+                SINGLE_PROJECT_BUILD_GRADLE,
+                NewProjectUtils.DEFAULT_FILE_ENCODING);
 
         buildGradleContent = buildGradleContent.replace("${MAIN_CLASS}",
                 mainClass != null ? mainClass : "");
@@ -59,60 +58,7 @@ implements
                 AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
 
         File buildGradle = new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
-        StringUtils.writeStringToFile(buildGradleContent, UTF8, buildGradle);
-    }
-
-    private static void createMainClass(
-            File projectDir,
-            GradleSingleProjectConfig config) throws IOException {
-        String mainClass = config.getMainClass();
-        if (mainClass == null) {
-            return;
-        }
-
-        String packageName;
-        String simpleClassName;
-
-        int classSepIndex = mainClass.lastIndexOf('.');
-        if (classSepIndex >= 0) {
-            packageName = mainClass.substring(0, classSepIndex);
-            simpleClassName = mainClass.substring(classSepIndex + 1);
-        }
-        else {
-            packageName = "";
-            simpleClassName = mainClass;
-        }
-
-        String relPackagePathStr = packageName.replace(".", File.separator);
-
-        File packagePath = new File(projectDir, "src");
-        packagePath = new File(packagePath, "main");
-        packagePath = new File(packagePath, "java");
-        if (!relPackagePathStr.isEmpty()) {
-            packagePath = new File(packagePath, relPackagePathStr);
-        }
-
-        StringBuilder content = new StringBuilder(256);
-        if (!packageName.isEmpty()) {
-            content.append("package ");
-            content.append(packageName);
-            content.append(";\n\n");
-        }
-
-        content.append("public class ");
-        content.append(simpleClassName);
-        content.append(" {\n");
-        content.append("    /**\n");
-        content.append("     * @param args the command line arguments\n");
-        content.append("     */\n");
-        content.append("    public static void main(String[] args) {\n");
-        content.append("    }\n");
-        content.append("}\n");
-
-        File mainClassPath = new File(packagePath, simpleClassName + ".java");
-
-        FileUtil.createFolder(packagePath);
-        StringUtils.writeStringToFile(content.toString(), UTF8, mainClassPath);
+        StringUtils.writeStringToFile(buildGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, buildGradle);
     }
 
     @Override
@@ -125,10 +71,17 @@ implements
         File projectDirAsFile = FileUtil.normalizeFile(config.getProjectFolder());
         FileObject projectDir = FileUtil.createFolder(projectDirAsFile);
 
-        GradleFileUtils.createDefaultSourceDirs(projectDir);
+        NewProjectUtils.createDefaultSourceDirs(projectDir);
         createBuildGradle(projectDirAsFile, config);
-        createMainClass(projectDirAsFile, config);
-        StringUtils.writeStringToFile("", UTF8, new File(projectDirAsFile, GradleProjectConstants.SETTINGS_FILE_NAME));
+
+        String mainClass = config.getMainClass();
+        if (mainClass != null) {
+            NewProjectUtils.createMainClass(projectDirAsFile, mainClass);
+        }
+
+        StringUtils.writeStringToFile("",
+                NewProjectUtils.DEFAULT_FILE_ENCODING,
+                new File(projectDirAsFile, GradleProjectConstants.SETTINGS_FILE_NAME));
 
         return Collections.singleton(projectDir);
     }

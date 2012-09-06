@@ -1,0 +1,41 @@
+package org.netbeans.gradle.project.newproject;
+
+import org.openide.util.NbBundle;
+
+public final class NewProjectStrings {
+    public static String getInvalidPath() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidPath");
+    }
+
+    public static String getDirectoryAlreadyExists() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_DirectoryAlreadyExists");
+    }
+
+    public static String getCannotCreateFolderHere() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_CannotCreateFolderHere");
+    }
+
+    public static String getNotRecommendedProjectName() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_NotRecommendedProjectName");
+    }
+
+    public static String getIllegalProjectName() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_IllegalProjectName");
+    }
+
+    public static String getIllegalIdentifier() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_IllegalIdentifier");
+    }
+
+    public static String getShouldNotUseDefaultPackage() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_ShouldNotUseDefaultPackage");
+    }
+
+    public static String getProjectNameMustNotBeEmpty() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_ProjectNameMustNotBeEmpty");
+    }
+
+    private NewProjectStrings() {
+        throw new AssertionError();
+    }
+}

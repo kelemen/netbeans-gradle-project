@@ -2,24 +2,88 @@ package org.netbeans.gradle.project.newproject;
 
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.validate.GroupValidator;
+import org.netbeans.gradle.project.validate.Problem;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
-    private final ChangeSupport changes;
+    private final GroupValidator validators;
+    private final BackgroundValidator bckgValidator;
 
     /**
      * Creates new form GradleSingleProjectPropertiesPanel
      */
     public GradleSingleProjectPropertiesPanel() {
-        changes = new ChangeSupport(this);
+        bckgValidator = new BackgroundValidator();
+
         initComponents();
 
+        validators = new GroupValidator();
+        validators.addValidator(
+                NewProjectUtils.createProjectNameValidator(),
+                NewProjectUtils.createCollector(jProjectNameEdit));
+        validators.addValidator(
+                NewProjectUtils.createNewFolderValidator(),
+                NewProjectUtils.createCollector(jProjectFolderEdit));
+        validators.addValidator(
+                NewProjectUtils.createClassNameValidator(),
+                NewProjectUtils.createCollector(jMainClassEdit));
+
+        jInformationLabel.setText("");
+        bckgValidator.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Problem currentProblem = bckgValidator.getCurrentProblem();
+                String message = currentProblem != null
+                        ? currentProblem.getMessage()
+                        : "";
+                if (message.isEmpty()) {
+                    jInformationLabel.setText("");
+                }
+                else {
+                    assert currentProblem != null;
+                    String title;
+                    switch (currentProblem.getLevel()) {
+                        case INFO:
+                            title = NbStrings.getInfoCaption();
+                            break;
+                        case WARNING:
+                            title = NbStrings.getWarningCaption();
+                            break;
+                        case SEVERE:
+                            title = NbStrings.getErrorCaption();
+                            break;
+                        default:
+                            throw new AssertionError(currentProblem.getLevel().name());
+                    }
+
+                    jInformationLabel.setText(title + ": " + message);
+                }
+            }
+        });
+
+        DocumentListener validationPerformer = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+        };
         DocumentListener projectFolderEditor = new DocumentListener() {
             private void updateFolderLocation() {
                 File location = new File(
@@ -45,14 +109,22 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         };
         jProjectNameEdit.getDocument().addDocumentListener(projectFolderEditor);
         jProjectLocationEdit.getDocument().addDocumentListener(projectFolderEditor);
+
+        jProjectNameEdit.getDocument().addDocumentListener(validationPerformer);
+        jProjectLocationEdit.getDocument().addDocumentListener(validationPerformer);
+        jMainClassEdit.getDocument().addDocumentListener(validationPerformer);
+    }
+
+    public void startValidation() {
+        bckgValidator.setValidators(validators);
     }
 
     public void addChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
+        bckgValidator.addChangeListener(listener);
     }
 
     public void removeChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
+        bckgValidator.removeChangeListener(listener);
     }
 
     public GradleSingleProjectConfig getConfig() {
@@ -70,7 +142,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
     }
 
     public boolean containsValidData() {
-        return true;
+        return bckgValidator.isValid();
     }
 
     /**
@@ -91,6 +163,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         jProjectFolderEdit = new javax.swing.JTextField();
         jMainClassLabel = new javax.swing.JLabel();
         jMainClassEdit = new javax.swing.JTextField();
+        jInformationLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jProjectNameCaption, org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jProjectNameCaption.text")); // NOI18N
 
@@ -116,6 +189,8 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
         jMainClassEdit.setText(org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jMainClassEdit.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jInformationLabel, org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jInformationLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -140,7 +215,10 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                                 .addComponent(jProjectLocationEdit)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jBrowseButton))
-                            .addComponent(jMainClassEdit))))
+                            .addComponent(jMainClassEdit)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jInformationLabel)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -163,7 +241,9 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMainClassLabel)
                     .addComponent(jMainClassEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addComponent(jInformationLabel)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -188,6 +268,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBrowseButton;
+    private javax.swing.JLabel jInformationLabel;
     private javax.swing.JTextField jMainClassEdit;
     private javax.swing.JLabel jMainClassLabel;
     private javax.swing.JTextField jProjectFolderEdit;
