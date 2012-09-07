@@ -114,7 +114,7 @@ implements
 
     @Override
     public String name() {
-        return "GradleSingleProjectTemplate";
+        return "GradleMultiProjectTemplate";
     }
 
     @Override
