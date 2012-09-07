@@ -1,0 +1,8 @@
+ext.mainClass = '${MAIN_CLASS}';
+
+apply from: rootProject.uri('parent.gradle');
+
+dependencies {
+    // TODO: Add dependencies here
+    //   but note that JUnit should have already been added in parent.gradle.
+}

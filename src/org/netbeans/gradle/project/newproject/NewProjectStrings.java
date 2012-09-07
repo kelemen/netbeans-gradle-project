@@ -35,6 +35,14 @@ public final class NewProjectStrings {
         return NbBundle.getMessage(NewProjectStrings.class, "MSG_ProjectNameMustNotBeEmpty");
     }
 
+    public static String getInvalidGroupId() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidGroupId");
+    }
+
+    public static String getInvalidVersion() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidVersion");
+    }
+
     private NewProjectStrings() {
         throw new AssertionError();
     }

@@ -1,23 +1,54 @@
 package org.netbeans.gradle.project.newproject;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.InputCollector;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
 public final class NewProjectUtils {
     public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
 
+    private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
     private static final Pattern LEGAL_FILENAME_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]*");
     private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*");
+    private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]+");
+    private static final Pattern MAVEN_VERSION_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]+");
+
+    public static Preferences getPreferences() {
+        return NbPreferences.forModule(NewProjectUtils.class);
+    }
+
+    public static String getDefaultProjectDir() {
+        String defaultDir = NewProjectUtils.getPreferences().get(DEFAULT_PROJECTDIR_SETTINGS_KEY, "");
+        if (defaultDir.isEmpty()) {
+            defaultDir = new File(System.getProperty("user.home"), "Projects").getAbsolutePath();
+        }
+        return defaultDir;
+    }
+
+    public static void setDefaultProjectDir(String newValue) {
+        getPreferences().put(DEFAULT_PROJECTDIR_SETTINGS_KEY, newValue.trim());
+    }
 
     public static void createDefaultSourceDirs(FileObject projectDir) throws IOException {
         FileObject srcDir = projectDir.createFolder("src");
@@ -143,6 +174,20 @@ public final class NewProjectUtils {
         return merge(notEmptyValidator, patternValidators);
     }
 
+    public static Validator<String> createGroupIdValidator() {
+        return createPatternValidator(
+                MAVEN_GROUP_ID_PATTERN,
+                Problem.Level.SEVERE,
+                NewProjectStrings.getInvalidGroupId());
+    }
+
+    public static Validator<String> createVersionValidator() {
+        return createPatternValidator(
+                MAVEN_VERSION_PATTERN,
+                Problem.Level.SEVERE,
+                NewProjectStrings.getInvalidVersion());
+    }
+
     public static Validator<String> createNewFolderValidator() {
         return new Validator<String>() {
             @Override
@@ -244,6 +289,136 @@ public final class NewProjectUtils {
                 return result != null ? result.trim() : "";
             }
         };
+    }
+
+    public static void chooseProjectLocation(Component parent, JTextComponent jProjectEdit) {
+        if (jProjectEdit == null) throw new NullPointerException("jProjectEdit");
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(null);
+        chooser.setDialogTitle(NbStrings.getSelectProjectLocationCaption());
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        String path = jProjectEdit.getText();
+        if (!path.isEmpty()) {
+            File initialSelection = new File(path);
+            if (initialSelection.exists()) {
+                chooser.setSelectedFile(initialSelection);
+            }
+        }
+        if (JFileChooser.APPROVE_OPTION == chooser.showOpenDialog(parent)) {
+            File projectDir = chooser.getSelectedFile();
+            jProjectEdit.setText(FileUtil.normalizeFile(projectDir).getAbsolutePath());
+        }
+    }
+
+    public static void connectLabelToProblems(
+            final BackgroundValidator validator,
+            final JLabel jLabel) {
+        if (validator == null) throw new NullPointerException("validator");
+        if (jLabel == null) throw new NullPointerException("jLabel");
+
+        jLabel.setText("");
+        validator.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Problem currentProblem = validator.getCurrentProblem();
+                String message = currentProblem != null
+                        ? currentProblem.getMessage()
+                        : "";
+                if (message.isEmpty()) {
+                    jLabel.setText("");
+                }
+                else {
+                    assert currentProblem != null;
+                    String title;
+                    Color labelColor;
+                    switch (currentProblem.getLevel()) {
+                        case INFO:
+                            labelColor = Color.BLACK;
+                            title = NbStrings.getInfoCaption();
+                            break;
+                        case WARNING:
+                            labelColor = Color.ORANGE.darker();
+                            title = NbStrings.getWarningCaption();
+                            break;
+                        case SEVERE:
+                            labelColor = Color.RED;
+                            title = NbStrings.getErrorCaption();
+                            break;
+                        default:
+                            throw new AssertionError(currentProblem.getLevel().name());
+                    }
+
+                    jLabel.setForeground(labelColor);
+                    jLabel.setText(title + ": " + message);
+                }
+            }
+        });
+    }
+
+    public static void setupNewProjectValidators(
+            final BackgroundValidator bckgValidator,
+            final GroupValidator validators,
+            final JTextComponent jProjectNameEdit,
+            final JTextComponent jProjectFolderEdit,
+            final JTextComponent jProjectLocationEdit) {
+        if (validators == null) throw new NullPointerException("validators");
+        if (jProjectNameEdit == null) throw new NullPointerException("jProjectNameEdit");
+        if (jProjectFolderEdit == null) throw new NullPointerException("jProjectFolderEdit");
+        if (jProjectLocationEdit == null) throw new NullPointerException("jProjectLocationEdit");
+
+        validators.addValidator(
+                NewProjectUtils.createProjectNameValidator(),
+                NewProjectUtils.createCollector(jProjectNameEdit));
+        validators.addValidator(
+                NewProjectUtils.createNewFolderValidator(),
+                NewProjectUtils.createCollector(jProjectFolderEdit));
+
+        DocumentListener validationPerformer = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                bckgValidator.performValidation();
+            }
+        };
+        DocumentListener projectFolderEditor = new DocumentListener() {
+            private void updateFolderLocation() {
+                File location = new File(
+                        jProjectLocationEdit.getText().trim(),
+                        jProjectNameEdit.getText().trim());
+                jProjectFolderEdit.setText(location.getPath());
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateFolderLocation();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateFolderLocation();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateFolderLocation();
+            }
+        };
+        jProjectNameEdit.getDocument().addDocumentListener(projectFolderEditor);
+        jProjectLocationEdit.getDocument().addDocumentListener(projectFolderEditor);
+
+        jProjectNameEdit.getDocument().addDocumentListener(validationPerformer);
+        jProjectLocationEdit.getDocument().addDocumentListener(validationPerformer);
     }
 
     private NewProjectUtils() {

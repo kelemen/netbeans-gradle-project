@@ -1,23 +1,13 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.awt.Color;
 import java.io.File;
-import java.util.prefs.Preferences;
-import javax.swing.JFileChooser;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.GroupValidator;
-import org.netbeans.gradle.project.validate.Problem;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.NbPreferences;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
-    private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
-
     private final GroupValidator validators;
     private final BackgroundValidator bckgValidator;
 
@@ -31,59 +21,14 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
         validators = new GroupValidator();
         validators.addValidator(
-                NewProjectUtils.createProjectNameValidator(),
-                NewProjectUtils.createCollector(jProjectNameEdit));
-        validators.addValidator(
-                NewProjectUtils.createNewFolderValidator(),
-                NewProjectUtils.createCollector(jProjectFolderEdit));
-        validators.addValidator(
                 NewProjectUtils.createClassNameValidator(true),
                 NewProjectUtils.createCollector(jMainClassEdit));
 
-        String defaultDir = getPreferences().get(DEFAULT_PROJECTDIR_SETTINGS_KEY, "");
-        if (defaultDir.isEmpty()) {
-            defaultDir = new File(System.getProperty("user.home"), "Projects").getAbsolutePath();
-        }
+        jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
 
-        jProjectLocationEdit.setText(defaultDir);
-
-        jInformationLabel.setText("");
-        bckgValidator.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                Problem currentProblem = bckgValidator.getCurrentProblem();
-                String message = currentProblem != null
-                        ? currentProblem.getMessage()
-                        : "";
-                if (message.isEmpty()) {
-                    jInformationLabel.setText("");
-                }
-                else {
-                    assert currentProblem != null;
-                    String title;
-                    Color labelColor;
-                    switch (currentProblem.getLevel()) {
-                        case INFO:
-                            labelColor = Color.BLACK;
-                            title = NbStrings.getInfoCaption();
-                            break;
-                        case WARNING:
-                            labelColor = Color.ORANGE.darker();
-                            title = NbStrings.getWarningCaption();
-                            break;
-                        case SEVERE:
-                            labelColor = Color.RED;
-                            title = NbStrings.getErrorCaption();
-                            break;
-                        default:
-                            throw new AssertionError(currentProblem.getLevel().name());
-                    }
-
-                    jInformationLabel.setForeground(labelColor);
-                    jInformationLabel.setText(title + ": " + message);
-                }
-            }
-        });
+        NewProjectUtils.connectLabelToProblems(bckgValidator, jInformationLabel);
+        NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
+                jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
 
         DocumentListener validationPerformer = new DocumentListener() {
             @Override
@@ -101,39 +46,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 bckgValidator.performValidation();
             }
         };
-        DocumentListener projectFolderEditor = new DocumentListener() {
-            private void updateFolderLocation() {
-                File location = new File(
-                        jProjectLocationEdit.getText().trim(),
-                        jProjectNameEdit.getText().trim());
-                jProjectFolderEdit.setText(location.getPath());
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
-        };
-        jProjectNameEdit.getDocument().addDocumentListener(projectFolderEditor);
-        jProjectLocationEdit.getDocument().addDocumentListener(projectFolderEditor);
-
-        jProjectNameEdit.getDocument().addDocumentListener(validationPerformer);
-        jProjectLocationEdit.getDocument().addDocumentListener(validationPerformer);
         jMainClassEdit.getDocument().addDocumentListener(validationPerformer);
-    }
-
-    private Preferences getPreferences() {
-        return NbPreferences.forModule(NewProjectUtils.class);
     }
 
     public void startValidation() {
@@ -158,7 +71,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
             return null;
         }
 
-        getPreferences().put(DEFAULT_PROJECTDIR_SETTINGS_KEY, jProjectLocationEdit.getText().trim());
+        NewProjectUtils.setDefaultProjectDir(jProjectLocationEdit.getText());
 
         File projectDir = new File(projectDirStr);
         return new GradleSingleProjectConfig(projectName, projectDir, mainClass);
@@ -271,22 +184,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
     }// </editor-fold>//GEN-END:initComponents
 
     private void jBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseButtonActionPerformed
-        JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(null);
-        chooser.setDialogTitle(NbStrings.getSelectProjectLocationCaption());
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        String path = jProjectLocationEdit.getText();
-        if (!path.isEmpty()) {
-            File initialSelection = new File(path);
-            if (initialSelection.exists()) {
-                chooser.setSelectedFile(initialSelection);
-            }
-        }
-        if (JFileChooser.APPROVE_OPTION == chooser.showOpenDialog(this)) {
-            File projectDir = chooser.getSelectedFile();
-            jProjectLocationEdit.setText(FileUtil.normalizeFile(projectDir).getAbsolutePath());
-        }
+        NewProjectUtils.chooseProjectLocation(this, jProjectLocationEdit);
     }//GEN-LAST:event_jBrowseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
