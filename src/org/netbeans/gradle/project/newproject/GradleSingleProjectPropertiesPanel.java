@@ -5,6 +5,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.validate.GroupValidator;
+import org.netbeans.gradle.project.validate.Validator;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
@@ -47,6 +48,12 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
             }
         };
         jMainClassEdit.getDocument().addDocumentListener(validationPerformer);
+    }
+
+    public void addProjectLocationValidator(Validator<String> validator) {
+        validators.addValidator(
+                validator,
+                NewProjectUtils.createCollector(jProjectLocationEdit));
     }
 
     public void startValidation() {

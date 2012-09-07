@@ -43,6 +43,10 @@ public final class NewProjectStrings {
         return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidVersion");
     }
 
+    public static String getNotRootProject() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_NotRootProject");
+    }
+
     private NewProjectStrings() {
         throw new AssertionError();
     }
