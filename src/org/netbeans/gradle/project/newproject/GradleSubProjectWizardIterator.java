@@ -22,6 +22,7 @@ import org.openide.util.NbBundle.Messages;
 @TemplateRegistration(
         folder="Project/Gradle",
         displayName="#template.subGradleProject",
+        description="Subproject.html",
         iconBase=NbIcons.PROJECT_ICON_PATH)
 @Messages("template.subGradleProject=Gradle Subproject")
 public final class GradleSubProjectWizardIterator

@@ -24,6 +24,7 @@ import org.openide.util.NbBundle.Messages;
 @TemplateRegistration(
         folder="Project/Gradle",
         displayName="#template.multiGradleProject",
+        description="MultiProject.html",
         iconBase=NbIcons.PROJECT_ICON_PATH)
 @Messages("template.multiGradleProject=Gradle Root Project")
 public final class GradleMultiProjectWizardIterator
