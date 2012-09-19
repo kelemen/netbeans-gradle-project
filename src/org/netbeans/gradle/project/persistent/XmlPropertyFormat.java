@@ -25,7 +25,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
-import org.netbeans.gradle.project.properties.MemProjectProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.openide.modules.SpecificationVersion;
@@ -131,22 +130,14 @@ final class XmlPropertyFormat {
                 + " - Used by the Gradle plugin of NetBeans.");
         root.appendChild(comment);
 
-        JavaPlatform defaultPlatform = JavaPlatform.getDefault();
-
         String sourceEncoding = snapshot.getSourceEncoding().name();
-        if (!sourceEncoding.equals(MemProjectProperties.DEFAULT_SOURCE_ENCODING.name())) {
-            addSimpleChild(root, SOURCE_ENCODING_NODE, sourceEncoding);
-        }
+        addSimpleChild(root, SOURCE_ENCODING_NODE, sourceEncoding);
 
         JavaPlatform platform = snapshot.getPlatform();
-        if (!platform.equals(defaultPlatform)) {
-            addSimpleChild(root, PLATFORM_NODE, platform.getSpecification().getVersion().toString());
-        }
+        addSimpleChild(root, PLATFORM_NODE, platform.getSpecification().getVersion().toString());
 
         String sourceLevel = snapshot.getSourceLevel();
-        if (!sourceLevel.equals(MemProjectProperties.getSourceLevelFromPlatform(defaultPlatform))) {
-            addSimpleChild(root, SOURCE_LEVEL_NODE, sourceLevel);
-        }
+        addSimpleChild(root, SOURCE_LEVEL_NODE, sourceLevel);
 
         List<PredefinedTask> commonTasks = snapshot.getCommonTasks();
         if (!commonTasks.isEmpty()) {
