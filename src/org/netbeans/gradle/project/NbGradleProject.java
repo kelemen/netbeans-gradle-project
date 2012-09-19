@@ -11,12 +11,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
@@ -240,7 +240,7 @@ public final class NbGradleProject implements Project {
     // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
         private final List<GlobalPathReg> paths;
-        private final ChangeListener cacheListener;
+        private final ModelLoadListener modelLoadListener;
         private boolean opened;
 
         public OpenHook() {
@@ -252,19 +252,19 @@ public final class NbGradleProject implements Project {
             this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
             this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
 
-            this.cacheListener = new ChangeListener() {
+            this.modelLoadListener = new ModelLoadListener() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
-                    GradleModelLoader.tryGetModelFromCache(
-                            getProjectDirectory(),
-                            new ModelRetrievedListenerImpl());
+                public void modelLoaded(NbGradleModel model) {
+                    if (getProjectDirectory().equals(model.getProjectDir())) {
+                        new ModelRetrievedListenerImpl().onComplete(model, null);
+                    }
                 }
             };
         }
 
         @Override
         protected void projectOpened() {
-            GradleModelLoader.addCacheChangeListener(cacheListener);
+            GradleModelLoader.addModelLoadedListener(modelLoadListener);
             reloadProject(true);
 
             cpProvider.addPropertyChangeListener(this);
@@ -288,7 +288,7 @@ public final class NbGradleProject implements Project {
                 }
             });
 
-            GradleModelLoader.removeCacheChangeListener(cacheListener);
+            GradleModelLoader.removeModelLoadedListener(modelLoadListener);
             cpProvider.removePropertyChangeListener(this);
         }
 

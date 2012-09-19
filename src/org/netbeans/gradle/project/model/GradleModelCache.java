@@ -15,7 +15,6 @@ public final class GradleModelCache {
     private final Lock cacheLock;
     private final Map<CacheKey, NbGradleModel> cache;
     private final int maxCapacity;
-    private final ChangeSupport changes;
 
     public GradleModelCache(int maxCapacity) {
         if (maxCapacity < 0) {
@@ -28,15 +27,6 @@ public final class GradleModelCache {
         float loadFactor = 0.75f;
         int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
         this.cache = new LinkedHashMap<CacheKey, NbGradleModel>(capacity, loadFactor, true);
-        this.changes = new ChangeSupport(this);
-    }
-
-    public void addChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
-    }
-
-    public void removeChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
     }
 
     public void addToCache(NbGradleModel model) {
@@ -69,7 +59,6 @@ public final class GradleModelCache {
             }
         } finally {
             cacheLock.unlock();
-            changes.fireChange();
         }
     }
 

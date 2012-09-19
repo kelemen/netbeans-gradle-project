@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeListener;
 import org.gradle.tooling.BuildException;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -50,13 +49,14 @@ public final class GradleModelLoader {
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
 
     private static GradleModelCache CACHE = new GradleModelCache(100);
+    private static ModelLoadSupport LISTENERS = new ModelLoadSupport();
 
-    public static void addCacheChangeListener(ChangeListener listener) {
-        CACHE.addChangeListener(listener);
+    public static void addModelLoadedListener(ModelLoadListener listener) {
+        LISTENERS.addListener(listener);
     }
 
-    public static void removeCacheChangeListener(ChangeListener listener) {
-        CACHE.removeChangeListener(listener);
+    public static void removeModelLoadedListener(ModelLoadListener listener) {
+        LISTENERS.removeListener(listener);
     }
 
     public static GradleConnector createGradleConnector() {
@@ -85,22 +85,6 @@ public final class GradleModelLoader {
         return projectDirFile != null
                 ? CACHE.tryGet(projectDirFile, settingsFile)
                 : null;
-    }
-
-    public static void tryGetModelFromCache(
-            final FileObject projectDir,
-            final ModelRetrievedListener listener) {
-        PROJECT_LOADER.execute(new Runnable() {
-            @Override
-            public void run() {
-                NbGradleModel model = null;
-                try {
-                    model = tryGetFromCache(projectDir);
-                } finally {
-                    listener.onComplete(model, null);
-                }
-            }
-        });
     }
 
     public static void fetchModel(
@@ -385,6 +369,11 @@ public final class GradleModelLoader {
         return result;
     }
 
+    private static void introduceLoadedModel(NbGradleModel model) {
+        CACHE.addToCache(model);
+        LISTENERS.fireEvent(model);
+    }
+
     private static NbGradleModel parseFromIdeaModel(
             FileObject projectDir, IdeaProject ideaModel) throws IOException {
         IdeaModule mainModule = tryFindMainModule(projectDir, ideaModel);
@@ -413,11 +402,12 @@ public final class GradleModelLoader {
                 FileObject moduleDir = FileUtil.toFileObject(module.getModuleDir());
                 if (moduleDir != null) {
                     NbGradleModel model = new NbGradleModel(moduleDir, settings, module);
-                    CACHE.addToCache(model);
+                    introduceLoadedModel(model);
                 }
             }
         }
-        CACHE.addToCache(mainModel);
+
+        introduceLoadedModel(mainModel);
 
         return mainModel;
     }
