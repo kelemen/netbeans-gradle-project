@@ -9,31 +9,32 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.project.CollectionUtils;
 
 public final class NbGradleModule {
     private final Properties properties;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
     private final List<NbGradleModule> children;
+    private final List<File> listedDirs;
 
     public NbGradleModule(
             Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
+            List<File> listedDirs,
             Map<NbDependencyType, NbDependencyGroup> dependencies,
             Collection<NbGradleModule> children) {
 
         if (properties == null) throw new NullPointerException("properties");
         if (dependencies == null) throw new NullPointerException("dependencies");
+        if (listedDirs == null) throw new NullPointerException("listedDirs");
         if (children == null) throw new NullPointerException("children");
 
         this.properties = properties;
         this.sources = asImmutable(NbSourceType.class, sources);
+        this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
         this.dependencies = asImmutable(NbDependencyType.class, dependencies);
-        this.children = Collections.unmodifiableList(new ArrayList<NbGradleModule>(children));
-
-        for (NbGradleModule child: this.children) {
-            if (child == null) throw new NullPointerException("child");
-        }
+        this.children = CollectionUtils.copyNullSafeList(children);
     }
 
     private static <K extends Enum<K>, V> Map<K, V> asImmutable(
@@ -78,6 +79,10 @@ public final class NbGradleModule {
 
     public Map<NbSourceType, NbSourceGroup> getSources() {
         return sources;
+    }
+
+    public List<File> getListedDirs() {
+        return listedDirs;
     }
 
     public NbDependencyGroup getDependencies(NbDependencyType dependencyType) {

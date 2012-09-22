@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -18,6 +19,7 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
@@ -212,8 +214,24 @@ extends
         addSourceGroups(sources.getSourceGroups(GradleProjectConstants.TEST_RESOURCES), toPopulate);
     }
 
+    private void addListedDirs(List<SingleNodeFactory> toPopulate) {
+        for (File listedDir: project.getCurrentModel().getMainModule().getListedDirs()) {
+            FileObject listedDirObj = FileUtil.toFileObject(listedDir);
+            if (listedDirObj != null) {
+                final DataFolder listedFolder = DataFolder.findFolder(listedDirObj);
+                toPopulate.add(new SingleNodeFactory() {
+                    @Override
+                    public Node createNode() {
+                        return listedFolder.getNodeDelegate().cloneNode();
+                    }
+                });
+            }
+        }
+    }
+
     private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
         addSources(toPopulate);
+        addListedDirs(toPopulate);
 
         addChildren(toPopulate);
 

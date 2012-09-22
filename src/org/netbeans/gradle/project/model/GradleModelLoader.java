@@ -144,6 +144,7 @@ public final class GradleModelLoader {
 
         NbGradleModule mainModule = new NbGradleModule(properties,
                 Collections.<NbSourceType, NbSourceGroup>emptyMap(),
+                Collections.<File>emptyList(),
                 Collections.<NbDependencyType, NbDependencyGroup>emptyMap(),
                 Collections.<NbGradleModule>emptyList());
 
@@ -314,6 +315,25 @@ public final class GradleModelLoader {
         return result;
     }
 
+    private static List<File> lookupListedDirs(Map<NbSourceType, NbSourceGroup> sources) {
+        List<File> result = new LinkedList<File>();
+
+        NbSourceGroup sourceGroups = sources.get(NbSourceType.SOURCE);
+        if (sourceGroups != null) {
+            for (File sourceRoot: sourceGroups.getPaths()) {
+                File parent = sourceRoot.getParentFile();
+                if (parent != null) {
+                    File webapp = new File(parent, "webapp");
+                    if (webapp.isDirectory()) {
+                        result.add(webapp);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     private static NbGradleModule tryParseModule(IdeaModule module,
             Map<String, NbGradleModule> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
@@ -364,7 +384,8 @@ public final class GradleModelLoader {
                 createDefaultOutput(moduleDir),
                 taskNames);
 
-        NbGradleModule result = new NbGradleModule(properties, sources, dependencies, children);
+        List<File> listedDirs = lookupListedDirs(sources);
+        NbGradleModule result = new NbGradleModule(properties, sources, listedDirs, dependencies, children);
         parsedModules.put(uniqueName, result);
         return result;
     }
