@@ -1,10 +1,8 @@
 package org.netbeans.gradle.project.query;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbSourceGroup;
+import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -19,15 +17,14 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
 
     @Override
     public Charset getEncoding(FileObject file) {
-        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
-        for (NbSourceGroup srcGroup: mainModule.getSources().values()) {
-            for (File srcDir: srcGroup.getPaths()) {
-                FileObject srcDirObj = FileUtil.toFileObject(srcDir);
-                if (srcDirObj != null && FileUtil.isParentOf(srcDirObj, file)) {
-                    return project.getProperties().getSourceEncoding().getValue();
-                }
-            }
+        if (FileUtil.isParentOf(project.getProjectDirectory(), file)) {
+            ProjectProperties properties = project.tryGetLoadedProperties();
+            return properties != null
+                    ? properties.getSourceEncoding().getValue()
+                    : null;
         }
-        return null;
+        else {
+            return null;
+        }
     }
 }
