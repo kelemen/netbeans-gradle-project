@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 
@@ -50,7 +51,10 @@ public final class ProjectPropertiesManager {
         }
     }
 
-    public static ProjectProperties getProperties(File propertiesFile) {
+    public static ProjectProperties getProperties(
+            File propertiesFile,
+            final WaitableSignal loadedSignal) {
+
         if (propertiesFile == null) throw new NullPointerException("propertiesFile");
 
         ProjectProperties result;
@@ -72,6 +76,9 @@ public final class ProjectPropertiesManager {
                     persister.load(newProperties, new Runnable() {
                         @Override
                         public void run() {
+                            if (loadedSignal != null) {
+                                loadedSignal.signal();
+                            }
                             setSaveOnChange(newProperties, persister);
                         }
                     });
@@ -87,6 +94,11 @@ public final class ProjectPropertiesManager {
                 }
             } finally {
                 MAIN_LOCK.unlock();
+            }
+        }
+        else {
+            if (loadedSignal != null) {
+                loadedSignal.signal();
             }
         }
 

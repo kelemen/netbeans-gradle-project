@@ -14,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.openide.util.ChangeSupport;
 
@@ -28,12 +29,14 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<JavaPlatform> platformProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
+    private final WaitableSignal loadedSignal;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
         this.propertiesRef = new AtomicReference<ProjectProperties>(null);
         this.changes = new ChangeSupport(this);
+        this.loadedSignal = new WaitableSignal();
 
         this.sourceLevelProxy = new MutablePropertyProxy<String>(new ProjectMutablePropertyRef<String>(this) {
             @Override
@@ -61,17 +64,22 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         });
     }
 
+    public boolean tryWaitForLoaded() {
+        getProperties();
+        return loadedSignal.tryWaitForSignal();
+    }
+
     private ProjectProperties getProperties() {
         ProjectProperties properties = propertiesRef.get();
         if (properties == null) {
             File propertiesFile = XmlPropertiesPersister.getFileForProject(project);
-            properties = ProjectPropertiesManager.getProperties(propertiesFile);
+            properties = ProjectPropertiesManager.getProperties(propertiesFile, loadedSignal);
             if (propertiesRef.compareAndSet(null, properties)) {
                 project.addModelChangeListener(new ChangeListener() {
                     @Override
                     public void stateChanged(ChangeEvent e) {
                         File propertiesFile = XmlPropertiesPersister.getFileForProject(project);
-                        propertiesRef.set(ProjectPropertiesManager.getProperties(propertiesFile));
+                        propertiesRef.set(ProjectPropertiesManager.getProperties(propertiesFile, loadedSignal));
                         changes.fireChange();
                     }
                 });

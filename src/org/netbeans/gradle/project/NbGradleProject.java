@@ -57,7 +57,7 @@ public final class NbGradleProject implements Project {
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
-    private final ProjectProperties properties;
+    private final ProjectPropertiesProxy properties;
     private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
@@ -146,6 +146,15 @@ public final class NbGradleProject implements Project {
 
     public ProjectProperties getProperties() {
         return properties;
+    }
+
+    public ProjectProperties tryGetLoadedProperties() {
+        if (properties.tryWaitForLoaded()) {
+            return properties;
+        }
+        else {
+            return null;
+        }
     }
 
     public String getName() {
