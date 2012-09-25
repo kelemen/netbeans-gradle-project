@@ -110,7 +110,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             final PlatformComboItem other = (PlatformComboItem)obj;
             SpecificationVersion thisVersion = this.platform.getSpecification().getVersion();
             SpecificationVersion otherVersion = other.platform.getSpecification().getVersion();
-            return thisVersion.equals(otherVersion);
+            return thisVersion != null && thisVersion.equals(otherVersion);
         }
 
         @Override
