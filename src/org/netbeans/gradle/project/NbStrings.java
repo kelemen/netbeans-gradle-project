@@ -102,6 +102,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReloadProject");
     }
 
+    public static String getOpenImmediateSubProjectsCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OpenImmediateSubProjects");
+    }
+
     public static String getOpenSubProjectsCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_OpenEverySubProject");
     }

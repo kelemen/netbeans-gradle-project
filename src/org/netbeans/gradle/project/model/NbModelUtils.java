@@ -20,6 +20,19 @@ public final class NbModelUtils {
         return name.startsWith(":");
     }
 
+    private static void getAllChildren(NbGradleModule module, List<NbGradleModule> result) {
+        result.addAll(module.getChildren());
+        for (NbGradleModule child: module.getChildren()) {
+            getAllChildren(child, result);
+        }
+    }
+
+    public static List<NbGradleModule> getAllChildren(NbGradleModule module) {
+        List<NbGradleModule> result = new LinkedList<NbGradleModule>();
+        getAllChildren(module, result);
+        return result;
+    }
+
     public static List<String> getNameParts(String name) {
         String[] namePartsArray = name.split(Pattern.quote(":"));
         List<String> result = new ArrayList<String>(namePartsArray.length);

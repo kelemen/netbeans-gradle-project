@@ -17,6 +17,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -157,18 +158,20 @@ extends
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
-        final List<NbGradleModule> children = getShownModule().getChildren();
-        if (children.isEmpty()) {
+        NbGradleModule shownModule = getShownModule();
+        final List<NbGradleModule> immediateChildren = shownModule.getChildren();
+        if (immediateChildren.isEmpty()) {
             return;
         }
+        final List<NbGradleModule> children = NbModelUtils.getAllChildren(shownModule);
 
         toPopulate.add(new SingleNodeFactory() {
             @Override
             public Node createNode() {
                 return new FilterNode(
                         createSimpleNode(),
-                        createSubprojectsChild(children),
-                        Lookups.fixed(children.toArray())) {
+                        createSubprojectsChild(immediateChildren),
+                        Lookups.fixed(immediateChildren.toArray())) {
                     @Override
                     public String getName() {
                         return "SubProjectsNode_" + getShownModule().getUniqueName();
@@ -177,6 +180,7 @@ extends
                     @Override
                     public Action[] getActions(boolean context) {
                         return new Action[] {
+                            new OpenProjectsAction(NbStrings.getOpenImmediateSubProjectsCaption(), immediateChildren),
                             new OpenProjectsAction(NbStrings.getOpenSubProjectsCaption(), children)
                         };
                     }

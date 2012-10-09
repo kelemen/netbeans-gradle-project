@@ -13,8 +13,12 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbModelUtils;
+import org.openide.loaders.DataFolder;
 import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.ContextAwareAction;
@@ -60,11 +64,78 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
-                    return new SubModuleNode(project, module);
+                    if (module.getChildren().isEmpty()) {
+                        return new SubModuleNode(project, module);
+                    }
+                    else {
+                        return new SubModuleWithChildren(project, module);
+                    }
                 }
             });
         }
         return true;
+    }
+
+    private static Children createSubprojectsChild(NbGradleProject project, List<NbGradleModule> children) {
+        return Children.create(new SubProjectsChildFactory(project, children), true);
+    }
+
+    private static Node createSimpleNode(NbGradleProject project) {
+        DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
+        return projectFolder.getNodeDelegate().cloneNode();
+    }
+
+    private static class SubModuleWithChildren extends FilterNode {
+        private final NbGradleModule module;
+        private final List<NbGradleModule> immdeiateChildren;
+        private final List<NbGradleModule> children;
+
+        public SubModuleWithChildren(NbGradleProject project, NbGradleModule module) {
+            this(project, module, module.getChildren());
+        }
+
+        private SubModuleWithChildren(NbGradleProject project, NbGradleModule module, List<NbGradleModule> children) {
+            super(createSimpleNode(project),
+                    createSubprojectsChild(project, children),
+                    Lookups.fixed(module));
+            this.module = module;
+            this.immdeiateChildren = Collections.unmodifiableList(NbModelUtils.getAllChildren(module));
+            this.children = Collections.unmodifiableList(new ArrayList<NbGradleModule>(children));
+        }
+
+        @Override
+        public String getName() {
+            return "SubProjectsNode_" + module.getUniqueName();
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            return new Action[] {
+                new OpenSubProjectAction(),
+                new OpenProjectsAction(NbStrings.getOpenImmediateSubProjectsCaption(), immdeiateChildren),
+                new OpenProjectsAction(NbStrings.getOpenSubProjectsCaption(), children)
+            };
+        }
+
+        @Override
+        public String getDisplayName() {
+            return module.getName();
+        }
+
+        @Override
+        public Image getIcon(int type) {
+            return NbIcons.getGradleIcon();
+        }
+
+        @Override
+        public Image getOpenedIcon(int type) {
+            return getIcon(type);
+        }
+
+        @Override
+        public boolean canRename() {
+            return false;
+        }
     }
 
     private static class SubModuleNode extends FilterNode {
