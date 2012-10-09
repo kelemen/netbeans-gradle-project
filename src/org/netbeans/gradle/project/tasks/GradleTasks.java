@@ -22,7 +22,6 @@ import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.GradleModelLoader;
@@ -44,17 +43,6 @@ public final class GradleTasks {
     private static File getJavaHome() {
         FileObject jdkHomeObj = GlobalGradleSettings.getCurrentGradleJdkHome();
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
-    }
-
-    private static void doGradleTasks(NbGradleProject project, GradleTaskDef taskDef) {
-        ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbStrings.getExecuteTasksText());
-        try {
-            progress.start();
-            doGradleTasksWithProgress(progress, project, taskDef);
-        } finally {
-            progress.finish();
-        }
     }
 
     private static void doGradleTasksWithProgress(
@@ -180,12 +168,13 @@ public final class GradleTasks {
             newTaskDef = taskDef;
         }
 
-        TASK_EXECUTOR.execute(new Runnable() {
+        String caption = NbStrings.getExecuteTasksText(newTaskDef.getTaskNames());
+        GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, caption, new DaemonTask() {
             @Override
-            public void run() {
-                doGradleTasks(project, newTaskDef);
+            public void run(ProgressHandle progress) {
+                doGradleTasksWithProgress(progress, project, newTaskDef);
             }
-        });
+        }, taskDef.isNonBlocking());
     }
 
     public static Runnable createAsyncGradleTask(NbGradleProject project, GradleTaskDef taskDef) {

@@ -96,6 +96,7 @@ public final class GradleActionProvider implements ActionProvider {
             boolean listenForDebugee,
             boolean test,
             boolean addSkipTestIfNeeded,
+            boolean nonBlocking,
             String... tasks) {
         List<String> qualified = toQualifiedTaskName(project, tasks);
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(qualified);
@@ -105,28 +106,30 @@ public final class GradleActionProvider implements ActionProvider {
         if (addSkipTestIfNeeded && GlobalGradleSettings.getSkipTests().getValue()) {
             builder.setArguments(Arrays.asList("-x", "test"));
         }
+        builder.setNonBlocking(nonBlocking);
 
         return GradleTasks.createAsyncGradleTask(project, builder.create());
     }
 
     private Runnable createProjectTask(
             boolean addSkipTestIfNeeded,
+            boolean nonBlocking,
             String... tasks) {
-        return createProjectTask(false, false, addSkipTestIfNeeded, tasks);
+        return createProjectTask(false, false, addSkipTestIfNeeded, nonBlocking, tasks);
     }
 
     private Runnable createAction(String command, Lookup context) {
         if (COMMAND_BUILD.equals(command)) {
-            return createProjectTask(true, "build");
+            return createProjectTask(true, true, "build");
         }
         else if (COMMAND_TEST.equals(command)) {
-            return createProjectTask(false, "cleanTest", "test");
+            return createProjectTask(false, true, "cleanTest", "test");
         }
         else if (COMMAND_CLEAN.equals(command)) {
-            return createProjectTask(false, "clean");
+            return createProjectTask(false, true, "clean");
         }
         else if (COMMAND_REBUILD.equals(command)) {
-            return createProjectTask(true, "clean", "build");
+            return createProjectTask(true, true, "clean", "build");
         }
         else if (COMMAND_RELOAD.equals(command)) {
             return new Runnable() {
@@ -137,13 +140,13 @@ public final class GradleActionProvider implements ActionProvider {
             };
         }
         else if (COMMAND_RUN.equals(command)) {
-            return createProjectTask(true, "run");
+            return createProjectTask(true, false, "run");
         }
         else if (COMMAND_DEBUG.equals(command)) {
-            return createProjectTask(true, false, true, "debug");
+            return createProjectTask(true, false, true, false, "debug");
         }
         else if (COMMAND_JAVADOC.equals(command)) {
-            return createProjectTask(false, "javadoc");
+            return createProjectTask(false, true, "javadoc");
         }
         else if (COMMAND_TEST_SINGLE.equals(command) || COMMAND_DEBUG_TEST_SINGLE.equals(command)) {
             List<FileObject> files = getFilesOfContext(context);

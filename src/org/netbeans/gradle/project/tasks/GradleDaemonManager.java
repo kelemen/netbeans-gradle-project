@@ -14,7 +14,7 @@ public final class GradleDaemonManager {
 
     private static final Lock QUEUE_LOCK = new ReentrantLock(true);
 
-    private static void runNonBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws Exception {
+    private static void runNonBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws InterruptedException {
         progress.suspend("");
         QUEUE_LOCK.lockInterruptibly();
         try {
@@ -25,7 +25,7 @@ public final class GradleDaemonManager {
         }
     }
 
-    private static void runBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws Exception {
+    private static void runBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws InterruptedException {
         progress.suspend("");
 
         // This lock/unlock is here only to wait for pending non-blocking tasks.

@@ -13,6 +13,7 @@ public final class GradleTaskDef {
 
         private TaskOutputListener stdOutListener;
         private TaskOutputListener stdErrListener;
+        private boolean nonBlocking;
 
         public Builder(GradleTaskDef taskDef) {
             this.taskNames = taskDef.getTaskNames();
@@ -20,6 +21,7 @@ public final class GradleTaskDef {
             this.jvmArguments = taskDef.getJvmArguments();
             this.stdOutListener = taskDef.getStdOutListener();
             this.stdErrListener = taskDef.getStdErrListener();
+            this.nonBlocking = false;
         }
 
         public Builder(String taskName) {
@@ -40,6 +42,14 @@ public final class GradleTaskDef {
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
+        }
+
+        public boolean isNonBlocking() {
+            return nonBlocking;
+        }
+
+        public void setNonBlocking(boolean nonBlocking) {
+            this.nonBlocking = nonBlocking;
         }
 
         public List<String> getTaskNames() {
@@ -90,6 +100,7 @@ public final class GradleTaskDef {
     private final List<String> jvmArguments;
     private final TaskOutputListener stdOutListener;
     private final TaskOutputListener stdErrListener;
+    private final boolean nonBlocking;
 
     private GradleTaskDef(Builder builder) {
         this.taskNames = builder.getTaskNames();
@@ -97,10 +108,15 @@ public final class GradleTaskDef {
         this.jvmArguments = builder.getJvmArguments();
         this.stdOutListener = builder.getStdOutListener();
         this.stdErrListener = builder.getStdErrListener();
+        this.nonBlocking = builder.isNonBlocking();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
+    }
+
+    public boolean isNonBlocking() {
+        return nonBlocking;
     }
 
     public List<String> getTaskNames() {

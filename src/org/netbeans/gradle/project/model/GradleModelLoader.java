@@ -34,9 +34,10 @@ import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.tasks.DaemonTask;
+import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
@@ -100,9 +101,10 @@ public final class GradleModelLoader {
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (listener == null) throw new NullPointerException("listener");
 
-        PROJECT_LOADER.execute(new Runnable() {
+        String caption = NbStrings.getLoadingProjectText(projectDir.getNameExt());
+        GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
-            public void run() {
+            public void run(ProgressHandle progress) {
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
@@ -110,7 +112,7 @@ public final class GradleModelLoader {
                         model = tryGetFromCache(projectDir);
                     }
                     if (model == null) {
-                        model = loadModel(projectDir);
+                        model = loadModelWithProgress(projectDir, progress);
                     }
                 } catch (IOException ex) {
                     error = ex;
@@ -122,7 +124,7 @@ public final class GradleModelLoader {
                     listener.onComplete(model, error);
                 }
             }
-        });
+        }, true);
     }
 
     private static NbOutput createDefaultOutput(File projectDir) {
@@ -436,6 +438,7 @@ public final class GradleModelLoader {
     private static NbGradleModel loadModelWithProgress(
             FileObject projectDir,
             ProgressHandle progress) throws IOException {
+        LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
         IdeaProject ideaModel;
 
@@ -454,20 +457,6 @@ public final class GradleModelLoader {
 
         return parseFromIdeaModel(projectDir, ideaModel);
     }
-
-    private static NbGradleModel loadModel(FileObject projectDir) throws IOException {
-        LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
-
-        ProgressHandle progress = ProgressHandleFactory.createHandle(
-                NbStrings.getLoadingProjectText(projectDir.getNameExt()));
-        try {
-            progress.start();
-            return loadModelWithProgress(projectDir, progress);
-        } finally {
-            progress.finish();
-        }
-    }
-
 
     private static class DependencyBuilder {
         private final Map<NbDependencyType, List<NbModuleDependency>> moduleDependencies;
