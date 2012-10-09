@@ -28,7 +28,10 @@ public final class GradleHomeRegistry {
     private static final PropertyChangeSupport CHANGES;
 
     static {
-        CHANGES = new PropertyChangeSupport(GradleHomeRegistry.class);
+        EventSource eventSource = new EventSource();
+        CHANGES = new PropertyChangeSupport(eventSource);
+        eventSource.init(CHANGES);
+
         USING_GLOBAL_PATHS = new AtomicBoolean(false);
         REGISTERED_GLOBAL_PATH = new AtomicBoolean(false);
         GRADLE_HOME_BINARIES = new AtomicReference<GradleHomePaths>(new GradleHomePaths());
@@ -130,6 +133,29 @@ public final class GradleHomeRegistry {
         public List<PathResourceImplementation> getPaths() {
             return paths;
         }
+    }
 
+    private static final class EventSource implements ClassPathImplementation {
+        private volatile PropertyChangeSupport changes;
+
+        public void init(PropertyChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public List<PathResourceImplementation> getResources() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
+        }
     }
 }

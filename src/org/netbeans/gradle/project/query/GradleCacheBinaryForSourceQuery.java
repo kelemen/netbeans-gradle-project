@@ -17,7 +17,13 @@ import org.openide.util.lookup.ServiceProviders;
 @ServiceProviders({@ServiceProvider(service = BinaryForSourceQueryImplementation.class)})
 public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQueryImplementation {
     private static final URL[] NO_ROOTS = new URL[0];
-    private static final ChangeSupport CHANGES = new ChangeSupport(ChangeSupport.class);
+    private static final ChangeSupport CHANGES;
+
+    static {
+        EventSource eventSource = new EventSource();
+        CHANGES = new ChangeSupport(eventSource);
+        eventSource.init(CHANGES);
+    }
 
     // This cache cannot shrink because SourceForBinaryQueryImplementation
     // requires that we return the exact same object when the same URL is
@@ -125,5 +131,29 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
 
         Result oldResult = cache.putIfAbsent(sourceRootObj, result);
         return oldResult != null ? oldResult : result;
+    }
+
+    private static final class EventSource implements Result {
+        private volatile ChangeSupport changes;
+
+        public void init(ChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public URL[] getRoots() {
+            return NO_ROOTS;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            changes.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            changes.removeChangeListener(l);
+        }
     }
 }

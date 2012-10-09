@@ -41,8 +41,11 @@ implements
     public GradleBinaryForSourceQuery(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
-        this.changes = new ChangeSupport(project);
         this.cache = new ConcurrentHashMap<FileObject, BinaryForSourceQuery.Result>();
+
+        EventSource eventSource = new EventSource();
+        this.changes = new ChangeSupport(eventSource);
+        eventSource.init(this.changes);
     }
 
     private static SourceType getSourceRootType(NbGradleModule module, FileObject root) {
@@ -205,5 +208,29 @@ implements
         NORMAL,
         TEST,
         UNKNOWN
+    }
+
+    private static final class EventSource implements BinaryForSourceQuery.Result {
+        private volatile ChangeSupport changes;
+
+        public void init(ChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public URL[] getRoots() {
+            return NO_ROOTS;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            changes.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            changes.removeChangeListener(l);
+        }
     }
 }

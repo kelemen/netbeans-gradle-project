@@ -52,7 +52,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         this.classpaths = new EnumMap<ClassPathType, ClassPath>(ClassPathType.class);
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>();
 
-        this.changes = new PropertyChangeSupport(this);
+        EventSource eventSource = new EventSource();
+        this.changes = new PropertyChangeSupport(eventSource);
+        eventSource.init(this.changes);
     }
 
     public static boolean isGradleFile(FileObject file) {
@@ -228,5 +230,29 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         BOOT,
         COMPILE,
         RUNTIME
+    }
+
+    private static final class EventSource implements ClassPathImplementation {
+        private volatile PropertyChangeSupport changes;
+
+        public void init(PropertyChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public List<PathResourceImplementation> getResources() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
+        }
     }
 }

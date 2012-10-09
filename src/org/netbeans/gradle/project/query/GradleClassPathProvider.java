@@ -77,8 +77,11 @@ implements
         int classPathTypeCount = ClassPathType.values().length;
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
         this.classpaths = new ConcurrentHashMap<ClassPathType, ClassPath>(classPathTypeCount);
-        this.changes = new PropertyChangeSupport(this);
         this.hasBeenUsed = new AtomicBoolean(false);
+
+        EventSource eventSource = new EventSource();
+        this.changes = new PropertyChangeSupport(eventSource);
+        eventSource.init(this.changes);
     }
 
     private ProjectInfoRef getInfoRef() {
@@ -578,5 +581,29 @@ implements
         BOOT_FOR_TEST,
         COMPILE,
         COMPILE_FOR_TEST
+    }
+
+    private static final class EventSource implements ClassPathImplementation {
+        private volatile PropertyChangeSupport changes;
+
+        public void init(PropertyChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public List<PathResourceImplementation> getResources() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
+        }
     }
 }
