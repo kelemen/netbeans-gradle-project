@@ -104,7 +104,8 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 currentlyShown.getTask().getDisplayName(),
                 names,
                 Arrays.asList(jActionPanel.getArguments()),
-                Arrays.asList(jActionPanel.getJvmArguments()));
+                Arrays.asList(jActionPanel.getJvmArguments()),
+                jActionPanel.isNonBlocking());
     }
 
     public void saveTasks(ProjectProperties properties) {
@@ -319,7 +320,8 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                         displayName,
                         Collections.singletonList(new PredefinedTask.Name("tasks", true)),
                         Collections.<String>emptyList(),
-                        Collections.<String>emptyList());
+                        Collections.<String>emptyList(),
+                        false);
                 PredefinedTaskItem item = new PredefinedTaskItem(newTask);
                 getModelOfTaskList().addElement(item);
                 jDefinedTasks.setSelectedValue(item, true);

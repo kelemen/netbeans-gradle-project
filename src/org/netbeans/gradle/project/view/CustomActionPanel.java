@@ -33,6 +33,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             jvmArguments.append('\n');
         }
         jJvmArgsTextArea.setText(jvmArguments.toString());
+        jNonBlockingCheck.setSelected(task.isNonBlocking());
     }
 
     public String[] getTasks() {
@@ -60,6 +61,10 @@ public class CustomActionPanel extends javax.swing.JPanel {
         }
 
         return StringUtils.splitLines(text);
+    }
+
+    public boolean isNonBlocking() {
+        return jNonBlockingCheck.isSelected();
     }
 
     private void traverseWithTab(JTextArea textArea, KeyEvent event) {
@@ -92,6 +97,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
         jJvmArgsCaption = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jJvmArgsTextArea = new javax.swing.JTextArea();
+        jNonBlockingCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jTasksCaption, org.openide.util.NbBundle.getMessage(CustomActionPanel.class, "CustomActionPanel.jTasksCaption.text")); // NOI18N
 
@@ -119,18 +125,21 @@ public class CustomActionPanel extends javax.swing.JPanel {
         });
         jScrollPane2.setViewportView(jJvmArgsTextArea);
 
+        org.openide.awt.Mnemonics.setLocalizedText(jNonBlockingCheck, org.openide.util.NbBundle.getMessage(CustomActionPanel.class, "CustomActionPanel.jNonBlockingCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jTasksEdit, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jTasksEdit)
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jNonBlockingCheck)
                             .addComponent(jTasksCaption)
                             .addComponent(jArgsCaption)
                             .addComponent(jJvmArgsCaption))
@@ -152,6 +161,8 @@ public class CustomActionPanel extends javax.swing.JPanel {
                 .addComponent(jJvmArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jNonBlockingCheck)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -169,6 +180,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
     private javax.swing.JTextArea jArgsTextArea;
     private javax.swing.JLabel jJvmArgsCaption;
     private javax.swing.JTextArea jJvmArgsTextArea;
+    private javax.swing.JCheckBox jNonBlockingCheck;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel jTasksCaption;

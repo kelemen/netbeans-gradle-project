@@ -253,7 +253,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     displayName,
                     names,
                     Arrays.asList(actionPanel.getArguments()),
-                    Arrays.asList(actionPanel.getJvmArguments()));
+                    Arrays.asList(actionPanel.getJvmArguments()),
+                    actionPanel.isNonBlocking());
         }
 
         private boolean doSaveTask(CustomActionPanel actionPanel) {

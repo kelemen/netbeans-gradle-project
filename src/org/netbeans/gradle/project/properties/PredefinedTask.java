@@ -37,18 +37,25 @@ public final class PredefinedTask {
     private final List<Name> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
+    private final boolean nonBlocking;
 
     public PredefinedTask(
             String displayName,
             List<Name> taskNames,
             List<String> arguments,
-            List<String> jvmArguments) {
+            List<String> jvmArguments,
+            boolean nonBlocking) {
         if (displayName == null) throw new NullPointerException("displayName");
 
         this.displayName = displayName;
         this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
         this.arguments = CollectionUtils.copyNullSafeList(arguments);
         this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
+        this.nonBlocking = nonBlocking;
+    }
+
+    public boolean isNonBlocking() {
+        return nonBlocking;
     }
 
     public String getDisplayName() {
@@ -139,6 +146,7 @@ public final class PredefinedTask {
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(processedTaskNames);
         builder.setArguments(arguments);
         builder.setJvmArguments(jvmArguments);
+        builder.setNonBlocking(nonBlocking);
         return builder.create();
     }
 

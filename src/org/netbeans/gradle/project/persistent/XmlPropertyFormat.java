@@ -44,6 +44,7 @@ final class XmlPropertyFormat {
     private static final String SOURCE_LEVEL_NODE = "source-level";
     private static final String COMMON_TASKS_NODE = "common-tasks";
     private static final String TASK_DISPLAY_NAME_NODE = "display-name";
+    private static final String TASK_NON_BLOCKING_NODE = "non-blocking";
     private static final String TASK_NODE = "task";
     private static final String TASK_NAME_LIST_NODE = "task-names";
     private static final String TASK_NAME_NODE = "name";
@@ -83,6 +84,7 @@ final class XmlPropertyFormat {
         Element taskNode = addChild(node, TASK_NODE);
 
         addSimpleChild(taskNode, TASK_DISPLAY_NAME_NODE, task.getDisplayName());
+        addSimpleChild(taskNode, TASK_NON_BLOCKING_NODE, task.isNonBlocking() ? VALUE_YES : VALUE_NO);
 
         Element nameListNode = addChild(taskNode, TASK_NAME_LIST_NODE);
         for (PredefinedTask.Name name: task.getTaskNames()) {
@@ -258,6 +260,15 @@ final class XmlPropertyFormat {
         }
         displayName = displayName != null ? displayName.trim() : "?";
 
+        Element nonBlockingNode = getFirstChildByTagName(root, TASK_NON_BLOCKING_NODE);
+        boolean nonBlocking = false;
+        if (nonBlockingNode != null) {
+            String nonBlockingStr = nonBlockingNode.getTextContent();
+            if (nonBlockingStr != null) {
+                nonBlocking = VALUE_YES.equalsIgnoreCase(nonBlockingStr.trim());
+            }
+        }
+
         List<PredefinedTask.Name> names = new LinkedList<PredefinedTask.Name>();
         Element nameListNode = getFirstChildByTagName(root, TASK_NAME_LIST_NODE);
         if (nameListNode != null) {
@@ -266,7 +277,7 @@ final class XmlPropertyFormat {
                 name = name != null ? name.trim() : "";
 
                 if (!name.isEmpty()) {
-                    boolean mustExist = VALUE_YES.equals(nameNode.getAttribute(TASK_MUST_EXIST_ATTR));
+                    boolean mustExist = VALUE_YES.equalsIgnoreCase(nameNode.getAttribute(TASK_MUST_EXIST_ATTR));
                     names.add(new PredefinedTask.Name(name, mustExist));
                 }
             }
@@ -296,7 +307,7 @@ final class XmlPropertyFormat {
             }
         }
 
-        return new PredefinedTask(displayName, names, args, jvmArgs);
+        return new PredefinedTask(displayName, names, args, jvmArgs, nonBlocking);
     }
 
     private static List<PredefinedTask> readTasks(Element root) {
