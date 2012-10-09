@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,16 +39,48 @@ public final class GradleDaemonManager {
 
     public static void submitGradleTask(
             Executor executor,
-            final String displayName,
-            final DaemonTask task,
-            final boolean nonBlocking) {
+            String caption,
+            DaemonTask task,
+            boolean nonBlocking) {
+        submitGradleTask(executor, new DaemonTaskDef(caption, nonBlocking, task));
+    }
+
+    public static void submitGradleTask(
+            Executor executor,
+            final DaemonTaskDef taskDef) {
+        submitGradleTask(executor, new Callable<DaemonTaskDef>() {
+            @Override
+            public DaemonTaskDef call() {
+                return taskDef;
+            }
+        });
+    }
+
+    public static void submitGradleTask(
+            Executor executor,
+            final Callable<DaemonTaskDef> taskDefFactory) {
         if (executor == null) throw new NullPointerException("executor");
-        if (displayName == null) throw new NullPointerException("displayName");
-        if (task == null) throw new NullPointerException("task");
+        if (taskDefFactory == null) throw new NullPointerException("taskDefFactory");
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                DaemonTaskDef taskDef;
+                try {
+                    taskDef = taskDefFactory.call();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to create DaemonTaskDef.", ex);
+                    return;
+                }
+
+                if (taskDef == null) {
+                    return;
+                }
+
+                String displayName = taskDef.getCaption();
+                boolean nonBlocking = taskDef.isNonBlocking();
+                DaemonTask task = taskDef.getTask();
+
                 final ThreadInterrupter interrupter = new ThreadInterrupter(Thread.currentThread());
                 ProgressHandle progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override

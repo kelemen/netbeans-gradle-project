@@ -21,7 +21,7 @@ public final class GradleTaskDef {
             this.jvmArguments = taskDef.getJvmArguments();
             this.stdOutListener = taskDef.getStdOutListener();
             this.stdErrListener = taskDef.getStdErrListener();
-            this.nonBlocking = false;
+            this.nonBlocking = taskDef.isNonBlocking();
         }
 
         public Builder(String taskName) {
@@ -38,6 +38,7 @@ public final class GradleTaskDef {
             this.jvmArguments = Collections.emptyList();
             this.stdOutListener = NoOpTaskOutputListener.INSTANCE;
             this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
+            this.nonBlocking = false;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");

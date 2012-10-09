@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,7 +36,7 @@ import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class GradleTasks {
-    public static final RequestProcessor TASK_EXECUTOR
+    private static final RequestProcessor TASK_EXECUTOR
             = new RequestProcessor("Gradle-Task-Executor", 10, true);
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
@@ -147,55 +148,81 @@ public final class GradleTasks {
         LifecycleManager.getDefault().saveAll();
     }
 
-    private static void submitGradleTask(final NbGradleProject project, GradleTaskDef taskDef) {
+    private static void submitGradleTask(
+            final NbGradleProject project,
+            final Callable<GradleTaskDef> taskDefFactory) {
         preSubmitGradleTask();
 
-        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
-
-        final GradleTaskDef newTaskDef;
-        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
-            GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-
-            List<String> combinedJvmArgs = new ArrayList<String>(
-                    taskDef.getJvmArguments().size() + globalJvmArgs.size());
-            combinedJvmArgs.addAll(taskDef.getJvmArguments());
-            combinedJvmArgs.addAll(globalJvmArgs);
-            builder.setJvmArguments(combinedJvmArgs);
-
-            newTaskDef = builder.create();
-        }
-        else {
-            newTaskDef = taskDef;
-        }
-
-        String caption = NbStrings.getExecuteTasksText(newTaskDef.getTaskNames());
-        GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, caption, new DaemonTask() {
+        Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
             @Override
-            public void run(ProgressHandle progress) {
-                doGradleTasksWithProgress(progress, project, newTaskDef);
+            public DaemonTaskDef call() throws Exception {
+                GradleTaskDef taskDef = taskDefFactory.call();
+                if (taskDef == null) {
+                    return null;
+                }
+
+                List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+
+                final GradleTaskDef newTaskDef;
+                if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+                    GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
+
+                    List<String> combinedJvmArgs = new ArrayList<String>(
+                            taskDef.getJvmArguments().size() + globalJvmArgs.size());
+                    combinedJvmArgs.addAll(taskDef.getJvmArguments());
+                    combinedJvmArgs.addAll(globalJvmArgs);
+                    builder.setJvmArguments(combinedJvmArgs);
+
+                    newTaskDef = builder.create();
+                }
+                else {
+                    newTaskDef = taskDef;
+                }
+
+                String caption = NbStrings.getExecuteTasksText(newTaskDef.getTaskNames());
+                boolean nonBlocking = newTaskDef.isNonBlocking();
+
+                return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
+                    @Override
+                    public void run(ProgressHandle progress) {
+                        doGradleTasksWithProgress(progress, project, newTaskDef);
+                    }
+                });
             }
-        }, taskDef.isNonBlocking());
+        };
+
+        GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory);
     }
 
-    public static Runnable createAsyncGradleTask(NbGradleProject project, GradleTaskDef taskDef) {
-        return new AsyncGradleTask(project, taskDef);
+    public static Runnable createAsyncGradleTask(NbGradleProject project, final GradleTaskDef taskDef) {
+        if (taskDef == null) throw new NullPointerException("taskDef");
+        return createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+            @Override
+            public GradleTaskDef call() {
+                return taskDef;
+            }
+        });
+    }
+
+    public static Runnable createAsyncGradleTask(NbGradleProject project, Callable<GradleTaskDef> taskDefFactory) {
+        return new AsyncGradleTask(project, taskDefFactory);
     }
 
     private static class AsyncGradleTask implements Runnable {
         private final NbGradleProject project;
-        private final GradleTaskDef taskDef;
+        private final Callable<GradleTaskDef> taskDefFactroy;
 
-        public AsyncGradleTask(NbGradleProject project, GradleTaskDef taskDef) {
+        public AsyncGradleTask(NbGradleProject project, Callable<GradleTaskDef> taskDefFactroy) {
             if (project == null) throw new NullPointerException("project");
-            if (taskDef == null) throw new NullPointerException("taskDef");
+            if (taskDefFactroy == null) throw new NullPointerException("taskDefFactroy");
 
             this.project = project;
-            this.taskDef = taskDef;
+            this.taskDefFactroy = taskDefFactroy;
         }
 
         @Override
         public void run() {
-            submitGradleTask(project, taskDef);
+            submitGradleTask(project, taskDefFactroy);
         }
     }
 

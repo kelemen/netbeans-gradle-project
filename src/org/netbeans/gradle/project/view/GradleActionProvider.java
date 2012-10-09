@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -175,9 +176,9 @@ public final class GradleActionProvider implements ActionProvider {
 
         @Override
         public void run() {
-            GradleTasks.TASK_EXECUTOR.execute(new Runnable() {
+            Runnable testTask = GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
                 @Override
-                public void run() {
+                public GradleTaskDef call() {
                     NbGradleModule mainModule = project.getAvailableModel().getMainModule();
 
                     List<FileObject> sources = new LinkedList<FileObject>();
@@ -210,15 +211,15 @@ public final class GradleActionProvider implements ActionProvider {
                             builder.setStdOutListener(debugeeListener(true));
                         }
 
-                        Runnable task;
-                        task = GradleTasks.createAsyncGradleTask(project, builder.create());
-                        task.run();
+                        return builder.create();
                     }
                     else {
                         LOGGER.log(Level.WARNING, "Failed to find test file to execute: {0}", file);
+                        return null;
                     }
                 }
             });
+            testTask.run();
         }
     }
 }
