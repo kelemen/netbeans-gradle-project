@@ -4,11 +4,14 @@ import java.awt.Dialog;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -24,12 +27,16 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         currentProperties = null;
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        PlatformComboItem[] comboItems = new PlatformComboItem[platforms.length];
+        List<PlatformComboItem> comboItems = new LinkedList<PlatformComboItem>();
         for (int i = 0; i < platforms.length; i++) {
-            comboItems[i] = new PlatformComboItem(platforms[i]);
+            JavaPlatform platform = platforms[i];
+            Specification specification = platform.getSpecification();
+            if (specification != null && specification.getVersion() != null) {
+                comboItems.add(new PlatformComboItem(platform));
+            }
         }
 
-        jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems));
+        jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new PlatformComboItem[0])));
     }
 
     public void initFromProperties(ProjectProperties properties) {
