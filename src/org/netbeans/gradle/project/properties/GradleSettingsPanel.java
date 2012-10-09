@@ -17,6 +17,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     public GradleSettingsPanel() {
         initComponents();
 
+        updateSettings();
+    }
+
+    private void fillPlatformCombo() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         JavaPlatformItem[] comboItems = new JavaPlatformItem[platforms.length];
         for (int i = 0; i < platforms.length; i++) {
@@ -24,10 +28,11 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         }
 
         jJdkCombo.setModel(new DefaultComboBoxModel(comboItems));
-        updateSettings();
     }
 
     public final void updateSettings() {
+        fillPlatformCombo();
+
         jGradlePathEdit.setText(GlobalGradleSettings.getGradleHome().getValueAsString());
         jGradleJVMArgs.setText(GlobalGradleSettings.getGradleJvmArgs().getValueAsString());
 
