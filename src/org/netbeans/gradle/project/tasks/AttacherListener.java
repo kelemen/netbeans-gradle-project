@@ -42,9 +42,10 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         NbGradleModule mainModule = project.getAvailableModel().getMainModule();
         List<FileObject> srcRoots = new LinkedList<FileObject>();
 
-        NbSourceGroup mainSources
-                = mainModule.getSources(test ? NbSourceType.TEST_SOURCE : NbSourceType.SOURCE);
-        srcRoots.addAll(mainSources.getFileObjects());
+        srcRoots.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
+        if (test) {
+            srcRoots.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFileObjects());
+        }
 
         Collection<NbDependency> allDependencies = NbModelUtils.getAllDependencies(
                 mainModule,
