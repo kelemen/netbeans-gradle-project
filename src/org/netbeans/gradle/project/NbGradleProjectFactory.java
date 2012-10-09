@@ -74,7 +74,16 @@ public class NbGradleProjectFactory implements ProjectFactory {
             }
         }
 
-        return projectDirectory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null;
+        if (projectDirectory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null) {
+            return true;
+        }
+        if (projectDirectory.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME) != null) {
+            return true;
+        }
+        if (projectDirectory.getFileObject(projectDirectory.getNameExt() + ".gradle") != null) {
+            return true;
+        }
+        return false;
     }
 
     @Override
