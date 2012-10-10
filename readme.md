@@ -95,10 +95,6 @@ Current Limitations
   The "Reload Project" action must be executed manually (from the project's
   popup menu). No automatic detection is done because reloading the project is
   slow (just like opening it).
-- Debugging is only possible by manually attaching to the process. To run a project
-  in debug mode a task must be defined to start the project in debug mode and listen
-  on a particular port. Single test run can be started by right clicking the file in
-  the project view but attaching to the process must still be done manually.
 - In case a directory for a source set does not exists it will be unavailable
   in the IDE and you cannot add files to it from the IDE.
 - Exclusion of directories from source sets are ignored. I don't see how it
