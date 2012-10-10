@@ -19,7 +19,7 @@ public final class GradleDaemonManager {
         progress.suspend("");
         QUEUE_LOCK.lockInterruptibly();
         try {
-            progress.progress("");
+            progress.switchToIndeterminate();
             task.run(progress);
         } finally{
             QUEUE_LOCK.unlock();
@@ -33,7 +33,7 @@ public final class GradleDaemonManager {
         QUEUE_LOCK.lockInterruptibly();
         QUEUE_LOCK.unlock();
 
-        progress.progress("");
+        progress.switchToIndeterminate();
         task.run(progress);
     }
 
