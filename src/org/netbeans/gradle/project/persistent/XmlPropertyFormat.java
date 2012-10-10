@@ -25,6 +25,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.openide.modules.SpecificationVersion;
@@ -40,6 +41,7 @@ final class XmlPropertyFormat {
 
     private static final String ROOT_NODE = "gradle-project-properties";
     private static final String SOURCE_ENCODING_NODE = "source-encoding";
+    private static final String PLATFORM_NAME_NODE = "target-platform-name";
     private static final String PLATFORM_NODE = "target-platform";
     private static final String SOURCE_LEVEL_NODE = "source-level";
     private static final String COMMON_TASKS_NODE = "common-tasks";
@@ -55,6 +57,8 @@ final class XmlPropertyFormat {
 
     private static final String VALUE_YES = "yes";
     private static final String VALUE_NO = "no";
+
+    private static final String DEFAULT_SPECIFICATION_NAME = "j2se";
 
     private static Element addChild(Node parent, String tagName) {
         Element element = parent.getOwnerDocument().createElement(tagName);
@@ -136,6 +140,7 @@ final class XmlPropertyFormat {
         addSimpleChild(root, SOURCE_ENCODING_NODE, sourceEncoding);
 
         JavaPlatform platform = snapshot.getPlatform();
+        addSimpleChild(root, PLATFORM_NAME_NODE, platform.getSpecification().getName());
         addSimpleChild(root, PLATFORM_NODE, platform.getSpecification().getVersion().toString());
 
         String sourceLevel = snapshot.getSourceLevel();
@@ -179,7 +184,7 @@ final class XmlPropertyFormat {
         return null;
     }
 
-    private static JavaPlatform parsePlatform(String versionStr) {
+    private static JavaPlatform parsePlatform(String specName, String versionStr) {
         SpecificationVersion version;
         try {
             version = new SpecificationVersion(versionStr);
@@ -190,7 +195,9 @@ final class XmlPropertyFormat {
 
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         for (JavaPlatform platform: platforms) {
-            if (version.equals(platform.getSpecification().getVersion())) {
+            Specification specification = platform.getSpecification();
+            if (specName.equalsIgnoreCase(specification.getName())
+                    && version.equals(specification.getVersion())) {
                 return platform;
             }
         }
@@ -207,12 +214,25 @@ final class XmlPropertyFormat {
 
         JavaPlatform bestMatch = null;
         for (JavaPlatform platform: platforms) {
+            Specification platformSpecification = platform.getSpecification();
+            if (platformSpecification == null) {
+                continue;
+            }
+
+            if (!specName.equalsIgnoreCase(platformSpecification.getName())) {
+                continue;
+            }
+
+            SpecificationVersion thisVersion = platformSpecification.getVersion();
+            if (thisVersion == null) {
+                continue;
+            }
+
             if (bestMatch == null) {
                 bestMatch = platform;
             }
             else {
                 SpecificationVersion bestVersion = bestMatch.getSpecification().getVersion();
-                SpecificationVersion thisVersion = platform.getSpecification().getVersion();
 
                 // required version is greater than the one we currently have
                 if (version.compareTo(bestVersion) > 0) {
@@ -364,9 +384,14 @@ final class XmlPropertyFormat {
             result.setSourceEncoding(sourceEncoding);
         }
 
+        String platformName = tryGetValueOfNode(root, PLATFORM_NAME_NODE);
+        if (platformName == null) {
+            platformName = DEFAULT_SPECIFICATION_NAME;
+        }
+
         String platformStr = tryGetValueOfNode(root, PLATFORM_NODE);
         JavaPlatform platform = platformStr != null
-                ? parsePlatform(platformStr)
+                ? parsePlatform(platformName, platformStr)
                 : null;
         if (platform != null) {
             result.setPlatform(platform);
