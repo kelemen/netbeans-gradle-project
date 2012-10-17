@@ -209,13 +209,13 @@ public final class GradleModelLoader {
         for (IdeaDependency dependency: module.getDependencies()) {
             String scope = dependency.getScope().getScope();
             NbDependencyType dependencyType;
-            if ("COMPILE".equals(scope)) {
+            if ("COMPILE".equalsIgnoreCase(scope) || "PROVIDED".equalsIgnoreCase(scope)) {
                 dependencyType = NbDependencyType.COMPILE;
             }
-            else if ("TEST".equals(scope)) {
+            else if ("TEST".equalsIgnoreCase(scope)) {
                 dependencyType = NbDependencyType.TEST_COMPILE;
             }
-            else if ("RUNTIME".equals(scope)) {
+            else if ("RUNTIME".equalsIgnoreCase(scope)) {
                 dependencyType = NbDependencyType.RUNTIME;
             }
             else {
