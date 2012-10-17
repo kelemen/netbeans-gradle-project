@@ -52,7 +52,9 @@ import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class GradleProjectLogicalViewProvider implements LogicalViewProvider {
@@ -110,38 +112,42 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             TasksActionMenu tasksAction = new TasksActionMenu(project);
             CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
-            this.actions = new Action[] {
-                CommonProjectActions.newFileAction(),
-                null,
-                createProjectAction(
+
+            List<Action> projectActions = new LinkedList<Action>();
+            projectActions.add(CommonProjectActions.newFileAction());
+            projectActions.add(null);
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_RUN,
-                    NbStrings.getRunCommandCaption()),
-                createProjectAction(
+                    NbStrings.getRunCommandCaption()));
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_DEBUG,
-                    NbStrings.getDebugCommandCaption()),
-                null,
-                createProjectAction(
+                    NbStrings.getDebugCommandCaption()));
+            projectActions.add(null);
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_BUILD,
-                    NbStrings.getBuildCommandCaption()),
-                createProjectAction(
+                    NbStrings.getBuildCommandCaption()));
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_CLEAN,
-                    NbStrings.getCleanCommandCaption()),
-                createProjectAction(
+                    NbStrings.getCleanCommandCaption()));
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_REBUILD,
-                    NbStrings.getRebuildCommandCaption()),
-                createProjectAction(
+                    NbStrings.getRebuildCommandCaption()));
+            projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_JAVADOC,
-                    NbStrings.getJavadocCommandCaption()),
-                customTasksAction,
-                tasksAction,
-                null,
-                createProjectAction(
+                    NbStrings.getJavadocCommandCaption()));
+            projectActions.add(customTasksAction);
+            projectActions.add(tasksAction);
+            projectActions.add(null);
+            projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
-                    NbStrings.getReloadCommandCaption()),
-                CommonProjectActions.closeProjectAction(),
-                null,
-                CommonProjectActions.customizeProjectAction()
-            };
+                    NbStrings.getReloadCommandCaption()));
+            projectActions.add(CommonProjectActions.closeProjectAction());
+            projectActions.add(null);
+            projectActions.addAll(Utilities.actionsForPath("Projects/Actions"));
+            projectActions.add(null);
+            projectActions.add(CommonProjectActions.customizeProjectAction());
+
+            this.actions = projectActions.toArray(new Action[projectActions.size()]);
         }
 
         public void fireInfoChangeEvent() {
