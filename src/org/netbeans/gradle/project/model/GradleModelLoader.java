@@ -490,6 +490,7 @@ public final class GradleModelLoader {
             }
         }
 
+        progress.progress(NbStrings.getParsingModel());
         return parseFromIdeaModel(projectDir, ideaModel);
     }
 

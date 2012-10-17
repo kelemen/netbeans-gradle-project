@@ -179,6 +179,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_SelectProjectLocation");
     }
 
+    public static String getParsingModel() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ParsingModel");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
