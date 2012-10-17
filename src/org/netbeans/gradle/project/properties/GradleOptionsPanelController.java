@@ -34,6 +34,7 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         GlobalGradleSettings.getGradleJvmArgs().setValueFromString(panel.getGradleJvmArgs());
         GlobalGradleSettings.getGradleJdk().setValue(panel.getJdk());
         GlobalGradleSettings.getSkipTests().setValue(panel.isSkipTests());
+        GlobalGradleSettings.getProjectCacheSize().setValue(panel.getProjectCacheSize());
     }
 
     @Override

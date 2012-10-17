@@ -17,6 +17,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.gradle.tooling.BuildException;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -53,6 +55,15 @@ public final class GradleModelLoader {
 
     private static GradleModelCache CACHE = new GradleModelCache(100);
     private static ModelLoadSupport LISTENERS = new ModelLoadSupport();
+
+    static {
+        GlobalGradleSettings.getProjectCacheSize().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                CACHE.setMaxCapacity(GlobalGradleSettings.getProjectCacheSize().getValue());
+            }
+        });
+    }
 
     public static void addModelLoadedListener(ModelLoadListener listener) {
         LISTENERS.addListener(listener);

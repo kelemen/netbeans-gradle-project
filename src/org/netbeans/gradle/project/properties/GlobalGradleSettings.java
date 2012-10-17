@@ -27,12 +27,14 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
     private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
     private static final StringBasedProperty<Boolean> SKIP_TESTS;
+    private static final StringBasedProperty<Integer> PROJECT_CACHE_SIZE;
 
     static {
         GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
         SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
+        PROJECT_CACHE_SIZE = new GlobalProperty<Integer>("project-cache-size", new IntegerConverter(1, Integer.MAX_VALUE, 100));
     }
 
     public static StringBasedProperty<FileObject> getGradleHome() {
@@ -49,6 +51,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getSkipTests() {
         return SKIP_TESTS;
+    }
+
+    public static StringBasedProperty<Integer> getProjectCacheSize() {
+        return PROJECT_CACHE_SIZE;
     }
 
     public static FileObject getCurrentGradleJdkHome() {
@@ -104,6 +110,54 @@ public final class GlobalGradleSettings {
                 result.append(valueItr.next());
             }
             return result.toString();
+        }
+    }
+
+    private static class IntegerConverter implements ValueConverter<Integer> {
+        private final Integer defaultValue;
+        private final int minValue;
+        private final int maxValue;
+
+        public IntegerConverter(int minValue, int maxValue, Integer defaultValue) {
+            if (minValue > maxValue) {
+                throw new IllegalArgumentException("minValue > maxValue");
+            }
+            if (defaultValue != null && (minValue > defaultValue || maxValue < defaultValue)) {
+                throw new IllegalArgumentException("minValue > defaultValue || maxValue < defaultValue");
+            }
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public Integer toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty()) {
+                return defaultValue;
+            }
+
+            try {
+                int result = Integer.parseInt(strValue);
+                if (result < minValue) result = minValue;
+                else if (result > maxValue) result = maxValue;
+                return result;
+            } catch (NumberFormatException ex) {
+                LOGGER.log(Level.WARNING, "Invalid integer in the settings: {0}", strValue);
+            }
+            return defaultValue;
+        }
+
+        @Override
+        public String toString(Integer value) {
+            if (value != null && value.equals(defaultValue)) {
+                return null;
+            }
+            // This check only matters in case value and defaultValue are both nulls.
+            if (value == defaultValue) {
+                return null;
+            }
+
+            return value != null ? value.toString() : null;
         }
     }
 

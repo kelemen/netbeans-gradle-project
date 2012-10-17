@@ -4,15 +4,14 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleModelCache {
-    private final Lock cacheLock;
+    private final ReentrantLock cacheLock;
     private final Map<CacheKey, NbGradleModel> cache;
-    private final int maxCapacity;
+    private volatile int maxCapacity;
 
     public GradleModelCache(int maxCapacity) {
         if (maxCapacity < 0) {
@@ -25,6 +24,30 @@ public final class GradleModelCache {
         float loadFactor = 0.75f;
         int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
         this.cache = new LinkedHashMap<CacheKey, NbGradleModel>(capacity, loadFactor, true);
+    }
+
+    private void cleanupCache() {
+        assert cacheLock.isHeldByCurrentThread();
+
+        while (cache.size() > maxCapacity) {
+            Iterator<?> itr = cache.entrySet().iterator();
+            itr.next();
+            itr.remove();
+        }
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        if (maxCapacity < 0) {
+            throw new IllegalArgumentException("Illegal max. capacity value: " + maxCapacity);
+        }
+
+        this.maxCapacity = maxCapacity;
+        cacheLock.lock();
+        try {
+            cleanupCache();
+        } finally {
+            cacheLock.unlock();
+        }
     }
 
     public void addToCache(NbGradleModel model) {
@@ -46,15 +69,7 @@ public final class GradleModelCache {
         cacheLock.lock();
         try {
             cache.put(key, model);
-
-            // The body of the while loop should not be executed more than once
-            // but keep the while (instead of "if"), in case it is required due
-            // to some bugs.
-            while (cache.size() > maxCapacity) {
-                Iterator<?> itr = cache.entrySet().iterator();
-                itr.next();
-                itr.remove();
-            }
+            cleanupCache();
         } finally {
             cacheLock.unlock();
         }
