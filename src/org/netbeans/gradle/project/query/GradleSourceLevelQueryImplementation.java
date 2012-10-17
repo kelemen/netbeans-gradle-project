@@ -4,6 +4,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -19,7 +20,10 @@ implements
 
     public GradleSourceLevelQueryImplementation(NbGradleProject project) {
         this.project = project;
-        this.changes = new ChangeSupport(this);
+
+        EventSource eventSource = new EventSource();
+        this.changes = new ChangeSupport(eventSource);
+        eventSource.init(this.changes);
     }
 
     @Override
@@ -55,5 +59,29 @@ implements
                 changes.addChangeListener(listener);
             }
         };
+    }
+
+    private static final class EventSource implements Result {
+        private volatile ChangeSupport changes;
+
+        public void init(ChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public String getSourceLevel() {
+            return AbstractProjectProperties.DEFAULT_SOURCE_LEVEL;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            changes.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            changes.removeChangeListener(l);
+        }
     }
 }

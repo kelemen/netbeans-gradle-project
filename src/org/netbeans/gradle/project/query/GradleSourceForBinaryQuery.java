@@ -62,8 +62,11 @@ implements
     public GradleSourceForBinaryQuery(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
-        this.changes = new ChangeSupport(project);
         this.cache = new ConcurrentHashMap<FileObject, SourceForBinaryQueryImplementation2.Result>();
+
+        EventSource eventSource = new EventSource();
+        this.changes = new ChangeSupport(eventSource);
+        eventSource.init(this.changes);
     }
 
     private static BinaryType getBinaryRootType(
@@ -216,6 +219,35 @@ implements
     @Override
     public SourceForBinaryQuery.Result findSourceRoots(URL binaryRoot) {
         return findSourceRoots2(binaryRoot);
+    }
+
+    private static final class EventSource implements SourceForBinaryQueryImplementation2.Result {
+        private volatile ChangeSupport changes;
+
+        public void init(ChangeSupport changes) {
+            assert changes != null;
+            this.changes = changes;
+        }
+
+        @Override
+        public boolean preferSources() {
+            return true;
+        }
+
+        @Override
+        public FileObject[] getRoots() {
+            return NO_ROOTS;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            changes.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            changes.removeChangeListener(l);
+        }
     }
 
     private enum BinaryType {
