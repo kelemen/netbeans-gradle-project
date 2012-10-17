@@ -78,6 +78,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_Build");
     }
 
+    public static String getTestCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_Test");
+    }
+
     public static String getCleanCommandCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_Clean");
     }

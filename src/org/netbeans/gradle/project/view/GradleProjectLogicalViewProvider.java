@@ -127,6 +127,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     ActionProvider.COMMAND_BUILD,
                     NbStrings.getBuildCommandCaption()));
             projectActions.add(createProjectAction(
+                    ActionProvider.COMMAND_TEST,
+                    NbStrings.getTestCommandCaption()));
+            projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_CLEAN,
                     NbStrings.getCleanCommandCaption()));
             projectActions.add(createProjectAction(
