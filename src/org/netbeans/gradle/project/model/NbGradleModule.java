@@ -101,6 +101,7 @@ public final class NbGradleModule {
     public static final class Properties {
         private static final Collator STR_CMP = Collator.getInstance();
 
+        private final boolean circularDependencies;
         private final File moduleDir;
         private final NbOutput output;
         private final String uniqueName;
@@ -109,6 +110,7 @@ public final class NbGradleModule {
         private final List<String> nameParts;
 
         public Properties(
+                boolean circularDependencies,
                 String uniqueName,
                 File moduleDir,
                 NbOutput output,
@@ -118,6 +120,7 @@ public final class NbGradleModule {
             if (output == null) throw new NullPointerException("output");
             if (tasks == null) throw new NullPointerException("tasks");
 
+            this.circularDependencies = circularDependencies;
             this.uniqueName = uniqueName;
             this.moduleDir = moduleDir;
             this.output = output;
@@ -137,6 +140,19 @@ public final class NbGradleModule {
             for (NbGradleTask task: this.tasks) {
                 if (task == null) throw new NullPointerException("task");
             }
+        }
+
+        /**
+         * Checks whether the associated {@code NbGradleModule} contains all the
+         * dependencies or not. This property had to be introduced to support
+         * circular dependencies. That is, when there are circular dependencies
+         * we are not able to pass all dependencies to each
+         * {@code NbGradleModule} (the first {@code NbGradleModule} created in
+         * the circle will surely not have all the dependencies due to the
+         * immutable nature of this class).
+         */
+        public boolean hasCircularDependencies() {
+            return circularDependencies;
         }
 
         public NbOutput getOutput() {

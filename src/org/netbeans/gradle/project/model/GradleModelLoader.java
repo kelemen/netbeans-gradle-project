@@ -8,10 +8,12 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -139,6 +141,7 @@ public final class GradleModelLoader {
         File projectDirAsFile = FileUtil.toFile(projectDir);
         String name = projectDir.getNameExt();
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
+                true,
                 name,
                 projectDirAsFile,
                 createDefaultOutput(projectDirAsFile),
@@ -197,9 +200,10 @@ public final class GradleModelLoader {
         return null;
     }
 
-    private static Map<NbDependencyType, NbDependencyGroup> getDependencies(
+    private static DependenciesResult getDependencies(
             IdeaModule module, Map<String, NbGradleModule> parsedModules) {
 
+        boolean circular = false;
         DependencyBuilder dependencies = new DependencyBuilder();
 
         for (IdeaDependency dependency: module.getDependencies()) {
@@ -226,6 +230,12 @@ public final class GradleModelLoader {
                     dependencies.addModuleDependency(
                             dependencyType,
                             new NbModuleDependency(parsedDependency, true));
+                    if (parsedDependency.getProperties().hasCircularDependencies()) {
+                        circular = true;
+                    }
+                }
+                else {
+                    circular = true;
                 }
             }
             else if (dependency instanceof ExternalDependency) {
@@ -253,7 +263,7 @@ public final class GradleModelLoader {
                 dependencyMap.put(type, group);
             }
         }
-        return dependencyMap;
+        return new DependenciesResult(circular, dependencyMap);
     }
 
     private static boolean isResourcePath(IdeaSourceDirectory srcDir) {
@@ -349,8 +359,7 @@ public final class GradleModelLoader {
         }
         parsedModules.put(uniqueName, null);
 
-        Map<NbDependencyType, NbDependencyGroup> dependencies
-                = getDependencies(module, parsedModules);
+        DependenciesResult dependencies = getDependencies(module, parsedModules);
 
         Map<NbSourceType, NbSourceGroup> sources = getSources(module);
 
@@ -381,13 +390,19 @@ public final class GradleModelLoader {
         }
 
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
+                dependencies.hasCircular(),
                 uniqueName,
                 moduleDir,
                 createDefaultOutput(moduleDir),
                 taskNames);
 
         List<File> listedDirs = lookupListedDirs(sources);
-        NbGradleModule result = new NbGradleModule(properties, sources, listedDirs, dependencies, children);
+        NbGradleModule result = new NbGradleModule(
+                properties,
+                sources,
+                listedDirs,
+                dependencies.getDependencies(),
+                children);
         parsedModules.put(uniqueName, result);
         return result;
     }
@@ -410,17 +425,37 @@ public final class GradleModelLoader {
             throw new IOException("Unable to parse the main project from the model.");
         }
 
+        Map<String, NbGradleModule> loadedModules = new HashMap<String, NbGradleModule>(parsedModules);
         for (IdeaModule module: ideaModel.getModules()) {
             String uniqueName = module.getGradleProject().getPath();
-            if (!parsedModules.containsKey(uniqueName)) {
-                tryParseModule(module, parsedModules);
+            // We have to remove the modules containing circular depencies,
+            // otherwise we would risk not having every module in the
+            // dependency graph.
+            Iterator<Map.Entry<String, NbGradleModule>> parsedModulesItr
+                    = parsedModules.entrySet().iterator();
+            while (parsedModulesItr.hasNext()) {
+                Entry<String, NbGradleModule> parsedModule = parsedModulesItr.next();
+                if (parsedModule.getValue().getProperties().hasCircularDependencies()) {
+                    parsedModulesItr.remove();
+                }
+            }
+
+            NbGradleModule parsedModule = parsedModules.get(uniqueName);
+            if (parsedModule == null) {
+                NbGradleModule subModule = tryParseModule(module, parsedModules);
+                if (subModule != null) {
+                    loadedModules.put(uniqueName, subModule);
+                }
+            }
+            else {
+                loadedModules.put(uniqueName, parsedModule);
             }
         }
 
         NbGradleModel mainModel = new NbGradleModel(projectDir, parsedMainModule);
         FileObject settings = mainModel.getSettingsFile();
 
-        for (NbGradleModule module: parsedModules.values()) {
+        for (NbGradleModule module: loadedModules.values()) {
             if (module != null && module != parsedMainModule) {
                 FileObject moduleDir = FileUtil.toFileObject(module.getModuleDir());
                 if (moduleDir != null) {
@@ -498,6 +533,26 @@ public final class GradleModelLoader {
             return new NbDependencyGroup(
                     getDependencies(type, moduleDependencies),
                     getDependencies(type, uriDependencies));
+        }
+    }
+
+    private static final class DependenciesResult {
+        private final boolean circular;
+        private final Map<NbDependencyType, NbDependencyGroup> dependencies;
+
+        public DependenciesResult(
+                boolean circular,
+                Map<NbDependencyType, NbDependencyGroup> dependencies) {
+            this.circular = circular;
+            this.dependencies = dependencies;
+        }
+
+        public boolean hasCircular() {
+            return circular;
+        }
+
+        public Map<NbDependencyType, NbDependencyGroup> getDependencies() {
+            return dependencies;
         }
     }
 
