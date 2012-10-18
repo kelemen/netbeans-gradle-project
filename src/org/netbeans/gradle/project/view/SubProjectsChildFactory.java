@@ -118,6 +118,11 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
         }
 
         @Override
+        public Action getPreferredAction() {
+            return new OpenSubProjectAction();
+        }
+
+        @Override
         public String getDisplayName() {
             return module.getName();
         }
@@ -151,6 +156,11 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
             return new Action[]{
                 new OpenSubProjectAction()
             };
+        }
+
+        @Override
+        public Action getPreferredAction() {
+            return new OpenSubProjectAction();
         }
 
         @Override
