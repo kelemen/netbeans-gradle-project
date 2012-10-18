@@ -8,12 +8,10 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -152,7 +150,6 @@ public final class GradleModelLoader {
         File projectDirAsFile = FileUtil.toFile(projectDir);
         String name = projectDir.getNameExt();
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
-                true,
                 name,
                 projectDirAsFile,
                 createDefaultOutput(projectDirAsFile),
@@ -211,10 +208,9 @@ public final class GradleModelLoader {
         return null;
     }
 
-    private static DependenciesResult getDependencies(
+    private static Map<NbDependencyType, NbDependencyGroup> getDependencies(
             IdeaModule module, Map<String, NbGradleModule> parsedModules) {
 
-        boolean circular = false;
         DependencyBuilder dependencies = new DependencyBuilder();
 
         for (IdeaDependency dependency: module.getDependencies()) {
@@ -241,12 +237,6 @@ public final class GradleModelLoader {
                     dependencies.addModuleDependency(
                             dependencyType,
                             new NbModuleDependency(parsedDependency, true));
-                    if (parsedDependency.getProperties().hasCircularDependencies()) {
-                        circular = true;
-                    }
-                }
-                else {
-                    circular = true;
                 }
             }
             else if (dependency instanceof ExternalDependency) {
@@ -274,7 +264,7 @@ public final class GradleModelLoader {
                 dependencyMap.put(type, group);
             }
         }
-        return new DependenciesResult(circular, dependencyMap);
+        return dependencyMap;
     }
 
     private static boolean isResourcePath(IdeaSourceDirectory srcDir) {
@@ -361,16 +351,10 @@ public final class GradleModelLoader {
             Map<String, NbGradleModule> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
 
-        if (parsedModules.containsKey(uniqueName)) {
-            NbGradleModule parsedModule = parsedModules.get(uniqueName);
-            if (parsedModule == null) {
-                LOGGER.log(Level.WARNING, "Circular or missing dependency: {0}", uniqueName);
-            }
+        NbGradleModule parsedModule = parsedModules.get(uniqueName);
+        if (parsedModule != null) {
             return parsedModule;
         }
-        parsedModules.put(uniqueName, null);
-
-        DependenciesResult dependencies = getDependencies(module, parsedModules);
 
         Map<NbSourceType, NbSourceGroup> sources = getSources(module);
 
@@ -389,32 +373,32 @@ public final class GradleModelLoader {
             taskNames.add(new NbGradleTask(qualifiedName, description.trim()));
         }
 
-        List<NbGradleModule> children = new LinkedList<NbGradleModule>();
+        NbGradleModule.Properties properties = new NbGradleModule.Properties(
+                uniqueName,
+                moduleDir,
+                createDefaultOutput(moduleDir),
+                taskNames);
+        List<File> listedDirs = lookupListedDirs(sources);
+
+        NbGradleModuleBuilder moduleBuilder = new NbGradleModuleBuilder(properties, sources, listedDirs);
+        NbGradleModule result = moduleBuilder.getReadOnlyView();
+        parsedModules.put(uniqueName, result);
+
+        // Recursion is only allowed from this point to avoid infinite
+        // recursion.
+
+        moduleBuilder.addDependencies(getDependencies(module, parsedModules));
+
         for (IdeaModule child: getChildModules(module)) {
             NbGradleModule parsedChild = tryParseModule(child, parsedModules);
             if (parsedChild == null) {
                 LOGGER.log(Level.WARNING, "Failed to parse a child module: {0}", child.getName());
             }
             else {
-                children.add(parsedChild);
+                moduleBuilder.addChild(parsedChild);
             }
         }
 
-        NbGradleModule.Properties properties = new NbGradleModule.Properties(
-                dependencies.hasCircular(),
-                uniqueName,
-                moduleDir,
-                createDefaultOutput(moduleDir),
-                taskNames);
-
-        List<File> listedDirs = lookupListedDirs(sources);
-        NbGradleModule result = new NbGradleModule(
-                properties,
-                sources,
-                listedDirs,
-                dependencies.getDependencies(),
-                children);
-        parsedModules.put(uniqueName, result);
         return result;
     }
 
@@ -436,37 +420,19 @@ public final class GradleModelLoader {
             throw new IOException("Unable to parse the main project from the model.");
         }
 
-        Map<String, NbGradleModule> loadedModules = new HashMap<String, NbGradleModule>(parsedModules);
         for (IdeaModule module: ideaModel.getModules()) {
             String uniqueName = module.getGradleProject().getPath();
-            // We have to remove the modules containing circular depencies,
-            // otherwise we would risk not having every module in the
-            // dependency graph.
-            Iterator<Map.Entry<String, NbGradleModule>> parsedModulesItr
-                    = parsedModules.entrySet().iterator();
-            while (parsedModulesItr.hasNext()) {
-                Entry<String, NbGradleModule> parsedModule = parsedModulesItr.next();
-                if (parsedModule.getValue().getProperties().hasCircularDependencies()) {
-                    parsedModulesItr.remove();
-                }
-            }
 
             NbGradleModule parsedModule = parsedModules.get(uniqueName);
             if (parsedModule == null) {
-                NbGradleModule subModule = tryParseModule(module, parsedModules);
-                if (subModule != null) {
-                    loadedModules.put(uniqueName, subModule);
-                }
-            }
-            else {
-                loadedModules.put(uniqueName, parsedModule);
+                tryParseModule(module, parsedModules);
             }
         }
 
         NbGradleModel mainModel = new NbGradleModel(projectDir, parsedMainModule);
         FileObject settings = mainModel.getSettingsFile();
 
-        for (NbGradleModule module: loadedModules.values()) {
+        for (NbGradleModule module: parsedModules.values()) {
             if (module != null && module != parsedMainModule) {
                 FileObject moduleDir = FileUtil.toFileObject(module.getModuleDir());
                 if (moduleDir != null) {

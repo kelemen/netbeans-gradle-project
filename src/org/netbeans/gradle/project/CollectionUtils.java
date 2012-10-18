@@ -10,7 +10,17 @@ public final class CollectionUtils {
         if (list == null) throw new NullPointerException("list");
 
         List<E> result = Collections.unmodifiableList(new ArrayList<E>(list));
-        for (E element: list) {
+        for (E element: result) {
+            if (element == null) throw new NullPointerException("element");
+        }
+        return result;
+    }
+
+    public static <E> ArrayList<E> copyNullSafeMutableList(Collection<? extends E> list) {
+        if (list == null) throw new NullPointerException("list");
+
+        ArrayList<E> result = new ArrayList<E>(list);
+        for (E element: result) {
             if (element == null) throw new NullPointerException("element");
         }
         return result;
