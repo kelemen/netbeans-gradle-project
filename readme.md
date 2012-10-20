@@ -1,7 +1,7 @@
 Downloads
 ---------
 
-The latest build (nbm file) can be downloaded from 
+The latest build (nbm file) can be downloaded from
 [http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support).
 
 General Description
@@ -17,6 +17,64 @@ to be fixed.
 
 Troubleshooting
 --------------
+
+### The classpaths are wrong within NetBeans ###
+
+This plugin loads an [IdeaProject](http://gradle.org/docs/current/groovydoc/org/gradle/plugins/ide/idea/model/IdeaProject.html)
+instance from the build script and therefore configurations applied to the
+[Idea plugin](http://gradle.org/docs/current/userguide/idea_plugin.html) (`apply plugin: 'idea'`)
+will be detected by the NetBeans plugin as well.
+
+Therefore you can add code to the build script to manually edit the classpath:
+
+    idea {
+      module {
+        scopes.COMPILE.plus += configurations.myconfig;
+      }
+    }
+
+The above code adds the dependencies of the "myconfig" configuration to the compile time classpath
+of the subproject. Don't forget to call `apply plugin: 'idea'` before the above code can be applied.
+
+### How can I configure the provided dependency scope? ###
+
+Gradle does not yet have a concept of provided dependencies in the Java plugin (it does have
+in the [War plugin](http://gradle.org/docs/current/userguide/war_plugin.html)).
+Most developers solve this by adding a user defined configuration like this:
+
+    configurations {
+      provided
+    }
+
+Then after adding the dependencies, adjusts the classpaths:
+
+    sourceSets {
+      main {
+        compileClasspath = compileClasspath + configurations.provided;
+      }
+    }
+
+This way Gradle will be able to compile the sources. However, the NetBeans plugin
+is ignorant of user defined configurations and therefore to make the project load
+properly in NetBeans, you will need to append the following code to the build script:
+
+    idea {
+      module {
+        scopes.PROVIDED.plus += configurations.provided;
+      }
+    }
+
+In version "1.1.3" or below, the above code should be
+
+    idea {
+      module {
+        scopes.COMPILE.plus += configurations.provided;
+      }
+    }
+
+because the NetBeans plugin did not expect provided dependencies.
+Note however that in both cases provided dependencies will be listed
+amongst the compile time dependencies within NetBeans.
 
 ### Loading the project takes too long ###
 
