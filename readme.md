@@ -76,6 +76,12 @@ because the NetBeans plugin did not expect provided dependencies.
 Note however that in both cases provided dependencies will be listed
 amongst the compile time dependencies within NetBeans.
 
+### NetBeans seems to load projects without asking ###
+
+Most likely you have a project with more than 100 subprojects (including the root).
+To avoid unnecessary loading of projects you should increase the number of projects
+to be cached. This can be changed on the *Tools/Options/Miscellaneous/Gradle* panel.
+
 ### Loading the project takes too long ###
 
 There can be several causes for this problem:
