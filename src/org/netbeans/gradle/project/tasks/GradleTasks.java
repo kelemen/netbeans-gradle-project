@@ -113,8 +113,9 @@ public final class GradleTasks {
 
                OutputWriter buildErrOutput = io.getErr();
                try {
-                   Writer forwardedStdOut = new WriterForwarded(buildOutput, taskDef.getStdOutListener());
-                   Writer forwardedStdErr = new WriterForwarded(buildErrOutput, taskDef.getStdErrListener());
+                   AtomicReference<WriteReference> writeRef = new AtomicReference<WriteReference>(null);
+                   Writer forwardedStdOut = new WriterForwarder(buildOutput, taskDef.getStdOutListener(), writeRef);
+                   Writer forwardedStdErr = new WriterForwarder(buildErrOutput, taskDef.getStdErrListener(), writeRef);
 
                    buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
                    buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
@@ -401,67 +402,135 @@ public final class GradleTasks {
         }
     }
 
-    private static class WriterForwarded extends Writer {
+    private static class WriteReference {
+        private final Writer writer;
+        private final char writtenChar;
+
+        public WriteReference(Writer writer, char writtenChar) {
+            if (writer == null) throw new NullPointerException("writer");
+
+            this.writer = writer;
+            this.writtenChar = writtenChar;
+        }
+
+        public Writer getWriter() {
+            return writer;
+        }
+
+        public boolean isNewLine() {
+            return writtenChar == '\n' || writtenChar == '\r';
+        }
+    }
+
+    private static class WriterForwarder extends Writer {
         private final Writer wrapped;
         private final TaskOutputListener listener;
+        private final AtomicReference<WriteReference> writeRef;
 
-        public WriterForwarded(Writer wrapped, TaskOutputListener listener) {
+        public WriterForwarder(Writer wrapped, TaskOutputListener listener, AtomicReference<WriteReference> writeRef) {
             if (wrapped == null) throw new NullPointerException("wrapped");
             if (listener == null) throw new NullPointerException("listener");
+            if (writeRef == null) throw new NullPointerException("writeRef");
 
             this.wrapped = wrapped;
             this.listener = listener;
+            this.writeRef = writeRef;
+        }
+
+        private void checkNewLine() throws IOException {
+            WriteReference currentRef = writeRef.get();
+            if (currentRef != null) {
+                if (currentRef.getWriter() != this && !currentRef.isNewLine()) {
+                    // don't use write('\n') because NetBeans will emit "10"
+                    // instead of a newline character.
+                    wrapped.write("\n");
+                }
+            }
         }
 
         @Override
         public void write(int c) throws IOException {
+            checkNewLine();
             wrapped.write(c);
+            writeRef.set(new WriteReference(this, (char)c));
         }
 
         @Override
         public void write(char[] cbuf) throws IOException {
             listener.receiveOutput(cbuf, 0, cbuf.length);
+            checkNewLine();
             wrapped.write(cbuf);
+            if (cbuf.length > 0) {
+                writeRef.set(new WriteReference(this, cbuf[cbuf.length - 1]));
+            }
         }
 
         @Override
         public void write(char[] cbuf, int off, int len) throws IOException {
             listener.receiveOutput(cbuf, off, len);
+            checkNewLine();
             wrapped.write(cbuf, off, len);
+            if (len > 0) {
+                writeRef.set(new WriteReference(this, cbuf[off + len - 1]));
+            }
         }
 
         @Override
         public void write(String str) throws IOException {
             char[] cbuf = str.toCharArray();
             listener.receiveOutput(cbuf, 0, cbuf.length);
+            checkNewLine();
             wrapped.write(str);
+            int len = str.length();
+            if (len > 0) {
+                writeRef.set(new WriteReference(this, str.charAt(len - 1)));
+            }
         }
 
         @Override
         public void write(String str, int off, int len) throws IOException {
             char[] cbuf = str.toCharArray();
             listener.receiveOutput(cbuf, off, len);
+            checkNewLine();
             wrapped.write(str, off, len);
+            if (len > 0) {
+                writeRef.set(new WriteReference(this, str.charAt(off + len - 1)));
+            }
         }
 
         @Override
         public Writer append(CharSequence csq) throws IOException {
             char[] cbuf = csq.toString().toCharArray();
             listener.receiveOutput(cbuf, 0, cbuf.length);
-            return wrapped.append(csq);
+            checkNewLine();
+            wrapped.append(csq);
+            int len = csq.length();
+            if (len > 0) {
+                writeRef.set(new WriteReference(this, csq.charAt(len - 1)));
+            }
+            return this;
         }
 
         @Override
         public Writer append(CharSequence csq, int start, int end) throws IOException {
             char[] cbuf = csq.toString().toCharArray();
             listener.receiveOutput(cbuf, start, end - start);
-            return wrapped.append(csq, start, end);
+            checkNewLine();
+            wrapped.append(csq, start, end);
+
+            if (end - start > 0) {
+                writeRef.set(new WriteReference(this, csq.charAt(end - 1)));
+            }
+            return this;
         }
 
         @Override
         public Writer append(char c) throws IOException {
             listener.receiveOutput(new char[]{c}, 0, 1);
-            return wrapped.append(c);
+            checkNewLine();
+            wrapped.append(c);
+            writeRef.set(new WriteReference(this, c));
+            return this;
         }
 
         @Override
