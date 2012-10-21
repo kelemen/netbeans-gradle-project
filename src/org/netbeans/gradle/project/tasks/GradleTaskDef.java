@@ -7,42 +7,71 @@ import org.netbeans.gradle.project.CollectionUtils;
 
 public final class GradleTaskDef {
     public static final class Builder {
+        private final String caption;
         private final List<String> taskNames;
         private List<String> arguments;
         private List<String> jvmArguments;
 
         private SmartOutputHandler.Visitor stdOutListener;
         private SmartOutputHandler.Visitor stdErrListener;
+        private boolean cleanOutput;
+        private boolean reuseOutput;
         private boolean nonBlocking;
 
         public Builder(GradleTaskDef taskDef) {
+            this.caption = taskDef.getCaption();
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
             this.jvmArguments = taskDef.getJvmArguments();
             this.stdOutListener = taskDef.getStdOutListener();
             this.stdErrListener = taskDef.getStdErrListener();
             this.nonBlocking = taskDef.isNonBlocking();
+            this.reuseOutput = taskDef.isReuseOutput();
+            this.cleanOutput = taskDef.isCleanOutput();
         }
 
-        public Builder(String taskName) {
-            this(Collections.singletonList(taskName));
+        public Builder(String caption, String taskName) {
+            this(caption, Collections.singletonList(taskName));
         }
 
-        public Builder(String[] taskNames) {
-            this(Arrays.asList(taskNames));
+        public Builder(String caption, String[] taskNames) {
+            this(caption, Arrays.asList(taskNames));
         }
 
-        public Builder(List<String> taskNames) {
+        public Builder(String caption, List<String> taskNames) {
+            this.caption = caption;
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
             this.stdOutListener = NoOpTaskOutputListener.INSTANCE;
             this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
             this.nonBlocking = false;
+            this.reuseOutput = true;
+            this.cleanOutput = false;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
+        }
+
+        public boolean isCleanOutput() {
+            return cleanOutput;
+        }
+
+        public void setCleanOutput(boolean cleanOutput) {
+            this.cleanOutput = cleanOutput;
+        }
+
+        public String getCaption() {
+            return caption;
+        }
+
+        public boolean isReuseOutput() {
+            return reuseOutput;
+        }
+
+        public void setReuseOutput(boolean reuseOutput) {
+            this.reuseOutput = reuseOutput;
         }
 
         public boolean isNonBlocking() {
@@ -96,24 +125,42 @@ public final class GradleTaskDef {
         }
     }
 
+    private final String caption;
     private final List<String> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
+    private final boolean reuseOutput;
     private final boolean nonBlocking;
+    private final boolean cleanOutput;
 
     private GradleTaskDef(Builder builder) {
+        this.caption = builder.getCaption();
         this.taskNames = builder.getTaskNames();
         this.arguments = builder.getArguments();
         this.jvmArguments = builder.getJvmArguments();
         this.stdOutListener = builder.getStdOutListener();
         this.stdErrListener = builder.getStdErrListener();
         this.nonBlocking = builder.isNonBlocking();
+        this.reuseOutput = builder.isReuseOutput();
+        this.cleanOutput = builder.isCleanOutput();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
+    }
+
+    public boolean isCleanOutput() {
+        return cleanOutput;
+    }
+
+    public String getCaption() {
+        return caption;
+    }
+
+    public boolean isReuseOutput() {
+        return reuseOutput;
     }
 
     public boolean isNonBlocking() {

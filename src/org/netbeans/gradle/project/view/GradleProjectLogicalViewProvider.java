@@ -14,7 +14,6 @@ import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -54,12 +53,9 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
-import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class GradleProjectLogicalViewProvider implements LogicalViewProvider {
-    private static final Logger LOGGER = Logger.getLogger(GradleProjectLogicalViewProvider.class.getName());
-
     private final NbGradleProject project;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
@@ -341,7 +337,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             if (doExecute) {
                 String[] tasks = panel.getTasks();
                 if (tasks.length > 0) {
-                    GradleTaskDef.Builder builder = new GradleTaskDef.Builder(tasks);
+                    GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
+                            project, Arrays.asList(tasks), panel.isNonBlocking());
                     builder.setArguments(Arrays.asList(panel.getArguments()));
                     builder.setJvmArguments(Arrays.asList(panel.getJvmArguments()));
 
@@ -538,7 +535,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(task.getQualifiedName());
+                        GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
+                                project, Arrays.asList(task.getQualifiedName()), false);
                         GradleTasks.createAsyncGradleTask(project, builder.create()).run();
                     }
                 });

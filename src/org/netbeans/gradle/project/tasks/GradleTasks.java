@@ -26,12 +26,11 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.tasks.InputOutputManager.IORef;
 import org.openide.LifecycleManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
-import org.openide.windows.IOProvider;
-import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class GradleTasks {
@@ -49,10 +48,6 @@ public final class GradleTasks {
             final ProgressHandle progress,
             NbGradleProject project,
             GradleTaskDef taskDef) {
-        String printableName = taskDef.getTaskNames().size() == 1
-                ? taskDef.getTaskNames().get(0)
-                : taskDef.getTaskNames().toString();
-
         StringBuilder commandBuilder = new StringBuilder(128);
         commandBuilder.append("gradle");
         for (String task: taskDef.getTaskNames()) {
@@ -97,64 +92,76 @@ public final class GradleTasks {
 
            buildLauncher.forTasks(taskDef.getTaskNamesArray());
 
-           InputOutput io = IOProvider.getDefault().getIO("Gradle: " + printableName, false);
-           OutputWriter buildOutput = io.getOut();
+           IORef ioRef = InputOutputManager.getInputOutput(
+                   taskDef.getCaption(),
+                   taskDef.isReuseOutput(),
+                   taskDef.isCleanOutput());
            try {
-               buildOutput.println(NbStrings.getExecutingTaskMessage(command));
-               if (!taskDef.getArguments().isEmpty()) {
-                   buildOutput.println(NbStrings.getTaskArgumentsMessage(taskDef.getArguments()));
-               }
-               if (!taskDef.getJvmArguments().isEmpty()) {
-                   buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(taskDef.getJvmArguments()));
-               }
+                OutputWriter buildOutput = ioRef.getIo().getOut();
+                try {
+                    OutputWriter buildErrOutput = ioRef.getIo().getErr();
+                    try {
+                        if (taskDef.isCleanOutput()) {
+                            buildOutput.reset();
+                            buildErrOutput.reset();
+                        }
 
-               buildOutput.println();
+                        buildOutput.println(NbStrings.getExecutingTaskMessage(command));
+                        if (!taskDef.getArguments().isEmpty()) {
+                            buildOutput.println(NbStrings.getTaskArgumentsMessage(taskDef.getArguments()));
+                        }
+                        if (!taskDef.getJvmArguments().isEmpty()) {
+                            buildOutput.println(NbStrings.getTaskJvmArgumentsMessage(taskDef.getJvmArguments()));
+                        }
 
-               OutputWriter buildErrOutput = io.getErr();
-               try {
-                   SmartOutputHandler.Consumer[] consumers = new SmartOutputHandler.Consumer[0];
+                        buildOutput.println();
 
-                   Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                           buildOutput,
-                           new SmartOutputHandler.Visitor[]{
-                               taskDef.getStdOutListener()
-                           },
-                           consumers));
-                   Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                           buildErrOutput,
-                           new SmartOutputHandler.Visitor[]{
-                               taskDef.getStdErrListener()
-                           },
-                           consumers));
+                        SmartOutputHandler.Consumer[] consumers = new SmartOutputHandler.Consumer[0];
 
-                   buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
-                   buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
+                        Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
+                                buildOutput,
+                                new SmartOutputHandler.Visitor[]{
+                                    taskDef.getStdOutListener()
+                                },
+                                consumers));
+                        Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
+                                buildErrOutput,
+                                new SmartOutputHandler.Visitor[]{
+                                    taskDef.getStdErrListener()
+                                },
+                                consumers));
 
-                   io.select();
-                   try {
-                       buildLauncher.run();
-                   } finally {
-                       // These close methods will only forward the last lines
-                       // if they were not terminated with a line separator.
-                       forwardedStdOut.close();
-                       forwardedStdErr.close();
-                   }
-               } catch (Throwable ex) {
-                   LOGGER.log(
-                           ex instanceof Exception ? Level.INFO : Level.SEVERE,
-                           "Gradle build failure: " + command,
-                           ex);
+                        buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
+                        buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
 
-                   String buildFailureMessage = NbStrings.getBuildFailure(command);
-                   buildErrOutput.println();
-                   buildErrOutput.println(buildFailureMessage);
-                   project.displayError(buildFailureMessage, ex, false);
-               } finally {
-                   buildErrOutput.close();
-               }
-           } finally {
-               buildOutput.close();
-           }
+                        ioRef.getIo().select();
+                        try {
+                            buildLauncher.run();
+                        } finally {
+                            // These close methods will only forward the last lines
+                            // if they were not terminated with a line separator.
+                            forwardedStdOut.close();
+                            forwardedStdErr.close();
+                        }
+                    } catch (Throwable ex) {
+                        LOGGER.log(
+                                ex instanceof Exception ? Level.INFO : Level.SEVERE,
+                                "Gradle build failure: " + command,
+                                ex);
+
+                        String buildFailureMessage = NbStrings.getBuildFailure(command);
+                        buildErrOutput.println();
+                        buildErrOutput.println(buildFailureMessage);
+                        project.displayError(buildFailureMessage, ex, false);
+                    } finally {
+                        buildErrOutput.close();
+                    }
+                } finally {
+                    buildOutput.close();
+                }
+            } finally {
+                ioRef.close();
+            }
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();
