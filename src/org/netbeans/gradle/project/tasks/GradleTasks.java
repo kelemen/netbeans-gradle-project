@@ -449,88 +449,15 @@ public final class GradleTasks {
         }
 
         @Override
-        public void write(int c) throws IOException {
-            checkNewLine();
-            wrapped.write(c);
-            writeRef.set(new WriteReference(this, (char)c));
-        }
-
-        @Override
-        public void write(char[] cbuf) throws IOException {
-            listener.receiveOutput(cbuf, 0, cbuf.length);
-            checkNewLine();
-            wrapped.write(cbuf);
-            if (cbuf.length > 0) {
-                writeRef.set(new WriteReference(this, cbuf[cbuf.length - 1]));
-            }
-        }
-
-        @Override
         public void write(char[] cbuf, int off, int len) throws IOException {
             listener.receiveOutput(cbuf, off, len);
+
             checkNewLine();
             wrapped.write(cbuf, off, len);
+
             if (len > 0) {
                 writeRef.set(new WriteReference(this, cbuf[off + len - 1]));
             }
-        }
-
-        @Override
-        public void write(String str) throws IOException {
-            char[] cbuf = str.toCharArray();
-            listener.receiveOutput(cbuf, 0, cbuf.length);
-            checkNewLine();
-            wrapped.write(str);
-            int len = str.length();
-            if (len > 0) {
-                writeRef.set(new WriteReference(this, str.charAt(len - 1)));
-            }
-        }
-
-        @Override
-        public void write(String str, int off, int len) throws IOException {
-            char[] cbuf = str.toCharArray();
-            listener.receiveOutput(cbuf, off, len);
-            checkNewLine();
-            wrapped.write(str, off, len);
-            if (len > 0) {
-                writeRef.set(new WriteReference(this, str.charAt(off + len - 1)));
-            }
-        }
-
-        @Override
-        public Writer append(CharSequence csq) throws IOException {
-            char[] cbuf = csq.toString().toCharArray();
-            listener.receiveOutput(cbuf, 0, cbuf.length);
-            checkNewLine();
-            wrapped.append(csq);
-            int len = csq.length();
-            if (len > 0) {
-                writeRef.set(new WriteReference(this, csq.charAt(len - 1)));
-            }
-            return this;
-        }
-
-        @Override
-        public Writer append(CharSequence csq, int start, int end) throws IOException {
-            char[] cbuf = csq.toString().toCharArray();
-            listener.receiveOutput(cbuf, start, end - start);
-            checkNewLine();
-            wrapped.append(csq, start, end);
-
-            if (end - start > 0) {
-                writeRef.set(new WriteReference(this, csq.charAt(end - 1)));
-            }
-            return this;
-        }
-
-        @Override
-        public Writer append(char c) throws IOException {
-            listener.receiveOutput(new char[]{c}, 0, 1);
-            checkNewLine();
-            wrapped.append(c);
-            writeRef.set(new WriteReference(this, c));
-            return this;
         }
 
         @Override
