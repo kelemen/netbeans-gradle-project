@@ -16,7 +16,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.gradle.tooling.BuildException;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
@@ -140,16 +139,16 @@ public final class GradleTasks {
                        forwardedStdOut.close();
                        forwardedStdErr.close();
                    }
-               } catch (BuildException ex) {
-                   // Gradle should have printed this one to stderr.
-                   LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
                } catch (Throwable ex) {
-                   buildErrOutput.println();
-                   ex.printStackTrace(buildErrOutput);
                    LOGGER.log(
                            ex instanceof Exception ? Level.INFO : Level.SEVERE,
                            "Gradle build failure: " + command,
                            ex);
+
+                   String buildFailureMessage = NbStrings.getBuildFailure(command);
+                   buildErrOutput.println();
+                   buildErrOutput.println(buildFailureMessage);
+                   project.displayError(buildFailureMessage, ex, false);
                } finally {
                    buildErrOutput.close();
                }

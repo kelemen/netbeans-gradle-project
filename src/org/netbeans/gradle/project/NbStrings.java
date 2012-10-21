@@ -187,6 +187,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_ParsingModel");
     }
 
+    public static String getProjectErrorTitle(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_PROJECT_ERROR_TITLE", projectName);
+    }
+
+    public static String getProjectLoadFailure(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_PROJECT_LOAD_FAILURE", projectName);
+    }
+
+    public static String getBuildFailure(String tasks) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_BUILD_FAILURE", tasks);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

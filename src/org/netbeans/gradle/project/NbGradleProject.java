@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -41,6 +43,9 @@ import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.util.lookup.Lookups;
+import org.openide.windows.IOProvider;
+import org.openide.windows.InputOutput;
+import org.openide.windows.OutputWriter;
 
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
@@ -54,6 +59,8 @@ public final class NbGradleProject implements Project {
 
     private final GradleClassPathProvider cpProvider;
 
+    private final String name;
+    private final ExceptionDisplayer exceptionDisplayer;
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
@@ -78,6 +85,12 @@ public final class NbGradleProject implements Project {
 
         this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnce = false;
+        this.name = projectDir.getNameExt();
+        this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
+    }
+
+    public void displayError(String errorText, Throwable exception, boolean setFocus) {
+        exceptionDisplayer.displayError(errorText, exception, setFocus);
     }
 
     private ProjectInfoRef getLoadErrorRef() {
@@ -158,11 +171,11 @@ public final class NbGradleProject implements Project {
     }
 
     public String getName() {
-        return getProjectDirectory().getNameExt();
+        return name;
     }
 
     public String getDisplayName() {
-        return getProjectDirectory().getNameExt();
+        return name;
     }
 
     @Override
@@ -378,6 +391,7 @@ public final class NbGradleProject implements Project {
                         NbStrings.getErrorLoadingProject(error));
                 getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
                 LOGGER.log(Level.INFO, "Error while loading the project model.", error);
+                displayError(NbStrings.getProjectLoadFailure(name), error, true);
             }
             else {
                 getLoadErrorRef().setInfo(null);
@@ -391,6 +405,44 @@ public final class NbGradleProject implements Project {
                     }
                 });
             }
+        }
+    }
+
+    private static class ExceptionDisplayer {
+        private final String outputCaption;
+        private final Lock outputLock;
+
+        public ExceptionDisplayer(String outputCaption) {
+            if (outputCaption == null) throw new NullPointerException("outputCaption");
+            this.outputCaption = outputCaption;
+            this.outputLock = new ReentrantLock();
+        }
+
+        public void displayError(final String errorText, final Throwable exception, final boolean setFocus) {
+            if (errorText == null) throw new NullPointerException("errorText");
+
+            PROJECT_PROCESSOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    InputOutput io = IOProvider.getDefault().getIO(outputCaption, false);
+                    if (setFocus) {
+                        io.select();
+                    }
+
+                    OutputWriter err = io.getErr();
+                    outputLock.lock();
+                    try {
+                        err.println();
+                        err.println(errorText);
+                        if (err != null) {
+                            exception.printStackTrace(err);
+                        }
+                    } finally {
+                        outputLock.unlock();
+                        err.close();
+                    }
+                }
+            });
         }
     }
 }
