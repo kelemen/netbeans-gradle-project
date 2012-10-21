@@ -17,7 +17,7 @@ import org.netbeans.gradle.project.tasks.DebugTextListener;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTaskDef.Builder;
 import org.netbeans.gradle.project.tasks.GradleTasks;
-import org.netbeans.gradle.project.tasks.TaskOutputListener;
+import org.netbeans.gradle.project.tasks.SmartOutputHandler;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -51,7 +51,7 @@ public final class GradleActionProvider implements ActionProvider {
         this.project = project;
     }
 
-    private TaskOutputListener debugeeListener(boolean test) {
+    private SmartOutputHandler.Visitor debugeeListener(boolean test) {
         return new DebugTextListener(new AttacherListener(project, test));
     }
 

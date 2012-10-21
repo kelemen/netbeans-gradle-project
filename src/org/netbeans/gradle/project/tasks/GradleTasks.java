@@ -113,15 +113,33 @@ public final class GradleTasks {
 
                OutputWriter buildErrOutput = io.getErr();
                try {
-                   AtomicReference<WriteReference> writeRef = new AtomicReference<WriteReference>(null);
-                   Writer forwardedStdOut = new WriterForwarder(buildOutput, taskDef.getStdOutListener(), writeRef);
-                   Writer forwardedStdErr = new WriterForwarder(buildErrOutput, taskDef.getStdErrListener(), writeRef);
+                   SmartOutputHandler.Consumer[] consumers = new SmartOutputHandler.Consumer[0];
+
+                   Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
+                           buildOutput,
+                           new SmartOutputHandler.Visitor[]{
+                               taskDef.getStdOutListener()
+                           },
+                           consumers));
+                   Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
+                           buildErrOutput,
+                           new SmartOutputHandler.Visitor[]{
+                               taskDef.getStdErrListener()
+                           },
+                           consumers));
 
                    buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
                    buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
 
                    io.select();
-                   buildLauncher.run();
+                   try {
+                       buildLauncher.run();
+                   } finally {
+                       // These close methods will only forward the last lines
+                       // if they were not terminated with a line separator.
+                       forwardedStdOut.close();
+                       forwardedStdErr.close();
+                   }
                } catch (BuildException ex) {
                    // Gradle should have printed this one to stderr.
                    LOGGER.log(Level.INFO, "Gradle build failure: " + command, ex);
@@ -399,75 +417,6 @@ public final class GradleTasks {
         @Override
         public void write(int b) throws IOException {
             write(new byte[]{(byte)b});
-        }
-    }
-
-    private static class WriteReference {
-        private final Writer writer;
-        private final char writtenChar;
-
-        public WriteReference(Writer writer, char writtenChar) {
-            if (writer == null) throw new NullPointerException("writer");
-
-            this.writer = writer;
-            this.writtenChar = writtenChar;
-        }
-
-        public Writer getWriter() {
-            return writer;
-        }
-
-        public boolean isNewLine() {
-            return writtenChar == '\n' || writtenChar == '\r';
-        }
-    }
-
-    private static class WriterForwarder extends Writer {
-        private final Writer wrapped;
-        private final TaskOutputListener listener;
-        private final AtomicReference<WriteReference> writeRef;
-
-        public WriterForwarder(Writer wrapped, TaskOutputListener listener, AtomicReference<WriteReference> writeRef) {
-            if (wrapped == null) throw new NullPointerException("wrapped");
-            if (listener == null) throw new NullPointerException("listener");
-            if (writeRef == null) throw new NullPointerException("writeRef");
-
-            this.wrapped = wrapped;
-            this.listener = listener;
-            this.writeRef = writeRef;
-        }
-
-        private void checkNewLine() throws IOException {
-            WriteReference currentRef = writeRef.get();
-            if (currentRef != null) {
-                if (currentRef.getWriter() != this && !currentRef.isNewLine()) {
-                    // don't use write('\n') because NetBeans will emit "10"
-                    // instead of a newline character.
-                    wrapped.write("\n");
-                }
-            }
-        }
-
-        @Override
-        public void write(char[] cbuf, int off, int len) throws IOException {
-            listener.receiveOutput(cbuf, off, len);
-
-            checkNewLine();
-            wrapped.write(cbuf, off, len);
-
-            if (len > 0) {
-                writeRef.set(new WriteReference(this, cbuf[off + len - 1]));
-            }
-        }
-
-        @Override
-        public void flush() throws IOException {
-            wrapped.flush();
-        }
-
-        @Override
-        public void close() throws IOException {
-            wrapped.close();
         }
     }
 

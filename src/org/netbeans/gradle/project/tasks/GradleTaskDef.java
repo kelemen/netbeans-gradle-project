@@ -11,8 +11,8 @@ public final class GradleTaskDef {
         private List<String> arguments;
         private List<String> jvmArguments;
 
-        private TaskOutputListener stdOutListener;
-        private TaskOutputListener stdErrListener;
+        private SmartOutputHandler.Visitor stdOutListener;
+        private SmartOutputHandler.Visitor stdErrListener;
         private boolean nonBlocking;
 
         public Builder(GradleTaskDef taskDef) {
@@ -73,20 +73,20 @@ public final class GradleTaskDef {
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
         }
 
-        public TaskOutputListener getStdOutListener() {
+        public SmartOutputHandler.Visitor getStdOutListener() {
             return stdOutListener;
         }
 
-        public void setStdOutListener(TaskOutputListener stdOutListener) {
+        public void setStdOutListener(SmartOutputHandler.Visitor stdOutListener) {
             if (stdOutListener == null) throw new NullPointerException("stdOutListener");
             this.stdOutListener = stdOutListener;
         }
 
-        public TaskOutputListener getStdErrListener() {
+        public SmartOutputHandler.Visitor getStdErrListener() {
             return stdErrListener;
         }
 
-        public void setStdErrListener(TaskOutputListener stdErrListener) {
+        public void setStdErrListener(SmartOutputHandler.Visitor stdErrListener) {
             if (stdErrListener == null) throw new NullPointerException("stdErrListener");
             this.stdErrListener = stdErrListener;
         }
@@ -99,8 +99,8 @@ public final class GradleTaskDef {
     private final List<String> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
-    private final TaskOutputListener stdOutListener;
-    private final TaskOutputListener stdErrListener;
+    private final SmartOutputHandler.Visitor stdOutListener;
+    private final SmartOutputHandler.Visitor stdErrListener;
     private final boolean nonBlocking;
 
     private GradleTaskDef(Builder builder) {
@@ -144,19 +144,19 @@ public final class GradleTaskDef {
         return stringListToArray(jvmArguments);
     }
 
-    public TaskOutputListener getStdOutListener() {
+    public SmartOutputHandler.Visitor getStdOutListener() {
         return stdOutListener;
     }
 
-    public TaskOutputListener getStdErrListener() {
+    public SmartOutputHandler.Visitor getStdErrListener() {
         return stdErrListener;
     }
 
-    private enum NoOpTaskOutputListener implements TaskOutputListener {
+    private enum NoOpTaskOutputListener implements SmartOutputHandler.Visitor {
         INSTANCE;
 
         @Override
-        public void receiveOutput(char[] buffer, int offset, int length) {
+        public void visitLine(String line) {
         }
     }
 }
