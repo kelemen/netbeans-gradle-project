@@ -28,6 +28,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
+import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.InputOutputManager;
 import org.netbeans.gradle.project.output.InputOutputManager.IORef;
 import org.netbeans.gradle.project.output.LineOutputWriter;
@@ -130,7 +131,9 @@ public final class GradleTasks {
 
                         List<SmartOutputHandler.Consumer> errorConsumers
                                 = new LinkedList<SmartOutputHandler.Consumer>(consumers);
-                        errorConsumers.add(0, new BuildErrorConsumer());
+                        errorConsumers.addAll(0, Arrays.asList(
+                                new BuildErrorConsumer(),
+                                new FileLineConsumer()));
 
                         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
                                 buildOutput,
