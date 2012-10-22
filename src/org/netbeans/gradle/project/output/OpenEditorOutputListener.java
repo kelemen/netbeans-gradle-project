@@ -25,15 +25,19 @@ public final class OpenEditorOutputListener implements OutputListener {
     }
 
     public static OpenEditorOutputListener tryCreateListener(File file, int lineNumber) {
+        if (file == null) throw new NullPointerException("file");
+
         File normFile = FileUtil.normalizeFile(file);
         if (normFile == null) {
             return null;
         }
 
         FileObject fileObj = FileUtil.toFileObject(normFile);
-        if (fileObj == null) {
-            return null;
-        }
+        return fileObj != null ? tryCreateListener(fileObj, lineNumber) : null;
+    }
+
+    public static OpenEditorOutputListener tryCreateListener(FileObject fileObj, int lineNumber) {
+        if (fileObj == null) throw new NullPointerException("fileObj");
 
         try {
             DataObject dataObj = DataObject.find(fileObj);
@@ -43,7 +47,7 @@ public final class OpenEditorOutputListener implements OutputListener {
 
             EditorCookie editor = dataObj.getLookup().lookup(EditorCookie.class);
             if (editor == null) {
-                LOGGER.log(Level.WARNING, "EditorCookie cannot be found for file: {0}", file);
+                LOGGER.log(Level.WARNING, "EditorCookie cannot be found for file: {0}", fileObj);
                 return null;
             }
 

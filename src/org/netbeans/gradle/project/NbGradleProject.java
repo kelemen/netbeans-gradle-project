@@ -212,6 +212,9 @@ public final class NbGradleProject implements Project {
                 // looks for it.
                 // GradleCacheBinaryForSourceQuery is provided as well and it
                 // is also registered using the ServiceProviders annotation.
+                //
+                // GradleSourceForBinaryQuery is used by the StackTraceConsumer
+                // to find the sources to where it should create a link.
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),
 
