@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.io.IOException;
+import java.util.List;
 import org.openide.windows.OutputWriter;
 
 public final class SmartOutputHandler implements LineOutputWriter.Handler {
@@ -16,14 +17,14 @@ public final class SmartOutputHandler implements LineOutputWriter.Handler {
     private final Visitor[] visitors;
     private final Consumer[] processors;
 
-    public SmartOutputHandler(OutputWriter output, Visitor[] visitors, Consumer[] processors) {
+    public SmartOutputHandler(OutputWriter output, List<Visitor> visitors, List<Consumer> processors) {
         if (output == null) throw new NullPointerException("output");
         if (visitors == null) throw new NullPointerException("visitors");
         if (processors == null) throw new NullPointerException("processors");
 
         this.output = output;
-        this.visitors = visitors.clone();
-        this.processors = processors.clone();
+        this.visitors = visitors.toArray(new Visitor[0]);
+        this.processors = processors.toArray(new Consumer[0]);
 
         for (Visitor visitor: this.visitors) {
             if (visitor == null) throw new NullPointerException("visitor");

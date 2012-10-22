@@ -11,6 +11,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -116,20 +118,24 @@ public final class GradleTasks {
 
                         buildOutput.println();
 
-                        SmartOutputHandler.Consumer[] consumers = new SmartOutputHandler.Consumer[0];
+                        List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
+                        // TODO: Add to consumers
+
+                        List<SmartOutputHandler.Consumer> outputConsumers
+                                = new LinkedList<SmartOutputHandler.Consumer>(consumers);
+
+                        List<SmartOutputHandler.Consumer> errorConsumers
+                                = new LinkedList<SmartOutputHandler.Consumer>(consumers);
+                        errorConsumers.add(0, new BuildErrorConsumer());
 
                         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
                                 buildOutput,
-                                new SmartOutputHandler.Visitor[]{
-                                    taskDef.getStdOutListener()
-                                },
-                                consumers));
+                                Arrays.asList(taskDef.getStdOutListener()),
+                                outputConsumers));
                         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
                                 buildErrOutput,
-                                new SmartOutputHandler.Visitor[]{
-                                    taskDef.getStdErrListener()
-                                },
-                                consumers));
+                                Arrays.asList(taskDef.getStdErrListener()),
+                                errorConsumers));
 
                         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
                         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
