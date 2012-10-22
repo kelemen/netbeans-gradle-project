@@ -231,7 +231,8 @@ public final class GradleActionProvider implements ActionProvider {
                                 ? new String[]{testArg, "-Dtest.debug"}
                                 : new String[]{testArg};
 
-                        GradleTaskDef.Builder builder = createProjectTaskBuilder(TaskKind.DEBUG, "cleanTest", "test");
+                        TaskKind kind = debug ? TaskKind.DEBUG : TaskKind.BUILD;
+                        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, "cleanTest", "test");
                         builder.setArguments(Arrays.asList(args));
                         if (debug) {
                             builder.setStdOutListener(debugeeListener(true));
