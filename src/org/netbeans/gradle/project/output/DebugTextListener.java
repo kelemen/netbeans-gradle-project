@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.output;
 
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;

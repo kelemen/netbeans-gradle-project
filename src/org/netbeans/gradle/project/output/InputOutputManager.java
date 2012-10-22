@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.output;
 
 import java.io.Closeable;
 import java.util.HashMap;

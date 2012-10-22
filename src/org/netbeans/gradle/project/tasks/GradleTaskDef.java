@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.project.output.SmartOutputHandler;
 
 public final class GradleTaskDef {
     public static final class Builder {

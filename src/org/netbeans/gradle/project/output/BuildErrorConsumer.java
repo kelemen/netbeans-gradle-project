@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
 import org.openide.windows.OutputWriter;
