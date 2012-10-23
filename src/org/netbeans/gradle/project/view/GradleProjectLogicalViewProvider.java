@@ -286,7 +286,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             }
 
             PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
-            if (newTaskDef.createTaskDef(project.getAvailableModel().getMainModule()) == null) {
+            if (newTaskDef.createTaskDef(project, project.getAvailableModel().getMainModule()) == null) {
                 newTaskDef = createTaskDef(actionPanel, displayName, false);
             }
 
@@ -433,7 +433,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             boolean hasCustomTasks = false;
             menu.removeAll();
             for (final PredefinedTask task: commonTasks) {
-                if (task.createTaskDef(mainModule) == null) {
+                if (task.createTaskDef(project, mainModule) == null) {
                     continue;
                 }
 
@@ -445,7 +445,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                         // the project might have changed since the menu item
                         // was created.
                         NbGradleModule module = project.getAvailableModel().getMainModule();
-                        GradleTaskDef taskDef = task.createTaskDef(module);
+                        GradleTaskDef taskDef = task.createTaskDef(project, module);
                         if (taskDef != null) {
                             GradleTasks.createAsyncGradleTask(project, taskDef).run();
                         }

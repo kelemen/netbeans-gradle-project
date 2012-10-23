@@ -135,13 +135,6 @@ public final class PredefinedTask {
     }
 
     public static GradleTaskDef.Builder getDefaultTaskBuilder(
-            NbGradleModule mainModule,
-            List<String> taskNames,
-            boolean nonBlocking) {
-        return getDefaultTaskBuilder(mainModule.getName(), taskNames, nonBlocking);
-    }
-
-    public static GradleTaskDef.Builder getDefaultTaskBuilder(
             NbGradleProject project,
             List<String> taskNames,
             boolean nonBlocking) {
@@ -165,7 +158,7 @@ public final class PredefinedTask {
         return builder;
     }
 
-    public GradleTaskDef createTaskDef(NbGradleModule mainModule) {
+    public GradleTaskDef createTaskDef(NbGradleProject project, NbGradleModule mainModule) {
         String projectName = mainModule.getUniqueName();
         List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
@@ -177,7 +170,7 @@ public final class PredefinedTask {
         }
 
         GradleTaskDef.Builder builder = getDefaultTaskBuilder(
-                mainModule, processedTaskNames, nonBlocking);
+                project, processedTaskNames, nonBlocking);
         builder.setArguments(arguments);
         builder.setJvmArguments(jvmArguments);
         return builder.create();
