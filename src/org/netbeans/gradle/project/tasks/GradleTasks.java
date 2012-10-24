@@ -163,7 +163,9 @@ public final class GradleTasks {
                     try {
                         if (taskDef.isCleanOutput()) {
                             buildOutput.reset();
-                            buildErrOutput.reset();
+                            // There is no need to reset buildErrOutput,
+                            // at least this is what NetBeans tells you in its
+                            // logs if you do.
                         }
 
                         printCommand(buildOutput, command, taskDef);
