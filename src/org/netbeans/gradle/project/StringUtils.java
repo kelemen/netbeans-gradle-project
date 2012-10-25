@@ -15,6 +15,17 @@ import java.util.StringTokenizer;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
+    private static final String SEPARATORS = ",./?;:'\"\\";
+
+    public static String stripSeperatorsFromEnd(String str) {
+        for (int i = str.length() - 1; i >= 0; i--) {
+            if (SEPARATORS.indexOf(str.charAt(i)) < 0) {
+                return str.substring(0, i + 1);
+            }
+        }
+        return "";
+    }
+
     public static String[] splitText(String text, String delimiters) {
         StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
         List<String> result = new LinkedList<String>();

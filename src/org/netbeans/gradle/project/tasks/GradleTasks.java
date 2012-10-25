@@ -32,8 +32,9 @@ import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.InputOutputManager;
 import org.netbeans.gradle.project.output.InputOutputManager.IORef;
-import org.netbeans.gradle.project.output.LineEndUrlConsumer;
 import org.netbeans.gradle.project.output.LineOutputWriter;
+import org.netbeans.gradle.project.output.OutputUrlConsumer;
+import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -98,7 +99,8 @@ public final class GradleTasks {
 
         List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
         consumers.add(new StackTraceConsumer(project));
-        consumers.add(new LineEndUrlConsumer());
+        consumers.add(new OutputUrlConsumer());
+        consumers.add(new ProjectFileConsumer(project));
 
         List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<SmartOutputHandler.Consumer>();
         outputConsumers.addAll(consumers);
