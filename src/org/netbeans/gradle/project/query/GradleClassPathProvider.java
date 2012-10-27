@@ -478,8 +478,17 @@ implements
         NbGradleModel projectModel = project.getCurrentModel();
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
         if (classPathType == null) {
-            DelayedClassPaths delayedClassPaths = new DelayedClassPaths(file, type);
-            return ClassPathFactory.createClassPath(delayedClassPaths);
+            // We don't really know if we will know the classpath of this file
+            // or not so we should return ClassPath which returns the classpaths
+            // as soon as they become known. However, this means that we never
+            // return null (except for gradle files) and this confuses NetBeans,
+            // which will cause a problem: The red exclamation mark is not shown
+            // on the project node when there is a compile time error in one of
+            // the project files.
+            //
+            // If we need to change our mind and return a delayed ClassPath
+            // implementation, it can be found in the commit a997dad9749a222131b4624c5848abf095b766f0.
+            return null;
         }
 
         ClassPath result = classpaths.get(classPathType);
@@ -507,39 +516,6 @@ implements
             return result != null
                     ? result
                     : Collections.<PathResourceImplementation>emptyList();
-        }
-
-        @Override
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
-            changes.addPropertyChangeListener(listener);
-        }
-
-        @Override
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
-            changes.removePropertyChangeListener(listener);
-        }
-    }
-
-    private class DelayedClassPaths implements ClassPathImplementation {
-        private final FileObject file;
-        private final String type;
-
-        public DelayedClassPaths(FileObject file, String type) {
-            this.file = file;
-            this.type = type;
-        }
-
-        @Override
-        public List<PathResourceImplementation> getResources() {
-            NbGradleModel projectModel = project.getCurrentModel();
-            ClassPathType classPathType = getClassPathType(projectModel, file, type);
-            List<PathResourceImplementation> result = classPathType != null
-                    ? classpathResources.get(classPathType)
-                    : null;
-            if (result == null) {
-                result = Collections.<PathResourceImplementation>emptyList();
-            }
-            return result;
         }
 
         @Override
