@@ -28,8 +28,6 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
 
     @Override
     public void applyChanges() {
-        GradleSettingsPanel panel = getPanel();
-
         getPanel().saveSettings();
     }
 
