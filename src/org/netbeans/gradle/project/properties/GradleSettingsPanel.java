@@ -43,29 +43,43 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         jSkipTestsCheck.setSelected(GlobalGradleSettings.getSkipTests().getValue());
         jProjectCacheSize.setValue(GlobalGradleSettings.getProjectCacheSize().getValue());
+        jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
     }
 
-    public String getGradleHome() {
+    public final void saveSettings() {
+        GlobalGradleSettings.getGradleHome().setValueFromString(getGradleHome());
+        GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getGradleJvmArgs());
+        GlobalGradleSettings.getGradleJdk().setValue(getJdk());
+        GlobalGradleSettings.getSkipTests().setValue(isSkipTests());
+        GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
+        GlobalGradleSettings.getAlwaysClearOutput().setValue(isAlwaysClearOutput());
+    }
+
+    private String getGradleHome() {
         String result = jGradlePathEdit.getText();
         return result != null ? result.trim() : "";
     }
 
-    public String getGradleJvmArgs() {
+    private String getGradleJvmArgs() {
         String result = jGradleJVMArgs.getText();
         return result != null ? result.trim() : "";
     }
 
-    public JavaPlatform getJdk() {
+    private JavaPlatform getJdk() {
         @SuppressWarnings("unchecked")
         JavaPlatformItem selected = (JavaPlatformItem)jJdkCombo.getSelectedItem();
         return selected != null ? selected.getPlatform() : JavaPlatform.getDefault();
     }
 
-    public boolean isSkipTests() {
+    private boolean isSkipTests() {
         return jSkipTestsCheck.isSelected();
     }
 
-    public int getProjectCacheSize() {
+    private boolean isAlwaysClearOutput() {
+        return jAlwayClearOutput.isSelected();
+    }
+
+    private int getProjectCacheSize() {
         Object value = jProjectCacheSize.getValue();
         int result;
         if (value instanceof Number) {
@@ -139,6 +153,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jSkipTestsCheck = new javax.swing.JCheckBox();
         jProjectCacheSize = new javax.swing.JSpinner();
         jProjectCacheSizeLabel = new javax.swing.JLabel();
+        jAlwayClearOutput = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -163,6 +178,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jProjectCacheSizeLabel, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jProjectCacheSizeLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jAlwayClearOutput, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jAlwayClearOutput.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -186,7 +203,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jProjectCacheSizeLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jAlwayClearOutput))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -213,7 +231,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectCacheSizeLabel)
                     .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(34, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jAlwayClearOutput)
+                .addContainerGap(32, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -227,6 +247,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jBrowsePathButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
     private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradleJdkCaption;

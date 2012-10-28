@@ -163,7 +163,8 @@ public final class GradleTasks {
                 try {
                     OutputWriter buildErrOutput = ioRef.getIo().getErr();
                     try {
-                        if (taskDef.isCleanOutput()) {
+                        if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
+                                || taskDef.isCleanOutput()) {
                             buildOutput.reset();
                             // There is no need to reset buildErrOutput,
                             // at least this is what NetBeans tells you in its
