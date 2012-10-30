@@ -204,17 +204,6 @@ public final class NbGradleProject implements Project {
                 new GradleCustomizer(this),
                 new OpenHook(),
                 new GradleAnnotationProcessingQuery(),
-                // The following two queries are not really useful but since
-                // they were implemented I will add them anyway.
-                // The real job to look up the sources of binaries is done by:
-                // GradleCacheSourceForBinaryQuery. This however must be
-                // registered to the default lookup, which is where NetBeans
-                // looks for it.
-                // GradleCacheBinaryForSourceQuery is provided as well and it
-                // is also registered using the ServiceProviders annotation.
-                //
-                // GradleSourceForBinaryQuery is used by the StackTraceConsumer
-                // to find the sources to where it should create a link.
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),
 

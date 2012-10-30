@@ -30,6 +30,15 @@ public final class GradleFileUtils {
         return new File(new File(userHome), ".gradle");
     }
 
+    public static boolean isParentOrSame(File parent, File child) {
+        for (File current = child; current != null; current = current.getParentFile()) {
+            if (current.equals(parent)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean canBeBinaryDirName(String dirName) {
         if (dirName == null) throw new NullPointerException("dirName");
 

@@ -268,19 +268,24 @@ implements
             size += fileGroup.size();
         }
 
-        List<PathResourceImplementation> result = new ArrayList<PathResourceImplementation>(size);
+        Set<File> filesSet = new HashSet<File>(4 * size / 3 + 1);
         for (List<File> fileGroup: fileGroups) {
             for (File file: fileGroup) {
-                URL url = FileUtil.urlForArchiveOrDir(file);
+                filesSet.add(file);
+            }
+        }
 
-                // Ignore non-existent or invalid classpath entries
-                if (url != null && file.exists()) {
-                    result.add(ClassPathSupport.createResource(url));
-                }
-                else {
-                    invalid.add(file);
-                    LOGGER.log(Level.WARNING, "Class path entry does not exists or invalid: {0}", file);
-                }
+        List<PathResourceImplementation> result = new ArrayList<PathResourceImplementation>(filesSet.size());
+        for (File file: filesSet) {
+            URL url = FileUtil.urlForArchiveOrDir(file);
+
+            // Ignore invalid classpath entries
+            if (url != null) {
+                result.add(ClassPathSupport.createResource(url));
+            }
+            else {
+                invalid.add(file);
+                LOGGER.log(Level.WARNING, "Class path entry is invalid: {0}", file);
             }
         }
         return result;
@@ -301,10 +306,6 @@ implements
         sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getPaths());
         testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getPaths());
 
-        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
-            sources.addAll(module.getSources(NbSourceType.SOURCE).getPaths());
-        }
-
         @SuppressWarnings("unchecked")
         List<PathResourceImplementation> sourcePaths = getPathResources(
                 new HashSet<File>(), sources);
@@ -312,7 +313,7 @@ implements
 
         @SuppressWarnings("unchecked")
         List<PathResourceImplementation> testSourcePaths = getPathResources(
-                new HashSet<File>(), sources, testSources);
+                new HashSet<File>(), testSources);
         setClassPathResources(ClassPathType.SOURCES_FOR_TEST, testSourcePaths);
     }
 
@@ -358,6 +359,9 @@ implements
         Set<File> notRequiredPaths = new HashSet<File>();
 
         NbGradleModule mainModule = projectModel.getMainModule();
+        testCompile.add(mainModule.getProperties().getOutput().getBuildDir());
+        testRuntime.add(mainModule.getProperties().getOutput().getBuildDir());
+
         addModuleClassPaths(mainModule, runtime, testRuntime, notRequiredPaths);
 
         for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
@@ -366,7 +370,7 @@ implements
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), runtime, null, notRequiredPaths);
+                addModuleClassPaths(moduleDep.getModule(), compile, null, notRequiredPaths);
             }
         }
         for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
@@ -384,7 +388,7 @@ implements
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), testRuntime, null, notRequiredPaths);
+                addModuleClassPaths(moduleDep.getModule(), testCompile, null, notRequiredPaths);
             }
         }
         for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {

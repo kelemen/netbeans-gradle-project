@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -30,39 +29,30 @@ public final class GradleSourceForBinaryQuery
 implements
         SourceForBinaryQueryImplementation2,
         ProjectInitListener {
-    // You would think that this is an important query for the debugger to
-    // find the source files. Well, no ...
+    // First, I thought this is an important query for the debugger but this
+    // query is not really used by the debugger.
     //
-    // The debugger actually does this (in NB 7.2 at least):
+    // Regardless, this query is important for the following reason:
+    // NetBeans detects project dependencies the following way:
     //
-    // 1. Collects all the sources from the GlobalPathRegistry.
-    // 2. Retrieves whatever classpaths are on the EXECUTE classpath of the
-    //    main project (yes, the one which can be selected to written its name
-    //    with bold font, even though it was said that setting something as the
-    //    main project is only to conveniently build, run etc. from the buttons
-    //    on the toolbar)
-    // 3. The binary paths collected are translated by this query to source
-    //    paths
-    // 4. All the source paths which has been collected are checked if they
-    //    contain the required source file.
-    //
-    // Conclusion: This query has little to no importance because you can't
-    //    expect the user to select something as the main project just to be
-    //    able to debug it (I don't think anyone would expect this behaviour).
-
-
-    private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
+    // First it queries the compile time dependencies, then it tries to look
+    // up the sources of the copile time dependencies. If the sources should be
+    // preferred over the binaries then it will not complain for the missing
+    // binaries if the sources are available. Therefore the directory where the
+    // compiled binaries of the project dependency will be stored are added to
+    // the compile time classpath of the project. Adding sources of other
+    // projects to the source path will confuse NetBeans.
 
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
-    private final ConcurrentMap<FileObject, SourceForBinaryQueryImplementation2.Result> cache;
+    private final ConcurrentMap<File, SourceForBinaryQueryImplementation2.Result> cache;
     private final NbGradleProject project;
     private final ChangeSupport changes;
 
     public GradleSourceForBinaryQuery(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
-        this.cache = new ConcurrentHashMap<FileObject, SourceForBinaryQueryImplementation2.Result>();
+        this.cache = new ConcurrentHashMap<File, SourceForBinaryQueryImplementation2.Result>();
 
         EventSource eventSource = new EventSource();
         this.changes = new ChangeSupport(eventSource);
@@ -70,19 +60,15 @@ implements
     }
 
     private static BinaryType getBinaryRootType(
-            NbGradleModule module, FileObject root) {
+            NbGradleModule module, File root) {
         NbOutput output = module.getProperties().getOutput();
 
-        FileObject normalPath = FileUtil.toFileObject(output.getBuildDir());
-        if (normalPath != null && FileUtil.getRelativePath(normalPath, root) != null) {
+        if (GradleFileUtils.isParentOrSame(output.getBuildDir(), root)) {
             return BinaryType.NORMAL;
         }
-
-        FileObject testPath = FileUtil.toFileObject(output.getTestBuildDir());
-        if (testPath != null && FileUtil.getRelativePath(testPath, root) != null) {
+        if (GradleFileUtils.isParentOrSame(output.getTestBuildDir(), root)) {
             return BinaryType.TEST;
         }
-
         return BinaryType.UNKNOWN;
     }
 
@@ -96,17 +82,18 @@ implements
         return result.toArray(NO_ROOTS);
     }
 
-    private static FileObject[] getDependencySources(NbGradleModule module, FileObject root) {
+    private static FileObject[] getDependencySources(NbGradleModule module, File root) {
         for (NbDependencyGroup dependency: module.getDependencies().values()) {
             for (NbUriDependency uriDep: dependency.getUriDependencies()) {
                 URI srcUri = uriDep.getSrcUri();
-                if (srcUri != null) {
+                File src = srcUri != null ? NbModelUtils.uriToFile(srcUri) : null;
+                if (src != null) {
                     URI uri = uriDep.getUri();
-                    FileObject depRoot = NbModelUtils.uriToFileObject(uri);
+                    File depRoot = NbModelUtils.uriToFile(uri);
                     if (root.equals(depRoot)) {
-                        FileObject src = NbModelUtils.uriToFileObject(srcUri);
-                        if (src != null) {
-                            return new FileObject[]{src};
+                        FileObject srcObj = FileUtil.toFileObject(src);
+                        if (srcObj != null) {
+                            return new FileObject[]{srcObj};
                         }
                     }
                 }
@@ -116,7 +103,7 @@ implements
     }
 
     private static FileObject[] tryGetRoots(
-            NbGradleModule module, FileObject root) {
+            NbGradleModule module, File root) {
         BinaryType binaryType = getBinaryRootType(module, root);
         switch (binaryType) {
             case NORMAL:
@@ -157,16 +144,12 @@ implements
 
     @Override
     public SourceForBinaryQueryImplementation2.Result findSourceRoots2(URL binaryRoot) {
-        File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
+        final File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
         if (binaryRootFile == null) {
             return null;
         }
-        final FileObject binaryRootObj = FileUtil.toFileObject(binaryRootFile);
-        if (binaryRootObj == null) {
-            return null;
-        }
 
-        SourceForBinaryQueryImplementation2.Result result = cache.get(binaryRootObj);
+        SourceForBinaryQueryImplementation2.Result result = cache.get(binaryRootFile);
         if (result != null) {
             return result;
         }
@@ -182,13 +165,13 @@ implements
                 NbGradleModel projectModel = project.getCurrentModel();
                 NbGradleModule mainModule = projectModel.getMainModule();
 
-                FileObject[] roots = tryGetRoots(mainModule, binaryRootObj);
+                FileObject[] roots = tryGetRoots(mainModule, binaryRootFile);
                 if (roots != null) {
                     return roots;
                 }
 
                 for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(mainModule)) {
-                    FileObject[] depRoots = tryGetRoots(dependency, binaryRootObj);
+                    FileObject[] depRoots = tryGetRoots(dependency, binaryRootFile);
                     if (depRoots != null) {
                         return depRoots;
                     }
@@ -212,7 +195,7 @@ implements
                 return Arrays.toString(getRoots());
             }
         };
-        SourceForBinaryQueryImplementation2.Result prevResult = cache.putIfAbsent(binaryRootObj, result);
+        SourceForBinaryQueryImplementation2.Result prevResult = cache.putIfAbsent(binaryRootFile, result);
         return prevResult != null ? prevResult : result;
     }
 
