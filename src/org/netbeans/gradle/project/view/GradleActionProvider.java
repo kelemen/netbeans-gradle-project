@@ -94,8 +94,7 @@ public final class GradleActionProvider implements ActionProvider {
         return qualified;
     }
 
-    private GradleTaskDef.Builder createProjectTaskBuilder(TaskKind kind, String... tasks) {
-        List<String> qualified = toQualifiedTaskName(project, tasks);
+    private GradleTaskDef.Builder createProjectTaskBuilder(TaskKind kind, boolean qualified, String... tasks) {
         String caption;
         switch (kind) {
             case DEBUG:
@@ -111,7 +110,14 @@ public final class GradleActionProvider implements ActionProvider {
                 throw new AssertionError(kind.name());
         }
 
-        Builder builder = new GradleTaskDef.Builder(caption, qualified);
+        List<String> taskNames;
+        if (qualified) {
+            taskNames = toQualifiedTaskName(project, tasks);
+        } else {
+            taskNames = Arrays.asList(tasks);
+        }
+
+        Builder builder = new GradleTaskDef.Builder(caption, taskNames);
         if (kind == TaskKind.RUN || kind == TaskKind.DEBUG) {
             builder.setCleanOutput(true);
             builder.setReuseOutput(false);
@@ -125,7 +131,7 @@ public final class GradleActionProvider implements ActionProvider {
             boolean nonBlocking,
             String... tasks) {
 
-        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, tasks);
+        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, false, tasks);
         if (addSkipTestIfNeeded && GlobalGradleSettings.getSkipTests().getValue()) {
             builder.setArguments(Arrays.asList("-x", "test"));
         }
@@ -232,7 +238,7 @@ public final class GradleActionProvider implements ActionProvider {
                                 : new String[]{testArg};
 
                         TaskKind kind = debug ? TaskKind.DEBUG : TaskKind.BUILD;
-                        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, "cleanTest", "test");
+                        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, true, "cleanTest", "test");
                         builder.setArguments(Arrays.asList(args));
                         if (debug) {
                             builder.setStdOutListener(debugeeListener(true));
