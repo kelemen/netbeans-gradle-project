@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.Specification;
 import org.openide.modules.SpecificationVersion;
 
 public abstract class AbstractProjectProperties implements ProjectProperties {

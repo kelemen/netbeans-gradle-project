@@ -190,6 +190,11 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         }
 
         @Override
+        public void setValueFromSource(PropertySource<? extends ValueType> source) {
+            propertyRef.getProperty().setValueFromSource(source);
+        }
+
+        @Override
         public void setValue(ValueType value) {
             propertyRef.getProperty().setValue(value);
         }

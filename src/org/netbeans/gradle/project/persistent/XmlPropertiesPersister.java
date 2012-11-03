@@ -91,16 +91,16 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                         @Override
                         public void run() {
                             if (!sourceLevelChanged.hasChanged()) {
-                                properties.getSourceLevel().setValue(snapshot.getSourceLevel());
+                                properties.getSourceLevel().setValueFromSource(snapshot.getSourceLevel());
                             }
                             if (!platformChanged.hasChanged()) {
-                                properties.getPlatform().setValue(snapshot.getPlatform());
+                                properties.getPlatform().setValueFromSource(snapshot.getPlatform());
                             }
                             if (!sourceEncodingChanged.hasChanged()) {
-                                properties.getSourceEncoding().setValue(snapshot.getSourceEncoding());
+                                properties.getSourceEncoding().setValueFromSource(snapshot.getSourceEncoding());
                             }
                             if (!commonTasksChanged.hasChanged()) {
-                                properties.getCommonTasks().setValue(snapshot.getCommonTasks());
+                                properties.getCommonTasks().setValueFromSource(snapshot.getCommonTasks());
                             }
 
                             if (onDone != null) {

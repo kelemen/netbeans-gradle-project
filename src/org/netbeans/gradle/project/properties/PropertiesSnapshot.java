@@ -4,58 +4,63 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.CollectionUtils;
 
 public final class PropertiesSnapshot {
     public static final class Builder {
-        private String sourceLevel;
-        private JavaPlatform platform;
-        private Charset sourceEncoding;
-        private List<PredefinedTask> commonTasks;
+        private PropertySource<String> sourceLevel;
+        private PropertySource<JavaPlatform> platform;
+        private PropertySource<Charset> sourceEncoding;
+        private PropertySource<List<PredefinedTask>> commonTasks;
 
         public Builder() {
-            this.platform = JavaPlatform.getDefault();
-            if (this.platform == null) {
-                throw new IllegalStateException("There is no default JDK.");
-            }
-            this.sourceEncoding = AbstractProjectProperties.DEFAULT_SOURCE_ENCODING;
-            this.sourceLevel = AbstractProjectProperties.getSourceLevelFromPlatform(this.platform);
-            this.commonTasks = Collections.emptyList();
+            this.platform = null;
+            this.sourceEncoding = null;
+            this.sourceLevel = null;
+            this.commonTasks = null;
         }
 
-        public String getSourceLevel() {
-            return sourceLevel;
+        public PropertySource<String> getSourceLevel() {
+            return sourceLevel != null
+                    ? sourceLevel
+                    : DefaultPropertySources.parseSourceLevelSource(getPlatform());
         }
 
-        public void setSourceLevel(String sourceLevel) {
+        public void setSourceLevel(PropertySource<String> sourceLevel) {
             if (sourceLevel == null) throw new NullPointerException("sourceLevel");
             this.sourceLevel = sourceLevel;
         }
 
-        public JavaPlatform getPlatform() {
-            return platform;
+        public PropertySource<JavaPlatform> getPlatform() {
+            return platform != null
+                    ? platform
+                    : asConst(JavaPlatform.getDefault());
         }
 
-        public void setPlatform(JavaPlatform platform) {
+        public void setPlatform(PropertySource<JavaPlatform> platform) {
             if (platform == null) throw new NullPointerException("platform");
             this.platform = platform;
         }
 
-        public Charset getSourceEncoding() {
-            return sourceEncoding;
+        public PropertySource<Charset> getSourceEncoding() {
+            return sourceEncoding != null
+                    ? sourceEncoding
+                    : asConst(AbstractProjectProperties.DEFAULT_SOURCE_ENCODING);
         }
 
-        public void setSourceEncoding(Charset sourceEncoding) {
+        public void setSourceEncoding(PropertySource<Charset> sourceEncoding) {
             if (sourceEncoding == null) throw new NullPointerException("sourceEncoding");
             this.sourceEncoding = sourceEncoding;
         }
 
-        public List<PredefinedTask> getCommonTasks() {
-            return commonTasks;
+        public PropertySource<List<PredefinedTask>> getCommonTasks() {
+            return commonTasks != null
+                    ? commonTasks
+                    : asConst(Collections.<PredefinedTask>emptyList());
         }
 
-        public void setCommonTasks(List<PredefinedTask> commonTasks) {
-            this.commonTasks = CollectionUtils.copyNullSafeList(commonTasks);
+        public void setCommonTasks(PropertySource<List<PredefinedTask>> commonTasks) {
+            if (commonTasks == null) throw new NullPointerException("commonTasks");
+            this.commonTasks = commonTasks;
         }
 
         public PropertiesSnapshot create() {
@@ -63,23 +68,20 @@ public final class PropertiesSnapshot {
         }
     }
 
-    private final String sourceLevel;
-    private final JavaPlatform platform;
-    private final Charset sourceEncoding;
-    private final List<PredefinedTask> commonTasks;
+    private final PropertySource<String> sourceLevel;
+    private final PropertySource<JavaPlatform> platform;
+    private final PropertySource<Charset> sourceEncoding;
+    private final PropertySource<List<PredefinedTask>> commonTasks;
 
     public PropertiesSnapshot(ProjectProperties properties) {
-        this.sourceLevel = properties.getSourceLevel().getValue();
-        this.platform = properties.getPlatform().getValue();
-        this.sourceEncoding = properties.getSourceEncoding().getValue();
-        this.commonTasks = properties.getCommonTasks().getValue();
+        this.sourceLevel = asConst(properties.getSourceLevel().getValue());
+        this.platform = asConst(properties.getPlatform().getValue());
+        this.sourceEncoding = asConst(properties.getSourceEncoding().getValue());
+        this.commonTasks = asConst(properties.getCommonTasks().getValue());
+    }
 
-        if (sourceLevel == null) throw new NullPointerException("sourceLevel");
-        if (platform == null) throw new NullPointerException("platform");
-        if (sourceEncoding == null) throw new NullPointerException("sourceEncoding");
-        for (PredefinedTask task: this.commonTasks) {
-            if (task == null) throw new NullPointerException("task");
-        }
+    private static <ValueType> PropertySource<ValueType> asConst(ValueType value) {
+        return new ConstPropertySource<ValueType>(value);
     }
 
     private PropertiesSnapshot(Builder builder) {
@@ -89,19 +91,19 @@ public final class PropertiesSnapshot {
         this.commonTasks = builder.getCommonTasks();
     }
 
-    public String getSourceLevel() {
+    public PropertySource<String> getSourceLevel() {
         return sourceLevel;
     }
 
-    public JavaPlatform getPlatform() {
+    public PropertySource<JavaPlatform> getPlatform() {
         return platform;
     }
 
-    public Charset getSourceEncoding() {
+    public PropertySource<Charset> getSourceEncoding() {
         return sourceEncoding;
     }
 
-    public List<PredefinedTask> getCommonTasks() {
+    public PropertySource<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
     }
 }

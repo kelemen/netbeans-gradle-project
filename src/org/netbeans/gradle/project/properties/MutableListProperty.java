@@ -3,35 +3,37 @@ package org.netbeans.gradle.project.properties;
 import java.util.List;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.CollectionUtils;
-import org.openide.util.ChangeSupport;
 
 public final class MutableListProperty<ElementType> implements MutableProperty<List<ElementType>> {
-    private List<ElementType> value;
-    private final ChangeSupport changes;
+    private final MutableProperty<List<ElementType>> wrapped;
 
     public MutableListProperty(List<? extends ElementType> value) {
-        this.value = CollectionUtils.copyNullSafeList(value);
-        this.changes = new ChangeSupport(this);
+        this.wrapped = new DefaultMutableProperty<List<ElementType>>(
+                CollectionUtils.copyNullSafeList(value), false);
+    }
+
+    @Override
+    public void setValueFromSource(PropertySource<? extends List<ElementType>> source) {
+        wrapped.setValueFromSource(source);
     }
 
     @Override
     public void setValue(List<ElementType> value) {
-        this.value = CollectionUtils.copyNullSafeList(value);
-        changes.fireChange();
+        wrapped.setValue(CollectionUtils.copyNullSafeList(value));
     }
 
     @Override
     public List<ElementType> getValue() {
-        return value;
+        return wrapped.getValue();
     }
 
     @Override
     public void addChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
+        wrapped.addChangeListener(listener);
     }
 
     @Override
     public void removeChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
+        wrapped.removeChangeListener(listener);
     }
 }
