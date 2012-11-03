@@ -7,6 +7,8 @@ public interface MutableProperty<ValueType> {
     public void setValue(ValueType value);
     public ValueType getValue();
 
+    public boolean isDefault();
+
     public void addChangeListener(ChangeListener listener);
     public void removeChangeListener(ChangeListener listener);
 }

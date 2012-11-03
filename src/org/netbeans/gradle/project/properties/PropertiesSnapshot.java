@@ -33,7 +33,7 @@ public final class PropertiesSnapshot {
         public PropertySource<JavaPlatform> getPlatform() {
             return platform != null
                     ? platform
-                    : asConst(JavaPlatform.getDefault());
+                    : asConst(JavaPlatform.getDefault(), true);
         }
 
         public void setPlatform(PropertySource<JavaPlatform> platform) {
@@ -44,7 +44,7 @@ public final class PropertiesSnapshot {
         public PropertySource<Charset> getSourceEncoding() {
             return sourceEncoding != null
                     ? sourceEncoding
-                    : asConst(AbstractProjectProperties.DEFAULT_SOURCE_ENCODING);
+                    : asConst(AbstractProjectProperties.DEFAULT_SOURCE_ENCODING, true);
         }
 
         public void setSourceEncoding(PropertySource<Charset> sourceEncoding) {
@@ -55,7 +55,7 @@ public final class PropertiesSnapshot {
         public PropertySource<List<PredefinedTask>> getCommonTasks() {
             return commonTasks != null
                     ? commonTasks
-                    : asConst(Collections.<PredefinedTask>emptyList());
+                    : asConst(Collections.<PredefinedTask>emptyList(), true);
         }
 
         public void setCommonTasks(PropertySource<List<PredefinedTask>> commonTasks) {
@@ -74,14 +74,18 @@ public final class PropertiesSnapshot {
     private final PropertySource<List<PredefinedTask>> commonTasks;
 
     public PropertiesSnapshot(ProjectProperties properties) {
-        this.sourceLevel = asConst(properties.getSourceLevel().getValue());
-        this.platform = asConst(properties.getPlatform().getValue());
-        this.sourceEncoding = asConst(properties.getSourceEncoding().getValue());
-        this.commonTasks = asConst(properties.getCommonTasks().getValue());
+        this.sourceLevel = asConst(properties.getSourceLevel());
+        this.platform = asConst(properties.getPlatform());
+        this.sourceEncoding = asConst(properties.getSourceEncoding());
+        this.commonTasks = asConst(properties.getCommonTasks());
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(ValueType value) {
-        return new ConstPropertySource<ValueType>(value);
+    private static <ValueType> PropertySource<ValueType> asConst(MutableProperty<ValueType> property) {
+        return asConst(property.getValue(), property.isDefault());
+    }
+
+    private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
+        return new ConstPropertySource<ValueType>(value, defaultValue);
     }
 
     private PropertiesSnapshot(Builder builder) {

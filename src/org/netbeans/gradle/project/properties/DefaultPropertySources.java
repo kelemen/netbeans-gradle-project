@@ -26,6 +26,11 @@ public final class DefaultPropertySources {
             }
 
             @Override
+            public boolean isDefault() {
+                return source.isDefault();
+            }
+
+            @Override
             public void addChangeListener(ChangeListener listener) {
                 source.addChangeListener(listener);
             }
@@ -39,12 +44,18 @@ public final class DefaultPropertySources {
 
     public static PropertySource<JavaPlatform> findPlatformSource(
             final String specName,
-            final String versionStr) {
+            final String versionStr,
+            final boolean defaultValue) {
 
         if (specName == null) throw new NullPointerException("specName");
         if (versionStr == null) throw new NullPointerException("versionStr");
 
         return new JavaPlatformSource<JavaPlatform>() {
+            @Override
+            public boolean isDefault() {
+                return defaultValue;
+            }
+
             @Override
             protected JavaPlatform chooseFromPlatforms(JavaPlatform[] platforms) {
                 SpecificationVersion version;

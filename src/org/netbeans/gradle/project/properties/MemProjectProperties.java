@@ -13,10 +13,10 @@ public final class MemProjectProperties extends AbstractProjectProperties {
 
     public MemProjectProperties() {
         JavaPlatform defaultPlatform = JavaPlatform.getDefault();
-        this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), false);
-        this.platform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, false);
-        this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, false);
-        this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList());
+        this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), true, false);
+        this.platform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
+        this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, true, false);
+        this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList(), true);
     }
 
     @Override

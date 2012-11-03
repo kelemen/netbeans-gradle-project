@@ -205,6 +205,11 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         }
 
         @Override
+        public boolean isDefault() {
+            return propertyRef.getProperty().isDefault();
+        }
+
+        @Override
         public void addChangeListener(ChangeListener listener) {
             mainLock.lock();
             try {

@@ -17,12 +17,12 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     private final ChangeSupport changes;
     private final ChangeListener changeForwarder;
 
-    public DefaultMutableProperty(ValueType value, boolean allowNulls) {
+    public DefaultMutableProperty(ValueType value, boolean defaultValue, boolean allowNulls) {
         if (!allowNulls) {
             if (value == null) throw new NullPointerException("value");
         }
         this.allowNulls = allowNulls;
-        this.valueSource = new ConstPropertySource<ValueType>(value);
+        this.valueSource = new ConstPropertySource<ValueType>(value, defaultValue);
         this.changesLock = new ReentrantLock();
         this.changes = new ChangeSupport(this);
         this.changeForwarder = new ChangeListener() {
@@ -55,7 +55,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
             if (value == null) throw new NullPointerException("value");
         }
 
-        setValueFromSource(new ConstPropertySource<ValueType>(value));
+        setValueFromSource(new ConstPropertySource<ValueType>(value, false));
     }
 
     @Override
@@ -66,6 +66,11 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
             LOGGER.log(Level.SEVERE, message, new Exception(message));
         }
         return value;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return valueSource.isDefault();
     }
 
     @Override

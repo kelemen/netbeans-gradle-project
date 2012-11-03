@@ -7,9 +7,9 @@ import org.netbeans.gradle.project.CollectionUtils;
 public final class MutableListProperty<ElementType> implements MutableProperty<List<ElementType>> {
     private final MutableProperty<List<ElementType>> wrapped;
 
-    public MutableListProperty(List<? extends ElementType> value) {
+    public MutableListProperty(List<? extends ElementType> value, boolean defaultValue) {
         this.wrapped = new DefaultMutableProperty<List<ElementType>>(
-                CollectionUtils.copyNullSafeList(value), false);
+                CollectionUtils.copyNullSafeList(value), defaultValue, false);
     }
 
     @Override
@@ -25,6 +25,11 @@ public final class MutableListProperty<ElementType> implements MutableProperty<L
     @Override
     public List<ElementType> getValue() {
         return wrapped.getValue();
+    }
+
+    @Override
+    public boolean isDefault() {
+        return wrapped.isDefault();
     }
 
     @Override
