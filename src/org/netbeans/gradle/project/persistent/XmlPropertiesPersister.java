@@ -22,7 +22,25 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         this.propertiesFile = propertiesFile;
     }
 
-    public static File getFileForProject(NbGradleProject project) {
+    public static File[] getFilesForProfile(NbGradleProject project, String profile) {
+        File mainFile = getFileForProject(project);
+
+        if (profile == null) {
+            return new File[]{mainFile};
+        }
+        else {
+            File profileFile = new File(mainFile.getParentFile(), ".nb-gradle");
+            profileFile = new File(profileFile, "profiles");
+            profileFile = new File(profileFile, profile);
+            return new File[]{profileFile, mainFile};
+        }
+    }
+
+    public static File[] getFilesForProject(NbGradleProject project) {
+        return getFilesForProfile(project, project.getCurrentProfile());
+    }
+
+    private static File getFileForProject(NbGradleProject project) {
         NbGradleModel model = project.getAvailableModel();
         FileObject settingsFile = model.getSettingsFile();
         FileObject dir = settingsFile != null

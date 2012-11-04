@@ -73,6 +73,11 @@ final class XmlPropertyFormat {
     }
 
     private static void saveDocument(File propertyfile, Document document) throws TransformerException, IOException {
+        File dir = propertyfile.getParentFile();
+        if (dir != null) {
+            dir.mkdirs();
+        }
+
         Source source = new DOMSource(document);
         Result result = new StreamResult(propertyfile);
 

@@ -39,10 +39,16 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
 
         changesLock.lock();
         try {
-            if (changes.hasListeners()) {
+            boolean hasListeners = changes.hasListeners();
+            if (hasListeners) {
                 this.valueSource.removeChangeListener(changeForwarder);
             }
+
             this.valueSource = source;
+
+            if (hasListeners) {
+                source.addChangeListener(changeForwarder);
+            }
         } finally {
             changesLock.unlock();
         }
