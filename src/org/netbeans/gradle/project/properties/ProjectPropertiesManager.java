@@ -8,8 +8,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -19,6 +23,8 @@ import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 
 public final class ProjectPropertiesManager {
+    private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesManager.class.getName());
+
     private static final Lock MAIN_LOCK = new ReentrantLock();
     private static final Map<List<File>, ProjectProperties> PROPERTIES
             = new WeakValueHashMap<List<File>, ProjectProperties>();
@@ -61,27 +67,27 @@ public final class ProjectPropertiesManager {
             File[] propertiesFiles,
             final WaitableSignal loadedSignal) {
         if (loadedSignal != null) {
-            return getProperties(propertiesFiles, new Runnable() {
+            return getProperties(propertiesFiles, new PropertiesLoadListener() {
                 @Override
-                public void run() {
+                public void loadedProperties(ProjectProperties properties) {
                     loadedSignal.signal();
                 }
             });
         }
         else {
-            return getProperties(propertiesFiles, (Runnable)null);
+            return getProperties(propertiesFiles, (PropertiesLoadListener)null);
         }
     }
 
     public static ProjectProperties getProperties(
             File[] propertiesFiles,
-            Runnable onLoadTask) {
+            PropertiesLoadListener onLoadTask) {
         return getProperties(Arrays.asList(propertiesFiles), onLoadTask);
     }
 
     public static ProjectProperties getProperties(
             List<File> propertiesFiles,
-            final Runnable onLoadTask) {
+            final PropertiesLoadListener onLoadTask) {
 
         List<File> fileList = new ArrayList<File>(propertiesFiles);
         for (File file: fileList) {
@@ -100,32 +106,38 @@ public final class ProjectPropertiesManager {
         }
 
         if (result == null) {
+            final AtomicReference<ProjectProperties> resultRef
+                    = new AtomicReference<ProjectProperties>(null);
+
+            final AtomicInteger subTaskCount = new AtomicInteger();
+            // Setting the value of resultRef is counted as a subTask as well.
+            // This resultForwarder will call onLoadTask only after all
+            // properties have been loaded.
+            final PropertiesLoadListener resultForwarder = new PropertiesLoadListener() {
+                @Override
+                public void loadedProperties(ProjectProperties properties) {
+                    if (subTaskCount.decrementAndGet() == 0 && onLoadTask != null) {
+                        ProjectProperties loadedProperties = resultRef.get();
+                        if (loadedProperties == null) {
+                            String message = "Internal error while loading properties.";
+                            LOGGER.log(Level.SEVERE, message, new IllegalStateException(message));
+                            return;
+                        }
+                        onLoadTask.loadedProperties(loadedProperties);
+                    }
+                }
+            };
+
             ProjectProperties newProperties;
             if (fileList.size() == 1) {
+                subTaskCount.set(2);
                 newProperties = getProperties(fileList.get(0), onLoadTask);
             }
             else {
-                Runnable runLastTask;
-                if (onLoadTask != null) {
-                    // This task runs "onLoadTask", only after the second run.
-                    // That is, after both properties have been loaded.
-                    runLastTask = new Runnable() {
-                        private final AtomicBoolean runnedOnce = new AtomicBoolean(false);
+                subTaskCount.set(3);
 
-                        @Override
-                        public void run() {
-                            if (runnedOnce.getAndSet(true)) {
-                                onLoadTask.run();
-                            }
-                        }
-                    };
-                }
-                else {
-                    runLastTask = null;
-                }
-
-                ProjectProperties mainProperties = getProperties(fileList.get(0), runLastTask);
-                ProjectProperties fallbackProperties = getProperties(fileList.subList(1, fileList.size()), runLastTask);
+                ProjectProperties mainProperties = getProperties(fileList.get(0), resultForwarder);
+                ProjectProperties fallbackProperties = getProperties(fileList.subList(1, fileList.size()), resultForwarder);
 
                 newProperties = new FallbackProjectProperties(mainProperties, fallbackProperties);
 
@@ -148,10 +160,13 @@ public final class ProjectPropertiesManager {
             } finally {
                 MAIN_LOCK.unlock();
             }
+
+            resultRef.set(result);
+            resultForwarder.loadedProperties(result);
         }
         else {
             if (onLoadTask != null) {
-                onLoadTask.run();
+                onLoadTask.loadedProperties(result);
             }
         }
 
@@ -160,7 +175,7 @@ public final class ProjectPropertiesManager {
 
     public static ProjectProperties getProperties(
             File propertiesFile,
-            final Runnable onLoadTask) {
+            final PropertiesLoadListener onLoadTask) {
 
         if (propertiesFile == null) throw new NullPointerException("propertiesFile");
 
@@ -191,7 +206,7 @@ public final class ProjectPropertiesManager {
         }
         else {
             if (onLoadTask != null) {
-                onLoadTask.run();
+                onLoadTask.loadedProperties(result);
             }
         }
 
@@ -200,7 +215,7 @@ public final class ProjectPropertiesManager {
 
     private static ProjectProperties loadPropertiesAlways(
             File propertiesFile,
-            final Runnable onLoadTask) {
+            final PropertiesLoadListener onLoadTask) {
 
         final ProjectProperties properties = new MemProjectProperties();
         final PropertiesPersister persister = new XmlPropertiesPersister(propertiesFile);
@@ -213,7 +228,7 @@ public final class ProjectPropertiesManager {
                     public void run() {
                         try {
                             if (onLoadTask != null) {
-                                onLoadTask.run();
+                                onLoadTask.loadedProperties(properties);
                             }
                         } finally {
                             setSaveOnChange(properties, persister);

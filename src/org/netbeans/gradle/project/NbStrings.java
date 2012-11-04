@@ -129,8 +129,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_CustomTaskTitle");
     }
 
-    public static String getManageTasksDlgTitle() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ManageTasksTitle");
+    public static String getManageTasksDlgTitle(String profile) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ManageTasksTitle", profile);
     }
 
     public static String getAddNewTaskDlgTitle() {
@@ -197,6 +197,10 @@ public final class NbStrings {
 
     public static String getBuildFailure(String tasks) {
         return NbBundle.getMessage(NbStrings.class, "MSG_BUILD_FAILURE", tasks);
+    }
+
+    public static String getDefaultProfileName() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DefaultProfile");
     }
 
     private NbStrings() {

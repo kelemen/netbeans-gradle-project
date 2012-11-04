@@ -17,8 +17,7 @@ public final class GradleCustomizer implements CustomizerProvider {
 
     @Override
     public void showCustomizer() {
-        ProjectPropertiesPanel panel = new ProjectPropertiesPanel();
-        panel.initFromProperties(project.getProperties());
+        ProjectPropertiesPanel panel = new ProjectPropertiesPanel(project);
 
         DialogDescriptor dlgDescriptor = new DialogDescriptor(
                 panel,
@@ -31,7 +30,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
         dlg.setVisible(true);
         if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
-            panel.updateProperties(project.getProperties());
+            panel.saveProperties();
         }
     }
 }

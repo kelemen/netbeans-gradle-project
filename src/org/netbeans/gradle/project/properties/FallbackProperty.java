@@ -33,7 +33,11 @@ public final class FallbackProperty<ValueType> implements MutableProperty<ValueT
 
     @Override
     public boolean isDefault() {
-        return mainValue.isDefault() && defaultValue.isDefault();
+        // "mainValue.isDefault() && defaultValue.isDefault()" would be
+        // more correct but this method is only used for FallbackProperty
+        // instances by the ProjectPropertiesPanel and for the
+        // ProjectPropertiesPanel this return value is better.
+        return mainValue.isDefault();
     }
 
     @Override

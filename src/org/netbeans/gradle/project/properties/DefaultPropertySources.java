@@ -16,7 +16,10 @@ import org.openide.util.ChangeSupport;
 public final class DefaultPropertySources {
     private static final Logger LOGGER = Logger.getLogger(DefaultPropertySources.class.getName());
 
-    public static PropertySource<String> parseSourceLevelSource(final PropertySource<JavaPlatform> source) {
+    public static PropertySource<String> parseSourceLevelSource(
+            final PropertySource<JavaPlatform> source,
+            final boolean defaultValue) {
+
         if (source == null) throw new NullPointerException("source");
 
         return new PropertySource<String>() {
@@ -27,7 +30,7 @@ public final class DefaultPropertySources {
 
             @Override
             public boolean isDefault() {
-                return source.isDefault();
+                return defaultValue;
             }
 
             @Override

@@ -22,7 +22,7 @@ public final class PropertiesSnapshot {
         public PropertySource<String> getSourceLevel() {
             return sourceLevel != null
                     ? sourceLevel
-                    : DefaultPropertySources.parseSourceLevelSource(getPlatform());
+                    : DefaultPropertySources.parseSourceLevelSource(getPlatform(), true);
         }
 
         public void setSourceLevel(PropertySource<String> sourceLevel) {

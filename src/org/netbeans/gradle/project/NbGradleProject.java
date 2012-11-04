@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
+import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -191,9 +192,15 @@ public final class NbGradleProject implements Project {
         return properties;
     }
 
-    public ProjectProperties getPropertiesForProfile(String profile, Runnable onLoadTask) {
+    public ProjectProperties getPropertiesForProfile(
+            String profile,
+            boolean useInheritance,
+            PropertiesLoadListener onLoadTask) {
+
         File[] files = XmlPropertiesPersister.getFilesForProfile(this, profile);
-        return ProjectPropertiesManager.getProperties(files[0], onLoadTask);
+        return useInheritance ?
+                ProjectPropertiesManager.getProperties(files, onLoadTask)
+                : ProjectPropertiesManager.getProperties(files[0], onLoadTask);
     }
 
     public ProjectProperties tryGetLoadedProperties() {

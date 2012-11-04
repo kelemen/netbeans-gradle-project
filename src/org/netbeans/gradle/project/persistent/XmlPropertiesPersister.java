@@ -1,6 +1,12 @@
 package org.netbeans.gradle.project.persistent;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -13,6 +19,9 @@ import org.openide.filesystems.FileUtil;
 
 public final class XmlPropertiesPersister implements PropertiesPersister {
     private static final String SETTINGS_FILENAME = ".nb-gradle-properties";
+    private static final String PROFILE_FILE_NAME_SUFFIX = ".profile";
+    private static final String SETTINGS_DIR_NAME = ".nb-gradle";
+    private static final String PROFILE_DIRECTORY = "profiles";
 
     private final File propertiesFile;
 
@@ -22,6 +31,47 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         this.propertiesFile = propertiesFile;
     }
 
+    public static Collection<String> getAvailableProfiles(NbGradleProject project) {
+        File profileDir = getProfileDirectory(project);
+        if (!profileDir.isDirectory()) {
+            return Collections.emptySet();
+        }
+
+        File[] profileFiles = profileDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase(Locale.ROOT).endsWith(PROFILE_FILE_NAME_SUFFIX);
+            }
+        });
+
+        if (profileFiles == null) {
+            return Collections.emptySet();
+        }
+
+        List<String> result = new ArrayList<String>(profileFiles.length);
+        int suffixLength = PROFILE_FILE_NAME_SUFFIX.length();
+        for (File profileFile: profileFiles) {
+            String fileName = profileFile.getName();
+            if (fileName.length() >= suffixLength) {
+                result.add(fileName.substring(0, fileName.length() - suffixLength));
+            }
+        }
+        return result;
+    }
+
+    public static File getSettingsDir(NbGradleProject project) {
+        File mainFile = getFileForProject(project);
+        File mainFileDir = mainFile.getParentFile();
+
+        return mainFileDir != null
+                ? new File(mainFileDir, SETTINGS_DIR_NAME)
+                : new File(SETTINGS_DIR_NAME);
+    }
+
+    private static File getProfileDirectory(NbGradleProject project) {
+        return new File(getSettingsDir(project), PROFILE_DIRECTORY);
+    }
+
     public static File[] getFilesForProfile(NbGradleProject project, String profile) {
         File mainFile = getFileForProject(project);
 
@@ -29,9 +79,13 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
             return new File[]{mainFile};
         }
         else {
-            File profileFile = new File(mainFile.getParentFile(), ".nb-gradle");
-            profileFile = new File(profileFile, "profiles");
-            profileFile = new File(profileFile, profile);
+            File mainFileDir = mainFile.getParentFile();
+
+            File profileFile = mainFileDir != null
+                    ? new File(mainFileDir, SETTINGS_DIR_NAME)
+                    : new File(SETTINGS_DIR_NAME);
+            profileFile = new File(profileFile, PROFILE_DIRECTORY);
+            profileFile = new File(profileFile, profile + PROFILE_FILE_NAME_SUFFIX);
             return new File[]{profileFile, mainFile};
         }
     }
