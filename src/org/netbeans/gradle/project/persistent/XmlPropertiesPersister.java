@@ -91,7 +91,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     public static File[] getFilesForProject(NbGradleProject project) {
-        return getFilesForProfile(project, project.getCurrentProfile());
+        return getFilesForProfile(project, project.getCurrentProfile().getProfileName());
     }
 
     private static File getFileForProject(NbGradleProject project) {

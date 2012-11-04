@@ -11,6 +11,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,7 +31,6 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
@@ -62,13 +62,33 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         setEnableDisable();
     }
 
-    private void fillProfileCombo(Collection<String> profiles) {
-        List<ProfileItem> profileItems = new ArrayList<ProfileItem>(profiles.size() + 1);
-        profileItems.add(new ProfileItem(null));
+    private void sortProfiles(NbGradleConfiguration[] profileArray) {
+        Arrays.sort(profileArray, new Comparator<NbGradleConfiguration>() {
+            @Override
+            public int compare(NbGradleConfiguration o1, NbGradleConfiguration o2) {
+                return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+            }
+        });
 
-        String[] profileArray = profiles.toArray(new String[0]);
-        Arrays.sort(profileArray, STR_CMP);
-        for (String profile: profileArray) {
+        // Make the default profile the first
+        for (int i = 0; i < profileArray.length; i++) {
+            if (NbGradleConfiguration.DEFAULT_CONFIG.equals(profileArray[i])) {
+                for (int j = i; j > 0; j--) {
+                    profileArray[j] = profileArray[j - 1];
+                }
+                profileArray[0] = NbGradleConfiguration.DEFAULT_CONFIG;
+                break;
+            }
+        }
+    }
+
+    private void fillProfileCombo(Collection<NbGradleConfiguration> profiles) {
+        List<ProfileItem> profileItems = new ArrayList<ProfileItem>(profiles.size() + 1);
+
+        NbGradleConfiguration[] profileArray = profiles.toArray(new NbGradleConfiguration[0]);
+        sortProfiles(profileArray);
+
+        for (NbGradleConfiguration profile: profileArray) {
             profileItems.add(new ProfileItem(profile));
         }
 
@@ -84,7 +104,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
-                    final Collection<String> profiles = XmlPropertiesPersister.getAvailableProfiles(project);
+                    final Collection<NbGradleConfiguration> profiles =
+                            project.getLookup().lookup(NbGradleConfigProvider.class).findAndUpdateConfigurations();
 
                     final PanelLockRef swingLock = lockRef.getAndSet(null);
                     SwingUtilities.invokeLater(new Runnable() {
@@ -144,7 +165,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         // If we already have a store for the properties then we should have
         // already edited it.
-        ProjectProperties storedProperties = storeForProperties.get(new ProfileItem(profileName));
+        ProjectProperties storedProperties = storeForProperties.get(selected);
         if (storedProperties != null) {
             currentlyShownProfile = selected;
             initFromProperties(storedProperties);
@@ -379,20 +400,27 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private static class ProfileItem {
-        private final String profileName;
+        private static final ProfileItem DEFAULT_PROFILE = new ProfileItem(NbGradleConfiguration.DEFAULT_CONFIG);
 
-        public ProfileItem(String profileName) {
-            this.profileName = profileName;
+        private final NbGradleConfiguration config;
+
+        public ProfileItem(NbGradleConfiguration config) {
+            if (config == null) throw new NullPointerException("config");
+            this.config = config;
         }
 
         public String getProfileName() {
-            return profileName;
+            return config.getProfileName();
+        }
+
+        public NbGradleConfiguration getConfig() {
+            return config;
         }
 
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 97 * hash + (this.profileName != null ? this.profileName.hashCode() : 0);
+            hash = 47 * hash + (this.config != null ? this.config.hashCode() : 0);
             return hash;
         }
 
@@ -403,16 +431,14 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             if (getClass() != obj.getClass())
                 return false;
             final ProfileItem other = (ProfileItem)obj;
-            if ((this.profileName == null) ? (other.profileName != null) : !this.profileName.equals(other.profileName))
+            if (this.config != other.config && (this.config == null || !this.config.equals(other.config)))
                 return false;
             return true;
         }
 
         @Override
         public String toString() {
-            return profileName != null
-                    ? profileName
-                    : NbStrings.getDefaultProfileName();
+            return config.getDisplayName();
         }
     }
 

@@ -24,6 +24,8 @@ import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
+import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
+import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
@@ -66,8 +68,6 @@ public final class NbGradleProject implements Project {
     private final String name;
     private final ExceptionDisplayer exceptionDisplayer;
     private final ChangeSupport modelChanges;
-    private final ChangeSupport profileChanges;
-    private volatile String currentProfile;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectPropertiesProxy properties;
@@ -87,37 +87,24 @@ public final class NbGradleProject implements Project {
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
         this.modelChanges = new ChangeSupport(this);
-        this.profileChanges = new ChangeSupport(this);
         this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
 
         this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnce = false;
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
-        this.currentProfile = null;
     }
 
-    public String getCurrentProfile() {
-        return currentProfile;
-    }
-
-    public void setCurrentProfile(String profile) {
-        this.currentProfile = profile;
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                profileChanges.fireChange();
-            }
-        });
+    public NbGradleConfiguration getCurrentProfile() {
+        return getLookup().lookup(NbGradleConfigProvider.class).getActiveConfiguration();
     }
 
     public void addProfileChangeListener(ChangeListener listener) {
-        profileChanges.addChangeListener(listener);
+        getLookup().lookup(NbGradleConfigProvider.class).addActiveConfigChangeListener(listener);
     }
 
     public void removeProfileChangeListener(ChangeListener listener) {
-        profileChanges.removeChangeListener(listener);
+        getLookup().lookup(NbGradleConfigProvider.class).removeActiveConfigChangeListener(listener);
     }
 
     public void displayError(String errorText, Throwable exception, boolean setFocus) {
@@ -234,6 +221,7 @@ public final class NbGradleProject implements Project {
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
                 state, //allow outside code to mark the project as needing saving
+                new NbGradleConfigProvider(this),
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
                 new GradleProjectSources(this),
