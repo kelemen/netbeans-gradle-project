@@ -4,6 +4,7 @@ import java.io.File;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Validator;
 

@@ -16,6 +16,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.InputCollector;
 import org.netbeans.gradle.project.validate.Problem;

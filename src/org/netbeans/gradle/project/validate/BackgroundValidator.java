@@ -1,12 +1,9 @@
-package org.netbeans.gradle.project.newproject;
+package org.netbeans.gradle.project.validate;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.validate.GroupValidator;
-import org.netbeans.gradle.project.validate.Problem;
-import org.netbeans.gradle.project.validate.Validator;
 import org.openide.util.ChangeSupport;
 import org.openide.util.RequestProcessor;
 
