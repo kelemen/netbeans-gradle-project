@@ -108,7 +108,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             public void run() {
                 try {
                     final Collection<NbGradleConfiguration> profiles =
-                            project.getLookup().lookup(NbGradleConfigProvider.class).findAndUpdateConfigurations();
+                            project.getLookup().lookup(NbGradleConfigProvider.class).findAndUpdateConfigurations(false);
 
                     final PanelLockRef swingLock = lockRef.getAndSet(null);
                     SwingUtilities.invokeLater(new Runnable() {
@@ -725,9 +725,9 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         NbGradleConfiguration newConfig = new NbGradleConfiguration(profileName);
-        project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);
-
         ProfileItem newProfile = new ProfileItem(newConfig);
+
+        project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);
 
         jProfileCombo.addItem(newProfile);
         sortProfileComboItems();

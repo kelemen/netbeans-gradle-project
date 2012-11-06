@@ -83,7 +83,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         }
     }
 
-    public Collection<NbGradleConfiguration> findAndUpdateConfigurations() {
+    public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
         Collection<String> profileNames = XmlPropertiesPersister.getAvailableProfiles(project);
         Collection<NbGradleConfiguration> currentConfigs
                 = new ArrayList<NbGradleConfiguration>(profileNames.size() + 1);
@@ -93,7 +93,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             currentConfigs.add(new NbGradleConfiguration(profileName));
         }
         configs.addAll(currentConfigs);
-        configs.retainAll(currentConfigs);
+        if (mayRemove) {
+            configs.retainAll(currentConfigs);
+        }
         if (!configs.contains(activeConfig.get())) {
             setActiveConfiguration(NbGradleConfiguration.DEFAULT_CONFIG);
         }
@@ -104,7 +106,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
             }
         });
-        return currentConfigs;
+        return Collections.unmodifiableSet(configs);
     }
 
     private void ensureLoadedAsynchronously() {
@@ -112,7 +114,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    findAndUpdateConfigurations();
+                    findAndUpdateConfigurations(false);
                 }
             });
         }
