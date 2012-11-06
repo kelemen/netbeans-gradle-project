@@ -203,6 +203,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_DefaultProfile");
     }
 
+    public static String getAddNewProfileCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_AddNewProfileCaption");
+    }
+
+    public static String getInvalidProfileName() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_InvalidProfileName");
+    }
+
+    public static String getEmptyProfileName() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_EmptyProfileName");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

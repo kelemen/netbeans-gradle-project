@@ -54,10 +54,22 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 }
             }
         });
+        executeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+            }
+        });
     }
 
     public void addConfiguration(NbGradleConfiguration config) {
         configs.add(config);
+        executeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+            }
+        });
     }
 
     private void executeOnEdt(Runnable task) {

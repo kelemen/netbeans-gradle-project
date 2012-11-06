@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -138,6 +139,28 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         jSourceLevelCombo.setSelectedItem(properties.getSourceLevel().getValue());
         jSourceLevelComboInherit.setSelected(properties.getSourceLevel().isDefault());
+    }
+
+    private void sortProfileComboItems() {
+        ComboBoxModel model = jProfileCombo.getModel();
+        int itemCount = model.getSize();
+        List<NbGradleConfiguration> configs = new ArrayList<NbGradleConfiguration>(itemCount);
+
+        for (int i = 0; i < itemCount; i++) {
+            Object element = model.getElementAt(i);
+            if (element instanceof ProfileItem) {
+                configs.add(((ProfileItem)element).getConfig());
+            }
+        }
+
+        NbGradleConfiguration[] configArray = configs.toArray(new NbGradleConfiguration[0]);
+        sortProfiles(configArray);
+
+        ProfileItem[] profiles = new ProfileItem[configArray.length];
+        for (int i = 0; i < profiles.length; i++) {
+            profiles[i] = new ProfileItem(configArray[i]);
+        }
+        jProfileCombo.setModel(new DefaultComboBoxModel(profiles));
     }
 
     private ProfileItem getSelectedProfile() {
@@ -525,8 +548,18 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jProfileCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jProfileCaption.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jAddProfileButton, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jAddProfileButton.text")); // NOI18N
+        jAddProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jAddProfileButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jRemoveProfileButton, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jRemoveProfileButton.text")); // NOI18N
+        jRemoveProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jRemoveProfileButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -617,6 +650,73 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             }
         });
     }//GEN-LAST:event_jManageTasksButtonActionPerformed
+
+    private void jRemoveProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRemoveProfileButtonActionPerformed
+        ProfileItem profileItem = getSelectedProfile();
+        if (profileItem == null) {
+            return;
+        }
+        NbGradleConfiguration config = profileItem.getConfig();
+        if (NbGradleConfiguration.DEFAULT_CONFIG.equals(config)) {
+            // Cannot remove the default profile.
+            return;
+        }
+
+        // set this to null, so that we will not attempt to save the profile
+        currentlyShownProfile = null;
+
+        storeForProperties.remove(profileItem);
+        jProfileCombo.removeItem(profileItem);
+        jProfileCombo.setSelectedItem(new ProfileItem(NbGradleConfiguration.DEFAULT_CONFIG));
+
+        project.getLookup().lookup(NbGradleConfigProvider.class).removeConfiguration(config);
+    }//GEN-LAST:event_jRemoveProfileButtonActionPerformed
+
+    private void jAddProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAddProfileButtonActionPerformed
+        final AddNewProfilePanel panel = new AddNewProfilePanel();
+        panel.startValidation();
+
+        final DialogDescriptor dlgDescriptor = new DialogDescriptor(
+                panel,
+                NbStrings.getAddNewProfileCaption(),
+                true,
+                new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
+                DialogDescriptor.OK_OPTION,
+                DialogDescriptor.BOTTOM_ALIGN,
+                null,
+                null);
+
+        panel.addValidityChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                dlgDescriptor.setValid(panel.isValidProfileName());
+            }
+        });
+        dlgDescriptor.setValid(panel.isValidProfileName());
+
+        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
+        dlg.pack();
+        dlg.setVisible(true);
+
+        if (DialogDescriptor.OK_OPTION != dlgDescriptor.getValue()) {
+            return;
+        }
+
+        String profileName = panel.getProfileName();
+        if (profileName.isEmpty()) {
+            return;
+        }
+
+        NbGradleConfiguration newConfig = new NbGradleConfiguration(profileName);
+        project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);
+
+        ProfileItem newProfile = new ProfileItem(newConfig);
+
+        jProfileCombo.addItem(newProfile);
+        sortProfileComboItems();
+        jProfileCombo.setSelectedItem(newProfile);
+
+    }//GEN-LAST:event_jAddProfileButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jAddProfileButton;

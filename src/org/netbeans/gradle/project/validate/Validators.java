@@ -25,6 +25,22 @@ public final class Validators {
         };
     }
 
+    public static Validator<String> createNonEmptyValidator(
+            final Problem.Level severity,
+            final String errorMessage) {
+        if (severity == null) throw new NullPointerException("severity");
+        if (errorMessage == null) throw new NullPointerException("errorMessage");
+
+        return new Validator<String>() {
+            @Override
+            public Problem validateInput(String inputType) {
+                return inputType.isEmpty()
+                        ? new Problem(severity, errorMessage)
+                        : null;
+            }
+        };
+    }
+
     public static Validator<String> createFileNameValidator(
             Problem.Level severity,
             String errorMessage) {
