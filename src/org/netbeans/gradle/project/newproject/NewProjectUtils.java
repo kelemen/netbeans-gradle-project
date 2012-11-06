@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
@@ -8,9 +7,6 @@ import java.nio.charset.Charset;
 import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
@@ -18,19 +14,20 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
-import org.netbeans.gradle.project.validate.InputCollector;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
+import org.netbeans.gradle.project.validate.Validators;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
+import static org.netbeans.gradle.project.validate.Validators.*;
+
 public final class NewProjectUtils {
     public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
 
     private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
-    private static final Pattern LEGAL_FILENAME_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]*");
     private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*");
     private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]+");
     private static final Pattern MAVEN_VERSION_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]+");
@@ -112,52 +109,9 @@ public final class NewProjectUtils {
         StringUtils.writeStringToFile(content.toString(), DEFAULT_FILE_ENCODING, mainClassPath);
     }
 
-    public static <InputType> Validator<InputType> merge(
-            final Validator<? super InputType> validator1,
-            final Validator<? super InputType> validator2) {
-
-        return new Validator<InputType>() {
-            @Override
-            public Problem validateInput(InputType inputType) {
-                Problem problem1 = validator1.validateInput(inputType);
-                Problem problem2 = validator2.validateInput(inputType);
-
-                if (problem1 == null) {
-                    return problem2;
-                }
-                if (problem2 == null) {
-                    return problem1;
-                }
-
-                return problem1.getLevel().getIntValue() >= problem2.getLevel().getIntValue()
-                        ? problem1
-                        : problem2;
-            }
-        };
-    }
-
-    public static Validator<String> createPatternValidator(
-            final Pattern pattern,
-            final Problem.Level severity,
-            final String errorMessage) {
-        if (pattern == null) throw new NullPointerException("pattern");
-        if (severity == null) throw new NullPointerException("severity");
-        if (errorMessage == null) throw new NullPointerException("errorMessage");
-
-        return new Validator<String>() {
-            @Override
-            public Problem validateInput(String inputType) {
-                if (!pattern.matcher(inputType).matches()) {
-                    return new Problem(severity, errorMessage);
-                }
-                return null;
-            }
-        };
-    }
-
     public static Validator<String> createProjectNameValidator() {
         Validator<String> patternValidators = merge(
-                createPatternValidator(LEGAL_FILENAME_PATTERN,
+                createFileNameValidator(
                     Problem.Level.SEVERE,
                     NewProjectStrings.getIllegalProjectName()),
                 createPatternValidator(RECOMMENDED_PROJECTNAME_PATTERN,
@@ -279,19 +233,6 @@ public final class NewProjectUtils {
         };
     }
 
-    public static InputCollector<String> createCollector(
-            final JTextComponent component) {
-        if (component == null) throw new NullPointerException("component");
-
-        return new InputCollector<String>() {
-            @Override
-            public String getInput() {
-                String result = component.getText();
-                return result != null ? result.trim() : "";
-            }
-        };
-    }
-
     public static void chooseProjectLocation(Component parent, JTextComponent jProjectEdit) {
         if (jProjectEdit == null) throw new NullPointerException("jProjectEdit");
 
@@ -313,51 +254,6 @@ public final class NewProjectUtils {
         }
     }
 
-    public static void connectLabelToProblems(
-            final BackgroundValidator validator,
-            final JLabel jLabel) {
-        if (validator == null) throw new NullPointerException("validator");
-        if (jLabel == null) throw new NullPointerException("jLabel");
-
-        jLabel.setText("");
-        validator.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                Problem currentProblem = validator.getCurrentProblem();
-                String message = currentProblem != null
-                        ? currentProblem.getMessage()
-                        : "";
-                if (message.isEmpty()) {
-                    jLabel.setText("");
-                }
-                else {
-                    assert currentProblem != null;
-                    String title;
-                    Color labelColor;
-                    switch (currentProblem.getLevel()) {
-                        case INFO:
-                            labelColor = Color.BLACK;
-                            title = NbStrings.getInfoCaption();
-                            break;
-                        case WARNING:
-                            labelColor = Color.ORANGE.darker();
-                            title = NbStrings.getWarningCaption();
-                            break;
-                        case SEVERE:
-                            labelColor = Color.RED;
-                            title = NbStrings.getErrorCaption();
-                            break;
-                        default:
-                            throw new AssertionError(currentProblem.getLevel().name());
-                    }
-
-                    jLabel.setForeground(labelColor);
-                    jLabel.setText(title + ": " + message);
-                }
-            }
-        });
-    }
-
     public static void setupNewProjectValidators(
             final BackgroundValidator bckgValidator,
             final GroupValidator validators,
@@ -371,10 +267,10 @@ public final class NewProjectUtils {
 
         validators.addValidator(
                 NewProjectUtils.createProjectNameValidator(),
-                NewProjectUtils.createCollector(jProjectNameEdit));
+                Validators.createCollector(jProjectNameEdit));
         validators.addValidator(
                 NewProjectUtils.createNewFolderValidator(),
-                NewProjectUtils.createCollector(jProjectFolderEdit));
+                Validators.createCollector(jProjectFolderEdit));
 
         DocumentListener validationPerformer = new DocumentListener() {
             @Override

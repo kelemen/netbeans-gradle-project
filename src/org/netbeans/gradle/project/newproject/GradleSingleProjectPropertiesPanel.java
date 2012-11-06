@@ -7,6 +7,7 @@ import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Validator;
+import org.netbeans.gradle.project.validate.Validators;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
@@ -24,11 +25,11 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         validators = new GroupValidator();
         validators.addValidator(
                 NewProjectUtils.createClassNameValidator(true),
-                NewProjectUtils.createCollector(jMainClassEdit));
+                Validators.createCollector(jMainClassEdit));
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
 
-        NewProjectUtils.connectLabelToProblems(bckgValidator, jInformationLabel);
+        Validators.connectLabelToProblems(bckgValidator, jInformationLabel);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
                 jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
 
@@ -54,7 +55,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
     public void addProjectLocationValidator(Validator<String> validator) {
         validators.addValidator(
                 validator,
-                NewProjectUtils.createCollector(jProjectLocationEdit));
+                Validators.createCollector(jProjectLocationEdit));
     }
 
     public void startValidation() {

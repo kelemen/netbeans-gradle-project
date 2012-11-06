@@ -6,6 +6,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
+import org.netbeans.gradle.project.validate.Validators;
 
 @SuppressWarnings("serial")
 public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
@@ -23,14 +24,14 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
         validators = new GroupValidator();
         validators.addValidator(
                 NewProjectUtils.createGroupIdValidator(),
-                NewProjectUtils.createCollector(jMavenGroupEdit));
+                Validators.createCollector(jMavenGroupEdit));
         validators.addValidator(
                 NewProjectUtils.createVersionValidator(),
-                NewProjectUtils.createCollector(jMavenVersionEdit));
+                Validators.createCollector(jMavenVersionEdit));
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
 
-        NewProjectUtils.connectLabelToProblems(bckgValidator, jInformationLabel);
+        Validators.connectLabelToProblems(bckgValidator, jInformationLabel);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
                 jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
 
