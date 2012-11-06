@@ -24,7 +24,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -659,6 +661,21 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         NbGradleConfiguration config = profileItem.getConfig();
         if (NbGradleConfiguration.DEFAULT_CONFIG.equals(config)) {
             // Cannot remove the default profile.
+            return;
+        }
+
+        String yes = UIManager.getString("OptionPane.yesButtonText", Locale.getDefault());
+        String no = UIManager.getString("OptionPane.noButtonText", Locale.getDefault());
+        int confirmResult = JOptionPane.showOptionDialog(
+                this,
+                NbStrings.getConfirmRemoveProfile(config.getDisplayName()),
+                "",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE,
+                null,
+                new Object[]{yes, no},
+                no);
+        if (confirmResult != 0) {
             return;
         }
 

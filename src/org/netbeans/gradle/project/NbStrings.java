@@ -215,6 +215,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_EmptyProfileName");
     }
 
+    public static String getConfirmRemoveProfile(String profileName) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmRemoveProfile", profileName);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
