@@ -15,7 +15,6 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
-import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.openide.util.ChangeSupport;
 
 public final class ProjectPropertiesProxy extends AbstractProjectProperties {
@@ -72,13 +71,13 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private ProjectProperties getProperties() {
         ProjectProperties properties = propertiesRef.get();
         if (properties == null) {
-            File[] propertiesFiles = XmlPropertiesPersister.getFilesForProject(project);
+            File[] propertiesFiles = SettingsFiles.getFilesForProject(project);
             properties = ProjectPropertiesManager.getProperties(propertiesFiles, loadedSignal);
             if (propertiesRef.compareAndSet(null, properties)) {
                 ChangeListener reloadTask = new ChangeListener() {
                     @Override
                     public void stateChanged(ChangeEvent e) {
-                        File[] propertiesFiles = XmlPropertiesPersister.getFilesForProject(project);
+                        File[] propertiesFiles = SettingsFiles.getFilesForProject(project);
                         propertiesRef.set(ProjectPropertiesManager.getProperties(propertiesFiles, loadedSignal));
                         changes.fireChange();
                     }

@@ -22,7 +22,6 @@ import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
@@ -30,6 +29,7 @@ import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -184,7 +184,7 @@ public final class NbGradleProject implements Project {
             boolean useInheritance,
             PropertiesLoadListener onLoadTask) {
 
-        File[] files = XmlPropertiesPersister.getFilesForProfile(this, profile);
+        File[] files = SettingsFiles.getFilesForProfile(this, profile);
         return useInheritance ?
                 ProjectPropertiesManager.getProperties(files, onLoadTask)
                 : ProjectPropertiesManager.getProperties(files[0], onLoadTask);

@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.openide.util.ChangeSupport;
 
@@ -48,7 +47,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                File profileFile = XmlPropertiesPersister.getFilesForProfile(project, config.getProfileName())[0];
+                File profileFile = SettingsFiles.getFilesForProfile(project, config.getProfileName())[0];
                 if (profileFile.isFile()) {
                     profileFile.delete();
                 }
@@ -84,7 +83,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
-        Collection<String> profileNames = XmlPropertiesPersister.getAvailableProfiles(project);
+        Collection<String> profileNames = SettingsFiles.getAvailableProfiles(project);
         Collection<NbGradleConfiguration> currentConfigs
                 = new ArrayList<NbGradleConfiguration>(profileNames.size() + 1);
 
