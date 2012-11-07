@@ -3,8 +3,11 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,6 +31,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<JavaPlatform> platformProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
+    private final Map<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
     private final WaitableSignal loadedSignal;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
@@ -61,6 +65,22 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                 return this.getProperties().getCommonTasks();
             }
         });
+
+        Set<String> commands = AbstractProjectProperties.getCustomizableCommands();
+        this.builtInTasks = new HashMap<String, MutablePropertyProxy<PredefinedTask>>(2 * commands.size());
+        for (final String command: commands) {
+            MutablePropertyProxy<PredefinedTask> proxy = new MutablePropertyProxy<PredefinedTask>(new ProjectMutablePropertyRef<PredefinedTask>(this) {
+                @Override
+                public MutableProperty<PredefinedTask> getProperty() {
+                    MutableProperty<PredefinedTask> taskProperty = this.getProperties().tryGetBuiltInTask(command);
+                    if (taskProperty == null) {
+                        throw new IllegalStateException("Missing customizable command: " + command);
+                    }
+                    return taskProperty;
+                }
+            });
+            this.builtInTasks.put(command, proxy);
+        }
     }
 
     public boolean tryWaitForLoaded() {
@@ -118,6 +138,12 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     @Override
     public MutableProperty<List<PredefinedTask>> getCommonTasks() {
         return commonTasksProxy;
+    }
+
+    @Override
+    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+        if (command == null) throw new NullPointerException("command");
+        return builtInTasks.get(command);
     }
 
     private static interface MutablePropertyRef<ValueType> {

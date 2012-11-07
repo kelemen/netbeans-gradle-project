@@ -5,11 +5,14 @@ import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -17,6 +20,8 @@ import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.netbeans.gradle.project.properties.PropertySource;
 
 public final class XmlPropertiesPersister implements PropertiesPersister {
+    private static final Logger LOGGER = Logger.getLogger(XmlPropertiesPersister.class.getName());
+
     private final File propertiesFile;
 
     public XmlPropertiesPersister(File propertiesFile) {
@@ -91,6 +96,19 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 return snapshot.getCommonTasks();
             }
         }));
+        for (final String command: AbstractProjectProperties.getCustomizableCommands()) {
+            MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
+            if (taskProperty == null) {
+                LOGGER.log(Level.WARNING, "tryGetBuiltInTask returned null for command: {0}", command);
+                continue;
+            }
+            setters.add(newPropertySetter(taskProperty, new PropertyGetter<PredefinedTask>() {
+                @Override
+                public PropertySource<PredefinedTask> get(PropertiesSnapshot snapshot) {
+                    return snapshot.tryGetBuiltInTask(command);
+                }
+            }));
+        }
 
         for (PropertySetter<?> setter: setters) {
             setter.start();
@@ -161,7 +179,13 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         }
 
         public void set(PropertiesSnapshot snapshot) {
-            property.setValueFromSource(getter.get(snapshot));
+            PropertySource<? extends ValueType> source = getter.get(snapshot);
+            if (source != null) {
+                property.setValueFromSource(source);
+            }
+            else {
+                LOGGER.warning("null property source.");
+            }
         }
 
         public void done() {

@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +16,6 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
@@ -140,15 +138,7 @@ public final class ProjectPropertiesManager {
                 ProjectProperties fallbackProperties = getProperties(fileList.subList(1, fileList.size()), resultForwarder);
 
                 newProperties = new FallbackProjectProperties(mainProperties, fallbackProperties);
-
-                // Note: We have to keep hard references to the returned
-                //   properties to prevent them from being garbage collected and
-                //   be removed from "PROPERTIES" while their properties are
-                //   still being used (FallbackProjectProperties does not keep
-                //   hard references to them).
-                newProperties = new ProjectPropertiesWithHardRefs(newProperties, mainProperties, fallbackProperties);
             }
-
 
             MAIN_LOCK.lock();
             try {
@@ -238,45 +228,6 @@ public final class ProjectPropertiesManager {
             }
         });
         return properties;
-    }
-
-    private static class ProjectPropertiesWithHardRefs extends AbstractProjectProperties {
-        private final ProjectProperties wrapped;
-        private final Object[] hardReferences;
-
-        public ProjectPropertiesWithHardRefs(ProjectProperties wrapped, Object... hardReferences) {
-            assert wrapped != null;
-
-            this.wrapped = wrapped;
-            this.hardReferences = hardReferences.clone();
-        }
-
-        @Override
-        public MutableProperty<String> getSourceLevel() {
-            return wrapped.getSourceLevel();
-        }
-
-        @Override
-        public MutableProperty<JavaPlatform> getPlatform() {
-            return wrapped.getPlatform();
-        }
-
-        @Override
-        public MutableProperty<Charset> getSourceEncoding() {
-            return wrapped.getSourceEncoding();
-        }
-
-        @Override
-        public MutableProperty<List<PredefinedTask>> getCommonTasks() {
-            return wrapped.getCommonTasks();
-        }
-
-        @Override
-        public String toString() {
-            return "ProjectPropertiesWithHardRefs{"
-                    + "wrapped=" + wrapped
-                    + ", hardReferences=" + Arrays.toString(hardReferences).hashCode() + '}';
-        }
     }
 
     private ProjectPropertiesManager() {

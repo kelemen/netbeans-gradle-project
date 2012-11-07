@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
@@ -24,6 +25,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -45,6 +47,7 @@ final class XmlPropertyFormat {
     private static final String PLATFORM_NODE = "target-platform";
     private static final String SOURCE_LEVEL_NODE = "source-level";
     private static final String COMMON_TASKS_NODE = "common-tasks";
+    private static final String BUILT_IN_TASKS_NODE = "built-in-tasks";
     private static final String TASK_DISPLAY_NAME_NODE = "display-name";
     private static final String TASK_NON_BLOCKING_NODE = "non-blocking";
     private static final String TASK_NODE = "task";
@@ -120,6 +123,23 @@ final class XmlPropertyFormat {
         }
     }
 
+    private static void addBuiltInTasks(Node node, PropertiesSnapshot snapshot) {
+        List<PredefinedTask> tasks = new LinkedList<PredefinedTask>();
+        for (String command: AbstractProjectProperties.getCustomizableCommands()) {
+            PropertySource<PredefinedTask> task = snapshot.tryGetBuiltInTask(command);
+            if (task != null && !task.isDefault()) {
+                tasks.add(task.getValue());
+            }
+        }
+
+        if (!tasks.isEmpty()) {
+            Element commonTasksNode = addChild(node, BUILT_IN_TASKS_NODE);
+            for (PredefinedTask task: tasks) {
+                addSingleTask(commonTasksNode, task);
+            }
+        }
+    }
+
     public static void saveToXml(File propertyfile, PropertiesSnapshot snapshot) {
         if (propertyfile == null) throw new NullPointerException("propertyfile");
         if (snapshot == null) throw new NullPointerException("snapshot");
@@ -163,6 +183,8 @@ final class XmlPropertyFormat {
                 addCommonTasks(root, commonTasks);
             }
         }
+
+        addBuiltInTasks(root, snapshot);
 
         try {
             saveDocument(propertyfile, document);
@@ -259,8 +281,8 @@ final class XmlPropertyFormat {
         return new PredefinedTask(displayName, names, args, jvmArgs, nonBlocking);
     }
 
-    private static List<PredefinedTask> readTasks(Element root) {
-        Element commonTasksNode = getFirstChildByTagName(root, COMMON_TASKS_NODE);
+    private static List<PredefinedTask> readTasks(String rootName, Element root) {
+        Element commonTasksNode = getFirstChildByTagName(root, rootName);
         if (commonTasksNode == null) {
             return Collections.emptyList();
         }
@@ -272,8 +294,16 @@ final class XmlPropertyFormat {
         return result;
     }
 
+    private static List<PredefinedTask> readCommonTasks(Element root) {
+        return readTasks(COMMON_TASKS_NODE, root);
+    }
+
     private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
         return new ConstPropertySource<ValueType>(value, defaultValue);
+    }
+
+    private static List<PredefinedTask> readBuiltInTasks(Element root) {
+        return readTasks(BUILT_IN_TASKS_NODE, root);
     }
 
     public static PropertiesSnapshot readFromXml(File propertiesFile) {
@@ -327,8 +357,19 @@ final class XmlPropertyFormat {
             result.setPlatform(DefaultPropertySources.findPlatformSource(platformName, platformStr, false));
         }
 
-        List<PredefinedTask> commonTasks = Collections.unmodifiableList(readTasks(root));
+        List<PredefinedTask> commonTasks = Collections.unmodifiableList(readCommonTasks(root));
         result.setCommonTasks(asConst(commonTasks, commonTasks.isEmpty()));
+
+        Set<String> customizableCommands = AbstractProjectProperties.getCustomizableCommands();
+        for (PredefinedTask builtInTask: readBuiltInTasks(root)) {
+            String command = builtInTask.getDisplayName();
+            if (!customizableCommands.contains(command)) {
+                LOGGER.log(Level.WARNING, "Property file contains unknown built-in command: {0}", command);
+            }
+            else {
+                result.setBuiltInTask(command, asConst(builtInTask, false));
+            }
+        }
 
         return result.create();
     }

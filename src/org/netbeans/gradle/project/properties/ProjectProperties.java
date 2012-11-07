@@ -20,5 +20,9 @@ public interface ProjectProperties {
     public MutableProperty<Charset> getSourceEncoding();
     public MutableProperty<List<PredefinedTask>> getCommonTasks();
 
+    // In case you add more built-in tasks, don't forget to update
+    // AbstractProjectProperties.getCustomizableCommands().
+    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
+
     public Collection<MutableProperty<?>> getAllProperties();
 }
