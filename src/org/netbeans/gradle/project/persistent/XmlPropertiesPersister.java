@@ -1,12 +1,20 @@
 package org.netbeans.gradle.project.persistent;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties.MutableProperty;
+import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
+import org.netbeans.gradle.project.properties.PropertySource;
 
 public final class XmlPropertiesPersister implements PropertiesPersister {
     private final File propertiesFile;
@@ -42,21 +50,51 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         });
     }
 
+    private static <ValueType> PropertySetter<ValueType> newPropertySetter(
+            MutableProperty<ValueType> property,
+            PropertyGetter<ValueType> getter) {
+        return new PropertySetter<ValueType>(property, getter);
+    }
+
     @Override
     public void load(final ProjectProperties properties, final Runnable onDone) {
         checkEDT();
 
         // We must listen for changes, so that we do not overwrite properties
         // modified later.
-        final ChangeDetector platformChanged = new ChangeDetector();
-        final ChangeDetector sourceEncodingChanged = new ChangeDetector();
-        final ChangeDetector sourceLevelChanged = new ChangeDetector();
-        final ChangeDetector commonTasksChanged = new ChangeDetector();
 
-        properties.getPlatform().addChangeListener(platformChanged);
-        properties.getSourceEncoding().addChangeListener(sourceEncodingChanged);
-        properties.getSourceLevel().addChangeListener(sourceLevelChanged);
-        properties.getCommonTasks().addChangeListener(commonTasksChanged);
+        final List<PropertySetter<?>> setters = new LinkedList<PropertySetter<?>>();
+
+        // Just add a new element to the list when a new property needs to be
+        // saved.
+        setters.add(newPropertySetter(properties.getPlatform(), new PropertyGetter<JavaPlatform>() {
+            @Override
+            public PropertySource<JavaPlatform> get(PropertiesSnapshot snapshot) {
+                return snapshot.getPlatform();
+            }
+        }));
+        setters.add(newPropertySetter(properties.getSourceEncoding(), new PropertyGetter<Charset>() {
+            @Override
+            public PropertySource<Charset> get(PropertiesSnapshot snapshot) {
+                return snapshot.getSourceEncoding();
+            }
+        }));
+        setters.add(newPropertySetter(properties.getSourceLevel(), new PropertyGetter<String>() {
+            @Override
+            public PropertySource<String> get(PropertiesSnapshot snapshot) {
+                return snapshot.getSourceLevel();
+            }
+        }));
+        setters.add(newPropertySetter(properties.getCommonTasks(), new PropertyGetter<List<PredefinedTask>>() {
+            @Override
+            public PropertySource<List<PredefinedTask>> get(PropertiesSnapshot snapshot) {
+                return snapshot.getCommonTasks();
+            }
+        }));
+
+        for (PropertySetter<?> setter: setters) {
+            setter.start();
+        }
 
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
@@ -67,17 +105,8 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            if (!sourceLevelChanged.hasChanged()) {
-                                properties.getSourceLevel().setValueFromSource(snapshot.getSourceLevel());
-                            }
-                            if (!platformChanged.hasChanged()) {
-                                properties.getPlatform().setValueFromSource(snapshot.getPlatform());
-                            }
-                            if (!sourceEncodingChanged.hasChanged()) {
-                                properties.getSourceEncoding().setValueFromSource(snapshot.getSourceEncoding());
-                            }
-                            if (!commonTasksChanged.hasChanged()) {
-                                properties.getCommonTasks().setValueFromSource(snapshot.getCommonTasks());
+                            for (PropertySetter<?> setter: setters) {
+                                setter.set(snapshot);
                             }
 
                             if (onDone != null) {
@@ -92,16 +121,55 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            properties.getPlatform().removeChangeListener(platformChanged);
-                            properties.getSourceEncoding().removeChangeListener(sourceEncodingChanged);
-                            properties.getSourceLevel().removeChangeListener(sourceLevelChanged);
-                            properties.getCommonTasks().removeChangeListener(commonTasksChanged);
+                            for (PropertySetter<?> setter: setters) {
+                                setter.done();
+                            }
                         }
                     });
                 }
 
             }
         });
+    }
+
+    private interface PropertyGetter<ValueType> {
+        public PropertySource<ValueType> get(PropertiesSnapshot snapshot);
+    }
+
+    private static class PropertySetter<ValueType> {
+        private final MutableProperty<ValueType> property;
+        private final PropertyGetter<? extends ValueType> getter;
+        private final AtomicReference<ChangeDetector> detectorRef;
+
+        public PropertySetter(MutableProperty<ValueType> property, PropertyGetter<? extends ValueType> getter) {
+            assert property != null;
+            this.property = property;
+            this.getter = getter;
+            this.detectorRef = new AtomicReference<ChangeDetector>(new ChangeDetector());
+        }
+
+        private ChangeDetector getDectector() {
+            ChangeDetector detector = detectorRef.get();
+            if (detector == null) {
+                throw new IllegalStateException();
+            }
+            return detector;
+        }
+
+        public void start() {
+            property.addChangeListener(getDectector());
+        }
+
+        public void set(PropertiesSnapshot snapshot) {
+            property.setValueFromSource(getter.get(snapshot));
+        }
+
+        public void done() {
+            ChangeDetector detector = detectorRef.getAndSet(null);
+            if (detector != null) {
+                property.removeChangeListener(detector);
+            }
+        }
     }
 
     private static class ChangeDetector implements ChangeListener {
