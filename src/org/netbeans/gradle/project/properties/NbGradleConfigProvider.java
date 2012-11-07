@@ -6,10 +6,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
@@ -20,21 +23,43 @@ import org.openide.util.ChangeSupport;
 public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
 
-    private final NbGradleProject project;
+    private static final Lock CONFIG_PROVIDERS_LOCK = new ReentrantLock();
+    private static final Map<File, NbGradleConfigProvider> CONFIG_PROVIDERS
+            = new WeakValueHashMap<File, NbGradleConfigProvider>();
+
+    private final File rootDirectory;
     private final PropertyChangeSupport changeSupport;
     private final ChangeSupport activeConfigChanges;
     private final Set<NbGradleConfiguration> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
 
-    public NbGradleConfigProvider(NbGradleProject project) {
-        this.project = project;
+    public NbGradleConfigProvider(File rootDirectory) {
+        if (rootDirectory == null) throw new NullPointerException("rootDirectory");
+
+        this.rootDirectory = rootDirectory;
         this.hasBeenUsed = new AtomicBoolean(false);
         this.changeSupport = new PropertyChangeSupport(this);
         this.activeConfigChanges = new ChangeSupport(this);
         this.activeConfig = new AtomicReference<NbGradleConfiguration>(NbGradleConfiguration.DEFAULT_CONFIG);
         this.configs = Collections.newSetFromMap(new ConcurrentHashMap<NbGradleConfiguration, Boolean>());
         this.configs.add(NbGradleConfiguration.DEFAULT_CONFIG);
+    }
+
+    public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
+        File rootDir = SettingsFiles.getRootDirectory(project);
+
+        CONFIG_PROVIDERS_LOCK.lock();
+        try {
+            NbGradleConfigProvider result = CONFIG_PROVIDERS.get(rootDir);
+            if (result == null) {
+                result = new NbGradleConfigProvider(rootDir);
+                CONFIG_PROVIDERS.put(rootDir, result);
+            }
+            return result;
+        } finally {
+            CONFIG_PROVIDERS_LOCK.unlock();
+        }
     }
 
     public void removeConfiguration(final NbGradleConfiguration config) {
@@ -47,7 +72,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                File profileFile = SettingsFiles.getFilesForProfile(project, config.getProfileName())[0];
+                File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileName())[0];
                 if (profileFile.isFile()) {
                     profileFile.delete();
                 }
@@ -83,7 +108,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
-        Collection<String> profileNames = SettingsFiles.getAvailableProfiles(project);
+        Collection<String> profileNames = SettingsFiles.getAvailableProfiles(rootDirectory);
         Collection<NbGradleConfiguration> currentConfigs
                 = new ArrayList<NbGradleConfiguration>(profileNames.size() + 1);
 

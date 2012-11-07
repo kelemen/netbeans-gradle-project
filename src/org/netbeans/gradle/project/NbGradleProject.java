@@ -221,7 +221,7 @@ public final class NbGradleProject implements Project {
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
                 state, //allow outside code to mark the project as needing saving
-                new NbGradleConfigProvider(this),
+                NbGradleConfigProvider.getConfigProvider(this),
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
                 new GradleProjectSources(this),

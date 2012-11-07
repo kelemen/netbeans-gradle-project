@@ -18,8 +18,8 @@ public final class SettingsFiles {
     private static final String SETTINGS_DIR_NAME = ".nb-gradle";
     private static final String PROFILE_DIRECTORY = "profiles";
 
-    public static Collection<String> getAvailableProfiles(NbGradleProject project) {
-        File profileDir = getProfileDirectory(project);
+    public static Collection<String> getAvailableProfiles(File rootDir) {
+        File profileDir = getProfileDirectory(rootDir);
         if (!profileDir.isDirectory()) {
             return Collections.emptySet();
         }
@@ -46,21 +46,17 @@ public final class SettingsFiles {
         return result;
     }
 
-    public static File getSettingsDir(File rootDir) {
+    public static Collection<String> getAvailableProfiles(NbGradleProject project) {
+        return getAvailableProfiles(getRootDirectory(project));
+    }
+
+    private static File getSettingsDir(File rootDir) {
         if (rootDir == null) throw new NullPointerException("rootDir");
         return new File(rootDir, SETTINGS_DIR_NAME);
     }
 
-    public static File getSettingsDir(NbGradleProject project) {
-        return getProfileDirectory(getRootDirectory(project));
-    }
-
     private static File getProfileDirectory(File rootDir) {
         return new File(getSettingsDir(rootDir), PROFILE_DIRECTORY);
-    }
-
-    private static File getProfileDirectory(NbGradleProject project) {
-        return getProfileDirectory(getRootDirectory(project));
     }
 
     public static File[] getFilesForProfile(File rootDir, String profile) {
