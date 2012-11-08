@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.view;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -7,8 +8,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -91,8 +94,17 @@ public final class GradleActionProvider implements ActionProvider {
         return files;
     }
 
-    private ProjectProperties getProperties(NbGradleConfiguration config) {
+    private void checkNotEdt() {
+        if (SwingUtilities.isEventDispatchThread()) {
+            throw new IllegalStateException("Cannot be called from the EDT.");
+        }
+    }
+
+    private ProjectProperties getLoadedProperties(NbGradleConfiguration config) {
+        checkNotEdt();
+
         if (config == null) {
+            // TODO: wait for the properties to be loaded.
             return project.getProperties();
         }
         else {
@@ -108,6 +120,38 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
+    private PredefinedTask getBuiltInTask(
+            final String command,
+            NbGradleConfiguration config) {
+        assert command != null;
+
+        checkNotEdt();
+
+        final ProjectProperties properties = getLoadedProperties(config);
+        final AtomicReference<PredefinedTask> resultRef = new AtomicReference<PredefinedTask>(null);
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    MutableProperty<PredefinedTask> task = properties.tryGetBuiltInTask(command);
+                    if (task != null) {
+                        resultRef.set(task.getValue());
+                    }
+                }
+            });
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        } catch (InvocationTargetException ex) {
+            throw new RuntimeException(ex.getMessage(), ex);
+        }
+
+        PredefinedTask result = resultRef.get();
+        if (result == null) {
+            result = BuiltInTasks.getDefaultBuiltInTask(command);
+        }
+        return result;
+    }
+
     private GradleTaskDef.Builder createProjectTaskBuilder(TaskKind kind, String command, NbGradleConfiguration config) {
         Map<String, String> varReplaceMap = PredefinedTask.varReplaceMap(project.getAvailableModel().getMainModule());
         return createProjectTaskBuilder(kind, command, config, varReplaceMap);
@@ -116,10 +160,7 @@ public final class GradleActionProvider implements ActionProvider {
     private GradleTaskDef.Builder createProjectTaskBuilder(
             TaskKind kind, String command, NbGradleConfiguration config, Map<String, String> varReplaceMap) {
 
-        MutableProperty<PredefinedTask> taskProperty = getProperties(config).tryGetBuiltInTask(command);
-        PredefinedTask task = taskProperty != null
-                ? taskProperty.getValue()
-                : BuiltInTasks.getDefaultBuiltInTask(command);
+        PredefinedTask task = getBuiltInTask(command, config);
 
         String caption;
         switch (kind) {
