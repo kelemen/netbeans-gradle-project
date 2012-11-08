@@ -98,6 +98,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_CustomTasks");
     }
 
+    public static String getTestSingleCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_TestSingle");
+    }
+
+    public static String getDebugTestSingleCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DebugTestSingle");
+    }
+
     public static String getTasksMenuCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_Tasks");
     }
@@ -131,6 +139,10 @@ public final class NbStrings {
 
     public static String getManageTasksDlgTitle(String profile) {
         return NbBundle.getMessage(NbStrings.class, "LBL_ManageTasksTitle", profile);
+    }
+
+    public static String getManageBuiltInTasksDlgTitle(String profile) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ManageBuiltInTasksTitle", profile);
     }
 
     public static String getAddNewTaskDlgTitle() {

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.spi.project.ActionProvider;
@@ -71,6 +73,7 @@ public final class BuiltInTasks {
             true);
 
     private static final Map<String, PredefinedTask> DEFAULT_TASKS;
+    private static final Map<String, String> DISPLAY_NAME_MAP;
 
     static {
         DEFAULT_TASKS = new HashMap<String, PredefinedTask>();
@@ -83,6 +86,17 @@ public final class BuiltInTasks {
         addToMap(DEFAULT_REBUILD_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_TEST_SINGLE_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_DEBUG_TEST_SINGLE_TASK, DEFAULT_TASKS);
+
+        DISPLAY_NAME_MAP = new HashMap<String, String>();
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_BUILD, NbStrings.getBuildCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST, NbStrings.getTestCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_CLEAN, NbStrings.getCleanCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_RUN, NbStrings.getRunCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG, NbStrings.getDebugCommandCaption());
+        DISPLAY_NAME_MAP.put(GradleActionProvider.COMMAND_JAVADOC, NbStrings.getJavadocCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_REBUILD, NbStrings.getRebuildCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST_SINGLE, NbStrings.getTestSingleCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, NbStrings.getDebugTestSingleCommandCaption());
     }
 
     private static void addToMap(PredefinedTask task, Map<String, PredefinedTask> map) {
@@ -99,6 +113,22 @@ public final class BuiltInTasks {
 
     private static String projectTask(String task) {
         return PredefinedTask.VAR_PROJECT_NAME + ":" + task;
+    }
+
+    public static String getDisplayNameOfCommand(String command) {
+        if (command == null) throw new NullPointerException("command");
+
+        String displayName = DISPLAY_NAME_MAP.get(command);
+        if (displayName == null) {
+            if (AbstractProjectProperties.getCustomizableCommands().contains(command)) {
+                LOGGER.log(Level.WARNING, "Customizable command does not have a display name: {0}", command);
+            }
+            else {
+                LOGGER.log(Level.WARNING, "Unknown command does not have a display name: {0}", command);
+            }
+            displayName = command;
+        }
+        return displayName;
     }
 
     public static PredefinedTask getDefaultBuiltInTask(String command) {
