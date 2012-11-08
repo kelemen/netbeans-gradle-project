@@ -425,8 +425,6 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private static class ProfileItem {
-        private static final ProfileItem DEFAULT_PROFILE = new ProfileItem(NbGradleConfiguration.DEFAULT_CONFIG);
-
         private final NbGradleConfiguration config;
 
         public ProfileItem(NbGradleConfiguration config) {
@@ -775,7 +773,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 ? selectedProfile.toString()
                 : "";
 
-        getSelectedProperties(false, new PropertiesLoadListener() {
+        getSelectedProperties(true, new PropertiesLoadListener() {
             @Override
             public void loadedProperties(final ProjectProperties properties) {
                 if (SwingUtilities.isEventDispatchThread()) {
