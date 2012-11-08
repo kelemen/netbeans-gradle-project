@@ -193,8 +193,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     @Override
     public boolean configurationsAffectAction(String command) {
-        // TODO: return true once it is possible to configure the built-in tasks.
-        return false;
+        return AbstractProjectProperties.getCustomizableCommands().contains(command);
     }
 
     @Override
