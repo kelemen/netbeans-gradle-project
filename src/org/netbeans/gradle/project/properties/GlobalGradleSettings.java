@@ -315,10 +315,8 @@ public final class GlobalGradleSettings {
 
         @Override
         public boolean isDefault() {
-            // We will assume that no value is the default value. This is a safe
-            // assumption for a global property because we never fall-back to
-            // anything from a global property.
-            return false;
+            String strValue = getValueAsString();
+            return strValue == null || strValue.isEmpty();
         }
 
         @Override
