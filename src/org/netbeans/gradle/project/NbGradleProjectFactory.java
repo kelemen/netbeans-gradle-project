@@ -5,8 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.project.Project;
@@ -19,7 +18,7 @@ import org.openide.filesystems.FileUtil;
 public class NbGradleProjectFactory implements ProjectFactory {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
-    private static ConcurrentMap<File, Counter> SAFE_TO_OPEN_PROJECTS = new ConcurrentHashMap<File, Counter>();
+    private static ConcurrentMap<File, RefCounter> SAFE_TO_OPEN_PROJECTS = new ConcurrentHashMap<File, RefCounter>();
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     public static Closeable safeToOpen(FileObject projectDir) {
@@ -28,21 +27,33 @@ public class NbGradleProjectFactory implements ProjectFactory {
             return DummyCloseable.INSTANCE;
         }
 
-        while (true) {
-            Counter counter = SAFE_TO_OPEN_PROJECTS.get(projectDirFile);
-            if (counter != null) {
-                counter.increment();
-                if (SAFE_TO_OPEN_PROJECTS.get(projectDirFile) == counter) {
-                    return new CounterCloser(projectDirFile, counter);
-                }
+        return safeToOpen(projectDirFile);
+    }
+
+    public static Closeable safeToOpen(File projectDir) {
+        if (projectDir == null) throw new NullPointerException("projectDir");
+
+        RefCounter counter;
+        RefCounter newCounter;
+        boolean set;
+
+        do {
+            counter = SAFE_TO_OPEN_PROJECTS.get(projectDir);
+            if (counter == null) {
+                newCounter = new RefCounter(1);
+                set = SAFE_TO_OPEN_PROJECTS.putIfAbsent(projectDir, newCounter) == null;
             }
             else {
-                counter = new Counter(1);
-                if (SAFE_TO_OPEN_PROJECTS.putIfAbsent(projectDirFile, counter) == null) {
-                    return new CounterCloser(projectDirFile, counter);
-                }
+                newCounter = counter.increment();
+                set = SAFE_TO_OPEN_PROJECTS.replace(projectDir, counter, newCounter);
             }
+        } while(!set);
+
+        if (counter == null) {
+            LOGGER.log(Level.INFO, "Project is now safe to load: {0}", projectDir);
         }
+
+        return new CounterCloser(projectDir);
     }
 
     public static boolean isSafeToOpen(FileObject projectDir) {
@@ -112,39 +123,55 @@ public class NbGradleProjectFactory implements ProjectFactory {
 
     }
 
-    private static class Counter {
-        private final AtomicLong counter;
+    private static class RefCounter {
+        private final long refCount;
 
-        public Counter(long initialValue) {
-            this.counter = new AtomicLong(initialValue);
+        public RefCounter(long value) {
+            this.refCount = value;
         }
 
-        public void increment() {
-            counter.incrementAndGet();
+        public long getRefCount() {
+            return refCount;
         }
 
-        public boolean decrement() {
-            return counter.decrementAndGet() <= 0;
+        public RefCounter increment() {
+            return new RefCounter(refCount + 1);
+        }
+
+        public RefCounter decrement() {
+            return new RefCounter(refCount - 1);
         }
     }
 
     private static class CounterCloser implements Closeable {
         private final File key;
-        private final AtomicReference<Counter> counterRef;
+        private final AtomicBoolean closed;
 
-        public CounterCloser(File key, Counter counter) {
+        public CounterCloser(File key) {
             if (key == null) throw new NullPointerException("key");
-            if (counter == null) throw new NullPointerException("counter");
             this.key = key;
-            this.counterRef = new AtomicReference<Counter>(counter);
+            this.closed = new AtomicBoolean(false);
         }
 
         @Override
         public void close() {
-            Counter counter = counterRef.getAndSet(null);
-            if (counter != null) {
-                if (counter.decrement()) {
-                    SAFE_TO_OPEN_PROJECTS.remove(key, counter);
+            if (closed.compareAndSet(false, true)) {
+                RefCounter counter;
+                RefCounter newCounter;
+                boolean set;
+                do {
+                    counter = SAFE_TO_OPEN_PROJECTS.get(key);
+                    newCounter = counter.decrement();
+
+                    if (newCounter.getRefCount() == 0) {
+                        set = SAFE_TO_OPEN_PROJECTS.remove(key, counter);
+                    }
+                    else {
+                        set = SAFE_TO_OPEN_PROJECTS.replace(key, counter, newCounter);
+                    }
+                } while (!set);
+
+                if (newCounter.getRefCount() == 0) {
                     LOGGER.log(Level.INFO, "Project is not safe to load anymore: {0}", key);
                 }
             }
