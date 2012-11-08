@@ -100,24 +100,32 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
+    private void waitForProjectLoad() {
+        checkNotEdt();
+        project.tryWaitForLoadedProject();
+    }
+
     private ProjectProperties getLoadedProperties(NbGradleConfiguration config) {
         checkNotEdt();
 
+        ProjectProperties properties;
         if (config == null) {
-            // TODO: wait for the properties to be loaded.
-            return project.getProperties();
+            properties = project.tryGetLoadedProperties();
+            if (properties == null) {
+                properties = project.getProperties();
+            }
         }
         else {
             final WaitableSignal loadedSignal = new WaitableSignal();
-            ProjectProperties properties = project.getPropertiesForProfile(config.getProfileName(), true, new PropertiesLoadListener() {
+            properties = project.getPropertiesForProfile(config.getProfileName(), true, new PropertiesLoadListener() {
                 @Override
                 public void loadedProperties(ProjectProperties properties) {
                     loadedSignal.signal();
                 }
             });
             loadedSignal.tryWaitForSignal();
-            return properties;
         }
+        return properties;
     }
 
     private PredefinedTask getBuiltInTask(
@@ -160,6 +168,7 @@ public final class GradleActionProvider implements ActionProvider {
     private GradleTaskDef.Builder createProjectTaskBuilder(
             TaskKind kind, String command, NbGradleConfiguration config, Map<String, String> varReplaceMap) {
 
+        waitForProjectLoad();
         PredefinedTask task = getBuiltInTask(command, config);
 
         String caption;

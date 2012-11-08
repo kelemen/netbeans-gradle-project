@@ -40,6 +40,7 @@ import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
 import org.netbeans.gradle.project.query.GradleUnitTestFinder;
+import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
@@ -75,7 +76,7 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
-    private volatile boolean loadedAtLeastOnce;
+    private final WaitableSignal loadedAtLeastOnceSignal;
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
@@ -90,7 +91,7 @@ public final class NbGradleProject implements Project {
         this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
 
         this.cpProvider = new GradleClassPathProvider(this);
-        this.loadedAtLeastOnce = false;
+        this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
     }
@@ -150,14 +151,25 @@ public final class NbGradleProject implements Project {
     }
 
     public boolean hasLoadedProject() {
-        return loadedAtLeastOnce;
+        return loadedAtLeastOnceSignal.isSignaled();
+    }
+
+    public boolean tryWaitForLoadedProject() {
+        if (GradleDaemonManager.isRunningExclusiveTask()) {
+            throw new IllegalStateException("Cannot wait for loading a project"
+                    + " while blocking daemon tasks from being executed."
+                    + " Possible dead-lock.");
+        }
+
+        // Ensure that the project is started to be loaded.
+        getCurrentModel();
+        return loadedAtLeastOnceSignal.tryWaitForSignal();
     }
 
     private void onModelChange() {
         assert SwingUtilities.isEventDispatchThread();
 
         try {
-            loadedAtLeastOnce = true;
             modelChanges.fireChange();
         } finally {
             GradleCacheSourceForBinaryQuery.notifyCacheChange();
@@ -401,6 +413,8 @@ public final class NbGradleProject implements Project {
     private class ModelRetrievedListenerImpl implements ModelRetrievedListener {
         @Override
         public void onComplete(NbGradleModel model, Throwable error) {
+            loadedAtLeastOnceSignal.signal();
+
             boolean hasChanged = false;
             if (model != null) {
                 NbGradleModel lastModel = currentModelRef.getAndSet(model);

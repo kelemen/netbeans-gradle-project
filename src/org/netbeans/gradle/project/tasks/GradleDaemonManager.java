@@ -13,7 +13,7 @@ import org.openide.util.Cancellable;
 public final class GradleDaemonManager {
     private static final Logger LOGGER = Logger.getLogger(GradleDaemonManager.class.getName());
 
-    private static final Lock QUEUE_LOCK = new ReentrantLock(true);
+    private static final ReentrantLock QUEUE_LOCK = new ReentrantLock(true);
 
     private static void runNonBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws InterruptedException {
         progress.suspend("");
@@ -35,6 +35,10 @@ public final class GradleDaemonManager {
 
         progress.switchToIndeterminate();
         task.run(progress);
+    }
+
+    public static boolean isRunningExclusiveTask() {
+        return QUEUE_LOCK.isHeldByCurrentThread();
     }
 
     public static void submitGradleTask(

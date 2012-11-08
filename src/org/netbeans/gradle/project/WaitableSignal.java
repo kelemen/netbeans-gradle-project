@@ -15,6 +15,10 @@ public final class WaitableSignal {
         this.signaled = false;
     }
 
+    public boolean isSignaled() {
+        return signaled;
+    }
+
     public void signal() {
         lock.lock();
         try {
