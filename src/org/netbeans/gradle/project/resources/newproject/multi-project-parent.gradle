@@ -5,8 +5,8 @@
 apply plugin: 'java';
 apply plugin: 'maven';
 
-String mavenGroupId = '{$MAVEN_GROUP}';
-String mavenVersion = '{$MAVEN_VERSION}';
+String mavenGroupId = '${MAVEN_GROUP}';
+String mavenVersion = '${MAVEN_VERSION}';
 
 sourceCompatibility = '${SOURCE_LEVEL}';
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8';
@@ -55,13 +55,11 @@ if (project.hasProperty('mainClass') && mainClass != '') {
     }
 }
 
-task createFolders(description: 'Creates the default source folders if they do not exist.') doLast {
-    File root = projectDir;
-    File main = new File(root, 'main');
-    File test = new File(root, 'test');
-
-    new File(main, 'java').mkdirs();
-    new File(main, 'resources').mkdirs();
-    new File(test, 'java').mkdirs();
-    new File(test, 'resources').mkdirs();
+task createFolders(description: 'Creates the source folders if they do not exist.') doLast {
+    sourceSets*.allSource*.srcDirs*.each { File srcDir ->
+        if (!srcDir.isDirectory()) {
+            println "Creating source folder: ${srcDir}";
+            srcDir.mkdirs();
+        }
+    }
 }

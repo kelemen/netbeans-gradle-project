@@ -53,9 +53,9 @@ implements
                 MULTI_PROJECT_PARENT_GRADLE,
                 NewProjectUtils.DEFAULT_FILE_ENCODING);
 
-        parentGradleContent = parentGradleContent.replace("{$MAVEN_GROUP}",
+        parentGradleContent = parentGradleContent.replace("${MAVEN_GROUP}",
                 config.getMavenGroupId());
-        parentGradleContent = parentGradleContent.replace("{$MAVEN_VERSION}",
+        parentGradleContent = parentGradleContent.replace("${MAVEN_VERSION}",
                 config.getMavenVersion());
         parentGradleContent = parentGradleContent.replace("${SOURCE_LEVEL}",
                 AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
