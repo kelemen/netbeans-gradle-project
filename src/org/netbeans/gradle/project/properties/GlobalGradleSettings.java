@@ -63,12 +63,7 @@ public final class GlobalGradleSettings {
         return ALWAYS_CLEAR_OUTPUT;
     }
 
-    public static FileObject getCurrentGradleJdkHome() {
-        JavaPlatform platform = GRADLE_JDK.getValue();
-        if (platform == null) {
-            return null;
-        }
-
+    public static FileObject getHomeFolder(JavaPlatform platform) {
         Collection<FileObject> installFolders = platform.getInstallFolders();
         int numberOfFolder = installFolders.size();
         if (numberOfFolder == 0) {
@@ -81,6 +76,15 @@ public final class GlobalGradleSettings {
         }
 
         return installFolders.iterator().next();
+    }
+
+    public static FileObject getCurrentGradleJdkHome() {
+        JavaPlatform platform = GRADLE_JDK.getValue();
+        if (platform == null) {
+            return null;
+        }
+
+        return getHomeFolder(platform);
     }
 
     private enum StringToStringListConverter implements ValueConverter<List<String>> {

@@ -74,8 +74,6 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private ClassPath getJdkSources() {
-        // FIXME: This is not the actual platform, we should provide the sources
-        //   of the JDK used to execute the Gradle script.
         JavaPlatform platform = project.getProperties().getPlatform().getValue();
         return platform.getSourceFolders();
     }

@@ -24,6 +24,7 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -50,8 +51,11 @@ public final class GradleTasks {
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
 
-    private static File getJavaHome() {
-        FileObject jdkHomeObj = GlobalGradleSettings.getCurrentGradleJdkHome();
+    private static File getJavaHome(NbGradleProject project) {
+        JavaPlatform platform = project.getProperties().getPlatform().getValue();
+        FileObject jdkHomeObj = platform != null
+                ? GlobalGradleSettings.getHomeFolder(platform)
+                : null;
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 
@@ -67,8 +71,13 @@ public final class GradleTasks {
         buildOutput.println();
     }
 
-    private static void configureBuildLauncher(BuildLauncher buildLauncher, GradleTaskDef taskDef, final ProgressHandle progress) {
-        File javaHome = getJavaHome();
+    private static void configureBuildLauncher(
+            NbGradleProject project,
+            BuildLauncher buildLauncher,
+            GradleTaskDef taskDef,
+            final ProgressHandle progress) {
+
+        File javaHome = getJavaHome(project);
         if (javaHome != null) {
             buildLauncher.setJavaHome(javaHome);
         }
@@ -152,7 +161,7 @@ public final class GradleTasks {
             projectConnection = gradleConnector.connect();
 
             BuildLauncher buildLauncher = projectConnection.newBuild();
-            configureBuildLauncher(buildLauncher, taskDef, progress);
+            configureBuildLauncher(project, buildLauncher, taskDef, progress);
 
             IORef ioRef = InputOutputManager.getInputOutput(
                     taskDef.getCaption(),
