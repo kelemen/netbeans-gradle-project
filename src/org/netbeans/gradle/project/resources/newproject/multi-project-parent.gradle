@@ -1,5 +1,5 @@
 //
-// This file is to applied to every subproject.
+// This file is to be applied to every subproject.
 //
 
 apply plugin: 'java';
