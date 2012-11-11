@@ -6,9 +6,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -30,7 +31,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final File rootDirectory;
     private final PropertyChangeSupport changeSupport;
     private final ChangeSupport activeConfigChanges;
-    private final Set<NbGradleConfiguration> configs;
+    private final AtomicReference<List<NbGradleConfiguration>> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
 
@@ -42,8 +43,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.changeSupport = new PropertyChangeSupport(this);
         this.activeConfigChanges = new ChangeSupport(this);
         this.activeConfig = new AtomicReference<NbGradleConfiguration>(NbGradleConfiguration.DEFAULT_CONFIG);
-        this.configs = Collections.newSetFromMap(new ConcurrentHashMap<NbGradleConfiguration, Boolean>());
-        this.configs.add(NbGradleConfiguration.DEFAULT_CONFIG);
+        this.configs = new AtomicReference<List<NbGradleConfiguration>>(
+                Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
@@ -62,35 +63,64 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         }
     }
 
+    private void removeFromConfig(NbGradleConfiguration config) {
+        List<NbGradleConfiguration> currentList;
+        List<NbGradleConfiguration> newList;
+
+        do {
+            currentList = configs.get();
+            newList = new ArrayList<NbGradleConfiguration>(currentList);
+            newList.remove(config);
+            newList = Collections.unmodifiableList(newList);
+        } while (!configs.compareAndSet(currentList, newList));
+    }
+
+    private void addToConfig(Collection<NbGradleConfiguration> toAdd) {
+        List<NbGradleConfiguration> currentList;
+        List<NbGradleConfiguration> newList;
+
+        do {
+            currentList = configs.get();
+            Set<NbGradleConfiguration> configSet = new HashSet<NbGradleConfiguration>(currentList);
+            configSet.addAll(toAdd);
+
+            newList = new ArrayList<NbGradleConfiguration>(configSet);
+            NbGradleConfiguration.sortProfiles(newList);
+
+            newList = Collections.unmodifiableList(newList);
+        } while (!configs.compareAndSet(currentList, newList));
+    }
+
     public void removeConfiguration(final NbGradleConfiguration config) {
-        if (config.getProfileName() == null) {
+        if (NbGradleConfiguration.DEFAULT_CONFIG.equals(config)) {
             LOGGER.warning("Cannot remove the default configuration");
             return;
         }
 
-        configs.remove(config);
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
+                removeFromConfig(config);
                 File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileName())[0];
                 if (profileFile.isFile()) {
                     profileFile.delete();
                 }
-            }
-        });
-        executeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+
+                executeOnEdt(new Runnable() {
+                    @Override
+                    public void run() {
+                        changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+                    }
+                });
             }
         });
     }
 
-    public void addConfiguration(NbGradleConfiguration config) {
-        configs.add(config);
+    public void addConfiguration(final NbGradleConfiguration config) {
         executeOnEdt(new Runnable() {
             @Override
             public void run() {
+                addToConfig(Collections.singleton(config));
                 changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
             }
         });
@@ -109,18 +139,22 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
         Collection<String> profileNames = SettingsFiles.getAvailableProfiles(rootDirectory);
-        Collection<NbGradleConfiguration> currentConfigs
+        List<NbGradleConfiguration> currentConfigs
                 = new ArrayList<NbGradleConfiguration>(profileNames.size() + 1);
 
         currentConfigs.add(NbGradleConfiguration.DEFAULT_CONFIG);
         for (String profileName: profileNames) {
             currentConfigs.add(new NbGradleConfiguration(profileName));
         }
-        configs.addAll(currentConfigs);
+
         if (mayRemove) {
-            configs.retainAll(currentConfigs);
+            configs.set(Collections.unmodifiableList(currentConfigs));
         }
-        if (!configs.contains(activeConfig.get())) {
+        else {
+            addToConfig(currentConfigs);
+        }
+
+        if (!configs.get().contains(activeConfig.get())) {
             setActiveConfiguration(NbGradleConfiguration.DEFAULT_CONFIG);
         }
 
@@ -130,7 +164,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
             }
         });
-        return Collections.unmodifiableSet(configs);
+        return configs.get();
     }
 
     private void ensureLoadedAsynchronously() {
@@ -147,7 +181,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     @Override
     public Collection<NbGradleConfiguration> getConfigurations() {
         ensureLoadedAsynchronously();
-        return Collections.unmodifiableSet(configs);
+        return configs.get();
     }
 
     @Override
@@ -155,7 +189,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         ensureLoadedAsynchronously();
 
         NbGradleConfiguration result = activeConfig.get();
-        if (!configs.contains(result)) {
+        if (!configs.get().contains(result)) {
             result = NbGradleConfiguration.DEFAULT_CONFIG;
             setActiveConfiguration(result);
         }

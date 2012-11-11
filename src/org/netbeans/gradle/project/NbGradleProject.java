@@ -57,6 +57,8 @@ import org.openide.windows.OutputWriter;
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
 
+    // Note: There is a lot of assumption on that this executor is
+    //   single-threaded and executes task in the order they were submitted.
     public static final RequestProcessor PROJECT_PROCESSOR
             = new RequestProcessor("Gradle-Project-Processor", 1, true);
 

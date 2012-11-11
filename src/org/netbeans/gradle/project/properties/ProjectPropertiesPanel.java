@@ -7,11 +7,8 @@ import java.awt.event.ItemListener;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +38,6 @@ import org.openide.modules.SpecificationVersion;
 @SuppressWarnings("serial") // don't care
 public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesPanel.class.getName());
-    private static final Collator STR_CMP = Collator.getInstance(Locale.getDefault());
 
     private ProfileItem currentlyShownProfile;
     private final Map<ProfileItem, ProjectProperties> storeForProperties;
@@ -65,31 +61,11 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         setEnableDisable();
     }
 
-    private void sortProfiles(NbGradleConfiguration[] profileArray) {
-        Arrays.sort(profileArray, new Comparator<NbGradleConfiguration>() {
-            @Override
-            public int compare(NbGradleConfiguration o1, NbGradleConfiguration o2) {
-                return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
-            }
-        });
-
-        // Make the default profile the first
-        for (int i = 0; i < profileArray.length; i++) {
-            if (NbGradleConfiguration.DEFAULT_CONFIG.equals(profileArray[i])) {
-                for (int j = i; j > 0; j--) {
-                    profileArray[j] = profileArray[j - 1];
-                }
-                profileArray[0] = NbGradleConfiguration.DEFAULT_CONFIG;
-                break;
-            }
-        }
-    }
-
     private void fillProfileCombo(Collection<NbGradleConfiguration> profiles) {
         List<ProfileItem> profileItems = new ArrayList<ProfileItem>(profiles.size() + 1);
 
         NbGradleConfiguration[] profileArray = profiles.toArray(new NbGradleConfiguration[0]);
-        sortProfiles(profileArray);
+        NbGradleConfiguration.sortProfiles(profileArray);
 
         for (NbGradleConfiguration profile: profileArray) {
             profileItems.add(new ProfileItem(profile));
@@ -156,7 +132,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         NbGradleConfiguration[] configArray = configs.toArray(new NbGradleConfiguration[0]);
-        sortProfiles(configArray);
+        NbGradleConfiguration.sortProfiles(configArray);
 
         ProfileItem[] profiles = new ProfileItem[configArray.length];
         for (int i = 0; i < profiles.length; i++) {
