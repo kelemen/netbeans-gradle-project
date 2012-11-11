@@ -737,8 +737,19 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);
 
-        jProfileCombo.addItem(newProfile);
-        sortProfileComboItems();
+        boolean hasItem = false;
+        int itemCount = jProfileCombo.getItemCount();
+        for (int i = 0; i < itemCount; i++) {
+            if (newProfile.equals(jProfileCombo.getItemAt(i))) {
+                hasItem = true;
+                break;
+            }
+        }
+
+        if (!hasItem) {
+            jProfileCombo.addItem(newProfile);
+            sortProfileComboItems();
+        }
         jProfileCombo.setSelectedItem(newProfile);
 
     }//GEN-LAST:event_jAddProfileButtonActionPerformed
