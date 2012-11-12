@@ -192,7 +192,7 @@ public final class GradleActionProvider implements ActionProvider {
     private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(TaskKind kind, String command, NbGradleConfiguration config) {
         GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, command, config);
         if (GlobalGradleSettings.getSkipTests().getValue()) {
-            builder.setArguments(Arrays.asList("-x", "test"));
+            builder.addArguments(Arrays.asList("-x", "test"));
         }
         return builder;
     }
