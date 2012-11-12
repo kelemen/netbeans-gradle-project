@@ -11,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -240,13 +239,7 @@ public final class GradleTasks {
                 final GradleTaskDef newTaskDef;
                 if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
                     GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-
-                    List<String> combinedJvmArgs = new ArrayList<String>(
-                            taskDef.getJvmArguments().size() + globalJvmArgs.size());
-                    combinedJvmArgs.addAll(taskDef.getJvmArguments());
-                    combinedJvmArgs.addAll(globalJvmArgs);
-                    builder.setJvmArguments(combinedJvmArgs);
-
+                    builder.addArguments(globalJvmArgs);
                     newTaskDef = builder.create();
                 }
                 else {

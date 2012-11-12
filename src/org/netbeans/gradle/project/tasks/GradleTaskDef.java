@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -95,12 +96,32 @@ public final class GradleTaskDef {
             this.arguments = CollectionUtils.copyNullSafeList(arguments);
         }
 
+        private static <T> List<T> concatNullSafeLists(
+                List<? extends T> list1,
+                List<? extends T> list2) {
+            List<T> result = new ArrayList<T>(list1.size() + list2.size());
+            result.addAll(list1);
+            result.addAll(list2);
+            for (T element: result) {
+                if (element == null) throw new NullPointerException("element");
+            }
+            return result;
+        }
+
+        public void addArguments(List<String> toAdd) {
+            this.arguments = Collections.unmodifiableList(concatNullSafeLists(this.arguments, toAdd));
+        }
+
         public List<String> getJvmArguments() {
             return jvmArguments;
         }
 
         public void setJvmArguments(List<String> jvmArguments) {
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
+        }
+
+        public void addJvmArguments(List<String> toAdd) {
+            this.jvmArguments = Collections.unmodifiableList(concatNullSafeLists(this.jvmArguments, toAdd));
         }
 
         public SmartOutputHandler.Visitor getStdOutListener() {
