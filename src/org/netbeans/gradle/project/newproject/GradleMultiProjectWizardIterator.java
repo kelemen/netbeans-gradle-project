@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,7 +35,11 @@ implements
 
     @StaticResource
     private static final String MULTI_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-root.gradle";
+
+    @StaticResource
     private static final String MULTI_PROJECT_PARENT_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-parent.gradle";
+
+    @StaticResource
     private static final String MULTI_PROJECT_SETTINGS_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-settings.gradle";
 
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
@@ -46,22 +52,31 @@ implements
         this.configRef = new AtomicReference<GradleMultiProjectConfig>(null);
     }
 
+    private static void createSettingsGradle(File projectDir) throws IOException {
+        Map<String, String> varReplaceMap =
+                Collections.singletonMap("${PROJECT_NAME}", projectDir.getName());
+
+        NewProjectUtils.copyTemplateFile(
+                MULTI_PROJECT_SETTINGS_GRADLE,
+                new File(projectDir, GradleProjectConstants.SETTINGS_FILE_NAME),
+                NewProjectUtils.DEFAULT_FILE_ENCODING,
+                varReplaceMap);
+    }
+
     private static void createParentGradle(
             File projectDir,
             GradleMultiProjectConfig config) throws IOException {
-        String parentGradleContent = StringUtils.getResourceAsString(
+
+        Map<String, String> varReplaceMap = new HashMap<String, String>();
+        varReplaceMap.put("${MAVEN_GROUP}", config.getMavenGroupId());
+        varReplaceMap.put("${MAVEN_VERSION}", config.getMavenVersion());
+        varReplaceMap.put("${SOURCE_LEVEL}", AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
+
+        NewProjectUtils.copyTemplateFile(
                 MULTI_PROJECT_PARENT_GRADLE,
-                NewProjectUtils.DEFAULT_FILE_ENCODING);
-
-        parentGradleContent = parentGradleContent.replace("${MAVEN_GROUP}",
-                config.getMavenGroupId());
-        parentGradleContent = parentGradleContent.replace("${MAVEN_VERSION}",
-                config.getMavenVersion());
-        parentGradleContent = parentGradleContent.replace("${SOURCE_LEVEL}",
-                AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
-
-        File parentGradle = new File(projectDir, "parent.gradle");
-        StringUtils.writeStringToFile(parentGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, parentGradle);
+                new File(projectDir, "parent.gradle"),
+                NewProjectUtils.DEFAULT_FILE_ENCODING,
+                varReplaceMap);
     }
 
     private static void copyToProject(
@@ -89,7 +104,7 @@ implements
         NewProjectUtils.createDefaultSourceDirs(projectDir);
         createParentGradle(projectDirAsFile, config);
         copyToProject(projectDirAsFile, MULTI_PROJECT_BUILD_GRADLE, GradleProjectConstants.BUILD_FILE_NAME);
-        copyToProject(projectDirAsFile, MULTI_PROJECT_SETTINGS_GRADLE, GradleProjectConstants.SETTINGS_FILE_NAME);
+        createSettingsGradle(projectDirAsFile);
 
         return Collections.singleton(projectDir);
     }

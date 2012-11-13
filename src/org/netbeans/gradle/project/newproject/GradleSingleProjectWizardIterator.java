@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,6 +36,9 @@ implements
     @StaticResource
     private static final String SINGLE_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/single-project.gradle";
 
+    @StaticResource
+    private static final String SINGLE_PROJECT_SETTINGS_GRADLE = "org/netbeans/gradle/project/resources/newproject/single-project-settings.gradle";
+
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
     private int descriptorIndex;
@@ -48,18 +53,28 @@ implements
             File projectDir,
             GradleSingleProjectConfig config) throws IOException {
         String mainClass = config.getMainClass();
+        String sourceLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
-        String buildGradleContent = StringUtils.getResourceAsString(
+        Map<String, String> varReplaceMap = new HashMap<String, String>();
+        varReplaceMap.put("${MAIN_CLASS}", StringUtils.emptyForNull(mainClass));
+        varReplaceMap.put("${SOURCE_LEVEL}", sourceLevel);
+
+        NewProjectUtils.copyTemplateFile(
                 SINGLE_PROJECT_BUILD_GRADLE,
-                NewProjectUtils.DEFAULT_FILE_ENCODING);
+                new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME),
+                NewProjectUtils.DEFAULT_FILE_ENCODING,
+                varReplaceMap);
+    }
 
-        buildGradleContent = buildGradleContent.replace("${MAIN_CLASS}",
-                mainClass != null ? mainClass : "");
-        buildGradleContent = buildGradleContent.replace("${SOURCE_LEVEL}",
-                AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
+    private static void createSettingsGradle(File projectDir) throws IOException {
+        Map<String, String> varReplaceMap =
+                Collections.singletonMap("${PROJECT_NAME}", projectDir.getName());
 
-        File buildGradle = new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
-        StringUtils.writeStringToFile(buildGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, buildGradle);
+        NewProjectUtils.copyTemplateFile(
+                SINGLE_PROJECT_SETTINGS_GRADLE,
+                new File(projectDir, GradleProjectConstants.SETTINGS_FILE_NAME),
+                NewProjectUtils.DEFAULT_FILE_ENCODING,
+                varReplaceMap);
     }
 
     @Override
@@ -74,15 +89,12 @@ implements
 
         NewProjectUtils.createDefaultSourceDirs(projectDir);
         createBuildGradle(projectDirAsFile, config);
+        createSettingsGradle(projectDirAsFile);
 
         String mainClass = config.getMainClass();
         if (mainClass != null) {
             NewProjectUtils.createMainClass(projectDirAsFile, mainClass);
         }
-
-        StringUtils.writeStringToFile("",
-                NewProjectUtils.DEFAULT_FILE_ENCODING,
-                new File(projectDirAsFile, GradleProjectConstants.SETTINGS_FILE_NAME));
 
         return Collections.singleton(projectDir);
     }

@@ -17,6 +17,10 @@ import org.openide.filesystems.FileUtil;
 public final class StringUtils {
     private static final String SEPARATORS = ",./?;:'\"\\";
 
+    public static String emptyForNull(String str) {
+        return str != null ? str : "";
+    }
+
     public static String stripSeperatorsFromEnd(String str) {
         for (int i = str.length() - 1; i >= 0; i--) {
             if (SEPARATORS.indexOf(str.charAt(i)) < 0) {

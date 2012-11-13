@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
@@ -34,6 +35,21 @@ public final class NewProjectUtils {
 
     public static Preferences getPreferences() {
         return NbPreferences.forModule(NewProjectUtils.class);
+    }
+
+    public static void copyTemplateFile(
+            String resourcePath,
+            File destination,
+            Charset encoding,
+            Map<String, String> varReplaceMap) throws IOException {
+
+        String resourceContent = StringUtils.getResourceAsString(resourcePath, encoding);
+
+        for (Map.Entry<String, String> entry: varReplaceMap.entrySet()) {
+            resourceContent = resourceContent.replace(entry.getKey(), entry.getValue());
+        }
+
+        StringUtils.writeStringToFile(resourceContent, encoding, destination);
     }
 
     public static String getDefaultProjectDir() {
