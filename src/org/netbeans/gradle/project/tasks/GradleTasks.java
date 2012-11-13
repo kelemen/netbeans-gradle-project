@@ -239,7 +239,7 @@ public final class GradleTasks {
                 final GradleTaskDef newTaskDef;
                 if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
                     GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-                    builder.addArguments(globalJvmArgs);
+                    builder.addJvmArguments(globalJvmArgs);
                     newTaskDef = builder.create();
                 }
                 else {
