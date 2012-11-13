@@ -2,9 +2,12 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
+import java.text.Collator;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -33,7 +36,7 @@ import org.openide.util.lookup.Lookups;
 public final class GradleProjectChildFactory
 extends
         ChildFactory.Detachable<SingleNodeFactory> {
-    private static final Logger LOGGER = Logger.getLogger(GradleProjectChildFactory.class.getName());
+    private static final Collator STR_CMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
@@ -145,6 +148,28 @@ extends
         FileObject settingsGradle = model.getSettingsFile();
         if (settingsGradle != null) {
             addGradleFile(settingsGradle, toPopulate);
+        }
+
+        List<FileObject> gradleFiles = new LinkedList<FileObject>();
+        for (FileObject file: project.getProjectDirectory().getChildren()) {
+            if (file.equals(buildGradle) || file.equals(settingsGradle)) {
+                continue;
+            }
+
+            if ("gradle".equalsIgnoreCase(file.getExt())) {
+                gradleFiles.add(file);
+            }
+        }
+
+        Collections.sort(gradleFiles, new Comparator<FileObject>() {
+            @Override
+            public int compare(FileObject o1, FileObject o2) {
+                return STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
+            }
+        });
+
+        for (FileObject file: gradleFiles) {
+            addGradleFile(file, toPopulate);
         }
     }
 
