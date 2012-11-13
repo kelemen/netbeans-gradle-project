@@ -110,67 +110,13 @@ extends
         });
     }
 
-    private void addGradleFile(
-            FileObject file,
-            List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-        final DataObject fileData = DataObject.find(file);
-
+    private void addProjectFiles(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
         toPopulate.add(new SingleNodeFactory() {
             @Override
             public Node createNode() {
-                return new FilterNode(fileData.getNodeDelegate()) {
-                    @Override
-                    public boolean canRename() {
-                        return false;
-                    }
-
-                    @Override
-                    public Image getIcon(int type) {
-                        return NbIcons.getGradleIcon();
-                    }
-
-                    @Override
-                    public Image getOpenedIcon(int type) {
-                        return getIcon(type);
-                    }
-                };
+                return new BuildScriptsNode(project);
             }
         });
-    }
-
-    private void addProjectFiles(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-        NbGradleModel model = project.getCurrentModel();
-        FileObject buildGradle = model.getBuildFile();
-        if (buildGradle != null) {
-            addGradleFile(buildGradle, toPopulate);
-        }
-
-        FileObject settingsGradle = model.getSettingsFile();
-        if (settingsGradle != null) {
-            addGradleFile(settingsGradle, toPopulate);
-        }
-
-        List<FileObject> gradleFiles = new LinkedList<FileObject>();
-        for (FileObject file: project.getProjectDirectory().getChildren()) {
-            if (file.equals(buildGradle) || file.equals(settingsGradle)) {
-                continue;
-            }
-
-            if ("gradle".equalsIgnoreCase(file.getExt())) {
-                gradleFiles.add(file);
-            }
-        }
-
-        Collections.sort(gradleFiles, new Comparator<FileObject>() {
-            @Override
-            public int compare(FileObject o1, FileObject o2) {
-                return STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
-            }
-        });
-
-        for (FileObject file: gradleFiles) {
-            addGradleFile(file, toPopulate);
-        }
     }
 
     private Node createSimpleNode() {

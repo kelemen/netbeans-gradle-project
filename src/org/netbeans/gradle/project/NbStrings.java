@@ -50,6 +50,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_Dependencies");
     }
 
+    public static String getBuildScriptsNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_BuildScripts");
+    }
+
     public static String getCompileDependenciesNodeCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_CompileDependencies");
     }
