@@ -215,6 +215,7 @@ public final class GradleDependenciesNode extends AbstractNode {
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
             FileObject moduleRoot = FileUtil.toFileObject(dependency.getModule().getModuleDir());
+            final String displayName = dependency.getModule().getModuleDir().getName();
 
             if (moduleRoot != null) {
                 final DataObject fileObject = DataObject.find(moduleRoot);
@@ -234,7 +235,7 @@ public final class GradleDependenciesNode extends AbstractNode {
 
                             @Override
                             public String getDisplayName() {
-                                return dependency.getModule().getName();
+                                return displayName;
                             }
                         };
                     }
@@ -257,7 +258,7 @@ public final class GradleDependenciesNode extends AbstractNode {
 
                             @Override
                             public String getDisplayName() {
-                                return dependency.getModule().getName();
+                                return displayName;
                             }
                         };
                     }
