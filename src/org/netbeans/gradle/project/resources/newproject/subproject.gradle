@@ -1,8 +1,8 @@
 // Note that "mainClass" must be set before applying "parent.gradle" because
 // "parent.gradle" will define the "run" and "debug" task based on this value.
-ext.mainClass = '${MAIN_CLASS}';
+ext.mainClass = '${MAIN_CLASS}'
 
-apply from: rootProject.file('parent.gradle');
+apply from: rootProject.file('parent.gradle')
 
 dependencies {
     // TODO: Add dependencies here

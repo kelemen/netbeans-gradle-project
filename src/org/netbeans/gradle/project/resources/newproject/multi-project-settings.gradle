@@ -1,4 +1,4 @@
-rootProject.name = '${PROJECT_NAME}';
+rootProject.name = '${PROJECT_NAME}'
 
 // Find the directories containing a "build.gradle" file in the root directory
 // of the project. That is, every directory containing a "build.gradle" will
@@ -6,13 +6,13 @@ rootProject.name = '${PROJECT_NAME}';
 def subDirs = rootDir.listFiles(new FileFilter() {
     public boolean accept(File file) {
         if (!file.isDirectory()) {
-            return false;
+            return false
         }
 
-        return new File(file, 'build.gradle').isFile();
+        return new File(file, 'build.gradle').isFile()
     }
 });
 
 subDirs.each { File dir ->
-    include dir.name;
+    include dir.name
 }
