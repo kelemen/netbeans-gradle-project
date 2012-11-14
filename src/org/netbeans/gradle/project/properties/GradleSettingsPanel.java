@@ -44,6 +44,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jSkipTestsCheck.setSelected(GlobalGradleSettings.getSkipTests().getValue());
         jProjectCacheSize.setValue(GlobalGradleSettings.getProjectCacheSize().getValue());
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
+        jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
     }
 
     public final void saveSettings() {
@@ -53,6 +54,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         GlobalGradleSettings.getSkipTests().setValue(isSkipTests());
         GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
         GlobalGradleSettings.getAlwaysClearOutput().setValue(isAlwaysClearOutput());
+        GlobalGradleSettings.getOmitInitScript().setValue(isDontAddInitScript());
     }
 
     private String getGradleHome() {
@@ -77,6 +79,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
     private boolean isAlwaysClearOutput() {
         return jAlwayClearOutput.isSelected();
+    }
+
+    private boolean isDontAddInitScript() {
+        return jDontAddInitScriptCheck.isSelected();
     }
 
     private int getProjectCacheSize() {
@@ -154,6 +160,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jProjectCacheSize = new javax.swing.JSpinner();
         jProjectCacheSizeLabel = new javax.swing.JLabel();
         jAlwayClearOutput = new javax.swing.JCheckBox();
+        jDontAddInitScriptCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -180,6 +187,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jAlwayClearOutput, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jAlwayClearOutput.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jDontAddInitScriptCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jDontAddInitScriptCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -197,6 +206,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                         .addComponent(jBrowsePathButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jDontAddInitScriptCheck)
                             .addComponent(jSkipTestsCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption)
@@ -233,7 +243,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jAlwayClearOutput)
-                .addContainerGap(32, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jDontAddInitScriptCheck)
+                .addContainerGap(29, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -249,6 +261,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
+    private javax.swing.JCheckBox jDontAddInitScriptCheck;
     private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradleJdkCaption;
     private javax.swing.JLabel jGradlePathCaption;

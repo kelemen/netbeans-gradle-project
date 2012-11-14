@@ -87,7 +87,10 @@ public final class GradleTasks {
     }
 
     private static File getInitScriptFile() {
-        // TODO: return null if must be skipped due to global settings
+        if (GlobalGradleSettings.getOmitInitScript().getValue()) {
+            return null;
+        }
+
         try {
             File tmpFile = File.createTempFile("nb-gradle-init", ".gradle");
             try {

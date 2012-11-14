@@ -29,6 +29,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> SKIP_TESTS;
     private static final StringBasedProperty<Integer> PROJECT_CACHE_SIZE;
     private static final StringBasedProperty<Boolean> ALWAYS_CLEAR_OUTPUT;
+    private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
 
     static {
         GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
@@ -37,6 +38,7 @@ public final class GlobalGradleSettings {
         SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
         PROJECT_CACHE_SIZE = new GlobalProperty<Integer>("project-cache-size", new IntegerConverter(1, Integer.MAX_VALUE, 100));
         ALWAYS_CLEAR_OUTPUT = new GlobalProperty<Boolean>("always-clear-output", new BooleanConverter(false));
+        OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
     }
 
     public static StringBasedProperty<FileObject> getGradleHome() {
@@ -61,6 +63,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getAlwaysClearOutput() {
         return ALWAYS_CLEAR_OUTPUT;
+    }
+
+    public static StringBasedProperty<Boolean> getOmitInitScript() {
+        return OMIT_INIT_SCRIPT;
     }
 
     public static FileObject getHomeFolder(JavaPlatform platform) {
