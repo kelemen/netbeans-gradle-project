@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.tasks;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,10 +24,12 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -49,6 +52,56 @@ public final class GradleTasks {
             = new RequestProcessor("Gradle-Task-Executor", 10, true);
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+
+    @StaticResource
+    private static final String INIT_SCRIPT_PATH = "org/netbeans/gradle/project/resources/nb-init-script.gradle";
+
+    private static final AtomicReference<String> INIT_SCRIPT = new AtomicReference<String>(null);
+
+    private static String getInitScript() {
+        String result = INIT_SCRIPT.get();
+        if (result == null) {
+            try {
+                result = StringUtils.getResourceAsString(INIT_SCRIPT_PATH, Charset.forName("UTF-8"));
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Missing init script", ex);
+            }
+
+            INIT_SCRIPT.compareAndSet(null, result);
+            result = INIT_SCRIPT.get();
+        }
+        return result;
+    }
+
+    private static void writeToFile(String str, File file) throws IOException {
+        OutputStream output = null;
+        try {
+            output = new FileOutputStream(file);
+            output.write(str.getBytes(UTF8));
+        } finally {
+            if (output != null) {
+                output.close();
+            }
+        }
+    }
+
+    private static File getInitScriptFile() {
+        // TODO: return null if must be skipped due to global settings
+        try {
+            File tmpFile = File.createTempFile("nb-gradle-init", ".gradle");
+            try {
+                writeToFile(getInitScript(), tmpFile);
+            } catch (Throwable ex) {
+                tmpFile.delete();
+                throw ex;
+            }
+            return tmpFile;
+        } catch (Throwable ex) {
+            LOGGER.log(Level.WARNING, "Failed to create initialization script.", ex);
+        }
+        return null;
+    }
 
     private static File getJavaHome(NbGradleProject project) {
         JavaPlatform platform = project.getProperties().getPlatform().getValue();
@@ -74,6 +127,7 @@ public final class GradleTasks {
             NbGradleProject project,
             BuildLauncher buildLauncher,
             GradleTaskDef taskDef,
+            File initScript,
             final ProgressHandle progress) {
 
         File javaHome = getJavaHome(project);
@@ -84,8 +138,17 @@ public final class GradleTasks {
         if (!taskDef.getJvmArguments().isEmpty()) {
             buildLauncher.setJvmArguments(taskDef.getJvmArgumentsArray());
         }
-        if (!taskDef.getArguments().isEmpty()) {
-            buildLauncher.withArguments(taskDef.getArgumentArray());
+
+        List<String> arguments = new LinkedList<String>();
+        arguments.addAll(taskDef.getArguments());
+
+        if (initScript != null) {
+            arguments.add("--init-script");
+            arguments.add(initScript.getPath());
+        }
+
+        if (!arguments.isEmpty()) {
+            buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
         }
 
         buildLauncher.addProgressListener(new ProgressListener() {
@@ -95,7 +158,7 @@ public final class GradleTasks {
             }
         });
 
-       buildLauncher.forTasks(taskDef.getTaskNamesArray());
+        buildLauncher.forTasks(taskDef.getTaskNamesArray());
     }
 
     private static OutputRef configureOutput(
@@ -160,55 +223,62 @@ public final class GradleTasks {
             projectConnection = gradleConnector.connect();
 
             BuildLauncher buildLauncher = projectConnection.newBuild();
-            configureBuildLauncher(project, buildLauncher, taskDef, progress);
-
-            IORef ioRef = InputOutputManager.getInputOutput(
-                    taskDef.getCaption(),
-                    taskDef.isReuseOutput(),
-                    taskDef.isCleanOutput());
+            File initScript = getInitScriptFile();
             try {
-                OutputWriter buildOutput = ioRef.getIo().getOut();
+                configureBuildLauncher(project, buildLauncher, taskDef, initScript, progress);
+
+                IORef ioRef = InputOutputManager.getInputOutput(
+                        taskDef.getCaption(),
+                        taskDef.isReuseOutput(),
+                        taskDef.isCleanOutput());
                 try {
-                    OutputWriter buildErrOutput = ioRef.getIo().getErr();
+                    OutputWriter buildOutput = ioRef.getIo().getOut();
                     try {
-                        if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
-                                || taskDef.isCleanOutput()) {
-                            buildOutput.reset();
-                            // There is no need to reset buildErrOutput,
-                            // at least this is what NetBeans tells you in its
-                            // logs if you do.
-                        }
-
-                        printCommand(buildOutput, command, taskDef);
-
-                        OutputRef outputRef = configureOutput(
-                                project, taskDef, buildLauncher, buildOutput, buildErrOutput);
+                        OutputWriter buildErrOutput = ioRef.getIo().getErr();
                         try {
-                            ioRef.getIo().select();
-                            buildLauncher.run();
-                        } finally {
-                            // This close method will only forward the last lines
-                            // if they were not terminated with a line separator.
-                            outputRef.close();
-                        }
-                    } catch (Throwable ex) {
-                        LOGGER.log(
-                                ex instanceof Exception ? Level.INFO : Level.SEVERE,
-                                "Gradle build failure: " + command,
-                                ex);
+                            if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
+                                    || taskDef.isCleanOutput()) {
+                                buildOutput.reset();
+                                // There is no need to reset buildErrOutput,
+                                // at least this is what NetBeans tells you in its
+                                // logs if you do.
+                            }
 
-                        String buildFailureMessage = NbStrings.getBuildFailure(command);
-                        buildErrOutput.println();
-                        buildErrOutput.println(buildFailureMessage);
-                        project.displayError(buildFailureMessage, ex, false);
+                            printCommand(buildOutput, command, taskDef);
+
+                            OutputRef outputRef = configureOutput(
+                                    project, taskDef, buildLauncher, buildOutput, buildErrOutput);
+                            try {
+                                ioRef.getIo().select();
+                                buildLauncher.run();
+                            } finally {
+                                // This close method will only forward the last lines
+                                // if they were not terminated with a line separator.
+                                outputRef.close();
+                            }
+                        } catch (Throwable ex) {
+                            LOGGER.log(
+                                    ex instanceof Exception ? Level.INFO : Level.SEVERE,
+                                    "Gradle build failure: " + command,
+                                    ex);
+
+                            String buildFailureMessage = NbStrings.getBuildFailure(command);
+                            buildErrOutput.println();
+                            buildErrOutput.println(buildFailureMessage);
+                            project.displayError(buildFailureMessage, ex, false);
+                        } finally {
+                            buildErrOutput.close();
+                        }
                     } finally {
-                        buildErrOutput.close();
+                        buildOutput.close();
                     }
                 } finally {
-                    buildOutput.close();
+                    ioRef.close();
                 }
             } finally {
-                ioRef.close();
+                if (initScript != null) {
+                    initScript.delete();
+                }
             }
         } finally {
             if (projectConnection != null) {

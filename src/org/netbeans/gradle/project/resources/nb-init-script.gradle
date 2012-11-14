@@ -1,0 +1,56 @@
+afterProject { org.gradle.api.Project project ->
+    if (project == null) {
+        return;
+    }
+
+    def tasks = project.tasks
+    boolean hasRun = tasks.findByName('run') != null
+    boolean hasDebug = tasks.findByName('debug') != null
+
+    if (tasks.findByName('classes') != null && project.hasProperty('sourceSets')) {
+        def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
+        if (definedMainClass == null) definedMainClass = '';
+        definedMainClass = definedMainClass.toString()
+
+        if (!hasRun) {
+            if ('' != definedMainClass) {
+                project.task ('run', dependsOn: project.classes, type: JavaExec) {
+                    main = definedMainClass
+                    classpath = project.sourceSets.main.runtimeClasspath
+                }
+            }
+            else {
+                project.task('run').doLast {
+                    println 'Cannot execute run because the property "mainClass" is not defined or empty.'
+                }
+            }
+        }
+
+        if (!hasDebug) {
+            if ('' != definedMainClass) {
+                project.task ('debug', dependsOn: project.classes, type: JavaExec) {
+                    main = definedMainClass
+                    classpath = project.sourceSets.main.runtimeClasspath
+                    debug = true
+                }
+            }
+            else {
+                project.task('debug').doLast {
+                    println 'Cannot execute debug because the property "mainClass" is not defined or empty.'
+                }
+            }
+        }
+    }
+    else {
+        if (!hasRun) {
+            project.task('run').doLast {
+                println 'Cannot execute run because the project does not have classes or source sets.'
+            }
+        }
+        if (!hasDebug) {
+            project.task('debug').doLast {
+                println 'Cannot execute debug because the project does not have classes or source sets.'
+            }
+        }
+    }
+}
