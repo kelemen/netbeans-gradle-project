@@ -16,6 +16,9 @@ if (!hasProperty('mainClass')) {
 
 repositories {
     mavenCentral()
+    // You may define additional repositories, or even remove "mavenCentral()".
+    // Read more about repositories here:
+    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
 }
 
 dependencies {
