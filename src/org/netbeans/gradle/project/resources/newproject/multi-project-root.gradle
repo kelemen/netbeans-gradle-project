@@ -2,6 +2,10 @@ import org.gradle.api.artifacts.*
 
 apply plugin: 'base' // To add "clean" task to the root project.
 
+subprojects {
+    apply from: rootProject.file('common.gradle')
+}
+
 task mergedJavadoc(type: Javadoc, description: 'Creates Javadoc from all the projects.') {
     title = 'All modules'
     destinationDir = new File(project.buildDir, 'merged-javadoc')

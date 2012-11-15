@@ -37,7 +37,7 @@ implements
     private static final String MULTI_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-root.gradle";
 
     @StaticResource
-    private static final String MULTI_PROJECT_PARENT_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-parent.gradle";
+    private static final String MULTI_PROJECT_COMMON_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-common.gradle";
 
     @StaticResource
     private static final String MULTI_PROJECT_SETTINGS_GRADLE = "org/netbeans/gradle/project/resources/newproject/multi-project-settings.gradle";
@@ -73,8 +73,8 @@ implements
         varReplaceMap.put("${SOURCE_LEVEL}", AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
 
         NewProjectUtils.copyTemplateFile(
-                MULTI_PROJECT_PARENT_GRADLE,
-                new File(projectDir, "parent.gradle"),
+                MULTI_PROJECT_COMMON_GRADLE,
+                new File(projectDir, "common.gradle"),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }

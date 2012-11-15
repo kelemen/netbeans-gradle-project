@@ -39,22 +39,28 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
                     public Problem validateInput(String inputType) {
                         File rootProject = new File(inputType);
 
-                        Problem problem;
-
-                        problem = checkFile(rootProject, GradleProjectConstants.BUILD_FILE_NAME);
-                        if (problem != null) {
-                            return problem;
+                        Problem problemRootBuild = checkFile(rootProject, GradleProjectConstants.BUILD_FILE_NAME);
+                        if (problemRootBuild != null) {
+                            return problemRootBuild;
                         }
 
-                        problem = checkFile(rootProject, GradleProjectConstants.SETTINGS_FILE_NAME);
-                        if (problem != null) {
-                            return problem;
+                        Problem problemRootSettings = checkFile(rootProject, GradleProjectConstants.SETTINGS_FILE_NAME);
+                        if (problemRootSettings != null) {
+                            return problemRootSettings;
                         }
 
-                        problem = checkFile(rootProject, "parent.gradle");
-                        if (problem != null) {
-                            return problem;
+                        Problem problemOldFormat = checkFile(rootProject, "parent.gradle");
+                        Problem problemNewFromat = checkFile(rootProject, "common.gradle");
+
+                        if (problemNewFromat != null && problemOldFormat != null) {
+                            return problemNewFromat;
                         }
+
+                        if (problemOldFormat == null && problemNewFromat == null) {
+                            // Cannot determine which format.
+                            return problemNewFromat;
+                        }
+
                         return null;
                     }
                 });

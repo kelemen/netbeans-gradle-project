@@ -30,7 +30,10 @@ implements
         WizardDescriptor.BackgroundInstantiatingIterator<WizardDescriptor> {
 
     @StaticResource
-    private static final String SINGLE_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/subproject.gradle";
+    private static final String SINGLE_PROJECT_OLD_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/subproject.gradle";
+
+    @StaticResource
+    private static final String SINGLE_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/subproject2.gradle";
 
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
@@ -45,10 +48,24 @@ implements
     private static void createBuildGradle(
             File projectDir,
             GradleSingleProjectConfig config) throws IOException {
+        File rootDir = projectDir.getParentFile();
+        if (rootDir == null) {
+            throw new IOException("Invalid project directory for subproject.");
+        }
+
+        boolean oldFormat = new File(rootDir, "parent.gradle").isFile();
+        boolean newFormat = new File(rootDir, "common.gradle").isFile();
+        if (oldFormat && newFormat) {
+            throw new IOException("Cannot determine if the project uses the new or the old format.");
+        }
+        if (!oldFormat && !newFormat) {
+            throw new IOException("The parent directory does nto appear to be created  by the multi-project wizard.");
+        }
+
         String mainClass = config.getMainClass();
 
         String buildGradleContent = StringUtils.getResourceAsString(
-                SINGLE_PROJECT_BUILD_GRADLE,
+                newFormat ? SINGLE_PROJECT_BUILD_GRADLE : SINGLE_PROJECT_OLD_BUILD_GRADLE,
                 NewProjectUtils.DEFAULT_FILE_ENCODING);
 
         buildGradleContent = buildGradleContent.replace("${MAIN_CLASS}",
