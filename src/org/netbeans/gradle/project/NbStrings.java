@@ -110,6 +110,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_DebugTestSingle");
     }
 
+    public static String getRunSingleCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_RunSingle");
+    }
+
+    public static String getDebugSingleCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DebugSingle");
+    }
+
     public static String getTasksMenuCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_Tasks");
     }

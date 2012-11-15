@@ -15,6 +15,7 @@ import org.netbeans.gradle.project.tasks.GradleTaskDef;
 public final class PredefinedTask {
     public static final String VAR_PROJECT_NAME = "${project}";
     public static final String VAR_TEST_FILE_PATH = "${test-file-path}";
+    public static final String VAR_SELECTED_CLASS = "${selected-class}";
 
     public static final class Name {
         private final String name;

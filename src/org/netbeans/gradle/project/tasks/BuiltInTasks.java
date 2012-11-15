@@ -71,6 +71,18 @@ public final class BuiltInTasks {
             Arrays.asList("-Dtest.single=" + PredefinedTask.VAR_TEST_FILE_PATH, "-Dtest.debug"),
             Collections.<String>emptyList(),
             true);
+    public static final PredefinedTask DEFAULT_RUN_SINGLE_TASK = new PredefinedTask(
+            ActionProvider.COMMAND_RUN_SINGLE,
+            asTaskNames(projectTask("run")),
+            Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
+            Collections.<String>emptyList(),
+            false);
+    public static final PredefinedTask DEFAULT_DEBUG_SINGLE_TASK = new PredefinedTask(
+            ActionProvider.COMMAND_DEBUG_SINGLE,
+            asTaskNames(projectTask("debug")),
+            Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
+            Collections.<String>emptyList(),
+            true);
 
     private static final Map<String, PredefinedTask> DEFAULT_TASKS;
     private static final Map<String, String> DISPLAY_NAME_MAP;
@@ -86,6 +98,8 @@ public final class BuiltInTasks {
         addToMap(DEFAULT_REBUILD_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_TEST_SINGLE_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_DEBUG_TEST_SINGLE_TASK, DEFAULT_TASKS);
+        addToMap(DEFAULT_RUN_SINGLE_TASK, DEFAULT_TASKS);
+        addToMap(DEFAULT_DEBUG_SINGLE_TASK, DEFAULT_TASKS);
 
         DISPLAY_NAME_MAP = new HashMap<String, String>();
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_BUILD, NbStrings.getBuildCommandCaption());
@@ -97,6 +111,8 @@ public final class BuiltInTasks {
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_REBUILD, NbStrings.getRebuildCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST_SINGLE, NbStrings.getTestSingleCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, NbStrings.getDebugTestSingleCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_RUN_SINGLE, NbStrings.getRunSingleCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_SINGLE, NbStrings.getDebugSingleCommandCaption());
     }
 
     private static void addToMap(PredefinedTask task, Map<String, PredefinedTask> map) {

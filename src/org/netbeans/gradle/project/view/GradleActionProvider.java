@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +16,7 @@ import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbSourceGroup;
 import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
@@ -52,7 +54,9 @@ public final class GradleActionProvider implements ActionProvider {
         COMMAND_REBUILD,
         COMMAND_RELOAD,
         COMMAND_TEST_SINGLE,
-        COMMAND_DEBUG_TEST_SINGLE
+        COMMAND_DEBUG_TEST_SINGLE,
+        COMMAND_RUN_SINGLE,
+        COMMAND_DEBUG_SINGLE
     };
 
     private final NbGradleProject project;
@@ -160,12 +164,21 @@ public final class GradleActionProvider implements ActionProvider {
         return result;
     }
 
-    private GradleTaskDef.Builder createProjectTaskBuilder(TaskKind kind, String command, NbGradleConfiguration config) {
+    private GradleTaskDef.Builder createProjectTaskBuilder(
+            TaskKind kind,
+            String command,
+            NbGradleConfiguration config,
+            Map<String, String> additionalVarReplaces) {
+
         Map<String, String> varReplaceMap = PredefinedTask.varReplaceMap(project.getAvailableModel().getMainModule());
-        return createProjectTaskBuilder(kind, command, config, varReplaceMap);
+        if (!additionalVarReplaces.isEmpty()) {
+            varReplaceMap = new HashMap<String, String>(varReplaceMap);
+            varReplaceMap.putAll(additionalVarReplaces);
+        }
+        return createProjectTaskBuilderSimple(kind, command, config, varReplaceMap);
     }
 
-    private GradleTaskDef.Builder createProjectTaskBuilder(
+    private GradleTaskDef.Builder createProjectTaskBuilderSimple(
             TaskKind kind, String command, NbGradleConfiguration config, Map<String, String> varReplaceMap) {
 
         waitForProjectLoad();
@@ -189,41 +202,96 @@ public final class GradleActionProvider implements ActionProvider {
         return task.createTaskDefBuilder(caption, varReplaceMap);
     }
 
-    private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(TaskKind kind, String command, NbGradleConfiguration config) {
-        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, command, config);
+    private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(
+            TaskKind kind,
+            String command,
+            NbGradleConfiguration config) {
+        return createProjectTaskBuilderMaySkipTest(kind, command, config, Collections.<String, String>emptyMap());
+    }
+
+    private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(
+            TaskKind kind,
+            String command,
+            NbGradleConfiguration config,
+            Map<String, String> additionalVarReplaces) {
+
+        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, command, config, additionalVarReplaces);
         if (GlobalGradleSettings.getSkipTests().getValue()) {
             builder.addArguments(Arrays.asList("-x", "test"));
         }
         return builder;
     }
+    private Runnable createProjectTask(
+            final TaskKind kind,
+            final String command,
+            final NbGradleConfiguration config) {
+        return createProjectTask(kind, command, config, Collections.<String, String>emptyMap());
+    }
 
-    private Runnable createProjectTask(final TaskKind kind, final String command, final NbGradleConfiguration config) {
+    private Runnable createProjectTask(
+            final TaskKind kind,
+            final String command,
+            final NbGradleConfiguration config,
+            Map<String, String> additionalVarReplaces) {
+
+        final Map<String, String> copyVars = new HashMap<String, String>(additionalVarReplaces);
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                return createProjectTaskBuilder(kind, command, config).create();
+                return createProjectTaskBuilder(kind, command, config, copyVars).create();
             }
         });
     }
 
-    private Runnable createProjectTaskMaySkipTest(final TaskKind kind, final String command, final NbGradleConfiguration config) {
+    private Runnable createProjectTaskMaySkipTest(
+            final TaskKind kind,
+            final String command,
+            final NbGradleConfiguration config) {
+        return createProjectTaskMaySkipTest(kind, command, config, Collections.<String, String>emptyMap());
+    }
+
+    private Runnable createProjectTaskMaySkipTest(
+            final TaskKind kind,
+            final String command,
+            final NbGradleConfiguration config,
+            Map<String, String> additionalVarReplaces) {
+
+        final Map<String, String> copyVars = new HashMap<String, String>(additionalVarReplaces);
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                return createProjectTaskBuilderMaySkipTest(kind, command, config).create();
+                return createProjectTaskBuilderMaySkipTest(kind, command, config, copyVars).create();
             }
         });
     }
 
-    private Runnable createDebugTask(final String command, final boolean test, final NbGradleConfiguration config) {
+    private Runnable createDebugTask(
+            final String command,
+            final boolean test,
+            final NbGradleConfiguration config) {
+
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                GradleTaskDef.Builder builder = createProjectTaskBuilderMaySkipTest(TaskKind.DEBUG, command, config);
+                GradleTaskDef.Builder builder = createProjectTaskBuilderMaySkipTest(
+                        TaskKind.DEBUG, command, config);
                 builder.setStdOutListener(debugeeListener(test));
                 return builder.create();
             }
         });
+    }
+
+    private static FileObject getJavaFileOfContext(Lookup context) {
+        List<FileObject> files = getFilesOfContext(context);
+        if (files.isEmpty()) {
+            return null;
+        }
+
+        FileObject file = files.get(0);
+        if (file == null || !"java".equals(file.getExt().toLowerCase(Locale.US))) {
+            return null;
+        }
+        return file;
     }
 
     private Runnable createAction(String command, Lookup context) {
@@ -261,64 +329,113 @@ public final class GradleActionProvider implements ActionProvider {
             return createProjectTaskMaySkipTest(TaskKind.BUILD, command, config);
         }
         else if (COMMAND_TEST_SINGLE.equals(command) || COMMAND_DEBUG_TEST_SINGLE.equals(command)) {
-            List<FileObject> files = getFilesOfContext(context);
-            if (files.isEmpty()) {
-                return null;
-            }
-            final FileObject file = files.get(0);
-            if (!"java".equals(file.getExt().toLowerCase(Locale.US))) {
-                return null;
-            }
+            FileObject file = getJavaFileOfContext(context);
 
-            return new TestSingleTask(file, command, COMMAND_DEBUG_TEST_SINGLE.equals(command), config);
+            return file != null
+                    ? new TestSingleTask(file, command, COMMAND_DEBUG_TEST_SINGLE.equals(command), config)
+                    : null;
+        }
+        else if (COMMAND_RUN_SINGLE.equals(command)) {
+            FileObject file = getJavaFileOfContext(context);
+            return file != null
+                    ? new ExecuteSingleTask(file, command, TaskKind.RUN, config)
+                    : null;
+        }
+        else if (COMMAND_DEBUG_SINGLE.equals(command)) {
+            FileObject file = getJavaFileOfContext(context);
+            return file != null
+                    ? new ExecuteSingleTask(file, command, TaskKind.DEBUG, config)
+                    : null;
         }
 
         return null;
     }
 
-    private class TestSingleTask implements Runnable {
+    private static String removeExtension(String filePath) {
+        int extSeparatorIndex = filePath.lastIndexOf('.');
+        return extSeparatorIndex >= 0
+                ? filePath.substring(0, extSeparatorIndex)
+                : filePath;
+    }
+
+    private FileContext getFileContext(FileObject file) {
+        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+
+        NbSourceType type = null;
+        String testFileName = null;
+
+        for (Map.Entry<NbSourceType, NbSourceGroup> group: mainModule.getSources().entrySet()) {
+            for (FileObject sourceFile: group.getValue().getFileObjects()) {
+                String relPath = FileUtil.getRelativePath(sourceFile, file);
+                if (relPath != null) {
+                    // Remove the ".java" from the end of
+                    // the file name
+                    testFileName = removeExtension(relPath);
+                    type = group.getKey();
+                    break;
+                }
+            }
+        }
+
+        if (type != null) {
+            Map<String, String> result = new HashMap<String, String>();
+            result.put(PredefinedTask.VAR_TEST_FILE_PATH, testFileName);
+            result.put(PredefinedTask.VAR_SELECTED_CLASS, testFileName.replace('/', '.'));
+            return new FileContext(type, result);
+        }
+        else {
+            return null;
+        }
+    }
+
+    private static final class FileContext {
+        private final NbSourceType sourceType;
+        private final Map<String, String> varReplaceMap;
+
+        public FileContext(NbSourceType sourceType, Map<String, String> varReplaceMap) {
+            assert sourceType != null;
+            assert varReplaceMap != null;
+
+            this.sourceType = sourceType;
+            this.varReplaceMap = Collections.unmodifiableMap(new HashMap<String, String>(varReplaceMap));
+        }
+
+        public NbSourceType getSourceType() {
+            return sourceType;
+        }
+
+        public Map<String, String> getVarReplaceMap() {
+            return varReplaceMap;
+        }
+    }
+
+    private abstract class AbstractFileTask implements Runnable {
         private final FileObject file;
-        private final boolean debug;
+        private final TaskKind taskKind;
         private final String command;
         private final NbGradleConfiguration config;
 
-        public TestSingleTask(FileObject file, String command, boolean debug, NbGradleConfiguration config) {
+        public AbstractFileTask(FileObject file, String command, TaskKind taskKind, NbGradleConfiguration config) {
             this.file = file;
-            this.debug = debug;
+            this.taskKind = taskKind;
             this.command = command;
             this.config = config;
         }
 
+        protected abstract boolean needTestClasses(FileContext fileContext);
+
         @Override
-        public void run() {
+        public final void run() {
             Runnable testTask = GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
                 @Override
                 public GradleTaskDef call() {
-                    NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+                    FileContext fileContext = getFileContext(file);
 
-                    List<FileObject> sources = new LinkedList<FileObject>();
-                    sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
-                    sources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFileObjects());
+                    if (fileContext != null) {
+                        GradleTaskDef.Builder builder = createProjectTaskBuilder(
+                                taskKind, command, config, fileContext.getVarReplaceMap());
 
-                    String testFileName = null;
-                    for (FileObject sourceFile: sources) {
-                        String relPath = FileUtil.getRelativePath(sourceFile, file);
-                        if (relPath != null) {
-                            // Remove the ".java" from the end of
-                            // the file name
-                            testFileName = relPath.substring(0, relPath.length() - 5);
-                            break;
-                        }
-                    }
-
-                    if (testFileName != null) {
-                        Map<String, String> varReplaceMap = new HashMap<String, String>();
-                        varReplaceMap.putAll(PredefinedTask.varReplaceMap(mainModule));
-                        varReplaceMap.put(PredefinedTask.VAR_TEST_FILE_PATH, testFileName);
-
-                        TaskKind kind = debug ? TaskKind.DEBUG : TaskKind.BUILD;
-                        GradleTaskDef.Builder builder = createProjectTaskBuilder(kind, command, config, varReplaceMap);
-                        if (debug) {
+                        if (taskKind == TaskKind.DEBUG) {
                             builder.setStdOutListener(debugeeListener(true));
                         }
                         return builder.create();
@@ -330,6 +447,28 @@ public final class GradleActionProvider implements ActionProvider {
                 }
             });
             testTask.run();
+        }
+    }
+
+    private class ExecuteSingleTask extends AbstractFileTask {
+        public ExecuteSingleTask(FileObject file, String command, TaskKind taskKind, NbGradleConfiguration config) {
+            super(file, command, taskKind, config);
+        }
+
+        @Override
+        protected boolean needTestClasses(FileContext fileContext) {
+            return fileContext.getSourceType().isTest();
+        }
+    }
+
+    private class TestSingleTask extends AbstractFileTask {
+        public TestSingleTask(FileObject file, String command, boolean debug, NbGradleConfiguration config) {
+            super(file, command, debug ? TaskKind.DEBUG : TaskKind.BUILD, config);
+        }
+
+        @Override
+        protected boolean needTestClasses(FileContext fileContext) {
+            return true;
         }
     }
 

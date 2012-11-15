@@ -31,7 +31,9 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
             GradleActionProvider.COMMAND_JAVADOC,
             ActionProvider.COMMAND_REBUILD,
             ActionProvider.COMMAND_TEST_SINGLE,
-            ActionProvider.COMMAND_DEBUG_TEST_SINGLE)));
+            ActionProvider.COMMAND_DEBUG_TEST_SINGLE,
+            ActionProvider.COMMAND_RUN_SINGLE,
+            ActionProvider.COMMAND_DEBUG_SINGLE)));
 
     public static String getSourceLevelFromPlatform(JavaPlatform platform) {
         SpecificationVersion version = platform.getSpecification().getVersion();
