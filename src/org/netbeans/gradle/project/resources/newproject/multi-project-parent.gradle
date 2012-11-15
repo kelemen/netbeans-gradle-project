@@ -42,19 +42,6 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.10'
 }
 
-if (project.hasProperty('mainClass') && mainClass != '') {
-    task (run, dependsOn: classes, type: JavaExec) {
-        main = mainClass
-        classpath = sourceSets.main.runtimeClasspath
-    }
-
-    task (debug, dependsOn: classes, type: JavaExec) {
-        main = mainClass
-        classpath = sourceSets.main.runtimeClasspath
-        debug = true
-    }
-}
-
 task createFolders(description: 'Creates the source folders if they do not exist.') doLast {
     sourceSets*.allSource*.srcDirs*.each { File srcDir ->
         if (!srcDir.isDirectory()) {
