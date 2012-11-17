@@ -9,5 +9,5 @@ public interface PropertiesPersister {
             = new RequestProcessor("Gradle-properties-persister", 1, true);
 
     public void save(ProjectProperties properties, Runnable onDone);
-    public void load(ProjectProperties properties, Runnable onDone);
+    public void load(ProjectProperties properties, boolean usedConcurrently, Runnable onDone);
 }

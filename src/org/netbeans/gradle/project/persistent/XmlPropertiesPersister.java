@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,20 +38,25 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     @Override
-    public void save(ProjectProperties properties, final Runnable onDone) {
+    public void save(final ProjectProperties properties, final Runnable onDone) {
         checkCallingThread();
 
-        final PropertiesSnapshot snapshot = new PropertiesSnapshot(properties);
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                try {
-                    XmlPropertyFormat.saveToXml(propertiesFile, snapshot);
-                } finally {
-                    if (onDone != null) {
-                        SwingUtilities.invokeLater(onDone);
+                final PropertiesSnapshot snapshot = new PropertiesSnapshot(properties);
+                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            XmlPropertyFormat.saveToXml(propertiesFile, snapshot);
+                        } finally {
+                            if (onDone != null) {
+                                onDone.run();
+                            }
+                        }
                     }
-                }
+                });
             }
         });
     }
@@ -62,7 +68,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     @Override
-    public void load(final ProjectProperties properties, final Runnable onDone) {
+    public void load(final ProjectProperties properties, final boolean usedConcurrently, final Runnable onDone) {
         checkCallingThread();
 
         // We must listen for changes, so that we do not overwrite properties
@@ -114,13 +120,17 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
             setter.start();
         }
 
+        final Executor setterExecutor = usedConcurrently
+                ? SwingExecutor.INSTANCE
+                : RecursiveExecutor.INSTANCE;
+
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     final PropertiesSnapshot snapshot = XmlPropertyFormat.readFromXml(propertiesFile);
 
-                    SwingUtilities.invokeLater(new Runnable() {
+                    setterExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
                             for (PropertySetter<?> setter: setters) {
@@ -132,11 +142,10 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             }
                         }
                     });
-
                 } finally {
-                    // invokeLater is required, so that the listeners will not
+                    // required, so that the listeners will not
                     // be removed before setting the properties.
-                    SwingUtilities.invokeLater(new Runnable() {
+                    setterExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
                             for (PropertySetter<?> setter: setters) {
@@ -206,6 +215,24 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         @Override
         public void stateChanged(ChangeEvent e) {
             changed = true;
+        }
+    }
+
+    private enum RecursiveExecutor implements Executor {
+        INSTANCE;
+
+        @Override
+        public void execute(Runnable command) {
+            command.run();
+        }
+    }
+
+    private enum SwingExecutor implements Executor {
+        INSTANCE;
+
+        @Override
+        public void execute(Runnable command) {
+            SwingUtilities.invokeLater(command);
         }
     }
 }

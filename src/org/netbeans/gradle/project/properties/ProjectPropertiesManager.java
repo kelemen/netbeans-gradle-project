@@ -13,7 +13,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.WaitableSignal;
@@ -213,7 +212,7 @@ public final class ProjectPropertiesManager {
         PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                persister.load(properties, new Runnable() {
+                persister.load(properties, false, new Runnable() {
                     @Override
                     public void run() {
                         try {
