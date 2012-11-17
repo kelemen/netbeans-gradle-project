@@ -32,7 +32,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
 
     static {
-        GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", GradleHomeConverter.INSTANCE);
+        GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", FileObjectConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
         SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
@@ -248,23 +248,15 @@ public final class GlobalGradleSettings {
         }
     }
 
-    private enum GradleHomeConverter implements ValueConverter<FileObject> {
+    private enum FileObjectConverter implements ValueConverter<FileObject> {
         INSTANCE;
 
         @Override
         public FileObject toValue(String strValue) {
-            String gradleHome;
-            if (strValue == null || strValue.isEmpty())  {
-                gradleHome = System.getenv("GRADLE_HOME");
-                gradleHome = gradleHome != null ? gradleHome.trim() : "";
-            }
-            else {
-                gradleHome = strValue;
-            }
-            if (gradleHome.isEmpty()) {
+            String gradleHome = strValue != null ? strValue.trim() : "";
+            if (gradleHome.isEmpty())  {
                 return null;
             }
-
             return FileUtil.toFileObject(FileUtil.normalizeFile(new File(gradleHome)));
         }
 
