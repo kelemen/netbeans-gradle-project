@@ -30,25 +30,25 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         this.propertiesFile = propertiesFile;
     }
 
-    private void checkEDT() {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            throw new IllegalStateException("This method may only be called from the EDT.");
+    private void checkCallingThread() {
+        if (!PropertiesPersister.PERSISTER_PROCESSOR.isRequestProcessorThread()) {
+            throw new IllegalStateException("This method may only be called from PropertiesPersister.PERSISTER_PROCESSOR.");
         }
     }
 
     @Override
     public void save(ProjectProperties properties, final Runnable onDone) {
-        checkEDT();
+        checkCallingThread();
 
         final PropertiesSnapshot snapshot = new PropertiesSnapshot(properties);
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     XmlPropertyFormat.saveToXml(propertiesFile, snapshot);
                 } finally {
                     if (onDone != null) {
-                        onDone.run();
+                        SwingUtilities.invokeLater(onDone);
                     }
                 }
             }
@@ -63,7 +63,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
 
     @Override
     public void load(final ProjectProperties properties, final Runnable onDone) {
-        checkEDT();
+        checkCallingThread();
 
         // We must listen for changes, so that we do not overwrite properties
         // modified later.

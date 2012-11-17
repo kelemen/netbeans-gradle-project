@@ -33,7 +33,7 @@ public final class ProjectPropertiesManager {
             final PropertiesPersister persister) {
 
         if (saveQueued.compareAndSet(false, true)) {
-            SwingUtilities.invokeLater(new Runnable() {
+            PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     saveQueued.set(false);
@@ -210,7 +210,7 @@ public final class ProjectPropertiesManager {
         final ProjectProperties properties = new MemProjectProperties();
         final PropertiesPersister persister = new XmlPropertiesPersister(propertiesFile);
 
-        SwingUtilities.invokeLater(new Runnable() {
+        PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
                 persister.load(properties, new Runnable() {

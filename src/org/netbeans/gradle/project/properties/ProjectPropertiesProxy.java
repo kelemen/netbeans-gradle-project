@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.openide.util.ChangeSupport;
 
 public final class ProjectPropertiesProxy extends AbstractProjectProperties {
@@ -84,6 +85,15 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     public boolean tryWaitForLoaded() {
+        // Attempting to call this method from any of the threads below could
+        // cause a dead-lock.
+        if (NbGradleProject.PROJECT_PROCESSOR.isRequestProcessorThread()) {
+            throw new IllegalStateException("This method cannot be access from the PROJECT_PROCESSOR.");
+        }
+        if (PropertiesPersister.PERSISTER_PROCESSOR.isRequestProcessorThread()) {
+            throw new IllegalStateException("This method cannot be access from the PERSISTER_PROCESSOR.");
+        }
+
         getProperties();
         return loadedSignal.tryWaitForSignal();
     }
