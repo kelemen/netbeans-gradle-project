@@ -41,7 +41,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         checkCallingThread();
 
         final PropertiesSnapshot snapshot = new PropertiesSnapshot(properties);
-        PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
