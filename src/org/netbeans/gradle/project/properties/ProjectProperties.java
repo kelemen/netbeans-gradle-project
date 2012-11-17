@@ -6,6 +6,9 @@ import java.util.List;
 import org.netbeans.api.java.platform.JavaPlatform;
 
 public interface ProjectProperties {
+    // Methods of this interface must be safe to access from multiple threads
+    // concurrently.
+
     // When adding new properties, don't forget to update:
     //   - PropertiesSnapshot: Add a field for the new property.
     //   - XmlPropertiesPersister.load: Do the same as with other properties.
@@ -22,6 +25,7 @@ public interface ProjectProperties {
 
     // In case you add more built-in tasks, don't forget to update
     // AbstractProjectProperties.getCustomizableCommands().
+    // Also define the defaults in BuiltInTasks.
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
 
     public Collection<MutableProperty<?>> getAllProperties();
