@@ -18,6 +18,12 @@ to be fixed.
 Troubleshooting
 --------------
 
+### NetBeans hangs while starting ###
+
+In version 1.1.7 there is a known issue which might cause a dead-lock in NetBeans.
+It is fixed in 1.1.8 but to be able to upgrade you will need to
+[disable the currently installed one manually](https://blogs.oracle.com/gridbag/entry/disabling_a_netbeans_plugin_before).
+
 ### The classpaths are wrong within NetBeans ###
 
 This plugin loads an [IdeaProject](http://gradle.org/docs/current/groovydoc/org/gradle/plugins/ide/idea/model/IdeaProject.html)
