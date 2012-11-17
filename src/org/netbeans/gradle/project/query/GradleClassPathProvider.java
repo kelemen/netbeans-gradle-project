@@ -121,6 +121,10 @@ implements
     }
 
     private void onModelChange() {
+        if (!hasBeenUsed.get()) {
+            return;
+        }
+
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
@@ -141,16 +145,10 @@ implements
             @Override
             public void stateChanged(ChangeEvent e) {
                 currentPlatform = project.getProperties().getPlatform().getValue();
-                if (hasBeenUsed.get()) {
-                    onModelChange();
-                }
+                onModelChange();
             }
         });
-        // This is not called because it would trigger the loading of the
-        // project even if it just shown in the project open dialog.
-        // Although it should be called to ensure correct behaviour in every
-        // case.
-        // onModelChange();
+        onModelChange();
     }
 
     // These PropertyChangeListener methods are declared because
@@ -474,6 +472,11 @@ implements
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
         if (GradleFilesClassPathProvider.isGradleFile(file)) {
+            return null;
+        }
+        // NetBeans calls findClassPath when you look at the directory in
+        // favorites.
+        if (project.getProjectDirectory().equals(file)) {
             return null;
         }
 
