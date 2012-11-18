@@ -114,7 +114,10 @@ public final class PredefinedTask {
 
             // if projectName is empty, that means that we want to execute
             // the task of the root project.
-            if (!projectName.isEmpty() && !projectName.startsWith(":")) {
+            if (projectName.isEmpty()) {
+                projectName = ":";
+            }
+            else if (!projectName.startsWith(":")) {
                 projectName = module.getUniqueName() + ":" + projectName;
             }
         }
