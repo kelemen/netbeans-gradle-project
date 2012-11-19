@@ -168,6 +168,7 @@ public final class GradleTasks {
             NbGradleProject project,
             GradleTaskDef taskDef,
             BuildLauncher buildLauncher,
+            Reader buildIn,
             OutputWriter buildOutput,
             OutputWriter buildErrOutput) {
 
@@ -195,6 +196,7 @@ public final class GradleTasks {
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
+        buildLauncher.setStandardInput(new ReaderInputStream(buildIn));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
@@ -250,7 +252,7 @@ public final class GradleTasks {
                             printCommand(buildOutput, command, taskDef);
 
                             OutputRef outputRef = configureOutput(
-                                    project, taskDef, buildLauncher, buildOutput, buildErrOutput);
+                                    project, taskDef, buildLauncher, ioRef.getIo().getIn(), buildOutput, buildErrOutput);
                             try {
                                 ioRef.getIo().select();
                                 buildLauncher.run();
