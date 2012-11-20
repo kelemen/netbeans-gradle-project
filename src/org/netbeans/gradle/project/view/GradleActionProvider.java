@@ -186,11 +186,9 @@ public final class GradleActionProvider implements ActionProvider {
 
         String caption;
         switch (kind) {
-            case DEBUG:
-                caption = project.getDisplayName() + " - debug";
-                break;
             case RUN:
-                caption = project.getDisplayName() + " - run";
+            case DEBUG:
+                caption = PredefinedTask.getCaption(project.getDisplayName(), task.getProcessedTaskNames(varReplaceMap), false);
                 break;
             case BUILD:
                 caption = project.getDisplayName();
