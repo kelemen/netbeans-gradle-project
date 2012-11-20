@@ -168,9 +168,7 @@ public final class GradleTasks {
             NbGradleProject project,
             GradleTaskDef taskDef,
             BuildLauncher buildLauncher,
-            Reader buildIn,
-            OutputWriter buildOutput,
-            OutputWriter buildErrOutput) {
+            IORef buildIo) {
 
         List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
         consumers.add(new StackTraceConsumer(project));
@@ -186,17 +184,17 @@ public final class GradleTasks {
         errorConsumers.add(new FileLineConsumer());
 
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                buildOutput,
+                buildIo.getOutRef(),
                 Arrays.asList(taskDef.getStdOutListener()),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                buildErrOutput,
+                buildIo.getErrRef(),
                 Arrays.asList(taskDef.getStdErrListener()),
                 errorConsumers));
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
-        buildLauncher.setStandardInput(new ReaderInputStream(buildIn));
+        buildLauncher.setStandardInput(new ReaderInputStream(buildIo.getInRef()));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
@@ -237,49 +235,44 @@ public final class GradleTasks {
                         taskDef.isReuseOutput(),
                         taskDef.isCleanOutput());
                 try {
-                    OutputWriter buildOutput = ioRef.getIo().getOut();
                     try {
-                        OutputWriter buildErrOutput = ioRef.getIo().getErr();
-                        try {
-                            if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
-                                    || taskDef.isCleanOutput()) {
-                                buildOutput.reset();
-                                // There is no need to reset buildErrOutput,
-                                // at least this is what NetBeans tells you in its
-                                // logs if you do.
-                            }
-
-                            printCommand(buildOutput, command, taskDef);
-
-                            OutputRef outputRef = configureOutput(
-                                    project, taskDef, buildLauncher, ioRef.getIo().getIn(), buildOutput, buildErrOutput);
-                            try {
-                                ioRef.getIo().select();
-                                buildLauncher.run();
-                            } finally {
-                                // This close method will only forward the last lines
-                                // if they were not terminated with a line separator.
-                                outputRef.close();
-                            }
-                        } catch (Throwable ex) {
-                            LOGGER.log(
-                                    ex instanceof Exception ? Level.INFO : Level.SEVERE,
-                                    "Gradle build failure: " + command,
-                                    ex);
-
-                            String buildFailureMessage = NbStrings.getBuildFailure(command);
-                            buildErrOutput.println();
-                            buildErrOutput.println(buildFailureMessage);
-                            project.displayError(buildFailureMessage, ex, false);
-                        } finally {
-                            buildErrOutput.close();
+                        OutputWriter buildOutput = ioRef.getOutRef();
+                        if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
+                                || taskDef.isCleanOutput()) {
+                            buildOutput.reset();
+                            // There is no need to reset buildErrOutput,
+                            // at least this is what NetBeans tells you in its
+                            // logs if you do.
                         }
-                    } finally {
-                        buildOutput.close();
+                        printCommand(buildOutput, command, taskDef);
+
+                        OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, ioRef);
+                        try {
+                            ioRef.getIo().select();
+                            buildLauncher.run();
+                        } finally {
+                            // This close method will only forward the last lines
+                            // if they were not terminated with a line separator.
+                            outputRef.close();
+                        }
+                    } catch (Throwable ex) {
+                        LOGGER.log(
+                                ex instanceof Exception ? Level.INFO : Level.SEVERE,
+                                "Gradle build failure: " + command,
+                                ex);
+
+                        String buildFailureMessage = NbStrings.getBuildFailure(command);
+
+                        OutputWriter buildErrOutput = ioRef.getErrRef();
+                        buildErrOutput.println();
+                        buildErrOutput.println(buildFailureMessage);
+                        project.displayError(buildFailureMessage, ex, false);
                     }
                 } finally {
                     ioRef.close();
                 }
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Unexpected I/O exception.", ex);
             } finally {
                 if (initScript != null) {
                     initScript.delete();
