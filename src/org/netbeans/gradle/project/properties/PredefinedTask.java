@@ -155,16 +155,39 @@ public final class PredefinedTask {
             List<String> taskNames,
             boolean nonBlocking) {
 
-        String caption = projectName;
-        if (!nonBlocking) {
-            caption += " - " + taskNames.toString();
-        }
+        String caption = getCaption(projectName, taskNames, nonBlocking);
 
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, taskNames);
         builder.setNonBlocking(nonBlocking);
         builder.setCleanOutput(!nonBlocking);
         builder.setReuseOutput(nonBlocking);
         return builder;
+    }
+    
+    private static String getCaption(String projectName, List<String> taskNames, boolean nonBlocking) {
+        boolean fullyQualified = true;
+        for (String taskName: taskNames) {
+            fullyQualified &= taskName.startsWith(":");
+        }
+        
+        if (fullyQualified) {
+            return joinTaskNames(taskNames);
+        } else {
+            String caption = projectName;
+            if (!nonBlocking) {
+                caption += " - " + joinTaskNames(taskNames);
+            }
+            return caption;
+        }
+    }
+    
+    private static String joinTaskNames(List<String> taskNames) {
+        StringBuilder sb = new StringBuilder();
+        for (String taskName: taskNames) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(taskName);
+        }
+        return sb.toString();
     }
 
     public static Map<String, String> varReplaceMap(NbGradleModule mainModule) {
