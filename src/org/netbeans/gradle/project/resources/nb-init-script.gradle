@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.JavaExec
+
 afterProject { org.gradle.api.Project project ->
     if (project == null) {
         return;
@@ -12,11 +14,16 @@ afterProject { org.gradle.api.Project project ->
         if (definedMainClass == null) definedMainClass = '';
         definedMainClass = definedMainClass.toString()
 
+        def configJavaExec = { JavaExec task ->
+            task.main = definedMainClass
+            task.classpath = project.sourceSets.main.runtimeClasspath
+            task.standardInput = System.in
+        }
+
         if (!hasRun) {
             if ('' != definedMainClass) {
                 project.task ('run', dependsOn: project.classes, type: JavaExec) {
-                    main = definedMainClass
-                    classpath = project.sourceSets.main.runtimeClasspath
+                    configJavaExec(it)
                 }
             }
             else {
@@ -29,8 +36,7 @@ afterProject { org.gradle.api.Project project ->
         if (!hasDebug) {
             if ('' != definedMainClass) {
                 project.task ('debug', dependsOn: project.classes, type: JavaExec) {
-                    main = definedMainClass
-                    classpath = project.sourceSets.main.runtimeClasspath
+                    configJavaExec(it)
                     debug = true
                 }
             }
