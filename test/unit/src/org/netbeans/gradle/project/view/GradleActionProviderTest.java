@@ -1,11 +1,11 @@
 package org.netbeans.gradle.project.view;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
@@ -13,11 +13,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.ProjectState;
 import org.openide.filesystems.FileChangeListener;
 import org.openide.filesystems.FileLock;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileStateInvalidException;
 import org.openide.filesystems.FileSystem;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
 /**
@@ -26,42 +30,76 @@ import org.openide.util.Lookup;
  */
 public class GradleActionProviderTest {
 
+    private static NbGradleProject project;
+
     @BeforeClass
     public static void setUpClass() {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
+        FileObject fileObject = FileUtil.createFolder(new File("."));
+        ProjectState projectState = new ProjectState() {
+            @Override
+            public void markModified() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void notifyDeleted() throws IllegalStateException {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+        project = new NbGradleProject(fileObject, projectState);
     }
 
     /**
      * Test of getSupportedActions method, of class GradleActionProvider.
      */
     @Test
-    public void should_getJavaFileOfContext_return_java_action() {
-        System.out.println("should_getJavaFileOfContext_return_java_action");
+    public void should_return_single_java_action_enabled() {
+        System.out.println("should_return_single_java_action_enabled");
         Lookup n = Lookup.EMPTY;
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("java");
-        FileObject javaFileOfContext = gradleActionProvider.getJavaFileOfContext(n);
-        assertNotNull(javaFileOfContext);
+        boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
+        assertTrue(actionEnabled);
     }
 
     @Test
-    public void should_getJavaFileOfContext_return_groovy_action() {
-        System.out.println("should_getJavaFileOfContext_return_groovy_action");
+    public void should_return_single_groovy_action_enabled() {
+        System.out.println("should_return_single_groovy_action_enabled");
         Lookup n = Lookup.EMPTY;
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("groovy");
-        FileObject javaFileOfContext = gradleActionProvider.getJavaFileOfContext(n);
-        assertNotNull(javaFileOfContext);
+
+        boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
+        assertTrue(actionEnabled);
     }
 
     @Test
-    public void should_getJavaFileOfContext_return_other_action() {
-        System.out.println("should_getJavaFileOfContext_return_other_action");
+    public void should_return_single_other_action_enabled() {
+        System.out.println("should_return_single_other_action_enabled");
         Lookup n = Lookup.EMPTY;
-        TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("rb");
-        FileObject javaFileOfContext = gradleActionProvider.getJavaFileOfContext(n);
-        assertNull(javaFileOfContext);
+        TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("txt");
+        boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
+        assertFalse(actionEnabled);
+    }
+
+    private static class TestGradleActionProvider extends GradleActionProvider {
+
+        private String ext;
+
+        public TestGradleActionProvider(String ext) {
+            super(project);
+            this.ext = ext;
+        }
+
+        @Override
+        protected List<FileObject> getFilesOfContext(Lookup context) {
+            List<FileObject> fileObjects = new ArrayList<FileObject>();
+            FileObject fileObject = new MyFileObject(ext);
+            fileObjects.add(fileObject);
+            return fileObjects;
+        }
     }
 
     private static class MyFileObject extends FileObject {
@@ -200,29 +238,6 @@ public class GradleActionProviderTest {
         @Override
         public boolean isReadOnly() {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-    }
-
-    private static class TestGradleActionProvider extends GradleActionProvider {
-
-        private String ext;
-
-        public TestGradleActionProvider(String ext) {
-            super(null);
-            this.ext = ext;
-        }
-
-        @Override
-        protected List<FileObject> getFilesOfContext(Lookup context) {
-            List<FileObject> fileObjects = new ArrayList<FileObject>();
-            FileObject fileObject = new MyFileObject(ext);
-            fileObjects.add(fileObject);
-            return fileObjects;
-        }
-
-        @Override
-        public FileObject getJavaFileOfContext(Lookup context) {
-            return super.getJavaFileOfContext(context); //To change body of generated methods, choose Tools | Templates.
         }
     }
 }
