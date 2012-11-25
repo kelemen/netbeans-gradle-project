@@ -63,6 +63,9 @@ public class GradleActionProviderTest {
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("java");
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
         assertTrue(actionEnabled);
+        
+        actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
+        assertTrue(actionEnabled);
     }
 
     @Test
@@ -73,6 +76,9 @@ public class GradleActionProviderTest {
 
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
         assertTrue(actionEnabled);
+        
+        actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
+        assertTrue(actionEnabled);
     }
 
     @Test
@@ -81,6 +87,9 @@ public class GradleActionProviderTest {
         Lookup n = Lookup.EMPTY;
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("txt");
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
+        assertFalse(actionEnabled);
+        
+        actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
         assertFalse(actionEnabled);
     }
 
