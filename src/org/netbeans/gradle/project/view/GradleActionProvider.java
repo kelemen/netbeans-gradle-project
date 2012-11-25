@@ -38,7 +38,7 @@ import org.openide.util.Lookup;
 
 import static org.netbeans.spi.project.ActionProvider.*;
 
-public final class GradleActionProvider implements ActionProvider {
+public class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
     public static final String COMMAND_JAVADOC = "javadoc";
@@ -87,7 +87,7 @@ public final class GradleActionProvider implements ActionProvider {
         return createAction(command, context) != null;
     }
 
-    private static List<FileObject> getFilesOfContext(Lookup context) {
+    protected List<FileObject> getFilesOfContext(Lookup context) {
         List<FileObject> files = new LinkedList<FileObject>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
@@ -281,16 +281,23 @@ public final class GradleActionProvider implements ActionProvider {
         });
     }
 
-    private static FileObject getJavaFileOfContext(Lookup context) {
+    protected FileObject getJavaFileOfContext(Lookup context) {
         List<FileObject> files = getFilesOfContext(context);
         if (files.isEmpty()) {
             return null;
         }
 
         FileObject file = files.get(0);
-        if (file == null || !"java".equals(file.getExt().toLowerCase(Locale.US))) {
+        if (file == null) {
             return null;
         }
+        
+        String fileExt = file.getExt().toLowerCase(Locale.US);
+        if (!"java".equals(fileExt)
+                && !"groovy".equals(fileExt)) {
+            return null;
+        }
+        
         return file;
     }
 
