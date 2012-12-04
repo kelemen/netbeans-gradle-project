@@ -6,18 +6,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.ChangeSupport;
 import org.openide.util.NbPreferences;
 
 public final class GlobalGradleSettings {
@@ -283,6 +285,9 @@ public final class GlobalGradleSettings {
     private static class GlobalProperty<ValueType> implements StringBasedProperty<ValueType> {
         private final String settingsName;
         private final ValueConverter<ValueType> converter;
+        private final Lock changesLock;
+        private final ChangeSupport changes;
+        private final PreferenceChangeListener changeForwarder;
 
         public GlobalProperty(String settingsName, ValueConverter<ValueType> converter) {
             if (settingsName == null) throw new NullPointerException("settingsName");
@@ -290,6 +295,16 @@ public final class GlobalGradleSettings {
 
             this.settingsName = settingsName;
             this.converter = converter;
+            this.changesLock = new ReentrantLock();
+            this.changes = new ChangeSupport(this);
+            this.changeForwarder = new PreferenceChangeListener() {
+                @Override
+                public void preferenceChange(PreferenceChangeEvent evt) {
+                    if (GlobalProperty.this.settingsName.equals(evt.getKey())) {
+                        changes.fireChange();
+                    }
+                }
+            };
         }
 
         private static Preferences getPreferences() {
@@ -323,18 +338,30 @@ public final class GlobalGradleSettings {
 
         @Override
         public void addChangeListener(ChangeListener listener) {
-            getPreferences().addPreferenceChangeListener(
-                    new ChangeListenerWrapper(settingsName, listener));
+            changesLock.lock();
+            try {
+                boolean hasListeners = changes.hasListeners();
+                changes.addChangeListener(listener);
+                if (!hasListeners) {
+                    getPreferences().addPreferenceChangeListener(changeForwarder);
+                }
+            } finally {
+                changesLock.unlock();
+            }
         }
 
         @Override
         public void removeChangeListener(ChangeListener listener) {
-            // We assume that listeners are looked up based on the equals
-            // method. This is not documented to be necessary and for example:
-            // AWTEventMulticaster does rely on reference equality. Still, we
-            // hope for the best as there is nothing else we can do.
-            getPreferences().removePreferenceChangeListener(
-                    new ChangeListenerWrapper(settingsName, listener));
+            changesLock.lock();
+            try {
+                changes.removeChangeListener(listener);
+                boolean hasListeners = changes.hasListeners();
+                if (!hasListeners) {
+                    getPreferences().removePreferenceChangeListener(changeForwarder);
+                }
+            } finally {
+                changesLock.unlock();
+            }
         }
 
         @Override
@@ -350,46 +377,6 @@ public final class GlobalGradleSettings {
         @Override
         public String getValueAsString() {
             return getPreferences().get(settingsName, null);
-        }
-    }
-
-    private static class ChangeListenerWrapper implements PreferenceChangeListener {
-        private final String preferenceName;
-        private final ChangeListener wrapped;
-
-        public ChangeListenerWrapper(String preferenceName, ChangeListener wrapped) {
-            if (preferenceName == null) throw new NullPointerException("preferenceName");
-            if (wrapped == null) throw new NullPointerException("wrapped");
-
-            this.preferenceName = preferenceName;
-            this.wrapped = wrapped;
-        }
-
-        @Override
-        public void preferenceChange(PreferenceChangeEvent evt) {
-            if (preferenceName.equals(evt.getKey())) {
-                wrapped.stateChanged(new ChangeEvent(evt.getSource()));
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 61 * wrapped.hashCode() + 3;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final ChangeListenerWrapper other = (ChangeListenerWrapper)obj;
-            return this.wrapped.equals(other.wrapped);
         }
     }
 
