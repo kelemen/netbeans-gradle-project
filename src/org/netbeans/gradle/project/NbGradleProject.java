@@ -179,14 +179,19 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private void loadProject(boolean onlyIfNotLoaded, boolean mayUseCache) {
+    private void loadProject(boolean onlyIfNotLoaded, final boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
                 return;
             }
         }
 
-        GradleModelLoader.fetchModel(projectDir, mayUseCache, new ModelRetrievedListenerImpl());
+        getPropertiesForProfile(getCurrentProfile().getProfileName(), true, new PropertiesLoadListener() {
+            @Override
+            public void loadedProperties(ProjectProperties properties) {
+                GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
+            }
+        });
     }
 
     public ProjectProperties getProperties() {

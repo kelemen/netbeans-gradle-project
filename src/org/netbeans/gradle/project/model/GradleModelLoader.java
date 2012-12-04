@@ -35,7 +35,9 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.tasks.DaemonTask;
@@ -71,12 +73,11 @@ public final class GradleModelLoader {
         LISTENERS.removeListener(listener);
     }
 
-    public static GradleConnector createGradleConnector() {
+    public static GradleConnector createGradleConnector(NbGradleProject project) {
         GradleConnector result = GradleConnector.newConnector();
-        FileObject gradleHomeObj = GlobalGradleSettings.getGradleHome().getValue();
-        File gradleHome = gradleHomeObj != null ? FileUtil.toFile(gradleHomeObj) : null;
+        File gradleHome = project.getProperties().getGradleHome().getValue();
 
-        if (gradleHome != null) {
+        if (gradleHome != null && !gradleHome.getPath().isEmpty()) {
             result.useInstallation(gradleHome);
         }
 
@@ -100,18 +101,19 @@ public final class GradleModelLoader {
     }
 
     public static void fetchModel(
-            final FileObject projectDir,
+            final NbGradleProject project,
             final ModelRetrievedListener listener) {
-        fetchModel(projectDir, false, listener);
+        fetchModel(project, false, listener);
     }
 
     public static void fetchModel(
-            final FileObject projectDir,
+            final NbGradleProject project,
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        if (project == null) throw new NullPointerException("project");
         if (listener == null) throw new NullPointerException("listener");
 
+        final FileObject projectDir = project.getProjectDirectory();
         String caption = NbStrings.getLoadingProjectText(projectDir.getNameExt());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
@@ -123,7 +125,7 @@ public final class GradleModelLoader {
                         model = tryGetFromCache(projectDir);
                     }
                     if (model == null) {
-                        model = loadModelWithProgress(projectDir, progress);
+                        model = loadModelWithProgress(project, progress);
                     }
                 } catch (IOException ex) {
                     error = ex;
@@ -164,15 +166,25 @@ public final class GradleModelLoader {
         return new NbGradleModel(projectDir, mainModule);
     }
 
+    public static File getScriptJavaHome(NbGradleProject project) {
+        if (project == null) throw new NullPointerException("project");
+
+        JavaPlatform platform = project.getProperties().getScriptPlatform().getValue();
+        FileObject jdkHomeObj = platform != null
+                ? GlobalGradleSettings.getHomeFolder(platform)
+                : null;
+        return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
+    }
+
     private static <T extends Model> T getModelWithProgress(
+            NbGradleProject project,
             final ProgressHandle progress,
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
 
-        FileObject jdkHomeObj = GlobalGradleSettings.getCurrentGradleJdkHome();
-        File jdkHome = jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
-        if (jdkHome != null) {
+        File jdkHome = getScriptJavaHome(project);
+        if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
             builder.setJavaHome(jdkHome);
         }
 
@@ -448,19 +460,21 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleModel loadModelWithProgress(
-            FileObject projectDir,
+            NbGradleProject project,
             ProgressHandle progress) throws IOException {
+        FileObject projectDir = project.getProjectDirectory();
+
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
         IdeaProject ideaModel;
 
-        GradleConnector gradleConnector = createGradleConnector();
+        GradleConnector gradleConnector = createGradleConnector(project);
         gradleConnector.forProjectDirectory(FileUtil.toFile(projectDir));
         ProjectConnection projectConnection = null;
         try {
             projectConnection = gradleConnector.connect();
 
-            ideaModel = getModelWithProgress(progress, projectConnection, IdeaProject.class);
+            ideaModel = getModelWithProgress(project, progress, projectConnection, IdeaProject.class);
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();

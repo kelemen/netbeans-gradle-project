@@ -106,14 +106,6 @@ public final class GradleTasks {
         return null;
     }
 
-    private static File getJavaHome(NbGradleProject project) {
-        JavaPlatform platform = project.getProperties().getPlatform().getValue();
-        FileObject jdkHomeObj = platform != null
-                ? GlobalGradleSettings.getHomeFolder(platform)
-                : null;
-        return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
-    }
-
     private static void printCommand(OutputWriter buildOutput, String command, GradleTaskDef taskDef) {
         buildOutput.println(NbStrings.getExecutingTaskMessage(command));
         if (!taskDef.getArguments().isEmpty()) {
@@ -133,7 +125,7 @@ public final class GradleTasks {
             File initScript,
             final ProgressHandle progress) {
 
-        File javaHome = getJavaHome(project);
+        File javaHome = GradleModelLoader.getScriptJavaHome(project);
         if (javaHome != null) {
             buildLauncher.setJavaHome(javaHome);
         }
@@ -219,7 +211,7 @@ public final class GradleTasks {
 
         FileObject projectDir = project.getProjectDirectory();
 
-        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector();
+        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(project);
         gradleConnector.forProjectDirectory(FileUtil.toFile(projectDir));
         ProjectConnection projectConnection = null;
         try {
