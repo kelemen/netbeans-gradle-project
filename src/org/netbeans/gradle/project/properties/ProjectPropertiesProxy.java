@@ -30,6 +30,8 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
     private final MutablePropertyProxy<String> sourceLevelProxy;
     private final MutablePropertyProxy<JavaPlatform> platformProxy;
+    private final MutablePropertyProxy<JavaPlatform> scriptPlatformProxy;
+    private final MutablePropertyProxy<File> gradleHomeProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
     private final Map<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
@@ -52,6 +54,18 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             @Override
             public MutableProperty<JavaPlatform> getProperty() {
                 return this.getProperties().getPlatform();
+            }
+        });
+        this.scriptPlatformProxy = new MutablePropertyProxy<JavaPlatform>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
+            @Override
+            public MutableProperty<JavaPlatform> getProperty() {
+                return this.getProperties().getScriptPlatform();
+            }
+        });
+        this.gradleHomeProxy = new MutablePropertyProxy<File>(new ProjectMutablePropertyRef<File>(this) {
+            @Override
+            public MutableProperty<File> getProperty() {
+                return this.getProperties().getGradleHome();
             }
         });
         this.sourceEncodingProxy = new MutablePropertyProxy<Charset>(new ProjectMutablePropertyRef<Charset>(this) {
@@ -138,6 +152,16 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     @Override
     public MutableProperty<JavaPlatform> getPlatform() {
         return platformProxy;
+    }
+
+    @Override
+    public MutableProperty<JavaPlatform> getScriptPlatform() {
+        return scriptPlatformProxy;
+    }
+
+    @Override
+    public MutableProperty<File> getGradleHome() {
+        return gradleHomeProxy;
     }
 
     @Override

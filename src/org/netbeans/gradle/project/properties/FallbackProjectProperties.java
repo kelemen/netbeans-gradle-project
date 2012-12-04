@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,8 @@ extends
 
     private final MutableProperty<String> sourceLevel;
     private final MutableProperty<JavaPlatform> platform;
+    private final MutableProperty<JavaPlatform> scriptPlatform;
+    private final MutableProperty<File> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
 
@@ -34,6 +37,14 @@ extends
         this.platform = new FallbackProperty<JavaPlatform>(
                 mainProperties.getPlatform(),
                 defaultProperties.getPlatform());
+
+        this.scriptPlatform = new FallbackProperty<JavaPlatform>(
+                mainProperties.getScriptPlatform(),
+                defaultProperties.getScriptPlatform());
+
+        this.gradleHome = new FallbackProperty<File>(
+                mainProperties.getGradleHome(),
+                defaultProperties.getGradleHome());
 
         this.sourceEncoding = new FallbackProperty<Charset>(
                 mainProperties.getSourceEncoding(),
@@ -62,6 +73,16 @@ extends
     @Override
     public MutableProperty<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
+    }
+
+    @Override
+    public MutableProperty<JavaPlatform> getScriptPlatform() {
+        return scriptPlatform;
+    }
+
+    @Override
+    public MutableProperty<File> getGradleHome() {
+        return gradleHome;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,8 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 public final class PropertiesSnapshot {
     private static final Logger LOGGER = Logger.getLogger(PropertiesSnapshot.class.getName());
@@ -17,6 +21,8 @@ public final class PropertiesSnapshot {
     public static final class Builder {
         private PropertySource<String> sourceLevel;
         private PropertySource<JavaPlatform> platform;
+        private PropertySource<JavaPlatform> scriptPlatform;
+        private PropertySource<File> gradleHome;
         private PropertySource<Charset> sourceEncoding;
         private PropertySource<List<PredefinedTask>> commonTasks;
         private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
@@ -25,6 +31,8 @@ public final class PropertiesSnapshot {
             this.platform = null;
             this.sourceEncoding = null;
             this.sourceLevel = null;
+            this.scriptPlatform = null;
+            this.gradleHome = null;
             this.commonTasks = null;
             this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>();
         }
@@ -67,6 +75,52 @@ public final class PropertiesSnapshot {
             this.platform = platform;
         }
 
+        public PropertySource<JavaPlatform> getScriptPlatform() {
+            return scriptPlatform != null
+                    ? scriptPlatform
+                    : wrapSource(getPlatform(), true);
+        }
+
+        public void setScriptPlatform(PropertySource<JavaPlatform> scriptPlatform) {
+            if (scriptPlatform == null) throw new NullPointerException("scriptPlatform");
+            this.scriptPlatform = scriptPlatform;
+        }
+
+        private static PropertySource<File> getGlobalGradleHomeAsFile(final boolean defaultValue) {
+            return new PropertySource<File>() {
+                @Override
+                public File getValue() {
+                    FileObject dir = GlobalGradleSettings.getGradleHome().getValue();
+                    return dir != null ? FileUtil.toFile(dir) : null;
+                }
+
+                @Override
+                public boolean isDefault() {
+                    return defaultValue;
+                }
+
+                @Override
+                public void addChangeListener(ChangeListener listener) {
+                    GlobalGradleSettings.getGradleHome().addChangeListener(listener);
+                }
+
+                @Override
+                public void removeChangeListener(ChangeListener listener) {
+                    GlobalGradleSettings.getGradleHome().removeChangeListener(listener);
+                }
+            };
+        }
+
+        public PropertySource<File> getGradleHome() {
+            return gradleHome != null
+                    ? gradleHome
+                    : getGlobalGradleHomeAsFile(true);
+        }
+
+        public void setGradleHome(PropertySource<File> gradleHome) {
+            this.gradleHome = gradleHome;
+        }
+
         public PropertySource<Charset> getSourceEncoding() {
             return sourceEncoding != null
                     ? sourceEncoding
@@ -96,6 +150,8 @@ public final class PropertiesSnapshot {
 
     private final PropertySource<String> sourceLevel;
     private final PropertySource<JavaPlatform> platform;
+    private final PropertySource<JavaPlatform> scriptPlatform;
+    private final PropertySource<File> gradleHome;
     private final PropertySource<Charset> sourceEncoding;
     private final PropertySource<List<PredefinedTask>> commonTasks;
     private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
@@ -103,6 +159,8 @@ public final class PropertiesSnapshot {
     public PropertiesSnapshot(ProjectProperties properties) {
         this.sourceLevel = asConst(properties.getSourceLevel());
         this.platform = asConst(properties.getPlatform());
+        this.scriptPlatform = asConst(properties.getScriptPlatform());
+        this.gradleHome = asConst(properties.getGradleHome());
         this.sourceEncoding = asConst(properties.getSourceEncoding());
         this.commonTasks = asConst(properties.getCommonTasks());
 
@@ -123,6 +181,34 @@ public final class PropertiesSnapshot {
         return asConst(property.getValue(), property.isDefault());
     }
 
+    private static <ValueType> PropertySource<ValueType> wrapSource(
+            final PropertySource<ValueType> source,
+            final boolean defaultValue) {
+        assert source != null;
+
+        return new PropertySource<ValueType>() {
+            @Override
+            public ValueType getValue() {
+                return source.getValue();
+            }
+
+            @Override
+            public boolean isDefault() {
+                return defaultValue;
+            }
+
+            @Override
+            public void addChangeListener(ChangeListener listener) {
+                source.addChangeListener(listener);
+            }
+
+            @Override
+            public void removeChangeListener(ChangeListener listener) {
+                source.removeChangeListener(listener);
+            }
+        };
+    }
+
     private static <ValueType> PropertySource<ValueType> asConstNullForNull(ValueType value, boolean defaultValue) {
         return value != null ? asConst(value, defaultValue) : null;
     }
@@ -134,6 +220,8 @@ public final class PropertiesSnapshot {
     private PropertiesSnapshot(Builder builder) {
         this.sourceLevel = builder.getSourceLevel();
         this.platform = builder.getPlatform();
+        this.scriptPlatform = builder.getScriptPlatform();
+        this.gradleHome = builder.getGradleHome();
         this.sourceEncoding = builder.getSourceEncoding();
         this.commonTasks = builder.getCommonTasks();
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(builder.builtInTasks);
@@ -145,6 +233,14 @@ public final class PropertiesSnapshot {
 
     public PropertySource<JavaPlatform> getPlatform() {
         return platform;
+    }
+
+    public PropertySource<JavaPlatform> getScriptPlatform() {
+        return scriptPlatform;
+    }
+
+    public PropertySource<File> getGradleHome() {
+        return gradleHome;
     }
 
     public PropertySource<Charset> getSourceEncoding() {

@@ -47,6 +47,10 @@ final class XmlPropertyFormat {
     private static final String PLATFORM_NODE = "target-platform";
     private static final String SOURCE_LEVEL_NODE = "source-level";
     private static final String COMMON_TASKS_NODE = "common-tasks";
+    private static final String SCRIPT_PLATFORM_NODE = "script-platform";
+    private static final String GENERIC_PLATFORM_NAME_NODE = "spec-name";
+    private static final String GENERIC_PLATFORM_VERSION_NODE = "spec-version";
+    private static final String GRADLE_HOME_NODE = "gradle-home";
     private static final String BUILT_IN_TASKS_NODE = "built-in-tasks";
     private static final String TASK_DISPLAY_NAME_NODE = "display-name";
     private static final String TASK_NON_BLOCKING_NODE = "non-blocking";
@@ -140,6 +144,13 @@ final class XmlPropertyFormat {
         }
     }
 
+    private static void addGenericPlatform(Node node, String nodeName, JavaPlatform platform) {
+        Element platformNode = addChild(node, nodeName);
+
+        addSimpleChild(platformNode, GENERIC_PLATFORM_NAME_NODE, platform.getSpecification().getName());
+        addSimpleChild(platformNode, GENERIC_PLATFORM_VERSION_NODE, platform.getSpecification().getVersion().toString());
+    }
+
     public static void saveToXml(File propertyfile, PropertiesSnapshot snapshot) {
         if (propertyfile == null) throw new NullPointerException("propertyfile");
         if (snapshot == null) throw new NullPointerException("snapshot");
@@ -181,6 +192,18 @@ final class XmlPropertyFormat {
             List<PredefinedTask> commonTasks = snapshot.getCommonTasks().getValue();
             if (!commonTasks.isEmpty()) {
                 addCommonTasks(root, commonTasks);
+            }
+        }
+
+        if (!snapshot.getScriptPlatform().isDefault()) {
+            JavaPlatform scriptPlatform = snapshot.getScriptPlatform().getValue();
+            addGenericPlatform(root, SCRIPT_PLATFORM_NODE, scriptPlatform);
+        }
+
+        if (!snapshot.getGradleHome().isDefault()) {
+            File gradleHome = snapshot.getGradleHome().getValue();
+            if (gradleHome != null) {
+                addSimpleChild(root, GRADLE_HOME_NODE, gradleHome.getPath());
             }
         }
 
@@ -306,6 +329,24 @@ final class XmlPropertyFormat {
         return readTasks(BUILT_IN_TASKS_NODE, root);
     }
 
+    private static PropertySource<JavaPlatform> readPlatform(Element root, String nodeName) {
+        Element platformNode = getFirstChildByTagName(root, nodeName);
+        if (platformNode == null) {
+            return null;
+        }
+
+        String platformName = tryGetValueOfNode(platformNode, GENERIC_PLATFORM_NAME_NODE);
+        if (platformName == null) {
+            platformName = DEFAULT_SPECIFICATION_NAME;
+        }
+
+        String versionStr = tryGetValueOfNode(platformNode, GENERIC_PLATFORM_VERSION_NODE);
+        if (versionStr != null) {
+            return DefaultPropertySources.findPlatformSource(platformName, versionStr, false);
+        }
+        return null;
+    }
+
     public static PropertiesSnapshot readFromXml(File propertiesFile) {
         PropertiesSnapshot.Builder result = new PropertiesSnapshot.Builder();
 
@@ -355,6 +396,17 @@ final class XmlPropertyFormat {
         String platformStr = tryGetValueOfNode(root, PLATFORM_NODE);
         if (platformStr != null) {
             result.setPlatform(DefaultPropertySources.findPlatformSource(platformName, platformStr, false));
+        }
+
+        String gradleHomeStr = tryGetValueOfNode(root, GRADLE_HOME_NODE);
+        if (gradleHomeStr != null) {
+            File gradleHome = !gradleHomeStr.isEmpty() ? new File(gradleHomeStr.trim()) : null;
+            result.setGradleHome(asConst(gradleHome, false));
+        }
+
+        PropertySource<JavaPlatform> scriptPlatform = readPlatform(root, SCRIPT_PLATFORM_NODE);
+        if (scriptPlatform != null) {
+            result.setScriptPlatform(scriptPlatform);
         }
 
         List<PredefinedTask> commonTasks = Collections.unmodifiableList(readCommonTasks(root));

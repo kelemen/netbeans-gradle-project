@@ -102,6 +102,18 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 return snapshot.getCommonTasks();
             }
         }));
+        setters.add(newPropertySetter(properties.getScriptPlatform(), new PropertyGetter<JavaPlatform>() {
+            @Override
+            public PropertySource<JavaPlatform> get(PropertiesSnapshot snapshot) {
+                return snapshot.getScriptPlatform();
+            }
+        }));
+        setters.add(newPropertySetter(properties.getGradleHome(), new PropertyGetter<File>() {
+            @Override
+            public PropertySource<File> get(PropertiesSnapshot snapshot) {
+                return snapshot.getGradleHome();
+            }
+        }));
         for (final String command: AbstractProjectProperties.getCustomizableCommands()) {
             MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
             if (taskProperty == null) {

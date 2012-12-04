@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,6 +13,8 @@ import org.netbeans.gradle.project.tasks.BuiltInTasks;
 public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<String> sourceLevel;
     private final MutableProperty<JavaPlatform> platform;
+    private final MutableProperty<JavaPlatform> scriptPlatform;
+    private final MutableProperty<File> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
     private final Map<String, MutableProperty<PredefinedTask>> builtInTasks;
@@ -20,6 +23,8 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         JavaPlatform defaultPlatform = JavaPlatform.getDefault();
         this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), true, false);
         this.platform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
+        this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
+        this.gradleHome = new DefaultMutableProperty<File>(null, true, true);
         this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, true, false);
         this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList(), true);
 
@@ -40,6 +45,16 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     @Override
     public MutableProperty<JavaPlatform> getPlatform() {
         return platform;
+    }
+
+    @Override
+    public MutableProperty<JavaPlatform> getScriptPlatform() {
+        return scriptPlatform;
+    }
+
+    @Override
+    public MutableProperty<File> getGradleHome() {
+        return gradleHome;
     }
 
     @Override
