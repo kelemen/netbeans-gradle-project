@@ -136,7 +136,20 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleModel getAvailableModel() {
-        return currentModelRef.get();
+        NbGradleModel result = currentModelRef.get();
+        // This is not a completely correct solution. The correct
+        // solution would be to listen when the model becomes dirty (based on
+        // the directory of the project). The problem is that there is no place
+        // to unregister such listener.
+        //
+        // However this should work in most practical cases since
+        // getAvailableModel() often gets called.
+        if (result.isDirty()) {
+            // Set a non-dirty to prevent many unnecessary project reload.
+            currentModelRef.set(result.createNonDirtyCopy());
+            reloadProject(true);
+        }
+        return result;
     }
 
     public NbGradleModel getCurrentModel() {

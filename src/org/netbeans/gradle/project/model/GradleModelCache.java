@@ -66,12 +66,17 @@ public final class GradleModelCache {
 
         CacheKey key = new CacheKey(projectDir, settingsFile);
 
+        NbGradleModel prevModel;
         cacheLock.lock();
         try {
-            cache.put(key, model);
+            prevModel = cache.put(key, model);
             cleanupCache();
         } finally {
             cacheLock.unlock();
+        }
+
+        if (prevModel != null) {
+            prevModel.setDirty();
         }
     }
 

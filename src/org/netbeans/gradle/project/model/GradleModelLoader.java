@@ -95,9 +95,14 @@ public final class GradleModelLoader {
             return null;
         }
 
-        return projectDirFile != null
+        NbGradleModel result = projectDirFile != null
                 ? CACHE.tryGet(projectDirFile, settingsFile)
                 : null;
+
+        if (result != null && result.isDirty()) {
+            result = null;
+        }
+        return result;
     }
 
     public static void fetchModel(

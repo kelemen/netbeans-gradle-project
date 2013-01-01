@@ -13,6 +13,7 @@ public final class NbGradleModel {
     private final FileObject projectDir;
     private final FileObject buildFile;
     private final FileObject settingsFile;
+    private volatile boolean dirty;
 
     private final NbGradleModule mainModule;
 
@@ -42,6 +43,7 @@ public final class NbGradleModel {
 
         this.buildFile = buildFile;
         this.settingsFile = settingsFile;
+        this.dirty = false;
     }
 
     public static FileObject getBuildFile(FileObject projectDir) {
@@ -60,6 +62,18 @@ public final class NbGradleModel {
         else {
             return findSettingsGradle(projectDir.getParent());
         }
+    }
+
+    public void setDirty() {
+        this.dirty = true;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public NbGradleModel createNonDirtyCopy() {
+        return new NbGradleModel(projectDir, buildFile, settingsFile, mainModule);
     }
 
     public FileObject getProjectDir() {
