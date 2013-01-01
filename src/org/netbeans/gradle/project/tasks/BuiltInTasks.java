@@ -70,7 +70,7 @@ public final class BuiltInTasks {
             asTaskNames(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("-Dtest.single=" + PredefinedTask.VAR_TEST_FILE_PATH, "-Dtest.debug"),
             Collections.<String>emptyList(),
-            true);
+            false);
     public static final PredefinedTask DEFAULT_RUN_SINGLE_TASK = new PredefinedTask(
             ActionProvider.COMMAND_RUN_SINGLE,
             asTaskNames(projectTask("run")),
