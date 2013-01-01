@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -109,8 +108,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void initFromProperties(ProjectProperties properties) {
-        File gradleHome = properties.getGradleHome().getValue();
-        jGradleHomeEdit.setText(gradleHome != null ? gradleHome.getPath() : "");
+        String gradleHome = AbstractProjectProperties.gradleLocationToString(properties.getGradleHome().getValue());
+        jGradleHomeEdit.setText(gradleHome != null ? gradleHome : "");
         jGradleHomeInherit.setSelected(properties.getGradleHome().isDefault());
 
         JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();
@@ -318,7 +317,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         String gradleHomeStr = jGradleHomeEdit.getText().trim();
-        File gradleHome = gradleHomeStr.isEmpty() ? null : new File(gradleHomeStr);
+        GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
         properties.getGradleHome().setValueFromSource(asConst(gradleHome, jGradleHomeInherit.isSelected()));
 
         PlatformComboItem selectedScriptPlatform = (PlatformComboItem)jScriptPlatformCombo.getSelectedItem();

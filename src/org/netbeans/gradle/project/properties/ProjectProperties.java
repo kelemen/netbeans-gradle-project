@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
@@ -22,7 +21,7 @@ public interface ProjectProperties {
     public MutableProperty<String> getSourceLevel();
     public MutableProperty<JavaPlatform> getPlatform();
     public MutableProperty<JavaPlatform> getScriptPlatform();
-    public MutableProperty<File> getGradleHome();
+    public MutableProperty<GradleLocation> getGradleHome();
     public MutableProperty<Charset> getSourceEncoding();
     public MutableProperty<List<PredefinedTask>> getCommonTasks();
 

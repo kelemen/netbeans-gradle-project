@@ -31,7 +31,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<String> sourceLevelProxy;
     private final MutablePropertyProxy<JavaPlatform> platformProxy;
     private final MutablePropertyProxy<JavaPlatform> scriptPlatformProxy;
-    private final MutablePropertyProxy<File> gradleHomeProxy;
+    private final MutablePropertyProxy<GradleLocation> gradleHomeProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
     private final Map<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
@@ -62,9 +62,9 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                 return this.getProperties().getScriptPlatform();
             }
         });
-        this.gradleHomeProxy = new MutablePropertyProxy<File>(new ProjectMutablePropertyRef<File>(this) {
+        this.gradleHomeProxy = new MutablePropertyProxy<GradleLocation>(new ProjectMutablePropertyRef<GradleLocation>(this) {
             @Override
-            public MutableProperty<File> getProperty() {
+            public MutableProperty<GradleLocation> getProperty() {
                 return this.getProperties().getGradleHome();
             }
         });
@@ -160,7 +160,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<File> getGradleHome() {
+    public MutableProperty<GradleLocation> getGradleHome() {
         return gradleHomeProxy;
     }
 

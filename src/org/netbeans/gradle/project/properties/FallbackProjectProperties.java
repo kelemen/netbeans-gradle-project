@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,7 @@ extends
     private final MutableProperty<String> sourceLevel;
     private final MutableProperty<JavaPlatform> platform;
     private final MutableProperty<JavaPlatform> scriptPlatform;
-    private final MutableProperty<File> gradleHome;
+    private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
 
@@ -42,7 +41,7 @@ extends
                 mainProperties.getScriptPlatform(),
                 defaultProperties.getScriptPlatform());
 
-        this.gradleHome = new FallbackProperty<File>(
+        this.gradleHome = new FallbackProperty<GradleLocation>(
                 mainProperties.getGradleHome(),
                 defaultProperties.getGradleHome());
 
@@ -81,7 +80,7 @@ extends
     }
 
     @Override
-    public MutableProperty<File> getGradleHome() {
+    public MutableProperty<GradleLocation> getGradleHome() {
         return gradleHome;
     }
 

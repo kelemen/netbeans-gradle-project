@@ -28,6 +28,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
+import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.netbeans.gradle.project.properties.PropertySource;
@@ -201,9 +202,9 @@ final class XmlPropertyFormat {
         }
 
         if (!snapshot.getGradleHome().isDefault()) {
-            File gradleHome = snapshot.getGradleHome().getValue();
+            String gradleHome = AbstractProjectProperties.gradleLocationToString(snapshot.getGradleHome().getValue());
             if (gradleHome != null) {
-                addSimpleChild(root, GRADLE_HOME_NODE, gradleHome.getPath());
+                addSimpleChild(root, GRADLE_HOME_NODE, gradleHome);
             }
         }
 
@@ -400,7 +401,7 @@ final class XmlPropertyFormat {
 
         String gradleHomeStr = tryGetValueOfNode(root, GRADLE_HOME_NODE);
         if (gradleHomeStr != null) {
-            File gradleHome = !gradleHomeStr.isEmpty() ? new File(gradleHomeStr.trim()) : null;
+            GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
             result.setGradleHome(asConst(gradleHome, false));
         }
 

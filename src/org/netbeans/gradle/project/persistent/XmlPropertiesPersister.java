@@ -14,6 +14,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -108,9 +109,9 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 return snapshot.getScriptPlatform();
             }
         }));
-        setters.add(newPropertySetter(properties.getGradleHome(), new PropertyGetter<File>() {
+        setters.add(newPropertySetter(properties.getGradleHome(), new PropertyGetter<GradleLocation>() {
             @Override
-            public PropertySource<File> get(PropertiesSnapshot snapshot) {
+            public PropertySource<GradleLocation> get(PropertiesSnapshot snapshot) {
                 return snapshot.getGradleHome();
             }
         }));

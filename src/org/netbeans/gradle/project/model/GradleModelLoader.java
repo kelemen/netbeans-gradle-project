@@ -40,6 +40,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.openide.filesystems.FileObject;
@@ -74,12 +75,23 @@ public final class GradleModelLoader {
     }
 
     public static GradleConnector createGradleConnector(NbGradleProject project) {
-        GradleConnector result = GradleConnector.newConnector();
-        File gradleHome = project.getProperties().getGradleHome().getValue();
+        final GradleConnector result = GradleConnector.newConnector();
 
-        if (gradleHome != null && !gradleHome.getPath().isEmpty()) {
-            result.useInstallation(gradleHome);
-        }
+        project.getProperties().getGradleHome().getValue().applyLocation(new GradleLocation.Applier() {
+            @Override
+            public void applyVersion(String versionStr) {
+                result.useGradleVersion(versionStr);
+            }
+
+            @Override
+            public void applyDirectory(File gradleHome) {
+                result.useInstallation(gradleHome);
+            }
+
+            @Override
+            public void applyDefault() {
+            }
+        });
 
         return result;
     }

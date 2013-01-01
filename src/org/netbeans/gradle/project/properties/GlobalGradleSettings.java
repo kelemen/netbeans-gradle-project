@@ -25,7 +25,7 @@ import org.openide.util.NbPreferences;
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
-    private static final StringBasedProperty<FileObject> GRADLE_HOME;
+    private static final StringBasedProperty<GradleLocation> GRADLE_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
     private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
     private static final StringBasedProperty<Boolean> SKIP_TESTS;
@@ -34,7 +34,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
 
     static {
-        GRADLE_HOME = new GlobalProperty<FileObject>("gradle-home", FileObjectConverter.INSTANCE);
+        GRADLE_HOME = new GlobalProperty<GradleLocation>("gradle-home", GradleLocationConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
         SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
@@ -43,7 +43,20 @@ public final class GlobalGradleSettings {
         OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
     }
 
-    public static StringBasedProperty<FileObject> getGradleHome() {
+    public static File getGradleInstallationAsFile() {
+        GradleLocation location = GRADLE_HOME.getValue();
+        if (location instanceof GradleLocationDirectory) {
+            return ((GradleLocationDirectory)location).getGradleHome();
+        }
+        return null;
+    }
+
+    public static FileObject getGradleInstallation() {
+        File result = getGradleInstallationAsFile();
+        return result != null ? FileUtil.toFileObject(result) : null;
+    }
+
+    public static StringBasedProperty<GradleLocation> getGradleHome() {
         return GRADLE_HOME;
     }
 
@@ -250,30 +263,22 @@ public final class GlobalGradleSettings {
         }
     }
 
-    private enum FileObjectConverter implements ValueConverter<FileObject> {
+    private enum GradleLocationConverter implements ValueConverter<GradleLocation> {
         INSTANCE;
 
         @Override
-        public FileObject toValue(String strValue) {
-            String gradleHome = strValue != null ? strValue.trim() : "";
-            if (gradleHome.isEmpty())  {
-                return null;
+        public GradleLocation toValue(String strValue) {
+            if (strValue == null)  {
+                return GradleLocationDefault.INSTANCE;
             }
-            return FileUtil.toFileObject(FileUtil.normalizeFile(new File(gradleHome)));
+            return AbstractProjectProperties.getGradleLocationFromString(strValue);
         }
 
         @Override
-        public String toString(FileObject value) {
-            if (value == null) {
-                return null;
-            }
-
-            File fileValue = FileUtil.toFile(value);
-            if (fileValue == null) {
-                return null;
-            }
-
-            return fileValue.getPath();
+        public String toString(GradleLocation value) {
+            return value != null
+                    ? AbstractProjectProperties.gradleLocationToString(value)
+                    : null;
         }
     }
 

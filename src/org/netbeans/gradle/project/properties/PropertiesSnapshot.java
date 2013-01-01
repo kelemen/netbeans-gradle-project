@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,8 +11,6 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class PropertiesSnapshot {
     private static final Logger LOGGER = Logger.getLogger(PropertiesSnapshot.class.getName());
@@ -22,7 +19,7 @@ public final class PropertiesSnapshot {
         private PropertySource<String> sourceLevel;
         private PropertySource<JavaPlatform> platform;
         private PropertySource<JavaPlatform> scriptPlatform;
-        private PropertySource<File> gradleHome;
+        private PropertySource<GradleLocation> gradleHome;
         private PropertySource<Charset> sourceEncoding;
         private PropertySource<List<PredefinedTask>> commonTasks;
         private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
@@ -86,12 +83,11 @@ public final class PropertiesSnapshot {
             this.scriptPlatform = scriptPlatform;
         }
 
-        private static PropertySource<File> getGlobalGradleHomeAsFile(final boolean defaultValue) {
-            return new PropertySource<File>() {
+        private static PropertySource<GradleLocation> getGlobalGradleHomeAsFile(final boolean defaultValue) {
+            return new PropertySource<GradleLocation>() {
                 @Override
-                public File getValue() {
-                    FileObject dir = GlobalGradleSettings.getGradleHome().getValue();
-                    return dir != null ? FileUtil.toFile(dir) : null;
+                public GradleLocation getValue() {
+                    return GlobalGradleSettings.getGradleHome().getValue();
                 }
 
                 @Override
@@ -111,13 +107,13 @@ public final class PropertiesSnapshot {
             };
         }
 
-        public PropertySource<File> getGradleHome() {
+        public PropertySource<GradleLocation> getGradleHome() {
             return gradleHome != null
                     ? gradleHome
                     : getGlobalGradleHomeAsFile(true);
         }
 
-        public void setGradleHome(PropertySource<File> gradleHome) {
+        public void setGradleHome(PropertySource<GradleLocation> gradleHome) {
             this.gradleHome = gradleHome;
         }
 
@@ -151,7 +147,7 @@ public final class PropertiesSnapshot {
     private final PropertySource<String> sourceLevel;
     private final PropertySource<JavaPlatform> platform;
     private final PropertySource<JavaPlatform> scriptPlatform;
-    private final PropertySource<File> gradleHome;
+    private final PropertySource<GradleLocation> gradleHome;
     private final PropertySource<Charset> sourceEncoding;
     private final PropertySource<List<PredefinedTask>> commonTasks;
     private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
@@ -239,7 +235,7 @@ public final class PropertiesSnapshot {
         return scriptPlatform;
     }
 
-    public PropertySource<File> getGradleHome() {
+    public PropertySource<GradleLocation> getGradleHome() {
         return gradleHome;
     }
 

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,46 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
 
     public static Set<String> getCustomizableCommands() {
         return CUSTOMIZABLE_TASKS;
+    }
+
+    public static GradleLocation getGradleLocationFromString(String gradleLocation) {
+        // TODO: implement "?VER=
+        if (gradleLocation == null) throw new NullPointerException("gradleLocation");
+
+        String location = gradleLocation.trim();
+        if (location.isEmpty()) {
+            return GradleLocationDefault.INSTANCE;
+        }
+
+        if (location.startsWith("?")) {
+            int sepIndex = location.indexOf('=');
+            if (sepIndex >= 0) {
+                String typeName = location.substring(1, sepIndex).trim();
+                String value = location.substring(sepIndex + 1, location.length());
+
+                if (GradleLocationDefault.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
+                    return GradleLocationDefault.INSTANCE;
+                }
+                if (GradleLocationVersion.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
+                    return new GradleLocationVersion(value);
+                }
+                if (GradleLocationDirectory.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
+                    return new GradleLocationDirectory(new File(value));
+                }
+            }
+        }
+
+        return new GradleLocationDirectory(new File(location));
+    }
+
+    public static String gradleLocationToString(GradleLocation gradleLocation) {
+        String value = gradleLocation.asString();
+        if (value == null) {
+            return null;
+        }
+
+        String typeName = gradleLocation.getUniqueTypeName();
+        return "?" + typeName + "=" + value;
     }
 
     @Override
