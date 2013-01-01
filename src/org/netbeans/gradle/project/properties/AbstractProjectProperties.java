@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +70,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
             int sepIndex = location.indexOf('=');
             if (sepIndex >= 0) {
                 String typeName = location.substring(1, sepIndex).trim();
-                String value = location.substring(sepIndex + 1, location.length());
+                String value = location.substring(sepIndex + 1, location.length()).trim();
 
                 if (GradleLocationDefault.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
                     return GradleLocationDefault.INSTANCE;
@@ -78,6 +80,13 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
                 }
                 if (GradleLocationDirectory.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
                     return new GradleLocationDirectory(new File(value));
+                }
+                if (GradleLocationDistribution.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
+                    try {
+                        return new GradleLocationDistribution(new URI(value));
+                    } catch (URISyntaxException ex) {
+                        LOGGER.log(Level.INFO, "Invalid URI for Gradle distribution: " + value, ex);
+                    }
                 }
             }
         }

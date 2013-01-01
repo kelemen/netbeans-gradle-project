@@ -89,6 +89,11 @@ public final class GradleModelLoader {
             }
 
             @Override
+            public void applyDistribution(URI location) {
+                result.useDistribution(location);
+            }
+
+            @Override
             public void applyDefault() {
             }
         });
