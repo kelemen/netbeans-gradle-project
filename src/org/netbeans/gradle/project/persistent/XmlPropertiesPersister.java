@@ -109,7 +109,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 return snapshot.getScriptPlatform();
             }
         }));
-        setters.add(newPropertySetter(properties.getGradleHome(), new PropertyGetter<GradleLocation>() {
+        setters.add(newPropertySetter(properties.getGradleLocation(), new PropertyGetter<GradleLocation>() {
             @Override
             public PropertySource<GradleLocation> get(PropertiesSnapshot snapshot) {
                 return snapshot.getGradleHome();

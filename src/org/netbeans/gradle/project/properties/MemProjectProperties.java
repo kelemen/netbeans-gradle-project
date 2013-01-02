@@ -52,7 +52,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleHome() {
+    public MutableProperty<GradleLocation> getGradleLocation() {
         return gradleHome;
     }
 

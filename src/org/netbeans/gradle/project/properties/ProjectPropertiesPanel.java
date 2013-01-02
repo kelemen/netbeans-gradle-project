@@ -108,9 +108,9 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void initFromProperties(ProjectProperties properties) {
-        String gradleHome = AbstractProjectProperties.gradleLocationToString(properties.getGradleHome().getValue());
+        String gradleHome = AbstractProjectProperties.gradleLocationToString(properties.getGradleLocation().getValue());
         jGradleHomeEdit.setText(gradleHome != null ? gradleHome : "");
-        jGradleHomeInherit.setSelected(properties.getGradleHome().isDefault());
+        jGradleHomeInherit.setSelected(properties.getGradleLocation().isDefault());
 
         JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();
         jScriptPlatformCombo.setSelectedItem(new PlatformComboItem(currentScriptPlatform));
@@ -293,7 +293,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             ProjectProperties dest = project.getPropertiesForProfile(entry.getKey().getProfileName(), false, null);
 
             copyProperty(src.getScriptPlatform(), dest.getScriptPlatform());
-            copyProperty(src.getGradleHome(), dest.getGradleHome());
+            copyProperty(src.getGradleLocation(), dest.getGradleLocation());
             copyProperty(src.getPlatform(), dest.getPlatform());
             copyProperty(src.getSourceEncoding(), dest.getSourceEncoding());
             copyProperty(src.getSourceLevel(), dest.getSourceLevel());
@@ -318,7 +318,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         String gradleHomeStr = jGradleHomeEdit.getText().trim();
         GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
-        properties.getGradleHome().setValueFromSource(asConst(gradleHome, jGradleHomeInherit.isSelected()));
+        properties.getGradleLocation().setValueFromSource(asConst(gradleHome, jGradleHomeInherit.isSelected()));
 
         PlatformComboItem selectedScriptPlatform = (PlatformComboItem)jScriptPlatformCombo.getSelectedItem();
         if (selectedScriptPlatform != null) {

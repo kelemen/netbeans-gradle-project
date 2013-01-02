@@ -25,7 +25,7 @@ import org.openide.util.NbPreferences;
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
-    private static final StringBasedProperty<GradleLocation> GRADLE_HOME;
+    private static final StringBasedProperty<GradleLocation> GRADLE_LOCATION;
     private static final StringBasedProperty<File> GRADLE_USER_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
     private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
@@ -37,7 +37,7 @@ public final class GlobalGradleSettings {
     static {
         // "gradle-home" is probably not the best name but it must remain so
         // for backward compatibility reason.
-        GRADLE_HOME = new GlobalProperty<GradleLocation>("gradle-home", GradleLocationConverter.INSTANCE);
+        GRADLE_LOCATION = new GlobalProperty<GradleLocation>("gradle-home", GradleLocationConverter.INSTANCE);
         GRADLE_USER_HOME = new GlobalProperty<File>("gradle-user-home", FileConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
@@ -48,14 +48,14 @@ public final class GlobalGradleSettings {
     }
 
     public static File getGradleInstallationAsFile() {
-        GradleLocation location = GRADLE_HOME.getValue();
+        GradleLocation location = GRADLE_LOCATION.getValue();
         if (location instanceof GradleLocationDirectory) {
             return ((GradleLocationDirectory)location).getGradleHome();
         }
         return null;
     }
 
-    public static FileObject getGradleInstallation() {
+    public static FileObject getGradleLocation() {
         File result = getGradleInstallationAsFile();
         return result != null ? FileUtil.toFileObject(result) : null;
     }
@@ -65,7 +65,7 @@ public final class GlobalGradleSettings {
     }
 
     public static StringBasedProperty<GradleLocation> getGradleHome() {
-        return GRADLE_HOME;
+        return GRADLE_LOCATION;
     }
 
     public static StringBasedProperty<List<String>> getGradleJvmArgs() {

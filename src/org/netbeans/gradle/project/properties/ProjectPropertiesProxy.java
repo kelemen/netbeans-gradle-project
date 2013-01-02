@@ -65,7 +65,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.gradleHomeProxy = new MutablePropertyProxy<GradleLocation>(new ProjectMutablePropertyRef<GradleLocation>(this) {
             @Override
             public MutableProperty<GradleLocation> getProperty() {
-                return this.getProperties().getGradleHome();
+                return this.getProperties().getGradleLocation();
             }
         });
         this.sourceEncodingProxy = new MutablePropertyProxy<Charset>(new ProjectMutablePropertyRef<Charset>(this) {
@@ -160,7 +160,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleHome() {
+    public MutableProperty<GradleLocation> getGradleLocation() {
         return gradleHomeProxy;
     }
 

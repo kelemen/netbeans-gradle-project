@@ -42,8 +42,8 @@ extends
                 defaultProperties.getScriptPlatform());
 
         this.gradleHome = new FallbackProperty<GradleLocation>(
-                mainProperties.getGradleHome(),
-                defaultProperties.getGradleHome());
+                mainProperties.getGradleLocation(),
+                defaultProperties.getGradleLocation());
 
         this.sourceEncoding = new FallbackProperty<Charset>(
                 mainProperties.getSourceEncoding(),
@@ -80,7 +80,7 @@ extends
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleHome() {
+    public MutableProperty<GradleLocation> getGradleLocation() {
         return gradleHome;
     }
 

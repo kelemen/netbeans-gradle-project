@@ -41,7 +41,7 @@ public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQuer
             return null;
         }
 
-        FileObject gradleHomeObj = GlobalGradleSettings.getGradleInstallation();
+        FileObject gradleHomeObj = GlobalGradleSettings.getGradleLocation();
         if (gradleHomeObj == null) {
             return null;
         }

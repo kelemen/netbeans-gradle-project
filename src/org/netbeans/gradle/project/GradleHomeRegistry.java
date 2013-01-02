@@ -67,7 +67,7 @@ public final class GradleHomeRegistry {
                 }
             });
 
-            FileObject gradleHome = GlobalGradleSettings.getGradleInstallation();
+            FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
             if (gradleHome != null) {
                 setGradleHome(gradleHome);
             }

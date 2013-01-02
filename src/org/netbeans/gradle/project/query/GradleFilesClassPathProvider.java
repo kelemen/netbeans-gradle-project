@@ -77,7 +77,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private static URL[] getGradleBinaries() {
-        FileObject gradleHome = GlobalGradleSettings.getGradleInstallation();
+        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
         if (gradleHome == null) {
             return new URL[0];
         }

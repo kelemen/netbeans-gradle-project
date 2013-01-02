@@ -117,7 +117,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        FileObject gradleHome = GlobalGradleSettings.getGradleInstallation();
+        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
         if (gradleHome == null) {
             return null;
         }

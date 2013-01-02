@@ -21,7 +21,7 @@ public interface ProjectProperties {
     public MutableProperty<String> getSourceLevel();
     public MutableProperty<JavaPlatform> getPlatform();
     public MutableProperty<JavaPlatform> getScriptPlatform();
-    public MutableProperty<GradleLocation> getGradleHome();
+    public MutableProperty<GradleLocation> getGradleLocation();
     public MutableProperty<Charset> getSourceEncoding();
     public MutableProperty<List<PredefinedTask>> getCommonTasks();
 

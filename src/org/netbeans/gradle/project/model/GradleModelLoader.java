@@ -117,7 +117,7 @@ public final class GradleModelLoader {
         runOnEDTAndWait(new Runnable() {
             @Override
             public void run() {
-                gradleLocation.set(project.getProperties().getGradleHome().getValue());
+                gradleLocation.set(project.getProperties().getGradleLocation().getValue());
             }
         });
 

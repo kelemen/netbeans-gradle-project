@@ -156,7 +156,7 @@ public final class PropertiesSnapshot {
         this.sourceLevel = asConst(properties.getSourceLevel());
         this.platform = asConst(properties.getPlatform());
         this.scriptPlatform = asConst(properties.getScriptPlatform());
-        this.gradleHome = asConst(properties.getGradleHome());
+        this.gradleHome = asConst(properties.getGradleLocation());
         this.sourceEncoding = asConst(properties.getSourceEncoding());
         this.commonTasks = asConst(properties.getCommonTasks());
 
