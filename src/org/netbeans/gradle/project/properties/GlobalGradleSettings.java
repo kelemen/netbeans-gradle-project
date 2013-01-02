@@ -26,6 +26,7 @@ public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
     private static final StringBasedProperty<GradleLocation> GRADLE_HOME;
+    private static final StringBasedProperty<File> GRADLE_USER_HOME;
     private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
     private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
     private static final StringBasedProperty<Boolean> SKIP_TESTS;
@@ -34,7 +35,10 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
 
     static {
+        // "gradle-home" is probably not the best name but it must remain so
+        // for backward compatibility reason.
         GRADLE_HOME = new GlobalProperty<GradleLocation>("gradle-home", GradleLocationConverter.INSTANCE);
+        GRADLE_USER_HOME = new GlobalProperty<File>("gradle-user-home", FileConverter.INSTANCE);
         GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
         GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
         SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
@@ -54,6 +58,10 @@ public final class GlobalGradleSettings {
     public static FileObject getGradleInstallation() {
         File result = getGradleInstallationAsFile();
         return result != null ? FileUtil.toFileObject(result) : null;
+    }
+
+    public static StringBasedProperty<File> getGradleUserHomeDir() {
+        return GRADLE_USER_HOME;
     }
 
     public static StringBasedProperty<GradleLocation> getGradleHome() {
@@ -260,6 +268,23 @@ public final class GlobalGradleSettings {
                 result.append(path);
             }
             return result.toString();
+        }
+    }
+
+    private enum FileConverter implements ValueConverter<File> {
+        INSTANCE;
+
+        @Override
+        public File toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty())  {
+                return null;
+            }
+            return new File(strValue);
+        }
+
+        @Override
+        public String toString(File value) {
+            return value != null ? value.getPath() : null;
         }
     }
 

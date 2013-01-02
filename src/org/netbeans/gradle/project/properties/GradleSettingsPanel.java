@@ -45,19 +45,28 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jProjectCacheSize.setValue(GlobalGradleSettings.getProjectCacheSize().getValue());
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
+
+        File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+        jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
     }
 
     public final void saveSettings() {
-        GlobalGradleSettings.getGradleHome().setValueFromString(getGradleHome());
+        GlobalGradleSettings.getGradleHome().setValueFromString(getGradleInstallDir());
         GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getGradleJvmArgs());
         GlobalGradleSettings.getGradleJdk().setValue(getJdk());
         GlobalGradleSettings.getSkipTests().setValue(isSkipTests());
         GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
         GlobalGradleSettings.getAlwaysClearOutput().setValue(isAlwaysClearOutput());
         GlobalGradleSettings.getOmitInitScript().setValue(isDontAddInitScript());
+        GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
     }
 
-    private String getGradleHome() {
+    private String getGradleUserHomeDir() {
+        String result = jGradleUserHomeEdit.getText();
+        return result != null ? result.trim() : "";
+    }
+
+    private String getGradleInstallDir() {
         String result = jGradlePathEdit.getText();
         return result != null ? result.trim() : "";
     }
@@ -161,6 +170,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jProjectCacheSizeLabel = new javax.swing.JLabel();
         jAlwayClearOutput = new javax.swing.JCheckBox();
         jDontAddInitScriptCheck = new javax.swing.JCheckBox();
+        jGradleUserHomeCaption = new javax.swing.JLabel();
+        jGradleUserHomeEdit = new javax.swing.JTextField();
+        jBrowseUserHomeDirButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -189,6 +201,17 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jDontAddInitScriptCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jDontAddInitScriptCheck.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jGradleUserHomeCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleUserHomeCaption.text")); // NOI18N
+
+        jGradleUserHomeEdit.setText(org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleUserHomeEdit.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jBrowseUserHomeDirButton, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jBrowseUserHomeDirButton.text")); // NOI18N
+        jBrowseUserHomeDirButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBrowseUserHomeDirButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -198,24 +221,29 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jJdkCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jGradlePathEdit, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jGradlePathCaption, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jBrowsePathButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jDontAddInitScriptCheck)
-                            .addComponent(jSkipTestsCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jProjectCacheSizeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jGradleUserHomeCaption)
+                            .addComponent(jSkipTestsCheck)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                    .addComponent(jProjectCacheSizeLabel)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jDontAddInitScriptCheck))
                             .addComponent(jAlwayClearOutput))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jGradleUserHomeEdit, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jGradlePathEdit, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jGradlePathCaption, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jBrowsePathButton)
+                            .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -228,24 +256,30 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jGradlePathEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jBrowsePathButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jGradleUserHomeCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jGradleUserHomeEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jBrowseUserHomeDirButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleJdkCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jJdkCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSkipTestsCheck)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jProjectCacheSizeLabel)
-                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jProjectCacheSizeLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jAlwayClearOutput)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jDontAddInitScriptCheck)
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -258,14 +292,26 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_jBrowsePathButtonActionPerformed
 
+    private void jBrowseUserHomeDirButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseUserHomeDirButtonActionPerformed
+        FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleSettingsPanel.class);
+        File f = dlgChooser.showOpenDialog();
+        if (f != null && f.isDirectory()) {
+            File file = f.getAbsoluteFile();
+            jBrowseUserHomeDirButton.setText(file.toString());
+        }
+    }//GEN-LAST:event_jBrowseUserHomeDirButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
+    private javax.swing.JButton jBrowseUserHomeDirButton;
     private javax.swing.JCheckBox jDontAddInitScriptCheck;
     private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradleJdkCaption;
     private javax.swing.JLabel jGradlePathCaption;
     private javax.swing.JTextField jGradlePathEdit;
+    private javax.swing.JLabel jGradleUserHomeCaption;
+    private javax.swing.JTextField jGradleUserHomeEdit;
     private javax.swing.JLabel jGradleVMArgsCaption;
     private javax.swing.JComboBox jJdkCombo;
     private javax.swing.JSpinner jProjectCacheSize;

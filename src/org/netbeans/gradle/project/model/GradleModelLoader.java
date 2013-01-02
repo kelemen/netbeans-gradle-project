@@ -108,6 +108,11 @@ public final class GradleModelLoader {
     public static GradleConnector createGradleConnector(final NbGradleProject project) {
         final GradleConnector result = GradleConnector.newConnector();
 
+        File gradleUserHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+        if (gradleUserHome != null) {
+            result.useGradleUserHomeDir(gradleUserHome);
+        }
+
         final AtomicReference<GradleLocation> gradleLocation = new AtomicReference<GradleLocation>();
         runOnEDTAndWait(new Runnable() {
             @Override
