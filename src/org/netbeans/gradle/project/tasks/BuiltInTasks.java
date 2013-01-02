@@ -82,7 +82,7 @@ public final class BuiltInTasks {
             asTaskNames(projectTask("debug")),
             Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
             Collections.<String>emptyList(),
-            true);
+            false);
 
     private static final Map<String, PredefinedTask> DEFAULT_TASKS;
     private static final Map<String, String> DISPLAY_NAME_MAP;
