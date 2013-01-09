@@ -301,9 +301,12 @@ public final class GlobalGradleSettings {
 
         @Override
         public String toString(GradleLocation value) {
-            return value != null
-                    ? AbstractProjectProperties.gradleLocationToString(value)
-                    : null;
+            if (value == null) {
+                return null;
+            }
+
+            String result = AbstractProjectProperties.gradleLocationToString(value);
+            return result.isEmpty() ? null : result;
         }
     }
 

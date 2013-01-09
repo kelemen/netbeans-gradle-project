@@ -97,7 +97,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
     public static String gradleLocationToString(GradleLocation gradleLocation) {
         String value = gradleLocation.asString();
         if (value == null) {
-            return null;
+            return "";
         }
 
         String typeName = gradleLocation.getUniqueTypeName();

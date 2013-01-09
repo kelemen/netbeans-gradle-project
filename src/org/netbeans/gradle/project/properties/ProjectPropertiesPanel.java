@@ -109,7 +109,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
     private void initFromProperties(ProjectProperties properties) {
         String gradleHome = AbstractProjectProperties.gradleLocationToString(properties.getGradleLocation().getValue());
-        jGradleHomeEdit.setText(gradleHome != null ? gradleHome : "");
+        jGradleHomeEdit.setText(gradleHome);
         jGradleHomeInherit.setSelected(properties.getGradleLocation().isDefault());
 
         JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();

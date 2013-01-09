@@ -203,9 +203,7 @@ final class XmlPropertyFormat {
 
         if (!snapshot.getGradleHome().isDefault()) {
             String gradleHome = AbstractProjectProperties.gradleLocationToString(snapshot.getGradleHome().getValue());
-            if (gradleHome != null) {
-                addSimpleChild(root, GRADLE_HOME_NODE, gradleHome);
-            }
+            addSimpleChild(root, GRADLE_HOME_NODE, gradleHome);
         }
 
         addBuiltInTasks(root, snapshot);
