@@ -102,18 +102,17 @@ implements
     }
 
     public ClassPath getClassPaths(String type) {
-        // Test paths contain all paths
         if (ClassPath.SOURCE.equals(type)) {
             return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.SOURCES), getPaths(ClassPathType.SOURCES_FOR_TEST));
         }
         else if (ClassPath.BOOT.equals(type)) {
-            return getPaths(ClassPathType.BOOT_FOR_TEST);
+            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.BOOT), getPaths(ClassPathType.BOOT_FOR_TEST));
         }
         else if (ClassPath.COMPILE.equals(type)) {
-            return getPaths(ClassPathType.COMPILE_FOR_TEST);
+            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.COMPILE), getPaths(ClassPathType.COMPILE_FOR_TEST));
         }
         else if (ClassPath.EXECUTE.equals(type)) {
-            return getPaths(ClassPathType.RUNTIME_FOR_TEST);
+            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.RUNTIME), getPaths(ClassPathType.RUNTIME_FOR_TEST));
         }
         else {
             return ClassPath.EMPTY;
