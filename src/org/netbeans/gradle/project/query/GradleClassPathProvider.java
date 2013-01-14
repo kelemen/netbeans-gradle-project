@@ -104,7 +104,7 @@ implements
     public ClassPath getClassPaths(String type) {
         // Test paths contain all paths
         if (ClassPath.SOURCE.equals(type)) {
-            return getPaths(ClassPathType.SOURCES_FOR_TEST);
+            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.SOURCES), getPaths(ClassPathType.SOURCES_FOR_TEST));
         }
         else if (ClassPath.BOOT.equals(type)) {
             return getPaths(ClassPathType.BOOT_FOR_TEST);
