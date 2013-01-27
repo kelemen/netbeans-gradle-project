@@ -189,6 +189,38 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_SaveAndExecute");
     }
 
+    public static String getDeleteProjectCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DeleteProject");
+    }
+
+    public static String getYesOption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OptionYes");
+    }
+
+    public static String getNoOption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OptionNo");
+    }
+
+    public static String getConfirmDeleteProject(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmDeleteProject", projectName);
+    }
+
+    public static String getConfirmDeleteProjectTitle() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmDeleteProjectTitle");
+    }
+
+    public static String getDeleteProjectProgress(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DeleteProjectProgress", projectName);
+    }
+
+    public static String getErrorDeleteProject(Throwable error) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorDeleteProject", error);
+    }
+
+    public static String getErrorDeleteProjectTitle() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorDeleteProjectTitle");
+    }
+
     public static String getErrorLoadingProject(Throwable ex) {
         StringBuilder errorText = new StringBuilder(1024);
         errorText.append(ex.toString());

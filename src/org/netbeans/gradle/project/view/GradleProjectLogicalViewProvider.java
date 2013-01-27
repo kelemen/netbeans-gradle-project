@@ -142,6 +142,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     NbStrings.getReloadCommandCaption()));
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
+            projectActions.add(new DeleteProjectAction(project));
+            projectActions.add(null);
             projectActions.addAll(Utilities.actionsForPath("Projects/Actions"));
             projectActions.add(null);
             projectActions.add(CommonProjectActions.customizeProjectAction());
