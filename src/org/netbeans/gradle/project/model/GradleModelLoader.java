@@ -46,7 +46,6 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
-import org.netbeans.gradle.project.properties.PropertySource;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.openide.filesystems.FileObject;
