@@ -43,6 +43,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.tasks.DaemonTask;
@@ -217,10 +218,15 @@ public final class GradleModelLoader {
     public static NbGradleModel createEmptyModel(FileObject projectDir) throws IOException {
         File projectDirAsFile = FileUtil.toFile(projectDir);
         String name = projectDir.getNameExt();
+
+        String level = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
                 name,
                 projectDirAsFile,
                 createDefaultOutput(projectDirAsFile),
+                level,
+                level,
                 Collections.<NbGradleTask>emptyList());
 
         NbGradleModule mainModule = new NbGradleModule(properties,
@@ -451,10 +457,25 @@ public final class GradleModelLoader {
             taskNames.add(new NbGradleTask(qualifiedName, description.trim()));
         }
 
+        String defaultLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+
+        String sourceLevel = module.getProject().getLanguageLevel().getLevel();
+        sourceLevel = sourceLevel != null
+                ? sourceLevel.replace("JDK_", "").replace("_", ".")
+                : defaultLevel;
+
+        String targetLevel = module.getProject().getJdkName();
+        if (targetLevel == null) targetLevel = defaultLevel;
+
+        sourceLevel = sourceLevel.trim();
+        targetLevel = targetLevel.trim();
+
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
                 uniqueName,
                 moduleDir,
                 createDefaultOutput(moduleDir),
+                sourceLevel,
+                targetLevel,
                 taskNames);
         List<File> listedDirs = lookupListedDirs(sources);
 

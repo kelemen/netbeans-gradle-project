@@ -89,6 +89,8 @@ public final class NbGradleModule {
         private final NbOutput output;
         private final String uniqueName;
         private final String name;
+        private final String sourceLevel;
+        private final String targetLevel;
         private final Collection<NbGradleTask> tasks;
         private final List<String> nameParts;
 
@@ -96,15 +98,21 @@ public final class NbGradleModule {
                 String uniqueName,
                 File moduleDir,
                 NbOutput output,
+                String sourceLevel,
+                String targetLevel,
                 Collection<NbGradleTask> tasks) {
             if (uniqueName == null) throw new NullPointerException("uniqueName");
             if (moduleDir == null) throw new NullPointerException("moduleDir");
             if (output == null) throw new NullPointerException("output");
+            if (sourceLevel == null) throw new NullPointerException("sourceLevel");
+            if (targetLevel == null) throw new NullPointerException("targetLevel");
             if (tasks == null) throw new NullPointerException("tasks");
 
             this.uniqueName = uniqueName;
             this.moduleDir = moduleDir;
             this.output = output;
+            this.sourceLevel = sourceLevel;
+            this.targetLevel = targetLevel;
             this.nameParts = Collections.unmodifiableList(new ArrayList<String>(
                     NbModelUtils.getNameParts(uniqueName)));
             this.name = this.nameParts.get(this.nameParts.size() - 1);
@@ -121,6 +129,14 @@ public final class NbGradleModule {
             for (NbGradleTask task: this.tasks) {
                 if (task == null) throw new NullPointerException("task");
             }
+        }
+
+        public String getSourceLevel() {
+            return sourceLevel;
+        }
+
+        public String getTargetLevel() {
+            return targetLevel;
         }
 
         public NbOutput getOutput() {
