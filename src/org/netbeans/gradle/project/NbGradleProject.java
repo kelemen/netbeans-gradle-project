@@ -216,10 +216,13 @@ public final class NbGradleProject implements Project {
             boolean useInheritance,
             PropertiesLoadListener onLoadTask) {
 
-        File[] files = SettingsFiles.getFilesForProfile(this, profile);
-        return useInheritance ?
-                ProjectPropertiesManager.getProperties(files, onLoadTask)
-                : ProjectPropertiesManager.getProperties(files[0], onLoadTask);
+        if (useInheritance) {
+            return ProjectPropertiesManager.getPropertySourceForProject(this, profile).load(onLoadTask);
+        }
+        else {
+            File profileFile = SettingsFiles.getProfileFile(this, profile);
+            return ProjectPropertiesManager.getFilePropertySource(profileFile).load(onLoadTask);
+        }
     }
 
     public ProjectProperties tryGetLoadedProperties() {

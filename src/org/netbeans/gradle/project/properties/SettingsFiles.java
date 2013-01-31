@@ -59,6 +59,18 @@ public final class SettingsFiles {
         return new File(getSettingsDir(rootDir), PROFILE_DIRECTORY);
     }
 
+    public static File getProfileFile(File rootDir, String profile) {
+        if (rootDir == null) throw new NullPointerException("rootDir");
+
+        if (profile != null) {
+            File profileFileDir = getProfileDirectory(rootDir);
+            return new File(profileFileDir, profile + PROFILE_FILE_NAME_SUFFIX);
+        }
+        else {
+            return new File(rootDir, SETTINGS_FILENAME);
+        }
+    }
+
     public static File[] getFilesForProfile(File rootDir, String profile) {
         if (rootDir == null) throw new NullPointerException("rootDir");
 
@@ -68,10 +80,13 @@ public final class SettingsFiles {
             return new File[]{mainFile};
         }
         else {
-            File profileFile = getProfileDirectory(rootDir);
-            profileFile = new File(profileFile, profile + PROFILE_FILE_NAME_SUFFIX);
+            File profileFile = getProfileFile(rootDir, profile);
             return new File[]{profileFile, mainFile};
         }
+    }
+
+    public static File getProfileFile(NbGradleProject project, String profile) {
+        return getProfileFile(getRootDirectory(project), profile);
     }
 
     public static File[] getFilesForProfile(NbGradleProject project, String profile) {

@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,14 +114,12 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private ProjectProperties getProperties() {
         ProjectProperties properties = propertiesRef.get();
         if (properties == null) {
-            File[] propertiesFiles = SettingsFiles.getFilesForProject(project);
-            properties = ProjectPropertiesManager.getProperties(propertiesFiles, loadedSignal);
+            properties = ProjectPropertiesManager.getProperties(project, loadedSignal);
             if (propertiesRef.compareAndSet(null, properties)) {
                 ChangeListener reloadTask = new ChangeListener() {
                     @Override
                     public void stateChanged(ChangeEvent e) {
-                        File[] propertiesFiles = SettingsFiles.getFilesForProject(project);
-                        propertiesRef.set(ProjectPropertiesManager.getProperties(propertiesFiles, loadedSignal));
+                        propertiesRef.set(ProjectPropertiesManager.getProperties(project, loadedSignal));
                         changes.fireChange();
                     }
                 };
