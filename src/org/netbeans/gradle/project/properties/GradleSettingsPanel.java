@@ -234,7 +234,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                                     .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addComponent(jDontAddInitScriptCheck))
                             .addComponent(jAlwayClearOutput))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 133, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jGradleUserHomeEdit, javax.swing.GroupLayout.Alignment.LEADING)
