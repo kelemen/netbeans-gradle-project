@@ -43,6 +43,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.tasks.DaemonTask;
@@ -546,6 +547,9 @@ public final class GradleModelLoader {
                 projectConnection.close();
             }
         }
+        
+        String sourceLevel = ideaModel.getLanguageLevel().getLevel().replace("JDK_", "").replace('_', '.');
+        project.getProperties().getSourceLevel().setValueFromSource(new ConstPropertySource<String>(sourceLevel, true));
 
         progress.progress(NbStrings.getParsingModel());
         return parseFromIdeaModel(projectDir, ideaModel);
