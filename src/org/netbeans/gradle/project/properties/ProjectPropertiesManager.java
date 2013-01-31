@@ -293,21 +293,33 @@ public final class ProjectPropertiesManager {
         }
     }
 
+    private static ProjectPropertySource filesWithDefault(File[] files, ProjectPropertySource defaultSource) {
+        ProjectPropertySource[] sources = new ProjectPropertySource[files.length + 1];
+        for (int i = 0; i < files.length; i++) {
+            sources[i] = getFilePropertySource(files[i]);
+        }
+        sources[files.length] = defaultSource;
+
+        return combineSources(sources);
+    }
+
     private static final class NbProfileProjectPropertySource implements ProjectPropertySource {
         private final NbGradleProject project;
         private final String profileName;
+        private final ProjectPropertySource defaultSource;
 
         public NbProfileProjectPropertySource(NbGradleProject project, String profileName) {
             if (project == null) throw new NullPointerException("project");
 
             this.project = project;
             this.profileName = profileName;
+            this.defaultSource = new DefaultProjectPropertySource(project);
         }
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
             File[] files = SettingsFiles.getFilesForProfile(project, profileName);
-            return getFilesPropertySource(files).load(onLoadTask);
+            return filesWithDefault(files, defaultSource).load(onLoadTask);
         }
 
         @Override
@@ -335,17 +347,19 @@ public final class ProjectPropertiesManager {
 
     private static final class NbCurrentProfileProjectPropertySource implements ProjectPropertySource {
         private final NbGradleProject project;
+        private final ProjectPropertySource defaultSource;
 
         public NbCurrentProfileProjectPropertySource(NbGradleProject project) {
             if (project == null) throw new NullPointerException("project");
 
             this.project = project;
+            this.defaultSource = new DefaultProjectPropertySource(project);
         }
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
             File[] files = SettingsFiles.getFilesForProject(project);
-            return getFilesPropertySource(files).load(onLoadTask);
+            return filesWithDefault(files, defaultSource).load(onLoadTask);
         }
 
         @Override
