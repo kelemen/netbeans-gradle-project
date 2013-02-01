@@ -45,6 +45,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jProjectCacheSize.setValue(GlobalGradleSettings.getProjectCacheSize().getValue());
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
+        jReliableJavaVersionCheck.setSelected(GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue());
 
         File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -58,6 +59,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
         GlobalGradleSettings.getAlwaysClearOutput().setValue(isAlwaysClearOutput());
         GlobalGradleSettings.getOmitInitScript().setValue(isDontAddInitScript());
+        GlobalGradleSettings.getMayRelyOnJavaOfScript().setValue(isReliableJavaVersion());
         GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
     }
 
@@ -92,6 +94,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
     private boolean isDontAddInitScript() {
         return jDontAddInitScriptCheck.isSelected();
+    }
+
+    private boolean isReliableJavaVersion() {
+        return jReliableJavaVersionCheck.isSelected();
     }
 
     private int getProjectCacheSize() {
@@ -173,6 +179,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleUserHomeCaption = new javax.swing.JLabel();
         jGradleUserHomeEdit = new javax.swing.JTextField();
         jBrowseUserHomeDirButton = new javax.swing.JButton();
+        jReliableJavaVersionCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -212,6 +219,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jReliableJavaVersionCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jReliableJavaVersionCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -221,20 +230,6 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jJdkCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jGradleJdkCaption)
-                            .addComponent(jGradleVMArgsCaption)
-                            .addComponent(jGradleUserHomeCaption)
-                            .addComponent(jSkipTestsCheck)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(jProjectCacheSizeLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(jDontAddInitScriptCheck))
-                            .addComponent(jAlwayClearOutput))
-                        .addGap(0, 133, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jGradleUserHomeEdit, javax.swing.GroupLayout.Alignment.LEADING)
@@ -243,7 +238,21 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jBrowsePathButton)
-                            .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING))))
+                            .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jGradleJdkCaption)
+                            .addComponent(jGradleVMArgsCaption)
+                            .addComponent(jGradleUserHomeCaption)
+                            .addComponent(jSkipTestsCheck)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jProjectCacheSizeLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jAlwayClearOutput)
+                            .addComponent(jDontAddInitScriptCheck)
+                            .addComponent(jReliableJavaVersionCheck))
+                        .addGap(0, 114, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -268,18 +277,20 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSkipTestsCheck)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jProjectCacheSizeLabel))
+                    .addComponent(jProjectCacheSizeLabel)
+                    .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jAlwayClearOutput)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jDontAddInitScriptCheck)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jReliableJavaVersionCheck)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -316,6 +327,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox jJdkCombo;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
+    private javax.swing.JCheckBox jReliableJavaVersionCheck;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JCheckBox jSkipTestsCheck;
     // End of variables declaration//GEN-END:variables

@@ -7,14 +7,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 
 public final class DefaultProjectProperties extends AbstractProjectProperties {
     private static final Logger LOGGER = Logger.getLogger(DefaultProjectProperties.class.getName());
 
-    // Currently not used but might be used later for determining the source
-    // level from the models.
     private final NbGradleProject project;
 
     public DefaultProjectProperties(NbGradleProject project) {
@@ -27,16 +26,25 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         return new UnmodifiableProperty<String>("SourceLevel") {
             @Override
             public String getValue() {
-                return getSourceLevelFromPlatform(getPlatform().getValue());
+                if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
+                    return project.getAvailableModel().getMainModule().getProperties().getSourceLevel();
+                }
+                else {
+                    return getSourceLevelFromPlatform(getPlatform().getValue());
+                }
             }
 
             @Override
             public void addChangeListener(ChangeListener listener) {
                 getPlatform().addChangeListener(listener);
+                project.addModelChangeListener(listener);
+                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
             }
 
             @Override
             public void removeChangeListener(ChangeListener listener) {
+                GlobalGradleSettings.getMayRelyOnJavaOfScript().removeChangeListener(listener);
+                project.removeModelChangeListener(listener);
                 getPlatform().removeChangeListener(listener);
             }
         };
@@ -45,9 +53,37 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     @Override
     public MutableProperty<JavaPlatform> getPlatform() {
         return new UnmodifiableProperty<JavaPlatform>("Platform") {
+            // This is here only te register and remove listeners because
+            // it can detect changes in the list of platforms defined in
+            // NetBeans. We will never request the value of this property
+            // source, so the actual parameters do not matter.
+            private final PropertySource<?> platformListHelper
+                    = DefaultPropertySources.findPlatformSource("j2se", "1.3", true);
+
             @Override
             public JavaPlatform getValue() {
-                return JavaPlatform.getDefault();
+                if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
+                    String targetLevel = project.getAvailableModel().getMainModule().getProperties().getTargetLevel();
+                    return DefaultPropertySources.findPlatformSource("j2se", targetLevel, true).getValue();
+                }
+                else {
+                    return JavaPlatform.getDefault();
+                }
+            }
+
+            @Override
+            public void addChangeListener(ChangeListener listener) {
+                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                project.addModelChangeListener(listener);
+                platformListHelper.addChangeListener(listener);
+
+            }
+
+            @Override
+            public void removeChangeListener(ChangeListener listener) {
+                platformListHelper.removeChangeListener(listener);
+                project.removeModelChangeListener(listener);
+                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
             }
         };
     }

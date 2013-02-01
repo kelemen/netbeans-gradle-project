@@ -33,6 +33,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Integer> PROJECT_CACHE_SIZE;
     private static final StringBasedProperty<Boolean> ALWAYS_CLEAR_OUTPUT;
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
+    private static final StringBasedProperty<Boolean> MAY_RELY_ON_JAVA_OF_SCRIPT;
 
     static {
         // "gradle-home" is probably not the best name but it must remain so
@@ -45,6 +46,7 @@ public final class GlobalGradleSettings {
         PROJECT_CACHE_SIZE = new GlobalProperty<Integer>("project-cache-size", new IntegerConverter(1, Integer.MAX_VALUE, 100));
         ALWAYS_CLEAR_OUTPUT = new GlobalProperty<Boolean>("always-clear-output", new BooleanConverter(false));
         OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
+        MAY_RELY_ON_JAVA_OF_SCRIPT = new GlobalProperty<Boolean>("rely-on-java-of-script", new BooleanConverter(false));
     }
 
     public static File getGradleInstallationAsFile() {
@@ -90,6 +92,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getOmitInitScript() {
         return OMIT_INIT_SCRIPT;
+    }
+
+    public static StringBasedProperty<Boolean> getMayRelyOnJavaOfScript() {
+        return MAY_RELY_ON_JAVA_OF_SCRIPT;
     }
 
     public static FileObject getHomeFolder(JavaPlatform platform) {
