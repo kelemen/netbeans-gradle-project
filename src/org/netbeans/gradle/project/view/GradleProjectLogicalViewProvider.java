@@ -14,6 +14,7 @@ import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -23,6 +24,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -43,12 +46,17 @@ import org.netbeans.spi.project.ui.support.CommonProjectActions;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
+import org.openide.loaders.DataObject;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeNotFoundException;
+import org.openide.nodes.NodeOp;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
@@ -87,7 +95,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     private Children createChildren() {
-        return Children.create(new GradleProjectChildFactory(project), true);
+        return Children.create(new GradleProjectChildFactory(project), false);
     }
 
     private Lookup createLookup(Node rootNode) {
@@ -228,10 +236,74 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
     @Override
     public Node findPath(Node root, Object target) {
-        for (Node child: root.getChildren().getNodes(true)) {
-            Node found = PackageView.findPath(child, target);
-            if (found != null) {
-                return found;
+        // The implementation of this method is mostly a copy-paste from the
+        // Maven plugin. I didn't take the time to fully understand it.
+        if (target instanceof FileObject) {
+            FileObject fileObject = (FileObject)target;
+
+            Node[] nodes = root.getChildren().getNodes(false);
+            for (Node child: nodes) {
+                Node found = PackageView.findPath(child, fileObject);
+                if (found != null) {
+                    return found;
+                }
+            }
+
+            // fallback if not found by PackageView.
+            for (int i = 0; i < nodes.length; i++) {
+                for (Node node: nodes[i].getChildren().getNodes(false)) {
+                    Node result = PackageView.findPath(node, fileObject);
+                    if (result != null) {
+                        return result;
+                    }
+                    Node found = findNodeByFileDataObject(node, fileObject);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private Node findNodeByFileDataObject(Node node, FileObject fo) {
+        FileObject xfo = node.getLookup().lookup(FileObject.class);
+        if (xfo == null) {
+            DataObject dobj = node.getLookup().lookup(DataObject.class);
+            if (dobj != null) {
+                xfo = dobj.getPrimaryFile();
+            }
+        }
+        if (xfo != null) {
+            if ((xfo.equals(fo))) {
+                return node;
+            }
+            else if (FileUtil.isParentOf(xfo, fo)) {
+                FileObject folder = fo.isFolder() ? fo : fo.getParent();
+                String relPath = FileUtil.getRelativePath(xfo, folder);
+                List<String> path = new ArrayList<String>();
+                StringTokenizer strtok = new StringTokenizer(relPath, "/");
+                while (strtok.hasMoreTokens()) {
+                    String token = strtok.nextToken();
+                    path.add(token);
+                }
+                try {
+                    Node folderNode = folder.equals(xfo) ? node : NodeOp.findPath(node, Collections.enumeration(path));
+                    if (fo.isFolder()) {
+                        return folderNode;
+                    }
+                    else {
+                        Node[] childs = folderNode.getChildren().getNodes(false);
+                        for (int j = 0; j < childs.length; j++) {
+                            DataObject dobj = childs[j].getLookup().lookup(DataObject.class);
+                            if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(fo.getNameExt())) {
+                                return childs[j];
+                            }
+                        }
+                    }
+                } catch (NodeNotFoundException e) {
+                    // OK, never mind
+                }
             }
         }
         return null;
