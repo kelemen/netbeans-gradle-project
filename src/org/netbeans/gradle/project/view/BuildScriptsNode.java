@@ -8,10 +8,12 @@ import java.util.LinkedList;
 import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
@@ -75,8 +77,15 @@ public final class BuildScriptsNode extends AbstractNode {
             project.removeModelChangeListener(this);
         }
 
-        private void addGradleFile(
+        private void addFileObject(
                 FileObject file,
+                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+            addFileObject(file, file.getNameExt(), toPopulate);
+        }
+
+        private void addFileObject(
+                FileObject file,
+                final String name,
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
             final DataObject fileData = DataObject.find(file);
 
@@ -87,6 +96,41 @@ public final class BuildScriptsNode extends AbstractNode {
                         @Override
                         public boolean canRename() {
                             return false;
+                        }
+
+                        @Override
+                        public String getDisplayName() {
+                            return name;
+                        }
+                    };
+                }
+            });
+        }
+
+        private void addGradleFile(
+                FileObject file,
+                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+            addGradleFile(file, file.getNameExt(), toPopulate);
+        }
+
+        private void addGradleFile(
+                FileObject file,
+                final String name,
+                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+            final DataObject fileData = DataObject.find(file);
+
+            toPopulate.add(new SingleNodeFactory() {
+                @Override
+                public Node createNode() {
+                    return new FilterNode(fileData.getNodeDelegate()) {
+                        @Override
+                        public boolean canRename() {
+                            return false;
+                        }
+
+                        @Override
+                        public String getDisplayName() {
+                            return name;
                         }
 
                         @Override
@@ -103,19 +147,43 @@ public final class BuildScriptsNode extends AbstractNode {
             });
         }
 
+        private static FileObject tryGetHomeGradleProperties() {
+            FileObject userHome = GradleFileUtils.getGradleUserHomeFileObject();
+            return userHome != null
+                    ? userHome.getFileObject(GradleProjectConstants.GRADLE_PROPERTIES_NAME)
+                    : null;
+        }
+
+        private static FileObject tryGetLocalGradleProperties(NbGradleModel model) {
+            return model.getProjectDir().getFileObject(GradleProjectConstants.GRADLE_PROPERTIES_NAME);
+        }
+
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            List<FileObject> gradleFiles = new LinkedList<FileObject>();
             NbGradleModel model = project.getCurrentModel();
-            FileObject buildGradle = model.getBuildFile();
-            if (buildGradle != null) {
-                gradleFiles.add(buildGradle);
-            }
 
             FileObject settingsGradle = model.getSettingsFile();
             if (settingsGradle != null) {
-                gradleFiles.add(settingsGradle);
+                addGradleFile(settingsGradle, toPopulate);
             }
 
+            FileObject buildGradle = model.getBuildFile();
+            if (buildGradle != null) {
+                addGradleFile(buildGradle, toPopulate);
+            }
+
+            FileObject homePropertiesFile = tryGetHomeGradleProperties();
+            if (homePropertiesFile != null) {
+                addFileObject(homePropertiesFile,
+                        NbStrings.getUserHomeFileName(GradleProjectConstants.GRADLE_PROPERTIES_NAME),
+                        toPopulate);
+            }
+
+            FileObject propertiesFile = tryGetLocalGradleProperties(model);
+            if (propertiesFile != null) {
+                addFileObject(propertiesFile, toPopulate);
+            }
+
+            List<FileObject> gradleFiles = new LinkedList<FileObject>();
             for (FileObject file : project.getProjectDirectory().getChildren()) {
                 if (file.equals(buildGradle) || file.equals(settingsGradle)) {
                     continue;

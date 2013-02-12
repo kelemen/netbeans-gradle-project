@@ -27,7 +27,7 @@ public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQuer
 
     @Override
     public Result findBinaryRoots(URL sourceRoot) {
-        if (GradleFileUtils.GRADLE_CACHE_HOME == null) {
+        if (GradleFileUtils.GRADLE_USER_HOME == null) {
             return null;
         }
 

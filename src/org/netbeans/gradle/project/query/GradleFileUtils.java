@@ -14,20 +14,39 @@ import org.openide.filesystems.FileUtil;
 public final class GradleFileUtils {
     private static final Logger LOGGER = Logger.getLogger(GradleFileUtils.class.getName());
 
-    public static final File GRADLE_CACHE_HOME = getGradleCacheDir();
+    private static final File NORM_USER_HOME = getUserHome();
+
+    public static final File GRADLE_USER_HOME = getGradleUserHome();
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
 
-    private static File getGradleCacheDir() {
+    private static File getUserHome() {
         String userHome = System.getProperty("user.home");
         if (userHome == null) {
-            LOGGER.severe("Gradle home path could not have been constructed.");
+            LOGGER.severe("user.home property is missing.");
             return null;
         }
-        return new File(new File(userHome), ".gradle");
+
+        File notNormalizedResult = new File(userHome);
+        File result = FileUtil.normalizeFile(notNormalizedResult);
+        if (result == null) {
+            LOGGER.log(Level.SEVERE, "Could not normalize path: {0}", notNormalizedResult);
+            return null;
+        }
+        return result;
+    }
+
+    private static File getGradleUserHome() {
+        return new File(NORM_USER_HOME, ".gradle");
+    }
+
+    public static FileObject getGradleUserHomeFileObject() {
+        return GRADLE_USER_HOME != null
+                ? FileUtil.toFileObject(GRADLE_USER_HOME)
+                : null;
     }
 
     public static boolean isParentOrSame(File parent, File child) {

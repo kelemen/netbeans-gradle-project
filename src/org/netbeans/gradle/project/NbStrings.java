@@ -275,6 +275,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmRemoveProfile", profileName);
     }
 
+    public static String getUserHomeFileName(String fileName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_USER_HOME_FILE", fileName);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
