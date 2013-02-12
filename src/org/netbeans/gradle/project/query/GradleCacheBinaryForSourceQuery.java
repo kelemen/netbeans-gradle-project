@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
@@ -23,6 +24,13 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
         EventSource eventSource = new EventSource();
         CHANGES = new ChangeSupport(eventSource);
         eventSource.init(CHANGES);
+
+        GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                notifyCacheChange();
+            }
+        });
     }
 
     // This cache cannot shrink because SourceForBinaryQueryImplementation
@@ -46,7 +54,8 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
 
     @Override
     public Result findBinaryRoots(URL sourceRoot) {
-        if (GradleFileUtils.GRADLE_USER_HOME == null) {
+        File gradleUserHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
+        if (gradleUserHome == null) {
             return null;
         }
 
@@ -64,8 +73,8 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
             return result;
         }
 
-        FileObject cacheHome = FileUtil.toFileObject(GradleFileUtils.GRADLE_USER_HOME);
-        if (cacheHome == null || !FileUtil.isParentOf(cacheHome, sourceRootObj)) {
+        FileObject gradleUserHomeObj = FileUtil.toFileObject(gradleUserHome);
+        if (gradleUserHomeObj == null || !FileUtil.isParentOf(gradleUserHomeObj, sourceRootObj)) {
             return null;
         }
 

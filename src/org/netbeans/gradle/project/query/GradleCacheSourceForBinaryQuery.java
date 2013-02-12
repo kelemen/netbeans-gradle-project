@@ -49,7 +49,8 @@ public final class GradleCacheSourceForBinaryQuery implements SourceForBinaryQue
 
     @Override
     public Result findSourceRoots2(URL binaryRoot) {
-        if (GradleFileUtils.GRADLE_USER_HOME == null) {
+        File gradleUserHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
+        if (gradleUserHome == null) {
             return null;
         }
 
@@ -67,7 +68,7 @@ public final class GradleCacheSourceForBinaryQuery implements SourceForBinaryQue
             return result;
         }
 
-        FileObject cacheHome = FileUtil.toFileObject(GradleFileUtils.GRADLE_USER_HOME);
+        FileObject cacheHome = FileUtil.toFileObject(gradleUserHome);
         if (cacheHome == null || !FileUtil.isParentOf(cacheHome, binaryRootObj)) {
             return null;
         }

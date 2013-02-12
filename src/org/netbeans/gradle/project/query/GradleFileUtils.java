@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.PropertySource;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -16,7 +19,7 @@ public final class GradleFileUtils {
 
     private static final File NORM_USER_HOME = getUserHome();
 
-    public static final File GRADLE_USER_HOME = getGradleUserHome();
+    public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
@@ -39,13 +42,42 @@ public final class GradleFileUtils {
         return result;
     }
 
-    private static File getGradleUserHome() {
+    private static File getDefaultGradleUserHome() {
         return new File(NORM_USER_HOME, ".gradle");
     }
 
+    private static PropertySource<File> getGradleUserHome() {
+        return new PropertySource<File>() {
+            @Override
+            public File getValue() {
+                File value = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+                if (value == null) {
+                    value = getDefaultGradleUserHome();
+                }
+                return value;
+            }
+
+            @Override
+            public boolean isDefault() {
+                return GlobalGradleSettings.getGradleUserHomeDir().isDefault();
+            }
+
+            @Override
+            public void addChangeListener(ChangeListener listener) {
+                GlobalGradleSettings.getGradleUserHomeDir().addChangeListener(listener);
+            }
+
+            @Override
+            public void removeChangeListener(ChangeListener listener) {
+                GlobalGradleSettings.getGradleUserHomeDir().removeChangeListener(listener);
+            }
+        };
+    }
+
     public static FileObject getGradleUserHomeFileObject() {
-        return GRADLE_USER_HOME != null
-                ? FileUtil.toFileObject(GRADLE_USER_HOME)
+        File result = GRADLE_USER_HOME.getValue();
+        return result != null
+                ? FileUtil.toFileObject(result)
                 : null;
     }
 
