@@ -24,8 +24,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.netbeans.api.project.FileOwnerQuery;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -76,18 +74,26 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
-        final ChangeListener changeListener = new ChangeListener() {
+        final ChangeListener infoChangeListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 result.fireInfoChangeEvent();
             }
         };
+        final ChangeListener modelListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                result.fireModelChange();
+            }
+        };
 
-        project.getProjectInfoManager().addChangeListener(changeListener);
+        project.addModelChangeListener(modelListener);
+        project.getProjectInfoManager().addChangeListener(infoChangeListener);
         result.addNodeListener(new NodeAdapter(){
             @Override
             public void nodeDestroyed(NodeEvent ev) {
-                project.getProjectInfoManager().removeChangeListener(changeListener);
+                project.getProjectInfoManager().removeChangeListener(infoChangeListener);
+                project.removeModelChangeListener(modelListener);
             }
         });
 
@@ -157,6 +163,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             projectActions.add(CommonProjectActions.customizeProjectAction());
 
             this.actions = projectActions.toArray(new Action[projectActions.size()]);
+        }
+
+        public void fireModelChange() {
+            fireDisplayNameChange(null, null);
         }
 
         public void fireInfoChangeEvent() {
@@ -230,7 +240,13 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         @Override
         public String getDisplayName() {
-            return project.getDisplayName();
+            NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+            if (mainModule.getProperties().isRootProject()) {
+                return project.getDisplayName() + " " + NbStrings.getRootProjectMarker();
+            }
+            else {
+                return project.getDisplayName();
+            }
         }
     }
 

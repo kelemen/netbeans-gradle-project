@@ -155,6 +155,15 @@ public final class NbGradleModule {
             return uniqueName;
         }
 
+        public boolean isRootProject() {
+            for (int i = 0; i < uniqueName.length(); i++) {
+                if (uniqueName.charAt(i) != ':') {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public List<String> getNameParts() {
             return nameParts;
         }

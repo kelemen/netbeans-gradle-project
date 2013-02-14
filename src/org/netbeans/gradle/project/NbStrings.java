@@ -279,6 +279,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_USER_HOME_FILE", fileName);
     }
 
+    public static String getRootProjectMarker() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ROOT_PROJECT_MARKER");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
