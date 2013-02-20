@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class SettingsFiles {
     private static final String SETTINGS_FILENAME = ".nb-gradle-properties";
@@ -99,19 +97,18 @@ public final class SettingsFiles {
 
     public static File getRootDirectory(NbGradleProject project) {
         NbGradleModel model = project.getAvailableModel();
-        FileObject settingsFile = model.getSettingsFile();
-        FileObject dir = settingsFile != null
-                ? settingsFile.getParent()
-                : project.getProjectDirectory();
+        File settingsFile = model.getSettingsFile();
+        File dir = settingsFile != null
+                ? settingsFile.getParentFile()
+                : project.getProjectDirectoryAsFile();
         if (dir == null) {
-            dir = project.getProjectDirectory();
+            dir = project.getProjectDirectoryAsFile();
         }
 
-        File outputDir = FileUtil.toFile(dir);
-        if (outputDir == null) {
+        if (dir == null) {
             throw new IllegalArgumentException("Cannot get the root directory because the directory is missing: " + dir);
         }
-        return outputDir;
+        return dir;
     }
 
     private SettingsFiles() {

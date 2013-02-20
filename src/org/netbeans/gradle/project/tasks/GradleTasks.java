@@ -41,8 +41,6 @@ import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.OutputWriter;
 
@@ -208,10 +206,10 @@ public final class GradleTasks {
                     new Object[]{command, taskDef.getArguments(), taskDef.getJvmArguments()});
         }
 
-        FileObject projectDir = project.getProjectDirectory();
+        File projectDir = project.getProjectDirectoryAsFile();
 
         GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(project);
-        gradleConnector.forProjectDirectory(FileUtil.toFile(projectDir));
+        gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
             projectConnection = gradleConnector.connect();

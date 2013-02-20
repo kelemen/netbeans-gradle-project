@@ -1,11 +1,14 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.io.File;
 import java.text.Collator;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.GradleProjectConstants;
@@ -15,6 +18,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.AbstractNode;
@@ -24,6 +28,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 public final class BuildScriptsNode extends AbstractNode {
+    private static final Logger LOGGER = Logger.getLogger(BuildScriptsNode.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
     public BuildScriptsNode(NbGradleProject project) {
@@ -79,15 +84,27 @@ public final class BuildScriptsNode extends AbstractNode {
 
         private void addFileObject(
                 FileObject file,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+                List<SingleNodeFactory> toPopulate) {
             addFileObject(file, file.getNameExt(), toPopulate);
+        }
+
+        private static DataObject tryGetDataObject(FileObject fileObj) {
+            try {
+                return DataObject.find(fileObj);
+            } catch (DataObjectNotFoundException ex) {
+                LOGGER.log(Level.INFO, "Failed to find DataObject for file object: " + fileObj.getPath(), ex);
+                return null;
+            }
         }
 
         private void addFileObject(
                 FileObject file,
                 final String name,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            final DataObject fileData = DataObject.find(file);
+                List<SingleNodeFactory> toPopulate) {
+            final DataObject fileData = tryGetDataObject(file);
+            if (fileData == null) {
+                return;
+            }
 
             toPopulate.add(new SingleNodeFactory() {
                 @Override
@@ -109,15 +126,18 @@ public final class BuildScriptsNode extends AbstractNode {
 
         private void addGradleFile(
                 FileObject file,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+                List<SingleNodeFactory> toPopulate) {
             addGradleFile(file, file.getNameExt(), toPopulate);
         }
 
         private void addGradleFile(
                 FileObject file,
                 final String name,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            final DataObject fileData = DataObject.find(file);
+                List<SingleNodeFactory> toPopulate) {
+            final DataObject fileData = tryGetDataObject(file);
+            if (fileData == null) {
+                return;
+            }
 
             toPopulate.add(new SingleNodeFactory() {
                 @Override
@@ -154,19 +174,26 @@ public final class BuildScriptsNode extends AbstractNode {
                     : null;
         }
 
-        private static FileObject tryGetLocalGradleProperties(NbGradleModel model) {
-            return model.getProjectDir().getFileObject(GradleProjectConstants.GRADLE_PROPERTIES_NAME);
+        private static File tryGetLocalGradleProperties(NbGradleModel model) {
+            return new File(model.getProjectDir(), GradleProjectConstants.GRADLE_PROPERTIES_NAME);
         }
 
-        private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+        private static FileObject tryGetLocalGradlePropertiesObj(NbGradleModel model) {
+            File result = tryGetLocalGradleProperties(model);
+            return result != null
+                    ? FileUtil.toFileObject(result)
+                    : null;
+        }
+
+        private void readKeys(List<SingleNodeFactory> toPopulate) {
             NbGradleModel model = project.getCurrentModel();
 
-            FileObject settingsGradle = model.getSettingsFile();
+            FileObject settingsGradle = model.tryGetSettingsFileObj();
             if (settingsGradle != null) {
                 addGradleFile(settingsGradle, toPopulate);
             }
 
-            FileObject buildGradle = model.getBuildFile();
+            FileObject buildGradle = model.tryGetBuildFileObj();
             if (buildGradle != null) {
                 addGradleFile(buildGradle, toPopulate);
             }
@@ -178,7 +205,7 @@ public final class BuildScriptsNode extends AbstractNode {
                         toPopulate);
             }
 
-            FileObject propertiesFile = tryGetLocalGradleProperties(model);
+            FileObject propertiesFile = tryGetLocalGradlePropertiesObj(model);
             if (propertiesFile != null) {
                 addFileObject(propertiesFile, toPopulate);
             }
@@ -208,11 +235,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-            try {
-                readKeys(toPopulate);
-            } catch (DataObjectNotFoundException ex) {
-                throw new RuntimeException(ex);
-            }
+            readKeys(toPopulate);
             return true;
         }
 

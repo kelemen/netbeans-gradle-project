@@ -83,7 +83,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
 
         Map<String, Object> services = new HashMap<String, Object>();
         services.put("name", project.getAvailableModel().getMainModule().getUniqueName());
-        services.put("baseDir", FileUtil.toFile(project.getProjectDirectory()));
+        services.put("baseDir", project.getProjectDirectoryAsFile());
         services.put("jdksources", getJdkSources());
         services.put("sourcepath", getSources());
 

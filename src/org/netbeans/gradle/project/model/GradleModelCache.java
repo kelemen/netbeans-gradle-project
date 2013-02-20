@@ -53,9 +53,9 @@ public final class GradleModelCache {
     public void addToCache(NbGradleModel model) {
         if (model == null) throw new NullPointerException("model");
 
-        File projectDir = FileUtil.toFile(model.getProjectDir());
+        File projectDir = model.getProjectDir();
 
-        FileObject settingsFileObj = model.getSettingsFile();
+        FileObject settingsFileObj = model.tryGetSettingsFileObj();
         File settingsFile = settingsFileObj != null
                 ? FileUtil.toFile(settingsFileObj)
                 : null;

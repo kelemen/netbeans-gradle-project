@@ -42,6 +42,18 @@ public final class GradleFileUtils {
         return result;
     }
 
+    public static FileObject asFileObject(File file) {
+        return file != null
+                ? FileUtil.toFileObject(file)
+                : null;
+    }
+
+    public static File asFile(FileObject fileObj) {
+        return fileObj != null
+                ? FileUtil.toFile(fileObj)
+                : null;
+    }
+
     private static File getDefaultGradleUserHome() {
         return new File(NORM_USER_HOME, ".gradle");
     }

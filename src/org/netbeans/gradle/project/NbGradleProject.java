@@ -46,6 +46,7 @@ import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
@@ -63,6 +64,7 @@ public final class NbGradleProject implements Project {
             = new RequestProcessor("Gradle-Project-Processor", 1, true);
 
     private final FileObject projectDir;
+    private final File projectDirAsFile;
     private final ProjectState state;
     private final AtomicReference<Lookup> lookupRef;
 
@@ -82,6 +84,11 @@ public final class NbGradleProject implements Project {
 
     public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
+        this.projectDirAsFile = FileUtil.toFile(projectDir);
+        if (projectDirAsFile == null) {
+            throw new IOException("Project directory does not exist.");
+        }
+
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
@@ -242,6 +249,10 @@ public final class NbGradleProject implements Project {
         return name;
     }
 
+    public File getProjectDirectoryAsFile() {
+        return projectDirAsFile;
+    }
+
     @Override
     public FileObject getProjectDirectory() {
         return projectDir;
@@ -334,7 +345,7 @@ public final class NbGradleProject implements Project {
             this.modelLoadListener = new ModelLoadListener() {
                 @Override
                 public void modelLoaded(NbGradleModel model) {
-                    if (getProjectDirectory().equals(model.getProjectDir())) {
+                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
                         new ModelRetrievedListenerImpl().onComplete(model, null);
                     }
                 }
