@@ -29,6 +29,40 @@ public final class ProjectFileConsumer implements SmartOutputHandler.Consumer {
                 || lowerPath.endsWith(".htm");
     }
 
+    private static boolean isLineSeparator(char ch) {
+        return ch <= ' ' || ch == ':' || ch == ';';
+    }
+
+    private static String tryReadNumberStr(String line, int startIndex) {
+        int lineLength = line.length();
+        if (startIndex >= lineLength) {
+            return "";
+        }
+
+        String trimmedLine = line.substring(startIndex).trim();
+        int trimmedLength = trimmedLine.length();
+        for (int i = 0; i < trimmedLength; i++) {
+            char ch = trimmedLine.charAt(i);
+            if (ch < '0' | ch > '9') {
+                return trimmedLine.substring(0, i);
+            }
+        }
+        return trimmedLine;
+    }
+
+    private static int tryReadNumber(String line, int startIndex) {
+        String intStr = tryReadNumberStr(line, startIndex);
+        if (intStr.isEmpty()) {
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(intStr);
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
+
     @Override
     public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
         String normalizedLine = line.replace(File.separatorChar, '/').toLowerCase(Locale.ROOT);
@@ -46,11 +80,14 @@ public final class ProjectFileConsumer implements SmartOutputHandler.Consumer {
         int lineLength = line.length();
         int endIndex = lineLength;
         for (int i = endPathIndex + 1; i < lineLength; i++) {
-            if (line.charAt(i) <= ' ') {
+            if (isLineSeparator(line.charAt(i))) {
                 endIndex = i;
                 break;
             }
         }
+
+        int lineNumber = tryReadNumber(line, endIndex + 1);
+        lineNumber = lineNumber >= 0 ? lineNumber - 1 : -1;
 
         String fileStr = StringUtils.stripSeperatorsFromEnd(line.substring(startIndex, endIndex));
         File file = new File(fileStr);
@@ -68,7 +105,7 @@ public final class ProjectFileConsumer implements SmartOutputHandler.Consumer {
         }
 
         if (outputListener == null) {
-            outputListener = OpenEditorOutputListener.tryCreateListener(file, -1);
+            outputListener = OpenEditorOutputListener.tryCreateListener(file, lineNumber);
             if (outputListener == null) {
                 return false;
             }
