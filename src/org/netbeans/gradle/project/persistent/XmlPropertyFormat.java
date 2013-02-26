@@ -1,7 +1,12 @@
 package org.netbeans.gradle.project.persistent;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -25,6 +30,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
@@ -41,6 +47,7 @@ import org.xml.sax.SAXException;
 
 final class XmlPropertyFormat {
     private static final Logger LOGGER = Logger.getLogger(XmlPropertyFormat.class.getName());
+    private static final String XML_ENCODING = "UTF-8";
 
     private static final String ROOT_NODE = "gradle-project-properties";
     private static final String SOURCE_ENCODING_NODE = "source-encoding";
@@ -80,17 +87,52 @@ final class XmlPropertyFormat {
         return element;
     }
 
+    private static void writeBytesToFile(File outputFile, byte[] content) throws IOException {
+        OutputStream output = null;
+        try {
+            output = new FileOutputStream(outputFile);
+            output.write(content);
+        } finally {
+            if (output != null) {
+                output.close();
+            }
+        }
+    }
+
     private static void saveDocument(File propertyfile, Document document) throws TransformerException, IOException {
         File dir = propertyfile.getParentFile();
         if (dir != null) {
             dir.mkdirs();
         }
 
+        String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator();
+        if (lineSeparator == null) {
+            Result result = new StreamResult(propertyfile);
+            saveDocument(result, document);
+        }
+        else {
+            ByteArrayOutputStream output = new ByteArrayOutputStream(2048);
+            Result result = new StreamResult(output);
+            saveDocument(result, document);
+
+            String fileOutput = output.toString(XML_ENCODING);
+            BufferedReader configContent = new BufferedReader(new StringReader(output.toString(XML_ENCODING)), 2048);
+
+            StringBuilder newFileStrContent = new StringBuilder(fileOutput.length());
+            for (String line = configContent.readLine(); line != null; line = configContent.readLine()) {
+                newFileStrContent.append(line);
+                newFileStrContent.append(lineSeparator);
+            }
+
+            writeBytesToFile(propertyfile, newFileStrContent.toString().getBytes(XML_ENCODING));
+        }
+    }
+
+    private static void saveDocument(Result result, Document document) throws TransformerException, IOException {
         Source source = new DOMSource(document);
-        Result result = new StreamResult(propertyfile);
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.ENCODING, XML_ENCODING);
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
