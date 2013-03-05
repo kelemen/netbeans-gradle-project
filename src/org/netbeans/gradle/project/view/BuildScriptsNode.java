@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.GradleProjectConstants;
@@ -26,6 +27,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(BuildScriptsNode.class.getName());
@@ -185,10 +187,36 @@ public final class BuildScriptsNode extends AbstractNode {
                     : null;
         }
 
+        private FileObject getRootBuildDir(FileObject settingsGradle) {
+            if (settingsGradle != null) {
+                return settingsGradle.getParent();
+            }
+            else {
+                return project.getProjectDirectory();
+            }
+        }
+
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             NbGradleModel model = project.getCurrentModel();
 
             FileObject settingsGradle = model.tryGetSettingsFileObj();
+            FileObject rootBuildDir = getRootBuildDir(settingsGradle);
+
+            if (rootBuildDir != null) {
+                FileObject buildSrcObj = rootBuildDir.getFileObject(GradleProjectConstants.BUILD_SRC_NAME);
+                final File buildSrc = buildSrcObj != null
+                        ? FileUtil.toFile(buildSrcObj)
+                        : null;
+                if (buildSrc != null) {
+                    toPopulate.add(new SingleNodeFactory() {
+                        @Override
+                        public Node createNode() {
+                            return new BuildSrcNode(buildSrc);
+                        }
+                    });
+                }
+            }
+
             if (settingsGradle != null) {
                 addGradleFile(settingsGradle, toPopulate);
             }
@@ -242,6 +270,54 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private static class BuildSrcNode extends FilterNode {
+        private final File buildSrcDir;
+
+        public BuildSrcNode(File buildSrcDir) {
+            super(Node.EMPTY.cloneNode(), null, Lookups.fixed(buildSrcDir));
+            this.buildSrcDir = buildSrcDir;
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            return new Action[]{
+                getPreferredAction()
+            };
+        }
+
+        @Override
+        public Action getPreferredAction() {
+            return OpenProjectsAction.createFromProjectDirs(
+                    NbStrings.getOpenBuildSrcCaption(),
+                    Collections.singleton(buildSrcDir));
+        }
+
+        @Override
+        public String getName() {
+            File parentFile = buildSrcDir.getParentFile();
+            return "BuildSrc_" + (parentFile != null ? parentFile.getName() : "unknown");
+        }
+        @Override
+        public String getDisplayName() {
+            return NbStrings.getBuildSrcNodeCaption();
+        }
+
+        @Override
+        public Image getIcon(int type) {
+            return NbIcons.getGradleIcon();
+        }
+
+        @Override
+        public Image getOpenedIcon(int type) {
+            return getIcon(type);
+        }
+
+        @Override
+        public boolean canRename() {
+            return false;
         }
     }
 }

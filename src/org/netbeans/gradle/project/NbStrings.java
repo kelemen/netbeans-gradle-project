@@ -130,6 +130,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_OpenImmediateSubProjects");
     }
 
+    public static String getBuildSrcNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_BuildSrcNode");
+    }
+
+    public static String getOpenBuildSrcCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OpenBuildSrc");
+    }
+
+    public static String getBuildSrcMarker(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_BuildSrcMarker", projectName);
+    }
+
     public static String getOpenSubProjectsCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_OpenEverySubProject");
     }
