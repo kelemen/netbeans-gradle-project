@@ -109,7 +109,7 @@ public final class BuildScriptsNode extends AbstractNode {
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
-                    return new FilterNode(fileData.getNodeDelegate()) {
+                    return new FilterNode(fileData.getNodeDelegate().cloneNode()) {
                         @Override
                         public boolean canRename() {
                             return false;
