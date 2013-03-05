@@ -256,15 +256,15 @@ public final class NbStrings {
     }
 
     public static String getProjectErrorTitle(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_PROJECT_ERROR_TITLE", projectName);
+        return NbBundle.getMessage(NbStrings.class, "LBL_ProjectErrorTitle", projectName);
     }
 
     public static String getProjectLoadFailure(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_PROJECT_LOAD_FAILURE", projectName);
+        return NbBundle.getMessage(NbStrings.class, "MSG_ProjectLoadFailure", projectName);
     }
 
     public static String getBuildFailure(String tasks) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_BUILD_FAILURE", tasks);
+        return NbBundle.getMessage(NbStrings.class, "MSG_BuildFailure", tasks);
     }
 
     public static String getDefaultProfileName() {
@@ -288,11 +288,11 @@ public final class NbStrings {
     }
 
     public static String getUserHomeFileName(String fileName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_USER_HOME_FILE", fileName);
+        return NbBundle.getMessage(NbStrings.class, "LBL_UserHomeFile", fileName);
     }
 
     public static String getRootProjectMarker() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ROOT_PROJECT_MARKER");
+        return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker");
     }
 
     private NbStrings() {
