@@ -202,7 +202,7 @@ public final class BuildScriptsNode extends AbstractNode {
             FileObject settingsGradle = model.tryGetSettingsFileObj();
             FileObject rootBuildDir = getRootBuildDir(settingsGradle);
 
-            if (rootBuildDir != null) {
+            if (rootBuildDir != null && !model.getMainModule().getProperties().isBuildSrc()) {
                 FileObject buildSrcObj = rootBuildDir.getFileObject(GradleProjectConstants.BUILD_SRC_NAME);
                 final File buildSrc = buildSrcObj != null
                         ? FileUtil.toFile(buildSrcObj)
