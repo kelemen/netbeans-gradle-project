@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.project.GradleProjectConstants;
 
 public final class NbGradleModule {
     private final Properties properties;
@@ -153,6 +154,10 @@ public final class NbGradleModule {
 
         public String getUniqueName() {
             return uniqueName;
+        }
+
+        public boolean isBuildSrc() {
+            return moduleDir.getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
         }
 
         public boolean isRootProject() {

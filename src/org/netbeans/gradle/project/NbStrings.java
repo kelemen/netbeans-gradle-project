@@ -291,8 +291,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_UserHomeFile", fileName);
     }
 
-    public static String getRootProjectMarker() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker");
+    public static String getRootProjectMarker(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker", projectName);
     }
 
     private NbStrings() {

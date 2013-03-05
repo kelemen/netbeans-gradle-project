@@ -4,6 +4,7 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -241,8 +242,13 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         @Override
         public String getDisplayName() {
             NbGradleModule mainModule = project.getAvailableModel().getMainModule();
-            if (mainModule.getProperties().isRootProject()) {
-                return project.getDisplayName() + " " + NbStrings.getRootProjectMarker();
+            if (mainModule.getProperties().isBuildSrc()) {
+                File parentFile = mainModule.getModuleDir().getParentFile();
+                String parentName = parentFile != null ? parentFile.getName() : "?";
+                return NbStrings.getBuildSrcMarker(parentName);
+            }
+            else if (mainModule.getProperties().isRootProject()) {
+                return NbStrings.getRootProjectMarker(project.getDisplayName());
             }
             else {
                 return project.getDisplayName();
