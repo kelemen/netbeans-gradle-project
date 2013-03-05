@@ -65,6 +65,19 @@ public class NbGradleProjectFactory implements ProjectFactory {
         return SAFE_TO_OPEN_PROJECTS.containsKey(projectDirFile);
     }
 
+    private static boolean hasBuildFile(FileObject directory) {
+        if (directory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null) {
+            return true;
+        }
+        if (directory.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME) != null) {
+            return true;
+        }
+        if (directory.getFileObject(directory.getNameExt() + ".gradle") != null) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean isProject(FileObject projectDirectory) {
         if (isSafeToOpen(projectDirectory)) {
@@ -85,15 +98,18 @@ public class NbGradleProjectFactory implements ProjectFactory {
             }
         }
 
-        if (projectDirectory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null) {
+        if (hasBuildFile(projectDirectory)) {
             return true;
         }
-        if (projectDirectory.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME) != null) {
-            return true;
+        if (projectDirectory.getNameExt().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME)) {
+            FileObject parent = projectDirectory.getParent();
+            if (parent != null) {
+                if (hasBuildFile(parent)) {
+                    return true;
+                }
+            }
         }
-        if (projectDirectory.getFileObject(projectDirectory.getNameExt() + ".gradle") != null) {
-            return true;
-        }
+
         return false;
     }
 

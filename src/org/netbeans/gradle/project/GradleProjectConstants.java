@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 public final class GradleProjectConstants {
+    public static final String BUILD_SRC_NAME = "buildSrc";
     public static final String BUILD_FILE_NAME = "build.gradle";
     public static final String SETTINGS_FILE_NAME = "settings.gradle";
     public static final String GRADLE_PROPERTIES_NAME = "gradle.properties";
