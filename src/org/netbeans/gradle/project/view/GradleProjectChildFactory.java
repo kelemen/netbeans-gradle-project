@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.view;
 import java.awt.Image;
 import java.io.File;
 import java.text.Collator;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Action;
@@ -123,6 +124,11 @@ extends
         return Children.create(new SubProjectsChildFactory(project, children), true);
     }
 
+    private static Action createOpenAction(String caption,
+            Collection<NbGradleModule> projects) {
+        return OpenProjectsAction.createFromModules(caption, projects);
+    }
+
     private void addChildren(List<SingleNodeFactory> toPopulate) {
         NbGradleModule shownModule = getShownModule();
         final List<NbGradleModule> immediateChildren = shownModule.getChildren();
@@ -146,8 +152,8 @@ extends
                     @Override
                     public Action[] getActions(boolean context) {
                         return new Action[] {
-                            new OpenProjectsAction(NbStrings.getOpenImmediateSubProjectsCaption(), immediateChildren),
-                            new OpenProjectsAction(NbStrings.getOpenSubProjectsCaption(), children)
+                            createOpenAction(NbStrings.getOpenImmediateSubProjectsCaption(), immediateChildren),
+                            createOpenAction(NbStrings.getOpenSubProjectsCaption(), children)
                         };
                     }
 

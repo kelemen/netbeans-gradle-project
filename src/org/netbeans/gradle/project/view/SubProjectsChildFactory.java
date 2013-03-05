@@ -85,6 +85,11 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
         return projectFolder.getNodeDelegate().cloneNode();
     }
 
+    private static Action createOpenAction(String caption,
+            Collection<NbGradleModule> projects) {
+        return OpenProjectsAction.createFromModules(caption, projects);
+    }
+
     private static class SubModuleWithChildren extends FilterNode {
         private final NbGradleModule module;
         private final List<NbGradleModule> immdeiateChildren;
@@ -112,8 +117,8 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
         public Action[] getActions(boolean context) {
             return new Action[] {
                 new OpenSubProjectAction(),
-                new OpenProjectsAction(NbStrings.getOpenImmediateSubProjectsCaption(), immdeiateChildren),
-                new OpenProjectsAction(NbStrings.getOpenSubProjectsCaption(), children)
+                createOpenAction(NbStrings.getOpenImmediateSubProjectsCaption(), immdeiateChildren),
+                createOpenAction(NbStrings.getOpenSubProjectsCaption(), children)
             };
         }
 
@@ -218,7 +223,9 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
             final Collection<? extends NbGradleModule> projects
                     = actionContext.lookupAll(NbGradleModule.class);
 
-            return new OpenProjectsAction(Collections.unmodifiableCollection(projects));
+            return createOpenAction(
+                    NbStrings.getOpenSubProjectCaption(projects),
+                    Collections.unmodifiableCollection(projects));
         }
     }
 }

@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.event.ActionEvent;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +14,6 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -22,35 +22,49 @@ import org.openide.filesystems.FileUtil;
 public final class OpenProjectsAction extends AbstractAction {
     private static final Logger LOGGER = Logger.getLogger(OpenProjectsAction.class.getName());
 
-    private final Collection<NbGradleModule> projects;
+    private final Collection<File> projectDirs;
 
-    public OpenProjectsAction(String caption, Collection<NbGradleModule> projects) {
-        super(caption);
-        this.projects = new ArrayList<NbGradleModule>(projects);
-        for (NbGradleModule project: this.projects) {
+    public static OpenProjectsAction createFromModules(
+            String caption,
+            Collection<NbGradleModule> projects) {
+        Collection<File> projectDirs = new ArrayList<File>(projects.size());
+        for (NbGradleModule project: projects) {
+            if (project == null) throw new NullPointerException("project");
+            projectDirs.add(project.getModuleDir());
+        }
+        return new OpenProjectsAction(caption, projectDirs);
+    }
+
+    public static OpenProjectsAction createFromProjectDirs(
+            String caption,
+            Collection<File> projectDirs) {
+        Collection<File> safeProjectDirs = new ArrayList<File>(projectDirs);
+        for (File project: safeProjectDirs) {
             if (project == null) throw new NullPointerException("project");
         }
+        return new OpenProjectsAction(caption, safeProjectDirs);
     }
 
-    public OpenProjectsAction(Collection<NbGradleModule> projects) {
-        this(NbStrings.getOpenSubProjectCaption(projects), projects);
+    private OpenProjectsAction(String caption, Collection<File> projectDirs) {
+        super(caption);
+        this.projectDirs = projectDirs;
     }
 
-    private void openSubProject(NbGradleModule project) {
-        LOGGER.log(Level.FINE, "Trying to open project: {0}", project.getName());
+    private void openProject(File projectDir) {
+        LOGGER.log(Level.FINE, "Trying to open project: {0}", projectDir.getName());
 
-        FileObject subProjectDir = FileUtil.toFileObject(project.getModuleDir());
-        if (subProjectDir == null) {
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir);
+        if (projectDirObj == null) {
             LOGGER.log(Level.WARNING,
                     "Directory of the project does not exist: {0}",
-                    project.getModuleDir());
+                    projectDir);
             return;
         }
 
         try {
             ProjectManager projectManager = ProjectManager.getDefault();
 
-            Closeable safeToOpenKey = NbGradleProjectFactory.safeToOpen(subProjectDir);
+            Closeable safeToOpenKey = NbGradleProjectFactory.safeToOpen(projectDirObj);
             try {
                 // We have to clear this list because if the project
                 // does not have build.gradle, NetBeans might have
@@ -58,11 +72,11 @@ public final class OpenProjectsAction extends AbstractAction {
                 // contain a project.
                 projectManager.clearNonProjectCache();
 
-                Project subProject = projectManager.findProject(subProjectDir);
+                Project subProject = projectManager.findProject(projectDirObj);
                 if (subProject == null) {
                     LOGGER.log(Level.WARNING,
                             "Project cannot be found: {0}",
-                            project.getModuleDir());
+                            projectDir);
                     return;
                 }
                 OpenProjects.getDefault().open(new Project[]{subProject}, false);
@@ -72,7 +86,7 @@ public final class OpenProjectsAction extends AbstractAction {
             }
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING,
-                    "Error while trying to load the project: " + project.getModuleDir(),
+                    "Error while trying to load the project: " + projectDir,
                     ex);
         }
     }
@@ -82,8 +96,8 @@ public final class OpenProjectsAction extends AbstractAction {
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                for (NbGradleModule project: projects) {
-                    openSubProject(project);
+                for (File projectDir: projectDirs) {
+                    openProject(projectDir);
                 }
             }
         });
