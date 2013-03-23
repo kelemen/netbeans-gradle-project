@@ -5,7 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,6 +14,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.modules.editor.indent.project.api.Customizers;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 import org.openide.util.HelpCtx;
@@ -32,11 +34,15 @@ public final class GradleCustomizer implements CustomizerProvider {
     }
 
     private static ProjectCustomizer.CompositeCategoryProvider[] getExternalCustomizers() {
-        Lookup customizerLookup = Lookups.forPath("Projects/org-netbeans-modules-apisupport-project/Customizer");
-        Collection<? extends ProjectCustomizer.CompositeCategoryProvider> externalCategoriesCollection
-                = customizerLookup.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
-        return externalCategoriesCollection
-                .toArray(new ProjectCustomizer.CompositeCategoryProvider[externalCategoriesCollection.size()]);
+        List<ProjectCustomizer.CompositeCategoryProvider> result
+                = new LinkedList<ProjectCustomizer.CompositeCategoryProvider>();
+
+        result.add(Customizers.createFormattingCategoryProvider(Collections.emptyMap()));
+
+        Lookup apiSupport = Lookups.forPath("Projects/org-netbeans-modules-apisupport-project/Customizer");
+        result.addAll(apiSupport.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
+
+        return result.toArray(new ProjectCustomizer.CompositeCategoryProvider[result.size()]);
     }
 
     private ProjectCustomizer.CompositeCategoryProvider[] getAllCustomizers() {
