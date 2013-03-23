@@ -3,12 +3,15 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.openide.filesystems.FileObject;
@@ -18,6 +21,78 @@ import org.openide.util.Utilities;
 public final class NbModelUtils {
     public static boolean isFullyQualifiedName(String name) {
         return name.startsWith(":");
+    }
+
+    private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {
+        List<V> valueList = map.get(key);
+        if (valueList == null) {
+            valueList = new LinkedList<V>();
+            map.put(key, valueList);
+        }
+        valueList.add(value);
+    }
+
+    public static List<NbSourceRoot> nameSourceRoots(List<File> files) {
+        // The common case
+        if (files.size() == 1) {
+            File file = files.get(0);
+            return Collections.singletonList(new NbSourceRoot(file, file.getName()));
+        }
+
+        Map<String, List<FileWithBase>> nameToFile
+                = new HashMap<String, List<FileWithBase>>(files.size() * 2 + 1);
+
+        int fileIndex = 0;
+        for (File file: files) {
+            String name = file.getName();
+            File parent = file.getParentFile();
+            addToMap(nameToFile, name, new FileWithBase(fileIndex, parent, file));
+            fileIndex++;
+        }
+
+        boolean didSomething;
+        do {
+            didSomething = false;
+
+            List<Map.Entry<String, List<FileWithBase>>> currentEntries
+                    = new ArrayList<Map.Entry<String, List<FileWithBase>>>(nameToFile.entrySet());
+            for (Map.Entry<String, List<FileWithBase>> entry: currentEntries) {
+                String entryName = entry.getKey();
+                List<FileWithBase> entryFiles = entry.getValue();
+
+                int renameableCount = 0;
+                for (FileWithBase file: entryFiles) {
+                    if (file.base != null) renameableCount++;
+                }
+
+                if (renameableCount > 1) {
+                    nameToFile.remove(entryName);
+                    for (FileWithBase file: entryFiles) {
+                        if (file.base != null) {
+                            String newName = file.base.getName() + '/' + entryName;
+                            File newParent = file.base.getParentFile();
+                            addToMap(nameToFile,
+                                    newName,
+                                    new FileWithBase(file.index, newParent, file.file));
+                        }
+                        else {
+                            addToMap(nameToFile, entryName, file);
+                        }
+                    }
+                    didSomething = true;
+                }
+            }
+        } while (didSomething);
+
+        NbSourceRoot[] result = new NbSourceRoot[fileIndex];
+        for (Map.Entry<String, List<FileWithBase>> entry: nameToFile.entrySet()) {
+            String entryName = entry.getKey();
+            for (FileWithBase file: entry.getValue()) {
+                result[file.index] = new NbSourceRoot(file.file, entryName);
+            }
+        }
+
+        return Arrays.asList(result);
     }
 
     private static void getAllChildren(NbGradleModule module, List<NbGradleModule> result) {
@@ -238,6 +313,20 @@ public final class NbModelUtils {
     public static FileObject uriToFileObject(URI uri) {
         File file = uriToFile(uri);
         return file != null ? FileUtil.toFileObject(file) : null;
+    }
+
+    private static final class FileWithBase {
+        public final int index;
+        public final File base;
+        public final File file;
+
+        public FileWithBase(int index, File base, File file) {
+            assert file != null;
+
+            this.index = index;
+            this.base = base;
+            this.file = file;
+        }
     }
 
     private NbModelUtils() {

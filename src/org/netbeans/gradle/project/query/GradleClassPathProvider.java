@@ -162,9 +162,8 @@ implements
 
     private FileType getTypeOfFile(NbGradleModule module, FileObject file) {
         for (Map.Entry<NbSourceType, NbSourceGroup> entry: module.getSources().entrySet()) {
-            for (File sourceRoot: entry.getValue().getPaths()) {
-                FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
-                if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, file) != null) {
+            for (FileObject sourceRoot: entry.getValue().getFileObjects()) {
+                if (FileUtil.getRelativePath(sourceRoot, file) != null) {
                     return sourceTypeToFileType(entry.getKey());
                 }
             }
@@ -300,8 +299,8 @@ implements
 
         NbGradleModule mainModule = projectModel.getMainModule();
 
-        sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getPaths());
-        testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getPaths());
+        sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFiles());
+        testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFiles());
 
         @SuppressWarnings("unchecked")
         List<PathResourceImplementation> sourcePaths = getPathResources(

@@ -24,9 +24,8 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static boolean hasSource(NbGradleModule module, FileObject source) {
-        for (File srcDirFile: module.getSources(NbSourceType.SOURCE).getPaths()) {
-            FileObject srcDir = FileUtil.toFileObject(srcDirFile);
-            if (srcDir != null && FileUtil.getRelativePath(srcDir, source) != null) {
+        for (FileObject srcDir: module.getSources(NbSourceType.SOURCE).getFileObjects()) {
+            if (FileUtil.getRelativePath(srcDir, source) != null) {
                 return true;
             }
         }
@@ -34,9 +33,8 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static boolean hasTest(NbGradleModule module, FileObject source) {
-        for (File srcDirFile: module.getSources(NbSourceType.TEST_SOURCE).getPaths()) {
-            FileObject srcDir = FileUtil.toFileObject(srcDirFile);
-            if (srcDir != null && FileUtil.getRelativePath(srcDir, source) != null) {
+        for (FileObject srcDir: module.getSources(NbSourceType.TEST_SOURCE).getFileObjects()) {
+            if (FileUtil.getRelativePath(srcDir, source) != null) {
                 return true;
             }
         }
@@ -45,7 +43,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
 
     private static URL[] getSourceRoots(NbGradleModule module) {
         List<URL> result = new LinkedList<URL>();
-        for (File srcDirFile: module.getSources(NbSourceType.SOURCE).getPaths()) {
+        for (File srcDirFile: module.getSources(NbSourceType.SOURCE).getFiles()) {
             result.add(FileUtil.urlForArchiveOrDir(srcDirFile));
         }
 
@@ -54,7 +52,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
 
     private static URL[] getTestRoots(NbGradleModule module) {
         List<URL> result = new LinkedList<URL>();
-        for (File srcDirFile: module.getSources(NbSourceType.TEST_SOURCE).getPaths()) {
+        for (File srcDirFile: module.getSources(NbSourceType.TEST_SOURCE).getFiles()) {
             result.add(FileUtil.urlForArchiveOrDir(srcDirFile));
         }
 

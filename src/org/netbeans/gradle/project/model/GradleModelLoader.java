@@ -381,16 +381,20 @@ public final class GradleModelLoader {
 
         Map<NbSourceType, NbSourceGroup> groups = new EnumMap<NbSourceType, NbSourceGroup>(NbSourceType.class);
         if (!sources.isEmpty()) {
-            groups.put(NbSourceType.SOURCE, new NbSourceGroup(sources));
+            groups.put(NbSourceType.SOURCE,
+                    new NbSourceGroup(NbModelUtils.nameSourceRoots(sources)));
         }
         if (!resources.isEmpty()) {
-            groups.put(NbSourceType.RESOURCE, new NbSourceGroup(resources));
+            groups.put(NbSourceType.RESOURCE,
+                    new NbSourceGroup(NbModelUtils.nameSourceRoots(resources)));
         }
         if (!testSources.isEmpty()) {
-            groups.put(NbSourceType.TEST_SOURCE, new NbSourceGroup(testSources));
+            groups.put(NbSourceType.TEST_SOURCE,
+                    new NbSourceGroup(NbModelUtils.nameSourceRoots(testSources)));
         }
         if (!testResources.isEmpty()) {
-            groups.put(NbSourceType.TEST_RESOURCE, new NbSourceGroup(testResources));
+            groups.put(NbSourceType.TEST_RESOURCE,
+                    new NbSourceGroup(NbModelUtils.nameSourceRoots(testResources)));
         }
         return groups;
     }
@@ -416,8 +420,8 @@ public final class GradleModelLoader {
 
         NbSourceGroup sourceGroups = sources.get(NbSourceType.SOURCE);
         if (sourceGroups != null) {
-            for (File sourceRoot: sourceGroups.getPaths()) {
-                File parent = sourceRoot.getParentFile();
+            for (NbSourceRoot sourceRoot: sourceGroups.getPaths()) {
+                File parent = sourceRoot.getPath().getParentFile();
                 if (parent != null) {
                     File webapp = new File(parent, "webapp");
                     if (webapp.isDirectory()) {

@@ -24,6 +24,7 @@ import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.NbSourceRoot;
 import org.netbeans.gradle.project.model.NbSourceType;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -61,10 +62,19 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
         return null;
     }
 
-    private static SourceGroup[] toSourceGroup(String displayName, List<File> rootDirs) {
+    private static SourceGroup[] toSourceGroup(String displayName, List<NbSourceRoot> rootDirs) {
+        // Don't add a marker when there are only one source roots
+        if (rootDirs.size() == 1) {
+            SourceGroup group = createSourceGroup(rootDirs.get(0).getPath(), displayName);
+            return group != null
+                    ? new SourceGroup[]{group}
+                    : NO_SOURCE_GROUPS;
+        }
+
         List<SourceGroup> result = new ArrayList<SourceGroup>(rootDirs.size());
-        for (File dir: rootDirs) {
-            SourceGroup group = createSourceGroup(dir, displayName);
+        for (NbSourceRoot root: rootDirs) {
+            String rootName = displayName + " [" + root.getName() + "]";
+            SourceGroup group = createSourceGroup(root.getPath(), rootName);
             if (group != null) {
                 result.add(group);
             }
