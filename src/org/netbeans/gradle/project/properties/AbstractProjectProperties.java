@@ -4,11 +4,11 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -106,7 +106,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
 
     @Override
     public final Collection<MutableProperty<?>> getAllProperties() {
-        List<MutableProperty<?>> result = new ArrayList<MutableProperty<?>>(4 + CUSTOMIZABLE_TASKS.size());
+        List<MutableProperty<?>> result = new LinkedList<MutableProperty<?>>();
         result.add(getPlatform());
         result.add(getSourceEncoding());
         result.add(getSourceLevel());
@@ -123,6 +123,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
                 LOGGER.log(Level.WARNING, "tryGetBuiltInTask returned null for customizable task: {0}", command);
             }
         }
+        result.add(getAuxConfigListener());
 
         return result;
     }

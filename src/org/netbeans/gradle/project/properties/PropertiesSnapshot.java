@@ -1,8 +1,11 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +14,7 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
+import org.w3c.dom.Element;
 
 public final class PropertiesSnapshot {
     private static final Logger LOGGER = Logger.getLogger(PropertiesSnapshot.class.getName());
@@ -23,6 +27,7 @@ public final class PropertiesSnapshot {
         private PropertySource<Charset> sourceEncoding;
         private PropertySource<List<PredefinedTask>> commonTasks;
         private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
+        private final List<AuxConfigSource> auxProperties;
 
         public Builder() {
             this.platform = null;
@@ -32,6 +37,32 @@ public final class PropertiesSnapshot {
             this.gradleHome = null;
             this.commonTasks = null;
             this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>();
+            this.auxProperties = new LinkedList<AuxConfigSource>();
+        }
+
+        public void addAuxConfig(AuxConfig config, boolean defaultValue) {
+            if (config == null) throw new NullPointerException("config");
+            auxProperties.add(new AuxConfigSource(
+                    config.getKey(),
+                    new DomElementSource(config.getValue(), defaultValue)));
+        }
+
+        public void addAuxProperty(AuxConfigSource source) {
+            if (source == null) throw new NullPointerException("source");
+            auxProperties.add(source);
+        }
+
+        public void addAuxProperty(AuxConfigProperty auxProperty) {
+            if (auxProperty == null) throw new NullPointerException("auxProperty");
+
+            MutableProperty<Element> property = auxProperty.getProperty();
+            auxProperties.add(new AuxConfigSource(
+                    auxProperty.getKey(),
+                    new DomElementSource(property.getValue(), property.isDefault())));
+        }
+
+        public Collection<AuxConfigSource> getAuxProperties() {
+            return new ArrayList<AuxConfigSource>(auxProperties);
         }
 
         public void setBuiltInTask(String command, PropertySource<PredefinedTask> task) {
@@ -151,6 +182,8 @@ public final class PropertiesSnapshot {
     private final PropertySource<Charset> sourceEncoding;
     private final PropertySource<List<PredefinedTask>> commonTasks;
     private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
+    private final List<AuxConfigSource> auxProperties;
+    private final Map<DomElementKey, AuxConfigSource> auxPropertiesMap;
 
     public PropertiesSnapshot(ProjectProperties properties) {
         this.sourceLevel = asConst(properties.getSourceLevel());
@@ -159,6 +192,16 @@ public final class PropertiesSnapshot {
         this.gradleHome = asConst(properties.getGradleLocation());
         this.sourceEncoding = asConst(properties.getSourceEncoding());
         this.commonTasks = asConst(properties.getCommonTasks());
+
+        Collection<AuxConfigProperty> otherAuxConfigs = properties.getAllAuxConfigs();
+        this.auxProperties = new ArrayList<AuxConfigSource>(otherAuxConfigs.size());
+        for (AuxConfigProperty auxProperty: otherAuxConfigs) {
+            MutableProperty<Element> property = auxProperty.getProperty();
+            this.auxProperties.add(new AuxConfigSource(
+                    auxProperty.getKey(),
+                    new DomElementSource(property.getValue(), property.isDefault())));
+        }
+        this.auxPropertiesMap = sourcesToMap(this.auxProperties);
 
         Set<String> commands = AbstractProjectProperties.getCustomizableCommands();
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(2 * commands.size());
@@ -213,6 +256,15 @@ public final class PropertiesSnapshot {
         return new ConstPropertySource<ValueType>(value, defaultValue);
     }
 
+    private static Map<DomElementKey, AuxConfigSource> sourcesToMap(Collection<AuxConfigSource> sources) {
+        Map<DomElementKey, AuxConfigSource> map = new HashMap<DomElementKey, AuxConfigSource>(
+                2 * sources.size() + 1);
+        for (AuxConfigSource auxSource: sources) {
+            map.put(auxSource.getKey(), auxSource);
+        }
+        return map;
+    }
+
     private PropertiesSnapshot(Builder builder) {
         this.sourceLevel = builder.getSourceLevel();
         this.platform = builder.getPlatform();
@@ -221,6 +273,8 @@ public final class PropertiesSnapshot {
         this.sourceEncoding = builder.getSourceEncoding();
         this.commonTasks = builder.getCommonTasks();
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(builder.builtInTasks);
+        this.auxProperties = Collections.unmodifiableList(new ArrayList<AuxConfigSource>(builder.auxProperties));
+        this.auxPropertiesMap = sourcesToMap(this.auxProperties);
     }
 
     public PropertySource<String> getSourceLevel() {
@@ -245,6 +299,19 @@ public final class PropertiesSnapshot {
 
     public PropertySource<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
+    }
+
+    public Collection<AuxConfigSource> getAuxProperties() {
+        return auxProperties;
+    }
+
+    public AuxConfigSource getAuxProperty(DomElementKey key) {
+        if (key == null) throw new NullPointerException("key");
+        AuxConfigSource result = auxPropertiesMap.get(key);
+        if (result == null) {
+            result = new AuxConfigSource(key, new DomElementSource(null, true));
+        }
+        return result;
     }
 
     public PropertySource<PredefinedTask> tryGetBuiltInTask(String command) {

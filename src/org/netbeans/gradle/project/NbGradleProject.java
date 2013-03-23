@@ -22,6 +22,8 @@ import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
+import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
@@ -264,6 +266,8 @@ public final class NbGradleProject implements Project {
         // to share "this" in the constructor.
         Lookup result = lookupRef.get();
         if (result == null) {
+            GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
+
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
                 state, //allow outside code to mark the project as needing saving
@@ -282,6 +286,8 @@ public final class NbGradleProject implements Project {
                 new GradleAnnotationProcessingQuery(),
                 new GradleSourceForBinaryQuery(this),
                 new GradleBinaryForSourceQuery(this),
+                auxConfig,
+                new GradleAuxiliaryProperties(auxConfig),
 
                 // FileOwnerQueryImplementation cannot be added to the project's
                 // lookup, since NetBeans will ignore it. It must be added
@@ -504,9 +510,6 @@ public final class NbGradleProject implements Project {
                     try {
                         err.println();
                         err.println(errorText);
-                        if (err != null) {
-                            exception.printStackTrace(err);
-                        }
                     } finally {
                         outputLock.unlock();
                         err.close();

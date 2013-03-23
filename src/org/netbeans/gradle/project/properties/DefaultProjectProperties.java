@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -9,6 +10,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
+import org.w3c.dom.Element;
 
 public final class DefaultProjectProperties extends AbstractProjectProperties {
     private static final Logger LOGGER = Logger.getLogger(DefaultProjectProperties.class.getName());
@@ -126,6 +128,39 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
                 return task;
             }
         };
+    }
+
+    @Override
+    public MutableProperty<Void> getAuxConfigListener() {
+        return new UnmodifiableProperty<Void>("AuxConfigListener") {
+            @Override
+            public Void getValue() {
+                return null;
+            }
+        };
+    }
+
+    @Override
+    public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
+        UnmodifiableProperty<Element> property = new UnmodifiableProperty<Element>("AuxConfig-" + elementName) {
+            @Override
+            public Element getValue() {
+                return null;
+            }
+        };
+        return new AuxConfigProperty(
+                new DomElementKey(elementName, namespace),
+                property);
+    }
+
+    @Override
+    public void setAllAuxConfigs(Collection<AuxConfig> configs) {
+        LOGGER.log(Level.WARNING, "Attempting to modify a default property: AuxConfigs");
+    }
+
+    @Override
+    public Collection<AuxConfigProperty> getAllAuxConfigs() {
+        return Collections.emptyList();
     }
 
     private static final class WrappedUnmodifiableProperty<ValueType> extends UnmodifiableProperty<ValueType> {

@@ -30,5 +30,12 @@ public interface ProjectProperties {
     // Also define the defaults in BuiltInTasks.
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
 
+    // The listener of this property is always notified whenever any of the
+    // auxilary configuration changes.
+    public MutableProperty<Void> getAuxConfigListener();
+    public AuxConfigProperty getAuxConfig(String elementName, String namespace);
+    public void setAllAuxConfigs(Collection<AuxConfig> configs);
+    public Collection<AuxConfigProperty> getAllAuxConfigs();
+
     public Collection<MutableProperty<?>> getAllProperties();
 }

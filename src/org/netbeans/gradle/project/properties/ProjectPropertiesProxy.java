@@ -2,11 +2,14 @@ package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,6 +22,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.openide.util.ChangeSupport;
+import org.w3c.dom.Element;
 
 public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesProxy.class.getName());
@@ -33,7 +37,9 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<GradleLocation> gradleHomeProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
+    private final MutablePropertyProxy<Void> auxConfigListener;
     private final Map<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
+    private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
     private final WaitableSignal loadedSignal;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
@@ -43,6 +49,13 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.changes = new ChangeSupport(this);
         this.loadedSignal = new WaitableSignal();
 
+        this.auxProperties = new ConcurrentHashMap<DomElementKey, AuxConfigProperty>();
+        this.auxConfigListener = new MutablePropertyProxy<Void>(new ProjectMutablePropertyRef<Void>(this) {
+            @Override
+            public MutableProperty<Void> getProperty() {
+                return this.getProperties().getAuxConfigListener();
+            }
+        });
         this.sourceLevelProxy = new MutablePropertyProxy<String>(new ProjectMutablePropertyRef<String>(this) {
             @Override
             public MutableProperty<String> getProperty() {
@@ -175,6 +188,45 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
         if (command == null) throw new NullPointerException("command");
         return builtInTasks.get(command);
+    }
+
+    @Override
+    public AuxConfigProperty getAuxConfig(final String elementName, final String namespace) {
+        DomElementKey key = new DomElementKey(elementName, namespace);
+        AuxConfigProperty property = auxProperties.get(key);
+        if (property != null) {
+            return property;
+        }
+
+        MutablePropertyProxy<Element> proxy = new MutablePropertyProxy<Element>(new ProjectMutablePropertyRef<Element>(this) {
+            @Override
+            public MutableProperty<Element> getProperty() {
+                return this.getProperties().getAuxConfig(elementName, namespace).getProperty();
+            }
+        });
+        auxProperties.putIfAbsent(key, new AuxConfigProperty(key, proxy));
+        return auxProperties.get(key);
+    }
+
+    @Override
+    public MutableProperty<Void> getAuxConfigListener() {
+        return auxConfigListener;
+    }
+
+    @Override
+    public void setAllAuxConfigs(Collection<AuxConfig> configs) {
+        for (AuxConfigProperty property: auxProperties.values()) {
+            property.getProperty().setValue(null);
+        }
+        for (AuxConfig config: configs) {
+            DomElementKey key = config.getKey();
+            getAuxConfig(key.getName(), key.getNamespace()).getProperty().setValue(config.getValue());
+        }
+    }
+
+    @Override
+    public Collection<AuxConfigProperty> getAllAuxConfigs() {
+        return new ArrayList<AuxConfigProperty>(auxProperties.values());
     }
 
     private static interface MutablePropertyRef<ValueType> {

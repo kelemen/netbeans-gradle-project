@@ -14,6 +14,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties.AuxConfig;
+import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -149,6 +151,15 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             for (PropertySetter<?> setter: setters) {
                                 setter.set(snapshot);
                             }
+
+                            // TODO: This might overwrite concurrently set
+                            //  properties which is unexpected by the user. This
+                            //  is unlikely to happen but should be fixed anyway.
+                            List<AuxConfig> newAuxConfigs = new LinkedList<AuxConfig>();
+                            for (AuxConfigSource config: snapshot.getAuxProperties()) {
+                                newAuxConfigs.add(new AuxConfig(config.getKey(), config.getSource().getValue()));
+                            }
+                            properties.setAllAuxConfigs(newAuxConfigs);
 
                             if (onDone != null) {
                                 onDone.run();

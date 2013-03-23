@@ -18,11 +18,16 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     private final ChangeListener changeForwarder;
 
     public DefaultMutableProperty(ValueType value, boolean defaultValue, boolean allowNulls) {
-        if (!allowNulls) {
-            if (value == null) throw new NullPointerException("value");
-        }
+        this(asSource(value, defaultValue, allowNulls), allowNulls);
+    }
+
+    public DefaultMutableProperty(
+            PropertySource<? extends ValueType> initialValue,
+            boolean allowNulls) {
+        if (initialValue == null) throw new NullPointerException("initialValue");
+
         this.allowNulls = allowNulls;
-        this.valueSource = new ConstPropertySource<ValueType>(value, defaultValue);
+        this.valueSource = initialValue;
         this.changesLock = new ReentrantLock();
         this.changes = new ChangeSupport(this);
         this.changeForwarder = new ChangeListener() {
@@ -31,6 +36,18 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
                 changes.fireChange();
             }
         };
+    }
+
+    private static <ValueType> PropertySource<? extends ValueType> asSource(
+            ValueType value, boolean defaultValue, boolean allowNulls) {
+        return new ConstPropertySource<ValueType>(
+                allowNulls ? value : checkNull(value),
+                defaultValue);
+    }
+
+    private static <T> T checkNull(T value) {
+        if (value == null) throw new NullPointerException("value");
+        return value;
     }
 
     @Override

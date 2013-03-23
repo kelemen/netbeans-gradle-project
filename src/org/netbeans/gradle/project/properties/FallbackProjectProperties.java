@@ -2,10 +2,12 @@ package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.w3c.dom.Element;
 
 public final class FallbackProjectProperties
 extends
@@ -20,6 +22,7 @@ extends
     private final MutableProperty<JavaPlatform> scriptPlatform;
     private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
+    private final MutableProperty<Void> auxConfigListener;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
 
     public FallbackProjectProperties(ProjectProperties mainProperties, ProjectProperties defaultProperties) {
@@ -48,6 +51,10 @@ extends
         this.sourceEncoding = new FallbackProperty<Charset>(
                 mainProperties.getSourceEncoding(),
                 defaultProperties.getSourceEncoding());
+
+        this.auxConfigListener = new FallbackProperty<Void>(
+                mainProperties.getAuxConfigListener(),
+                defaultProperties.getAuxConfigListener());
 
         this.commonTasks = new ListMergerProperty<PredefinedTask>(
                 mainProperties.getCommonTasks(),
@@ -102,6 +109,29 @@ extends
         }
 
         return new FallbackProperty<PredefinedTask>(mainProperty, defaultProperty);
+    }
+
+    @Override
+    public MutableProperty<Void> getAuxConfigListener() {
+        return auxConfigListener;
+    }
+
+    @Override
+    public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
+        FallbackProperty<Element> property = new FallbackProperty<Element>(
+                mainProperties.getAuxConfig(elementName, namespace).getProperty(),
+                defaultProperties.getAuxConfig(elementName, namespace).getProperty());
+        return new AuxConfigProperty(elementName, namespace, property);
+    }
+
+    @Override
+    public void setAllAuxConfigs(Collection<AuxConfig> configs) {
+        mainProperties.setAllAuxConfigs(configs);
+    }
+
+    @Override
+    public Collection<AuxConfigProperty> getAllAuxConfigs() {
+        return mainProperties.getAllAuxConfigs();
     }
 
     private static class ListMergerProperty<ElementType>

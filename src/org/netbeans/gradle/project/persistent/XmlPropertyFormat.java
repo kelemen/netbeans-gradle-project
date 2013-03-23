@@ -10,7 +10,10 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +35,8 @@ import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties.AuxConfig;
+import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -69,6 +74,7 @@ final class XmlPropertyFormat {
     private static final String TASK_ARGS_NODE = "task-args";
     private static final String TASK_JVM_ARGS_NODE = "task-jvm-args";
     private static final String ARG_NODE = "arg";
+    private static final String AUXILIARY_NODE = "auxiliary";
 
     private static final String VALUE_YES = "yes";
     private static final String VALUE_NO = "no";
@@ -194,6 +200,46 @@ final class XmlPropertyFormat {
         addSimpleChild(platformNode, GENERIC_PLATFORM_VERSION_NODE, platform.getSpecification().getVersion().toString());
     }
 
+    private static List<AuxConfigSource> sortDomProperties(Collection<AuxConfigSource> properties) {
+        List<AuxConfigSource> currentConfigs = new ArrayList<AuxConfigSource>(properties);
+
+        // Return them sorted, so that they are saved in a deterministic order.
+        Collections.sort(currentConfigs, new Comparator<AuxConfigSource>() {
+            @Override
+            public int compare(AuxConfigSource o1, AuxConfigSource o2) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+
+        return currentConfigs;
+    }
+
+    private static void addAuxiliaryConfig(Node node, PropertiesSnapshot snapshot) {
+        List<AuxConfigSource> configs = sortDomProperties(snapshot.getAuxProperties());
+        if (configs.isEmpty()) {
+            return;
+        }
+
+        List<Element> auxElements = new ArrayList<Element>(configs.size());
+        for (AuxConfigSource config: configs) {
+            Element value = config.getSource().getValue();
+            if (value != null) {
+                auxElements.add(value);
+            }
+        }
+
+        if (auxElements.isEmpty()) {
+            return;
+        }
+
+        Document doc = node.getOwnerDocument();
+        Element auxiliaryNode = addChild(node, AUXILIARY_NODE);
+
+        for (Element auxElement: auxElements) {
+            auxiliaryNode.appendChild(doc.importNode(auxElement, true));
+        }
+    }
+
     public static void saveToXml(File propertyfile, PropertiesSnapshot snapshot) {
         if (propertyfile == null) throw new NullPointerException("propertyfile");
         if (snapshot == null) throw new NullPointerException("snapshot");
@@ -249,6 +295,7 @@ final class XmlPropertyFormat {
         }
 
         addBuiltInTasks(root, snapshot);
+        addAuxiliaryConfig(root, snapshot);
 
         try {
             saveDocument(propertyfile, document);
@@ -388,6 +435,27 @@ final class XmlPropertyFormat {
         return null;
     }
 
+    private static Collection<AuxConfig> readAuxiliaryConfigs(Element root) {
+        List<AuxConfig> result = new LinkedList<AuxConfig>();
+
+        Element auxNode = getFirstChildByTagName(root, AUXILIARY_NODE);
+        if (auxNode == null) {
+            return result;
+        }
+
+        NodeList childNodes = auxNode.getChildNodes();
+        int childCount = childNodes.getLength();
+        for (int i = 0; i < childCount; i++) {
+            Node child = childNodes.item(i);
+            if (child instanceof Element) {
+                String elementName = child.getNodeName();
+                String namespace = child.getNamespaceURI();
+                result.add(new AuxConfig(elementName, namespace, (Element)child));
+            }
+        }
+        return result;
+    }
+
     public static PropertiesSnapshot readFromXml(File propertiesFile) {
         PropertiesSnapshot.Builder result = new PropertiesSnapshot.Builder();
 
@@ -462,6 +530,10 @@ final class XmlPropertyFormat {
             else {
                 result.setBuiltInTask(command, asConst(builtInTask, false));
             }
+        }
+
+        for (AuxConfig auxConfig: readAuxiliaryConfigs(root)) {
+            result.addAuxConfig(auxConfig, false);
         }
 
         return result.create();
