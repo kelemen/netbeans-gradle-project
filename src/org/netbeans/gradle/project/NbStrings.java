@@ -295,6 +295,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker", projectName);
     }
 
+    public static String getGradleProjectCategoryName() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectCategoryName");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
