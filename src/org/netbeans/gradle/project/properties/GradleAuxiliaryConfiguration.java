@@ -28,7 +28,8 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     public Element getConfigurationFragment(String elementName, String namespace, boolean shared) {
         DomElementKey key = new DomElementKey(elementName, namespace);
         if (!shared) {
-            return (Element)privateConfig.get(key).cloneNode(true);
+            Element result = privateConfig.get(key);
+            return result != null ? (Element)result.cloneNode(true) : null;
         }
 
         return getProperties().getAuxConfig(elementName, namespace).getProperty().getValue();
