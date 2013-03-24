@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.openide.util.lookup.Lookups;
 public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
 
+    private static final String CHANGELF_CUSTOMIZER = "com.junichi11.netbeans.changelf.ui.options.ChangeLFCustomizerProvider";
     private static final String GRADLE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle";
 
     private final NbGradleProject project;
@@ -40,7 +42,15 @@ public final class GradleCustomizer implements CustomizerProvider {
         result.add(Customizers.createFormattingCategoryProvider(Collections.emptyMap()));
 
         Lookup apiSupport = Lookups.forPath("Projects/org-netbeans-modules-apisupport-project/Customizer");
-        result.addAll(apiSupport.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
+        Collection<? extends ProjectCustomizer.CompositeCategoryProvider> apiSupportCustomizers
+                = apiSupport.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
+
+        for (ProjectCustomizer.CompositeCategoryProvider customizer: apiSupportCustomizers) {
+            if (CHANGELF_CUSTOMIZER.equals(customizer.getClass().getName())) {
+                result.add(customizer);
+                break;
+            }
+        }
 
         return result.toArray(new ProjectCustomizer.CompositeCategoryProvider[result.size()]);
     }
