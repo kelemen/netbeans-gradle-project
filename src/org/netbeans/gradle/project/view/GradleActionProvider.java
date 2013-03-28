@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -40,12 +39,13 @@ import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
 
+import static org.netbeans.api.java.project.JavaProjectConstants.COMMAND_DEBUG_FIX;
+import static org.netbeans.api.java.project.JavaProjectConstants.COMMAND_JAVADOC;
 import static org.netbeans.spi.project.ActionProvider.*;
 
 public class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
-    public static final String COMMAND_JAVADOC = "javadoc";
     public static final String COMMAND_RELOAD = "reload";
 
     private static final String[] SUPPORTED_ACTIONS = new String[]{
@@ -61,7 +61,7 @@ public class GradleActionProvider implements ActionProvider {
         COMMAND_DEBUG_TEST_SINGLE,
         COMMAND_RUN_SINGLE,
         COMMAND_DEBUG_SINGLE,
-        JavaProjectConstants.COMMAND_DEBUG_FIX
+        COMMAND_DEBUG_FIX
     };
 
     private final NbGradleProject project;
@@ -378,7 +378,7 @@ public class GradleActionProvider implements ActionProvider {
                     ? new ExecuteSingleTask(file, command, TaskKind.DEBUG, config)
                     : null;
         }
-        else if (JavaProjectConstants.COMMAND_DEBUG_FIX.equals(command)) {
+        else if (COMMAND_DEBUG_FIX.equals(command)) {
             final String className = DebugUtils.getActiveClassName(project, context);
             if (className.isEmpty()) {
                 return null;

@@ -15,7 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.view.GradleActionProvider;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.modules.SpecificationVersion;
 
@@ -31,7 +31,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
             ActionProvider.COMMAND_CLEAN,
             ActionProvider.COMMAND_RUN,
             ActionProvider.COMMAND_DEBUG,
-            GradleActionProvider.COMMAND_JAVADOC,
+            JavaProjectConstants.COMMAND_JAVADOC,
             ActionProvider.COMMAND_REBUILD,
             ActionProvider.COMMAND_TEST_SINGLE,
             ActionProvider.COMMAND_DEBUG_TEST_SINGLE,

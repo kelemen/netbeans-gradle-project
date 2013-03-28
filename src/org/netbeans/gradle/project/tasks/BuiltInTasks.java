@@ -12,7 +12,6 @@ import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.spi.project.ActionProvider;
 
 public final class BuiltInTasks {
@@ -49,7 +48,7 @@ public final class BuiltInTasks {
             Collections.<String>emptyList(),
             false);
     public static final PredefinedTask DEFAULT_JAVADOC_TASK = new PredefinedTask(
-            GradleActionProvider.COMMAND_JAVADOC,
+            JavaProjectConstants.COMMAND_JAVADOC,
             asTaskNames("javadoc"),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
@@ -115,7 +114,7 @@ public final class BuiltInTasks {
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_CLEAN, NbStrings.getCleanCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_RUN, NbStrings.getRunCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG, NbStrings.getDebugCommandCaption());
-        DISPLAY_NAME_MAP.put(GradleActionProvider.COMMAND_JAVADOC, NbStrings.getJavadocCommandCaption());
+        DISPLAY_NAME_MAP.put(JavaProjectConstants.COMMAND_JAVADOC, NbStrings.getJavadocCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_REBUILD, NbStrings.getRebuildCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST_SINGLE, NbStrings.getTestSingleCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, NbStrings.getDebugTestSingleCommandCaption());

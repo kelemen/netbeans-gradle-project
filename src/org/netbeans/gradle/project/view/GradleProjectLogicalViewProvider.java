@@ -25,6 +25,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -147,7 +148,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     ActionProvider.COMMAND_REBUILD,
                     NbStrings.getRebuildCommandCaption()));
             projectActions.add(createProjectAction(
-                    GradleActionProvider.COMMAND_JAVADOC,
+                    JavaProjectConstants.COMMAND_JAVADOC,
                     NbStrings.getJavadocCommandCaption()));
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
