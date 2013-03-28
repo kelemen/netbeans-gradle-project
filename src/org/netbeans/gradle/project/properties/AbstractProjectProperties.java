@@ -36,7 +36,8 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
             ActionProvider.COMMAND_TEST_SINGLE,
             ActionProvider.COMMAND_DEBUG_TEST_SINGLE,
             ActionProvider.COMMAND_RUN_SINGLE,
-            ActionProvider.COMMAND_DEBUG_SINGLE)));
+            ActionProvider.COMMAND_DEBUG_SINGLE,
+            JavaProjectConstants.COMMAND_DEBUG_FIX)));
 
     public static String getSourceLevelFromPlatform(JavaPlatform platform) {
         SpecificationVersion version = platform.getSpecification().getVersion();
