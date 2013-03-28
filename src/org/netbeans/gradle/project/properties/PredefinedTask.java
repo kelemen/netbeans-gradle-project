@@ -82,6 +82,14 @@ public final class PredefinedTask {
         return jvmArguments;
     }
 
+    public List<String> getProcessedTaskNames(Map<String, String> varReplaceMap) {
+        List<String> processedTaskNames = new LinkedList<String>();
+        for (Name name: taskNames) {
+            processedTaskNames.add(processString(name.getName(), varReplaceMap));
+        }
+        return processedTaskNames;
+    }
+
     private static boolean isLocalTaskExists(NbGradleModule module, String task) {
         for (NbGradleTask moduleTask: module.getTasks()) {
             if (moduleTask.getLocalName().equals(task)) {
@@ -155,16 +163,39 @@ public final class PredefinedTask {
             List<String> taskNames,
             boolean nonBlocking) {
 
-        String caption = projectName;
-        if (!nonBlocking) {
-            caption += " - " + taskNames.toString();
-        }
+        String caption = getCaption(projectName, taskNames, nonBlocking);
 
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, taskNames);
         builder.setNonBlocking(nonBlocking);
         builder.setCleanOutput(!nonBlocking);
         builder.setReuseOutput(nonBlocking);
         return builder;
+    }
+    
+    public static String getCaption(String projectName, List<String> taskNames, boolean nonBlocking) {
+        boolean fullyQualified = true;
+        for (String taskName: taskNames) {
+            fullyQualified &= taskName.startsWith(":");
+        }
+        
+        if (fullyQualified) {
+            return joinTaskNames(taskNames);
+        } else {
+            String caption = projectName;
+            if (!nonBlocking) {
+                caption += " - " + joinTaskNames(taskNames);
+            }
+            return caption;
+        }
+    }
+    
+    private static String joinTaskNames(List<String> taskNames) {
+        StringBuilder sb = new StringBuilder();
+        for (String taskName: taskNames) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(taskName);
+        }
+        return sb.toString();
     }
 
     public static Map<String, String> varReplaceMap(NbGradleModule mainModule) {
@@ -197,10 +228,7 @@ public final class PredefinedTask {
     }
 
     public GradleTaskDef.Builder createTaskDefBuilder(String caption, Map<String, String> varReplaceMap) {
-        List<String> processedTaskNames = new LinkedList<String>();
-        for (Name name: taskNames) {
-            processedTaskNames.add(processString(name.getName(), varReplaceMap));
-        }
+        List<String> processedTaskNames = getProcessedTaskNames(varReplaceMap);
 
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, processedTaskNames);
         builder.setArguments(processList(arguments, varReplaceMap));
