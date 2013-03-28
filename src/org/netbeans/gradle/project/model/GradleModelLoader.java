@@ -48,6 +48,7 @@ import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
+import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.RequestProcessor;
@@ -200,7 +201,7 @@ public final class GradleModelLoader {
                     listener.onComplete(model, error);
                 }
             }
-        }, true);
+        }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
     private static NbOutput createDefaultOutput(File projectDir) {

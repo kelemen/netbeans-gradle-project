@@ -13,12 +13,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbSourceGroup;
 import org.netbeans.gradle.project.model.NbSourceType;
 import org.netbeans.gradle.project.output.DebugTextListener;
+import org.netbeans.gradle.project.output.InputOutputManager;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.MutableProperty;
@@ -28,8 +30,10 @@ import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
+import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTasks;
+import org.netbeans.gradle.project.tasks.TaskCompleteListener;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -56,7 +60,8 @@ public class GradleActionProvider implements ActionProvider {
         COMMAND_TEST_SINGLE,
         COMMAND_DEBUG_TEST_SINGLE,
         COMMAND_RUN_SINGLE,
-        COMMAND_DEBUG_SINGLE
+        COMMAND_DEBUG_SINGLE,
+        JavaProjectConstants.COMMAND_DEBUG_FIX
     };
 
     private final NbGradleProject project;
@@ -178,27 +183,28 @@ public class GradleActionProvider implements ActionProvider {
         return createProjectTaskBuilderSimple(kind, command, config, varReplaceMap);
     }
 
+    private String getOutputTabCaption(TaskKind kind) {
+        switch (kind) {
+            case DEBUG:
+                return project.getDisplayName() + " - debug";
+            case RUN:
+                return project.getDisplayName() + " - run";
+            case BUILD:
+                return project.getDisplayName();
+            case APPLY_CHANGES:
+                return project.getDisplayName() + " - fix";
+            default:
+                throw new AssertionError(kind.name());
+        }
+    }
+
     private GradleTaskDef.Builder createProjectTaskBuilderSimple(
             TaskKind kind, String command, NbGradleConfiguration config, Map<String, String> varReplaceMap) {
 
         waitForProjectLoad();
         PredefinedTask task = getBuiltInTask(command, config);
 
-        String caption;
-        switch (kind) {
-            case DEBUG:
-                caption = project.getDisplayName() + " - debug";
-                break;
-            case RUN:
-                caption = project.getDisplayName() + " - run";
-                break;
-            case BUILD:
-                caption = project.getDisplayName();
-                break;
-            default:
-                throw new AssertionError(kind.name());
-        }
-
+        String caption = getOutputTabCaption(kind);
         return task.createTaskDefBuilder(caption, varReplaceMap);
     }
 
@@ -206,7 +212,11 @@ public class GradleActionProvider implements ActionProvider {
             TaskKind kind,
             String command,
             NbGradleConfiguration config) {
-        return createProjectTaskBuilderMaySkipTest(kind, command, config, Collections.<String, String>emptyMap());
+        return createProjectTaskBuilderMaySkipTest(
+                kind,
+                command,
+                config,
+                Collections.<String, String>emptyMap());
     }
 
     private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(
@@ -240,21 +250,35 @@ public class GradleActionProvider implements ActionProvider {
             public GradleTaskDef call() {
                 return createProjectTaskBuilder(kind, command, config, copyVars).create();
             }
-        });
+        }, projectTaskCompleteListener());
     }
 
     private Runnable createProjectTaskMaySkipTest(
-            final TaskKind kind,
-            final String command,
-            final NbGradleConfiguration config) {
-        return createProjectTaskMaySkipTest(kind, command, config, Collections.<String, String>emptyMap());
+            TaskKind kind,
+            String command,
+            NbGradleConfiguration config) {
+        return createProjectTaskMaySkipTest(kind, command, config, projectTaskCompleteListener());
+    }
+
+    private Runnable createProjectTaskMaySkipTest(
+            TaskKind kind,
+            String command,
+            NbGradleConfiguration config,
+            TaskCompleteListener listener) {
+        return createProjectTaskMaySkipTest(
+                kind,
+                command,
+                config,
+                Collections.<String, String>emptyMap(),
+                listener);
     }
 
     private Runnable createProjectTaskMaySkipTest(
             final TaskKind kind,
             final String command,
             final NbGradleConfiguration config,
-            Map<String, String> additionalVarReplaces) {
+            Map<String, String> additionalVarReplaces,
+            TaskCompleteListener listener) {
 
         final Map<String, String> copyVars = new HashMap<String, String>(additionalVarReplaces);
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
@@ -262,7 +286,7 @@ public class GradleActionProvider implements ActionProvider {
             public GradleTaskDef call() {
                 return createProjectTaskBuilderMaySkipTest(kind, command, config, copyVars).create();
             }
-        });
+        }, listener);
     }
 
     private Runnable createDebugTask(
@@ -278,7 +302,7 @@ public class GradleActionProvider implements ActionProvider {
                 builder.setStdOutListener(debugeeListener(test));
                 return builder.create();
             }
-        });
+        }, projectTaskCompleteListener());
     }
 
     protected FileObject getJavaFileOfContext(Lookup context) {
@@ -291,13 +315,13 @@ public class GradleActionProvider implements ActionProvider {
         if (file == null) {
             return null;
         }
-        
+
         String fileExt = file.getExt().toLowerCase(Locale.US);
         if (!"java".equals(fileExt)
                 && !"groovy".equals(fileExt)) {
             return null;
         }
-        
+
         return file;
     }
 
@@ -354,6 +378,34 @@ public class GradleActionProvider implements ActionProvider {
                     ? new ExecuteSingleTask(file, command, TaskKind.DEBUG, config)
                     : null;
         }
+        else if (JavaProjectConstants.COMMAND_DEBUG_FIX.equals(command)) {
+            final String className = DebugUtils.getActiveClassName(project, context);
+            if (className.isEmpty()) {
+                return null;
+            }
+
+            return createProjectTaskMaySkipTest(TaskKind.APPLY_CHANGES, command, config, new TaskCompleteListener() {
+                @Override
+                public void onComplete(Throwable error) {
+                    if (error == null) {
+                        InputOutputManager.IORef ref = InputOutputManager.getInputOutput(
+                                getOutputTabCaption(TaskKind.APPLY_CHANGES), true, false);
+                        try {
+                            DebugUtils.applyChanges(project, ref.getIo().getOut(), className);
+                        } finally {
+                            try {
+                                ref.close();
+                            } catch (Throwable ex) {
+                                LOGGER.log(Level.SEVERE, "Failed to close IORef.", ex);
+                            }
+                        }
+                    }
+                    else {
+                        projectTaskCompleteListener().onComplete(error);
+                    }
+                }
+            });
+        }
 
         return null;
     }
@@ -384,7 +436,7 @@ public class GradleActionProvider implements ActionProvider {
             }
         }
 
-        if (type != null) {
+        if (type != null && testFileName != null) {
             Map<String, String> result = new HashMap<String, String>();
             result.put(PredefinedTask.VAR_TEST_FILE_PATH, testFileName);
             result.put(PredefinedTask.VAR_SELECTED_CLASS, testFileName.replace('/', '.'));
@@ -393,6 +445,10 @@ public class GradleActionProvider implements ActionProvider {
         else {
             return null;
         }
+    }
+
+    private TaskCompleteListener projectTaskCompleteListener() {
+        return GradleTasks.projectTaskCompleteListener(project);
     }
 
     private static final class FileContext {
@@ -452,7 +508,7 @@ public class GradleActionProvider implements ActionProvider {
                         return null;
                     }
                 }
-            });
+            }, projectTaskCompleteListener());
             testTask.run();
         }
     }
@@ -482,6 +538,7 @@ public class GradleActionProvider implements ActionProvider {
     private enum TaskKind {
         DEBUG,
         RUN,
-        BUILD
+        BUILD,
+        APPLY_CHANGES
     }
 }

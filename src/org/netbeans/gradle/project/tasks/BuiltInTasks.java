@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -83,6 +84,12 @@ public final class BuiltInTasks {
             Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
             Collections.<String>emptyList(),
             false);
+    public static final PredefinedTask DEFAULT_APPLY_CODE_CHANGES_TASK = new PredefinedTask(
+            JavaProjectConstants.COMMAND_DEBUG_FIX,
+            asTaskNames(projectTask("classes")),
+            Collections.<String>emptyList(),
+            Collections.<String>emptyList(),
+            false);
 
     private static final Map<String, PredefinedTask> DEFAULT_TASKS;
     private static final Map<String, String> DISPLAY_NAME_MAP;
@@ -100,6 +107,7 @@ public final class BuiltInTasks {
         addToMap(DEFAULT_DEBUG_TEST_SINGLE_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_RUN_SINGLE_TASK, DEFAULT_TASKS);
         addToMap(DEFAULT_DEBUG_SINGLE_TASK, DEFAULT_TASKS);
+        addToMap(DEFAULT_APPLY_CODE_CHANGES_TASK, DEFAULT_TASKS);
 
         DISPLAY_NAME_MAP = new HashMap<String, String>();
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_BUILD, NbStrings.getBuildCommandCaption());
@@ -113,6 +121,7 @@ public final class BuiltInTasks {
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, NbStrings.getDebugTestSingleCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_RUN_SINGLE, NbStrings.getRunSingleCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_SINGLE, NbStrings.getDebugSingleCommandCaption());
+        DISPLAY_NAME_MAP.put(JavaProjectConstants.COMMAND_DEBUG_FIX, NbStrings.getApplyCodeChangesCommandCaption());
     }
 
     private static void addToMap(PredefinedTask task, Map<String, PredefinedTask> map) {

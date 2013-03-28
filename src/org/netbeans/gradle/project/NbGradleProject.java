@@ -510,6 +510,9 @@ public final class NbGradleProject implements Project {
                     try {
                         err.println();
                         err.println(errorText);
+                        if (exception != null) {
+                            exception.printStackTrace(err);
+                        }
                     } finally {
                         outputLock.unlock();
                         err.close();

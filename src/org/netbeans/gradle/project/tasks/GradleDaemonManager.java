@@ -45,28 +45,32 @@ public final class GradleDaemonManager {
             Executor executor,
             String caption,
             DaemonTask task,
-            boolean nonBlocking) {
-        submitGradleTask(executor, new DaemonTaskDef(caption, nonBlocking, task));
+            boolean nonBlocking,
+            TaskCompleteListener listener) {
+        submitGradleTask(executor, new DaemonTaskDef(caption, nonBlocking, task), listener);
     }
 
     public static void submitGradleTask(
             Executor executor,
-            final DaemonTaskDef taskDef) {
+            final DaemonTaskDef taskDef,
+            TaskCompleteListener listener) {
         submitGradleTask(executor, new Callable<DaemonTaskDef>() {
             @Override
             public DaemonTaskDef call() {
                 return taskDef;
             }
-        });
+        }, listener);
     }
 
     public static void submitGradleTask(
             Executor executor,
-            final Callable<DaemonTaskDef> taskDefFactory) {
+            final Callable<DaemonTaskDef> taskDefFactory,
+            final TaskCompleteListener listener) {
         if (executor == null) throw new NullPointerException("executor");
         if (taskDefFactory == null) throw new NullPointerException("taskDefFactory");
+        if (listener == null) throw new NullPointerException("listener");
 
-        executor.execute(new Runnable() {
+        final Runnable executeTask = new Runnable() {
             @Override
             public void run() {
                 DaemonTaskDef taskDef;
@@ -114,6 +118,19 @@ public final class GradleDaemonManager {
                     interrupter.stopInterrupting();
                     progress.finish();
                 }
+            }
+        };
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Throwable error = null;
+                try {
+                    executeTask.run();
+                } catch (Throwable ex) {
+                    error = ex;
+                }
+                listener.onComplete(error);
             }
         });
     }

@@ -118,6 +118,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_DebugSingle");
     }
 
+    public static String getApplyCodeChangesCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ApplyCodeChanges");
+    }
+
     public static String getTasksMenuCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_Tasks");
     }
@@ -265,6 +269,10 @@ public final class NbStrings {
 
     public static String getBuildFailure(String tasks) {
         return NbBundle.getMessage(NbStrings.class, "MSG_BuildFailure", tasks);
+    }
+
+    public static String getGradleTaskFailure() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_GradleTaskFailure");
     }
 
     public static String getDefaultProfileName() {

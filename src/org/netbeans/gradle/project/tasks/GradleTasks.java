@@ -280,7 +280,8 @@ public final class GradleTasks {
 
     private static void submitGradleTask(
             final NbGradleProject project,
-            final Callable<GradleTaskDef> taskDefFactory) {
+            final Callable<GradleTaskDef> taskDefFactory,
+            final TaskCompleteListener listener) {
         preSubmitGradleTask();
 
         Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
@@ -315,38 +316,75 @@ public final class GradleTasks {
             }
         };
 
-        GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory);
+        GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory, listener);
     }
 
-    public static Runnable createAsyncGradleTask(NbGradleProject project, final GradleTaskDef taskDef) {
+    public static Runnable createAsyncGradleTask(
+            NbGradleProject project,
+            final GradleTaskDef taskDef) {
+        return createAsyncGradleTask(project, taskDef, projectTaskCompleteListener(project));
+    }
+
+    public static Runnable createAsyncGradleTask(
+            NbGradleProject project,
+            final GradleTaskDef taskDef,
+            TaskCompleteListener listener) {
         if (taskDef == null) throw new NullPointerException("taskDef");
+
         return createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
                 return taskDef;
             }
-        });
+        }, listener);
     }
 
-    public static Runnable createAsyncGradleTask(NbGradleProject project, Callable<GradleTaskDef> taskDefFactory) {
-        return new AsyncGradleTask(project, taskDefFactory);
+    public static Runnable createAsyncGradleTask(
+            NbGradleProject project,
+            Callable<GradleTaskDef> taskDefFactory,
+            TaskCompleteListener listener) {
+        return new AsyncGradleTask(project, taskDefFactory, listener);
+    }
+
+    public static TaskCompleteListener projectTaskCompleteListener(final NbGradleProject project) {
+        if (project == null) throw new NullPointerException("project");
+
+        return new TaskCompleteListener() {
+            @Override
+            public void onComplete(Throwable error) {
+                if (error != null) {
+                    LOGGER.log(error instanceof Exception ? Level.INFO : Level.SEVERE,
+                            "Gradle build failure.",
+                            error);
+
+                    String buildFailureMessage = NbStrings.getGradleTaskFailure();
+                    project.displayError(buildFailureMessage, error, false);
+                }
+            }
+        };
     }
 
     private static class AsyncGradleTask implements Runnable {
         private final NbGradleProject project;
         private final Callable<GradleTaskDef> taskDefFactroy;
+        private final TaskCompleteListener listener;
 
-        public AsyncGradleTask(NbGradleProject project, Callable<GradleTaskDef> taskDefFactroy) {
+        public AsyncGradleTask(
+                NbGradleProject project,
+                Callable<GradleTaskDef> taskDefFactroy,
+                TaskCompleteListener listener) {
             if (project == null) throw new NullPointerException("project");
             if (taskDefFactroy == null) throw new NullPointerException("taskDefFactroy");
+            if (listener == null) throw new NullPointerException("listener");
 
             this.project = project;
             this.taskDefFactroy = taskDefFactroy;
+            this.listener = listener;
         }
 
         @Override
         public void run() {
-            submitGradleTask(project, taskDefFactroy);
+            submitGradleTask(project, taskDefFactroy, listener);
         }
     }
 
