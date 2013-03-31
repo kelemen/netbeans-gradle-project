@@ -41,7 +41,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     @Override
-    public void save(final ProjectProperties properties, final Runnable onDone) {
+    public void save(final NbGradleProject project, final ProjectProperties properties, final Runnable onDone) {
         checkCallingThread();
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -52,7 +52,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                     @Override
                     public void run() {
                         try {
-                            XmlPropertyFormat.saveToXml(propertiesFile, snapshot);
+                            XmlPropertyFormat.saveToXml(project, propertiesFile, snapshot);
                         } finally {
                             if (onDone != null) {
                                 onDone.run();

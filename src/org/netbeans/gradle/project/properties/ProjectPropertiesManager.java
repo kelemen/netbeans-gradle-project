@@ -27,6 +27,7 @@ public final class ProjectPropertiesManager {
             = new WeakValueHashMap<ProjectPropertySource, ProjectProperties>();
 
     private static void saveIfRequired(
+            final NbGradleProject project,
             final AtomicBoolean saveQueued,
             final ProjectProperties properties,
             final PropertiesPersister persister) {
@@ -36,13 +37,14 @@ public final class ProjectPropertiesManager {
                 @Override
                 public void run() {
                     saveQueued.set(false);
-                    persister.save(properties, null);
+                    persister.save(project, properties, null);
                 }
             });
         }
     }
 
     private static void setSaveOnChange(
+            final NbGradleProject project,
             final ProjectProperties properties,
             final PropertiesPersister persister) {
 
@@ -51,7 +53,7 @@ public final class ProjectPropertiesManager {
         ChangeListener saveIfRequiredTask = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                saveIfRequired(saveQueued, properties, persister);
+                saveIfRequired(project, saveQueued, properties, persister);
             }
         };
 
@@ -81,20 +83,20 @@ public final class ProjectPropertiesManager {
         return new NbCurrentProfileProjectPropertySource(project);
     }
 
-    public static ProjectPropertySource getFilesPropertySource(File... propertiesFiles) {
-        return getFilesPropertySource(Arrays.asList(propertiesFiles));
+    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, File... propertiesFiles) {
+        return getFilesPropertySource(project, Arrays.asList(propertiesFiles));
     }
 
-    public static ProjectPropertySource getFilesPropertySource(List<File> propertiesFiles) {
+    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, List<File> propertiesFiles) {
         List<ProjectPropertySource> sources = new ArrayList<ProjectPropertySource>();
         for (File propertyFile: propertiesFiles) {
-            sources.add(getFilePropertySource(propertyFile));
+            sources.add(getFilePropertySource(project, propertyFile));
         }
         return combineSources(sources);
     }
 
-    public static ProjectPropertySource getFilePropertySource(final File propertiesFile) {
-        return new FileProjectPropertySource(propertiesFile);
+    public static ProjectPropertySource getFilePropertySource(NbGradleProject project, final File propertiesFile) {
+        return new FileProjectPropertySource(project, propertiesFile);
     }
 
     public static ProjectPropertySource combineSources(List<? extends ProjectPropertySource> propertySources) {
@@ -113,6 +115,7 @@ public final class ProjectPropertiesManager {
     }
 
     private static ProjectProperties loadPropertiesAlways(
+            final NbGradleProject project,
             File propertiesFile,
             final PropertiesLoadListener onLoadTask) {
 
@@ -129,7 +132,7 @@ public final class ProjectPropertiesManager {
                                 onLoadTask.loadedProperties(properties);
                             }
                         } finally {
-                            setSaveOnChange(properties, persister);
+                            setSaveOnChange(project, properties, persister);
                         }
                     }
                 });
@@ -139,10 +142,12 @@ public final class ProjectPropertiesManager {
     }
 
     private static class FileProjectPropertySource implements ProjectPropertySource {
+        private final NbGradleProject project;
         private final File propertiesFile;
 
-        public FileProjectPropertySource(File propertiesFile) {
+        public FileProjectPropertySource(NbGradleProject project, File propertiesFile) {
             if (propertiesFile == null) throw new NullPointerException("propertiesFile");
+            this.project = project;
             this.propertiesFile = propertiesFile;
         }
 
@@ -157,7 +162,8 @@ public final class ProjectPropertiesManager {
             }
 
             if (result == null) {
-                final ProjectProperties newProperties = loadPropertiesAlways(propertiesFile, onLoadTask);
+                final ProjectProperties newProperties
+                        = loadPropertiesAlways(project, propertiesFile, onLoadTask);
 
                 MAIN_LOCK.lock();
                 try {
@@ -293,10 +299,12 @@ public final class ProjectPropertiesManager {
         }
     }
 
-    private static ProjectPropertySource filesWithDefault(File[] files, ProjectPropertySource defaultSource) {
+    private static ProjectPropertySource filesWithDefault(
+            NbGradleProject project, File[] files, ProjectPropertySource defaultSource) {
+
         ProjectPropertySource[] sources = new ProjectPropertySource[files.length + 1];
         for (int i = 0; i < files.length; i++) {
-            sources[i] = getFilePropertySource(files[i]);
+            sources[i] = getFilePropertySource(project, files[i]);
         }
         sources[files.length] = defaultSource;
 
@@ -319,7 +327,7 @@ public final class ProjectPropertiesManager {
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
             File[] files = SettingsFiles.getFilesForProfile(project, profileName);
-            return filesWithDefault(files, defaultSource).load(onLoadTask);
+            return filesWithDefault(project, files, defaultSource).load(onLoadTask);
         }
 
         @Override
@@ -359,7 +367,7 @@ public final class ProjectPropertiesManager {
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
             File[] files = SettingsFiles.getFilesForProject(project);
-            return filesWithDefault(files, defaultSource).load(onLoadTask);
+            return filesWithDefault(project, files, defaultSource).load(onLoadTask);
         }
 
         @Override

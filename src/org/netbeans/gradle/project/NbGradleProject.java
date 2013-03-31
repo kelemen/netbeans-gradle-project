@@ -231,7 +231,7 @@ public final class NbGradleProject implements Project {
         }
         else {
             File profileFile = SettingsFiles.getProfileFile(this, profile);
-            return ProjectPropertiesManager.getFilePropertySource(profileFile).load(onLoadTask);
+            return ProjectPropertiesManager.getFilePropertySource(this, profileFile).load(onLoadTask);
         }
     }
 

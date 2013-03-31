@@ -17,8 +17,8 @@ public final class ChangeLFPlugin {
         LINE_FEED_METHOD = new PluginLookupMethod(pluginClass, "getCurrentLineFeedCode", Project.class);
     }
 
-    public static String getPreferredLineSeparator() {
-        Object lineFeedEnum = LINE_FEED_METHOD.tryCall((Object)null);
+    public static String getPreferredLineSeparator(Project project) {
+        Object lineFeedEnum = LINE_FEED_METHOD.tryCall(project);
         if (lineFeedEnum == null) {
             return null;
         }

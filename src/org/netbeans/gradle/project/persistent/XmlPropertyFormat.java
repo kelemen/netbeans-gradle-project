@@ -33,6 +33,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
@@ -105,13 +106,13 @@ final class XmlPropertyFormat {
         }
     }
 
-    private static void saveDocument(File propertyfile, Document document) throws TransformerException, IOException {
+    private static void saveDocument(NbGradleProject project, File propertyfile, Document document) throws TransformerException, IOException {
         File dir = propertyfile.getParentFile();
         if (dir != null) {
             dir.mkdirs();
         }
 
-        String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator();
+        String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);
         if (lineSeparator == null) {
             Result result = new StreamResult(propertyfile);
             saveDocument(result, document);
@@ -240,7 +241,7 @@ final class XmlPropertyFormat {
         }
     }
 
-    public static void saveToXml(File propertyfile, PropertiesSnapshot snapshot) {
+    public static void saveToXml(NbGradleProject project, File propertyfile, PropertiesSnapshot snapshot) {
         if (propertyfile == null) throw new NullPointerException("propertyfile");
         if (snapshot == null) throw new NullPointerException("snapshot");
 
@@ -298,7 +299,7 @@ final class XmlPropertyFormat {
         addAuxiliaryConfig(root, snapshot);
 
         try {
-            saveDocument(propertyfile, document);
+            saveDocument(project, propertyfile, document);
         } catch (IOException ex) {
             LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
         } catch (TransformerException ex) {
