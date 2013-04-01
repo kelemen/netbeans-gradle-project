@@ -37,6 +37,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<GradleLocation> gradleHomeProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
     private final MutablePropertyProxy<List<PredefinedTask>> commonTasksProxy;
+    private final MutablePropertyProxy<LicenseHeaderInfo> licenseHeaderProxy;
     private final MutablePropertyProxy<Void> auxConfigListener;
     private final Map<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
@@ -84,6 +85,12 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             @Override
             public MutableProperty<Charset> getProperty() {
                 return this.getProperties().getSourceEncoding();
+            }
+        });
+        this.licenseHeaderProxy = new MutablePropertyProxy<LicenseHeaderInfo>(new ProjectMutablePropertyRef<LicenseHeaderInfo>(this) {
+            @Override
+            public MutableProperty<LicenseHeaderInfo> getProperty() {
+                return this.getProperties().getLicenseHeader();
             }
         });
         this.commonTasksProxy = new MutablePropertyProxy<List<PredefinedTask>>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
@@ -152,6 +159,11 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
     private void removeModelChangeListener(ChangeListener listener) {
         changes.removeChangeListener(listener);
+    }
+
+    @Override
+    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+        return licenseHeaderProxy;
     }
 
     @Override

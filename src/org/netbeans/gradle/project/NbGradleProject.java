@@ -42,6 +42,7 @@ import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
+import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.query.GradleUnitTestFinder;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.view.GradleActionProvider;
@@ -290,6 +291,7 @@ public final class NbGradleProject implements Project {
                 auxConfig,
                 new GradleAuxiliaryProperties(auxConfig),
                 new GradleProjectTemplates(),
+                new GradleTemplateAttrProvider(this),
 
                 // FileOwnerQueryImplementation cannot be added to the project's
                 // lookup, since NetBeans will ignore it. It must be added

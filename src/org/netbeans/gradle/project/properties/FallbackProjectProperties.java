@@ -22,6 +22,7 @@ extends
     private final MutableProperty<JavaPlatform> scriptPlatform;
     private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
+    private final MutableProperty<LicenseHeaderInfo> licenseHeader;
     private final MutableProperty<Void> auxConfigListener;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
 
@@ -52,6 +53,10 @@ extends
                 mainProperties.getSourceEncoding(),
                 defaultProperties.getSourceEncoding());
 
+        this.licenseHeader = new FallbackProperty<LicenseHeaderInfo>(
+                mainProperties.getLicenseHeader(),
+                defaultProperties.getLicenseHeader());
+
         this.auxConfigListener = new FallbackProperty<Void>(
                 mainProperties.getAuxConfigListener(),
                 defaultProperties.getAuxConfigListener());
@@ -59,6 +64,11 @@ extends
         this.commonTasks = new ListMergerProperty<PredefinedTask>(
                 mainProperties.getCommonTasks(),
                 defaultProperties.getCommonTasks());
+    }
+
+    @Override
+    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+        return licenseHeader;
     }
 
     @Override

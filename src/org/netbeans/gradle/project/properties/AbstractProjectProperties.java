@@ -114,6 +114,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
         result.add(getCommonTasks());
         result.add(getScriptPlatform());
         result.add(getGradleLocation());
+        result.add(getLicenseHeader());
 
         for (String command: CUSTOMIZABLE_TASKS) {
             MutableProperty<PredefinedTask> task = tryGetBuiltInTask(command);

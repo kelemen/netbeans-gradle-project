@@ -23,6 +23,16 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
+    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+        return new UnmodifiableProperty<LicenseHeaderInfo>("LicenseHeader") {
+            @Override
+            public LicenseHeaderInfo getValue() {
+                return null;
+            }
+        };
+    }
+
+    @Override
     public MutableProperty<String> getSourceLevel() {
         return new UnmodifiableProperty<String>("SourceLevel") {
             @Override

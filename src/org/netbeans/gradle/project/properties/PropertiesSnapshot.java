@@ -25,6 +25,7 @@ public final class PropertiesSnapshot {
         private PropertySource<JavaPlatform> scriptPlatform;
         private PropertySource<GradleLocation> gradleHome;
         private PropertySource<Charset> sourceEncoding;
+        private PropertySource<LicenseHeaderInfo> licenseHeader;
         private PropertySource<List<PredefinedTask>> commonTasks;
         private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
         private final List<AuxConfigSource> auxProperties;
@@ -36,6 +37,7 @@ public final class PropertiesSnapshot {
             this.scriptPlatform = null;
             this.gradleHome = null;
             this.commonTasks = null;
+            this.licenseHeader = null;
             this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>();
             this.auxProperties = new LinkedList<AuxConfigSource>();
         }
@@ -79,6 +81,17 @@ public final class PropertiesSnapshot {
             return result != null
                     ? result
                     : asConstNullForNull(BuiltInTasks.getDefaultBuiltInTask(command), true);
+        }
+
+        public PropertySource<LicenseHeaderInfo> getLicenseHeader() {
+            return licenseHeader != null
+                    ? licenseHeader
+                    : asConst((LicenseHeaderInfo)null, true);
+        }
+
+        public void setLicenseHeader(PropertySource<LicenseHeaderInfo> licenseFile) {
+            if (licenseFile == null) throw new NullPointerException("licenseFile");
+            this.licenseHeader = licenseFile;
         }
 
         public PropertySource<String> getSourceLevel() {
@@ -180,6 +193,7 @@ public final class PropertiesSnapshot {
     private final PropertySource<JavaPlatform> scriptPlatform;
     private final PropertySource<GradleLocation> gradleHome;
     private final PropertySource<Charset> sourceEncoding;
+    private final PropertySource<LicenseHeaderInfo> licenseHeader;
     private final PropertySource<List<PredefinedTask>> commonTasks;
     private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
     private final List<AuxConfigSource> auxProperties;
@@ -192,6 +206,7 @@ public final class PropertiesSnapshot {
         this.gradleHome = asConst(properties.getGradleLocation());
         this.sourceEncoding = asConst(properties.getSourceEncoding());
         this.commonTasks = asConst(properties.getCommonTasks());
+        this.licenseHeader = asConst(properties.getLicenseHeader());
 
         Collection<AuxConfigProperty> otherAuxConfigs = properties.getAllAuxConfigs();
         this.auxProperties = new ArrayList<AuxConfigSource>(otherAuxConfigs.size());
@@ -272,9 +287,14 @@ public final class PropertiesSnapshot {
         this.gradleHome = builder.getGradleHome();
         this.sourceEncoding = builder.getSourceEncoding();
         this.commonTasks = builder.getCommonTasks();
+        this.licenseHeader = builder.getLicenseHeader();
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(builder.builtInTasks);
         this.auxProperties = Collections.unmodifiableList(new ArrayList<AuxConfigSource>(builder.auxProperties));
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
+    }
+
+    public PropertySource<LicenseHeaderInfo> getLicenseHeader() {
+        return licenseHeader;
     }
 
     public PropertySource<String> getSourceLevel() {

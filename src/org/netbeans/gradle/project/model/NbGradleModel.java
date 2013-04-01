@@ -94,6 +94,18 @@ public final class NbGradleModel {
         return projectDir;
     }
 
+    public File getRootProjectDir() {
+        File result = null;
+        if (settingsFile != null) {
+            result = settingsFile.getParentFile();
+        }
+
+        if (result == null) {
+            result = projectDir;
+        }
+        return result;
+    }
+
     public FileObject tryGetProjectDirAsObj() {
         return FileUtil.toFileObject(projectDir);
     }

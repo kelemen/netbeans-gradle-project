@@ -21,6 +21,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<JavaPlatform> scriptPlatform;
     private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
+    private final MutableProperty<LicenseHeaderInfo> licenseHeader;
     private final MutableProperty<Void> auxConfigListener;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
     private final Map<String, MutableProperty<PredefinedTask>> builtInTasks;
@@ -32,6 +33,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         this.platform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
         this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
         this.gradleHome = new DefaultMutableProperty<GradleLocation>(GradleLocationDefault.INSTANCE, true, false);
+        this.licenseHeader = new DefaultMutableProperty<LicenseHeaderInfo>(null, true, true);
         this.auxConfigListener = new DefaultMutableProperty<Void>(null, true, true);
         this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, true, false);
         this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList(), true);
@@ -44,6 +46,11 @@ public final class MemProjectProperties extends AbstractProjectProperties {
             this.builtInTasks.put(command,
                     new DefaultMutableProperty<PredefinedTask>(task, true, false));
         }
+    }
+
+    @Override
+    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+        return licenseHeader;
     }
 
     @Override

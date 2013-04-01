@@ -17,6 +17,7 @@ import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -115,6 +116,12 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
             @Override
             public PropertySource<GradleLocation> get(PropertiesSnapshot snapshot) {
                 return snapshot.getGradleHome();
+            }
+        }));
+        setters.add(newPropertySetter(properties.getLicenseHeader(), new PropertyGetter<LicenseHeaderInfo>() {
+            @Override
+            public PropertySource<LicenseHeaderInfo> get(PropertiesSnapshot snapshot) {
+                return snapshot.getLicenseHeader();
             }
         }));
         for (final String command: AbstractProjectProperties.getCustomizableCommands()) {

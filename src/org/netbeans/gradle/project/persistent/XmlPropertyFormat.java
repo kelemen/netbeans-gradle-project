@@ -17,8 +17,10 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
@@ -41,6 +43,7 @@ import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.netbeans.gradle.project.properties.PropertySource;
@@ -76,11 +79,17 @@ final class XmlPropertyFormat {
     private static final String TASK_JVM_ARGS_NODE = "task-jvm-args";
     private static final String ARG_NODE = "arg";
     private static final String AUXILIARY_NODE = "auxiliary";
+    private static final String LICENSE_HEADER_NODE = "license-header";
+    private static final String LICENSE_NAME_NODE = "name";
+    private static final String LICENSE_PROPERTY_NODE = "property";
+    private static final String LICENSE_PROPERTY_NAME_ATTR = "name";
 
     private static final String VALUE_YES = "yes";
     private static final String VALUE_NO = "no";
 
     private static final String DEFAULT_SPECIFICATION_NAME = "j2se";
+
+    private static final String SAVE_FILE_NAME_SEPARATOR = "/";
 
     private static Element addChild(Node parent, String tagName) {
         Element element = parent.getOwnerDocument().createElement(tagName);
@@ -241,6 +250,19 @@ final class XmlPropertyFormat {
         }
     }
 
+    private static void addLicenseHeader(Node root, String nodeName, LicenseHeaderInfo licenseHeader) {
+        Element licenseNode = addChild(root, nodeName);
+        addSimpleChild(licenseNode, LICENSE_NAME_NODE, licenseHeader.getLicenseName());
+
+        // We sort them only to save them in a deterministic order, so the
+        // property file only changes if the properties really change.
+        TreeMap<String, String> sortedProperties = new TreeMap<String, String>(licenseHeader.getProperties());
+        for (Map.Entry<String, String> property: sortedProperties.entrySet()) {
+            Element propertyNode = addSimpleChild(licenseNode, LICENSE_PROPERTY_NODE, property.getValue());
+            propertyNode.setAttribute(LICENSE_PROPERTY_NAME_ATTR, property.getKey());
+        }
+    }
+
     public static void saveToXml(NbGradleProject project, File propertyfile, PropertiesSnapshot snapshot) {
         if (propertyfile == null) throw new NullPointerException("propertyfile");
         if (snapshot == null) throw new NullPointerException("snapshot");
@@ -293,6 +315,13 @@ final class XmlPropertyFormat {
         if (!snapshot.getGradleHome().isDefault()) {
             String gradleHome = AbstractProjectProperties.gradleLocationToString(snapshot.getGradleHome().getValue());
             addSimpleChild(root, GRADLE_HOME_NODE, gradleHome);
+        }
+
+        if (!snapshot.getLicenseHeader().isDefault()) {
+            LicenseHeaderInfo licenseHeader = snapshot.getLicenseHeader().getValue();
+            if (licenseHeader != null) {
+                addLicenseHeader(root, LICENSE_HEADER_NODE, licenseHeader);
+            }
         }
 
         addBuiltInTasks(root, snapshot);
@@ -436,6 +465,44 @@ final class XmlPropertyFormat {
         return null;
     }
 
+    private static PropertySource<LicenseHeaderInfo> readLicenseHeader(Element root, String nodeName) {
+        Element licenseNode = getFirstChildByTagName(root, nodeName);
+        if (licenseNode == null) {
+            return null;
+        }
+
+        Element nameNode = getFirstChildByTagName(licenseNode, LICENSE_NAME_NODE);
+        if (nameNode == null) {
+            return null;
+        }
+
+        String name = nameNode.getTextContent();
+        if (name == null) {
+            return null;
+        }
+
+        Map<String, String> properties = new TreeMap<String, String>();
+        NodeList childNodes = licenseNode.getChildNodes();
+        int childCount = childNodes.getLength();
+        for (int i = 0; i < childCount; i++) {
+            Node property = childNodes.item(i);
+            Element propertyElement = property instanceof Element
+                    ? (Element)property
+                    : null;
+
+            if (propertyElement != null && LICENSE_PROPERTY_NODE.equals(propertyElement.getNodeName())) {
+                String propertyName = propertyElement.getAttribute(LICENSE_PROPERTY_NAME_ATTR);
+                String properyValue = property.getTextContent();
+
+                if (propertyName != null && properyValue != null) {
+                    properties.put(propertyName.trim(), properyValue.trim());
+                }
+            }
+        }
+
+        return asConst(new LicenseHeaderInfo(name.trim(), properties), false);
+    }
+
     private static Collection<AuxConfig> readAuxiliaryConfigs(Element root) {
         List<AuxConfig> result = new LinkedList<AuxConfig>();
 
@@ -517,6 +584,11 @@ final class XmlPropertyFormat {
         PropertySource<JavaPlatform> scriptPlatform = readPlatform(root, SCRIPT_PLATFORM_NODE);
         if (scriptPlatform != null) {
             result.setScriptPlatform(scriptPlatform);
+        }
+
+        PropertySource<LicenseHeaderInfo> licenseHeader = readLicenseHeader(root, LICENSE_HEADER_NODE);
+        if (licenseHeader != null) {
+            result.setLicenseHeader(licenseHeader);
         }
 
         List<PredefinedTask> commonTasks = Collections.unmodifiableList(readCommonTasks(root));

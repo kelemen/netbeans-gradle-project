@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +25,7 @@ public interface ProjectProperties {
     public MutableProperty<GradleLocation> getGradleLocation();
     public MutableProperty<Charset> getSourceEncoding();
     public MutableProperty<List<PredefinedTask>> getCommonTasks();
+    public MutableProperty<LicenseHeaderInfo> getLicenseHeader();
 
     // In case you add more built-in tasks, don't forget to update
     // AbstractProjectProperties.getCustomizableCommands().
