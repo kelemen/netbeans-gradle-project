@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +14,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.modules.editor.indent.project.api.Customizers;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -25,7 +25,6 @@ import org.openide.util.lookup.Lookups;
 public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
 
-    private static final String CHANGELF_CUSTOMIZER = "com.junichi11.netbeans.changelf.ui.options.ChangeLFCustomizerProvider";
     private static final String GRADLE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle";
 
     private final NbGradleProject project;
@@ -41,15 +40,9 @@ public final class GradleCustomizer implements CustomizerProvider {
 
         result.add(Customizers.createFormattingCategoryProvider(Collections.emptyMap()));
 
-        Lookup apiSupport = Lookups.forPath("Projects/org-netbeans-modules-apisupport-project/Customizer");
-        Collection<? extends ProjectCustomizer.CompositeCategoryProvider> apiSupportCustomizers
-                = apiSupport.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
-
-        for (ProjectCustomizer.CompositeCategoryProvider customizer: apiSupportCustomizers) {
-            if (CHANGELF_CUSTOMIZER.equals(customizer.getClass().getName())) {
-                result.add(customizer);
-                break;
-            }
+        ProjectCustomizer.CompositeCategoryProvider changeLFProperties = ChangeLFPlugin.getProjectSettings();
+        if (changeLFProperties != null) {
+            result.add(changeLFProperties);
         }
 
         return result.toArray(new ProjectCustomizer.CompositeCategoryProvider[result.size()]);
