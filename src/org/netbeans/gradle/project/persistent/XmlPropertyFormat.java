@@ -81,6 +81,7 @@ final class XmlPropertyFormat {
     private static final String AUXILIARY_NODE = "auxiliary";
     private static final String LICENSE_HEADER_NODE = "license-header";
     private static final String LICENSE_NAME_NODE = "name";
+    private static final String LICENSE_FILE_NODE = "template";
     private static final String LICENSE_PROPERTY_NODE = "property";
     private static final String LICENSE_PROPERTY_NAME_ATTR = "name";
 
@@ -250,9 +251,19 @@ final class XmlPropertyFormat {
         }
     }
 
+    private static void addFileNode(Node root, String nodeName, File file) {
+        String filePathStr = file.getPath().replace(File.separator, SAVE_FILE_NAME_SEPARATOR);
+        addSimpleChild(root, nodeName, filePathStr);
+    }
+
     private static void addLicenseHeader(Node root, String nodeName, LicenseHeaderInfo licenseHeader) {
         Element licenseNode = addChild(root, nodeName);
         addSimpleChild(licenseNode, LICENSE_NAME_NODE, licenseHeader.getLicenseName());
+
+        File templateFile = licenseHeader.getLicenseTemplateFile();
+        if (templateFile != null) {
+            addFileNode(licenseNode, LICENSE_FILE_NODE, templateFile);
+        }
 
         // We sort them only to save them in a deterministic order, so the
         // property file only changes if the properties really change.
@@ -465,6 +476,15 @@ final class XmlPropertyFormat {
         return null;
     }
 
+    private static File tryReadFilePath(Element root, String nodeName) {
+        String strPath = tryGetValueOfNode(root, nodeName);
+        if (strPath == null) {
+            return null;
+        }
+
+        return new File(strPath.trim().replace(SAVE_FILE_NAME_SEPARATOR, File.separator));
+    }
+
     private static PropertySource<LicenseHeaderInfo> readLicenseHeader(Element root, String nodeName) {
         Element licenseNode = getFirstChildByTagName(root, nodeName);
         if (licenseNode == null) {
@@ -480,6 +500,8 @@ final class XmlPropertyFormat {
         if (name == null) {
             return null;
         }
+
+        File licenseTemplate = tryReadFilePath(licenseNode, LICENSE_FILE_NODE);
 
         Map<String, String> properties = new TreeMap<String, String>();
         NodeList childNodes = licenseNode.getChildNodes();
@@ -500,7 +522,7 @@ final class XmlPropertyFormat {
             }
         }
 
-        return asConst(new LicenseHeaderInfo(name.trim(), properties), false);
+        return asConst(new LicenseHeaderInfo(name.trim(), properties, licenseTemplate), false);
     }
 
     private static Collection<AuxConfig> readAuxiliaryConfigs(Element root) {
