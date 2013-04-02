@@ -311,7 +311,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         File f = dlgChooser.showOpenDialog();
         if (f != null && f.isDirectory()) {
             File file = f.getAbsoluteFile();
-            jBrowseUserHomeDirButton.setText(file.toString());
+            jGradleUserHomeEdit.setText(file.toString());
         }
     }//GEN-LAST:event_jBrowseUserHomeDirButtonActionPerformed
 
