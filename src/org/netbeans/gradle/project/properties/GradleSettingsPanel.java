@@ -296,6 +296,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
     private void jBrowsePathButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowsePathButtonActionPerformed
         FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleSettingsPanel.class);
+        dlgChooser.setDirectoriesOnly(true);
         File f = dlgChooser.showOpenDialog();
         if (f != null && f.isDirectory()) {
             File file = f.getAbsoluteFile();
@@ -305,6 +306,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
     private void jBrowseUserHomeDirButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseUserHomeDirButtonActionPerformed
         FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleSettingsPanel.class);
+        dlgChooser.setDirectoriesOnly(true);
+
         File f = dlgChooser.showOpenDialog();
         if (f != null && f.isDirectory()) {
             File file = f.getAbsoluteFile();
