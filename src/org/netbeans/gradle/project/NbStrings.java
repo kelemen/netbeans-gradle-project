@@ -307,6 +307,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectCategoryName");
     }
 
+    public static String getGradleProjectLicenseCategoryName() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectLicenseCategoryName");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

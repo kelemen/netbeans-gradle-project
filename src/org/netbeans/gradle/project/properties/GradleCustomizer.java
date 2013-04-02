@@ -26,6 +26,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
 
     private static final String GRADLE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle";
+    private static final String LICENSE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-license";
 
     private final NbGradleProject project;
 
@@ -52,8 +53,10 @@ public final class GradleCustomizer implements CustomizerProvider {
         ProjectCustomizer.CompositeCategoryProvider[] externalCategories
                 = getExternalCustomizers();
         List<ProjectCustomizer.CompositeCategoryProvider> allCategoriesList
-                = new ArrayList<ProjectCustomizer.CompositeCategoryProvider>(externalCategories.length + 1);
+                = new ArrayList<ProjectCustomizer.CompositeCategoryProvider>(externalCategories.length + 2);
+
         allCategoriesList.add(new MainCustomizer(project));
+        allCategoriesList.add(new LicenseCustomizer(project));
         allCategoriesList.addAll(Arrays.asList(externalCategories));
 
         return allCategoriesList.toArray(new ProjectCustomizer.CompositeCategoryProvider[allCategoriesList.size()]);
@@ -135,6 +138,36 @@ public final class GradleCustomizer implements CustomizerProvider {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     panel.saveProperties();
+                }
+            });
+            return panel;
+        }
+    }
+
+    private static final class LicenseCustomizer
+    implements
+            ProjectCustomizer.CompositeCategoryProvider {
+
+        private final LicenseHeaderPanel panel;
+
+        public LicenseCustomizer(NbGradleProject project) {
+            this.panel = new LicenseHeaderPanel(project);
+        }
+
+        @Override
+        public ProjectCustomizer.Category createCategory(Lookup context) {
+            return ProjectCustomizer.Category.create(
+                    LICENSE_CATEGORY_NAME,
+                    NbStrings.getGradleProjectLicenseCategoryName(),
+                    null);
+        }
+
+        @Override
+        public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
+            category.setOkButtonListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    panel.save();
                 }
             });
             return panel;
