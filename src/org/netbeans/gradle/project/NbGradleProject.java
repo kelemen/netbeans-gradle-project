@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -66,6 +67,7 @@ public final class NbGradleProject implements Project {
     //   single-threaded and executes task in the order they were submitted.
     public static final RequestProcessor PROJECT_PROCESSOR
             = new RequestProcessor("Gradle-Project-Processor", 1, true);
+    private static final LicenseManager LICENSE_MANAGER = new LicenseManager();
 
     private final FileObject projectDir;
     private final File projectDirAsFile;
@@ -341,6 +343,8 @@ public final class NbGradleProject implements Project {
     private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
         private final List<GlobalPathReg> paths;
         private final ModelLoadListener modelLoadListener;
+        private ChangeListener licenseChangeListener;
+        private LicenseManager.Ref licenseRef;
         private boolean opened;
 
         public OpenHook() {
@@ -351,6 +355,8 @@ public final class NbGradleProject implements Project {
             this.paths.add(new GlobalPathReg(ClassPath.BOOT));
             this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
             this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
+            this.licenseRef = null;
+            this.licenseChangeListener = null;
 
             this.modelLoadListener = new ModelLoadListener() {
                 @Override
@@ -362,6 +368,31 @@ public final class NbGradleProject implements Project {
             };
         }
 
+        private void registerLicenseNow() {
+            assert SwingUtilities.isEventDispatchThread();
+
+            if (licenseRef != null) {
+                licenseRef.unregister();
+            }
+
+            licenseRef = LICENSE_MANAGER.registerLicense(
+                    NbGradleProject.this,
+                    getProperties().getLicenseHeader().getValue());
+        }
+
+        public void registerLicense() {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (!opened) {
+                        return;
+                    }
+
+                    registerLicenseNow();
+                }
+            });
+        }
+
         @Override
         protected void projectOpened() {
             GradleModelLoader.addModelLoadedListener(modelLoadListener);
@@ -369,11 +400,25 @@ public final class NbGradleProject implements Project {
 
             cpProvider.addPropertyChangeListener(this);
 
+            if (licenseChangeListener != null) {
+                LOGGER.warning("projectOpened() without close.");
+                properties.getLicenseHeader().removeChangeListener(licenseChangeListener);
+            }
+
+            licenseChangeListener = new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    registerLicense();
+                }
+            };
+            properties.getLicenseHeader().addChangeListener(licenseChangeListener);
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     opened = true;
                     doRegisterClassPaths();
+                    registerLicenseNow();
                 }
             });
         }
@@ -385,8 +430,18 @@ public final class NbGradleProject implements Project {
                 public void run() {
                     opened = false;
                     doUnregisterPaths();
+
+                    if (licenseRef != null) {
+                        licenseRef.unregister();
+                        licenseRef = null;
+                    }
                 }
             });
+
+           if (licenseChangeListener != null) {
+                properties.getLicenseHeader().removeChangeListener(licenseChangeListener);
+                licenseChangeListener = null;
+            }
 
             GradleModelLoader.removeModelLoadedListener(modelLoadListener);
             cpProvider.removePropertyChangeListener(this);

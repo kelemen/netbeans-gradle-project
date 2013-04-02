@@ -63,7 +63,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
         LicenseHeaderInfo licenseHeader = licenseHeaderRef.get();
 
         if (licenseHeader != null) {
-            String licenseName = licenseHeader.getLicenseName();
+            String licenseName = licenseHeader.getPrivateLicenseName(project);
             String fileName = "license-" + licenseName + ".txt";
 
             if (FileUtil.getConfigFile("Templates/Licenses/" + fileName) != null) {
