@@ -48,7 +48,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
         Collections.sort(modules, new Comparator<NbGradleModule>(){
             @Override
             public int compare(NbGradleModule o1, NbGradleModule o2) {
-                return STR_SMP.compare(o1.getName(), o2.getName());
+                return STR_SMP.compare(o1.getDisplayName(), o2.getDisplayName());
             }
         });
     }
@@ -129,7 +129,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
 
         @Override
         public String getDisplayName() {
-            return module.getName();
+            return module.getDisplayName();
         }
 
         @Override
@@ -174,7 +174,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
         }
         @Override
         public String getDisplayName() {
-            return module.getName();
+            return module.getDisplayName();
         }
 
         @Override

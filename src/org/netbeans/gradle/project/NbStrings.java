@@ -153,7 +153,7 @@ public final class NbStrings {
     public static String getOpenSubProjectCaption(Collection<? extends NbGradleModule> projects) {
         int numberOfProjects = projects.size();
         if (numberOfProjects == 1) {
-            String name = projects.iterator().next().getName();
+            String name = projects.iterator().next().getDisplayName();
             return NbBundle.getMessage(NbStrings.class, "LBL_OpenSingleSubProject", name);
         }
         else {

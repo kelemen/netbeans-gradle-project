@@ -17,7 +17,7 @@ public final class NbModuleDependency implements NbDependency {
 
     @Override
     public String getShortName() {
-        return module.getName();
+        return module.getDisplayName();
     }
 
     @Override
