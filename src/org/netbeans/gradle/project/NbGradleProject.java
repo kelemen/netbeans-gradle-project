@@ -252,7 +252,7 @@ public final class NbGradleProject implements Project {
     }
 
     public String getDisplayName() {
-        return name;
+        return getAvailableModel().getMainModule().getDisplayName();
     }
 
     public File getProjectDirectoryAsFile() {

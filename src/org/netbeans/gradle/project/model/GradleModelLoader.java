@@ -224,6 +224,7 @@ public final class GradleModelLoader {
 
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
                 name,
+                name,
                 projectDirAsFile,
                 createDefaultOutput(projectDirAsFile),
                 level,
@@ -474,7 +475,11 @@ public final class GradleModelLoader {
         sourceLevel = sourceLevel.trim();
         targetLevel = targetLevel.trim();
 
+        String scriptDisplayName = module.getName();
+        if (scriptDisplayName == null) scriptDisplayName = "";
+
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
+                scriptDisplayName,
                 uniqueName,
                 moduleDir,
                 createDefaultOutput(moduleDir),

@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.project.GradleProjectConstants;
+import org.netbeans.gradle.project.NbStrings;
 
 public final class NbGradleModule {
     private final Properties properties;
@@ -16,6 +17,7 @@ public final class NbGradleModule {
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
     private final List<NbGradleModule> children;
     private final List<File> listedDirs;
+    private final String displayName;
 
     // Should only be called by NbGradleModuleBuilder
     NbGradleModule(
@@ -35,6 +37,35 @@ public final class NbGradleModule {
         this.listedDirs = Collections.unmodifiableList(listedDirs);
         this.dependencies = Collections.unmodifiableMap(dependencies);
         this.children = Collections.unmodifiableList(children);
+
+        // findDisplayName() must be called after other properties are set.
+        this.displayName = findDisplayName();
+    }
+
+    private String findDisplayName() {
+        if (properties.isBuildSrc()) {
+            File parentFile = getModuleDir().getParentFile();
+            String parentName = parentFile != null ? parentFile.getName() : "?";
+            return NbStrings.getBuildSrcMarker(parentName);
+        }
+        else {
+            String scriptName = properties.getScriptDisplayName();
+            scriptName = scriptName.trim();
+            if (scriptName.isEmpty()) {
+                scriptName = getModuleDir().getName();
+            }
+
+            if (getProperties().isRootProject()) {
+                return NbStrings.getRootProjectMarker(scriptName);
+            }
+            else {
+                return scriptName;
+            }
+        }
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public Properties getProperties() {
@@ -86,6 +117,7 @@ public final class NbGradleModule {
     public static final class Properties {
         private static final Collator STR_CMP = Collator.getInstance();
 
+        private final String scriptDisplayName;
         private final File moduleDir;
         private final NbOutput output;
         private final String uniqueName;
@@ -96,12 +128,14 @@ public final class NbGradleModule {
         private final List<String> nameParts;
 
         public Properties(
+                String scriptDisplayName,
                 String uniqueName,
                 File moduleDir,
                 NbOutput output,
                 String sourceLevel,
                 String targetLevel,
                 Collection<NbGradleTask> tasks) {
+            if (scriptDisplayName == null) throw new NullPointerException("scriptDisplayName");
             if (uniqueName == null) throw new NullPointerException("uniqueName");
             if (moduleDir == null) throw new NullPointerException("moduleDir");
             if (output == null) throw new NullPointerException("output");
@@ -109,6 +143,7 @@ public final class NbGradleModule {
             if (targetLevel == null) throw new NullPointerException("targetLevel");
             if (tasks == null) throw new NullPointerException("tasks");
 
+            this.scriptDisplayName = scriptDisplayName;
             this.uniqueName = uniqueName;
             this.moduleDir = moduleDir;
             this.output = output;
@@ -130,6 +165,10 @@ public final class NbGradleModule {
             for (NbGradleTask task: this.tasks) {
                 if (task == null) throw new NullPointerException("task");
             }
+        }
+
+        public String getScriptDisplayName() {
+            return scriptDisplayName;
         }
 
         public String getSourceLevel() {

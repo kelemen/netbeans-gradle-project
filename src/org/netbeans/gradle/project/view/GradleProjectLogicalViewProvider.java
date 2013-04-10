@@ -242,18 +242,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         @Override
         public String getDisplayName() {
-            NbGradleModule mainModule = project.getAvailableModel().getMainModule();
-            if (mainModule.getProperties().isBuildSrc()) {
-                File parentFile = mainModule.getModuleDir().getParentFile();
-                String parentName = parentFile != null ? parentFile.getName() : "?";
-                return NbStrings.getBuildSrcMarker(parentName);
-            }
-            else if (mainModule.getProperties().isRootProject()) {
-                return NbStrings.getRootProjectMarker(project.getDisplayName());
-            }
-            else {
-                return project.getDisplayName();
-            }
+            return project.getDisplayName();
         }
     }
 
