@@ -178,7 +178,7 @@ public final class GradleModelLoader {
         if (listener == null) throw new NullPointerException("listener");
 
         final File projectDir = project.getProjectDirectoryAsFile();
-        String caption = NbStrings.getLoadingProjectText(projectDir.getName());
+        String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
             public void run(ProgressHandle progress) {
