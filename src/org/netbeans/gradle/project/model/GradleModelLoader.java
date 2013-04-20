@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,11 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.gradle.tooling.BuildException;
@@ -80,33 +76,6 @@ public final class GradleModelLoader {
         LISTENERS.removeListener(listener);
     }
 
-    private static void runOnEDTAndWait(Runnable task) {
-        assert task != null;
-
-        if (SwingUtilities.isEventDispatchThread()) {
-            task.run();
-        }
-        else {
-            try {
-                SwingUtilities.invokeAndWait(task);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new CancellationException();
-            } catch (InvocationTargetException ex) {
-                Throwable cause = ex.getCause();
-                if (cause instanceof RuntimeException) {
-                    throw (RuntimeException)cause;
-                }
-                else if (cause instanceof Error) {
-                    throw (Error)cause;
-                }
-                else {
-                    throw new RuntimeException(cause.getMessage(), cause);
-                }
-            }
-        }
-    }
-
     public static GradleConnector createGradleConnector(final NbGradleProject project) {
         final GradleConnector result = GradleConnector.newConnector();
 
@@ -115,15 +84,9 @@ public final class GradleModelLoader {
             result.useGradleUserHomeDir(gradleUserHome);
         }
 
-        final AtomicReference<GradleLocation> gradleLocation = new AtomicReference<GradleLocation>();
-        runOnEDTAndWait(new Runnable() {
-            @Override
-            public void run() {
-                gradleLocation.set(project.getProperties().getGradleLocation().getValue());
-            }
-        });
+        GradleLocation gradleLocation = project.getProperties().getGradleLocation().getValue();
 
-        gradleLocation.get().applyLocation(new GradleLocation.Applier() {
+        gradleLocation.applyLocation(new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 result.useGradleVersion(versionStr);

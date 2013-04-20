@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.view;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,7 +8,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -142,27 +140,13 @@ public class GradleActionProvider implements ActionProvider {
             NbGradleConfiguration config) {
         assert command != null;
 
-        checkNotEdt();
-
         final ProjectProperties properties = getLoadedProperties(config);
-        final AtomicReference<PredefinedTask> resultRef = new AtomicReference<PredefinedTask>(null);
-        try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    MutableProperty<PredefinedTask> task = properties.tryGetBuiltInTask(command);
-                    if (task != null) {
-                        resultRef.set(task.getValue());
-                    }
-                }
-            });
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        } catch (InvocationTargetException ex) {
-            throw new RuntimeException(ex.getMessage(), ex);
-        }
 
-        PredefinedTask result = resultRef.get();
+        MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
+        PredefinedTask result = taskProperty != null
+                ? taskProperty.getValue()
+                : null;
+
         if (result == null) {
             result = BuiltInTasks.getDefaultBuiltInTask(command);
         }

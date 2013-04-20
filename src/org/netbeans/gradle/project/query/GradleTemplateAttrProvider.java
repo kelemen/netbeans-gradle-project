@@ -1,12 +1,9 @@
 package org.netbeans.gradle.project.query;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.DefaultProjectProperties;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
@@ -25,43 +22,11 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
         this.project = project;
     }
 
-    private void invokeOnEdtAndWait(Runnable task) {
-        if (SwingUtilities.isEventDispatchThread()) {
-            task.run();
-        }
-        else {
-            try {
-                SwingUtilities.invokeAndWait(task);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            } catch (InvocationTargetException ex) {
-                Throwable cause = ex.getCause();
-                if (cause instanceof Error) {
-                    throw (Error)cause;
-                }
-                if (cause instanceof RuntimeException) {
-                    throw (RuntimeException)cause;
-                }
-
-                throw new RuntimeException(cause.getMessage(), cause);
-            }
-        }
-    }
-
     @Override
     public Map<String, ?> attributesFor(DataObject template, DataFolder target, String name) {
         Map<String, Object> values = new TreeMap<String, Object>();
 
-        final AtomicReference<LicenseHeaderInfo> licenseHeaderRef = new AtomicReference<LicenseHeaderInfo>(null);
-        invokeOnEdtAndWait(new Runnable() {
-            @Override
-            public void run() {
-                licenseHeaderRef.set(project.getProperties().getLicenseHeader().getValue());
-            }
-        });
-
-        LicenseHeaderInfo licenseHeader = licenseHeaderRef.get();
-
+        LicenseHeaderInfo licenseHeader = project.getProperties().getLicenseHeader().getValue();
         if (licenseHeader != null) {
             String licenseName = licenseHeader.getPrivateLicenseName(project);
             String fileName = "license-" + licenseName + ".txt";
