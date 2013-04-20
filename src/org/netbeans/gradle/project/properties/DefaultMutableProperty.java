@@ -12,7 +12,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     private static final Logger LOGGER = Logger.getLogger(DefaultMutableProperty.class.getName());
 
     private final boolean allowNulls;
-    private PropertySource<? extends ValueType> valueSource;
+    private volatile PropertySource<? extends ValueType> valueSource;
     private final Lock changesLock;
     private final ChangeSupport changes;
     private final ChangeListener changeForwarder;
