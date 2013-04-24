@@ -41,10 +41,11 @@ public interface GradleProjectPlatformQuery {
      * need to be looked up elsewhere. This query should be able to find all
      * platforms with the given name.
      * <P>
-     * Returning {@code false} means that platforms with the given name will not
-     * be found by this query. So if this method returns {@code false}, the
-     * {@link #tryFindPlatformByName(String,String) tryFindPlatformByName} will
-     * return {@code null} if this name is specified.
+     * Returning {@code false} means that platforms with the given name is
+     * unlikely to be found by this query. So if this method returns {@code false},
+     * the {@link #tryFindPlatformByName(String,String) tryFindPlatformByName}
+     * will most likely return {@code null} if this name is specified. That is,
+     * only look up platforms of unknown name as a last resort using this query.
      *
      * @param platformName the name of the queries platform. This argument
      *   cannot be {@code null}.
