@@ -25,7 +25,7 @@ public final class ProjectQueryPlatformSource extends AbstractProjectPlatformSou
     }
 
     @Override
-    public ProjectPlatform getValue() {
+    public ProjectPlatform tryGetValue() {
         return getCurrentQuery().tryFindPlatformByName(name, version);
     }
 

@@ -38,7 +38,7 @@ public final class ProjectPlatformSource extends AbstractProjectPlatformSource {
     }
 
     @Override
-    public ProjectPlatform getValue() {
+    public ProjectPlatform tryGetValue() {
         GradleProjectPlatformQuery query = getCurrentQuery();
         if (query == null) {
             query = findOwnerQuery();
