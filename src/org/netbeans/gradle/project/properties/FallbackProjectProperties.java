@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.w3c.dom.Element;
 
 public final class FallbackProjectProperties
@@ -18,7 +19,7 @@ extends
     private final ProjectProperties defaultProperties;
 
     private final MutableProperty<String> sourceLevel;
-    private final MutableProperty<JavaPlatform> platform;
+    private final MutableProperty<ProjectPlatform> platform;
     private final MutableProperty<JavaPlatform> scriptPlatform;
     private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
@@ -37,7 +38,7 @@ extends
                 mainProperties.getSourceLevel(),
                 defaultProperties.getSourceLevel());
 
-        this.platform = new FallbackProperty<JavaPlatform>(
+        this.platform = new FallbackProperty<ProjectPlatform>(
                 mainProperties.getPlatform(),
                 defaultProperties.getPlatform());
 
@@ -77,7 +78,7 @@ extends
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getPlatform() {
+    public MutableProperty<ProjectPlatform> getPlatform() {
         return platform;
     }
 

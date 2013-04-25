@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.w3c.dom.Element;
 
@@ -21,7 +22,7 @@ public final class PropertiesSnapshot {
 
     public static final class Builder {
         private PropertySource<String> sourceLevel;
-        private PropertySource<JavaPlatform> platform;
+        private PropertySource<ProjectPlatform> platform;
         private PropertySource<JavaPlatform> scriptPlatform;
         private PropertySource<GradleLocation> gradleHome;
         private PropertySource<Charset> sourceEncoding;
@@ -105,13 +106,13 @@ public final class PropertiesSnapshot {
             this.sourceLevel = sourceLevel;
         }
 
-        public PropertySource<JavaPlatform> getPlatform() {
+        public PropertySource<ProjectPlatform> getPlatform() {
             return platform != null
                     ? platform
-                    : asConst(JavaPlatform.getDefault(), true);
+                    : asConst(AbstractProjectPlatformSource.getDefaultPlatform(), true);
         }
 
-        public void setPlatform(PropertySource<JavaPlatform> platform) {
+        public void setPlatform(PropertySource<ProjectPlatform> platform) {
             if (platform == null) throw new NullPointerException("platform");
             this.platform = platform;
         }
@@ -119,7 +120,7 @@ public final class PropertiesSnapshot {
         public PropertySource<JavaPlatform> getScriptPlatform() {
             return scriptPlatform != null
                     ? scriptPlatform
-                    : wrapSource(getPlatform(), true);
+                    : asConst(JavaPlatform.getDefault(), true);
         }
 
         public void setScriptPlatform(PropertySource<JavaPlatform> scriptPlatform) {
@@ -189,7 +190,7 @@ public final class PropertiesSnapshot {
     }
 
     private final PropertySource<String> sourceLevel;
-    private final PropertySource<JavaPlatform> platform;
+    private final PropertySource<ProjectPlatform> platform;
     private final PropertySource<JavaPlatform> scriptPlatform;
     private final PropertySource<GradleLocation> gradleHome;
     private final PropertySource<Charset> sourceEncoding;
@@ -301,7 +302,7 @@ public final class PropertiesSnapshot {
         return sourceLevel;
     }
 
-    public PropertySource<JavaPlatform> getPlatform() {
+    public PropertySource<ProjectPlatform> getPlatform() {
         return platform;
     }
 

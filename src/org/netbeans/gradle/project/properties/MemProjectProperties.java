@@ -13,11 +13,12 @@ import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 
 public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<String> sourceLevel;
-    private final MutableProperty<JavaPlatform> platform;
+    private final MutableProperty<ProjectPlatform> platform;
     private final MutableProperty<JavaPlatform> scriptPlatform;
     private final MutableProperty<GradleLocation> gradleHome;
     private final MutableProperty<Charset> sourceEncoding;
@@ -28,10 +29,12 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
 
     public MemProjectProperties() {
-        JavaPlatform defaultPlatform = JavaPlatform.getDefault();
+        ProjectPlatform defaultPlatform = AbstractProjectPlatformSource.getDefaultPlatform();
+        JavaPlatform defaultJavaPlatform = JavaPlatform.getDefault();
+
         this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), true, false);
-        this.platform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
-        this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultPlatform, true, false);
+        this.platform = new DefaultMutableProperty<ProjectPlatform>(defaultPlatform, true, false);
+        this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultJavaPlatform, true, false);
         this.gradleHome = new DefaultMutableProperty<GradleLocation>(GradleLocationDefault.INSTANCE, true, false);
         this.licenseHeader = new DefaultMutableProperty<LicenseHeaderInfo>(null, true, true);
         this.auxConfigListener = new DefaultMutableProperty<Void>(null, true, true);
@@ -59,7 +62,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getPlatform() {
+    public MutableProperty<ProjectPlatform> getPlatform() {
         return platform;
     }
 

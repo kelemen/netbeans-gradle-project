@@ -10,6 +10,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.ChangeSupport;
 
@@ -17,7 +18,7 @@ public final class DefaultPropertySources {
     private static final Logger LOGGER = Logger.getLogger(DefaultPropertySources.class.getName());
 
     public static PropertySource<String> parseSourceLevelSource(
-            final PropertySource<JavaPlatform> source,
+            final PropertySource<ProjectPlatform> source,
             final boolean defaultValue) {
 
         if (source == null) throw new NullPointerException("source");

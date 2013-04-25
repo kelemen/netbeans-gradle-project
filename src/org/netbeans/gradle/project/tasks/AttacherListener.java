@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,8 +12,8 @@ import java.util.logging.Logger;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -25,7 +26,6 @@ import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -74,8 +74,8 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private ClassPath getJdkSources() {
-        JavaPlatform platform = project.getProperties().getPlatform().getValue();
-        return platform.getSourceFolders();
+        ProjectPlatform platform = project.getProperties().getPlatform().getValue();
+        return ClassPathSupport.createClassPath(platform.getSourcePaths().toArray(new URL[0]));
     }
 
     private void doAttach(int port) throws DebuggerStartException {

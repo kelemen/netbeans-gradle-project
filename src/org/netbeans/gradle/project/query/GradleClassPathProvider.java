@@ -23,12 +23,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -58,7 +58,7 @@ implements
     private final ConcurrentMap<ClassPathType, ClassPath> classpaths;
 
     private final PropertyChangeSupport changes;
-    private volatile JavaPlatform currentPlatform;
+    private volatile ProjectPlatform currentPlatform;
 
     private final AtomicReference<ProjectInfoRef> infoRefRef;
     // This property is used to prevent eagrly loading a project due
@@ -416,17 +416,17 @@ implements
                 missing, compile, testCompile, runtime, testRuntime);
         setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
 
-        List<PathResourceImplementation> jdk = new LinkedList<PathResourceImplementation>();
-        JavaPlatform platform = currentPlatform;
+        List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
+        ProjectPlatform platform = currentPlatform;
         if (platform == null) {
             platform = project.getProperties().getPlatform().getValue();
         }
-        for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
-            jdk.add(ClassPathSupport.createResource(entry.getURL()));
+        for (URL url: platform.getBootLibraries()) {
+            platformResources.add(ClassPathSupport.createResource(url));
         }
 
-        setClassPathResources(ClassPathType.BOOT, jdk);
-        setClassPathResources(ClassPathType.BOOT_FOR_TEST, jdk);
+        setClassPathResources(ClassPathType.BOOT, platformResources);
+        setClassPathResources(ClassPathType.BOOT_FOR_TEST, platformResources);
 
         missing.removeAll(notRequiredPaths);
 

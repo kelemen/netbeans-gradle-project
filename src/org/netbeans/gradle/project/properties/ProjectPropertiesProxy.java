@@ -20,6 +20,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.openide.util.ChangeSupport;
 import org.w3c.dom.Element;
@@ -32,7 +33,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final ChangeSupport changes;
 
     private final MutablePropertyProxy<String> sourceLevelProxy;
-    private final MutablePropertyProxy<JavaPlatform> platformProxy;
+    private final MutablePropertyProxy<ProjectPlatform> platformProxy;
     private final MutablePropertyProxy<JavaPlatform> scriptPlatformProxy;
     private final MutablePropertyProxy<GradleLocation> gradleHomeProxy;
     private final MutablePropertyProxy<Charset> sourceEncodingProxy;
@@ -63,9 +64,9 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                 return this.getProperties().getSourceLevel();
             }
         });
-        this.platformProxy = new MutablePropertyProxy<JavaPlatform>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
+        this.platformProxy = new MutablePropertyProxy<ProjectPlatform>(new ProjectMutablePropertyRef<ProjectPlatform>(this) {
             @Override
-            public MutableProperty<JavaPlatform> getProperty() {
+            public MutableProperty<ProjectPlatform> getProperty() {
                 return this.getProperties().getPlatform();
             }
         });
@@ -172,7 +173,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getPlatform() {
+    public MutableProperty<ProjectPlatform> getPlatform() {
         return platformProxy;
     }
 

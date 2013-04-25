@@ -1,57 +1,20 @@
 package org.netbeans.gradle.project.api.query;
 
 import java.net.URL;
-import java.util.List;
-import org.netbeans.gradle.project.CollectionUtils;
+import java.util.Collection;
 
 /**
  * Defines a platform used by a Gradle project. Currently, the platform is only
  * used to determine the boot classpath of source files. Other optional
  * properties might be added in the future.
  * <P>
- * This class is immutable and as such is safe to be accessed by multiple
- * concurrent threads.
+ * Implementations of this interface must be safe to be accessed by multiple
+ * threads concurrently. Implementations are recommended to be immutable as
+ * well.
  *
  * @see GradleProjectPlatformQuery
- * @see ProjectPlatformRef
  */
-public final class ProjectPlatform {
-    private final String displayName;
-    private final String name;
-    private final String version;
-    private final List<URL> bootLibraries;
-
-    /**
-     * Creates a new {@code ProjectPlatform} initialized with the mandatory
-     * properties.
-     *
-     * @param displayName the user friendly name of the platform to be displayed
-     *   in a GUI. This argument cannot be {@code null}.
-     * @param name the name of the platform through which the platform can be
-     *   looked up (e.g.: "j2se", "android"). This name is case-sensitive and
-     *   cannot be {@code null}.
-     * @param version the version of the platform. The exact format of the
-     *   version might vary from platform to platform. This argument cannot be
-     *   {@code null}.
-     * @param bootLibraries the libraries to be added to the boot classpath
-     *   of source files (e.g.: jars for a Java project). This argument cannot
-     *   be {@code null} and cannot contain {@code null} elements.
-     */
-    public ProjectPlatform(
-            String displayName,
-            String name,
-            String version,
-            List<URL> bootLibraries) {
-        if (displayName == null) throw new NullPointerException("displayName");
-        if (name == null) throw new NullPointerException("name");
-        if (version == null) throw new NullPointerException("version");
-
-        this.displayName = displayName;
-        this.name = name;
-        this.version = version;
-        this.bootLibraries = CollectionUtils.copyNullSafeList(bootLibraries);
-    }
-
+public interface ProjectPlatform {
     /**
      * Returns the libraries to be added to the boot classpath of source files
      * as specified at construction time.
@@ -63,9 +26,16 @@ public final class ProjectPlatform {
      *   This method never returns {@code null} and the returned list does not
      *   contain {@code null} elements.
      */
-    public List<URL> getBootLibraries() {
-        return bootLibraries;
-    }
+    public Collection<URL> getBootLibraries();
+
+    /**
+     * Returns the source of the libraries of this platform if available.
+     *
+     * @return the source of the libraries of this platform if available.
+     *   This method never returns {@code null}, if the sources are unavailable,
+     *   the return value is an empty list.
+     */
+    public Collection<URL> getSourcePaths();
 
     /**
      * Returns the user friendly name of the platform which might be displayed
@@ -74,9 +44,7 @@ public final class ProjectPlatform {
      * @return the user friendly name of the platform which might be displayed
      *   to the user on a GUI. This method never returns {@code null}.
      */
-    public String getDisplayName() {
-        return displayName;
-    }
+    public String getDisplayName() ;
 
     /**
      * Returns the programmatic name of this platform. This name can be used to
@@ -87,9 +55,7 @@ public final class ProjectPlatform {
      * @return the programmatic name of this platform. This method never returns
      *   {@code null}.
      */
-    public String getName() {
-        return name;
-    }
+    public String getName();
 
     /**
      * Returns the version of this platform. Along with the
@@ -100,18 +66,31 @@ public final class ProjectPlatform {
      * @return the version of this platform. This method never returns
      *   {@code null}.
      */
-    public String getVersion() {
-        return version;
-    }
+    public String getVersion();
 
     /**
-     * Returns the same string as {@link #getDisplayName()}.
+     * Returns {@code true} if this platform is equivalen to the the given
+     * platform, {@code false} otherwise.
+     * <P>
+     * Note that this method must conform to the generic specification of
+     * {@link Object#equals(Object) equals}.
      *
-     * @return the same string as {@link #getDisplayName()}. This method never
-     *   returns {@code null}.
+     * @param obj the other platform to which this platform is compared to. This
+     *   argument can be {@code null}, in which case the return value is
+     *   {@code null}.
+     * @return {@code true} if this platform is equivalen to the the given
+     *   platform, {@code false} otherwise
+     *
+     * @see #hashCode()
      */
     @Override
-    public String toString() {
-        return displayName;
-    }
+    public boolean equals(Object obj);
+
+    /**
+     * {@inheritDoc }
+     *
+     * @return the hash code of this platform
+     */
+    @Override
+    public int hashCode();
 }

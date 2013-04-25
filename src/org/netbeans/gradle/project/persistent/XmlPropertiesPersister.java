@@ -13,6 +13,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;
@@ -82,9 +83,9 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
 
         // Just add a new element to the list when a new property needs to be
         // saved.
-        setters.add(newPropertySetter(properties.getPlatform(), new PropertyGetter<JavaPlatform>() {
+        setters.add(newPropertySetter(properties.getPlatform(), new PropertyGetter<ProjectPlatform>() {
             @Override
-            public PropertySource<JavaPlatform> get(PropertiesSnapshot snapshot) {
+            public PropertySource<ProjectPlatform> get(PropertiesSnapshot snapshot) {
                 return snapshot.getPlatform();
             }
         }));

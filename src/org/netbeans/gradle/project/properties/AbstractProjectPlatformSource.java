@@ -1,19 +1,13 @@
 package org.netbeans.gradle.project.properties;
 
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.event.ListenerRef;
 import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.query.ProjectPlatform;
-import org.openide.modules.SpecificationVersion;
 import org.openide.util.ChangeSupport;
 
 import static org.netbeans.gradle.project.properties.ProjectPlatformSource.getJavaPlatform;
@@ -39,20 +33,7 @@ implements
     }
 
     public static ProjectPlatform getJavaPlatform(JavaPlatform platform) {
-        String displayName = platform.getDisplayName();
-        Specification spec = platform.getSpecification();
-        SpecificationVersion specVersion = spec != null ? spec.getVersion() : null;
-
-        String name = spec != null ? spec.getName() : "";
-        String version = specVersion != null ? specVersion.toString() : null;
-
-        List<URL> bootLibs = new LinkedList<URL>();
-
-        for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
-            bootLibs.add(entry.getURL());
-        }
-
-        return new ProjectPlatform(displayName, name, version, bootLibs);
+        return new JavaProjectPlatform(platform);
     }
 
     protected final GradleProjectPlatformQuery getCurrentQuery() {

@@ -14,7 +14,6 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.event.ListenerRef;
 import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.query.ProjectPlatform;
-import org.netbeans.gradle.project.api.query.ProjectPlatformRef;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectPlatformQuery.class, position = 1000)
@@ -65,24 +64,12 @@ implements
     }
 
     @Override
-    public Collection<ProjectPlatformRef> getAvailablePlatforms() {
+    public Collection<ProjectPlatform> getAvailablePlatforms() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<ProjectPlatformRef> result = new ArrayList<ProjectPlatformRef>(platforms.length);
+        List<ProjectPlatform> result = new ArrayList<ProjectPlatform>(platforms.length);
 
         for (final JavaPlatform platform: platforms) {
-            final String displayName = platform.getDisplayName();
-
-            result.add(new ProjectPlatformRef() {
-                @Override
-                public String getDisplayName() {
-                    return displayName;
-                }
-
-                @Override
-                public ProjectPlatform getPlatform() {
-                    return AbstractProjectPlatformSource.getJavaPlatform(platform);
-                }
-            });
+            result.add(AbstractProjectPlatformSource.getJavaPlatform(platform));
         }
         return result;
     }

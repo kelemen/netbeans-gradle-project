@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.w3c.dom.Element;
 
@@ -62,9 +63,9 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getPlatform() {
-        return new UnmodifiableProperty<JavaPlatform>("Platform") {
-            // This is here only te register and remove listeners because
+    public MutableProperty<ProjectPlatform> getPlatform() {
+        return new UnmodifiableProperty<ProjectPlatform>("Platform") {
+            // This is here only to register and remove listeners because
             // it can detect changes in the list of platforms defined in
             // NetBeans. We will never request the value of this property
             // source, so the actual parameters do not matter.
@@ -72,13 +73,14 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
                     = DefaultPropertySources.findPlatformSource("j2se", "1.3", true);
 
             @Override
-            public JavaPlatform getValue() {
+            public ProjectPlatform getValue() {
                 if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
                     String targetLevel = project.getAvailableModel().getMainModule().getProperties().getTargetLevel();
-                    return DefaultPropertySources.findPlatformSource("j2se", targetLevel, true).getValue();
+                    // TODO: Try to find out the type of the platform.
+                    return new ProjectPlatformSource("j2se", targetLevel, true).getValue();
                 }
                 else {
-                    return JavaPlatform.getDefault();
+                    return AbstractProjectPlatformSource.getDefaultPlatform();
                 }
             }
 

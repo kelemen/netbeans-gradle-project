@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.api.query.ProjectPlatform;
 
 public interface ProjectProperties {
     // Methods of this interface must be safe to access from multiple threads
@@ -20,7 +20,7 @@ public interface ProjectProperties {
     //   Other places need to be updated will not compile.
 
     public MutableProperty<String> getSourceLevel();
-    public MutableProperty<JavaPlatform> getPlatform();
+    public MutableProperty<ProjectPlatform> getPlatform();
     public MutableProperty<JavaPlatform> getScriptPlatform();
     public MutableProperty<GradleLocation> getGradleLocation();
     public MutableProperty<Charset> getSourceEncoding();

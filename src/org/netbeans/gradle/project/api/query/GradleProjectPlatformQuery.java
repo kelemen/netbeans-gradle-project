@@ -70,7 +70,7 @@ public interface GradleProjectPlatformQuery {
      *   {@code null} and the returns collection may not contain {@code null}
      *   elements.
      */
-    public Collection<ProjectPlatformRef> getAvailablePlatforms();
+    public Collection<ProjectPlatform> getAvailablePlatforms();
 
     /**
      * Finds and returns a platform best matching the given name and version or
