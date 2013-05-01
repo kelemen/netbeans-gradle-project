@@ -5,6 +5,7 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Lookup;
 
 /**
  * Defines an immutable model of a loaded Gradle project except that it can be
@@ -18,30 +19,36 @@ public final class NbGradleModel {
     private volatile boolean dirty;
 
     private final NbGradleModule mainModule;
+    private final Lookup models;
 
     public NbGradleModel(
             File projectDir,
-            NbGradleModule mainModule) {
-        this(projectDir, findSettingsGradle(projectDir), mainModule);
+            NbGradleModule mainModule,
+            Lookup models) {
+        this(projectDir, findSettingsGradle(projectDir), mainModule, models);
     }
 
     public NbGradleModel(
             File projectDir,
             File settingsFile,
-            NbGradleModule mainModule) {
-        this(projectDir, getBuildFile(projectDir), settingsFile, mainModule);
+            NbGradleModule mainModule,
+            Lookup models) {
+        this(projectDir, getBuildFile(projectDir), settingsFile, mainModule, models);
     }
 
     public NbGradleModel(
             File projectDir,
             File buildFile,
             File settingsFile,
-            NbGradleModule mainModule) {
+            NbGradleModule mainModule,
+            Lookup models) {
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (mainModule == null) throw new NullPointerException("mainModule");
+        if (models == null) throw new NullPointerException("models");
 
         this.projectDir = projectDir;
         this.mainModule = mainModule;
+        this.models = models;
 
         this.buildFile = buildFile;
         this.settingsFile = settingsFile;
@@ -78,6 +85,10 @@ public final class NbGradleModel {
         }
     }
 
+    public Lookup getModels() {
+        return models;
+    }
+
     public void setDirty() {
         this.dirty = true;
     }
@@ -87,7 +98,7 @@ public final class NbGradleModel {
     }
 
     public NbGradleModel createNonDirtyCopy() {
-        return new NbGradleModel(projectDir, buildFile, settingsFile, mainModule);
+        return new NbGradleModel(projectDir, buildFile, settingsFile, mainModule, models);
     }
 
     public File getProjectDir() {

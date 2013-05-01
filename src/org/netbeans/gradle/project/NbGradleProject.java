@@ -611,6 +611,9 @@ public final class NbGradleProject implements Project {
             }
 
             if (hasChanged) {
+                for (GradleProjectExtension extension: extensions) {
+                    extension.modelsLoaded(model != null ? model.getModels() : Lookup.EMPTY);
+                }
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {

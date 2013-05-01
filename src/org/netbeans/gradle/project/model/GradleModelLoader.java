@@ -24,6 +24,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.ExternalDependency;
 import org.gradle.tooling.model.GradleProject;
@@ -39,6 +40,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -47,8 +49,10 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.util.Utilities;
+import org.openide.util.lookup.Lookups;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
@@ -180,16 +184,19 @@ public final class GradleModelLoader {
         if (projectDirAsFile == null) {
             throw new IllegalStateException("Project directory does not exist.");
         }
+        return createEmptyModel(projectDirAsFile, Lookup.EMPTY);
+    }
 
-        String name = projectDir.getNameExt();
+    private static NbGradleModel createEmptyModel(File projectDir, Lookup otherModels) throws IOException {
+        String name = projectDir.getName();
 
         String level = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
         NbGradleModule.Properties properties = new NbGradleModule.Properties(
                 name,
                 name,
-                projectDirAsFile,
-                createDefaultOutput(projectDirAsFile),
+                projectDir,
+                createDefaultOutput(projectDir),
                 level,
                 level,
                 Collections.<NbGradleTask>emptyList());
@@ -200,7 +207,7 @@ public final class GradleModelLoader {
                 Collections.<NbDependencyType, NbDependencyGroup>emptyMap(),
                 Collections.<NbGradleModule>emptyList());
 
-        return new NbGradleModel(projectDirAsFile, mainModule);
+        return new NbGradleModel(projectDir, mainModule, otherModels);
     }
 
     public static File getScriptJavaHome(NbGradleProject project) {
@@ -213,12 +220,26 @@ public final class GradleModelLoader {
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 
+    private static Object getRawModelWithProgress(
+            NbGradleProject project,
+            final ProgressHandle progress,
+            ProjectConnection projectConnection,
+            Class<?> model) {
+        // Actually this cast is only needed to be complile against pre 1.6
+        // Tooling API because from version 1.6 there is no need to extend
+        // Model.
+        // TODO: Remove this hack after upgrading to 1.6
+        @SuppressWarnings("unchecked")
+        Class<? extends Model> castedModel = (Class<? extends Model>)model;
+        return getModelWithProgress(project, progress, projectConnection, castedModel);
+    }
+
     private static <T extends Model> T getModelWithProgress(
             NbGradleProject project,
             final ProgressHandle progress,
             ProjectConnection projectConnection,
-            Class<T> model) {
-        ModelBuilder<T> builder = projectConnection.model(model);
+            Class<? extends T> model) {
+        ModelBuilder<? extends T> builder = projectConnection.model(model);
 
         File jdkHome = getScriptJavaHome(project);
         if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
@@ -479,7 +500,7 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleModel parseFromIdeaModel(
-            File projectDir, IdeaProject ideaModel) throws IOException {
+            File projectDir, IdeaProject ideaModel, Lookup otherModels) throws IOException {
         IdeaModule mainModule = tryFindMainModule(projectDir, ideaModel);
         if (mainModule == null) {
             throw new IOException("Unable to find the main project in the model.");
@@ -500,14 +521,14 @@ public final class GradleModelLoader {
             }
         }
 
-        NbGradleModel mainModel = new NbGradleModel(projectDir, parsedMainModule);
+        NbGradleModel mainModel = new NbGradleModel(projectDir, parsedMainModule, otherModels);
         File settings = mainModel.getSettingsFile();
 
         for (NbGradleModule module: parsedModules.values()) {
             if (module != null && module != parsedMainModule) {
                 File moduleDir = module.getModuleDir();
                 if (moduleDir != null) {
-                    NbGradleModel model = new NbGradleModel(moduleDir, settings, module);
+                    NbGradleModel model = new NbGradleModel(moduleDir, settings, module, otherModels);
                     introduceLoadedModel(model);
                 }
             }
@@ -518,6 +539,27 @@ public final class GradleModelLoader {
         return mainModel;
     }
 
+    private static Lookup getExtensionModels(
+            NbGradleProject project,
+            ProgressHandle progress,
+            ProjectConnection projectConnection) {
+
+        List<Object> models = new LinkedList<Object>();
+        for (GradleProjectExtension extension: project.getExtensions()) {
+            for (List<Class<?>> modelRequest: extension.getGradleModels()) {
+                for (Class<?> modelClass: modelRequest) {
+                    try {
+                        models.add(getRawModelWithProgress(project, progress, projectConnection, modelClass));
+                        break;
+                    } catch (UnknownModelException ex) {
+                        LOGGER.log(Level.FINE, "Cannot find model {0}", modelClass.getName());
+                    }
+                }
+            }
+        }
+        return Lookups.fixed(models.toArray());
+    }
+
     private static NbGradleModel loadModelWithProgress(
             NbGradleProject project,
             ProgressHandle progress) throws IOException {
@@ -525,23 +567,35 @@ public final class GradleModelLoader {
 
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
-        IdeaProject ideaModel;
+        IdeaProject ideaModel = null;
+        Lookup extensionModels;
 
+        //Lookup
         GradleConnector gradleConnector = createGradleConnector(project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
             projectConnection = gradleConnector.connect();
 
-            ideaModel = getModelWithProgress(project, progress, projectConnection, IdeaProject.class);
+            try {
+                ideaModel = getModelWithProgress(project, progress, projectConnection, IdeaProject.class);
+            } catch (UnknownModelException ex) {
+                LOGGER.log(Level.INFO, "IdeaProject model is not found in project {0}", projectDir);
+            }
+            extensionModels = getExtensionModels(project, progress, projectConnection);
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();
             }
         }
 
-        progress.progress(NbStrings.getParsingModel());
-        return parseFromIdeaModel(projectDir, ideaModel);
+        if (ideaModel != null) {
+            progress.progress(NbStrings.getParsingModel());
+            return parseFromIdeaModel(projectDir, ideaModel, extensionModels);
+        }
+        else {
+            return createEmptyModel(projectDir, extensionModels);
+        }
     }
 
     private static class DependencyBuilder {
