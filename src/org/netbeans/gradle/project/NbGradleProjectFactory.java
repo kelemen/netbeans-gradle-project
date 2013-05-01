@@ -134,7 +134,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         if (!isProject(dir)) {
             return null;
         }
-        return new NbGradleProject(dir, state);
+        return NbGradleProject.createProject(dir, state);
     }
 
     @Override

@@ -39,7 +39,7 @@ public class GradleActionProviderTest {
 
     @Before
     public void setUp() throws IOException {
-        FileObject fileObject = FileUtil.createFolder(new File("."));
+        FileObject fileObject = FileUtil.createFolder(FileUtil.normalizeFile(new File(".")));
         ProjectState projectState = new ProjectState() {
             @Override
             public void markModified() {
@@ -51,7 +51,7 @@ public class GradleActionProviderTest {
                 throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         };
-        project = new NbGradleProject(fileObject, projectState);
+        project = NbGradleProject.createProject(fileObject, projectState);
     }
 
     /**
@@ -64,7 +64,7 @@ public class GradleActionProviderTest {
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("java");
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
         assertTrue(actionEnabled);
-        
+
         actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
         assertTrue(actionEnabled);
     }
@@ -77,7 +77,7 @@ public class GradleActionProviderTest {
 
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
         assertTrue(actionEnabled);
-        
+
         actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
         assertTrue(actionEnabled);
     }
@@ -89,7 +89,7 @@ public class GradleActionProviderTest {
         TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("txt");
         boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
         assertFalse(actionEnabled);
-        
+
         actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
         assertFalse(actionEnabled);
     }

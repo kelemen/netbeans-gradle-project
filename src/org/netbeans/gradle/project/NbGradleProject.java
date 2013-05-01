@@ -4,9 +4,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -19,6 +23,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.api.query.GradleProjectExtension;
+import org.netbeans.gradle.project.api.query.GradleProjectExtensionQuery;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
@@ -88,13 +94,17 @@ public final class NbGradleProject implements Project {
 
     private final WaitableSignal loadedAtLeastOnceSignal;
 
-    public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
+    private final AtomicReference<Queue<Runnable>> delayedInitTasks;
+    private volatile List<GradleProjectExtension> extensions;
+
+    private NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
 
+        this.delayedInitTasks = new AtomicReference<Queue<Runnable>>(new LinkedBlockingQueue<Runnable>());
         this.state = state;
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
@@ -109,6 +119,35 @@ public final class NbGradleProject implements Project {
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
+        this.extensions = Collections.emptyList();
+    }
+
+    public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
+        NbGradleProject project = new NbGradleProject(projectDir, state);
+        try {
+            Collection<? extends GradleProjectExtensionQuery> extensionQueries
+                    = Lookup.getDefault().lookupAll(GradleProjectExtensionQuery.class);
+
+            List<GradleProjectExtension> extensions = new LinkedList<GradleProjectExtension>();
+            for (GradleProjectExtensionQuery extension: extensionQueries) {
+                extensions.add(extension.loadExtensionForProject(project));
+            }
+            project.setExtensions(extensions);
+        } finally {
+            Queue<Runnable> taskList = project.delayedInitTasks.getAndSet(null);
+            for (Runnable tasks: taskList) {
+                tasks.run();
+            }
+        }
+        return project;
+    }
+
+    public List<GradleProjectExtension> getExtensions() {
+        return extensions;
+    }
+
+    private void setExtensions(List<GradleProjectExtension> extensions) {
+        this.extensions = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -205,11 +244,50 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private void loadProject(boolean onlyIfNotLoaded, final boolean mayUseCache) {
+    private boolean isInitialized() {
+        return delayedInitTasks.get() == null;
+    }
+
+    private void runDelayedInitTask(final Runnable task) {
+        assert task != null;
+
+        Queue<Runnable> taskList = delayedInitTasks.get();
+        if (taskList == null) {
+            task.run();
+            return;
+        }
+
+        final AtomicBoolean executed = new AtomicBoolean(false);
+        Runnable delayedTask = new Runnable() {
+            @Override
+            public void run() {
+                if (executed.compareAndSet(false, true)) {
+                    task.run();
+                }
+            }
+        };
+
+        taskList.add(delayedTask);
+        if (delayedInitTasks.get() == null) {
+            delayedTask.run();
+        }
+    }
+
+    private void loadProject(final boolean onlyIfNotLoaded, final boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
                 return;
             }
+        }
+
+        if (!isInitialized()) {
+            runDelayedInitTask(new Runnable() {
+                @Override
+                public void run() {
+                    loadProject(onlyIfNotLoaded, mayUseCache);
+                }
+            });
+            return;
         }
 
         getPropertiesForProfile(getCurrentProfile().getProfileName(), true, new PropertiesLoadListener() {
