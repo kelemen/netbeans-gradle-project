@@ -1,0 +1,35 @@
+package org.netbeans.gradle.project.api.query;
+
+import org.netbeans.api.project.Project;
+
+/**
+ * Defines a query for extending Gradle based projects. This query must be used
+ * by other plugins to integrate with the Gradle project type. That is,
+ * instances if {@code GradleProjectExtensionQuery} are notified upon each
+ * project load.
+ * <P>
+ * Instances of {@code GradleProjectExtensionQuery} are expected to be installed
+ * into the global default lookup: {@code org.openide.util.Lookup.getDefault()}
+ * via the {@code org.openide.util.lookup.ServiceProvider} annotation.
+ * <P>
+ * <B>Note</B>: As of the current implementation, this query must be on the
+ * global lookup prior loading the project. This means that plugins integrating
+ * with Gradle projects require NetBeans to be restarted after being installed.
+ * <P>
+ * Instances of this interface must be safe to be called by multiple threads
+ * concurrently but they are not required to be
+ * <I>synchronization transparent</I> unless otherwise noted.
+ */
+public interface GradleProjectExtensionQuery {
+    /**
+     * Attaches the extension to a particular project which has just been
+     * loaded. This method is called for each loaded project and is called
+     * exactly once.
+     *
+     * @param project the project which has been loaded and to which this
+     *   extension is to be attached. This argument cannot be {@code null}.
+     * @return the {@code GradleProjectExtension} handling the extension of the
+     *   loaded project. This method may never return {@code null}.
+     */
+    public GradleProjectExtension loadExtensionForProject(Project project);
+}
