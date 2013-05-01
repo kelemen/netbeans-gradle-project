@@ -3,6 +3,7 @@ package org.netbeans.gradle.project;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.util.logging.Logger;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.openide.filesystems.FileUtil;
@@ -30,6 +31,7 @@ public final class NbIcons {
 
     private static class GradleIconHolder {
         public static final Image IMAGE = loadIcon();
+        public static final Icon ICON = new ImageIcon(IMAGE);
 
         private static Image loadIcon() {
             Image result = ImageUtilities.loadImage(PROJECT_ICON_PATH);
@@ -42,6 +44,10 @@ public final class NbIcons {
 
     public static Image getGradleIcon() {
         return GradleIconHolder.IMAGE;
+    }
+
+    public static Icon getGradleIconAsIcon() {
+        return GradleIconHolder.ICON;
     }
 
     private static class TaskIconHolder {
