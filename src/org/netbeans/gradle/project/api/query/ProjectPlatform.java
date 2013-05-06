@@ -69,7 +69,7 @@ public interface ProjectPlatform {
     public String getVersion();
 
     /**
-     * Returns {@code true} if this platform is equivalen to the the given
+     * Returns {@code true} if this platform is equivalent to the the given
      * platform, {@code false} otherwise.
      * <P>
      * Note that this method must conform to the generic specification of
