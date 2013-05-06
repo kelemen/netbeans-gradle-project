@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.view;
 
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.text.Collator;
 import java.util.ArrayList;

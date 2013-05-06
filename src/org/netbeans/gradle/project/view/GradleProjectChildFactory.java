@@ -1,9 +1,10 @@
 package org.netbeans.gradle.project.view;
 
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.io.File;
-import java.text.Collator;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Action;
@@ -16,6 +17,9 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.event.ListenerRef;
+import org.netbeans.gradle.project.api.query.GradleProjectExtension;
+import org.netbeans.gradle.project.api.query.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
@@ -27,35 +31,60 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
 extends
         ChildFactory.Detachable<SingleNodeFactory> {
-    private static final Collator STR_CMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
+    private volatile List<GradleProjectExtensionNodes> currentExtensions;
 
     public GradleProjectChildFactory(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
 
         this.project = project;
         this.cleanupTaskRef = new AtomicReference<Runnable>(null);
+        this.currentExtensions = null;
     }
 
     private NbGradleModule getShownModule() {
         return project.getCurrentModel().getMainModule();
     }
 
+    private List<GradleProjectExtensionNodes> getExtensionNodes() {
+        List<GradleProjectExtensionNodes> result = new LinkedList<GradleProjectExtensionNodes>();
+        for (GradleProjectExtension extension: project.getExtensions()) {
+            Lookup extensionLookup = extension.getExtensionLookup();
+            result.addAll(extensionLookup.lookupAll(GradleProjectExtensionNodes.class));
+        }
+        return result;
+    }
+
     @Override
     protected void addNotify() {
-        final ChangeListener changeListener = new ChangeListener() {
+        final Runnable simpleChangeListener = new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 refresh(false);
             }
         };
+        final ChangeListener changeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                simpleChangeListener.run();
+            }
+        };
+
+        List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
+        currentExtensions = extensionNodes;
+
+        final List<ListenerRef> listenerRefs = new LinkedList<ListenerRef>();
+        for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
+            listenerRefs.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
+        }
 
         final Sources sources = ProjectUtils.getSources(project);
         sources.addChangeListener(changeListener);
@@ -66,6 +95,10 @@ extends
             public void run() {
                 sources.removeChangeListener(changeListener);
                 project.removeModelChangeListener(changeListener);
+
+                for (ListenerRef ref: listenerRefs) {
+                    ref.unregister();
+                }
             }
         });
         if (prevTask != null) {
@@ -206,6 +239,15 @@ extends
     }
 
     private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+        List<GradleProjectExtensionNodes> extensionNodes = currentExtensions;
+        if (extensionNodes != null) {
+            for (GradleProjectExtensionNodes nodes: extensionNodes) {
+                toPopulate.addAll(nodes.getNodeFactories());
+            }
+        }
+
+        // TODO: Except for addProjectFiles, other nodes should be displayed by
+        //   an extension (Java extension).
         addSources(toPopulate);
         addListedDirs(toPopulate);
 
