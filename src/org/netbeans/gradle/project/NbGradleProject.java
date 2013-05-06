@@ -54,7 +54,9 @@ import org.netbeans.gradle.project.query.GradleUnitTestFinder;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
+import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
+import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -78,6 +80,7 @@ public final class NbGradleProject implements Project {
     private final FileObject projectDir;
     private final File projectDirAsFile;
     private final ProjectState state;
+    private final AtomicReference<Lookup> defaultLookupRef;
     private final AtomicReference<Lookup> lookupRef;
 
     private final GradleClassPathProvider cpProvider;
@@ -95,6 +98,7 @@ public final class NbGradleProject implements Project {
     private final WaitableSignal loadedAtLeastOnceSignal;
 
     private final AtomicReference<Queue<Runnable>> delayedInitTasks;
+    //private final AtomicReference<Lookup>
     private volatile List<GradleProjectExtension> extensions;
 
     private NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
@@ -106,7 +110,7 @@ public final class NbGradleProject implements Project {
 
         this.delayedInitTasks = new AtomicReference<Queue<Runnable>>(new LinkedBlockingQueue<Runnable>());
         this.state = state;
-        this.lookupRef = new AtomicReference<Lookup>(null);
+        this.defaultLookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
 
@@ -120,6 +124,7 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
         this.extensions = Collections.emptyList();
+        this.lookupRef = new AtomicReference<Lookup>(null);
     }
 
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
@@ -148,6 +153,19 @@ public final class NbGradleProject implements Project {
 
     private void setExtensions(List<GradleProjectExtension> extensions) {
         this.extensions = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
+        List<LookupProvider> extensionsAsProviders = new ArrayList<LookupProvider>(this.extensions.size());
+        for (final GradleProjectExtension extension: this.extensions) {
+            extensionsAsProviders.add(new LookupProvider() {
+                @Override
+                public Lookup createAdditionalLookup(Lookup baseContext) {
+                    return extension.getExtensionLookup();
+                }
+            });
+        }
+        Lookup extensionLookup = Lookups.fixed(extensionsAsProviders.toArray());
+        this.lookupRef.compareAndSet(null, LookupProviderSupport.createCompositeLookup(
+                getDefaultLookup(),
+                extensionLookup));
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -342,11 +360,10 @@ public final class NbGradleProject implements Project {
         return projectDir;
     }
 
-    @Override
-    public Lookup getLookup() {
+    private Lookup getDefaultLookup() {
         // The Lookup is not created in the constructor, so that we do not need
         // to share "this" in the constructor.
-        Lookup result = lookupRef.get();
+        Lookup result = defaultLookupRef.get();
         if (result == null) {
             GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
 
@@ -379,14 +396,20 @@ public final class NbGradleProject implements Project {
                 // GradleFileOwnerQuery and is added using the annotation.
             });
 
-            if (lookupRef.compareAndSet(null, newLookup)) {
+            if (defaultLookupRef.compareAndSet(null, newLookup)) {
                 for (ProjectInitListener listener: newLookup.lookupAll(ProjectInitListener.class)) {
                     listener.onInitProject();
                 }
             }
-            result = lookupRef.get();
+            result = defaultLookupRef.get();
         }
         return result;
+    }
+
+    @Override
+    public Lookup getLookup() {
+        Lookup lookup = lookupRef.get();
+        return lookup != null ? lookup : getDefaultLookup();
     }
 
     // equals and hashCode is provided, so that NetBeans doesn't load the

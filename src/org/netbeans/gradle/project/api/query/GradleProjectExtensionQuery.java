@@ -25,6 +25,10 @@ public interface GradleProjectExtensionQuery {
      * Attaches the extension to a particular project which has just been
      * loaded. This method is called for each loaded project and is called
      * exactly once.
+     * <P>
+     * <B>Note</B>: When this method is called, the lookup of the project is
+     * incomplete and callers of the lookup must not expect to be notified
+     * when the lookup of the project changes (via {@code Lookup.Result}).
      *
      * @param project the project which has been loaded and to which this
      *   extension is to be attached. This argument cannot be {@code null}.

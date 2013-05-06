@@ -45,7 +45,7 @@ public interface GradleProjectExtension {
      * @return the lookup which is to be added to the project's lookup. This
      *   method may never return {@code null}.
      */
-    public Lookup getExtensionLookUp();
+    public Lookup getExtensionLookup();
 
     /**
      * Called whenever the models for the associated Gradle project has been
