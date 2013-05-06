@@ -41,6 +41,11 @@ public interface GradleProjectExtension {
      * Returns the lookup which is to be added to the project's lookup. That is,
      * the objects contained in the returned lookup will be possible to be
      * queried through the project's lookup.
+     * <P>
+     * The following queries are known and used by the Gradle plugin itself:
+     * <ul>
+     *  <li>{@link GradleProjectContextActions}</li>
+     * </ul>
      *
      * @return the lookup which is to be added to the project's lookup. This
      *   method may never return {@code null}.

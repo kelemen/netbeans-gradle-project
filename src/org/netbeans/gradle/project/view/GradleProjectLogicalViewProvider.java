@@ -4,7 +4,6 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +30,8 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
+import org.netbeans.gradle.project.api.query.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
@@ -112,6 +113,34 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 rootNode.getLookup());
     }
 
+    private static List<Action> getActionsOfExtension(GradleProjectExtension extension) {
+        Lookup extensionLookup = extension.getExtensionLookup();
+        Collection<? extends GradleProjectContextActions> actionQueries
+                = extensionLookup.lookupAll(GradleProjectContextActions.class);
+
+        List<Action> result = new LinkedList<Action>();
+        for (GradleProjectContextActions actionQuery: actionQueries) {
+            result.addAll(actionQuery.getContextActions());
+        }
+        return result;
+    }
+
+    private List<Action> getExtensionActions() {
+        List<Action> extensionActions = new LinkedList<Action>();
+        for (GradleProjectExtension extension: project.getExtensions()) {
+            List<Action> actions = getActionsOfExtension(extension);
+
+            if (!actions.isEmpty()) {
+                extensionActions.add(null);
+                extensionActions.addAll(actions);
+            }
+        }
+        if (!extensionActions.isEmpty()) {
+            extensionActions.add(null);
+        }
+        return extensionActions;
+    }
+
     private static Action createProjectAction(String command, String label) {
         return ProjectSensitiveActions.projectCommandAction(command, label, null);
     }
@@ -150,6 +179,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             projectActions.add(createProjectAction(
                     JavaProjectConstants.COMMAND_JAVADOC,
                     NbStrings.getJavadocCommandCaption()));
+
+            projectActions.addAll(getExtensionActions());
+
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
             projectActions.add(null);
