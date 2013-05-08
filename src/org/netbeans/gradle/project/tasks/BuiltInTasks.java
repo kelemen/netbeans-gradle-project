@@ -68,19 +68,19 @@ public final class BuiltInTasks {
     public static final PredefinedTask DEFAULT_DEBUG_TEST_SINGLE_TASK = new PredefinedTask(
             ActionProvider.COMMAND_DEBUG_TEST_SINGLE,
             asTaskNames(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + PredefinedTask.VAR_TEST_FILE_PATH, "-Dtest.debug"),
+            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"),
             Collections.<String>emptyList(),
             false);
     public static final PredefinedTask DEFAULT_RUN_SINGLE_TASK = new PredefinedTask(
             ActionProvider.COMMAND_RUN_SINGLE,
             asTaskNames(projectTask("run")),
-            Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
+            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
             Collections.<String>emptyList(),
             false);
     public static final PredefinedTask DEFAULT_DEBUG_SINGLE_TASK = new PredefinedTask(
             ActionProvider.COMMAND_DEBUG_SINGLE,
             asTaskNames(projectTask("debug")),
-            Arrays.asList("-PmainClass=" + PredefinedTask.VAR_SELECTED_CLASS),
+            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
             Collections.<String>emptyList(),
             false);
     public static final PredefinedTask DEFAULT_APPLY_CODE_CHANGES_TASK = new PredefinedTask(
@@ -136,7 +136,7 @@ public final class BuiltInTasks {
     }
 
     private static String projectTask(String task) {
-        return PredefinedTask.VAR_PROJECT_NAME + ":" + task;
+        return StandardTaskVariable.PROJECT_NAME.getScriptReplaceConstant() + ":" + task;
     }
 
     public static String getDisplayNameOfCommand(String command) {

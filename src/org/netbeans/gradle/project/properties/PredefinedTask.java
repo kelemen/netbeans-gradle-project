@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +10,11 @@ import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TaskVariable;
+import org.openide.util.Lookup;
 
 public final class PredefinedTask {
-    public static final String VAR_PROJECT_NAME = "${project}";
-    public static final String VAR_TEST_FILE_PATH = "${test-file-path}";
-    public static final String VAR_SELECTED_CLASS = "${selected-class}";
-
     public static final class Name {
         private final String name;
         private final boolean mustExist;
@@ -167,15 +165,6 @@ public final class PredefinedTask {
         return builder;
     }
 
-    public static Map<String, String> varReplaceMap(NbGradleModule mainModule) {
-        String uniqueName = mainModule.getUniqueName();
-        if (":".equals(uniqueName)) { // This is the root project.
-            uniqueName = "";
-        }
-
-        return Collections.singletonMap(VAR_PROJECT_NAME, uniqueName);
-    }
-
     private static String processString(String str, Map<String, String> varReplaceMap) {
         String result = str;
         for (Map.Entry<String, String> entry: varReplaceMap.entrySet()) {
@@ -184,22 +173,25 @@ public final class PredefinedTask {
         return result;
     }
 
-    private static List<String> processList(List<String> strings, Map<String, String> varReplaceMap) {
+    private static List<String> processList(List<String> strings, Map<TaskVariable, String> varReplaceMap) {
         List<String> result = new ArrayList<String>(strings.size());
         for (String str: strings) {
-            result.add(processString(str, varReplaceMap));
+            result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
         }
         return result;
     }
 
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, NbGradleProject project) {
-        return createTaskDefBuilder(caption, varReplaceMap(project.getAvailableModel().getMainModule()));
+    public GradleTaskDef.Builder createTaskDefBuilder(
+            String caption,
+            NbGradleProject project,
+            Lookup actionContext) {
+        return createTaskDefBuilder(caption, project.getVarReplaceMap(actionContext));
     }
 
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, Map<String, String> varReplaceMap) {
+    public GradleTaskDef.Builder createTaskDefBuilder(String caption, Map<TaskVariable, String> varReplaceMap) {
         List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
-            processedTaskNames.add(processString(name.getName(), varReplaceMap));
+            processedTaskNames.add(StandardTaskVariable.replaceVars(name.getName(), varReplaceMap));
         }
 
         GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, processedTaskNames);
@@ -213,16 +205,16 @@ public final class PredefinedTask {
         return builder;
     }
 
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project) {
-        return tryCreateTaskDef(project, varReplaceMap(project.getAvailableModel().getMainModule()));
+    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Lookup actionContext) {
+        return tryCreateTaskDef(project, project.getVarReplaceMap(actionContext));
     }
 
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Map<String, String> varReplaceMap) {
+    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Map<TaskVariable, String> varReplaceMap) {
         NbGradleModule mainModule = project.getAvailableModel().getMainModule();
 
         List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
-            String processName = processString(name.getName(), varReplaceMap);
+            String processName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
             if (name.mustExist && !isTaskExists(mainModule, processName)) {
                 return null;
             }

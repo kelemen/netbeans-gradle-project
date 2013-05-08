@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,6 +53,8 @@ import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.query.GradleUnitTestFinder;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -191,6 +194,11 @@ public final class NbGradleProject implements Project {
             result = loadErrorRef.get();
         }
         return result;
+    }
+
+    public Map<TaskVariable, String> getVarReplaceMap(Lookup actionContext) {
+        // TODO: Get var replace maps from extensions as well.
+        return StandardTaskVariable.createVarReplaceMap(this, actionContext);
     }
 
     public ProjectInfoManager getProjectInfoManager() {

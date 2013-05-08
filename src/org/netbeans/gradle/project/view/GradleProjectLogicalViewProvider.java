@@ -404,7 +404,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             }
 
             PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
-            if (newTaskDef.tryCreateTaskDef(project) == null) {
+            if (newTaskDef.tryCreateTaskDef(project, Lookup.EMPTY) == null) {
                 newTaskDef = createTaskDef(actionPanel, displayName, false);
             }
 
@@ -552,7 +552,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             menu.removeAll();
 
             for (final PredefinedTask task: commonTasks) {
-                if (task.tryCreateTaskDef(project) == null) {
+                if (task.tryCreateTaskDef(project, Lookup.EMPTY) == null) {
                     continue;
                 }
 
@@ -563,7 +563,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                         // recreate the task on every actionPerformed because
                         // the project might have changed since the menu item
                         // was created.
-                        GradleTaskDef taskDef = task.tryCreateTaskDef(project);
+                        GradleTaskDef taskDef = task.tryCreateTaskDef(project, Lookup.EMPTY);
                         if (taskDef != null) {
                             GradleTasks.createAsyncGradleTask(project, taskDef).run();
                         }
