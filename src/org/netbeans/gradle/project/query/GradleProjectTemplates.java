@@ -8,15 +8,22 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "java-classes",
         "java-main-class",
         "java-forms",
+        "java-beans",
+        "j2ee-types",
         "gui-java-application",
         "java-beans",
         "oasis-XML-catalogs",
         "XML",
+        "ant-script",
+        "ant-task",
         "web-service-clients",
         "REST-clients",
         "wsdl",
+        "servlet-types",
+        "web-types",
         "junit",
-        "simple-files"
+        "simple-files",
+        "ear-types"
     };
     private static final String[] PRIVILEGED_TEMPLATES = {
         "Templates/Classes/Class.java",
