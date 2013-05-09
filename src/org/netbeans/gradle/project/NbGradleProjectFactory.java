@@ -10,12 +10,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
+import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.ProjectFactory2;
 import org.netbeans.spi.project.ProjectState;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-@org.openide.util.lookup.ServiceProvider(service = ProjectFactory2.class)
+@org.openide.util.lookup.ServiceProvider(service = ProjectFactory.class)
 public class NbGradleProjectFactory implements ProjectFactory2 {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
