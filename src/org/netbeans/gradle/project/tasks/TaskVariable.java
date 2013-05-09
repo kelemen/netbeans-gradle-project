@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.util.regex.Pattern;
 
 public final class TaskVariable {
-    private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("");
+    private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("[A-Za-z0-9\\-_\\.]+");
 
     private final String variableName;
 
@@ -14,6 +14,10 @@ public final class TaskVariable {
         }
 
         this.variableName = variableName;
+    }
+
+    public static boolean isValidVariableName(String name) {
+        return VARIABLE_NAME_PATTERN.matcher(name).matches();
     }
 
     public String getVariableName() {

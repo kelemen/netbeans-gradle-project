@@ -144,11 +144,13 @@ public enum StandardTaskVariable {
                 int varEnd = varStart >= 0 ? str.indexOf('}', varStart + 1) : -1;
                 if (varStart >= 0 && varEnd >= varStart) {
                     String varName = str.substring(varStart + 1, varEnd);
-                    String value = varReplaceMap.get(new TaskVariable(varName));
-                    if (value != null) {
-                        result.append(value);
-                        index = varEnd + 1;
-                        continue;
+                    if (TaskVariable.isValidVariableName(varName)) {
+                        String value = varReplaceMap.get(new TaskVariable(varName));
+                        if (value != null) {
+                            result.append(value);
+                            index = varEnd + 1;
+                            continue;
+                        }
                     }
                 }
             }
