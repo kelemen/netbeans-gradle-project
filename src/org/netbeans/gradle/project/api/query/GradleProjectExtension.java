@@ -35,7 +35,7 @@ public interface GradleProjectExtension {
      *
      * @see #modelsLoaded(Lookup)
      */
-    public List<List<Class<?>>> getGradleModels();
+    public Iterable<List<Class<?>>> getGradleModels();
 
     /**
      * Returns the lookup which is to be added to the project's lookup. That is,
