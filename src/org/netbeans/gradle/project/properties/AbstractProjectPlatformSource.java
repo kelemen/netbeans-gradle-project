@@ -10,7 +10,7 @@ import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.openide.util.ChangeSupport;
 
-import static org.netbeans.gradle.project.properties.ProjectPlatformSource.getJavaPlatform;
+import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSource.getJavaPlatform;
 
 public abstract class AbstractProjectPlatformSource
 implements

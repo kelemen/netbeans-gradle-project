@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.view;
 
-import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.io.File;
 import java.text.Collator;
@@ -17,6 +16,7 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;

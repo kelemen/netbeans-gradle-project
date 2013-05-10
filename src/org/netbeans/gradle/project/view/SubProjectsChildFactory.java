@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.view;
 
-import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.text.Collator;
@@ -15,6 +14,7 @@ import javax.swing.Action;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.openide.loaders.DataFolder;

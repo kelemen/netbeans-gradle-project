@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.view;
 
-import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -20,6 +19,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModule;

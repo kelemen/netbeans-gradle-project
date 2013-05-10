@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.api.nodes;
 
 import java.util.List;
 import org.netbeans.gradle.project.api.event.ListenerRef;
-import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 
 /**
  * Defines a query which returns the nodes to be added under the project node.

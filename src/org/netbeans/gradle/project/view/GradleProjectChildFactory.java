@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.view;
 
-import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import java.awt.Image;
 import java.io.File;
 import java.util.Collection;
@@ -18,8 +17,9 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.ListenerRef;
-import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
