@@ -39,8 +39,7 @@ public interface GradleTaskVariableQuery {
      *   {@code null} but might be possibly empty.
      * @return the map mapping the names of variables to their values. The
      *   returned map can be (and recommended to be) lazily constructed. This
-     *   method may never return {@code null}. The returned map can be
-     *   read-only.
+     *   method may never return {@code null}.
      */
-    public Map<TaskVariable, String> getVariableMap(Lookup actionContext);
+    public TaskVariableMap getVariableMap(Lookup actionContext);
 }

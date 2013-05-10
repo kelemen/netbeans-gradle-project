@@ -3,14 +3,13 @@ package org.netbeans.gradle.project.view;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
-import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.output.InputOutputManager;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
@@ -172,7 +171,7 @@ public class GradleActionProvider implements ActionProvider {
     }
 
     private GradleTaskDef.Builder createProjectTaskBuilderSimple(
-            TaskKind kind, String command, NbGradleConfiguration config, Map<TaskVariable, String> varReplaceMap) {
+            TaskKind kind, String command, NbGradleConfiguration config, TaskVariableMap varReplaceMap) {
 
         waitForProjectLoad();
         PredefinedTask task = getBuiltInTask(command, config);

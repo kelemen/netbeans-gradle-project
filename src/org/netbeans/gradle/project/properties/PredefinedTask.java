@@ -7,6 +7,7 @@ import java.util.Map;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.model.NbModelUtils;
@@ -165,15 +166,7 @@ public final class PredefinedTask {
         return builder;
     }
 
-    private static String processString(String str, Map<String, String> varReplaceMap) {
-        String result = str;
-        for (Map.Entry<String, String> entry: varReplaceMap.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
-        return result;
-    }
-
-    private static List<String> processList(List<String> strings, Map<TaskVariable, String> varReplaceMap) {
+    private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
         List<String> result = new ArrayList<String>(strings.size());
         for (String str: strings) {
             result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
@@ -188,7 +181,7 @@ public final class PredefinedTask {
         return createTaskDefBuilder(caption, project.getVarReplaceMap(actionContext));
     }
 
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, Map<TaskVariable, String> varReplaceMap) {
+    public GradleTaskDef.Builder createTaskDefBuilder(String caption, TaskVariableMap varReplaceMap) {
         List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
             processedTaskNames.add(StandardTaskVariable.replaceVars(name.getName(), varReplaceMap));
@@ -209,7 +202,7 @@ public final class PredefinedTask {
         return tryCreateTaskDef(project, project.getVarReplaceMap(actionContext));
     }
 
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Map<TaskVariable, String> varReplaceMap) {
+    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, TaskVariableMap varReplaceMap) {
         NbGradleModule mainModule = project.getAvailableModel().getMainModule();
 
         List<String> processedTaskNames = new LinkedList<String>();

@@ -1,16 +1,17 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -52,28 +53,28 @@ public enum StandardTaskVariable {
     TEST_FILE_PATH("test-file-path") {
         @Override
         public String tryGetValue(NbGradleProject project, Lookup actionContext) {
-            String value = SELECTED_CLASS.tryGetValue(project, actionContext);
-            return value != null
-                    ? deduceFrom(Collections.singletonMap(SELECTED_CLASS, value))
+            String selectedClass = SELECTED_CLASS.tryGetValue(project, actionContext);
+            return deduceFromClass(selectedClass);
+        }
+
+        private String deduceFromClass(String selectedClass) {
+            return selectedClass != null
+                    ? selectedClass.replace('.', '/')
                     : null;
         }
 
         @Override
-        public boolean canDeduceFrom(Map<StandardTaskVariable, String> variables) {
-            return variables.containsKey(SELECTED_CLASS);
-        }
-
-        @Override
-        public String deduceFrom(Map<StandardTaskVariable, String> variables) {
-            String selectedClass = variables.get(SELECTED_CLASS);
+        public String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, String> cache) {
+            String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
             if (selectedClass != null) {
-                return selectedClass.replace('.', '/');
+                cache.putIfAbsent(SELECTED_CLASS.getVariable(), selectedClass);
             }
-            else {
-                return super.deduceFrom(variables);
-            }
+            return deduceFromClass(selectedClass);
         }
     };
+
+    private static final Map<TaskVariable, StandardTaskVariable> TASK_VARIABLE_MAP
+            = createStandardMap();
 
     private static String removeExtension(String filePath) {
         int extSeparatorIndex = filePath.lastIndexOf('.');
@@ -107,34 +108,51 @@ public enum StandardTaskVariable {
         return file.isFolder() ? null : file;
     }
 
-    public static Map<TaskVariable, String> createVarReplaceMap(
-            NbGradleProject project, Lookup actionContext) {
-
-        Map<StandardTaskVariable, String> currentValues
-                = new EnumMap<StandardTaskVariable, String>(StandardTaskVariable.class);
-        for (StandardTaskVariable variable: StandardTaskVariable.values()) {
-            String value;
-            if (variable.canDeduceFrom(currentValues)) {
-                value = variable.deduceFrom(currentValues);
-            }
-            else {
-                value = variable.tryGetValue(project, actionContext);
-            }
-
-            if (value != null) {
-                currentValues.put(variable, value);
-            }
-        }
-
-        Map<TaskVariable, String> result = new HashMap<TaskVariable, String>(2 * currentValues.size());
-        for (Map.Entry<StandardTaskVariable, String> entry: currentValues.entrySet()) {
-            result.put(entry.getKey().getVariable(), entry.getValue());
+    private static Map<TaskVariable, StandardTaskVariable> createStandardMap() {
+        StandardTaskVariable[] variables = StandardTaskVariable.values();
+        Map<TaskVariable, StandardTaskVariable> result
+                = new HashMap<TaskVariable, StandardTaskVariable>(variables.length * 2);
+        for (StandardTaskVariable variable: variables) {
+            result.put(variable.getVariable(), variable);
         }
         return result;
     }
 
+    public static TaskVariableMap createVarReplaceMap(
+            final NbGradleProject project, final Lookup actionContext) {
+        if (project == null) throw new NullPointerException("project");
+        if (actionContext == null) throw new NullPointerException("actionContext");
+
+        final ConcurrentMap<TaskVariable, String> cache
+                = new ConcurrentHashMap<TaskVariable, String>();
+
+        return new TaskVariableMap() {
+            @Override
+            public String tryGetValueForVariable(TaskVariable variable) {
+                StandardTaskVariable stdVar = TASK_VARIABLE_MAP.get(variable);
+                if (stdVar == null) {
+                    return null;
+                }
+
+                String result = cache.get(variable);
+                if (result == null) {
+                    result = stdVar.tryDeduceFrom(this, cache);
+                    if (result == null) {
+                        result = stdVar.tryGetValue(project, actionContext);
+                    }
+
+                    if (result != null) {
+                        cache.putIfAbsent(variable, result);
+                        result = cache.get(variable);
+                    }
+                }
+                return result;
+            }
+        };
+    }
+
     public static String replaceVars(
-            String str, Map<TaskVariable, String> varReplaceMap) {
+            String str, TaskVariableMap varReplaceMap) {
         StringBuilder result = new StringBuilder(str.length() * 2);
 
         int index = 0;
@@ -146,7 +164,7 @@ public enum StandardTaskVariable {
                 if (varStart >= 0 && varEnd >= varStart) {
                     String varName = str.substring(varStart + 1, varEnd);
                     if (TaskVariable.isValidVariableName(varName)) {
-                        String value = varReplaceMap.get(new TaskVariable(varName));
+                        String value = varReplaceMap.tryGetValueForVariable(new TaskVariable(varName));
                         if (value != null) {
                             result.append(value);
                             index = varEnd + 1;
@@ -182,11 +200,7 @@ public enum StandardTaskVariable {
 
     public abstract String tryGetValue(NbGradleProject project, Lookup actionContext);
 
-    public boolean canDeduceFrom(Map<StandardTaskVariable, String> variables) {
-        return false;
-    }
-
-    public String deduceFrom(Map<StandardTaskVariable, String> variables) {
-        throw new IllegalArgumentException("Cannot deduce " + name() + " from " + variables);
+    public String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, String> cache) {
+        return null;
     }
 }
