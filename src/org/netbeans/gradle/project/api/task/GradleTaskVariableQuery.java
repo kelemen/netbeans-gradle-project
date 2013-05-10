@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.api.task;
 
-import java.util.Map;
 import org.openide.util.Lookup;
 
 /**
