@@ -257,6 +257,7 @@
             </test-dependencies>
             <public-packages>
                 <package>org.netbeans.gradle.project.api.event</package>
+                <package>org.netbeans.gradle.project.api.nodes</package>
                 <package>org.netbeans.gradle.project.api.query</package>
             </public-packages>
             <class-path-extension>
