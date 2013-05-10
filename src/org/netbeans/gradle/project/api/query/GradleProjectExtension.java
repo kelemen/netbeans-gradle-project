@@ -46,6 +46,7 @@ public interface GradleProjectExtension {
      * <ul>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectContextActions}</li>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
      * </ul>
      *
      * @return the lookup which is to be added to the project's lookup. This
