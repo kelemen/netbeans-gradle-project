@@ -10,7 +10,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.ChangeSupport;
 

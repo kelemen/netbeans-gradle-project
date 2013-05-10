@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 
 public final class MemProjectProperties extends AbstractProjectProperties {

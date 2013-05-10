@@ -13,7 +13,7 @@ import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModule;

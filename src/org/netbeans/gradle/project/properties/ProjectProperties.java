@@ -4,7 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
 public interface ProjectProperties {
     // Methods of this interface must be safe to access from multiple threads

@@ -40,7 +40,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.query.GradleProjectExtension;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;

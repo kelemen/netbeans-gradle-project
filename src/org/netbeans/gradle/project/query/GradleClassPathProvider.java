@@ -28,7 +28,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.model.NbDependency;
 import org.netbeans.gradle.project.model.NbDependencyType;
 import org.netbeans.gradle.project.model.NbGradleModel;

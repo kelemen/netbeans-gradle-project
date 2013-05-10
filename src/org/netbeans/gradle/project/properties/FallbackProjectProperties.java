@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.w3c.dom.Element;
 
 public final class FallbackProjectProperties

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
 public final class ProjectQueryPlatformSource extends AbstractProjectPlatformSource {
     private final String name;

@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.modules.SpecificationVersion;
 

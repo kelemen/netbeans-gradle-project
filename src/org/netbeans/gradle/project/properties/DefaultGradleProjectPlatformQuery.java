@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Set;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.ListenerRef;
-import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectPlatformQuery.class, position = 1000)

@@ -36,7 +36,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;

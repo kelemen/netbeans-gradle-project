@@ -5,9 +5,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.ListenerRef;
-import org.netbeans.gradle.project.api.query.GradleProjectPlatformQuery;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
 import org.openide.util.ChangeSupport;
 
 import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSource.getJavaPlatform;

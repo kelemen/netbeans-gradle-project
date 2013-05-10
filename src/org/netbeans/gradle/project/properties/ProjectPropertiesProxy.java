@@ -20,7 +20,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.openide.util.ChangeSupport;
 import org.w3c.dom.Element;

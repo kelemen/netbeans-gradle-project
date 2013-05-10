@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.api.query;
+package org.netbeans.gradle.project.api.entry;
 
 import org.netbeans.api.project.Project;
 

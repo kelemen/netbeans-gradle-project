@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.api.query;
+package org.netbeans.gradle.project.api.entry;
 
 import java.net.URL;
 import java.util.Collection;

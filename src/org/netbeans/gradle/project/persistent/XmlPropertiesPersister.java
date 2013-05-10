@@ -13,7 +13,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.api.query.ProjectPlatform;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaProjectPlatform implements ProjectPlatform {
