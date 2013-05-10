@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.api.task;
 
 import java.util.regex.Pattern;
 

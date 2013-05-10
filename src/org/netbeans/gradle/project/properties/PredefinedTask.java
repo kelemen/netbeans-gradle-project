@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
-import org.netbeans.gradle.project.tasks.TaskVariable;
 import org.openide.util.Lookup;
 
 public final class PredefinedTask {
