@@ -18,19 +18,19 @@ import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
 
 public enum StandardTaskVariable {
-    PROJECT_NAME("project") {
+    PROJECT_NAME("project", new ValueGetter() {
         @Override
-        public String tryGetValue(NbGradleProject project, Lookup actionContext) {
+        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             String uniqueName = project.getAvailableModel().getMainModule().getUniqueName();
             if (":".equals(uniqueName)) { // This is the root project.
                 uniqueName = "";
             }
-            return uniqueName;
+            return new VariableValue(uniqueName);
         }
-    },
-    SELECTED_CLASS("selected-class") {
+    }),
+    SELECTED_CLASS("selected-class", new ValueGetter() {
         @Override
-        public String tryGetValue(NbGradleProject project, Lookup actionContext) {
+        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject file = getFileOfContext(actionContext);
             SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
                     .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
@@ -47,14 +47,14 @@ public enum StandardTaskVariable {
                 }
             }
 
-            return relFileName != null ? relFileName.replace('/', '.') : null;
+            return new VariableValue(relFileName != null ? relFileName.replace('/', '.') : null);
         }
-    },
-    TEST_FILE_PATH("test-file-path") {
+    }),
+    TEST_FILE_PATH("test-file-path", new ValueGetter() {
         @Override
-        public String tryGetValue(NbGradleProject project, Lookup actionContext) {
-            String selectedClass = SELECTED_CLASS.tryGetValue(project, actionContext);
-            return deduceFromClass(selectedClass);
+        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
+            return new VariableValue(deduceFromClass(selectedClass));
         }
 
         private String deduceFromClass(String selectedClass) {
@@ -62,21 +62,16 @@ public enum StandardTaskVariable {
                     ? selectedClass.replace('.', '/')
                     : null;
         }
-
+    }),
+    PLATFORM_DIR("platform-dir", new ValueGetter() {
         @Override
-        protected String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, VariableValue> cache) {
-            String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
-            cache.putIfAbsent(SELECTED_CLASS.getVariable(), new VariableValue(selectedClass));
-            return deduceFromClass(selectedClass);
-        }
-    },
-    PLATFORM_DIR("platform-dir") {
-        @Override
-        public String tryGetValue(NbGradleProject project, Lookup actionContext) {
+        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject rootFolder = project.getProperties().getPlatform().getValue().getRootFolder();
-            return rootFolder != null ? FileUtil.getFileDisplayName(rootFolder) : null;
+            return new VariableValue(rootFolder != null
+                    ? FileUtil.getFileDisplayName(rootFolder)
+                    : null);
         }
-    };
+    });
 
     private static final Map<TaskVariable, StandardTaskVariable> TASK_VARIABLE_MAP
             = createStandardMap();
@@ -141,15 +136,14 @@ public enum StandardTaskVariable {
 
                 VariableValue result = cache.get(variable);
                 if (result == null) {
-                    String value = stdVar.tryDeduceFrom(this, cache);
-                    if (value == null) {
-                        value = stdVar.tryGetValue(project, actionContext);
-                    }
+                    result = stdVar.tryGetValue(this, project, actionContext);
 
-                    cache.putIfAbsent(variable, new VariableValue(value));
-                    result = cache.get(variable);
+                    VariableValue prevResult = cache.putIfAbsent(variable, result);
+                    if (prevResult != null) {
+                        result = prevResult;
+                    }
                 }
-                return result.getValue();
+                return result.value;
             }
         };
     }
@@ -184,9 +178,11 @@ public enum StandardTaskVariable {
     }
 
     private final TaskVariable variable;
+    private final ValueGetter valueGetter;
 
-    private StandardTaskVariable(String variableName) {
+    private StandardTaskVariable(String variableName, ValueGetter valueGetter) {
         this.variable = new TaskVariable(variableName);
+        this.valueGetter = valueGetter;
     }
 
     public TaskVariable getVariable() {
@@ -201,21 +197,22 @@ public enum StandardTaskVariable {
         return variable.getScriptReplaceConstant();
     }
 
-    public abstract String tryGetValue(NbGradleProject project, Lookup actionContext);
+    private VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+        return valueGetter.tryGetValue(variables, project, actionContext);
+    }
 
-    protected String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, VariableValue> cache) {
-        return null;
+    private static abstract class ValueGetter {
+        public abstract VariableValue tryGetValue(
+                TaskVariableMap variables,
+                NbGradleProject project,
+                Lookup actionContext);
     }
 
     private static final class VariableValue {
-        private final String value;
+        public final String value;
 
         public VariableValue(String value) {
             this.value = value;
-        }
-
-        public String getValue() {
-            return value;
         }
     }
 }
