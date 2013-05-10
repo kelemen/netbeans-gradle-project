@@ -71,6 +71,13 @@ public enum StandardTaskVariable {
             }
             return deduceFromClass(selectedClass);
         }
+    },
+    PLATFORM_DIR("platform-dir") {
+        @Override
+        public String tryGetValue(NbGradleProject project, Lookup actionContext) {
+            FileObject rootFolder = project.getProperties().getPlatform().getValue().getRootFolder();
+            return rootFolder != null ? FileUtil.getFileDisplayName(rootFolder) : null;
+        }
     };
 
     private static final Map<TaskVariable, StandardTaskVariable> TASK_VARIABLE_MAP
