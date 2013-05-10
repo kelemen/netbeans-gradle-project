@@ -44,8 +44,8 @@ public interface GradleProjectExtension {
      * <P>
      * The following queries are known and used by the Gradle plugin itself:
      * <ul>
-     *  <li>{@link GradleProjectContextActions}</li>
-     *  <li>{@link GradleProjectExtensionNodes}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectContextActions}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
      * </ul>
      *
      * @return the lookup which is to be added to the project's lookup. This

@@ -19,7 +19,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.ListenerRef;
 import org.netbeans.gradle.project.api.query.GradleProjectExtension;
-import org.netbeans.gradle.project.api.query.GradleProjectExtensionNodes;
+import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbModelUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;

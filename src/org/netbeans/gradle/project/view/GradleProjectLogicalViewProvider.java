@@ -30,7 +30,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
-import org.netbeans.gradle.project.api.query.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleModule;

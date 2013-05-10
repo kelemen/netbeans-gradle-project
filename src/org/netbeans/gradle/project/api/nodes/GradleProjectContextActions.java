@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.api.query;
+package org.netbeans.gradle.project.api.nodes;
 
 import java.util.List;
 import javax.swing.Action;
