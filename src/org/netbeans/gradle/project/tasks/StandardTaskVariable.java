@@ -64,11 +64,9 @@ public enum StandardTaskVariable {
         }
 
         @Override
-        public String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, String> cache) {
+        protected String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, VariableValue> cache) {
             String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
-            if (selectedClass != null) {
-                cache.putIfAbsent(SELECTED_CLASS.getVariable(), selectedClass);
-            }
+            cache.putIfAbsent(SELECTED_CLASS.getVariable(), new VariableValue(selectedClass));
             return deduceFromClass(selectedClass);
         }
     },
@@ -130,8 +128,8 @@ public enum StandardTaskVariable {
         if (project == null) throw new NullPointerException("project");
         if (actionContext == null) throw new NullPointerException("actionContext");
 
-        final ConcurrentMap<TaskVariable, String> cache
-                = new ConcurrentHashMap<TaskVariable, String>();
+        final ConcurrentMap<TaskVariable, VariableValue> cache
+                = new ConcurrentHashMap<TaskVariable, VariableValue>();
 
         return new TaskVariableMap() {
             @Override
@@ -141,19 +139,17 @@ public enum StandardTaskVariable {
                     return null;
                 }
 
-                String result = cache.get(variable);
+                VariableValue result = cache.get(variable);
                 if (result == null) {
-                    result = stdVar.tryDeduceFrom(this, cache);
-                    if (result == null) {
-                        result = stdVar.tryGetValue(project, actionContext);
+                    String value = stdVar.tryDeduceFrom(this, cache);
+                    if (value == null) {
+                        value = stdVar.tryGetValue(project, actionContext);
                     }
 
-                    if (result != null) {
-                        cache.putIfAbsent(variable, result);
-                        result = cache.get(variable);
-                    }
+                    cache.putIfAbsent(variable, new VariableValue(value));
+                    result = cache.get(variable);
                 }
-                return result;
+                return result.getValue();
             }
         };
     }
@@ -207,7 +203,19 @@ public enum StandardTaskVariable {
 
     public abstract String tryGetValue(NbGradleProject project, Lookup actionContext);
 
-    public String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, String> cache) {
+    protected String tryDeduceFrom(TaskVariableMap variables, ConcurrentMap<TaskVariable, VariableValue> cache) {
         return null;
+    }
+
+    private static final class VariableValue {
+        private final String value;
+
+        public VariableValue(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }
