@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.query.GradleProjectExtension;
 import org.netbeans.gradle.project.api.query.GradleProjectExtensionQuery;
+import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
@@ -197,7 +199,14 @@ public final class NbGradleProject implements Project {
     }
 
     public Map<TaskVariable, String> getVarReplaceMap(Lookup actionContext) {
-        // TODO: Get var replace maps from extensions as well.
+        Map<TaskVariable, String> result = new HashMap<TaskVariable, String>();
+        for (GradleProjectExtension extension: extensions) {
+            Collection<? extends GradleTaskVariableQuery> taskVariables
+                    = extension.getExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
+            for (GradleTaskVariableQuery query: taskVariables) {
+                result.putAll(query.getVariableMap(actionContext));
+            }
+        }
         return StandardTaskVariable.createVarReplaceMap(this, actionContext);
     }
 
