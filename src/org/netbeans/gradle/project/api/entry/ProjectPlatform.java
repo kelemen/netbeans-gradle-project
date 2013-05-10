@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.net.URL;
 import java.util.Collection;
+import org.openide.filesystems.FileObject;
 
 /**
  * Defines a platform used by a Gradle project. Currently, the platform is only
@@ -15,6 +16,15 @@ import java.util.Collection;
  * @see GradleProjectPlatformQuery
  */
 public interface ProjectPlatform {
+    /**
+     * Returns the root folder containing the platform or {@code null} if it is
+     * unknown. This value might be used to passed for Gradle commands.
+     *
+     * @return the root folder containing the platform or {@code null} if it is
+     *   unknown
+     */
+    public FileObject getRootFolder();
+
     /**
      * Returns the libraries to be added to the boot classpath of source files
      * as specified at construction time.

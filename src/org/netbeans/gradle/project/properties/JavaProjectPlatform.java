@@ -7,6 +7,7 @@ import java.util.List;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.openide.filesystems.FileObject;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaProjectPlatform implements ProjectPlatform {
@@ -25,6 +26,14 @@ public final class JavaProjectPlatform implements ProjectPlatform {
             urls.add(entry.getURL());
         }
         return urls;
+    }
+
+    @Override
+    public FileObject getRootFolder() {
+        for (FileObject folder: platform.getInstallFolders()) {
+            return folder;
+        }
+        return null;
     }
 
     @Override
