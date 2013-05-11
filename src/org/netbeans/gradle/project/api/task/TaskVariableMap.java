@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.task;
 
 /**
  * Defines a map for retrieving values for a given {@code TaskVariable}.
- * Instances of this map are recommended to be lazyly constructed.
+ * Instances of this map are recommended to be lazily constructed.
  * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.

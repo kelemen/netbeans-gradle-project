@@ -88,7 +88,7 @@ public interface ProjectPlatform {
      * @param obj the other platform to which this platform is compared to. This
      *   argument can be {@code null}, in which case the return value is
      *   {@code null}.
-     * @return {@code true} if this platform is equivalen to the the given
+     * @return {@code true} if this platform is equivalent to the the given
      *   platform, {@code false} otherwise
      *
      * @see #hashCode()

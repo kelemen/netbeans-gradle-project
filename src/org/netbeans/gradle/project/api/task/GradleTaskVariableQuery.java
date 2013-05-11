@@ -27,7 +27,7 @@ public interface GradleTaskVariableQuery {
      * <P>
      * This method is always called from a background thread just before each
      * Gradle command. Therefore, this method may do some I/O operation. Note,
-     * however, that this method should return relatively quicly, otherwise
+     * however, that this method should return relatively quickly, otherwise
      * each Gradle command execution will suffer a performance penalty (due to
      * this method is executed prior the Gradle command).
      *

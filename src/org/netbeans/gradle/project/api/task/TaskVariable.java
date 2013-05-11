@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
  * Defines a variable which might be replaced with a given string in Gradle
  * commands. Variables in strings take the form "${variable-name}" and their
  * name is case-sensitive. Variable names might only contain: alphanumerical
- * characters (english alphabet), dash ('-'), underscore ('_') and dot ('.')
+ * characters (English alphabet), dash ('-'), underscore ('_') and dot ('.')
  * and they must contain at least a single character.
  * <P>
  * The {@code equals} and {@code hashCode} methods of {@code TaskVariable} are
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * their {@link #getVariableName() name} equals (case-sensitive).
  * <P>
  * Instances of {@code TaskVariable} are immutable and as such are safe to be
- * accessed concurrently without any syncronization.
+ * accessed concurrently without any synchronization.
  *
  * @see GradleTaskVariableQuery
  */
@@ -49,7 +49,7 @@ public final class TaskVariable {
     /**
      * Checks if the given variable name is appropriate to use or not. The name
      * is appropriate, if and only, if they only contain alphanumerical
-     * characters (english alphabet), dash ('-'), underscore ('_') or dot ('.')
+     * characters (English alphabet), dash ('-'), underscore ('_') or dot ('.')
      * and they must contain at least a single character.
      * <P>
      * If this method returns {@code true}, then calling the constructor of
@@ -59,7 +59,7 @@ public final class TaskVariable {
      * IllegalArgumentException.
      *
      * @param variableName the name of the variable to be verified. This
-     *   arugment cannot be {@code null}.
+     *   argument cannot be {@code null}.
      * @return {@code true} if this variable name is valid to use as a
      *   {@code TaskVariable}, {@code false} otherwise
      *
