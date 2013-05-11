@@ -20,7 +20,7 @@ import org.openide.util.Lookup;
 public enum StandardTaskVariable {
     PROJECT_NAME("project", new ValueGetter() {
         @Override
-        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             String uniqueName = project.getAvailableModel().getMainModule().getUniqueName();
             if (":".equals(uniqueName)) { // This is the root project.
                 uniqueName = "";
@@ -30,10 +30,10 @@ public enum StandardTaskVariable {
     }),
     SELECTED_CLASS("selected-class", new ValueGetter() {
         @Override
-        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject file = getFileOfContext(actionContext);
             if (file == null) {
-                return null;
+                return VariableValue.NULL_VALUE;
             }
 
             SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
@@ -56,7 +56,7 @@ public enum StandardTaskVariable {
     }),
     TEST_FILE_PATH("test-file-path", new ValueGetter() {
         @Override
-        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
             return new VariableValue(deduceFromClass(selectedClass));
         }
@@ -69,7 +69,7 @@ public enum StandardTaskVariable {
     }),
     PLATFORM_DIR("platform-dir", new ValueGetter() {
         @Override
-        public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject rootFolder = project.getProperties().getPlatform().getValue().getRootFolder();
             return new VariableValue(rootFolder != null
                     ? FileUtil.getFileDisplayName(rootFolder)
@@ -202,17 +202,19 @@ public enum StandardTaskVariable {
     }
 
     private VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-        return valueGetter.tryGetValue(variables, project, actionContext);
+        return valueGetter.getValue(variables, project, actionContext);
     }
 
     private static abstract class ValueGetter {
-        public abstract VariableValue tryGetValue(
+        public abstract VariableValue getValue(
                 TaskVariableMap variables,
                 NbGradleProject project,
                 Lookup actionContext);
     }
 
     private static final class VariableValue {
+        private static final VariableValue NULL_VALUE = new VariableValue(null);
+
         public final String value;
 
         public VariableValue(String value) {
