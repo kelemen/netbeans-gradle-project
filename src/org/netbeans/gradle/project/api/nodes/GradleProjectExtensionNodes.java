@@ -7,12 +7,12 @@ import org.netbeans.gradle.project.api.event.ListenerRef;
  * Defines a query which returns the nodes to be added under the project node.
  * <P>
  * Instances of this interface are expected to be found on the
- * {@link org.netbeans.gradle.project.api.query.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
  * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.
  *
- * @see org.netbeans.gradle.project.api.query.GradleProjectExtension#getExtensionLookup()
+ * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup()
  *
  * @author Kelemen Attila
  */

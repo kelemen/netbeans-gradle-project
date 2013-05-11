@@ -11,7 +11,7 @@ import org.openide.util.Lookup;
  * assuming that the name of the project is ":MyProject".
  * <P>
  * Instances of this interface are expected to be found on the
- * {@link org.netbeans.gradle.project.api.query.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
  * The actions in the context menu might may have their own visualization by
  * implementing the {@code Presenter.Popup} interface (e.g., they can have
  * submenus).
@@ -19,7 +19,7 @@ import org.openide.util.Lookup;
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.
  *
- * @see org.netbeans.gradle.project.api.query.GradleProjectExtension#getExtensionLookup()
+ * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup()
  */
 public interface GradleTaskVariableQuery {
     /**

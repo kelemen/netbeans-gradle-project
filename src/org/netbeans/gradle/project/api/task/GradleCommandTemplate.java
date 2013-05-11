@@ -261,8 +261,6 @@ public final class GradleCommandTemplate {
      * @return the arguments for this Gradle command. This method
      *   never returns {@code null} and the returned list does not contain
      *   {@code null} elements but may be empty.
-     *
-     * @see #setArguments(List)
      */
     public List<String> getArguments() {
         return arguments;
@@ -286,8 +284,6 @@ public final class GradleCommandTemplate {
      * @return the last set JVM arguments for this Gradle command. This
      *   method never returns {@code null} and the returned list does not
      *   contain {@code null} elements but may be empty.
-     *
-     * @see #setJvmArguments(List)
      */
     public List<String> getJvmArguments() {
         return jvmArguments;
@@ -308,8 +304,6 @@ public final class GradleCommandTemplate {
      *
      * @return {@code true} if this Gradle command might block other
      *   commands indefinitely, {@code false} otherwise
-     *
-     * @see #setBlocking(boolean)
      */
     public boolean isBlocking() {
         return blocking;
