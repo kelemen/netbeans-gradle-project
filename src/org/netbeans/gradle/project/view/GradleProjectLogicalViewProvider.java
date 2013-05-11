@@ -32,6 +32,7 @@ import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -40,7 +41,6 @@ import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
@@ -354,6 +354,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         return null;
     }
 
+    private static void executeCommandTemplate(NbGradleProject project, GradleCommandTemplate command) {
+        project.getLookup().lookup(GradleCommandExecutor.class).executeCommand(command);
+    }
+
     @SuppressWarnings("serial") // don't care about serialization
     private static class CustomTaskAction extends AbstractAction {
         private final NbGradleProject project;
@@ -456,7 +460,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             if (doExecute) {
                 final GradleCommandTemplate commandTemplate = panel.tryGetGradleCommand();
                 if (commandTemplate != null) {
-                    GradleTasks.submitGradleCommand(project, Lookup.EMPTY, commandTemplate);
+                    executeCommandTemplate(project, commandTemplate);
                 }
             }
         }
@@ -557,7 +561,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        GradleTasks.submitGradleCommand(project, Lookup.EMPTY, task.toCommandTemplate());
+                        executeCommandTemplate(project, task.toCommandTemplate());
                     }
                 });
                 menu.add(menuItem);
@@ -647,7 +651,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                         GradleCommandTemplate.Builder command
                                 = new GradleCommandTemplate.Builder(Arrays.asList(task.getQualifiedName()));
 
-                        GradleTasks.submitGradleCommand(project, Lookup.EMPTY, command.create());
+                        executeCommandTemplate(project, command.create());
                     }
                 });
                 menu.add(menuItem);
