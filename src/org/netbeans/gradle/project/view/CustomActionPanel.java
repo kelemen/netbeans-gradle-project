@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import javax.swing.JTextArea;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 
 @SuppressWarnings("serial") // Don't care about serialization
@@ -37,24 +38,17 @@ public class CustomActionPanel extends javax.swing.JPanel {
         jNonBlockingCheck.setSelected(task.isNonBlocking());
     }
 
-    public PredefinedTask tryGetPredefinedTask(String displayName) {
+    public GradleCommandTemplate tryGetGradleCommand() {
         String[] tasks = getTasks();
         if (tasks.length == 0) {
             return null;
         }
 
-        PredefinedTask.Name[] taskNames = new PredefinedTask.Name[tasks.length];
-        for (int i = 0; i < taskNames.length; i++) {
-            taskNames[i] = new PredefinedTask.Name(tasks[i], false);
-        }
-
-        String[] args = getArguments();
-        String[] jvmArgs = getJvmArguments();
-        return new PredefinedTask(displayName,
-                Arrays.asList(taskNames),
-                Arrays.asList(args),
-                Arrays.asList(jvmArgs),
-                isNonBlocking());
+        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(Arrays.asList(tasks));
+        builder.setArguments(Arrays.asList(getArguments()));
+        builder.setJvmArguments(Arrays.asList(getJvmArguments()));
+        builder.setBlocking(!isNonBlocking());
+        return builder.create();
     }
 
     public String[] getTasks() {

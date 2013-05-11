@@ -30,6 +30,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -42,6 +43,7 @@ import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
+import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.OutputWriter;
 
@@ -319,6 +321,30 @@ public final class GradleTasks {
 
         GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory, listener);
     }
+
+    public static void submitGradleCommand(
+            final NbGradleProject project,
+            final Lookup actionContext,
+            final GradleCommandTemplate command) {
+        createAsyncGradleTask(project, actionContext, command).run();
+    }
+
+    public static Runnable createAsyncGradleTask(
+            final NbGradleProject project,
+            final Lookup actionContext,
+            final GradleCommandTemplate command) {
+        if (project == null) throw new NullPointerException("project");
+        if (actionContext == null) throw new NullPointerException("actionContext");
+        if (command == null) throw new NullPointerException("command");
+
+        return createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+            @Override
+            public GradleTaskDef call() {
+                return GradleTaskDef.createFromTemplate(project, command, Lookup.EMPTY).create();
+            }
+        });
+    }
+
 
     public static Runnable createAsyncGradleTask(
             NbGradleProject project,

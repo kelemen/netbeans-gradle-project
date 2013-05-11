@@ -5,11 +5,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
+import org.openide.util.Lookup;
 
 public final class GradleTaskDef {
     public static final class Builder {
-        private final String caption;
+        private String caption;
         private final List<String> taskNames;
         private List<String> arguments;
         private List<String> jvmArguments;
@@ -41,6 +45,8 @@ public final class GradleTaskDef {
         }
 
         public Builder(String caption, List<String> taskNames) {
+            if (caption == null) throw new NullPointerException("caption");
+
             this.caption = caption;
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
@@ -66,6 +72,23 @@ public final class GradleTaskDef {
 
         public String getCaption() {
             return caption;
+        }
+
+        public void setCaption(String caption) {
+            if (caption == null) throw new NullPointerException("caption");
+            this.caption = caption;
+        }
+
+        public void setDefaultCaption(NbGradleProject project) {
+            setDefaultCaption(project.getDisplayName());
+        }
+
+        public void setDefaultCaption(String projectName) {
+            String newCaption = projectName;
+            if (!nonBlocking) {
+                newCaption += " - " + taskNames.toString();
+            }
+            this.caption = newCaption;
         }
 
         public boolean isReuseOutput() {
@@ -219,6 +242,58 @@ public final class GradleTaskDef {
 
     public SmartOutputHandler.Visitor getStdErrListener() {
         return stdErrListener;
+    }
+
+    private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
+        List<String> result = new ArrayList<String>(strings.size());
+        for (String str: strings) {
+            result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
+        }
+        return result;
+    }
+
+    public static GradleTaskDef.Builder createFromTemplate(
+            String caption,
+            GradleCommandTemplate command,
+            TaskVariableMap varReplaceMap) {
+        if (caption == null) throw new NullPointerException("caption");
+        if (command == null) throw new NullPointerException("command");
+        if (varReplaceMap == null) throw new NullPointerException("varReplaceMap");
+
+        GradleTaskDef.Builder builder = new Builder(caption, processList(command.getTasks(), varReplaceMap));
+        builder.setArguments(processList(command.getArguments(), varReplaceMap));
+        builder.setJvmArguments(processList(command.getJvmArguments(), varReplaceMap));
+        builder.setNonBlocking(!command.isBlocking());
+        builder.setCleanOutput(command.isBlocking());
+        builder.setReuseOutput(!command.isBlocking());
+        return builder;
+    }
+
+    public static GradleTaskDef.Builder createFromTemplate(
+            NbGradleProject project,
+            GradleCommandTemplate command,
+            TaskVariableMap varReplaceMap) {
+        GradleTaskDef.Builder builder = createFromTemplate("", command, varReplaceMap);
+        builder.setDefaultCaption(project);
+        return builder;
+    }
+
+    public static GradleTaskDef.Builder createFromTemplate(
+            String caption,
+            GradleCommandTemplate command,
+            NbGradleProject project,
+            Lookup actionContext) {
+
+        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
+        return createFromTemplate(caption, command, varReplaceMap);
+    }
+
+    public static GradleTaskDef.Builder createFromTemplate(
+            NbGradleProject project,
+            GradleCommandTemplate command,
+            Lookup actionContext) {
+        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
+        return createFromTemplate(project, command, varReplaceMap);
     }
 
     private enum NoOpTaskOutputListener implements SmartOutputHandler.Visitor {

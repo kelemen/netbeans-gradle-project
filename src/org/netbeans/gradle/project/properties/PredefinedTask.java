@@ -3,15 +3,14 @@ package org.netbeans.gradle.project.properties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 
@@ -151,76 +150,35 @@ public final class PredefinedTask {
         }
     }
 
-    private static GradleTaskDef.Builder getDefaultTaskBuilder(
-            NbGradleProject project,
-            List<String> taskNames,
-            boolean nonBlocking) {
-        return getDefaultTaskBuilder(project.getDisplayName(), taskNames, nonBlocking);
-    }
-
-    private static GradleTaskDef.Builder getDefaultTaskBuilder(
-            String projectName,
-            List<String> taskNames,
-            boolean nonBlocking) {
-
-        String caption = projectName;
-        if (!nonBlocking) {
-            caption += " - " + taskNames.toString();
-        }
-
-        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, taskNames);
-        builder.setNonBlocking(nonBlocking);
-        builder.setCleanOutput(!nonBlocking);
-        builder.setReuseOutput(nonBlocking);
-        return builder;
-    }
-
-    private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
-        List<String> result = new ArrayList<String>(strings.size());
-        for (String str: strings) {
-            result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
-        }
-        return result;
-    }
-
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, TaskVariableMap varReplaceMap) {
-        List<String> processedTaskNames = new LinkedList<String>();
+    public GradleCommandTemplate toCommandTemplate() {
+        List<String> rawTaskNames = new ArrayList<String>(taskNames.size());
         for (Name name: taskNames) {
-            processedTaskNames.add(StandardTaskVariable.replaceVars(name.getName(), varReplaceMap));
+            rawTaskNames.add(name.getName());
         }
 
-        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, processedTaskNames);
-        builder.setArguments(processList(arguments, varReplaceMap));
-        builder.setJvmArguments(processList(jvmArguments, varReplaceMap));
-
-        builder.setNonBlocking(nonBlocking);
-        builder.setCleanOutput(!nonBlocking);
-        builder.setReuseOutput(nonBlocking);
-
-        return builder;
+        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(rawTaskNames);
+        builder.setArguments(arguments);
+        builder.setJvmArguments(jvmArguments);
+        builder.setBlocking(!nonBlocking);
+        return builder.create();
     }
 
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Lookup actionContext) {
-        return tryCreateTaskDef(project, project.getVarReplaceMap(actionContext));
+    public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {
+        return isTasksExistsIfRequired(project, project.getVarReplaceMap(actionContext));
     }
 
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, TaskVariableMap varReplaceMap) {
+    public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
         NbGradleModule mainModule = project.getAvailableModel().getMainModule();
 
-        List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
-            String processName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
-            if (name.mustExist && !isTaskExists(mainModule, processName)) {
-                return null;
+            if (name.mustExist) {
+                String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
+                if (!isTaskExists(mainModule, processedName)) {
+                    return false;
+                }
             }
-            processedTaskNames.add(processName);
         }
-
-        GradleTaskDef.Builder builder = getDefaultTaskBuilder(
-                project, processedTaskNames, nonBlocking);
-        builder.setArguments(processList(arguments, varReplaceMap));
-        builder.setJvmArguments(processList(jvmArguments, varReplaceMap));
-        return builder.create();
+        return true;
     }
 
     @Override

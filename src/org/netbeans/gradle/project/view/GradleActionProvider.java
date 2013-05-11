@@ -177,7 +177,7 @@ public class GradleActionProvider implements ActionProvider {
         PredefinedTask task = getBuiltInTask(command, config);
 
         String caption = getOutputTabCaption(kind);
-        return task.createTaskDefBuilder(caption, varReplaceMap);
+        return GradleTaskDef.createFromTemplate(caption, task.toCommandTemplate(), varReplaceMap);
     }
 
     private GradleTaskDef.Builder createProjectTaskBuilderMaySkipTest(
