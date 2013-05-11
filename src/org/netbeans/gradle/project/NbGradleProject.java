@@ -58,9 +58,7 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
-import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
-import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -85,7 +83,7 @@ public final class NbGradleProject implements Project {
     private final File projectDirAsFile;
     private final ProjectState state;
     private final AtomicReference<Lookup> defaultLookupRef;
-    private final AtomicReference<Lookup> lookupRef;
+    private final AtomicReference<DynamicLookup> lookupRef;
 
     private final GradleClassPathProvider cpProvider;
 
@@ -128,7 +126,7 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
         this.extensions = Collections.emptyList();
-        this.lookupRef = new AtomicReference<Lookup>(null);
+        this.lookupRef = new AtomicReference<DynamicLookup>(null);
     }
 
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
@@ -157,19 +155,13 @@ public final class NbGradleProject implements Project {
 
     private void setExtensions(List<GradleProjectExtension> extensions) {
         this.extensions = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
-        List<LookupProvider> extensionsAsProviders = new ArrayList<LookupProvider>(this.extensions.size());
+        List<Lookup> allLookups = new ArrayList<Lookup>(this.extensions.size() + 1);
+        allLookups.add(getDefaultLookup());
         for (final GradleProjectExtension extension: this.extensions) {
-            extensionsAsProviders.add(new LookupProvider() {
-                @Override
-                public Lookup createAdditionalLookup(Lookup baseContext) {
-                    return extension.getExtensionLookup();
-                }
-            });
+            allLookups.add(extension.getExtensionLookup());
         }
-        Lookup extensionLookup = Lookups.fixed(extensionsAsProviders.toArray());
-        this.lookupRef.compareAndSet(null, LookupProviderSupport.createCompositeLookup(
-                getDefaultLookup(),
-                extensionLookup));
+
+        getMainLookup().replaceLookups(allLookups);
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -435,10 +427,18 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
+    private DynamicLookup getMainLookup() {
+        DynamicLookup lookup = lookupRef.get();
+        if (lookup == null) {
+            lookupRef.compareAndSet(null, new DynamicLookup(getDefaultLookup()));
+            lookup = lookupRef.get();
+        }
+        return lookup;
+    }
+
     @Override
     public Lookup getLookup() {
-        Lookup lookup = lookupRef.get();
-        return lookup != null ? lookup : getDefaultLookup();
+        return getMainLookup();
     }
 
     // equals and hashCode is provided, so that NetBeans doesn't load the
