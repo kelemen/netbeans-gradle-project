@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.Callable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -453,14 +454,14 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             } while (!okToClose);
 
             if (doExecute) {
-                String[] tasks = panel.getTasks();
-                if (tasks.length > 0) {
-                    GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
-                            project, Arrays.asList(tasks), panel.isNonBlocking());
-                    builder.setArguments(Arrays.asList(panel.getArguments()));
-                    builder.setJvmArguments(Arrays.asList(panel.getJvmArguments()));
-
-                    GradleTasks.createAsyncGradleTask(project, builder.create()).run();
+                final PredefinedTask predefinedTask = panel.tryGetPredefinedTask("");
+                if (predefinedTask != null) {
+                    GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+                        @Override
+                        public GradleTaskDef call() {
+                            return predefinedTask.tryCreateTaskDef(project, Lookup.EMPTY);
+                        }
+                    }).run();
                 }
             }
         }
@@ -563,10 +564,12 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                         // recreate the task on every actionPerformed because
                         // the project might have changed since the menu item
                         // was created.
-                        GradleTaskDef taskDef = task.tryCreateTaskDef(project, Lookup.EMPTY);
-                        if (taskDef != null) {
-                            GradleTasks.createAsyncGradleTask(project, taskDef).run();
-                        }
+                        GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+                            @Override
+                            public GradleTaskDef call() throws Exception {
+                                return task.tryCreateTaskDef(project, Lookup.EMPTY);
+                            }
+                        }).run();
                     }
                 });
                 menu.add(menuItem);
@@ -653,9 +656,14 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
-                                project, Arrays.asList(task.getQualifiedName()), false);
-                        GradleTasks.createAsyncGradleTask(project, builder.create()).run();
+                        GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+                            @Override
+                            public GradleTaskDef call() {
+                                PredefinedTask predefinedTask
+                                        = PredefinedTask.createSimple("", task.getQualifiedName());
+                                return predefinedTask.tryCreateTaskDef(project, Lookup.EMPTY);
+                            }
+                        }).run();
                     }
                 });
                 menu.add(menuItem);

@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
@@ -79,6 +81,15 @@ public final class PredefinedTask {
         return jvmArguments;
     }
 
+    public static PredefinedTask createSimple(String displayName, String taskName) {
+        Name name = new Name(taskName, false);
+        return new PredefinedTask(displayName,
+                Arrays.asList(name),
+                Collections.<String>emptyList(),
+                Collections.<String>emptyList(),
+                false);
+    }
+
     private static boolean isLocalTaskExists(NbGradleModule module, String task) {
         for (NbGradleTask moduleTask: module.getTasks()) {
             if (moduleTask.getLocalName().equals(task)) {
@@ -140,14 +151,14 @@ public final class PredefinedTask {
         }
     }
 
-    public static GradleTaskDef.Builder getDefaultTaskBuilder(
+    private static GradleTaskDef.Builder getDefaultTaskBuilder(
             NbGradleProject project,
             List<String> taskNames,
             boolean nonBlocking) {
         return getDefaultTaskBuilder(project.getDisplayName(), taskNames, nonBlocking);
     }
 
-    public static GradleTaskDef.Builder getDefaultTaskBuilder(
+    private static GradleTaskDef.Builder getDefaultTaskBuilder(
             String projectName,
             List<String> taskNames,
             boolean nonBlocking) {

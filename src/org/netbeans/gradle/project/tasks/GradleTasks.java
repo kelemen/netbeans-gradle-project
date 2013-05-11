@@ -321,22 +321,8 @@ public final class GradleTasks {
 
     public static Runnable createAsyncGradleTask(
             NbGradleProject project,
-            final GradleTaskDef taskDef) {
-        return createAsyncGradleTask(project, taskDef, projectTaskCompleteListener(project));
-    }
-
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            final GradleTaskDef taskDef,
-            TaskCompleteListener listener) {
-        if (taskDef == null) throw new NullPointerException("taskDef");
-
-        return createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
-            @Override
-            public GradleTaskDef call() {
-                return taskDef;
-            }
-        }, listener);
+            Callable<GradleTaskDef> taskDefFactory) {
+        return new AsyncGradleTask(project, taskDefFactory, projectTaskCompleteListener(project));
     }
 
     public static Runnable createAsyncGradleTask(
