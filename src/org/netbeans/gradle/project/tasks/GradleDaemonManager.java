@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.openide.util.Cancellable;
 
 public final class GradleDaemonManager {
@@ -46,14 +47,14 @@ public final class GradleDaemonManager {
             String caption,
             DaemonTask task,
             boolean nonBlocking,
-            TaskCompleteListener listener) {
+            CommandCompleteListener listener) {
         submitGradleTask(executor, new DaemonTaskDef(caption, nonBlocking, task), listener);
     }
 
     public static void submitGradleTask(
             Executor executor,
             final DaemonTaskDef taskDef,
-            TaskCompleteListener listener) {
+            CommandCompleteListener listener) {
         submitGradleTask(executor, new Callable<DaemonTaskDef>() {
             @Override
             public DaemonTaskDef call() {
@@ -65,7 +66,7 @@ public final class GradleDaemonManager {
     public static void submitGradleTask(
             Executor executor,
             final Callable<DaemonTaskDef> taskDefFactory,
-            final TaskCompleteListener listener) {
+            final CommandCompleteListener listener) {
         if (executor == null) throw new NullPointerException("executor");
         if (taskDefFactory == null) throw new NullPointerException("taskDefFactory");
         if (listener == null) throw new NullPointerException("listener");

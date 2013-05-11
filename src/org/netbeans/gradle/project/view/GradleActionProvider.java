@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.output.InputOutputManager;
@@ -24,7 +25,6 @@ import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTasks;
-import org.netbeans.gradle.project.tasks.TaskCompleteListener;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
@@ -219,7 +219,7 @@ public class GradleActionProvider implements ActionProvider {
             final String command,
             final NbGradleConfiguration config,
             final Lookup actionContext,
-            TaskCompleteListener listener) {
+            CommandCompleteListener listener) {
 
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
@@ -298,7 +298,7 @@ public class GradleActionProvider implements ActionProvider {
                 return null;
             }
 
-            return createProjectTaskMaySkipTest(TaskKind.APPLY_CHANGES, command, config, context, new TaskCompleteListener() {
+            return createProjectTaskMaySkipTest(TaskKind.APPLY_CHANGES, command, config, context, new CommandCompleteListener() {
                 @Override
                 public void onComplete(Throwable error) {
                     if (error == null) {
@@ -324,7 +324,7 @@ public class GradleActionProvider implements ActionProvider {
         return null;
     }
 
-    private TaskCompleteListener projectTaskCompleteListener() {
+    private CommandCompleteListener projectTaskCompleteListener() {
         return GradleTasks.projectTaskCompleteListener(project);
     }
 
