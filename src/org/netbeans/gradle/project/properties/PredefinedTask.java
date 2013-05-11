@@ -183,13 +183,6 @@ public final class PredefinedTask {
         return result;
     }
 
-    public GradleTaskDef.Builder createTaskDefBuilder(
-            String caption,
-            NbGradleProject project,
-            Lookup actionContext) {
-        return createTaskDefBuilder(caption, project.getVarReplaceMap(actionContext));
-    }
-
     public GradleTaskDef.Builder createTaskDefBuilder(String caption, TaskVariableMap varReplaceMap) {
         List<String> processedTaskNames = new LinkedList<String>();
         for (Name name: taskNames) {
