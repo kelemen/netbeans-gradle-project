@@ -10,7 +10,7 @@ package org.netbeans.gradle.project.api.task;
  * does not support canceling command execution. When Gradle will support
  * cancellation a new executor might be added to the project's lookup.
  * <P>
- * This executed is available on the
+ * This executor is available on the
  * {@link org.netbeans.api.project.Project#getLookup() project's lookup}. It is
  * already available when loading extensions (i.e., maybe retrieved in the
  * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery#loadExtensionForProject(org.netbeans.api.project.Project) GradleProjectExtensionQuery.loadExtensionForProject}
