@@ -32,6 +32,10 @@ public enum StandardTaskVariable {
         @Override
         public VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject file = getFileOfContext(actionContext);
+            if (file == null) {
+                return null;
+            }
+
             SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
                     .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
 
