@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicReference;
-import org.netbeans.gradle.project.api.event.ListenerReference;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
  * Defines a {@link ListenerRef} forwarding its calls to another
@@ -43,8 +43,8 @@ import org.netbeans.gradle.project.api.event.ListenerReference;
  * Methods of this class are <I>synchronization transparent</I>, assuming
  * that the underlying listener is <I>synchronization transparent</I>.
  */
-public final class InitLaterListenerRef implements ListenerReference {
-    private final AtomicReference<ListenerReference> currentRef;
+public final class InitLaterListenerRef implements NbListenerRef {
+    private final AtomicReference<NbListenerRef> currentRef;
 
     /**
      * Creates a new {@code InitLaterListenerRef} with no underlying
@@ -52,10 +52,10 @@ public final class InitLaterListenerRef implements ListenerReference {
      * to set the {@code ListenerRef} to which calls are to be forwarded.
      */
     public InitLaterListenerRef() {
-        this.currentRef = new AtomicReference<ListenerReference>(null);
+        this.currentRef = new AtomicReference<NbListenerRef>(null);
     }
 
-    private void completeUnregistration(ListenerReference listenerRef) {
+    private void completeUnregistration(NbListenerRef listenerRef) {
         assert listenerRef != null;
         try {
             listenerRef.unregister();
@@ -81,11 +81,11 @@ public final class InitLaterListenerRef implements ListenerReference {
      * @throws IllegalStateException thrown if this method has already been
      *   called
      */
-    public void init(ListenerReference listenerRef) {
+    public void init(NbListenerRef listenerRef) {
         if (listenerRef == null) throw new NullPointerException("listenerRef");
 
         do {
-            ListenerReference oldRef = currentRef.get();
+            NbListenerRef oldRef = currentRef.get();
             if (oldRef != null) {
                 if (oldRef instanceof PoisonListenerRef) {
                     completeUnregistration(listenerRef);
@@ -105,7 +105,7 @@ public final class InitLaterListenerRef implements ListenerReference {
      */
     @Override
     public boolean isRegistered() {
-        ListenerReference listenerRef = currentRef.get();
+        NbListenerRef listenerRef = currentRef.get();
         return listenerRef != null ? listenerRef.isRegistered() : true;
     }
 
@@ -123,7 +123,7 @@ public final class InitLaterListenerRef implements ListenerReference {
     @Override
     public void unregister() {
         do {
-            ListenerReference oldRef = currentRef.get();
+            NbListenerRef oldRef = currentRef.get();
             if (oldRef != null) {
                 completeUnregistration(oldRef);
                 return;
@@ -131,7 +131,7 @@ public final class InitLaterListenerRef implements ListenerReference {
         } while (!currentRef.compareAndSet(null, PoisonListenerRef.REGISTERED));
     }
 
-    private enum PoisonListenerRef implements ListenerReference {
+    private enum PoisonListenerRef implements NbListenerRef {
         REGISTERED(true), // used before true unregistration
         UNREGISTERED(false); // used after true unregistration
 

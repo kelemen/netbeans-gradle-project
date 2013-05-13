@@ -7,7 +7,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.ListenerReference;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.openide.util.ChangeSupport;
 
 import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSource.getJavaPlatform;
@@ -18,7 +18,7 @@ implements
 
     private final Lock changesLock;
     private final ChangeSupport changes;
-    private ListenerReference subListenerRef;
+    private NbListenerRef subListenerRef;
     private final AtomicReference<GradleProjectPlatformQuery> queryRef;
 
     public AbstractProjectPlatformSource() {
@@ -48,7 +48,7 @@ implements
         if (query == null) throw new NullPointerException("query");
 
         if (queryRef.compareAndSet(null, query)) {
-            ListenerReference toRemove = null;
+            NbListenerRef toRemove = null;
             InitLaterListenerRef toAdd = null;
 
             changesLock.lock();
@@ -89,7 +89,7 @@ implements
 
     @Override
     public final void addChangeListener(ChangeListener listener) {
-        ListenerReference toRemove = null;
+        NbListenerRef toRemove = null;
         InitLaterListenerRef toAdd = null;
         GradleProjectPlatformQuery query = queryRef.get();
 
@@ -121,7 +121,7 @@ implements
 
     @Override
     public final void removeChangeListener(ChangeListener listener) {
-        ListenerReference toRemove = null;
+        NbListenerRef toRemove = null;
 
         changesLock.lock();
         try {

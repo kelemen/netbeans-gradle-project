@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.api.nodes;
 
 import java.util.List;
-import org.netbeans.gradle.project.api.event.ListenerReference;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
  * Defines a query which returns the nodes to be added under the project node.
@@ -29,7 +29,7 @@ public interface GradleProjectExtensionNodes {
      *   currently added listener, so that it may not be notified again. This
      *   method never returns {@code null}.
      */
-    public ListenerReference addNodeChangeListener(Runnable listener);
+    public NbListenerRef addNodeChangeListener(Runnable listener);
 
     /**
      * Returns the factory for the list of nodes to be displayed below the

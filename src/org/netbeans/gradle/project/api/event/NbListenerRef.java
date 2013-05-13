@@ -21,7 +21,7 @@ package org.netbeans.gradle.project.api.event;
  * Methods of this interface are required to be
  * <I>synchronization transparent</I>.
  */
-public interface ListenerReference {
+public interface NbListenerRef {
     /**
      * Checks whether the listener is currently registered to receive
      * notifications of events.

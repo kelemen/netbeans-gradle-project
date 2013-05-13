@@ -17,7 +17,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.netbeans.gradle.project.api.event.ListenerReference;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModule;
@@ -81,7 +81,7 @@ extends
         List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
         currentExtensions = extensionNodes;
 
-        final List<ListenerReference> listenerRefs = new LinkedList<ListenerReference>();
+        final List<NbListenerRef> listenerRefs = new LinkedList<NbListenerRef>();
         for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
             listenerRefs.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
         }
@@ -96,7 +96,7 @@ extends
                 sources.removeChangeListener(changeListener);
                 project.removeModelChangeListener(changeListener);
 
-                for (ListenerReference ref: listenerRefs) {
+                for (NbListenerRef ref: listenerRefs) {
                     ref.unregister();
                 }
             }
