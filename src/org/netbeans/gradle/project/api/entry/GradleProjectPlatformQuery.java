@@ -16,6 +16,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  * Instances of this interface must be safe to be called by multiple threads
  * concurrently but they are not required to be
  * <I>synchronization transparent</I> unless otherwise noted.
+ *
+ * @see org.netbeans.gradle.project.api.property.GradleProperty.BuildPlatform
  */
 public interface GradleProjectPlatformQuery {
     /**
