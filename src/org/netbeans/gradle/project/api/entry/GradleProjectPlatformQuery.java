@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.net.URI;
 import java.util.Collection;
-import org.netbeans.gradle.project.api.event.ListenerRef;
+import org.netbeans.gradle.project.api.event.ListenerReference;
 
 /**
  * Defines a query which can find a platform for a Gradle project. The platform
@@ -31,7 +31,7 @@ public interface GradleProjectPlatformQuery {
      *   currently added listener, so that it may not be notified again. This
      *   method never returns {@code null}.
      */
-    public ListenerRef addPlatformChangeListener(Runnable listener);
+    public ListenerReference addPlatformChangeListener(Runnable listener);
 
     /**
      * Returns {@code true} if platforms with the specified name are to be

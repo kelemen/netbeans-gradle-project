@@ -13,7 +13,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.ListenerRef;
+import org.netbeans.gradle.project.api.event.ListenerReference;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectPlatformQuery.class, position = 1000)
@@ -27,7 +27,7 @@ implements
     }
 
     @Override
-    public ListenerRef addPlatformChangeListener(final Runnable listener) {
+    public ListenerReference addPlatformChangeListener(final Runnable listener) {
         if (listener == null) throw new NullPointerException("listener");
 
         final PropertyChangeListener changeListener = new PropertyChangeListener() {
@@ -42,7 +42,7 @@ implements
         final JavaPlatformManager manager = JavaPlatformManager.getDefault();
         manager.addPropertyChangeListener(changeListener);
 
-        return new ListenerRef() {
+        return new ListenerReference() {
             private volatile boolean registered = true;
 
             @Override
