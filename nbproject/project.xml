@@ -259,6 +259,7 @@
                 <package>org.netbeans.gradle.project.api.entry</package>
                 <package>org.netbeans.gradle.project.api.event</package>
                 <package>org.netbeans.gradle.project.api.nodes</package>
+                <package>org.netbeans.gradle.project.api.property</package>
                 <package>org.netbeans.gradle.project.api.task</package>
             </public-packages>
             <class-path-extension>
