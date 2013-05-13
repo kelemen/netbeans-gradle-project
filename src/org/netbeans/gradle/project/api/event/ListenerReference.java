@@ -8,9 +8,9 @@ package org.netbeans.gradle.project.api.event;
  * it again through this interface. That is, it should be registered as it was
  * done previously.
  * <P>
- * Note that this method defines the same methods as the
- * {@code org.jtrim.event.ListenerRef} (of the <I>JTrim</I> library) methods
- * with exactly the same contract. This is so, that later (in NetBeans 8) this
+ * Note that this interface defines the same methods as the
+ * {@code org.jtrim.event.ListenerRef} (of the <I>JTrim</I> library) interface
+ * with exactly the same contract. This is so, that later (in NetBeans 7.4) this
  * interface can extend from the interface of <I>JTrim</I>.
  *
  * <h3>Thread safety</h3>
