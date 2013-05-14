@@ -38,6 +38,7 @@ import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
@@ -412,6 +413,10 @@ public final class NbGradleProject implements Project {
                 new GradleProjectTemplates(),
                 new GradleTemplateAttrProvider(this),
                 new DefaultGradleCommandExecutor(this),
+                ProjectPropertiesApi.buildPlatform(getProperties().getPlatform()),
+                ProjectPropertiesApi.scriptPlatform(getProperties().getScriptPlatform()),
+                ProjectPropertiesApi.sourceEncoding(getProperties().getSourceEncoding()),
+                ProjectPropertiesApi.sourceLevel(getProperties().getSourceLevel()),
 
                 // FileOwnerQueryImplementation cannot be added to the project's
                 // lookup, since NetBeans will ignore it. It must be added
