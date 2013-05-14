@@ -34,7 +34,7 @@ import static org.netbeans.api.java.project.JavaProjectConstants.COMMAND_DEBUG_F
 import static org.netbeans.api.java.project.JavaProjectConstants.COMMAND_JAVADOC;
 import static org.netbeans.spi.project.ActionProvider.*;
 
-public class GradleActionProvider implements ActionProvider {
+public final class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
     public static final String COMMAND_RELOAD = "reload";
