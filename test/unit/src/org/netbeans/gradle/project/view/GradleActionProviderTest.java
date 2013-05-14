@@ -82,18 +82,6 @@ public class GradleActionProviderTest {
         assertTrue(actionEnabled);
     }
 
-    @Test
-    public void should_return_single_other_action_enabled() {
-        System.out.println("should_return_single_other_action_enabled");
-        Lookup n = Lookup.EMPTY;
-        TestGradleActionProvider gradleActionProvider = new TestGradleActionProvider("txt");
-        boolean actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_RUN_SINGLE, n);
-        assertFalse(actionEnabled);
-
-        actionEnabled = gradleActionProvider.isActionEnabled(ActionProvider.COMMAND_DEBUG_SINGLE, n);
-        assertFalse(actionEnabled);
-    }
-
     private static class TestGradleActionProvider extends GradleActionProvider {
 
         private String ext;
@@ -112,9 +100,9 @@ public class GradleActionProviderTest {
         }
     }
 
+    @SuppressWarnings("serial")
     private static class MyFileObject extends FileObject {
-
-        private String ext;
+        private final String ext;
 
         public MyFileObject(String ext) {
             this.ext = ext;
@@ -221,6 +209,7 @@ public class GradleActionProviderTest {
         }
 
         @Override
+        @Deprecated
         public void setImportant(boolean bln) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
@@ -246,6 +235,7 @@ public class GradleActionProviderTest {
         }
 
         @Override
+        @Deprecated
         public boolean isReadOnly() {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
