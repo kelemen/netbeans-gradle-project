@@ -552,7 +552,7 @@ public final class GradleModelLoader {
                         models.add(getRawModelWithProgress(project, progress, projectConnection, modelClass));
                         break;
                     } catch (UnknownModelException ex) {
-                        LOGGER.log(Level.FINE, "Cannot find model {0}", modelClass.getName());
+                        LOGGER.log(Level.FINE, "Cannot find model " + modelClass.getName(), ex);
                     }
                 }
             }
@@ -581,6 +581,7 @@ public final class GradleModelLoader {
                 ideaModel = getModelWithProgress(project, progress, projectConnection, IdeaProject.class);
             } catch (UnknownModelException ex) {
                 LOGGER.log(Level.INFO, "IdeaProject model is not found in project {0}", projectDir);
+                LOGGER.log(Level.FINE, "IdeaProject model is not found", ex);
             }
             extensionModels = getExtensionModels(project, progress, projectConnection);
         } finally {
