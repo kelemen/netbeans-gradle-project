@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.java.query;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -19,26 +19,29 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
+import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.model.NbDependency;
-import org.netbeans.gradle.project.model.NbDependencyType;
-import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.model.NbModuleDependency;
-import org.netbeans.gradle.project.model.NbOutput;
-import org.netbeans.gradle.project.model.NbSourceGroup;
-import org.netbeans.gradle.project.model.NbSourceType;
-import org.netbeans.gradle.project.model.NbUriDependency;
+import org.netbeans.gradle.project.api.property.GradleProperty;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.NbDependencyType;
+import org.netbeans.gradle.project.java.model.NbJavaDependency;
+import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.NbModuleDependency;
+import org.netbeans.gradle.project.java.model.NbOutput;
+import org.netbeans.gradle.project.java.model.NbSourceGroup;
+import org.netbeans.gradle.project.java.model.NbSourceType;
+import org.netbeans.gradle.project.java.model.NbUriDependency;
+import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -50,10 +53,11 @@ import org.openide.filesystems.FileUtil;
 public final class GradleClassPathProvider
 implements
         ClassPathProvider,
-        ProjectInitListener {
+        ProjectInitListener,
+        JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
 
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
     private final ConcurrentMap<ClassPathType, ClassPath> classpaths;
 
@@ -69,8 +73,10 @@ implements
 
     // EnumMap is not a ConcurrentMap, so it cannot be used.
     @SuppressWarnings("MapReplaceableByEnumMap")
-    public GradleClassPathProvider(NbGradleProject project) {
-        this.project = project;
+    public GradleClassPathProvider(JavaExtension javaExt) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+
+        this.javaExt = javaExt;
         this.currentPlatform = null;
         this.infoRefRef = new AtomicReference<ProjectInfoRef>(null);
 
@@ -87,7 +93,8 @@ implements
     private ProjectInfoRef getInfoRef() {
         ProjectInfoRef result = infoRefRef.get();
         if (result == null) {
-            infoRefRef.compareAndSet(null, project.getProjectInfoManager().createInfoRef());
+            ProjectInfoManager infoManager = javaExt.getProjectLookup().lookup(ProjectInfoManager.class);
+            infoRefRef.compareAndSet(null, infoManager.createInfoRef());
             result = infoRefRef.get();
         }
         return result;
@@ -119,7 +126,8 @@ implements
         }
     }
 
-    private void onModelChange() {
+    @Override
+    public void onModelChange() {
         if (!hasBeenUsed.get()) {
             return;
         }
@@ -127,27 +135,26 @@ implements
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                loadPathResources(project.getCurrentModel());
+                loadPathResources(javaExt.getCurrentModel());
             }
         });
     }
 
+    private GradleProperty.BuildPlatform getPlatformProperty() {
+        return javaExt.getProjectLookup().lookup(GradleProperty.BuildPlatform.class);
+    }
+
     @Override
     public void onInitProject() {
-        project.addModelChangeListener(new ChangeListener() {
+        final GradleProperty.BuildPlatform platformProperty = getPlatformProperty();
+
+        platformProperty.addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
+                currentPlatform = platformProperty.getValue();
                 onModelChange();
             }
         });
-        project.getProperties().getPlatform().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                currentPlatform = project.getProperties().getPlatform().getValue();
-                onModelChange();
-            }
-        });
-        onModelChange();
     }
 
     // These PropertyChangeListener methods are declared because
@@ -160,7 +167,7 @@ implements
         changes.removePropertyChangeListener(listener);
     }
 
-    private FileType getTypeOfFile(NbGradleModule module, FileObject file) {
+    private FileType getTypeOfFile(NbJavaModule module, FileObject file) {
         for (Map.Entry<NbSourceType, NbSourceGroup> entry: module.getSources().entrySet()) {
             for (FileObject sourceRoot: entry.getValue().getFileObjects()) {
                 if (FileUtil.getRelativePath(sourceRoot, file) != null) {
@@ -201,13 +208,13 @@ implements
         }
     }
 
-    private FileType getTypeOfFile(NbGradleModel projectModel, FileObject file) {
-        NbGradleModule mainModule = projectModel.getMainModule();
+    private FileType getTypeOfFile(NbJavaModel projectModel, FileObject file) {
+        NbJavaModule mainModule = projectModel.getMainModule();
         FileType result = getTypeOfFile(mainModule, file);
         if (result != null) {
             return result;
         }
-        for (NbGradleModule module: NbModelUtils.getAllModuleDependencies(mainModule)) {
+        for (NbJavaModule module: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
             FileType depResult = getTypeOfFile(module, file);
             if (depResult != null) {
                 return depResult;
@@ -251,7 +258,7 @@ implements
         return null;
     }
 
-    private ClassPathType getClassPathType(NbGradleModel projectModel, FileObject file, String type) {
+    private ClassPathType getClassPathType(NbJavaModel projectModel, FileObject file, String type) {
         FileType fileType = getTypeOfFile(projectModel, file);
         return getClassPathType(fileType, type);
     }
@@ -293,11 +300,11 @@ implements
         classpathResources.put(classPathType, Collections.unmodifiableList(paths));
     }
 
-    private void loadPathResourcesForSources(NbGradleModel projectModel) {
+    private void loadPathResourcesForSources(NbJavaModel projectModel) {
         List<File> sources = new LinkedList<File>();
         List<File> testSources = new LinkedList<File>();
 
-        NbGradleModule mainModule = projectModel.getMainModule();
+        NbJavaModule mainModule = projectModel.getMainModule();
 
         sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFiles());
         testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFiles());
@@ -314,7 +321,7 @@ implements
     }
 
     private static void addModuleClassPaths(
-            NbGradleModule module,
+            NbJavaModule module,
             List<File> paths,
             List<File> testPaths,
             Collection<File> combinedPaths) {
@@ -343,7 +350,7 @@ implements
         }
     }
 
-    private void loadPathResources(NbGradleModel projectModel) {
+    private void loadPathResources(NbJavaModel projectModel) {
         loadPathResourcesForSources(projectModel);
 
         List<File> compile = new LinkedList<File>();
@@ -354,13 +361,13 @@ implements
         // Contains build directories which does not necessarily exists
         Set<File> notRequiredPaths = new HashSet<File>();
 
-        NbGradleModule mainModule = projectModel.getMainModule();
+        NbJavaModule mainModule = projectModel.getMainModule();
         testCompile.add(mainModule.getProperties().getOutput().getBuildDir());
         testRuntime.add(mainModule.getProperties().getOutput().getBuildDir());
 
         addModuleClassPaths(mainModule, runtime, testRuntime, notRequiredPaths);
 
-        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
+        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, compile);
             }
@@ -369,7 +376,7 @@ implements
                 addModuleClassPaths(moduleDep.getModule(), compile, null, notRequiredPaths);
             }
         }
-        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
+        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, runtime);
             }
@@ -378,7 +385,7 @@ implements
                 addModuleClassPaths(moduleDep.getModule(), runtime, null, notRequiredPaths);
             }
         }
-        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
+        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, testCompile);
             }
@@ -387,7 +394,7 @@ implements
                 addModuleClassPaths(moduleDep.getModule(), testCompile, null, notRequiredPaths);
             }
         }
-        for (NbDependency dependency: NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {
+        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, testRuntime);
             }
@@ -419,7 +426,7 @@ implements
         List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
         ProjectPlatform platform = currentPlatform;
         if (platform == null) {
-            platform = project.getProperties().getPlatform().getValue();
+            platform = getPlatformProperty().getValue();
         }
         for (URL url: platform.getBootLibraries()) {
             platformResources.add(ClassPathSupport.createResource(url));
@@ -472,15 +479,10 @@ implements
         if (GradleFilesClassPathProvider.isGradleFile(file)) {
             return null;
         }
-        // NetBeans calls findClassPath when you look at the directory in
-        // favorites.
-        if (project.getProjectDirectory().equals(file)) {
-            return null;
-        }
 
         hasBeenUsed.set(true);
 
-        NbGradleModel projectModel = project.getCurrentModel();
+        NbJavaModel projectModel = javaExt.getCurrentModel();
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
         if (classPathType == null) {
             // We don't really know if we will know the classpath of this file

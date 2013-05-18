@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.GradleTask;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.model.NbGradleModule;
 import org.netbeans.gradle.project.model.NbGradleTask;
-import org.netbeans.gradle.project.model.NbModelUtils;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 
@@ -89,7 +90,7 @@ public final class PredefinedTask {
                 false);
     }
 
-    private static boolean isLocalTaskExists(NbGradleModule module, String task) {
+    private static boolean isLocalTaskExists(NbJavaModule module, String task) {
         for (NbGradleTask moduleTask: module.getTasks()) {
             if (moduleTask.getLocalName().equals(task)) {
                 return true;
@@ -98,11 +99,11 @@ public final class PredefinedTask {
         return false;
     }
 
-    private static boolean isLocalTaskExistsInModuleTree(NbGradleModule module, String task) {
+    private static boolean isLocalTaskExistsInModuleTree(NbJavaModule module, String task) {
         if (isLocalTaskExists(module, task)) {
             return true;
         }
-        for (NbGradleModule child: module.getChildren()) {
+        for (NbJavaModule child: module.getChildren()) {
             if (isLocalTaskExistsInModuleTree(child, task)) {
                 return true;
             }
@@ -110,43 +111,65 @@ public final class PredefinedTask {
         return false;
     }
 
-    private static boolean isTaskExists(NbGradleModule module, String task) {
-        String projectName;
-        String localName;
+    private static GradleProject getRootProject(GradleProject project) {
+        GradleProject current = project;
+        GradleProject result = current;
 
-        int nameSepIndex = task.lastIndexOf(':');
-        if (nameSepIndex >= 0) {
-            projectName = task.substring(0, nameSepIndex);
-            localName = task.substring(nameSepIndex + 1);
+        while (current != null) {
+            result = current;
+            current = current.getParent();
+        }
+        return result;
+    }
 
-            // if projectName is empty, that means that we want to execute
-            // the task of the root project.
-            if (projectName.isEmpty()) {
-                projectName = ":";
-            }
-            else if (!projectName.startsWith(":")) {
-                projectName = module.getUniqueName() + ":" + projectName;
-            }
+    private static GradleProject findProject(GradleProject project, String projectPath) {
+        if (projectPath.startsWith(":")) {
+            return getRootProject(project).findByPath(projectPath);
         }
         else {
-            projectName = null;
-            localName = task;
+            return project.findByPath(projectPath);
         }
+    }
 
-        if (projectName != null) {
-            NbGradleModule projectModule = NbModelUtils.lookupModuleByName(module, projectName);
-            if (projectModule == null) {
-                return false;
-            }
-
-            return isLocalTaskExists(projectModule, localName);
-        }
-        else {
-            if (isLocalTaskExistsInModuleTree(module, localName)) {
+    private static boolean isProjectHasTask(GradleProject project, String taskName) {
+        for (GradleTask task: project.getTasks()) {
+            if (taskName.equals(task.getName())) {
                 return true;
             }
+        }
+        return false;
+    }
 
+    private static boolean isProjectOrChildrenHasTask(GradleProject project, String taskName) {
+        if (isProjectHasTask(project, taskName)) {
+            return true;
+        }
+        for (GradleProject child: project.getChildren()) {
+            if (isProjectOrChildrenHasTask(child, taskName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isTaskExists(GradleProject project, String projectPath, String taskName) {
+        GradleProject taskProject = findProject(project, projectPath);
+        if (taskProject == null) {
             return false;
+        }
+
+        return isProjectHasTask(taskProject, taskName);
+    }
+
+    private static boolean isTaskExists(GradleProject project, String taskName) {
+        int taskNameSepIndex = taskName.lastIndexOf(':');
+        if (taskNameSepIndex >= 0) {
+            return isTaskExists(project,
+                    taskName.substring(0, taskNameSepIndex),
+                    taskName.substring(taskNameSepIndex + 1));
+        }
+        else {
+            return isProjectOrChildrenHasTask(project, taskName);
         }
     }
 
@@ -168,12 +191,12 @@ public final class PredefinedTask {
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
-        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+        GradleProject gradleProject = project.getAvailableModel().getGradleProject();
 
         for (Name name: taskNames) {
             if (name.mustExist) {
                 String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
-                if (!isTaskExists(mainModule, processedName)) {
+                if (!isTaskExists(gradleProject, processedName)) {
                     return false;
                 }
             }

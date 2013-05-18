@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.entry;
 
+import java.io.IOException;
 import org.netbeans.api.project.Project;
 
 /**
@@ -34,6 +35,12 @@ public interface GradleProjectExtensionQuery {
      *   extension is to be attached. This argument cannot be {@code null}.
      * @return the {@code GradleProjectExtension} handling the extension of the
      *   loaded project. This method may never return {@code null}.
+     *
+     * @throws IOException thrown if some serious I/O error prevented the
+     *   extension from being loaded. Throwing this exception will prevent the
+     *   extension from being applied to this project (even after it changes),
+     *   so this exception should only be thrown in the extreme cases.
+     *
      */
-    public GradleProjectExtension loadExtensionForProject(Project project);
+    public GradleProjectExtension loadExtensionForProject(Project project) throws IOException;
 }

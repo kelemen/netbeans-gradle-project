@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
 public enum NbSourceType {
     SOURCE(false, false),

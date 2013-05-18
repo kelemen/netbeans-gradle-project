@@ -1,9 +1,9 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.java.query;
 
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.api.property.GradleProperty;
+import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
@@ -15,11 +15,13 @@ implements
         SourceLevelQueryImplementation2,
         ProjectInitListener {
 
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final ChangeSupport changes;
 
-    public GradleSourceLevelQueryImplementation(NbGradleProject project) {
-        this.project = project;
+    public GradleSourceLevelQueryImplementation(JavaExtension javaExt) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+
+        this.javaExt = javaExt;
 
         EventSource eventSource = new EventSource();
         this.changes = new ChangeSupport(eventSource);
@@ -28,9 +30,9 @@ implements
 
     @Override
     public void onInitProject() {
-        project.getProperties().getSourceLevel().addChangeListener(new ChangeListener() {
+        javaExt.getProjectLookup().lookup(GradleProperty.SourceLevel.class).addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 changes.fireChange();
             }
         });
@@ -39,14 +41,17 @@ implements
     @Override
     public Result getSourceLevel(FileObject javaFile) {
         // Assume that every source file must reside in the project directory.
-        if (FileUtil.getRelativePath(project.getProjectDirectory(), javaFile) == null) {
+        if (FileUtil.getRelativePath(javaExt.getProjectDirectory(), javaFile) == null) {
             return null;
         }
+
+        final GradleProperty.SourceLevel sourceLevel
+                = javaExt.getProjectLookup().lookup(GradleProperty.SourceLevel.class);
 
         return new Result() {
             @Override
             public String getSourceLevel() {
-                return project.getProperties().getSourceLevel().getValue();
+                return sourceLevel.getValue();
             }
 
             @Override

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,10 +23,10 @@ public final class NbDependencyGroup {
         this.uriDependencies = Collections.unmodifiableList(
                 new ArrayList<NbUriDependency>(uriDependencies));
 
-        for (NbDependency dependency: this.moduleDependencies) {
+        for (NbJavaDependency dependency: this.moduleDependencies) {
             if (dependency == null) throw new NullPointerException("dependency");
         }
-        for (NbDependency dependency: this.uriDependencies) {
+        for (NbJavaDependency dependency: this.uriDependencies) {
             if (dependency == null) throw new NullPointerException("dependency");
         }
     }
@@ -39,8 +39,8 @@ public final class NbDependencyGroup {
         return uriDependencies;
     }
 
-    public List<NbDependency> getAllDependencies() {
-        List<NbDependency> result = new ArrayList<NbDependency>(
+    public List<NbJavaDependency> getAllDependencies() {
+        List<NbJavaDependency> result = new ArrayList<NbJavaDependency>(
                 moduleDependencies.size() + uriDependencies.size());
         result.addAll(moduleDependencies);
         result.addAll(uriDependencies);

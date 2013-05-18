@@ -1,5 +1,6 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
+import org.netbeans.gradle.project.model.NbGradleTask;
 import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -8,30 +9,35 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.gradle.tooling.model.GradleProject;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
 
-public final class NbGradleModule {
+public final class NbJavaModule {
+    private final GradleProject gradleProject;
     private final Properties properties;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
-    private final List<NbGradleModule> children;
+    private final List<NbJavaModule> children;
     private final List<File> listedDirs;
     private final String displayName;
 
-    // Should only be called by NbGradleModuleBuilder
-    NbGradleModule(
+    // Should only be called by NbJavaModuleBuilder
+    NbJavaModule(
+            GradleProject gradleProject,
             Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs,
             Map<NbDependencyType, NbDependencyGroup> dependencies,
-            List<NbGradleModule> children) {
+            List<NbJavaModule> children) {
 
+        if (gradleProject == null) throw new NullPointerException("gradleProject");
         if (properties == null) throw new NullPointerException("properties");
         if (dependencies == null) throw new NullPointerException("dependencies");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
         if (children == null) throw new NullPointerException("children");
 
+        this.gradleProject = gradleProject;
         this.properties = properties;
         this.sources = Collections.unmodifiableMap(sources);
         this.listedDirs = Collections.unmodifiableList(listedDirs);
@@ -42,6 +48,10 @@ public final class NbGradleModule {
         this.displayName = findDisplayName();
     }
 
+    public GradleProject getGradleProject() {
+        return gradleProject;
+    }
+
     private String findDisplayName() {
         if (properties.isBuildSrc()) {
             File parentFile = getModuleDir().getParentFile();
@@ -49,7 +59,7 @@ public final class NbGradleModule {
             return NbStrings.getBuildSrcMarker(parentName);
         }
         else {
-            String scriptName = properties.getScriptDisplayName();
+            String scriptName = properties.getShortName();
             scriptName = scriptName.trim();
             if (scriptName.isEmpty()) {
                 scriptName = getModuleDir().getName();
@@ -76,8 +86,8 @@ public final class NbGradleModule {
         return properties.getModuleDir();
     }
 
-    public String getName() {
-        return properties.getName();
+    public String getShortName() {
+        return properties.getShortName();
     }
 
     public String getUniqueName() {
@@ -110,32 +120,31 @@ public final class NbGradleModule {
         return dependencies;
     }
 
-    public List<NbGradleModule> getChildren() {
+    public List<NbJavaModule> getChildren() {
         return children;
     }
 
     public static final class Properties {
         private static final Collator STR_CMP = Collator.getInstance();
 
-        private final String scriptDisplayName;
+        private final String shortName;
         private final File moduleDir;
         private final NbOutput output;
         private final String uniqueName;
-        private final String name;
         private final String sourceLevel;
         private final String targetLevel;
         private final Collection<NbGradleTask> tasks;
-        private final List<String> nameParts;
 
         public Properties(
-                String scriptDisplayName,
+                String shortName,
                 String uniqueName,
                 File moduleDir,
                 NbOutput output,
                 String sourceLevel,
                 String targetLevel,
                 Collection<NbGradleTask> tasks) {
-            if (scriptDisplayName == null) throw new NullPointerException("scriptDisplayName");
+
+            if (shortName == null) throw new NullPointerException("scriptDisplayName");
             if (uniqueName == null) throw new NullPointerException("uniqueName");
             if (moduleDir == null) throw new NullPointerException("moduleDir");
             if (output == null) throw new NullPointerException("output");
@@ -143,15 +152,12 @@ public final class NbGradleModule {
             if (targetLevel == null) throw new NullPointerException("targetLevel");
             if (tasks == null) throw new NullPointerException("tasks");
 
-            this.scriptDisplayName = scriptDisplayName;
+            this.shortName = shortName;
             this.uniqueName = uniqueName;
             this.moduleDir = moduleDir;
             this.output = output;
             this.sourceLevel = sourceLevel;
             this.targetLevel = targetLevel;
-            this.nameParts = Collections.unmodifiableList(new ArrayList<String>(
-                    NbModelUtils.getNameParts(uniqueName)));
-            this.name = this.nameParts.get(this.nameParts.size() - 1);
 
             List<NbGradleTask> clonedTasks = new ArrayList<NbGradleTask>(tasks);
             Collections.sort(clonedTasks, new Comparator<NbGradleTask>() {
@@ -167,8 +173,8 @@ public final class NbGradleModule {
             }
         }
 
-        public String getScriptDisplayName() {
-            return scriptDisplayName;
+        public String getShortName() {
+            return shortName;
         }
 
         public String getSourceLevel() {
@@ -187,10 +193,6 @@ public final class NbGradleModule {
             return moduleDir;
         }
 
-        public String getName() {
-            return name;
-        }
-
         public String getUniqueName() {
             return uniqueName;
         }
@@ -206,10 +208,6 @@ public final class NbGradleModule {
                 }
             }
             return true;
-        }
-
-        public List<String> getNameParts() {
-            return nameParts;
         }
 
         public Collection<NbGradleTask> getTasks() {

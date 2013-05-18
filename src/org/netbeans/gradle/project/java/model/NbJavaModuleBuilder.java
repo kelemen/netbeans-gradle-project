@@ -1,22 +1,24 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.gradle.tooling.model.GradleProject;
 import org.netbeans.gradle.project.CollectionUtils;
 
-public final class NbGradleModuleBuilder {
+public final class NbJavaModuleBuilder {
     // We need this class because in case of circular dependencies we are
-    // not able to create an immutable NbGradleModule instance.
+    // not able to create an immutable NbJavaModule instance.
 
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
-    private final List<NbGradleModule> children;
-    private final NbGradleModule view;
+    private final List<NbJavaModule> children;
+    private final NbJavaModule view;
 
-    public NbGradleModuleBuilder(
-            NbGradleModule.Properties properties,
+    public NbJavaModuleBuilder(
+            GradleProject gradleProject,
+            NbJavaModule.Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs) {
 
@@ -25,8 +27,10 @@ public final class NbGradleModuleBuilder {
         if (listedDirs == null) throw new NullPointerException("listedDirs");
 
         this.dependencies = new EnumMap<NbDependencyType, NbDependencyGroup>(NbDependencyType.class);
-        this.children = new LinkedList<NbGradleModule>();
-        this.view = new NbGradleModule(properties,
+        this.children = new LinkedList<NbJavaModule>();
+        this.view = new NbJavaModule(
+                gradleProject,
+                properties,
                 copyNullSafeMutableMap(NbSourceType.class, sources),
                 CollectionUtils.copyNullSafeMutableList(listedDirs),
                 dependencies,
@@ -57,12 +61,12 @@ public final class NbGradleModuleBuilder {
         this.dependencies.putAll(dependencies);
     }
 
-    public void addChild(NbGradleModule child) {
+    public void addChild(NbJavaModule child) {
         if (child == null) throw new NullPointerException("child");
         this.children.add(child);
     }
 
-    public NbGradleModule getReadOnlyView() {
+    public NbJavaModule getReadOnlyView() {
         return view;
     }
 }

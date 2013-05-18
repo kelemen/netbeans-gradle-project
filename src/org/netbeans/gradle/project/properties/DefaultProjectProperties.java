@@ -10,6 +10,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.w3c.dom.Element;
 
@@ -33,17 +34,32 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         };
     }
 
+    private J2SEPlatformFromScriptQuery tryGetPlatformScriptQuery() {
+        return project.getLookup().lookup(J2SEPlatformFromScriptQuery.class);
+    }
+
+    private String tryGetScriptSourceLevel() {
+        J2SEPlatformFromScriptQuery query = tryGetPlatformScriptQuery();
+        return query != null ? query.getSourceLevel() : null;
+    }
+
+    private ProjectPlatform tryGetScriptPlatform() {
+        J2SEPlatformFromScriptQuery query = tryGetPlatformScriptQuery();
+        return query != null ? query.getPlatform(): null;
+    }
+
     @Override
     public MutableProperty<String> getSourceLevel() {
         return new UnmodifiableProperty<String>("SourceLevel") {
             @Override
             public String getValue() {
                 if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
-                    return project.getAvailableModel().getMainModule().getProperties().getSourceLevel();
+                    String sourceLevel = tryGetScriptSourceLevel();
+                    if (sourceLevel != null) {
+                        return sourceLevel;
+                    }
                 }
-                else {
-                    return getSourceLevelFromPlatform(getPlatform().getValue());
-                }
+                return getSourceLevelFromPlatform(getPlatform().getValue());
             }
 
             @Override
@@ -75,13 +91,12 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
             @Override
             public ProjectPlatform getValue() {
                 if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
-                    String targetLevel = project.getAvailableModel().getMainModule().getProperties().getTargetLevel();
-                    // TODO: Try to find out the type of the platform.
-                    return new ProjectPlatformSource("j2se", targetLevel, true).getValue();
+                    ProjectPlatform platform = tryGetScriptPlatform();
+                    if (platform != null) {
+                        return platform;
+                    }
                 }
-                else {
-                    return AbstractProjectPlatformSource.getDefaultPlatform();
-                }
+                return AbstractProjectPlatformSource.getDefaultPlatform();
             }
 
             @Override

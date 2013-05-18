@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.gradle.tooling.model.GradleTask;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -36,8 +37,6 @@ import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -515,7 +514,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         private final NbGradleProject project;
         private final JMenu menu;
         private List<PredefinedTask> lastUsedTasks;
-        private NbGradleModule lastUsedModule;
+        private NbGradleModel lastUsedModule;
 
         public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
             if (project == null) throw new NullPointerException("project");
@@ -530,7 +529,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void updateMenuContent() {
             List<PredefinedTask> commonTasks = project.getProperties().getCommonTasks().getValue();
-            NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+            NbGradleModel mainModule = project.getAvailableModel();
             if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
                 return;
             }
@@ -640,16 +639,16 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             lastUsedModel = projectModel;
 
-            Collection<NbGradleTask> tasks = projectModel.getMainModule().getTasks();
+            Collection<? extends GradleTask> tasks = projectModel.getGradleProject().getTasks();
 
             menu.removeAll();
-            for (final NbGradleTask task: tasks) {
-                JMenuItem menuItem = new JMenuItem(task.getLocalName());
+            for (final GradleTask task: tasks) {
+                JMenuItem menuItem = new JMenuItem(task.getName());
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         GradleCommandTemplate.Builder command
-                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getQualifiedName()));
+                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getPath()));
 
                         executeCommandTemplate(project, command.create());
                     }

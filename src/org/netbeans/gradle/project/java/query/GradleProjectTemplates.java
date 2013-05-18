@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.java.query;
 
 import org.netbeans.spi.project.ui.PrivilegedTemplates;
 import org.netbeans.spi.project.ui.RecommendedTemplates;

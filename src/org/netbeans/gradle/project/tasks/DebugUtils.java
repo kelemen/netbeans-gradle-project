@@ -15,7 +15,7 @@ import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.debugger.jpda.EditorContext;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.netbeans.spi.project.SingleMethod;

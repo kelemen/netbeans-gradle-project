@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -10,16 +10,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
-import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectInitListener;
-import org.netbeans.gradle.project.model.NbDependencyGroup;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.model.NbSourceType;
-import org.netbeans.gradle.project.model.NbUriDependency;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.NbDependencyGroup;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.NbSourceType;
+import org.netbeans.gradle.project.java.model.NbUriDependency;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -29,18 +28,18 @@ import org.openide.util.Utilities;
 public final class GradleBinaryForSourceQuery
 implements
         BinaryForSourceQueryImplementation,
-        ProjectInitListener {
+        JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
 
     private static final URL[] NO_ROOTS = new URL[0];
 
     private final ConcurrentMap<FileObject, BinaryForSourceQuery.Result> cache;
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final ChangeSupport changes;
 
-    public GradleBinaryForSourceQuery(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
-        this.project = project;
+    public GradleBinaryForSourceQuery(JavaExtension javaExt) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+        this.javaExt = javaExt;
         this.cache = new ConcurrentHashMap<FileObject, BinaryForSourceQuery.Result>();
 
         EventSource eventSource = new EventSource();
@@ -48,7 +47,7 @@ implements
         eventSource.init(this.changes);
     }
 
-    private static SourceType getSourceRootType(NbGradleModule module, FileObject root) {
+    private static SourceType getSourceRootType(NbJavaModule module, FileObject root) {
         for (FileObject src: module.getSources(NbSourceType.SOURCE).getFileObjects()) {
             if (FileUtil.getRelativePath(src, root) != null) {
                 return SourceType.NORMAL;
@@ -63,7 +62,7 @@ implements
         return SourceType.UNKNOWN;
     }
 
-    private static URL[] getBinariesOfModule(NbGradleModule module) {
+    private static URL[] getBinariesOfModule(NbJavaModule module) {
         File buildDir = module.getProperties().getOutput().getBuildDir();
         try {
             URL url = Utilities.toURI(buildDir).toURL();
@@ -75,7 +74,7 @@ implements
         return NO_ROOTS;
     }
 
-    private static URL[] getTestBinariesOfModule(NbGradleModule module) {
+    private static URL[] getTestBinariesOfModule(NbJavaModule module) {
         File testBuildDir = module.getProperties().getOutput().getTestBuildDir();
         try {
             URL url = Utilities.toURI(testBuildDir).toURL();
@@ -87,12 +86,12 @@ implements
         return NO_ROOTS;
     }
 
-    private static URL[] getDependencyBinaries(NbGradleModule module, FileObject root) {
+    private static URL[] getDependencyBinaries(NbJavaModule module, FileObject root) {
         for (NbDependencyGroup dependency: module.getDependencies().values()) {
             for (NbUriDependency uriDep: dependency.getUriDependencies()) {
                 URI srcUri = uriDep.getSrcUri();
                 if (srcUri != null) {
-                    FileObject srcRoot = NbModelUtils.uriToFileObject(srcUri);
+                    FileObject srcRoot = NbJavaModelUtils.uriToFileObject(srcUri);
                     if (srcRoot != null && srcRoot.equals(root)) {
                         try {
                             return new URL[]{uriDep.getUri().toURL()};
@@ -110,7 +109,7 @@ implements
     }
 
     private static URL[] tryGetRoots(
-            NbGradleModule module, FileObject root) {
+            NbJavaModule module, FileObject root) {
         SourceType sourceType = getSourceRootType(module, root);
         switch (sourceType) {
             case NORMAL:
@@ -125,28 +124,14 @@ implements
         }
     }
 
-    private void onModelChange() {
+    @Override
+    public void onModelChange() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 changes.fireChange();
             }
         });
-    }
-
-    @Override
-    public void onInitProject() {
-        project.addModelChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                onModelChange();
-            }
-        });
-        // This is not called because it would trigger the loading of the
-        // project even if it just shown in the project open dialog.
-        // Although it should be called to ensure correct behaviour in every
-        // case.
-        // onModelChange();
     }
 
     @Override
@@ -168,14 +153,14 @@ implements
         result = new BinaryForSourceQuery.Result() {
             @Override
             public URL[] getRoots() {
-                NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+                NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
                 URL[] roots = tryGetRoots(mainModule, sourceRootObj);
                 if (roots != null) {
                     return roots;
                 }
 
-                for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(mainModule)) {
+                for (NbJavaModule dependency: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
                     URL[] depRoots = tryGetRoots(dependency, sourceRootObj);
                     if (depRoots != null) {
                         return depRoots;

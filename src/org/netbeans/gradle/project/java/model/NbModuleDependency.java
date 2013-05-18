@@ -1,17 +1,17 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
-public final class NbModuleDependency implements NbDependency {
-    private final NbGradleModule module;
+public final class NbModuleDependency implements NbJavaDependency {
+    private final NbJavaModule module;
     private final boolean transitive;
 
-    public NbModuleDependency(NbGradleModule module, boolean transitive) {
+    public NbModuleDependency(NbJavaModule module, boolean transitive) {
         if (module == null) throw new NullPointerException("module");
 
         this.module = module;
         this.transitive = transitive;
     }
 
-    public NbGradleModule getModule() {
+    public NbJavaModule getModule() {
         return module;
     }
 

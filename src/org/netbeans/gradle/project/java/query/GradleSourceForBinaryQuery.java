@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.URI;
@@ -8,18 +8,18 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
-import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectInitListener;
-import org.netbeans.gradle.project.model.NbDependencyGroup;
-import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.model.NbOutput;
-import org.netbeans.gradle.project.model.NbSourceType;
-import org.netbeans.gradle.project.model.NbUriDependency;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.NbDependencyGroup;
+import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.NbOutput;
+import org.netbeans.gradle.project.java.model.NbSourceType;
+import org.netbeans.gradle.project.java.model.NbUriDependency;
+import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -28,7 +28,7 @@ import org.openide.util.ChangeSupport;
 public final class GradleSourceForBinaryQuery
 implements
         SourceForBinaryQueryImplementation2,
-        ProjectInitListener {
+        JavaModelChangeListener {
     // First, I thought this is an important query for the debugger but this
     // query is not really used by the debugger.
     //
@@ -46,12 +46,12 @@ implements
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
     private final ConcurrentMap<File, SourceForBinaryQueryImplementation2.Result> cache;
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final ChangeSupport changes;
 
-    public GradleSourceForBinaryQuery(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
-        this.project = project;
+    public GradleSourceForBinaryQuery(JavaExtension javaExt) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+        this.javaExt = javaExt;
         this.cache = new ConcurrentHashMap<File, SourceForBinaryQueryImplementation2.Result>();
 
         EventSource eventSource = new EventSource();
@@ -60,7 +60,7 @@ implements
     }
 
     private static BinaryType getBinaryRootType(
-            NbGradleModule module, File root) {
+            NbJavaModule module, File root) {
         NbOutput output = module.getProperties().getOutput();
 
         if (GradleFileUtils.isParentOrSame(output.getBuildDir(), root)) {
@@ -72,24 +72,24 @@ implements
         return BinaryType.UNKNOWN;
     }
 
-    private static FileObject[] getSourcesOfModule(NbGradleModule module) {
+    private static FileObject[] getSourcesOfModule(NbJavaModule module) {
         List<FileObject> result = module.getSources(NbSourceType.SOURCE).getFileObjects();
         return result.toArray(NO_ROOTS);
     }
 
-    private static FileObject[] getTestSourcesOfModule(NbGradleModule module) {
+    private static FileObject[] getTestSourcesOfModule(NbJavaModule module) {
         List<FileObject> result = module.getSources(NbSourceType.TEST_SOURCE).getFileObjects();
         return result.toArray(NO_ROOTS);
     }
 
-    private static FileObject[] getDependencySources(NbGradleModule module, File root) {
+    private static FileObject[] getDependencySources(NbJavaModule module, File root) {
         for (NbDependencyGroup dependency: module.getDependencies().values()) {
             for (NbUriDependency uriDep: dependency.getUriDependencies()) {
                 URI srcUri = uriDep.getSrcUri();
-                File src = srcUri != null ? NbModelUtils.uriToFile(srcUri) : null;
+                File src = srcUri != null ? NbJavaModelUtils.uriToFile(srcUri) : null;
                 if (src != null) {
                     URI uri = uriDep.getUri();
-                    File depRoot = NbModelUtils.uriToFile(uri);
+                    File depRoot = NbJavaModelUtils.uriToFile(uri);
                     if (root.equals(depRoot)) {
                         FileObject srcObj = FileUtil.toFileObject(src);
                         if (srcObj != null) {
@@ -103,7 +103,7 @@ implements
     }
 
     private static FileObject[] tryGetRoots(
-            NbGradleModule module, File root) {
+            NbJavaModule module, File root) {
         BinaryType binaryType = getBinaryRootType(module, root);
         switch (binaryType) {
             case NORMAL:
@@ -118,28 +118,14 @@ implements
         }
     }
 
-    private void onModelChange() {
+    @Override
+    public void onModelChange() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 changes.fireChange();
             }
         });
-    }
-
-    @Override
-    public void onInitProject() {
-        project.addModelChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                onModelChange();
-            }
-        });
-        // This is not called because it would trigger the loading of the
-        // project even if it just shown in the project open dialog.
-        // Although it should be called to ensure correct behaviour in every
-        // case.
-        // onModelChange();
     }
 
     @Override
@@ -162,15 +148,15 @@ implements
 
             @Override
             public FileObject[] getRoots() {
-                NbGradleModel projectModel = project.getCurrentModel();
-                NbGradleModule mainModule = projectModel.getMainModule();
+                NbJavaModel projectModel = javaExt.getCurrentModel();
+                NbJavaModule mainModule = projectModel.getMainModule();
 
                 FileObject[] roots = tryGetRoots(mainModule, binaryRootFile);
                 if (roots != null) {
                     return roots;
                 }
 
-                for (NbGradleModule dependency: NbModelUtils.getAllModuleDependencies(mainModule)) {
+                for (NbJavaModule dependency: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
                     FileObject[] depRoots = tryGetRoots(dependency, binaryRootFile);
                     if (depRoots != null) {
                         return depRoots;

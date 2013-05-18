@@ -1,10 +1,10 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.net.URI;
 import org.openide.filesystems.FileObject;
 
-public final class NbUriDependency implements NbDependency {
+public final class NbUriDependency implements NbJavaDependency {
     private final URI uri;
     private final URI srcUri;
     private final boolean transitive;
@@ -17,11 +17,11 @@ public final class NbUriDependency implements NbDependency {
     }
 
     public File tryGetAsFile() {
-        return NbModelUtils.uriToFile(uri);
+        return NbJavaModelUtils.uriToFile(uri);
     }
 
     public FileObject tryGetAsFileObject() {
-        return NbModelUtils.uriToFileObject(uri);
+        return NbJavaModelUtils.uriToFileObject(uri);
     }
 
     public URI getUri() {

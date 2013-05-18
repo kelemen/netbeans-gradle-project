@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.view;
+package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.Image;
 import java.text.Collator;
@@ -14,18 +14,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.model.NbDependency;
-import org.netbeans.gradle.project.model.NbDependencyType;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.model.NbModuleDependency;
-import org.netbeans.gradle.project.model.NbUriDependency;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.NbDependencyType;
+import org.netbeans.gradle.project.java.model.NbJavaDependency;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.NbModuleDependency;
+import org.netbeans.gradle.project.java.model.NbUriDependency;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -36,15 +35,28 @@ import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
-public final class GradleDependenciesNode extends AbstractNode {
+public final class GradleDependenciesNode extends AbstractNode implements JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleDependenciesNode.class.getName());
 
-    public GradleDependenciesNode(NbGradleProject project) {
-        super(createChildren(project));
+    private final DependenciesChildFactory childFactory;
+
+    public GradleDependenciesNode(JavaExtension javaExt) {
+        this(new DependenciesChildFactory(javaExt));
     }
 
-    private static Children createChildren(NbGradleProject project) {
-        return Children.create(new DependenciesChildFactory(project), true);
+    private GradleDependenciesNode(DependenciesChildFactory childFactory) {
+        super(createChildren(childFactory));
+
+        this.childFactory = childFactory;
+    }
+
+    private static Children createChildren(DependenciesChildFactory childFactory) {
+        return Children.create(childFactory, true);
+    }
+
+    @Override
+    public void onModelChange() {
+        childFactory.stateChanged();
     }
 
     @Override
@@ -64,34 +76,22 @@ public final class GradleDependenciesNode extends AbstractNode {
 
     private static class DependenciesChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory>
-    implements
-            ChangeListener {
-        private final NbGradleProject project;
+            ChildFactory.Detachable<SingleNodeFactory> {
 
-        public DependenciesChildFactory(NbGradleProject project) {
-            if (project == null) throw new NullPointerException("project");
-            this.project = project;
+        private final JavaExtension javaExt;
+
+        public DependenciesChildFactory(JavaExtension javaExt) {
+            if (javaExt == null) throw new NullPointerException("javaExt");
+            this.javaExt = javaExt;
         }
 
-        @Override
-        public void stateChanged(ChangeEvent e) {
+        public void stateChanged() {
             refresh(false);
-        }
-
-        @Override
-        protected void addNotify() {
-            project.addModelChangeListener(this);
-        }
-
-        @Override
-        protected void removeNotify() {
-            project.removeModelChangeListener(this);
         }
 
         private void addDependencyGroup(
                 final String groupName,
-                final Collection<NbDependency> dependencies,
+                final Collection<NbJavaDependency> dependencies,
                 List<SingleNodeFactory> toPopulate) {
 
             if (dependencies.isEmpty()) {
@@ -121,16 +121,16 @@ public final class GradleDependenciesNode extends AbstractNode {
             });
         }
 
-        private static List<NbDependency> orderDependencies(Collection<NbDependency> dependencies) {
-            List<NbDependency> result = new ArrayList<NbDependency>(dependencies);
+        private static List<NbJavaDependency> orderDependencies(Collection<NbJavaDependency> dependencies) {
+            List<NbJavaDependency> result = new ArrayList<NbJavaDependency>(dependencies);
             final Collator textComparer = Collator.getInstance(Locale.US);
             final Map<Class<?>, Integer> classOrder = new HashMap<Class<?>, Integer>();
             classOrder.put(NbModuleDependency.class, 0);
             classOrder.put(NbUriDependency.class, 1);
 
-            Collections.sort(result, new Comparator<NbDependency>() {
+            Collections.sort(result, new Comparator<NbJavaDependency>() {
                 @Override
-                public int compare(NbDependency o1, NbDependency o2) {
+                public int compare(NbJavaDependency o1, NbJavaDependency o2) {
                     if (o1.getClass() != o2.getClass()) {
                         Integer index1 = classOrder.get(o1.getClass());
                         Integer index2 = classOrder.get(o2.getClass());
@@ -160,16 +160,16 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            NbGradleModule mainModule = project.getCurrentModel().getMainModule();
+            NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
-            Set<NbDependency> compile = new LinkedHashSet<NbDependency>(
-                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE));
-            Set<NbDependency> runtime = new LinkedHashSet<NbDependency>(
-                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME));
-            Set<NbDependency> testCompile = new LinkedHashSet<NbDependency>(
-                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE));
-            Set<NbDependency> testRuntime = new LinkedHashSet<NbDependency>(
-                    NbModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME));
+            Set<NbJavaDependency> compile = new LinkedHashSet<NbJavaDependency>(
+                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE));
+            Set<NbJavaDependency> runtime = new LinkedHashSet<NbJavaDependency>(
+                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME));
+            Set<NbJavaDependency> testCompile = new LinkedHashSet<NbJavaDependency>(
+                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE));
+            Set<NbJavaDependency> testRuntime = new LinkedHashSet<NbJavaDependency>(
+                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME));
 
             testRuntime.removeAll(runtime);
             testRuntime.removeAll(testCompile);
@@ -205,10 +205,10 @@ public final class GradleDependenciesNode extends AbstractNode {
     }
 
     private static class DependencyGroupChildFactory extends ChildFactory<SingleNodeFactory> {
-        private final List<NbDependency> dependencies;
+        private final List<NbJavaDependency> dependencies;
 
-        public DependencyGroupChildFactory(Collection<NbDependency> dependencies) {
-            this.dependencies = new ArrayList<NbDependency>(dependencies);
+        public DependencyGroupChildFactory(Collection<NbJavaDependency> dependencies) {
+            this.dependencies = new ArrayList<NbJavaDependency>(dependencies);
         }
 
         private void addModuleDependency(
@@ -286,7 +286,7 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         private void addGenericDependency(
-                NbDependency dependency,
+                NbJavaDependency dependency,
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
             final String nodeCaption = dependency.toString();
@@ -314,7 +314,7 @@ public final class GradleDependenciesNode extends AbstractNode {
         }
 
         protected void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            for (NbDependency dependency: dependencies) {
+            for (NbJavaDependency dependency: dependencies) {
                 if (dependency instanceof NbModuleDependency) {
                     addModuleDependency((NbModuleDependency)dependency, toPopulate);
                 }

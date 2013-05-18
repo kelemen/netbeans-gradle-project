@@ -1,61 +1,84 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import org.gradle.tooling.model.GradleProject;
 import org.netbeans.gradle.project.GradleProjectConstants;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
-/**
- * Defines an immutable model of a loaded Gradle project except that it can be
- * marked dirty. If the model is dirty, it means that the model should be
- * reloaded.
- */
 public final class NbGradleModel {
     private final File projectDir;
     private final File buildFile;
     private final File settingsFile;
+    private final GradleProjectInfo projectInfo;
     private volatile boolean dirty;
 
-    private final NbGradleModule mainModule;
     private final Lookup models;
 
+    private final String displayName;
+
     public NbGradleModel(
+            GradleProjectInfo projectInfo,
             File projectDir,
-            NbGradleModule mainModule,
             Lookup models) {
-        this(projectDir, findSettingsGradle(projectDir), mainModule, models);
+        this(projectInfo, projectDir, findSettingsGradle(projectDir), models);
     }
 
     public NbGradleModel(
+            GradleProjectInfo projectInfo,
             File projectDir,
             File settingsFile,
-            NbGradleModule mainModule,
             Lookup models) {
-        this(projectDir, getBuildFile(projectDir), settingsFile, mainModule, models);
+        this(projectInfo, projectDir, getBuildFile(projectDir), settingsFile, models);
     }
 
     public NbGradleModel(
+            GradleProjectInfo projectInfo,
             File projectDir,
             File buildFile,
             File settingsFile,
-            NbGradleModule mainModule,
             Lookup models) {
+        if (projectInfo == null) throw new NullPointerException("projectInfo");
         if (projectDir == null) throw new NullPointerException("projectDir");
-        if (mainModule == null) throw new NullPointerException("mainModule");
         if (models == null) throw new NullPointerException("models");
 
+        this.projectInfo = projectInfo;
         this.projectDir = projectDir;
-        this.mainModule = mainModule;
-        this.models = models;
-
         this.buildFile = buildFile;
         this.settingsFile = settingsFile;
+        this.models = models;
         this.dirty = false;
+        this.displayName = findDisplayName();
+    }
+
+    private String findDisplayName() {
+        if (isBuildSrc()) {
+            File parentFile = getProjectDir().getParentFile();
+            String parentName = parentFile != null ? parentFile.getName() : "?";
+            return NbStrings.getBuildSrcMarker(parentName);
+        }
+        else {
+            String scriptName = getGradleProject().getName();
+            scriptName = scriptName.trim();
+            if (scriptName.isEmpty()) {
+                scriptName = getProjectDir().getName();
+            }
+
+            if (isRootProject()) {
+                return NbStrings.getRootProjectMarker(scriptName);
+            }
+            else {
+                return scriptName;
+            }
+        }
     }
 
     public static File getBuildFile(File projectDir) {
+        // TODO: Check build file on the disk.
+        // try build.gradle first, then directory.gradle.
         return new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
     }
 
@@ -85,20 +108,38 @@ public final class NbGradleModel {
         }
     }
 
-    public Lookup getModels() {
-        return models;
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public boolean isBuildSrc() {
+        return projectDir.getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
+    }
+
+    public boolean isRootProject() {
+        String uniqueName = getGradleProject().getPath();
+        for (int i = 0; i < uniqueName.length(); i++) {
+            if (uniqueName.charAt(i) != ':') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public GradleProjectInfo getGradleProjectInfo() {
+        return projectInfo;
+    }
+
+    public GradleProject getGradleProject() {
+        return projectInfo.getGradleProject();
     }
 
     public void setDirty() {
         this.dirty = true;
     }
 
-    public boolean isDirty() {
-        return dirty;
-    }
-
     public NbGradleModel createNonDirtyCopy() {
-        return new NbGradleModel(projectDir, buildFile, settingsFile, mainModule, models);
+        return new NbGradleModel(projectInfo, projectDir, buildFile, settingsFile, models);
     }
 
     public File getProjectDir() {
@@ -117,25 +158,28 @@ public final class NbGradleModel {
         return result;
     }
 
-    public FileObject tryGetProjectDirAsObj() {
-        return FileUtil.toFileObject(projectDir);
-    }
-
-
-    public NbGradleModule getMainModule() {
-        return mainModule;
-    }
-
     public File getBuildFile() {
         return buildFile;
     }
 
-    public FileObject tryGetBuildFileObj() {
-        return GradleFileUtils.asFileObject(buildFile);
-    }
-
     public File getSettingsFile() {
         return settingsFile;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public Lookup getModels() {
+        return models;
+    }
+
+    public FileObject tryGetProjectDirAsObj() {
+        return FileUtil.toFileObject(projectDir);
+    }
+
+    public FileObject tryGetBuildFileObj() {
+        return GradleFileUtils.asFileObject(buildFile);
     }
 
     public FileObject tryGetSettingsFileObj() {

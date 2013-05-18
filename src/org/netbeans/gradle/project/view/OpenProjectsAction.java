@@ -14,7 +14,7 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.model.NbGradleModule;
+import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -26,11 +26,11 @@ public final class OpenProjectsAction extends AbstractAction {
 
     public static OpenProjectsAction createFromModules(
             String caption,
-            Collection<NbGradleModule> projects) {
+            Collection<? extends GradleProjectInfo> projects) {
         Collection<File> projectDirs = new ArrayList<File>(projects.size());
-        for (NbGradleModule project: projects) {
+        for (GradleProjectInfo project: projects) {
             if (project == null) throw new NullPointerException("project");
-            projectDirs.add(project.getModuleDir());
+            projectDirs.add(project.getProjectDir());
         }
         return new OpenProjectsAction(caption, projectDirs);
     }
