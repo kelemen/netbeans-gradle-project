@@ -71,6 +71,9 @@ implements
     // due to a change in the settings.
     private final AtomicBoolean hasBeenUsed;
 
+    private final AtomicReference<ClassPath> allSourcesClassPathRef;
+    private volatile List<PathResourceImplementation> allSources;
+
     // EnumMap is not a ConcurrentMap, so it cannot be used.
     @SuppressWarnings("MapReplaceableByEnumMap")
     public GradleClassPathProvider(JavaExtension javaExt) {
@@ -84,6 +87,8 @@ implements
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
         this.classpaths = new ConcurrentHashMap<ClassPathType, ClassPath>(classPathTypeCount);
         this.hasBeenUsed = new AtomicBoolean(false);
+        this.allSources = Collections.emptyList();
+        this.allSourcesClassPathRef = new AtomicReference<ClassPath>(null);
 
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
@@ -110,7 +115,13 @@ implements
 
     public ClassPath getClassPaths(String type) {
         if (ClassPath.SOURCE.equals(type)) {
-            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.SOURCES), getPaths(ClassPathType.SOURCES_FOR_TEST));
+            ClassPath result = allSourcesClassPathRef.get();
+            if (result == null) {
+                result = ClassPathFactory.createClassPath(new AllSourcesClassPaths());
+                allSourcesClassPathRef.compareAndSet(null, result);
+                result = allSourcesClassPathRef.get();
+            }
+            return result;
         }
         else if (ClassPath.BOOT.equals(type)) {
             return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.BOOT), getPaths(ClassPathType.BOOT_FOR_TEST));
@@ -261,6 +272,31 @@ implements
     private ClassPathType getClassPathType(NbJavaModel projectModel, FileObject file, String type) {
         FileType fileType = getTypeOfFile(projectModel, file);
         return getClassPathType(fileType, type);
+    }
+
+    private void addSourcesToList(NbJavaModule module, List<PathResourceImplementation> result) {
+        for (NbSourceType sourceType: new NbSourceType[] {NbSourceType.SOURCE, NbSourceType.TEST_SOURCE}) {
+            NbSourceGroup sources = module.getSources(sourceType);
+            if (sources != null) {
+                @SuppressWarnings("unchecked")
+                List<PathResourceImplementation> resources
+                        = getPathResources(new HashSet<File>(), sources.getFiles());
+                result.addAll(resources);
+            }
+        }
+    }
+
+    private void updateAllSources() {
+        List<PathResourceImplementation> sourceContainer = new LinkedList<PathResourceImplementation>();
+
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+        addSourcesToList(mainModule, sourceContainer);
+
+        for (NbJavaModule module: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
+            addSourcesToList(module, sourceContainer);
+        }
+
+        allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
     }
 
     public static List<PathResourceImplementation> getPathResources(
@@ -435,6 +471,8 @@ implements
         setClassPathResources(ClassPathType.BOOT, platformResources);
         setClassPathResources(ClassPathType.BOOT_FOR_TEST, platformResources);
 
+        updateAllSources();
+
         missing.removeAll(notRequiredPaths);
 
         if (missing.isEmpty()) {
@@ -509,7 +547,26 @@ implements
         return classpaths.get(classPathType);
     }
 
-    private class GradleClassPaths implements ClassPathImplementation {
+    private abstract class AbstractGradleClassPaths implements ClassPathImplementation {
+        @Override
+        public final void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public final void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
+        }
+    }
+
+    private class AllSourcesClassPaths extends AbstractGradleClassPaths {
+        @Override
+        public List<PathResourceImplementation> getResources() {
+            return allSources;
+        }
+    }
+
+    private class GradleClassPaths extends AbstractGradleClassPaths {
         private final ClassPathType classPathType;
 
         public GradleClassPaths(ClassPathType classPathType) {
@@ -523,16 +580,6 @@ implements
             return result != null
                     ? result
                     : Collections.<PathResourceImplementation>emptyList();
-        }
-
-        @Override
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
-            changes.addPropertyChangeListener(listener);
-        }
-
-        @Override
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
-            changes.removePropertyChangeListener(listener);
         }
     }
 
