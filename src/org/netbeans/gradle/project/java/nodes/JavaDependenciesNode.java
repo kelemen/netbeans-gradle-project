@@ -216,7 +216,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
 
             FileObject moduleRoot = FileUtil.toFileObject(dependency.getModule().getModuleDir());
-            final String displayName = dependency.getModule().getDisplayName();
+            final String displayName = dependency.getModule().getShortName();
 
             if (moduleRoot != null) {
                 final DataObject fileObject = DataObject.find(moduleRoot);

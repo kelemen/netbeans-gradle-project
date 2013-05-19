@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.model.ExternalDependency;
-import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -31,7 +30,6 @@ import org.netbeans.gradle.project.model.EmptyGradleProject;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -74,8 +72,7 @@ public final class NbJavaModelUtils {
                 projectDir,
                 createDefaultOutput(projectDir),
                 level,
-                level,
-                Collections.<NbGradleTask>emptyList());
+                level);
 
         NbJavaModuleBuilder mainModuleBuilder = new NbJavaModuleBuilder(
                 new EmptyGradleProject(projectDir),
@@ -355,15 +352,6 @@ public final class NbJavaModelUtils {
             return null;
         }
 
-        List<NbGradleTask> taskNames = new LinkedList<NbGradleTask>();
-        for (GradleTask task: module.getGradleProject().getTasks()) {
-            String qualifiedName = task.getPath();
-            String description = task.getDescription();
-            if (description == null) description = "";
-
-            taskNames.add(new NbGradleTask(qualifiedName, description.trim()));
-        }
-
         String defaultLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
         String sourceLevel = module.getProject().getLanguageLevel().getLevel();
@@ -386,8 +374,7 @@ public final class NbJavaModelUtils {
                 moduleDir,
                 NbJavaModelUtils.createDefaultOutput(moduleDir),
                 sourceLevel,
-                targetLevel,
-                taskNames);
+                targetLevel);
         List<File> listedDirs = lookupListedDirs(sources);
 
         NbJavaModuleBuilder moduleBuilder = new NbJavaModuleBuilder(

@@ -10,8 +10,6 @@ import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 
@@ -88,27 +86,6 @@ public final class PredefinedTask {
                 Collections.<String>emptyList(),
                 Collections.<String>emptyList(),
                 false);
-    }
-
-    private static boolean isLocalTaskExists(NbJavaModule module, String task) {
-        for (NbGradleTask moduleTask: module.getTasks()) {
-            if (moduleTask.getLocalName().equals(task)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isLocalTaskExistsInModuleTree(NbJavaModule module, String task) {
-        if (isLocalTaskExists(module, task)) {
-            return true;
-        }
-        for (NbJavaModule child: module.getChildren()) {
-            if (isLocalTaskExistsInModuleTree(child, task)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static GradleProject getRootProject(GradleProject project) {
