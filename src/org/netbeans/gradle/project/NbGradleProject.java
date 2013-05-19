@@ -339,7 +339,7 @@ public final class NbGradleProject implements Project {
             runDelayedInitTask(new Runnable() {
                 @Override
                 public void run() {
-                    loadProject(onlyIfNotLoaded, mayUseCache);
+                    loadProject(false, mayUseCache);
                 }
             });
             return;
