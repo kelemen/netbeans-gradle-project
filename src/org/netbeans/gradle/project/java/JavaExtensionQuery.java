@@ -13,6 +13,6 @@ public final class JavaExtensionQuery implements GradleProjectExtensionQuery {
 
     @Override
     public GradleProjectExtension loadExtensionForProject(Project project) throws IOException {
-        return new JavaExtension(project);
+        return JavaExtension.create(project);
     }
 }

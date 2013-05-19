@@ -49,17 +49,26 @@ public final class JavaExtension implements GradleProjectExtension {
     private final GradleClassPathProvider cpProvider;
 
     private final AtomicReference<Lookup> lookupRef;
+    private final AtomicReference<Lookup> permanentLookupRef;
+
     private final DynamicLookup extensionLookup;
     private final Lookup protectedExtensionLookup;
 
-    public JavaExtension(Project project) throws IOException {
+    private JavaExtension(Project project) throws IOException {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
         this.currentModel = NbJavaModelUtils.createEmptyModel(project.getProjectDirectory());
         this.cpProvider = new GradleClassPathProvider(this);
         this.lookupRef = new AtomicReference<Lookup>(null);
+        this.permanentLookupRef = new AtomicReference<Lookup>(null);
         this.extensionLookup = new DynamicLookup();
         this.protectedExtensionLookup = DynamicLookup.viewLookup(extensionLookup);
+    }
+
+    public static JavaExtension create(Project project) throws IOException {
+        JavaExtension result = new JavaExtension(project);
+        result.updateLookup(false);
+        return result;
     }
 
     public boolean isOwnerProject(File file) {
@@ -68,7 +77,7 @@ public final class JavaExtension implements GradleProjectExtension {
         File currentFile = file;
         fileObj = FileUtil.toFileObject(currentFile);
         while (fileObj == null) {
-            currentFile = file.getParentFile();
+            currentFile = currentFile.getParentFile();
             if (currentFile == null) {
                 return false;
             }
@@ -97,6 +106,26 @@ public final class JavaExtension implements GradleProjectExtension {
         return NEEDED_MODELS;
     }
 
+    private void initLookup(Lookup lookup) {
+        for (ProjectInitListener listener: lookup.lookupAll(ProjectInitListener.class)) {
+            listener.onInitProject();
+        }
+    }
+
+    // These classes are on the lookup always.
+    private Lookup getPermanentLookup() {
+        Lookup lookup = permanentLookupRef.get();
+        if (lookup == null) {
+            lookup = Lookups.singleton(new OpenHook());
+
+            if (permanentLookupRef.compareAndSet(null, lookup)) {
+                initLookup(lookup);
+            }
+            lookup = permanentLookupRef.get();
+        }
+        return lookup;
+    }
+
     private Lookup getStaticLookup() {
         Lookup lookup = lookupRef.get();
         if (lookup == null) {
@@ -105,7 +134,6 @@ public final class JavaExtension implements GradleProjectExtension {
                     cpProvider,
                     new GradleSourceLevelQueryImplementation(this),
                     new GradleUnitTestFinder(this),
-                    new OpenHook(),
                     new GradleAnnotationProcessingQuery(),
                     new GradleSourceForBinaryQuery(this),
                     new GradleBinaryForSourceQuery(this),
@@ -115,9 +143,7 @@ public final class JavaExtension implements GradleProjectExtension {
                     );
 
             if (lookupRef.compareAndSet(null, lookup)) {
-                for (ProjectInitListener listener: lookup.lookupAll(ProjectInitListener.class)) {
-                    listener.onInitProject();
-                }
+                initLookup(lookup);
             }
             lookup = lookupRef.get();
         }
@@ -174,6 +200,15 @@ public final class JavaExtension implements GradleProjectExtension {
         currentModel = NbJavaModelUtils.createEmptyModel(currentModel.getMainModule().getModuleDir());
     }
 
+    private void updateLookup(boolean loaded) {
+        if (loaded) {
+            extensionLookup.replaceLookups(getPermanentLookup(), getStaticLookup());
+        }
+        else {
+            extensionLookup.replaceLookups(getPermanentLookup());
+        }
+    }
+
     @Override
     public void modelsLoaded(Lookup modelLookup) {
         boolean loaded = false;
@@ -201,12 +236,7 @@ public final class JavaExtension implements GradleProjectExtension {
             loaded = true;
         }
 
-        if (loaded) {
-            extensionLookup.replaceLookups(getStaticLookup());
-        }
-        else {
-            extensionLookup.replaceLookups();
-        }
+        updateLookup(loaded);
 
         for (JavaModelChangeListener listener: getExtensionLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();
