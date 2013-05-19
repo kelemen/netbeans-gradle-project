@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.java;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -13,6 +14,7 @@ import javax.swing.SwingUtilities;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
+import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectSources;
@@ -31,6 +33,7 @@ import org.netbeans.gradle.project.java.query.J2SEPlatformFromScriptQueryImpl;
 import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -57,6 +60,20 @@ public final class JavaExtension implements GradleProjectExtension {
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.extensionLookup = new DynamicLookup();
         this.protectedExtensionLookup = DynamicLookup.viewLookup(extensionLookup);
+    }
+
+    public boolean isOwnerProject(File file) {
+        FileObject fileObj = FileUtil.toFileObject(file);
+        return fileObj != null ? isOwnerProject(fileObj) : false;
+    }
+
+    public boolean isOwnerProject(FileObject file) {
+        Project owner = FileOwnerQuery.getOwner(file);
+        if (owner == null) {
+            return false;
+        }
+
+        return project.getProjectDirectory().equals(owner.getProjectDirectory());
     }
 
     public NbJavaModel getCurrentModel() {

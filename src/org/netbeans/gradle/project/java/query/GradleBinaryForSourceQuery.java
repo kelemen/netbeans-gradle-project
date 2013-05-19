@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,11 +13,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
-import org.netbeans.gradle.project.java.model.NbDependencyGroup;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
 import org.netbeans.gradle.project.java.model.NbSourceType;
-import org.netbeans.gradle.project.java.model.NbUriDependency;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -86,28 +82,6 @@ implements
         return NO_ROOTS;
     }
 
-    private static URL[] getDependencyBinaries(NbJavaModule module, FileObject root) {
-        for (NbDependencyGroup dependency: module.getDependencies().values()) {
-            for (NbUriDependency uriDep: dependency.getUriDependencies()) {
-                URI srcUri = uriDep.getSrcUri();
-                if (srcUri != null) {
-                    FileObject srcRoot = NbJavaModelUtils.uriToFileObject(srcUri);
-                    if (srcRoot != null && srcRoot.equals(root)) {
-                        try {
-                            return new URL[]{uriDep.getUri().toURL()};
-                        } catch (MalformedURLException ex) {
-                            // This should not happend but we cannot do anything
-                            // in this case.
-                            LOGGER.log(Level.SEVERE, "Cannot convert URI to URL: " + uriDep.getUri(), ex);
-                            return null;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     private static URL[] tryGetRoots(
             NbJavaModule module, FileObject root) {
         SourceType sourceType = getSourceRootType(module, root);
@@ -116,10 +90,8 @@ implements
                 return getBinariesOfModule(module);
             case TEST:
                 return getTestBinariesOfModule(module);
-            case UNKNOWN:
-                return getDependencyBinaries(module, root);
             default:
-                throw new AssertionError(sourceType.name());
+                return NO_ROOTS;
 
         }
     }
@@ -145,6 +117,16 @@ implements
             return null;
         }
 
+        if (!javaExt.isOwnerProject(sourceRootObj)) {
+            return null;
+        }
+
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+        SourceType rootType = getSourceRootType(mainModule, sourceRootObj);
+        if (rootType == SourceType.UNKNOWN) {
+            return null;
+        }
+
         BinaryForSourceQuery.Result result = cache.get(sourceRootObj);
         if (result != null) {
             return result;
@@ -155,19 +137,7 @@ implements
             public URL[] getRoots() {
                 NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
-                URL[] roots = tryGetRoots(mainModule, sourceRootObj);
-                if (roots != null) {
-                    return roots;
-                }
-
-                for (NbJavaModule dependency: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
-                    URL[] depRoots = tryGetRoots(dependency, sourceRootObj);
-                    if (depRoots != null) {
-                        return depRoots;
-                    }
-                }
-
-                return NO_ROOTS;
+                return tryGetRoots(mainModule, sourceRootObj);
             }
 
             @Override
