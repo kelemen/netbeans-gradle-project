@@ -238,9 +238,18 @@ public final class GradleActionProvider implements ActionProvider {
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                GradleTaskDef.Builder builder = createProjectTaskBuilderMaySkipTest(
-                        TaskKind.DEBUG, command, config, actionContext);
-                builder.setStdOutListener(debugeeListener(test));
+                GradleTaskDef.Builder builder;
+                if (test) {
+                    builder = createProjectTaskBuilder(TaskKind.DEBUG, command, config, actionContext);
+                }
+                else {
+                    builder = createProjectTaskBuilderMaySkipTest(TaskKind.DEBUG, command, config, actionContext);
+                }
+
+                // Until we find a better way for determining what sources are
+                // needed on the classpath, put the test sources to the
+                // classpath as well.
+                builder.setStdOutListener(debugeeListener(true));
                 return builder.create();
             }
         }, projectTaskCompleteListener());
@@ -290,7 +299,7 @@ public final class GradleActionProvider implements ActionProvider {
             return createProjectTaskMaySkipTest(TaskKind.RUN, command, config, context);
         }
         else if (COMMAND_DEBUG_SINGLE.equals(command)) {
-            return createDebugTask(command, true, config, context);
+            return createDebugTask(command, false, config, context);
         }
         else if (COMMAND_DEBUG_FIX.equals(command)) {
             final String className = DebugUtils.getActiveClassName(project, context);
