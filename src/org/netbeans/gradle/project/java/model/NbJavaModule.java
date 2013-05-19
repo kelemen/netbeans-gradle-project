@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.java.model;
 
-import org.netbeans.gradle.project.model.NbGradleTask;
 import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import java.util.Map;
 import org.gradle.tooling.model.GradleProject;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.model.NbGradleTask;
 
 public final class NbJavaModule {
     private final GradleProject gradleProject;

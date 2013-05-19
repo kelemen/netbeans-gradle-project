@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.java.model;
 
-import org.netbeans.gradle.project.model.NbGradleTask;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -32,6 +31,7 @@ import org.netbeans.gradle.project.model.EmptyGradleProject;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

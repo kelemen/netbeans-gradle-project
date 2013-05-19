@@ -10,8 +10,8 @@ import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 

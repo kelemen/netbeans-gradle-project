@@ -1,4 +1,3 @@
-
 package org.netbeans.gradle.project.java.query;
 
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
