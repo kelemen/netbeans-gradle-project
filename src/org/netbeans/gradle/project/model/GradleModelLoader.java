@@ -259,7 +259,10 @@ public final class GradleModelLoader {
                         }
                         break;
                     } catch (UnknownModelException ex) {
-                        LOGGER.log(Level.INFO, "Cannot find model {0}", modelClass.getName());
+                        Throwable loggedException = LOGGER.isLoggable(Level.FINE)
+                                ? ex
+                                : null;
+                        LOGGER.log(Level.INFO, "Cannot find model " + modelClass.getName(), loggedException);
                     }
                 }
             }
