@@ -268,6 +268,8 @@ public final class GradleModelLoader {
             }
         }
 
+        progress.progress(NbStrings.getParsingModel());
+
         JavaExtension javaExt = project.lookupExtension(JavaExtension.class);
         if (javaExt != null) {
             models.add(javaExt.addToModelLookup(Lookups.fixed(models.toArray())));
@@ -349,7 +351,6 @@ public final class GradleModelLoader {
             }
         }
 
-        progress.progress(NbStrings.getParsingModel());
         if (ideaModule != null) {
             GradleProjectInfo projectInfo = tryCreateProjectTreeFromIdea(ideaModule);
             if (projectInfo != null) {
