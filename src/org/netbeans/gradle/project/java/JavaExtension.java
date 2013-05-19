@@ -63,8 +63,20 @@ public final class JavaExtension implements GradleProjectExtension {
     }
 
     public boolean isOwnerProject(File file) {
-        FileObject fileObj = FileUtil.toFileObject(file);
-        return fileObj != null ? isOwnerProject(fileObj) : false;
+        FileObject fileObj;
+
+        File currentFile = file;
+        fileObj = FileUtil.toFileObject(currentFile);
+        while (fileObj == null) {
+            currentFile = file.getParentFile();
+            if (currentFile == null) {
+                return false;
+            }
+
+            fileObj = FileUtil.toFileObject(currentFile);
+        }
+
+        return isOwnerProject(fileObj);
     }
 
     public boolean isOwnerProject(FileObject file) {
