@@ -7,6 +7,7 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
@@ -52,12 +53,21 @@ public final class JavaExtensionNodes implements GradleProjectExtensionNodes {
         }
     }
 
+    private void addDependencies(List<SingleNodeFactory> toPopulate) {
+        toPopulate.add(new SingleNodeFactory() {
+            @Override
+            public Node createNode() {
+                return new JavaDependenciesNode(javaExt);
+            }
+        });
+    }
 
     @Override
     public List<SingleNodeFactory> getNodeFactories() {
         List<SingleNodeFactory> result = new LinkedList<SingleNodeFactory>();
 
         addListedDirs(result);
+        addDependencies(result);
 
         return result;
     }

@@ -35,16 +35,16 @@ import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
-public final class GradleDependenciesNode extends AbstractNode implements JavaModelChangeListener {
-    private static final Logger LOGGER = Logger.getLogger(GradleDependenciesNode.class.getName());
+public final class JavaDependenciesNode extends AbstractNode implements JavaModelChangeListener {
+    private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
 
     private final DependenciesChildFactory childFactory;
 
-    public GradleDependenciesNode(JavaExtension javaExt) {
+    public JavaDependenciesNode(JavaExtension javaExt) {
         this(new DependenciesChildFactory(javaExt));
     }
 
-    private GradleDependenciesNode(DependenciesChildFactory childFactory) {
+    private JavaDependenciesNode(DependenciesChildFactory childFactory) {
         super(createChildren(childFactory));
 
         this.childFactory = childFactory;
