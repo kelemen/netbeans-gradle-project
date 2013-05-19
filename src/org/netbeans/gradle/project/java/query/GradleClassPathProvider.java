@@ -274,8 +274,12 @@ implements
         return getClassPathType(fileType, type);
     }
 
-    private void addSourcesToList(NbJavaModule module, List<PathResourceImplementation> result) {
-        for (NbSourceType sourceType: new NbSourceType[] {NbSourceType.SOURCE, NbSourceType.TEST_SOURCE}) {
+    private void addSourcesToList(
+            NbJavaModule module,
+            List<PathResourceImplementation> result,
+            NbSourceType... sourceTypes) {
+
+        for (NbSourceType sourceType: sourceTypes) {
             NbSourceGroup sources = module.getSources(sourceType);
             if (sources != null) {
                 @SuppressWarnings("unchecked")
@@ -290,10 +294,10 @@ implements
         List<PathResourceImplementation> sourceContainer = new LinkedList<PathResourceImplementation>();
 
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        addSourcesToList(mainModule, sourceContainer);
+        addSourcesToList(mainModule, sourceContainer, NbSourceType.SOURCE, NbSourceType.TEST_SOURCE);
 
         for (NbJavaModule module: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
-            addSourcesToList(module, sourceContainer);
+            addSourcesToList(module, sourceContainer, NbSourceType.SOURCE);
         }
 
         allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
