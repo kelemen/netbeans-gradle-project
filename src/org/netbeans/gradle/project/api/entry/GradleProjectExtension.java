@@ -40,7 +40,10 @@ public interface GradleProjectExtension {
     /**
      * Returns the lookup which is to be added to the project's lookup. That is,
      * the objects contained in the returned lookup will be possible to be
-     * queried through the project's lookup.
+     * queried through the project's lookup. Until the method
+     * {@link #modelsLoaded(Lookup) modelsLoaded} is called,
+     * {@code GradleProjectExtension} must take the same action as if
+     * {@code modelsLoaded} has already been called with an empty lookup.
      * <P>
      * The following queries are known and used by the Gradle plugin itself:
      * <ul>
@@ -53,9 +56,18 @@ public interface GradleProjectExtension {
      * {@link org.netbeans.spi.project.ui.ProjectOpenedHook} but note that you
      * have to have this instance on the lookup at all times, otherwise it may
      * not get called.
+     * <P>
+     * <B>Implementation note</B>: If this method ever changes the
+     * {@code Lookup} object it returns, then it must consider listeners
+     * registered to the results of the lookup operation (see: {@code Lookup.Result}).
+     * It is however recommended to always return the same lookup instance.
+     * Since the objects on the lookup may change, implementations are
+     * recommended to use a subclass of {@link org.openide.util.lookup.ProxyLookup}.
      *
      * @return the lookup which is to be added to the project's lookup. This
      *   method may never return {@code null}.
+     *
+     * @see org.openide.util.lookup.ProxyLookup
      */
     public Lookup getExtensionLookup();
 
@@ -64,6 +76,12 @@ public interface GradleProjectExtension {
      * (re)loaded. An invocation of this method invalidates previous invocation
      * of this method and the {@code modelsLoaded} method may not be called
      * concurrently by multiple threads for the same project.
+     * <P>
+     * <B>Implementation note</B>: If this implementations can't find the
+     * models it needs, the expected action is to remove instances from the
+     * {@link #getExtensionLookup() lookup} which might conflict with other
+     * extensions. Probably the only instance which must remain on the project's
+     * lookup is implementations of {@link org.netbeans.spi.project.ui.ProjectOpenedHook}.
      *
      * @param modelLookup the {@code Lookup} containing the available models
      *   loaded via the Tooling API of Gradle. If a model requested by this
