@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.model.ExternalDependency;
-import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
@@ -339,22 +338,6 @@ public final class NbJavaModelUtils {
         return groups;
     }
 
-    private static List<IdeaModule> getChildModules(IdeaModule mainModule) {
-        Collection<? extends GradleProject> children = mainModule.getGradleProject().getChildren();
-        Set<String> childrenPaths = new HashSet<String>(2 * children.size());
-        for (GradleProject child: children) {
-            childrenPaths.add(child.getPath());
-        }
-
-        List<IdeaModule> result = new LinkedList<IdeaModule>();
-        for (IdeaModule module: mainModule.getProject().getModules()) {
-            if (childrenPaths.contains(module.getGradleProject().getPath())) {
-                result.add(module);
-            }
-        }
-        return result;
-    }
-
     private static NbJavaModule tryParseModule(IdeaModule module,
             Map<String, NbJavaModule> parsedModules) {
         String uniqueName = module.getGradleProject().getPath();
@@ -417,7 +400,7 @@ public final class NbJavaModelUtils {
 
         moduleBuilder.addDependencies(getDependencies(module, parsedModules));
 
-        for (IdeaModule child: getChildModules(module)) {
+        for (IdeaModule child: GradleModelLoader.getChildModules(module)) {
             NbJavaModule parsedChild = tryParseModule(child, parsedModules);
             if (parsedChild == null) {
                 LOGGER.log(Level.WARNING, "Failed to parse a child module: {0}", child.getName());

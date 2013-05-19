@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,7 +27,7 @@ import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.HierarchicalElement;
+import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -275,6 +277,23 @@ public final class GradleModelLoader {
         }
     }
 
+    public static List<IdeaModule> getChildModules(IdeaModule module) {
+        Collection<? extends GradleProject> children = module.getGradleProject().getChildren();
+        Set<String> childrenPaths = new HashSet<String>(2 * children.size());
+        for (GradleProject child: children) {
+            childrenPaths.add(child.getPath());
+        }
+
+        List<IdeaModule> result = new LinkedList<IdeaModule>();
+        for (IdeaModule candidateChild: module.getProject().getModules()) {
+            if (childrenPaths.contains(candidateChild.getGradleProject().getPath())) {
+                result.add(candidateChild);
+            }
+        }
+        return result;
+    }
+
+
     private static GradleProjectInfo tryCreateProjectTreeFromIdea(IdeaModule module) {
         DomainObjectSet<? extends IdeaContentRoot> contentRoots = module.getContentRoots();
         if (contentRoots.isEmpty()) {
@@ -283,14 +302,12 @@ public final class GradleModelLoader {
 
         File moduleDir = contentRoots.iterator().next().getRootDirectory();
 
-        DomainObjectSet<? extends HierarchicalElement> ideaChildren = module.getChildren();
-        List<GradleProjectInfo> children = new ArrayList<GradleProjectInfo>(ideaChildren.size());
-        for (HierarchicalElement child: ideaChildren) {
-            if (child instanceof IdeaModule) {
-                GradleProjectInfo childInfo = tryCreateProjectTreeFromIdea((IdeaModule)child);
-                if (childInfo != null) {
-                    children.add(childInfo);
-                }
+        int expectedChildCount = module.getGradleProject().getChildren().size();
+        List<GradleProjectInfo> children = new ArrayList<GradleProjectInfo>(expectedChildCount);
+        for (IdeaModule child: getChildModules(module)) {
+            GradleProjectInfo childInfo = tryCreateProjectTreeFromIdea(child);
+            if (childInfo != null) {
+                children.add(childInfo);
             }
         }
 
