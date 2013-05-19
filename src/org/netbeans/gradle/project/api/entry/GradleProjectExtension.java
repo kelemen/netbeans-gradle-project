@@ -48,6 +48,11 @@ public interface GradleProjectExtension {
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
      * </ul>
+     * <P>
+     * Note: You may also return an implementation of
+     * {@link org.netbeans.spi.project.ui.ProjectOpenedHook} but note that you
+     * have to have this instance on the lookup at all times, otherwise it may
+     * not get called.
      *
      * @return the lookup which is to be added to the project's lookup. This
      *   method may never return {@code null}.
