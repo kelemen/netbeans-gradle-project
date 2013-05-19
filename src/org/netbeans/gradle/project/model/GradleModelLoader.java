@@ -37,6 +37,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbSourceRoot;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -263,6 +264,12 @@ public final class GradleModelLoader {
                 }
             }
         }
+
+        JavaExtension javaExt = project.lookupExtension(JavaExtension.class);
+        if (javaExt != null) {
+            models.add(javaExt.addToModelLookup(Lookups.fixed(models.toArray())));
+        }
+
         return Lookups.fixed(models.toArray());
     }
 

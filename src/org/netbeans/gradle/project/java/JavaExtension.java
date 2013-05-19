@@ -133,6 +133,31 @@ public final class JavaExtension implements GradleProjectExtension {
         return currentModel.getMainModule().getShortName();
     }
 
+    /**
+     * This method is a pure hack to prevent regression when no extension is
+     * used other than the standard Java project. That is, this method is called
+     * right when models are loaded and will add other projects to the cache
+     * if only the JavaExtension is present.
+     */
+    public List<?> addToModelLookup(Lookup modelLookup) {
+        NbJavaModel result = null;
+        IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
+        if (ideaProject != null) {
+            try {
+                result = NbJavaModelUtils.parseFromIdeaModel(
+                        currentModel.getMainModule().getModuleDir(),
+                        ideaProject);
+            } catch (IOException ex) {
+                LOGGER.log(Level.FINE, "Failed to parse model.", ex);
+                // We will most likely log this exception again in modelsLoaded.
+            }
+        }
+
+        return result != null
+                ? Collections.singletonList(result)
+                : Collections.emptyList();
+    }
+
     private void switchToEmptyModel() {
         currentModel = NbJavaModelUtils.createEmptyModel(currentModel.getMainModule().getModuleDir());
     }
