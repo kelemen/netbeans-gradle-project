@@ -38,14 +38,12 @@ extends
 
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
-    private volatile List<GradleProjectExtensionNodes> currentExtensions;
 
     public GradleProjectChildFactory(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
 
         this.project = project;
         this.cleanupTaskRef = new AtomicReference<Runnable>(null);
-        this.currentExtensions = null;
     }
 
     private NbGradleModel getShownModule() {
@@ -77,7 +75,6 @@ extends
         };
 
         List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
-        currentExtensions = extensionNodes;
 
         final List<NbListenerRef> listenerRefs = new LinkedList<NbListenerRef>();
         for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
@@ -217,7 +214,7 @@ extends
     private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
         addSources(toPopulate);
 
-        List<GradleProjectExtensionNodes> extensionNodes = currentExtensions;
+        List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
         if (extensionNodes != null) {
             for (GradleProjectExtensionNodes nodes: extensionNodes) {
                 toPopulate.addAll(nodes.getNodeFactories());
