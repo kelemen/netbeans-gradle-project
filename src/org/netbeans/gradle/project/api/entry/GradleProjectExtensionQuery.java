@@ -30,6 +30,20 @@ public interface GradleProjectExtensionQuery {
      * <B>Note</B>: When this method is called, the lookup of the project is
      * incomplete and callers of the lookup must not expect to be notified
      * when the lookup of the project changes (via {@code Lookup.Result}).
+     * <P>
+     * You can expect the following queries to be on the project's lookup even
+     * when this method is being called:
+     * <ul>
+     *  <li>{@link org.netbeans.spi.project.ProjectState}</li>
+     *  <li>{@link org.netbeans.api.project.ProjectInformation}</li>
+     *  <li>{@link org.netbeans.spi.project.AuxiliaryConfiguration}</li>
+     *  <li>{@link org.netbeans.spi.project.AuxiliaryProperties}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.task.GradleCommandExecutor}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.SourceEncoding}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.ScriptPlatform}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.SourceLevel}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.BuildPlatform}</li>
+     * </ul>
      *
      * @param project the project which has been loaded and to which this
      *   extension is to be attached. This argument cannot be {@code null}.
