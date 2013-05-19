@@ -31,6 +31,7 @@ import org.netbeans.gradle.project.java.query.GradleSourceLevelQueryImplementati
 import org.netbeans.gradle.project.java.query.GradleUnitTestFinder;
 import org.netbeans.gradle.project.java.query.J2SEPlatformFromScriptQueryImpl;
 import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
+import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -139,6 +140,7 @@ public final class JavaExtension implements GradleProjectExtension {
                     new GradleBinaryForSourceQuery(this),
                     new GradleProjectTemplates(),
                     new JavaExtensionNodes(this),
+                    new JavaProjectContextActions(this),
                     new J2SEPlatformFromScriptQueryImpl(this) // internal use only
                     );
 

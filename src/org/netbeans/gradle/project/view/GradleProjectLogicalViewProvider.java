@@ -25,7 +25,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.gradle.tooling.model.GradleTask;
-import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -146,11 +145,16 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     private final class GradleProjectNode extends FilterNode {
-        private final Action[] actions;
+        @SuppressWarnings("VolatileArrayField")
+        private volatile Action[] actions;
 
         public GradleProjectNode(Node node) {
             super(node, createChildren(), createLookup(node));
 
+            updateActionsList();
+        }
+
+        private void updateActionsList() {
             TasksActionMenu tasksAction = new TasksActionMenu(project);
             CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
 
@@ -176,9 +180,6 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_REBUILD,
                     NbStrings.getRebuildCommandCaption()));
-            projectActions.add(createProjectAction(
-                    JavaProjectConstants.COMMAND_JAVADOC,
-                    NbStrings.getJavadocCommandCaption()));
 
             projectActions.addAll(getExtensionActions());
 
@@ -201,6 +202,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void fireModelChange() {
             fireDisplayNameChange(null, null);
+            updateActionsList();
         }
 
         public void fireInfoChangeEvent() {
