@@ -29,6 +29,8 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -41,6 +43,7 @@ import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
+import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.OutputWriter;
 
@@ -281,7 +284,7 @@ public final class GradleTasks {
     private static void submitGradleTask(
             final NbGradleProject project,
             final Callable<GradleTaskDef> taskDefFactory,
-            final TaskCompleteListener listener) {
+            final CommandCompleteListener listener) {
         preSubmitGradleTask();
 
         Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
@@ -319,37 +322,47 @@ public final class GradleTasks {
         GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory, listener);
     }
 
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            final GradleTaskDef taskDef) {
-        return createAsyncGradleTask(project, taskDef, projectTaskCompleteListener(project));
+    public static void submitGradleCommand(
+            final NbGradleProject project,
+            final Lookup actionContext,
+            final GradleCommandTemplate command) {
+        createAsyncGradleTask(project, actionContext, command).run();
     }
 
     public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
-            final GradleTaskDef taskDef,
-            TaskCompleteListener listener) {
-        if (taskDef == null) throw new NullPointerException("taskDef");
+            final NbGradleProject project,
+            final Lookup actionContext,
+            final GradleCommandTemplate command) {
+        if (project == null) throw new NullPointerException("project");
+        if (actionContext == null) throw new NullPointerException("actionContext");
+        if (command == null) throw new NullPointerException("command");
 
         return createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                return taskDef;
+                return GradleTaskDef.createFromTemplate(project, command, Lookup.EMPTY).create();
             }
-        }, listener);
+        });
+    }
+
+
+    public static Runnable createAsyncGradleTask(
+            NbGradleProject project,
+            Callable<GradleTaskDef> taskDefFactory) {
+        return new AsyncGradleTask(project, taskDefFactory, projectTaskCompleteListener(project));
     }
 
     public static Runnable createAsyncGradleTask(
             NbGradleProject project,
             Callable<GradleTaskDef> taskDefFactory,
-            TaskCompleteListener listener) {
+            CommandCompleteListener listener) {
         return new AsyncGradleTask(project, taskDefFactory, listener);
     }
 
-    public static TaskCompleteListener projectTaskCompleteListener(final NbGradleProject project) {
+    public static CommandCompleteListener projectTaskCompleteListener(final NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
 
-        return new TaskCompleteListener() {
+        return new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 if (error != null) {
@@ -367,12 +380,12 @@ public final class GradleTasks {
     private static class AsyncGradleTask implements Runnable {
         private final NbGradleProject project;
         private final Callable<GradleTaskDef> taskDefFactroy;
-        private final TaskCompleteListener listener;
+        private final CommandCompleteListener listener;
 
         public AsyncGradleTask(
                 NbGradleProject project,
                 Callable<GradleTaskDef> taskDefFactroy,
-                TaskCompleteListener listener) {
+                CommandCompleteListener listener) {
             if (project == null) throw new NullPointerException("project");
             if (taskDefFactroy == null) throw new NullPointerException("taskDefFactroy");
             if (listener == null) throw new NullPointerException("listener");

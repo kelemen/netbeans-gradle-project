@@ -1,12 +1,14 @@
 package org.netbeans.gradle.project;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -16,9 +18,12 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.java.classpath.ClassPath;
-import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
+import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
+import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
@@ -29,23 +34,19 @@ import org.netbeans.gradle.project.properties.GradleCustomizer;
 import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.query.GradleAnnotationProcessingQuery;
-import org.netbeans.gradle.project.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
-import org.netbeans.gradle.project.query.GradleClassPathProvider;
-import org.netbeans.gradle.project.query.GradleProjectTemplates;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
-import org.netbeans.gradle.project.query.GradleSourceForBinaryQuery;
-import org.netbeans.gradle.project.query.GradleSourceLevelQueryImplementation;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
-import org.netbeans.gradle.project.query.GradleUnitTestFinder;
+import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
@@ -72,9 +73,9 @@ public final class NbGradleProject implements Project {
     private final FileObject projectDir;
     private final File projectDirAsFile;
     private final ProjectState state;
-    private final AtomicReference<Lookup> lookupRef;
-
-    private final GradleClassPathProvider cpProvider;
+    private final AtomicReference<Lookup> defaultLookupRef;
+    private final AtomicReference<DynamicLookup> lookupRef;
+    private final AtomicReference<Lookup> protectedLookupRef;
 
     private final String name;
     private final ExceptionDisplayer exceptionDisplayer;
@@ -88,27 +89,96 @@ public final class NbGradleProject implements Project {
 
     private final WaitableSignal loadedAtLeastOnceSignal;
 
-    public NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
+    private final AtomicReference<Queue<Runnable>> delayedInitTasks;
+    private volatile List<GradleProjectExtension> extensions;
+    private volatile Lookup extensionsOnLookup;
+
+    private NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
 
+        this.delayedInitTasks = new AtomicReference<Queue<Runnable>>(new LinkedBlockingQueue<Runnable>());
         this.state = state;
-        this.lookupRef = new AtomicReference<Lookup>(null);
+        this.defaultLookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
         this.modelChanges = new ChangeSupport(this);
-        this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDir));
+        this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDirAsFile));
 
-        this.cpProvider = new GradleClassPathProvider(this);
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
+        this.extensions = Collections.emptyList();
+        this.extensionsOnLookup = Lookup.EMPTY;
+        this.lookupRef = new AtomicReference<DynamicLookup>(null);
+        this.protectedLookupRef = new AtomicReference<Lookup>(null);
+    }
+
+    public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
+        NbGradleProject project = new NbGradleProject(projectDir, state);
+        try {
+            Collection<? extends GradleProjectExtensionQuery> extensionQueries
+                    = Lookup.getDefault().lookupAll(GradleProjectExtensionQuery.class);
+
+            List<GradleProjectExtension> extensions = new LinkedList<GradleProjectExtension>();
+            for (GradleProjectExtensionQuery extension: extensionQueries) {
+                GradleProjectExtension loadedExtension = null;
+                try {
+                    loadedExtension = extension.loadExtensionForProject(project);
+                } catch (IOException ex) {
+                    String errorMessage = "Failed to load a Gradle extension ["
+                            + extension.getClass().getName()
+                            + "] for this project: "
+                            + projectDir;
+                    LOGGER.log(Level.INFO, errorMessage, ex);
+                } catch (Throwable ex) {
+                    String errorMessage = "An unexpected failure prevented loading of a Gradle extension ["
+                            + extension.getClass().getName()
+                            + "] for this project: "
+                            + projectDir;
+                    LOGGER.log(Level.SEVERE, errorMessage, ex);
+                }
+
+                if (loadedExtension != null) {
+                    extensions.add(loadedExtension);
+                }
+            }
+            project.setExtensions(extensions);
+        } finally {
+            Queue<Runnable> taskList = project.delayedInitTasks.getAndSet(null);
+            for (Runnable tasks: taskList) {
+                tasks.run();
+            }
+        }
+        return project;
+    }
+
+    public List<GradleProjectExtension> getExtensions() {
+        return extensions;
+    }
+
+    private void setExtensions(List<GradleProjectExtension> extensions) {
+        List<GradleProjectExtension> newExtensions
+                = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
+        List<Lookup> allLookups = new ArrayList<Lookup>(newExtensions.size() + 1);
+        allLookups.add(getDefaultLookup());
+        for (final GradleProjectExtension extension: newExtensions) {
+            allLookups.add(extension.getExtensionLookup());
+        }
+
+        this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
+        this.extensions = newExtensions;
+        getMainLookup().replaceLookups(allLookups);
+    }
+
+    public <T extends GradleProjectExtension> T lookupExtension(Class<T> extClass) {
+        return extensionsOnLookup.lookup(extClass);
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -134,6 +204,31 @@ public final class NbGradleProject implements Project {
             result = loadErrorRef.get();
         }
         return result;
+    }
+
+    public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
+        final List<TaskVariableMap> maps = new LinkedList<TaskVariableMap>();
+        maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
+
+        for (GradleProjectExtension extension: extensions) {
+            Collection<? extends GradleTaskVariableQuery> taskVariables
+                    = extension.getExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
+            for (GradleTaskVariableQuery query: taskVariables) {
+                maps.add(query.getVariableMap(actionContext));
+            }
+        }
+        return new TaskVariableMap() {
+            @Override
+            public String tryGetValueForVariable(TaskVariable variable) {
+                for (TaskVariableMap map: maps) {
+                    String value = map.tryGetValueForVariable(variable);
+                    if (value != null) {
+                        return value;
+                    }
+                }
+                return null;
+            }
+        };
     }
 
     public ProjectInfoManager getProjectInfoManager() {
@@ -166,7 +261,6 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleModel getCurrentModel() {
-        loadProject(true, true);
         return getAvailableModel();
     }
 
@@ -205,11 +299,50 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private void loadProject(boolean onlyIfNotLoaded, final boolean mayUseCache) {
+    private boolean isInitialized() {
+        return delayedInitTasks.get() == null;
+    }
+
+    private void runDelayedInitTask(final Runnable task) {
+        assert task != null;
+
+        Queue<Runnable> taskList = delayedInitTasks.get();
+        if (taskList == null) {
+            task.run();
+            return;
+        }
+
+        final AtomicBoolean executed = new AtomicBoolean(false);
+        Runnable delayedTask = new Runnable() {
+            @Override
+            public void run() {
+                if (executed.compareAndSet(false, true)) {
+                    task.run();
+                }
+            }
+        };
+
+        taskList.add(delayedTask);
+        if (delayedInitTasks.get() == null) {
+            delayedTask.run();
+        }
+    }
+
+    private void loadProject(final boolean onlyIfNotLoaded, final boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
                 return;
             }
+        }
+
+        if (!isInitialized()) {
+            runDelayedInitTask(new Runnable() {
+                @Override
+                public void run() {
+                    loadProject(false, mayUseCache);
+                }
+            });
+            return;
         }
 
         getPropertiesForProfile(getCurrentProfile().getProfileName(), true, new PropertiesLoadListener() {
@@ -252,7 +385,7 @@ public final class NbGradleProject implements Project {
     }
 
     public String getDisplayName() {
-        return getAvailableModel().getMainModule().getDisplayName();
+        return getAvailableModel().getDisplayName();
     }
 
     public File getProjectDirectoryAsFile() {
@@ -264,11 +397,10 @@ public final class NbGradleProject implements Project {
         return projectDir;
     }
 
-    @Override
-    public Lookup getLookup() {
+    private Lookup getDefaultLookup() {
         // The Lookup is not created in the constructor, so that we do not need
         // to share "this" in the constructor.
-        Lookup result = lookupRef.get();
+        Lookup result = defaultLookupRef.get();
         if (result == null) {
             GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
 
@@ -278,22 +410,20 @@ public final class NbGradleProject implements Project {
                 NbGradleConfigProvider.getConfigProvider(this),
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
-                new GradleProjectSources(this),
                 new GradleActionProvider(this),
-                cpProvider,
-                new GradleSourceLevelQueryImplementation(this),
-                new GradleUnitTestFinder(this),
                 new GradleSharabilityQuery(this),
                 new GradleSourceEncodingQuery(this),
                 new GradleCustomizer(this),
                 new OpenHook(),
-                new GradleAnnotationProcessingQuery(),
-                new GradleSourceForBinaryQuery(this),
-                new GradleBinaryForSourceQuery(this),
                 auxConfig,
                 new GradleAuxiliaryProperties(auxConfig),
-                new GradleProjectTemplates(),
                 new GradleTemplateAttrProvider(this),
+                new DefaultGradleCommandExecutor(this),
+                ProjectPropertiesApi.buildPlatform(getProperties().getPlatform()),
+                ProjectPropertiesApi.scriptPlatform(getProperties().getScriptPlatform()),
+                ProjectPropertiesApi.sourceEncoding(getProperties().getSourceEncoding()),
+                ProjectPropertiesApi.sourceLevel(getProperties().getSourceLevel()),
+                new ProjectInfoManager(),
 
                 // FileOwnerQueryImplementation cannot be added to the project's
                 // lookup, since NetBeans will ignore it. It must be added
@@ -301,14 +431,35 @@ public final class NbGradleProject implements Project {
                 // GradleFileOwnerQuery and is added using the annotation.
             });
 
-            if (lookupRef.compareAndSet(null, newLookup)) {
+            if (defaultLookupRef.compareAndSet(null, newLookup)) {
                 for (ProjectInitListener listener: newLookup.lookupAll(ProjectInitListener.class)) {
                     listener.onInitProject();
                 }
+
+                loadProject(true, true);
             }
-            result = lookupRef.get();
+            result = defaultLookupRef.get();
         }
         return result;
+    }
+
+    private DynamicLookup getMainLookup() {
+        DynamicLookup lookup = lookupRef.get();
+        if (lookup == null) {
+            lookupRef.compareAndSet(null, new DynamicLookup(getDefaultLookup()));
+            lookup = lookupRef.get();
+        }
+        return lookup;
+    }
+
+    @Override
+    public Lookup getLookup() {
+        Lookup lookup = protectedLookupRef.get();
+        if (lookup == null) {
+            protectedLookupRef.compareAndSet(null, DynamicLookup.viewLookup(getMainLookup()));
+            lookup = protectedLookupRef.get();
+        }
+        return lookup;
     }
 
     // equals and hashCode is provided, so that NetBeans doesn't load the
@@ -333,15 +484,11 @@ public final class NbGradleProject implements Project {
         return true;
     }
 
-    // OpenHook is important for debugging because the debugger relies on the
-    // globally registered source class paths for source stepping.
-
     // SwingUtilities.invokeLater is used only to guarantee the order of events.
     // Actually any executor which executes tasks in the order they were
     // submitted to it is good (using SwingUtilities.invokeLater was only
     // convenient to use because registering paths is cheap enough).
-    private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
-        private final List<GlobalPathReg> paths;
+    private class OpenHook extends ProjectOpenedHook {
         private final ModelLoadListener modelLoadListener;
         private ChangeListener licenseChangeListener;
         private LicenseManager.Ref licenseRef;
@@ -350,11 +497,6 @@ public final class NbGradleProject implements Project {
         public OpenHook() {
             this.opened = false;
 
-            this.paths = new LinkedList<GlobalPathReg>();
-            this.paths.add(new GlobalPathReg(ClassPath.SOURCE));
-            this.paths.add(new GlobalPathReg(ClassPath.BOOT));
-            this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
-            this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
             this.licenseRef = null;
             this.licenseChangeListener = null;
 
@@ -384,11 +526,9 @@ public final class NbGradleProject implements Project {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    if (!opened) {
-                        return;
+                    if (opened) {
+                        registerLicenseNow();
                     }
-
-                    registerLicenseNow();
                 }
             });
         }
@@ -397,8 +537,6 @@ public final class NbGradleProject implements Project {
         protected void projectOpened() {
             GradleModelLoader.addModelLoadedListener(modelLoadListener);
             reloadProject(true);
-
-            cpProvider.addPropertyChangeListener(this);
 
             if (licenseChangeListener != null) {
                 LOGGER.warning("projectOpened() without close.");
@@ -417,7 +555,6 @@ public final class NbGradleProject implements Project {
                 @Override
                 public void run() {
                     opened = true;
-                    doRegisterClassPaths();
                     registerLicenseNow();
                 }
             });
@@ -429,7 +566,6 @@ public final class NbGradleProject implements Project {
                 @Override
                 public void run() {
                     opened = false;
-                    doUnregisterPaths();
 
                     if (licenseRef != null) {
                         licenseRef.unregister();
@@ -444,68 +580,6 @@ public final class NbGradleProject implements Project {
             }
 
             GradleModelLoader.removeModelLoadedListener(modelLoadListener);
-            cpProvider.removePropertyChangeListener(this);
-        }
-
-        private void doUnregisterPaths() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            for (GlobalPathReg pathReg: paths) {
-                pathReg.unregister();
-            }
-        }
-
-        private void doRegisterClassPaths() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            for (GlobalPathReg pathReg: paths) {
-                pathReg.register();
-            }
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    if (opened) {
-                        doRegisterClassPaths();
-                    }
-                }
-            });
-        }
-    }
-
-    private class GlobalPathReg {
-        private final String type;
-        // Note that using AtomicReference does not really make the methods
-        // thread-safe but is only convenient to use.
-        private final AtomicReference<ClassPath[]> paths;
-
-        public GlobalPathReg(String type) {
-            this.type = type;
-            this.paths = new AtomicReference<ClassPath[]>(null);
-        }
-
-        private void replaceRegistration(ClassPath[] newPaths) {
-            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
-
-            ClassPath[] oldPaths = paths.getAndSet(newPaths);
-            if (oldPaths != null) {
-                registry.unregister(type, oldPaths);
-            }
-            if (newPaths != null) {
-                registry.register(type, newPaths);
-            }
-        }
-
-        public void register() {
-            ClassPath[] newPaths = new ClassPath[]{cpProvider.getClassPaths(type)};
-            replaceRegistration(newPaths);
-        }
-
-        public void unregister() {
-            replaceRegistration(null);
         }
     }
 
@@ -533,6 +607,9 @@ public final class NbGradleProject implements Project {
             }
 
             if (hasChanged) {
+                for (GradleProjectExtension extension: extensions) {
+                    extension.modelsLoaded(model != null ? model.getModels() : Lookup.EMPTY);
+                }
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {

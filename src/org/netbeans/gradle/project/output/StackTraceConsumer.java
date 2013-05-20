@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.URLMapper;

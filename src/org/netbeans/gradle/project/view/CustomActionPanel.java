@@ -1,8 +1,10 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import javax.swing.JTextArea;
 import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 
 @SuppressWarnings("serial") // Don't care about serialization
@@ -34,6 +36,19 @@ public class CustomActionPanel extends javax.swing.JPanel {
         }
         jJvmArgsTextArea.setText(jvmArguments.toString());
         jNonBlockingCheck.setSelected(task.isNonBlocking());
+    }
+
+    public GradleCommandTemplate tryGetGradleCommand() {
+        String[] tasks = getTasks();
+        if (tasks.length == 0) {
+            return null;
+        }
+
+        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(Arrays.asList(tasks));
+        builder.setArguments(Arrays.asList(getArguments()));
+        builder.setJvmArguments(Arrays.asList(getJvmArguments()));
+        builder.setBlocking(!isNonBlocking());
+        return builder.create();
     }
 
     public String[] getTasks() {

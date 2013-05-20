@@ -10,6 +10,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.ChangeSupport;
 
@@ -17,7 +18,7 @@ public final class DefaultPropertySources {
     private static final Logger LOGGER = Logger.getLogger(DefaultPropertySources.class.getName());
 
     public static PropertySource<String> parseSourceLevelSource(
-            final PropertySource<JavaPlatform> source,
+            final PropertySource<ProjectPlatform> source,
             final boolean defaultValue) {
 
         if (source == null) throw new NullPointerException("source");
@@ -45,6 +46,99 @@ public final class DefaultPropertySources {
         };
     }
 
+    public static JavaPlatform tryFindPlatform(String specName, String versionStr) {
+        return tryChooseFromPlatforms(specName, versionStr, JavaPlatformManager.getDefault().getInstalledPlatforms());
+    }
+
+
+    public static JavaPlatform tryChooseFromPlatforms(
+            String specName,
+            String versionStr,
+            JavaPlatform[] platforms) {
+
+        if (specName == null) throw new NullPointerException("specName");
+        if (versionStr == null) throw new NullPointerException("versionStr");
+
+        SpecificationVersion version;
+        try {
+            version = new SpecificationVersion(versionStr);
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.INFO, "Invalid platform version: " + versionStr, ex);
+            return JavaPlatform.getDefault();
+        }
+
+        for (JavaPlatform platform: platforms) {
+            Specification specification = platform.getSpecification();
+            if (specName.equalsIgnoreCase(specification.getName())
+                    && version.equals(specification.getVersion())) {
+                return platform;
+            }
+        }
+
+        // We could not find an exact match, so try to find the best match:
+        //
+        // 1. If there is at least one platform with a version higher than
+        //    requested, choose the one with the lowest version which is still
+        //    higher than the requested (the closest version to the requested
+        //    which is above the requested version).
+        //
+        // 2. In case every platform is below the requested, choose the one
+        //    with the highest version number.
+
+        JavaPlatform bestMatch = null;
+        for (JavaPlatform platform: platforms) {
+            Specification platformSpecification = platform.getSpecification();
+            if (platformSpecification == null) {
+                continue;
+            }
+
+            if (!specName.equalsIgnoreCase(platformSpecification.getName())) {
+                continue;
+            }
+
+            SpecificationVersion thisVersion = platformSpecification.getVersion();
+            if (thisVersion == null) {
+                continue;
+            }
+
+            if (bestMatch == null) {
+                bestMatch = platform;
+            }
+            else {
+                SpecificationVersion bestVersion = bestMatch.getSpecification().getVersion();
+
+                // required version is greater than the one we currently have
+                if (version.compareTo(bestVersion) > 0) {
+                    // Replace if this platform has a greater version number
+                    if (bestVersion.compareTo(thisVersion) < 0) {
+                        bestMatch = platform;
+                    }
+                }
+                else {
+                    // Replace if this platform is still above the requirement
+                    // but is below the one we currently have.
+                    if (version.compareTo(thisVersion) < 0
+                            && thisVersion.compareTo(bestVersion) < 0) {
+                        bestMatch = platform;
+                    }
+                }
+            }
+        }
+
+        if (version.compareTo(bestMatch.getSpecification().getVersion()) > 0) {
+            LOGGER.log(Level.WARNING,
+                    "The choosen platform has a higher version number than the requested one: {0}",
+                    versionStr);
+        }
+        else {
+            LOGGER.log(Level.WARNING,
+                    "The choosen platform has a lower version number than the requested one: {0}",
+                    versionStr);
+        }
+
+        return bestMatch;
+    }
+
     public static PropertySource<JavaPlatform> findPlatformSource(
             final String specName,
             final String versionStr,
@@ -61,87 +155,15 @@ public final class DefaultPropertySources {
 
             @Override
             protected JavaPlatform chooseFromPlatforms(JavaPlatform[] platforms) {
-                SpecificationVersion version;
-                try {
-                    version = new SpecificationVersion(versionStr);
-                } catch (NumberFormatException ex) {
-                    LOGGER.log(Level.INFO, "Invalid platform version: " + versionStr, ex);
-                    return JavaPlatform.getDefault();
-                }
-
-                for (JavaPlatform platform: platforms) {
-                    Specification specification = platform.getSpecification();
-                    if (specName.equalsIgnoreCase(specification.getName())
-                            && version.equals(specification.getVersion())) {
-                        return platform;
-                    }
-                }
-
-                // We could not find an exact match, so try to find the best match:
-                //
-                // 1. If there is at least one platform with a version higher than
-                //    requested, choose the one with the lowest version which is still
-                //    higher than the requested (the closest version to the requested
-                //    which is above the requested version).
-                //
-                // 2. In case every platform is below the requested, choose the one
-                //    with the highest version number.
-
-                JavaPlatform bestMatch = null;
-                for (JavaPlatform platform: platforms) {
-                    Specification platformSpecification = platform.getSpecification();
-                    if (platformSpecification == null) {
-                        continue;
-                    }
-
-                    if (!specName.equalsIgnoreCase(platformSpecification.getName())) {
-                        continue;
-                    }
-
-                    SpecificationVersion thisVersion = platformSpecification.getVersion();
-                    if (thisVersion == null) {
-                        continue;
-                    }
-
-                    if (bestMatch == null) {
-                        bestMatch = platform;
-                    }
-                    else {
-                        SpecificationVersion bestVersion = bestMatch.getSpecification().getVersion();
-
-                        // required version is greater than the one we currently have
-                        if (version.compareTo(bestVersion) > 0) {
-                            // Replace if this platform has a greater version number
-                            if (bestVersion.compareTo(thisVersion) < 0) {
-                                bestMatch = platform;
-                            }
-                        }
-                        else {
-                            // Replace if this platform is still above the requirement
-                            // but is below the one we currently have.
-                            if (version.compareTo(thisVersion) < 0
-                                    && thisVersion.compareTo(bestVersion) < 0) {
-                                bestMatch = platform;
-                            }
-                        }
-                    }
-                }
+                JavaPlatform bestMatch = tryChooseFromPlatforms(specName, versionStr, platforms);
 
                 if (bestMatch == null) {
                     LOGGER.severe("Could not find any Java platform.");
-                }
-                else if (version.compareTo(bestMatch.getSpecification().getVersion()) > 0) {
-                    LOGGER.log(Level.WARNING,
-                            "The choosen platform has a higher version number than the requested one: {0}",
-                            versionStr);
+                    return JavaPlatform.getDefault();
                 }
                 else {
-                    LOGGER.log(Level.WARNING,
-                            "The choosen platform has a lower version number than the requested one: {0}",
-                            versionStr);
+                    return bestMatch;
                 }
-
-                return bestMatch != null ? bestMatch : JavaPlatform.getDefault();
             }
         };
     }

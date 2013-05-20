@@ -253,28 +253,112 @@
                         <code-name-base>org.netbeans.libs.junit4</code-name-base>
                         <compile-dependency/>
                     </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.java.api.common</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.masterfs</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.nbjunit</code-name-base>
+                        <recursive/>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.projectapi</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.projectui</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.actions</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.awt</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.dialogs</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.explorer</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.filesystems</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.io</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.loaders</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.modules</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.nodes</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.options</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.text</code-name-base>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.openide.util</code-name-base>
+                    </test-dependency>
                 </test-type>
             </test-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>org.gradle.api</package>
+                <package>org.gradle.api.artifacts</package>
+                <package>org.gradle.api.artifacts.cache</package>
+                <package>org.gradle.api.artifacts.dsl</package>
+                <package>org.gradle.api.artifacts.repositories</package>
+                <package>org.gradle.api.artifacts.result</package>
+                <package>org.gradle.api.component</package>
+                <package>org.gradle.api.dsl</package>
+                <package>org.gradle.api.execution</package>
+                <package>org.gradle.api.file</package>
+                <package>org.gradle.api.initialization</package>
+                <package>org.gradle.api.initialization.dsl</package>
+                <package>org.gradle.tooling.model</package>
+                <package>org.gradle.tooling.model.build</package>
+                <package>org.gradle.tooling.model.eclipse</package>
+                <package>org.gradle.tooling.model.idea</package>
+                <package>org.gradle.tooling.provider.model</package>
+                <package>org.netbeans.gradle.project.api.entry</package>
+                <package>org.netbeans.gradle.project.api.event</package>
+                <package>org.netbeans.gradle.project.api.nodes</package>
+                <package>org.netbeans.gradle.project.api.property</package>
+                <package>org.netbeans.gradle.project.api.task</package>
+            </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/gradle-wrapper-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gradle-wrapper-1.0.jar</binary-origin>
+                <runtime-relative-path>ext/gradle-wrapper-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gradle-wrapper-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gradle-core-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gradle-core-1.0.jar</binary-origin>
+                <runtime-relative-path>ext/gradle-core-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gradle-core-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gradle-base-services-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gradle-base-services-1.0.jar</binary-origin>
+                <runtime-relative-path>ext/gradle-base-services-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gradle-base-services-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gradle-tooling-api-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gradle-tooling-api-1.0.jar</binary-origin>
+                <runtime-relative-path>ext/gradle-messaging-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gradle-messaging-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.6.4.jar</binary-origin>
+                <runtime-relative-path>ext/gradle-tooling-api-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gradle-tooling-api-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

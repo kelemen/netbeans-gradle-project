@@ -1,22 +1,19 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.GradleTask;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbGradleTask;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.tasks.GradleTaskDef;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.openide.util.Lookup;
 
 public final class PredefinedTask {
-    public static final String VAR_PROJECT_NAME = "${project}";
-    public static final String VAR_TEST_FILE_PATH = "${test-file-path}";
-    public static final String VAR_SELECTED_CLASS = "${selected-class}";
-
     public static final class Name {
         private final String name;
         private final boolean mustExist;
@@ -82,158 +79,106 @@ public final class PredefinedTask {
         return jvmArguments;
     }
 
-    private static boolean isLocalTaskExists(NbGradleModule module, String task) {
-        for (NbGradleTask moduleTask: module.getTasks()) {
-            if (moduleTask.getLocalName().equals(task)) {
+    public static PredefinedTask createSimple(String displayName, String taskName) {
+        Name name = new Name(taskName, false);
+        return new PredefinedTask(displayName,
+                Arrays.asList(name),
+                Collections.<String>emptyList(),
+                Collections.<String>emptyList(),
+                false);
+    }
+
+    private static GradleProject getRootProject(GradleProject project) {
+        GradleProject current = project;
+        GradleProject result = current;
+
+        while (current != null) {
+            result = current;
+            current = current.getParent();
+        }
+        return result;
+    }
+
+    private static GradleProject findProject(GradleProject project, String projectPath) {
+        if (projectPath.startsWith(":")) {
+            return getRootProject(project).findByPath(projectPath);
+        }
+        else {
+            return project.findByPath(projectPath);
+        }
+    }
+
+    private static boolean isProjectHasTask(GradleProject project, String taskName) {
+        for (GradleTask task: project.getTasks()) {
+            if (taskName.equals(task.getName())) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isLocalTaskExistsInModuleTree(NbGradleModule module, String task) {
-        if (isLocalTaskExists(module, task)) {
+    private static boolean isProjectOrChildrenHasTask(GradleProject project, String taskName) {
+        if (isProjectHasTask(project, taskName)) {
             return true;
         }
-        for (NbGradleModule child: module.getChildren()) {
-            if (isLocalTaskExistsInModuleTree(child, task)) {
+        for (GradleProject child: project.getChildren()) {
+            if (isProjectOrChildrenHasTask(child, taskName)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isTaskExists(NbGradleModule module, String task) {
-        String projectName;
-        String localName;
-
-        int nameSepIndex = task.lastIndexOf(':');
-        if (nameSepIndex >= 0) {
-            projectName = task.substring(0, nameSepIndex);
-            localName = task.substring(nameSepIndex + 1);
-
-            // if projectName is empty, that means that we want to execute
-            // the task of the root project.
-            if (projectName.isEmpty()) {
-                projectName = ":";
-            }
-            else if (!projectName.startsWith(":")) {
-                projectName = module.getUniqueName() + ":" + projectName;
-            }
-        }
-        else {
-            projectName = null;
-            localName = task;
-        }
-
-        if (projectName != null) {
-            NbGradleModule projectModule = NbModelUtils.lookupModuleByName(module, projectName);
-            if (projectModule == null) {
-                return false;
-            }
-
-            return isLocalTaskExists(projectModule, localName);
-        }
-        else {
-            if (isLocalTaskExistsInModuleTree(module, localName)) {
-                return true;
-            }
-
+    private static boolean isTaskExists(GradleProject project, String projectPath, String taskName) {
+        GradleProject taskProject = findProject(project, projectPath);
+        if (taskProject == null) {
             return false;
         }
+
+        return isProjectHasTask(taskProject, taskName);
     }
 
-    public static GradleTaskDef.Builder getDefaultTaskBuilder(
-            NbGradleProject project,
-            List<String> taskNames,
-            boolean nonBlocking) {
-        return getDefaultTaskBuilder(project.getDisplayName(), taskNames, nonBlocking);
-    }
-
-    public static GradleTaskDef.Builder getDefaultTaskBuilder(
-            String projectName,
-            List<String> taskNames,
-            boolean nonBlocking) {
-
-        String caption = projectName;
-        if (!nonBlocking) {
-            caption += " - " + taskNames.toString();
+    private static boolean isTaskExists(GradleProject project, String taskName) {
+        int taskNameSepIndex = taskName.lastIndexOf(':');
+        if (taskNameSepIndex >= 0) {
+            return isTaskExists(project,
+                    taskName.substring(0, taskNameSepIndex),
+                    taskName.substring(taskNameSepIndex + 1));
         }
-
-        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, taskNames);
-        builder.setNonBlocking(nonBlocking);
-        builder.setCleanOutput(!nonBlocking);
-        builder.setReuseOutput(nonBlocking);
-        return builder;
-    }
-
-    public static Map<String, String> varReplaceMap(NbGradleModule mainModule) {
-        String uniqueName = mainModule.getUniqueName();
-        if (":".equals(uniqueName)) { // This is the root project.
-            uniqueName = "";
+        else {
+            return isProjectOrChildrenHasTask(project, taskName);
         }
-
-        return Collections.singletonMap(VAR_PROJECT_NAME, uniqueName);
     }
 
-    private static String processString(String str, Map<String, String> varReplaceMap) {
-        String result = str;
-        for (Map.Entry<String, String> entry: varReplaceMap.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
-        return result;
-    }
-
-    private static List<String> processList(List<String> strings, Map<String, String> varReplaceMap) {
-        List<String> result = new ArrayList<String>(strings.size());
-        for (String str: strings) {
-            result.add(processString(str, varReplaceMap));
-        }
-        return result;
-    }
-
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, NbGradleProject project) {
-        return createTaskDefBuilder(caption, varReplaceMap(project.getAvailableModel().getMainModule()));
-    }
-
-    public GradleTaskDef.Builder createTaskDefBuilder(String caption, Map<String, String> varReplaceMap) {
-        List<String> processedTaskNames = new LinkedList<String>();
+    public GradleCommandTemplate toCommandTemplate() {
+        List<String> rawTaskNames = new ArrayList<String>(taskNames.size());
         for (Name name: taskNames) {
-            processedTaskNames.add(processString(name.getName(), varReplaceMap));
+            rawTaskNames.add(name.getName());
         }
 
-        GradleTaskDef.Builder builder = new GradleTaskDef.Builder(caption, processedTaskNames);
-        builder.setArguments(processList(arguments, varReplaceMap));
-        builder.setJvmArguments(processList(jvmArguments, varReplaceMap));
-
-        builder.setNonBlocking(nonBlocking);
-        builder.setCleanOutput(!nonBlocking);
-        builder.setReuseOutput(nonBlocking);
-
-        return builder;
-    }
-
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project) {
-        return tryCreateTaskDef(project, varReplaceMap(project.getAvailableModel().getMainModule()));
-    }
-
-    public GradleTaskDef tryCreateTaskDef(NbGradleProject project, Map<String, String> varReplaceMap) {
-        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
-
-        List<String> processedTaskNames = new LinkedList<String>();
-        for (Name name: taskNames) {
-            String processName = processString(name.getName(), varReplaceMap);
-            if (name.mustExist && !isTaskExists(mainModule, processName)) {
-                return null;
-            }
-            processedTaskNames.add(processName);
-        }
-
-        GradleTaskDef.Builder builder = getDefaultTaskBuilder(
-                project, processedTaskNames, nonBlocking);
-        builder.setArguments(processList(arguments, varReplaceMap));
-        builder.setJvmArguments(processList(jvmArguments, varReplaceMap));
+        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(rawTaskNames);
+        builder.setArguments(arguments);
+        builder.setJvmArguments(jvmArguments);
+        builder.setBlocking(!nonBlocking);
         return builder.create();
+    }
+
+    public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {
+        return isTasksExistsIfRequired(project, project.getVarReplaceMap(actionContext));
+    }
+
+    public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
+        GradleProject gradleProject = project.getAvailableModel().getGradleProject();
+
+        for (Name name: taskNames) {
+            if (name.mustExist) {
+                String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
+                if (!isTaskExists(gradleProject, processedName)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override

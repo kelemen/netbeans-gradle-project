@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,21 +12,21 @@ import java.util.logging.Logger;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.model.NbDependency;
-import org.netbeans.gradle.project.model.NbDependencyType;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbModelUtils;
-import org.netbeans.gradle.project.model.NbModuleDependency;
-import org.netbeans.gradle.project.model.NbSourceGroup;
-import org.netbeans.gradle.project.model.NbSourceType;
-import org.netbeans.gradle.project.model.NbUriDependency;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.NbDependencyType;
+import org.netbeans.gradle.project.java.model.NbJavaDependency;
+import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbModuleDependency;
+import org.netbeans.gradle.project.java.model.NbSourceGroup;
+import org.netbeans.gradle.project.java.model.NbSourceType;
+import org.netbeans.gradle.project.java.model.NbUriDependency;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -40,7 +41,12 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private ClassPath getSources() {
-        NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+        JavaExtension javaExtension = project.lookupExtension(JavaExtension.class);
+        if (javaExtension == null) {
+            return ClassPath.EMPTY;
+        }
+
+        NbJavaModule mainModule = javaExtension.getCurrentModel().getMainModule();
         List<FileObject> srcRoots = new LinkedList<FileObject>();
 
         srcRoots.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
@@ -48,11 +54,11 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
             srcRoots.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFileObjects());
         }
 
-        Collection<NbDependency> allDependencies = NbModelUtils.getAllDependencies(
+        Collection<NbJavaDependency> allDependencies = NbJavaModelUtils.getAllDependencies(
                 mainModule,
                 test ? NbDependencyType.TEST_RUNTIME : NbDependencyType.RUNTIME);
 
-        for (NbDependency dependency: allDependencies) {
+        for (NbJavaDependency dependency: allDependencies) {
             if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
                 NbSourceGroup sources = moduleDep.getModule().getSources(NbSourceType.SOURCE);
@@ -62,7 +68,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
                 NbUriDependency uriDep = (NbUriDependency)dependency;
                 URI srcUri = uriDep.getSrcUri();
                 FileObject srcRoot = srcUri != null
-                        ? NbModelUtils.uriToFileObject(srcUri) : null;
+                        ? NbJavaModelUtils.uriToFileObject(srcUri) : null;
                 srcRoot = GradleFileUtils.asArchiveOrDir(srcRoot);
 
                 if (srcRoot != null) {
@@ -74,15 +80,15 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private ClassPath getJdkSources() {
-        JavaPlatform platform = project.getProperties().getPlatform().getValue();
-        return platform.getSourceFolders();
+        ProjectPlatform platform = project.getProperties().getPlatform().getValue();
+        return ClassPathSupport.createClassPath(platform.getSourcePaths().toArray(new URL[0]));
     }
 
     private void doAttach(int port) throws DebuggerStartException {
         LOGGER.log(Level.INFO, "Attempting to attach to debugee on port: {0}", port);
 
         Map<String, Object> services = new HashMap<String, Object>();
-        services.put("name", project.getAvailableModel().getMainModule().getUniqueName());
+        services.put("name", project.getAvailableModel().getGradleProject().getPath());
         services.put("baseDir", project.getProjectDirectoryAsFile());
         services.put("jdksources", getJdkSources());
         services.put("sourcepath", getSources());

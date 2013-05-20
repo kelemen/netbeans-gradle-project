@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.modules.SpecificationVersion;
 
@@ -39,19 +40,24 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
             ActionProvider.COMMAND_DEBUG_SINGLE,
             JavaProjectConstants.COMMAND_DEBUG_FIX)));
 
-    public static String getSourceLevelFromPlatform(JavaPlatform platform) {
-        SpecificationVersion version = platform.getSpecification().getVersion();
-        if (version == null) {
-            return DEFAULT_SOURCE_LEVEL;
-        }
-
-        String[] versionParts = version.toString().split(Pattern.quote("."));
+    private static String getSourceLevelFromPlatformVersion(String version) {
+        String[] versionParts = version.split(Pattern.quote("."));
         if (versionParts.length < 2) {
             return DEFAULT_SOURCE_LEVEL;
         }
         else {
             return versionParts[0] + "." + versionParts[1];
         }
+    }
+
+    public static String getSourceLevelFromPlatform(JavaPlatform platform) {
+        SpecificationVersion version = platform.getSpecification().getVersion();
+        String versionStr = version != null ? version.toString() : "";
+        return getSourceLevelFromPlatformVersion(versionStr);
+    }
+
+    public static String getSourceLevelFromPlatform(ProjectPlatform platform) {
+        return getSourceLevelFromPlatformVersion(platform.getVersion());
     }
 
     public static Set<String> getCustomizableCommands() {

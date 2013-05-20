@@ -31,9 +31,12 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
+import org.openide.util.Lookup;
 
 @SuppressWarnings("serial") // don't care
 public class ProjectPropertiesPanel extends javax.swing.JPanel {
@@ -54,7 +57,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         profileChangeLock = new AtomicInteger(0);
 
         setupListeners();
-        fillPlatformCombo();
+        fillProjectPlatformCombo();
+        fillScriptPlatformCombo();
 
         fetchProfilesAndSelect();
 
@@ -113,11 +117,11 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jGradleHomeInherit.setSelected(properties.getGradleLocation().isDefault());
 
         JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();
-        jScriptPlatformCombo.setSelectedItem(new PlatformComboItem(currentScriptPlatform));
+        jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(currentScriptPlatform));
         jScriptPlatformInherit.setSelected(properties.getScriptPlatform().isDefault());
 
-        JavaPlatform currentPlatform = properties.getPlatform().getValue();
-        jPlatformCombo.setSelectedItem(new PlatformComboItem(currentPlatform));
+        ProjectPlatform currentPlatform = properties.getPlatform().getValue();
+        jPlatformCombo.setSelectedItem(new ProjectPlatformComboItem(currentPlatform));
         jPlatformComboInherit.setSelected(properties.getPlatform().isDefault());
 
         jSourceEncoding.setText(properties.getSourceEncoding().getValue().name());
@@ -224,19 +228,29 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         });
     }
 
-    private void fillPlatformCombo() {
+    private void fillProjectPlatformCombo() {
+        List<ProjectPlatformComboItem> comboItems = new LinkedList<ProjectPlatformComboItem>();
+        for (GradleProjectPlatformQuery query: Lookup.getDefault().lookupAll(GradleProjectPlatformQuery.class)) {
+            for (ProjectPlatform platform: query.getAvailablePlatforms()) {
+                comboItems.add(new ProjectPlatformComboItem(platform));
+            }
+        }
+
+        jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new ProjectPlatformComboItem[0])));
+    }
+
+    private void fillScriptPlatformCombo() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<PlatformComboItem> comboItems = new LinkedList<PlatformComboItem>();
+        List<JavaPlatformComboItem> comboItems = new LinkedList<JavaPlatformComboItem>();
         for (int i = 0; i < platforms.length; i++) {
             JavaPlatform platform = platforms[i];
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
-                comboItems.add(new PlatformComboItem(platform));
+                comboItems.add(new JavaPlatformComboItem(platform));
             }
         }
 
-        jScriptPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new PlatformComboItem[0])));
-        jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new PlatformComboItem[0])));
+        jScriptPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new JavaPlatformComboItem[0])));
     }
 
     private PanelLockRef lockPanel() {
@@ -320,12 +334,12 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
         properties.getGradleLocation().setValueFromSource(asConst(gradleHome, jGradleHomeInherit.isSelected()));
 
-        PlatformComboItem selectedScriptPlatform = (PlatformComboItem)jScriptPlatformCombo.getSelectedItem();
+        JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
         if (selectedScriptPlatform != null) {
             properties.getScriptPlatform().setValueFromSource(asConst(selectedScriptPlatform.getPlatform(), jScriptPlatformInherit.isSelected()));
         }
 
-        PlatformComboItem selected = (PlatformComboItem)jPlatformCombo.getSelectedItem();
+        ProjectPlatformComboItem selected = (ProjectPlatformComboItem)jPlatformCombo.getSelectedItem();
         if (selected != null) {
             properties.getPlatform().setValueFromSource(asConst(selected.getPlatform(), jPlatformComboInherit.isSelected()));
         }
@@ -356,10 +370,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    private static class PlatformComboItem {
+    private static class JavaPlatformComboItem {
         private final JavaPlatform platform;
 
-        public PlatformComboItem(JavaPlatform platform) {
+        public JavaPlatformComboItem(JavaPlatform platform) {
             if (platform == null) throw new NullPointerException("platform");
             this.platform = platform;
         }
@@ -383,10 +397,54 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final PlatformComboItem other = (PlatformComboItem)obj;
+            final JavaPlatformComboItem other = (JavaPlatformComboItem)obj;
             SpecificationVersion thisVersion = this.platform.getSpecification().getVersion();
             SpecificationVersion otherVersion = other.platform.getSpecification().getVersion();
             return thisVersion.equals(otherVersion);
+        }
+
+        @Override
+        public String toString() {
+            return platform.getDisplayName();
+        }
+    }
+
+    private static class ProjectPlatformComboItem {
+        private final ProjectPlatform platform;
+
+        public ProjectPlatformComboItem(ProjectPlatform platform) {
+            if (platform == null) throw new NullPointerException("platform");
+            this.platform = platform;
+        }
+
+        public ProjectPlatform getPlatform() {
+            return platform;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 41 * hash + (this.platform.getName().hashCode());
+            hash = 41 * hash + (this.platform.getVersion().hashCode());
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final ProjectPlatformComboItem other = (ProjectPlatformComboItem)obj;
+            if (!this.platform.getName().equals(other.platform.getName())) {
+                return false;
+            }
+            if (!this.platform.getVersion().equals(other.platform.getVersion())) {
+                return false;
+            }
+            return true;
         }
 
         @Override

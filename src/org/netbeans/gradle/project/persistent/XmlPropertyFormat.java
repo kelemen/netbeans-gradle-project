@@ -36,6 +36,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
@@ -45,6 +46,7 @@ import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.PredefinedTask;
+import org.netbeans.gradle.project.properties.ProjectPlatformSource;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 import org.netbeans.gradle.project.properties.PropertySource;
 import org.w3c.dom.Comment;
@@ -301,9 +303,9 @@ final class XmlPropertyFormat {
         }
 
         if (!snapshot.getPlatform().isDefault()) {
-            JavaPlatform platform = snapshot.getPlatform().getValue();
-            addSimpleChild(root, PLATFORM_NAME_NODE, platform.getSpecification().getName());
-            addSimpleChild(root, PLATFORM_NODE, platform.getSpecification().getVersion().toString());
+            ProjectPlatform platform = snapshot.getPlatform().getValue();
+            addSimpleChild(root, PLATFORM_NAME_NODE, platform.getName());
+            addSimpleChild(root, PLATFORM_NODE, platform.getVersion());
         }
 
         if (!snapshot.getSourceLevel().isDefault()) {
@@ -592,9 +594,9 @@ final class XmlPropertyFormat {
             platformName = DEFAULT_SPECIFICATION_NAME;
         }
 
-        String platformStr = tryGetValueOfNode(root, PLATFORM_NODE);
-        if (platformStr != null) {
-            result.setPlatform(DefaultPropertySources.findPlatformSource(platformName, platformStr, false));
+        String platformVersion = tryGetValueOfNode(root, PLATFORM_NODE);
+        if (platformVersion != null) {
+            result.setPlatform(new ProjectPlatformSource(platformName, platformVersion, false));
         }
 
         String gradleHomeStr = tryGetValueOfNode(root, GRADLE_HOME_NODE);

@@ -16,26 +16,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
-import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbSourceRoot;
-import org.netbeans.gradle.project.model.NbSourceType;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbSourceRoot;
+import org.netbeans.gradle.project.java.model.NbSourceType;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
-public final class GradleProjectSources implements Sources, ProjectInitListener {
+public final class GradleProjectSources implements Sources, JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleProjectSources.class.getName());
 
     private static final SourceGroup[] NO_SOURCE_GROUPS = new SourceGroup[0];
 
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final ChangeSupport changeSupport;
 
     private volatile Map<String, SourceGroup[]> currentGroups;
@@ -43,9 +44,9 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
     private final AtomicBoolean hasScanned;
     private final AtomicReference<Object> scanRequestId;
 
-    public GradleProjectSources(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
-        this.project = project;
+    public GradleProjectSources(JavaExtension javaExt) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+        this.javaExt = javaExt;
         this.changeSupport = new ChangeSupport(this);
         this.currentGroups = Collections.emptyMap();
         this.hasScanned = new AtomicBoolean(false);
@@ -98,7 +99,7 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
     }
 
     private static Map<String, SourceGroup[]> findSourceGroupsOfModule(
-            NbGradleModule module) {
+            NbJavaModule module) {
         Map<String, SourceGroup[]> groups = new LinkedHashMap<String, SourceGroup[]>(8);
 
         String sourceGroupCaption = NbStrings.getSrcPackageCaption();
@@ -126,9 +127,9 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
         return groups;
     }
 
-    private static Map<String, SourceGroup[]> findSourceGroups(NbGradleProject project) {
-        NbGradleModel projectModel = project.getCurrentModel();
-        NbGradleModule mainModule = projectModel.getMainModule();
+    private static Map<String, SourceGroup[]> findSourceGroups(JavaExtension javaExt) {
+        NbJavaModel projectModel = javaExt.getCurrentModel();
+        NbJavaModule mainModule = projectModel.getMainModule();
 
         Map<String, SourceGroup[]> moduleSources = findSourceGroupsOfModule(mainModule);
         SourceGroup[] sources = moduleSources.get(GradleProjectConstants.SOURCES);
@@ -151,33 +152,20 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
         groups.put(GradleProjectConstants.TEST_SOURCES, testSources);
         groups.put(GradleProjectConstants.TEST_RESOURCES, testResources);
 
-        groups.put(Sources.TYPE_GENERIC, new SourceGroup[] {new GradleSourceGroup(project.getProjectDirectory(), project.getDisplayName())});
+        groups.put(Sources.TYPE_GENERIC, new SourceGroup[] {
+            new GradleSourceGroup(javaExt.getProjectDirectory())});
 
         return groups;
     }
 
-    private void onModelChange() {
+    @Override
+    public void onModelChange() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 scanForSources();
             }
         });
-    }
-
-    @Override
-    public void onInitProject() {
-        project.addModelChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                onModelChange();
-            }
-        });
-        // This is not called because it would trigger the loading of the
-        // project even if it just shown in the project open dialog.
-        // Although it should be called to ensure correct behaviour in every
-        // case.
-        // onModelChange();
     }
 
     public void scanForSources() {
@@ -206,10 +194,10 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
             public void run() {
                 scanRequestId.compareAndSet(requestId, null);
 
-                Map<String, SourceGroup[]> groups = findSourceGroups(project);
+                Map<String, SourceGroup[]> groups = findSourceGroups(javaExt);
 
                 currentGroups = groups;
-                LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", project.getName());
+                LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", javaExt.getName());
 
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -227,10 +215,12 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
 
         SourceGroup[] foundGroup = currentGroups.get(type);
         if (foundGroup == null && Sources.TYPE_GENERIC.equals(type)) {
-            foundGroup = new SourceGroup[] {new GradleSourceGroup(project.getProjectDirectory(), project.getDisplayName())};
+            return new SourceGroup[] {
+                new GradleSourceGroup(javaExt.getProjectDirectory())};
         }
-
-        return foundGroup != null ? foundGroup.clone() : NO_SOURCE_GROUPS;
+        else {
+            return foundGroup != null ? foundGroup.clone() : NO_SOURCE_GROUPS;
+        }
     }
 
     @Override
@@ -247,6 +237,10 @@ public final class GradleProjectSources implements Sources, ProjectInitListener 
         private final FileObject location;
         private final PropertyChangeSupport changes;
         private final String displayName;
+
+        public GradleSourceGroup(FileObject location) {
+            this(location, NbStrings.getSrcPackageCaption());
+        }
 
         public GradleSourceGroup(FileObject location, String displayName) {
             this.location = location;

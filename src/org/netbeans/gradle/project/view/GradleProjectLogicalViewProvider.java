@@ -4,7 +4,6 @@ import java.awt.Dialog;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,20 +24,21 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.netbeans.api.java.project.JavaProjectConstants;
+import org.gradle.tooling.model.GradleTask;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.NbGradleModule;
-import org.netbeans.gradle.project.model.NbGradleTask;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.tasks.GradleTaskDef;
-import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
@@ -112,16 +112,49 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 rootNode.getLookup());
     }
 
+    private static List<Action> getActionsOfExtension(GradleProjectExtension extension) {
+        Lookup extensionLookup = extension.getExtensionLookup();
+        Collection<? extends GradleProjectContextActions> actionQueries
+                = extensionLookup.lookupAll(GradleProjectContextActions.class);
+
+        List<Action> result = new LinkedList<Action>();
+        for (GradleProjectContextActions actionQuery: actionQueries) {
+            result.addAll(actionQuery.getContextActions());
+        }
+        return result;
+    }
+
+    private List<Action> getExtensionActions() {
+        List<Action> extensionActions = new LinkedList<Action>();
+        for (GradleProjectExtension extension: project.getExtensions()) {
+            List<Action> actions = getActionsOfExtension(extension);
+
+            if (!actions.isEmpty()) {
+                extensionActions.add(null);
+                extensionActions.addAll(actions);
+            }
+        }
+        if (!extensionActions.isEmpty()) {
+            extensionActions.add(null);
+        }
+        return extensionActions;
+    }
+
     private static Action createProjectAction(String command, String label) {
         return ProjectSensitiveActions.projectCommandAction(command, label, null);
     }
 
     private final class GradleProjectNode extends FilterNode {
-        private final Action[] actions;
+        @SuppressWarnings("VolatileArrayField")
+        private volatile Action[] actions;
 
         public GradleProjectNode(Node node) {
             super(node, createChildren(), createLookup(node));
 
+            updateActionsList();
+        }
+
+        private void updateActionsList() {
             TasksActionMenu tasksAction = new TasksActionMenu(project);
             CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
 
@@ -147,9 +180,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_REBUILD,
                     NbStrings.getRebuildCommandCaption()));
-            projectActions.add(createProjectAction(
-                    JavaProjectConstants.COMMAND_JAVADOC,
-                    NbStrings.getJavadocCommandCaption()));
+
+            projectActions.addAll(getExtensionActions());
+
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
             projectActions.add(null);
@@ -169,6 +202,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void fireModelChange() {
             fireDisplayNameChange(null, null);
+            updateActionsList();
         }
 
         public void fireInfoChangeEvent() {
@@ -321,6 +355,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         return null;
     }
 
+    private static void executeCommandTemplate(NbGradleProject project, GradleCommandTemplate command) {
+        project.getLookup().lookup(GradleCommandExecutor.class).executeCommand(command);
+    }
+
     @SuppressWarnings("serial") // don't care about serialization
     private static class CustomTaskAction extends AbstractAction {
         private final NbGradleProject project;
@@ -372,7 +410,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             }
 
             PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
-            if (newTaskDef.tryCreateTaskDef(project) == null) {
+            if (!newTaskDef.isTasksExistsIfRequired(project, Lookup.EMPTY)) {
                 newTaskDef = createTaskDef(actionPanel, displayName, false);
             }
 
@@ -421,14 +459,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             } while (!okToClose);
 
             if (doExecute) {
-                String[] tasks = panel.getTasks();
-                if (tasks.length > 0) {
-                    GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
-                            project, Arrays.asList(tasks), panel.isNonBlocking());
-                    builder.setArguments(Arrays.asList(panel.getArguments()));
-                    builder.setJvmArguments(Arrays.asList(panel.getJvmArguments()));
-
-                    GradleTasks.createAsyncGradleTask(project, builder.create()).run();
+                final GradleCommandTemplate commandTemplate = panel.tryGetGradleCommand();
+                if (commandTemplate != null) {
+                    executeCommandTemplate(project, commandTemplate);
                 }
             }
         }
@@ -483,7 +516,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         private final NbGradleProject project;
         private final JMenu menu;
         private List<PredefinedTask> lastUsedTasks;
-        private NbGradleModule lastUsedModule;
+        private NbGradleModel lastUsedModule;
 
         public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
             if (project == null) throw new NullPointerException("project");
@@ -498,7 +531,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void updateMenuContent() {
             List<PredefinedTask> commonTasks = project.getProperties().getCommonTasks().getValue();
-            NbGradleModule mainModule = project.getAvailableModel().getMainModule();
+            NbGradleModel mainModule = project.getAvailableModel();
             if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
                 return;
             }
@@ -519,8 +552,9 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             boolean hasCustomTasks = false;
             menu.removeAll();
 
+            TaskVariableMap varReplaceMap = project.getVarReplaceMap(Lookup.EMPTY);
             for (final PredefinedTask task: commonTasks) {
-                if (task.tryCreateTaskDef(project) == null) {
+                if (!task.isTasksExistsIfRequired(project, varReplaceMap)) {
                     continue;
                 }
 
@@ -528,13 +562,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        // recreate the task on every actionPerformed because
-                        // the project might have changed since the menu item
-                        // was created.
-                        GradleTaskDef taskDef = task.tryCreateTaskDef(project);
-                        if (taskDef != null) {
-                            GradleTasks.createAsyncGradleTask(project, taskDef).run();
-                        }
+                        executeCommandTemplate(project, task.toCommandTemplate());
                     }
                 });
                 menu.add(menuItem);
@@ -613,17 +641,18 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             lastUsedModel = projectModel;
 
-            Collection<NbGradleTask> tasks = projectModel.getMainModule().getTasks();
+            Collection<? extends GradleTask> tasks = projectModel.getGradleProject().getTasks();
 
             menu.removeAll();
-            for (final NbGradleTask task: tasks) {
-                JMenuItem menuItem = new JMenuItem(task.getLocalName());
+            for (final GradleTask task: tasks) {
+                JMenuItem menuItem = new JMenuItem(task.getName());
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        GradleTaskDef.Builder builder = PredefinedTask.getDefaultTaskBuilder(
-                                project, Arrays.asList(task.getQualifiedName()), false);
-                        GradleTasks.createAsyncGradleTask(project, builder.create()).run();
+                        GradleCommandTemplate.Builder command
+                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getPath()));
+
+                        executeCommandTemplate(project, command.create());
                     }
                 });
                 menu.add(menuItem);

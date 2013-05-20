@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
@@ -202,7 +203,7 @@ public final class BuildScriptsNode extends AbstractNode {
             FileObject settingsGradle = model.tryGetSettingsFileObj();
             FileObject rootBuildDir = getRootBuildDir(settingsGradle);
 
-            if (rootBuildDir != null && !model.getMainModule().getProperties().isBuildSrc()) {
+            if (rootBuildDir != null && !model.isBuildSrc()) {
                 FileObject buildSrcObj = rootBuildDir.getFileObject(GradleProjectConstants.BUILD_SRC_NAME);
                 final File buildSrc = buildSrcObj != null
                         ? FileUtil.toFile(buildSrcObj)
