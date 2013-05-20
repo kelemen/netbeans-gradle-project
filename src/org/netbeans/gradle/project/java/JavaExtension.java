@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,6 +65,13 @@ public final class JavaExtension implements GradleProjectExtension {
         this.permanentLookupRef = new AtomicReference<Lookup>(null);
         this.extensionLookup = new DynamicLookup();
         this.protectedExtensionLookup = DynamicLookup.viewLookup(extensionLookup);
+    }
+
+    @Override
+    public String getExtensionName() {
+        // Do not return JavaExtension.class.getName() because this string must
+        // remain the same even if this class is renamed.
+        return "org.netbeans.gradle.project.java.JavaExtension";
     }
 
     public static JavaExtension create(Project project) throws IOException {
@@ -212,7 +220,7 @@ public final class JavaExtension implements GradleProjectExtension {
     }
 
     @Override
-    public void modelsLoaded(Lookup modelLookup) {
+    public Set<String> modelsLoaded(Lookup modelLookup) {
         boolean loaded = false;
 
         NbJavaModel javaModel = modelLookup.lookup(NbJavaModel.class);
@@ -243,6 +251,8 @@ public final class JavaExtension implements GradleProjectExtension {
         for (JavaModelChangeListener listener: getExtensionLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();
         }
+
+        return Collections.emptySet();
     }
 
     // OpenHook is important for debugging because the debugger relies on the

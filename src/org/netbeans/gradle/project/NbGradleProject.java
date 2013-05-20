@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -210,12 +214,10 @@ public final class NbGradleProject implements Project {
         final List<TaskVariableMap> maps = new LinkedList<TaskVariableMap>();
         maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
 
-        for (GradleProjectExtension extension: extensions) {
-            Collection<? extends GradleTaskVariableQuery> taskVariables
-                    = extension.getExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
-            for (GradleTaskVariableQuery query: taskVariables) {
-                maps.add(query.getVariableMap(actionContext));
-            }
+        Collection<? extends GradleTaskVariableQuery> taskVariables
+                = getLookup().lookupAll(GradleTaskVariableQuery.class);
+        for (GradleTaskVariableQuery query: taskVariables) {
+            maps.add(query.getVariableMap(actionContext));
         }
         return new TaskVariableMap() {
             @Override
@@ -584,6 +586,66 @@ public final class NbGradleProject implements Project {
     }
 
     private class ModelRetrievedListenerImpl implements ModelRetrievedListener {
+        private void fireModelChangeEvent() {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    onModelChange();
+                }
+            });
+        }
+
+        private Set<String> safelyLoadExtensions(GradleProjectExtension extension, Lookup lookup) {
+            Set<String> conflicts = null;
+            try {
+                conflicts = extension.modelsLoaded(lookup);
+            } catch (Throwable ex) {
+                LOGGER.log(Level.SEVERE,
+                        "Extension has thrown an unexpected exception: " + extension.getExtensionName(),
+                        ex);
+            }
+
+            return conflicts != null ? conflicts : Collections.<String>emptySet();
+        }
+
+        private void notifyEmptyModelChange() {
+            for (GradleProjectExtension extension: extensions) {
+                safelyLoadExtensions(extension, Lookup.EMPTY);
+            }
+
+            fireModelChangeEvent();
+        }
+
+        private void notifyModelChange(Lookup modelLookup) {
+            int setSize = 2 * extensions.size();
+            Set<String> disabledExtensions = new HashSet<String>(setSize);
+            Map<String, GradleProjectExtension> loadedExtensions
+                    = new HashMap<String, GradleProjectExtension>(setSize);
+
+            for (GradleProjectExtension extension: extensions) {
+                String name = extension.getExtensionName();
+                if (disabledExtensions.contains(name)) {
+                    continue;
+                }
+
+                Set<String> conflicts = safelyLoadExtensions(extension, modelLookup);
+                disabledExtensions.addAll(conflicts);
+                loadedExtensions.put(name, extension);
+            }
+
+            // TODO: What if an extension is disabled and so extensions
+            //  conflicting with it can be enabled? Should we consider this case?
+
+            for (String disabled: disabledExtensions) {
+                GradleProjectExtension extension = loadedExtensions.get(disabled);
+                if (extension != null) {
+                    safelyLoadExtensions(extension, Lookup.EMPTY);
+                }
+            }
+
+            fireModelChangeEvent();
+        }
+
         @Override
         public void onComplete(NbGradleModel model, Throwable error) {
             loadedAtLeastOnceSignal.signal();
@@ -607,15 +669,12 @@ public final class NbGradleProject implements Project {
             }
 
             if (hasChanged) {
-                for (GradleProjectExtension extension: extensions) {
-                    extension.modelsLoaded(model != null ? model.getModels() : Lookup.EMPTY);
+                if (model == null) {
+                    notifyEmptyModelChange();
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        onModelChange();
-                    }
-                });
+                else {
+                    notifyModelChange(model.getModels());
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,7 +16,6 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -29,7 +29,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
@@ -51,11 +50,8 @@ extends
     }
 
     private List<GradleProjectExtensionNodes> getExtensionNodes() {
-        List<GradleProjectExtensionNodes> result = new LinkedList<GradleProjectExtensionNodes>();
-        for (GradleProjectExtension extension: project.getExtensions()) {
-            Lookup extensionLookup = extension.getExtensionLookup();
-            result.addAll(extensionLookup.lookupAll(GradleProjectExtensionNodes.class));
-        }
+        List<GradleProjectExtensionNodes> result = new ArrayList<GradleProjectExtensionNodes>(
+                project.getLookup().lookupAll(GradleProjectExtensionNodes.class));
         return result;
     }
 
