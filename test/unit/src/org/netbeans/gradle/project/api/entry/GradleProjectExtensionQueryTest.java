@@ -5,6 +5,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.io.File;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
@@ -31,7 +33,7 @@ import org.netbeans.junit.MockServices;
  * @author radim
  */
 public class GradleProjectExtensionQueryTest {
-    private static List<Closeable> toClose;
+    private static final List<Closeable> TO_CLOSE = new LinkedList<Closeable>();
     private static File tempFolder;
     private static File prjDir;
 
@@ -47,15 +49,15 @@ public class GradleProjectExtensionQueryTest {
         tempFolder.mkdir();
         TestUtils.unzip(GradleProjectExtensionQueryTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
         prjDir = new File(tempFolder, "gradle-sample");
-        toClose.add(NbGradleProjectFactory.safeToOpen(prjDir));
+        TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(prjDir));
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        for (Closeable closeable : toClose) {
+        for (Closeable closeable : TO_CLOSE) {
             closeable.close();
         }
-        toClose.clear();
+        TO_CLOSE.clear();
     }
 
     @AfterClass
