@@ -1,12 +1,13 @@
 package org.netbeans.gradle.project.api.entry;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.io.File;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -79,17 +80,24 @@ public class GradleProjectExtensionQueryTest {
         // verifyClasspath(prj, foProjectSrc, ClassPath.BOOT, "android.jar", "annotations.jar");
     }
 
+    private Set<String> getRootsOfClassPath(ClassPath classpath) {
+        Set<String> roots = new HashSet<String>();
+        for (FileObject cpEntry: classpath.getRoots()) {
+            roots.add(cpEntry.getPath());
+        }
+        return roots;
+    }
+
     private void verifyClasspath(Project prj, FileObject fo, String cpType, String... entries) {
         ClassPathProvider cpp = prj.getLookup().lookup(ClassPathProvider.class);
         ClassPath classpath = cpp.findClassPath(fo, cpType);
         assertNotNull("classpath " + cpType + " found", classpath);
 
-        for (final String entry : entries) {
+        Set<String> cpRoots = getRootsOfClassPath(classpath);
+        for (final String entry: entries) {
             assertTrue(
-                    "classpath " + classpath + "contains entry " + entry,
-                    Iterables.any(
-                    Splitter.on(':').split(classpath.toString()),
-                    new Predicate<String>() {
+                    "classpath " + classpath + " contains entry " + entry,
+                    Iterables.any(cpRoots, new Predicate<String>() {
                 @Override
                 public boolean apply(String t) {
                     return t.endsWith(entry);
