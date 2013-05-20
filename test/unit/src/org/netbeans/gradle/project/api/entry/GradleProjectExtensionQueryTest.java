@@ -17,7 +17,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.junit.MockServices;
@@ -47,7 +46,7 @@ public class GradleProjectExtensionQueryTest {
         tempFolder.delete();
         tempFolder.mkdir();
         TestUtils.unzip(GradleProjectExtensionQueryTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
-        prjDir = new File(tempFolder, "gradle-sample");
+        prjDir = FileUtil.normalizeFile(new File(tempFolder, "gradle-sample"));
         TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(prjDir));
     }
 
@@ -71,7 +70,6 @@ public class GradleProjectExtensionQueryTest {
         assertNotNull(prj);
         GradleTestExtension ext = gPrj.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
-        NbGradleModel model = gPrj.getCurrentModel();
         ext.loadedSignal.await(150, TimeUnit.SECONDS);
 
         FileObject foProjectSrc = prj.getProjectDirectory().getFileObject("src/main/java/org/netbeans/gradle/Sample.java");
