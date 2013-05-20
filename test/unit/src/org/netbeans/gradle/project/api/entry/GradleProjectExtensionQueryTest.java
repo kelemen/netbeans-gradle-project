@@ -5,28 +5,27 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.io.File;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.spi.java.classpath.ClassPathProvider;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.junit.MockServices;
+import org.netbeans.spi.java.classpath.ClassPathProvider;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+
+import static org.junit.Assert.*;
 
 /**
  *
