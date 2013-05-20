@@ -7,7 +7,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +23,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
-import org.netbeans.gradle.project.properties.GradleLocationDirectory;
+import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.junit.MockServices;
 
 /**
@@ -32,8 +31,6 @@ import org.netbeans.junit.MockServices;
  * @author radim
  */
 public class GradleProjectExtensionQueryTest {
-    private static final Logger LOG = Logger.getLogger(GradleProjectExtensionQueryTest.class.getName());
-    private static final String GRADLE_DIR = System.getProperty("test.all.gradle.home");
     private static List<Closeable> toClose;
     private static File tempFolder;
     private static File prjDir;
@@ -42,7 +39,7 @@ public class GradleProjectExtensionQueryTest {
     public static void setUpClass() throws Exception {
         MockServices.setServices();
 
-        GlobalGradleSettings.getGradleHome().setValue(new GradleLocationDirectory(new File(GRADLE_DIR)));
+        GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.6"));
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
         tempFolder = File.createTempFile("junit", "");
