@@ -32,78 +32,74 @@ import org.netbeans.junit.MockServices;
  * @author radim
  */
 public class GradleProjectExtensionQueryTest {
-  private static final Logger LOG = Logger.getLogger(GradleProjectExtensionQueryTest.class.getName());
+    private static final Logger LOG = Logger.getLogger(GradleProjectExtensionQueryTest.class.getName());
+    private static final String GRADLE_DIR = System.getProperty("test.all.gradle.home");
+    private static List<Closeable> toClose;
+    private static File tempFolder;
+    private static File prjDir;
 
-  private static final String GRADLE_DIR = System.getProperty("test.all.gradle.home");
-  private static List<Closeable> toClose;
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        MockServices.setServices();
 
-  private static File tempFolder;
-  private static File prjDir;
+        GlobalGradleSettings.getGradleHome().setValue(new GradleLocationDirectory(new File(GRADLE_DIR)));
+        GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    MockServices.setServices();
+        tempFolder = File.createTempFile("junit", "");
+        tempFolder.delete();
+        tempFolder.mkdir();
+        TestUtils.unzip(GradleProjectExtensionQueryTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
+        prjDir = new File(tempFolder, "gradle-sample");
+        toClose.add(NbGradleProjectFactory.safeToOpen(prjDir));
+    }
 
-    GlobalGradleSettings.getGradleHome().setValue(new GradleLocationDirectory(new File(GRADLE_DIR)));
-    GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        for (Closeable closeable : toClose) {
+            closeable.close();
+        }
+        toClose.clear();
+    }
 
-    tempFolder = File.createTempFile("junit", "");
-    tempFolder.delete();
-    tempFolder.mkdir();
-    TestUtils.unzip(GradleProjectExtensionQueryTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
-    prjDir = new File(tempFolder, "gradle-sample");
-    toClose.add(NbGradleProjectFactory.safeToOpen(prjDir));
-  }
+    @AfterClass
+    public static void clear() {
+        TestUtils.recursiveDelete(tempFolder);
+    }
 
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-      for (Closeable closeable: toClose) {
-          closeable.close();
-      }
-      toClose.clear();
-  }
+    @Test
+    public void basic() throws Exception {
+        Project prj = ProjectManager.getDefault().findProject(FileUtil.toFileObject(prjDir));
+        NbGradleProject gPrj = prj.getLookup().lookup(NbGradleProject.class);
+        assertNotNull(prj);
+        GradleTestExtension ext = gPrj.getLookup().lookup(GradleTestExtension.class);
+        assertNotNull(ext);
+        NbGradleModel model = gPrj.getCurrentModel();
+        ext.loadedSignal.await(150, TimeUnit.SECONDS);
 
-  @AfterClass
-  public static void clear() {
-    TestUtils.recursiveDelete(tempFolder);
-  }
+        FileObject foProjectSrc = prj.getProjectDirectory().getFileObject("src/main/java/org/netbeans/gradle/Sample.java");
 
-  @Test
-  public void basic() throws Exception {
-    Project prj = ProjectManager.getDefault().findProject(FileUtil.toFileObject(prjDir));
-    NbGradleProject gPrj = prj.getLookup().lookup(NbGradleProject.class);
-    assertNotNull(prj);
-    GradleTestExtension ext = gPrj.getLookup().lookup(GradleTestExtension.class);
-    assertNotNull(ext);
-    NbGradleModel model = gPrj.getCurrentModel();
-    ext.loadedSignal.await(150, TimeUnit.SECONDS);
+        // get the classpath
+        verifyClasspath(prj, foProjectSrc, ClassPath.SOURCE, "gradle-sample/src/main/java");
+        // need to add some test here
+        // verifyClasspath(prj, foProjectSrc, ClassPath.BOOT, "android.jar", "annotations.jar");
+    }
 
-//    FileObject foProjectSrc = prj.getProjectDirectory().getFileObject("src/main/java");
-    FileObject foProjectSrc = prj.getProjectDirectory().getFileObject("src/main/java/org/netbeans/gradle/Sample.java");
+    private void verifyClasspath(Project prj, FileObject fo, String cpType, String... entries) {
+        ClassPathProvider cpp = prj.getLookup().lookup(ClassPathProvider.class);
+        ClassPath classpath = cpp.findClassPath(fo, cpType);
+        assertNotNull("classpath " + cpType + " found", classpath);
 
-    // get the classpath
-    verifyClasspath(prj, foProjectSrc, ClassPath.SOURCE, "gradle-sample/src/main/java");
-    // need to add some test here
-    // verifyClasspath(prj, foProjectSrc, ClassPath.BOOT, "android.jar", "annotations.jar");
-  }
-
-  private void verifyClasspath(Project prj, FileObject fo, String cpType, String ... entries) {
-    ClassPathProvider cpp = prj.getLookup().lookup(ClassPathProvider.class);
-    ClassPath classpath = cpp.findClassPath(fo, cpType);
-    assertNotNull("classpath " + cpType + " found", classpath);
-
-    for (final String entry : entries) {
-      assertTrue(
-          "classpath " + classpath + "contains entry " + entry,
-          Iterables.any(
-              Splitter.on(':').split(classpath.toString()),
-              new Predicate<String>() {
-
+        for (final String entry : entries) {
+            assertTrue(
+                    "classpath " + classpath + "contains entry " + entry,
+                    Iterables.any(
+                    Splitter.on(':').split(classpath.toString()),
+                    new Predicate<String>() {
                 @Override
                 public boolean apply(String t) {
-                  return t.endsWith(entry);
+                    return t.endsWith(entry);
                 }
-              }));
+            }));
+        }
     }
-  }
 }
