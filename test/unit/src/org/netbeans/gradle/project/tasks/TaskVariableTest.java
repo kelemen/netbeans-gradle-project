@@ -1,9 +1,5 @@
 package org.netbeans.gradle.project.tasks;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 
@@ -14,21 +10,6 @@ import static org.junit.Assert.*;
  * @author Kelemen Attila
  */
 public class TaskVariableTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     private static TaskVariable create(String name) {
         return new TaskVariable(name);
