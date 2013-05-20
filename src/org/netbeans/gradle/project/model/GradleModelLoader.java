@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -173,6 +174,18 @@ public final class GradleModelLoader {
         FileObject jdkHomeObj = platform != null
                 ? GlobalGradleSettings.getHomeFolder(platform)
                 : null;
+
+        if (jdkHomeObj != null) {
+            // This is necessary for unit test code because JavaPlatform returns
+            // the jre inside the JDK.
+            if ("jre".equals(jdkHomeObj.getNameExt().toLowerCase(Locale.ROOT))) {
+                FileObject parent = jdkHomeObj.getParent();
+                if (parent != null) {
+                    jdkHomeObj = parent;
+                }
+            }
+        }
+
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 

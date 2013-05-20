@@ -38,7 +38,6 @@ public class GradleProjectExtensionQueryTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices();
-
         GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.6"));
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
