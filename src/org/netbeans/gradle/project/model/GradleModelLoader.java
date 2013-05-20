@@ -181,21 +181,15 @@ public final class GradleModelLoader {
             final ProgressHandle progress,
             ProjectConnection projectConnection,
             Class<?> model) {
-        // Actually this cast is only needed to be complile against pre 1.6
-        // Tooling API because from version 1.6 there is no need to extend
-        // Model.
-        // TODO: Remove this hack after upgrading to 1.6
-        @SuppressWarnings("unchecked")
-        Class<? extends Model> castedModel = (Class<? extends Model>)model;
-        return getModelWithProgress(project, progress, projectConnection, castedModel);
+        return getModelWithProgress(project, progress, projectConnection, model);
     }
 
-    private static <T extends Model> T getModelWithProgress(
+    private static Object getModelWithProgress(
             NbGradleProject project,
             final ProgressHandle progress,
             ProjectConnection projectConnection,
-            Class<? extends T> model) {
-        ModelBuilder<? extends T> builder = projectConnection.model(model);
+            Class<?> model) {
+        ModelBuilder<?> builder = projectConnection.model(model);
 
         File jdkHome = getScriptJavaHome(project);
         if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
