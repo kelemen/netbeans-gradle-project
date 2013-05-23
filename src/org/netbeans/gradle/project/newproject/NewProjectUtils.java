@@ -29,9 +29,9 @@ public final class NewProjectUtils {
     public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
 
     private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
-    private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*");
-    private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]+");
-    private static final Pattern MAVEN_VERSION_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]+");
+    private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
+    private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
+    private static final Pattern MAVEN_VERSION_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
 
     public static Preferences getPreferences() {
         return NbPreferences.forModule(NewProjectUtils.class);
