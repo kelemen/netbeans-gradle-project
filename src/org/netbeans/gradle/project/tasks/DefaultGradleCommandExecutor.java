@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.util.concurrent.Callable;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.openide.util.Lookup;
@@ -16,32 +17,31 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
     }
 
     @Override
-    public void executeCommand(GradleCommandTemplate command) {
-        GradleTasks.submitGradleCommand(project, Lookup.EMPTY, command);
-    }
-
-    @Override
     public void executeCommand(
             final GradleCommandTemplate command,
-            final CommandCompleteListener completeListener) {
+            final CustomCommandActions customActions) {
 
         if (command == null) throw new NullPointerException("command");
-        if (completeListener == null) throw new NullPointerException("completeListener");
+        if (customActions == null) throw new NullPointerException("customActions");
 
-        GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override
             public GradleTaskDef call() {
-                return GradleTaskDef.createFromTemplate(project, command, Lookup.EMPTY).create();
+                return GradleTaskDef.createFromTemplate(project, command, customActions, Lookup.EMPTY).create();
             }
         }, new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 try {
-                    completeListener.onComplete(error);
+                    CommandCompleteListener completeListener = customActions.getCommandCompleteListener();
+                    if (completeListener != null) {
+                        completeListener.onComplete(error);
+                    }
                 } finally {
                     GradleTasks.projectTaskCompleteListener(project).onComplete(error);
                 }
             }
         });
+        asyncTask.run();
     }
 }

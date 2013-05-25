@@ -32,6 +32,7 @@ import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -355,8 +356,15 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         return null;
     }
 
-    private static void executeCommandTemplate(NbGradleProject project, GradleCommandTemplate command) {
-        project.getLookup().lookup(GradleCommandExecutor.class).executeCommand(command);
+    private static void executeCommandTemplate(
+            NbGradleProject project,
+            GradleCommandTemplate command) {
+        CustomCommandActions actions = command.isBlocking()
+                ? CustomCommandActions.OTHER
+                : CustomCommandActions.BUILD;
+
+        project.getLookup().lookup(GradleCommandExecutor.class)
+                .executeCommand(command, actions);
     }
 
     @SuppressWarnings("serial") // don't care about serialization

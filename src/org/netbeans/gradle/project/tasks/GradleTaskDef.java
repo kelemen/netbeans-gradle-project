@@ -6,7 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.TaskKind;
+import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.openide.util.Lookup;
@@ -77,18 +80,6 @@ public final class GradleTaskDef {
         public void setCaption(String caption) {
             if (caption == null) throw new NullPointerException("caption");
             this.caption = caption;
-        }
-
-        public void setDefaultCaption(NbGradleProject project) {
-            setDefaultCaption(project.getDisplayName());
-        }
-
-        public void setDefaultCaption(String projectName) {
-            String newCaption = projectName;
-            if (!nonBlocking) {
-                newCaption += " - " + taskNames.toString();
-            }
-            this.caption = newCaption;
         }
 
         public boolean isReuseOutput() {
@@ -269,31 +260,51 @@ public final class GradleTaskDef {
         return builder;
     }
 
+    private static SmartOutputHandler.Visitor outputProcessorToLineVisitor(final TaskOutputProcessor processor) {
+        if (processor == null) {
+            return NoOpTaskOutputListener.INSTANCE;
+        }
+
+        return new SmartOutputHandler.Visitor() {
+            @Override
+            public void visitLine(String line) {
+                processor.processLine(line);
+            }
+        };
+    }
+
+    private static String getOutputTabCaption(NbGradleProject project, TaskKind kind, List<String> taskNames) {
+        switch (kind) {
+            case DEBUG:
+                return project.getDisplayName() + " - debug";
+            case RUN:
+                return project.getDisplayName() + " - run";
+            case BUILD:
+                return project.getDisplayName();
+            case OTHER:
+                return project.getDisplayName() + " - " + taskNames.toString();
+            default:
+                throw new AssertionError(kind.name());
+        }
+    }
+
     public static GradleTaskDef.Builder createFromTemplate(
             NbGradleProject project,
             GradleCommandTemplate command,
-            TaskVariableMap varReplaceMap) {
-        GradleTaskDef.Builder builder = createFromTemplate("", command, varReplaceMap);
-        builder.setDefaultCaption(project);
+            CustomCommandActions customActions,
+            Lookup actionContext) {
+
+        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
+        String caption = getOutputTabCaption(project, customActions.getTaskKind(), command.getTasks());
+        GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
+
+        TaskOutputProcessor stdOutProcessor = customActions.getStdOutProcessor();
+        builder.setStdOutListener(outputProcessorToLineVisitor(stdOutProcessor));
+
+        TaskOutputProcessor stdErrProcessor = customActions.getStdErrProcessor();
+        builder.setStdErrListener(outputProcessorToLineVisitor(stdErrProcessor));
+
         return builder;
-    }
-
-    public static GradleTaskDef.Builder createFromTemplate(
-            String caption,
-            GradleCommandTemplate command,
-            NbGradleProject project,
-            Lookup actionContext) {
-
-        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
-        return createFromTemplate(caption, command, varReplaceMap);
-    }
-
-    public static GradleTaskDef.Builder createFromTemplate(
-            NbGradleProject project,
-            GradleCommandTemplate command,
-            Lookup actionContext) {
-        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
-        return createFromTemplate(project, command, varReplaceMap);
     }
 
     private enum NoOpTaskOutputListener implements SmartOutputHandler.Visitor {
