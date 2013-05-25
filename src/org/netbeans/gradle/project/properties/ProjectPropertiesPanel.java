@@ -88,8 +88,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
-                    final Collection<NbGradleConfiguration> profiles =
-                            project.getLookup().lookup(NbGradleConfigProvider.class).findAndUpdateConfigurations(false);
+                    final Collection<NbGradleConfiguration> profiles = project
+                            .getLookup()
+                            .lookup(NbGradleSingleProjectConfigProvider.class)
+                            .findAndUpdateConfigurations(false);
 
                     final PanelLockRef swingLock = lockRef.getAndSet(null);
                     SwingUtilities.invokeLater(new Runnable() {
@@ -805,7 +807,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jProfileCombo.removeItem(profileItem);
         jProfileCombo.setSelectedItem(new ProfileItem(NbGradleConfiguration.DEFAULT_CONFIG));
 
-        project.getLookup().lookup(NbGradleConfigProvider.class).removeConfiguration(config);
+        project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeConfiguration(config);
     }//GEN-LAST:event_jRemoveProfileButtonActionPerformed
 
     private void jAddProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAddProfileButtonActionPerformed
@@ -846,7 +848,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         NbGradleConfiguration newConfig = new NbGradleConfiguration(profileDef);
         ProfileItem newProfile = new ProfileItem(newConfig);
 
-        project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);
+        project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).addConfiguration(newConfig);
 
         boolean hasItem = false;
         int itemCount = jProfileCombo.getItemCount();

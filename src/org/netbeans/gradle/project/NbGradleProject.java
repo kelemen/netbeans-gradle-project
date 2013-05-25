@@ -37,8 +37,8 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
-import org.netbeans.gradle.project.properties.NbGradleConfigProvider;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
+import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
@@ -202,15 +202,15 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleConfiguration getCurrentProfile() {
-        return getLookup().lookup(NbGradleConfigProvider.class).getActiveConfiguration();
+        return getLookup().lookup(NbGradleSingleProjectConfigProvider.class).getActiveConfiguration();
     }
 
     public void addProfileChangeListener(ChangeListener listener) {
-        getLookup().lookup(NbGradleConfigProvider.class).addActiveConfigChangeListener(listener);
+        getLookup().lookup(NbGradleSingleProjectConfigProvider.class).addActiveConfigChangeListener(listener);
     }
 
     public void removeProfileChangeListener(ChangeListener listener) {
-        getLookup().lookup(NbGradleConfigProvider.class).removeActiveConfigChangeListener(listener);
+        getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeActiveConfigChangeListener(listener);
     }
 
     public void displayError(String errorText, Throwable exception, boolean setFocus) {
@@ -425,7 +425,7 @@ public final class NbGradleProject implements Project {
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
                 state, //allow outside code to mark the project as needing saving
-                NbGradleConfigProvider.getConfigProvider(this),
+                NbGradleSingleProjectConfigProvider.create(this),
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
                 new GradleActionProvider(this),
