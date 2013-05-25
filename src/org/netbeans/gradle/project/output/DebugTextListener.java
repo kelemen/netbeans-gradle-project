@@ -4,8 +4,9 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 
-public final class DebugTextListener implements SmartOutputHandler.Visitor {
+public final class DebugTextListener implements TaskOutputProcessor {
     public static interface DebugeeListener {
         public void onDebugeeListening(int port);
     }
@@ -25,7 +26,7 @@ public final class DebugTextListener implements SmartOutputHandler.Visitor {
     }
 
     @Override
-    public void visitLine(String line) {
+    public void processLine(String line) {
         if (found.get()) {
             return;
         }

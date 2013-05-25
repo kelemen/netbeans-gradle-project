@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.w3c.dom.Element;
 
 public final class PropertiesSnapshot {
@@ -81,7 +80,7 @@ public final class PropertiesSnapshot {
             PropertySource<PredefinedTask> result = builtInTasks.get(command);
             return result != null
                     ? result
-                    : asConstNullForNull(BuiltInTasks.getDefaultBuiltInTask(command), true);
+                    : PropertiesSnapshot.<PredefinedTask>asConstNullForNull(null, true);
         }
 
         public PropertySource<LicenseHeaderInfo> getLicenseHeader() {
@@ -340,6 +339,6 @@ public final class PropertiesSnapshot {
         PropertySource<PredefinedTask> result = builtInTasks.get(command);
         return result != null
                 ? result
-                : asConstNullForNull(BuiltInTasks.getDefaultBuiltInTask(command), true);
+                : PropertiesSnapshot.<PredefinedTask>asConstNullForNull(null, true);
     }
 }

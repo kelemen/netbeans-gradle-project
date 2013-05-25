@@ -3,15 +3,17 @@ package org.netbeans.gradle.project.properties;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
-import org.netbeans.gradle.project.tasks.BuiltInTasks;
 import org.w3c.dom.Element;
 
 public final class DefaultProjectProperties extends AbstractProjectProperties {
@@ -146,9 +148,27 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         };
     }
 
+    private static PredefinedTask templateToPredefined(
+            String displayName, GradleCommandTemplate command) {
+        List<PredefinedTask.Name> taskNames = new LinkedList<PredefinedTask.Name>();
+        for (String taskName: command.getTasks()) {
+            taskNames.add(new PredefinedTask.Name(taskName, false));
+        }
+
+        return new PredefinedTask(displayName,
+                taskNames,
+                command.getArguments(),
+                command.getJvmArguments(),
+                !command.isBlocking());
+    }
+
     @Override
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
-        final PredefinedTask task = BuiltInTasks.getDefaultBuiltInTask(command);
+        ProfileDef profile = project.getCurrentProfile().getProfileDef();
+        GradleCommandTemplate commandTemplate
+                = project.getMergedCommandQuery().tryGetDefaultGradleCommand(profile, command);
+
+        final PredefinedTask task = templateToPredefined(command, commandTemplate);
         return new UnmodifiableProperty<PredefinedTask>("BuiltInTask-" + command) {
             @Override
             public PredefinedTask getValue() {

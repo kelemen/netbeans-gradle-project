@@ -26,6 +26,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
+import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -49,6 +50,7 @@ import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
+import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
@@ -98,6 +100,8 @@ public final class NbGradleProject implements Project {
     private volatile List<GradleProjectExtension> extensions;
     private volatile Lookup extensionsOnLookup;
 
+    private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
+
     private NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
@@ -105,6 +109,7 @@ public final class NbGradleProject implements Project {
             throw new IOException("Project directory does not exist.");
         }
 
+        this.mergedCommandQueryRef = new AtomicReference<BuiltInGradleCommandQuery>(null);
         this.delayedInitTasks = new AtomicReference<Queue<Runnable>>(new LinkedBlockingQueue<Runnable>());
         this.state = state;
         this.defaultLookupRef = new AtomicReference<Lookup>(null);
@@ -162,6 +167,17 @@ public final class NbGradleProject implements Project {
             }
         }
         return project;
+    }
+
+    public BuiltInGradleCommandQuery getMergedCommandQuery() {
+        BuiltInGradleCommandQuery result = mergedCommandQueryRef.get();
+        if (result == null) {
+            // TODO: consider extensions.
+            result = new DefaultBuiltInTasks(this);
+            mergedCommandQueryRef.compareAndSet(null, result);
+            result = mergedCommandQueryRef.get();
+        }
+        return result;
     }
 
     public List<GradleProjectExtension> getExtensions() {

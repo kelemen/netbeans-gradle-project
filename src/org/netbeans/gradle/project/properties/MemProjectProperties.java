@@ -4,17 +4,13 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.tasks.BuiltInTasks;
 
 public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<String> sourceLevel;
@@ -25,7 +21,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     private final MutableProperty<LicenseHeaderInfo> licenseHeader;
     private final MutableProperty<Void> auxConfigListener;
     private final MutableProperty<List<PredefinedTask>> commonTasks;
-    private final Map<String, MutableProperty<PredefinedTask>> builtInTasks;
+    private final ConcurrentMap<String, MutableProperty<PredefinedTask>> builtInTasks;
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
 
     public MemProjectProperties() {
@@ -41,14 +37,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, true, false);
         this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList(), true);
         this.auxProperties = new ConcurrentHashMap<DomElementKey, AuxConfigProperty>();
-
-        Set<String> commands = AbstractProjectProperties.getCustomizableCommands();
-        this.builtInTasks = new HashMap<String, MutableProperty<PredefinedTask>>(2 * commands.size());
-        for (String command: commands) {
-            PredefinedTask task = BuiltInTasks.getDefaultBuiltInTask(command);
-            this.builtInTasks.put(command,
-                    new DefaultMutableProperty<PredefinedTask>(task, true, false));
-        }
+        this.builtInTasks = new ConcurrentHashMap<String, MutableProperty<PredefinedTask>>(32);
     }
 
     @Override
@@ -90,7 +79,13 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
         if (command == null) throw new NullPointerException("command");
 
-        return builtInTasks.get(command);
+        MutableProperty<PredefinedTask> result = builtInTasks.get(command);
+        if (result == null) {
+            result = new DefaultMutableProperty<PredefinedTask>(null, true, true);
+            builtInTasks.putIfAbsent(command, result);
+            result = builtInTasks.get(command);
+        }
+        return result;
     }
 
     @Override

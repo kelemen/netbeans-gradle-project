@@ -192,9 +192,12 @@ final class XmlPropertyFormat {
     private static void addBuiltInTasks(Node node, PropertiesSnapshot snapshot) {
         List<PredefinedTask> tasks = new LinkedList<PredefinedTask>();
         for (String command: AbstractProjectProperties.getCustomizableCommands()) {
-            PropertySource<PredefinedTask> task = snapshot.tryGetBuiltInTask(command);
-            if (task != null && !task.isDefault()) {
-                tasks.add(task.getValue());
+            PropertySource<PredefinedTask> taskProperty = snapshot.tryGetBuiltInTask(command);
+            if (taskProperty != null && !taskProperty.isDefault()) {
+                PredefinedTask task = taskProperty.getValue();
+                if (task != null) {
+                    tasks.add(task);
+                }
             }
         }
 

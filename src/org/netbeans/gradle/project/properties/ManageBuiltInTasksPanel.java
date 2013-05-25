@@ -21,7 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.tasks.BuiltInTasks;
+import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
 @SuppressWarnings("serial")
@@ -121,6 +121,23 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         return projectProperties.tryGetBuiltInTask(item.getCommand());
     }
 
+    private PredefinedTask getCurrentValue(String command) {
+        MutableProperty<PredefinedTask> property = projectProperties.tryGetBuiltInTask(command);
+        PredefinedTask result = null;
+        if (property != null) {
+            result = property.getValue();
+        }
+
+        if (result == null) {
+            result = new PredefinedTask(command,
+                    Arrays.asList(new PredefinedTask.Name("tasks", false)),
+                    Collections.<String>emptyList(),
+                    Collections.<String>emptyList(),
+                    true);
+        }
+        return result;
+    }
+
     private SavedTask getLastShownTask() {
         if (lastShownItem == null) {
             return null;
@@ -139,7 +156,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         else {
             SavedTask lastValue = toSaveTasks.get(command);
             if (lastValue == null) {
-                names = BuiltInTasks.getDefaultBuiltInTask(command).getTaskNames();
+                names = getCurrentValue(command).getTaskNames();
             }
             else {
                 names = lastValue.getTaskDef().getTaskNames();
@@ -209,7 +226,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
             MutableProperty<PredefinedTask> taskProperty = projectProperties.tryGetBuiltInTask(command);
             if (taskProperty != null) {
                 if (task.isInherited()) {
-                    PredefinedTask defaultTask = BuiltInTasks.getDefaultBuiltInTask(command);
+                    PredefinedTask defaultTask = getCurrentValue(command);
                     taskProperty.setValueFromSource(asConst(defaultTask, true));
                 }
                 else {
@@ -249,7 +266,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         public BuiltInTaskItem(String command) {
             assert command != null;
             this.command = command;
-            this.displayName = BuiltInTasks.getDisplayNameOfCommand(command);
+            this.displayName = DefaultBuiltInTasks.getDisplayNameOfCommand(command);
         }
 
         public String getCommand() {
