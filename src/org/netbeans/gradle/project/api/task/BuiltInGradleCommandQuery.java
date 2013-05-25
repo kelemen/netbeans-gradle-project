@@ -32,9 +32,9 @@ public interface BuiltInGradleCommandQuery {
     public Set<String> getSupportedCommands();
 
     /**
-     * Returns the Gradle command to be associated with the specified profile
-     * and built-in command or {@code null} if the associated extension does not
-     * define a command.
+     * Defines the default Gradle command to run when the built-in command is to
+     * be executed. This command might be reconfigured by users, so there is no
+     * guarantee that this command will actually be executed.
      * <P>
      * This method must accept any profile or command even if
      * {@link #getSupportedCommands()} does not contain the specified command.
@@ -46,10 +46,31 @@ public interface BuiltInGradleCommandQuery {
      * @param command the command as defined by the
      *   {@link org.netbeans.spi.project.ActionProvider} interface. This
      *   argument cannot be {@code null}.
-     * @return the Gradle command to be associated with the specified profile
-     *   and built-in command. This method may return {@code null} if the
-     *   associated extension does not define a Gradle command for the specified
-     *   profile and command.
+     *
+     * @return the default Gradle command to run when the built-in command is to
+     *   be executed. This method may return {@code null} in the case there are
+     *   no Gradle associated Gradle command with the specified command or
+     *   profile.
      */
-    public BuiltInGradleCommand tryGetCommand(ProfileDef profileDef, String command);
+    public GradleCommandTemplate tryGetDefaultGradleCommand(ProfileDef profileDef, String command);
+
+    /**
+     * Returns the custom tasks associated with the specified built-in command.
+     * The tasks returned by this method cannot be reconfigured by users.
+     * <P>
+     * This method must accept any profile or command even if
+     * {@link #getSupportedCommands()} does not contain the specified command.
+     * This method should return {@code null} for such case.
+     *
+     * @param profileDef the profile to which the command is requested. This
+     *   argument can be {@code null} if the command is requested for the
+     *   default profile.
+     * @param command the command as defined by the
+     *   {@link org.netbeans.spi.project.ActionProvider} interface. This
+     *   argument cannot be {@code null}.
+     * @return the custom tasks associated with the specified built-in command.
+     *   This method may return {@code null} if the associated extension does
+     *   not define a Gradle command for the specified profile and command.
+     */
+    public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command);
 }
