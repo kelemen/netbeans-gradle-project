@@ -65,6 +65,7 @@ public interface GradleProjectExtension {
      * <ul>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectContextActions}</li>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
      * </ul>
      * <P>
