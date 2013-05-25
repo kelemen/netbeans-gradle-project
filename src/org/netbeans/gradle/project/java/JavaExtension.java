@@ -33,6 +33,7 @@ import org.netbeans.gradle.project.java.query.GradleUnitTestFinder;
 import org.netbeans.gradle.project.java.query.J2SEPlatformFromScriptQueryImpl;
 import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
+import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -46,6 +47,7 @@ public final class JavaExtension implements GradleProjectExtension {
             = Collections.singleton(Collections.<Class<?>>singletonList(IdeaProject.class));
 
     private final Project project;
+    private final File projectDirectoryAsFile;
     private volatile NbJavaModel currentModel;
 
     private final GradleClassPathProvider cpProvider;
@@ -58,6 +60,10 @@ public final class JavaExtension implements GradleProjectExtension {
 
     private JavaExtension(Project project) throws IOException {
         if (project == null) throw new NullPointerException("project");
+
+        this.projectDirectoryAsFile = FileUtil.toFile(project.getProjectDirectory());
+        if (projectDirectoryAsFile == null) throw new NullPointerException("projectDirAsFile");
+
         this.project = project;
         this.currentModel = NbJavaModelUtils.createEmptyModel(project.getProjectDirectory());
         this.cpProvider = new GradleClassPathProvider(this);
@@ -149,6 +155,7 @@ public final class JavaExtension implements GradleProjectExtension {
                     new GradleProjectTemplates(),
                     new JavaExtensionNodes(this),
                     new JavaProjectContextActions(this),
+                    new GradleJavaBuiltInCommands(this),
                     new J2SEPlatformFromScriptQueryImpl(this) // internal use only
                     );
 
@@ -175,6 +182,10 @@ public final class JavaExtension implements GradleProjectExtension {
 
     public FileObject getProjectDirectory() {
         return project.getProjectDirectory();
+    }
+
+    public File getProjectDirectoryAsFile() {
+        return projectDirectoryAsFile;
     }
 
     public String getName() {

@@ -33,6 +33,23 @@ public final class GradleCommandTemplate {
         private boolean blocking;
 
         /**
+         * Creates a new builder whose properties are initially set the
+         * appropriate properties of the specified {@code GradleCommandTemplate}.
+         *
+         * @param command the {@code GradleCommandTemplate} whose properties
+         *   are copied to this builder. This argument cannot be {@code null}.
+         *
+         * @throws NullPointerException thrown if the specified command is
+         *   {@code null}
+         */
+        public Builder(GradleCommandTemplate command) {
+            this.tasks = command.getTasks();
+            this.arguments = command.getArguments();
+            this.jvmArguments = command.getJvmArguments();
+            this.blocking = command.isBlocking();
+        }
+
+        /**
          * Creates a new {@code Builder} with the given task names.
          * The default value for the other properties are the following:
          * <ul>

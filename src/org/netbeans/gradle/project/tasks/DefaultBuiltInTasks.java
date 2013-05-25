@@ -15,22 +15,13 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.api.task.TaskKind;
-import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.spi.project.ActionProvider;
-
-// FIXME: We do not consider skip test global property.
 
 public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     private static final Logger LOGGER = Logger.getLogger(DefaultBuiltInTasks.class.getName());
 
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
             Arrays.asList("build"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
-    private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
-            Arrays.asList("cleanTest", "test"),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
@@ -44,43 +35,8 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.RUN);
-    private static final CommandWithActions DEFAULT_DEBUG_TASK = blockingCommand(
-            Arrays.asList("debug"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
-    private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
-            Arrays.asList("javadoc"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
     private static final CommandWithActions DEFAULT_REBUILD_TASK = nonBlockingCommand(
             Arrays.asList("clean", "build"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
-    private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=${test-file-path}"),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
-    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
-    private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
-            Arrays.asList(projectTask("run")),
-            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
-            Collections.<String>emptyList(),
-            CustomCommandActions.RUN);
-    private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK = blockingCommand(
-            Arrays.asList(projectTask("debug")),
-            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
-    private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = blockingCommand(
-            Arrays.asList(projectTask("classes")),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
@@ -91,18 +47,12 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     static {
         DEFAULT_TASKS = new HashMap<String, CommandWithActions>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
-        addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
         addToDefaults(ActionProvider.COMMAND_CLEAN, DEFAULT_CLEAN_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG, DEFAULT_DEBUG_TASK);
-        addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
-        addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, DEFAULT_TEST_SINGLE_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, DEFAULT_DEBUG_TEST_SINGLE_TASK);
-        addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG_SINGLE, DEFAULT_DEBUG_SINGLE_TASK);
-        addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
 
+        // We have to provide names for the following commands because of the
+        // contract of BuiltInGradleCommandQuery.tryGetDisplayNameOfCommand.
         DISPLAY_NAME_MAP = new HashMap<String, String>();
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_BUILD, NbStrings.getBuildCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST, NbStrings.getTestCommandCaption());
@@ -130,7 +80,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         return StandardTaskVariable.PROJECT_NAME.getScriptReplaceConstant() + ":" + task;
     }
 
-    public static String tryGetDisplayNameOfDefaultCommand(String command) {
+    private static String tryGetDisplayNameOfDefaultCommand(String command) {
         if (command == null) throw new NullPointerException("command");
         return DISPLAY_NAME_MAP.get(command);
     }
@@ -169,7 +119,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
 
     @Override
     public String tryGetDisplayNameOfCommand(String command) {
-        return getDisplayNameOfCommand(project, command);
+        return DISPLAY_NAME_MAP.get(command);
     }
 
     @Override
@@ -181,16 +131,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     @Override
     public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command) {
         CommandWithActions task = DEFAULT_TASKS.get(command);
-        if (task != null && task.customActions.getTaskKind() == TaskKind.DEBUG) {
-            return debugActions(true);
-        }
         return task != null ? task.customActions : null;
-    }
-
-    private CustomCommandActions debugActions(boolean test) {
-        CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.DEBUG);
-        result.setStdOutProcessor(new DebugTextListener(new AttacherListener(project, test)));
-        return result.create();
     }
 
     private static CommandWithActions blockingCommand(

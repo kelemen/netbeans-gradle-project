@@ -14,6 +14,7 @@ import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbDependencyType;
 import org.netbeans.gradle.project.java.model.NbJavaDependency;
@@ -31,22 +32,17 @@ import org.openide.filesystems.FileObject;
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
 
-    private final NbGradleProject project;
+    private final JavaExtension javaExt;
     private final boolean test;
 
-    public AttacherListener(NbGradleProject project, boolean test) {
-        if (project == null) throw new NullPointerException("project");
-        this.project = project;
+    public AttacherListener(JavaExtension javaExt, boolean test) {
+        if (javaExt == null) throw new NullPointerException("javaExt");
+        this.javaExt = javaExt;
         this.test = test;
     }
 
     private ClassPath getSources() {
-        JavaExtension javaExtension = project.lookupExtension(JavaExtension.class);
-        if (javaExtension == null) {
-            return ClassPath.EMPTY;
-        }
-
-        NbJavaModule mainModule = javaExtension.getCurrentModel().getMainModule();
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
         List<FileObject> srcRoots = new LinkedList<FileObject>();
 
         srcRoots.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
@@ -80,7 +76,9 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private ClassPath getJdkSources() {
-        ProjectPlatform platform = project.getProperties().getPlatform().getValue();
+        GradleProperty.BuildPlatform platformProperty
+                = javaExt.getProjectLookup().lookup(GradleProperty.BuildPlatform.class);
+        ProjectPlatform platform = platformProperty.getValue();
         return ClassPathSupport.createClassPath(platform.getSourcePaths().toArray(new URL[0]));
     }
 
@@ -88,8 +86,8 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         LOGGER.log(Level.INFO, "Attempting to attach to debugee on port: {0}", port);
 
         Map<String, Object> services = new HashMap<String, Object>();
-        services.put("name", project.getAvailableModel().getGradleProject().getPath());
-        services.put("baseDir", project.getProjectDirectoryAsFile());
+        services.put("name", javaExt.getCurrentModel().getMainModule().getUniqueName());
+        services.put("baseDir", javaExt.getProjectDirectoryAsFile());
         services.put("jdksources", getJdkSources());
         services.put("sourcepath", getSources());
 

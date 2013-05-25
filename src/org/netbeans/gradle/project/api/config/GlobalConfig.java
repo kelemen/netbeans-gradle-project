@@ -16,6 +16,8 @@ public final class GlobalConfig {
      * tasks not directly related to testing (such as build). Extensions should
      * consider this value when providing their own
      * {@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery custom built-in tasks}.
+     * <P>
+     * The value of the returned property is never {@code null}.
      *
      * @return the property indicating if tests should be skipped when executing
      *   tasks not directly related to testing (such as build). This method
