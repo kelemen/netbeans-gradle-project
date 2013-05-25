@@ -227,7 +227,6 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     @Override
     public boolean hasCustomizer() {
-        // TODO: Open the project properties window
         return false;
     }
 

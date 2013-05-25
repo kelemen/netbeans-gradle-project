@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
+import org.netbeans.spi.project.ui.CustomizerProvider;
 
 public final class NbGradleSingleProjectConfigProvider
 implements
@@ -99,14 +100,21 @@ implements
         commonConfig.setActiveConfiguration(configuration);
     }
 
+    private CustomizerProvider getCustomizerProvider() {
+        return project.getLookup().lookup(CustomizerProvider.class);
+    }
+
     @Override
     public boolean hasCustomizer() {
-        return commonConfig.hasCustomizer();
+        return getCustomizerProvider() != null;
     }
 
     @Override
     public void customize() {
-        commonConfig.customize();
+        CustomizerProvider customizerProvider = getCustomizerProvider();
+        if (customizerProvider != null) {
+            customizerProvider.showCustomizer();
+        }
     }
 
     @Override
