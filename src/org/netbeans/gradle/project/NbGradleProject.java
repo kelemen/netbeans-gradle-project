@@ -50,9 +50,9 @@ import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
-import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
+import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
@@ -172,8 +172,7 @@ public final class NbGradleProject implements Project {
     public BuiltInGradleCommandQuery getMergedCommandQuery() {
         BuiltInGradleCommandQuery result = mergedCommandQueryRef.get();
         if (result == null) {
-            // TODO: consider extensions.
-            result = new DefaultBuiltInTasks(this);
+            result = new MergedBuiltInGradleCommandQuery(this);
             mergedCommandQueryRef.compareAndSet(null, result);
             result = mergedCommandQueryRef.get();
         }

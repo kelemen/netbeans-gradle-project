@@ -21,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
@@ -29,6 +30,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     private static final Logger LOGGER = Logger.getLogger(ManageBuiltInTasksPanel.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
+    private final NbGradleProject project;
     private final ProjectProperties projectProperties;
     private final CustomActionPanel jActionPanel;
     private BuiltInTaskItem lastShownItem;
@@ -37,7 +39,8 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     /**
      * Creates new form ManageBuiltInTasksPanel
      */
-    public ManageBuiltInTasksPanel(ProjectProperties properties) {
+    public ManageBuiltInTasksPanel(NbGradleProject project, ProjectProperties properties) {
+        this.project = project;
         this.projectProperties = properties;
         lastShownItem = null;
         toSaveTasks = new HashMap<String, SavedTask>();
@@ -83,11 +86,15 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         setEnableChildrenRecursive(jActionPanel, !jInheritCheck.isSelected());
     }
 
+    private String getDisplayNameOfCommand(String command) {
+        return DefaultBuiltInTasks.getDisplayNameOfCommand(project, command);
+    }
+
     private void fillTaskCombo() {
-        Set<String> commands = AbstractProjectProperties.getCustomizableCommands();
+        Set<String> commands = projectProperties.getKnownBuiltInCommands();
         List<BuiltInTaskItem> items = new ArrayList<BuiltInTaskItem>(commands.size());
         for (String command: commands) {
-            items.add(new BuiltInTaskItem(command));
+            items.add(new BuiltInTaskItem(command, getDisplayNameOfCommand(command)));
         }
         Collections.sort(items, new Comparator<BuiltInTaskItem>() {
             @Override
@@ -263,10 +270,12 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         private final String command;
         private final String displayName;
 
-        public BuiltInTaskItem(String command) {
+        public BuiltInTaskItem(String command, String displayName) {
             assert command != null;
+            assert displayName != null;
+
             this.command = command;
-            this.displayName = DefaultBuiltInTasks.getDisplayNameOfCommand(command);
+            this.displayName = displayName;
         }
 
         public String getCommand() {

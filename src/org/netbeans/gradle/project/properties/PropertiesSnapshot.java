@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -198,6 +199,7 @@ public final class PropertiesSnapshot {
     private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
     private final List<AuxConfigSource> auxProperties;
     private final Map<DomElementKey, AuxConfigSource> auxPropertiesMap;
+    private final Set<String> knownBuiltInCommands;
 
     public PropertiesSnapshot(ProjectProperties properties) {
         this.sourceLevel = asConst(properties.getSourceLevel());
@@ -218,7 +220,8 @@ public final class PropertiesSnapshot {
         }
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
 
-        Set<String> commands = AbstractProjectProperties.getCustomizableCommands();
+        Set<String> commands = properties.getKnownBuiltInCommands();
+        this.knownBuiltInCommands = Collections.unmodifiableSet(new HashSet<String>(commands));
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(2 * commands.size());
         for (String command: commands) {
             MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
@@ -233,34 +236,6 @@ public final class PropertiesSnapshot {
 
     private static <ValueType> PropertySource<ValueType> asConst(MutableProperty<ValueType> property) {
         return asConst(property.getValue(), property.isDefault());
-    }
-
-    private static <ValueType> PropertySource<ValueType> wrapSource(
-            final PropertySource<ValueType> source,
-            final boolean defaultValue) {
-        assert source != null;
-
-        return new PropertySource<ValueType>() {
-            @Override
-            public ValueType getValue() {
-                return source.getValue();
-            }
-
-            @Override
-            public boolean isDefault() {
-                return defaultValue;
-            }
-
-            @Override
-            public void addChangeListener(ChangeListener listener) {
-                source.addChangeListener(listener);
-            }
-
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                source.removeChangeListener(listener);
-            }
-        };
     }
 
     private static <ValueType> PropertySource<ValueType> asConstNullForNull(ValueType value, boolean defaultValue) {
@@ -289,6 +264,7 @@ public final class PropertiesSnapshot {
         this.commonTasks = builder.getCommonTasks();
         this.licenseHeader = builder.getLicenseHeader();
         this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(builder.builtInTasks);
+        this.knownBuiltInCommands = Collections.unmodifiableSet(builtInTasks.keySet());
         this.auxProperties = Collections.unmodifiableList(new ArrayList<AuxConfigSource>(builder.auxProperties));
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
     }
@@ -340,5 +316,13 @@ public final class PropertiesSnapshot {
         return result != null
                 ? result
                 : PropertiesSnapshot.<PredefinedTask>asConstNullForNull(null, true);
+    }
+
+    public Map<String, PropertySource<PredefinedTask>> getBuiltInTasks() {
+        return Collections.unmodifiableMap(builtInTasks);
+    }
+
+    public Set<String> getKnownBuiltInCommands() {
+        return knownBuiltInCommands;
     }
 }

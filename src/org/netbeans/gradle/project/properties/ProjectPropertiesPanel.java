@@ -551,7 +551,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void displayManageBuiltInTasksPanel(String profileName, ProjectProperties properties) {
-        ManageBuiltInTasksPanel panel = new ManageBuiltInTasksPanel(properties);
+        ManageBuiltInTasksPanel panel = new ManageBuiltInTasksPanel(project, properties);
 
         DialogDescriptor dlgDescriptor = new DialogDescriptor(
                 panel,

@@ -4,6 +4,8 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -14,7 +16,6 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -125,7 +126,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 return snapshot.getLicenseHeader();
             }
         }));
-        for (final String command: AbstractProjectProperties.getCustomizableCommands()) {
+        for (final String command: properties.getKnownBuiltInCommands()) {
             MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
             if (taskProperty == null) {
                 LOGGER.log(Level.WARNING, "tryGetBuiltInTask returned null for command: {0}", command);
@@ -163,6 +164,20 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                             // TODO: This might overwrite concurrently set
                             //  properties which is unexpected by the user. This
                             //  is unlikely to happen but should be fixed anyway.
+
+                            Set<Map.Entry<String, PropertySource<PredefinedTask>>> builtInTasks
+                                    = snapshot.getBuiltInTasks().entrySet();
+                            for (Map.Entry<String, PropertySource<PredefinedTask>> taskEntry: builtInTasks) {
+                                MutableProperty<PredefinedTask> property
+                                        = properties.tryGetBuiltInTask(taskEntry.getKey());
+                                if (property == null) {
+                                    LOGGER.log(Level.SEVERE, "Cannot set property for built-in task: {0}", taskEntry.getKey());
+                                }
+                                else {
+                                    property.setValueFromSource(taskEntry.getValue());
+                                }
+                            }
+
                             List<AuxConfig> newAuxConfigs = new LinkedList<AuxConfig>();
                             for (AuxConfigSource config: snapshot.getAuxProperties()) {
                                 newAuxConfigs.add(new AuxConfig(config.getKey(), config.getSource().getValue()));

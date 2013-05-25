@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeEvent;
@@ -24,10 +25,13 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     private final ConcurrentMap<String, MutableProperty<PredefinedTask>> builtInTasks;
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
 
+    private final MutableProperty<Object> builtInChangeSignal;
+
     public MemProjectProperties() {
         ProjectPlatform defaultPlatform = AbstractProjectPlatformSource.getDefaultPlatform();
         JavaPlatform defaultJavaPlatform = JavaPlatform.getDefault();
 
+        this.builtInChangeSignal = new DefaultMutableProperty<Object>(new Object(), true, false);
         this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), true, false);
         this.platform = new DefaultMutableProperty<ProjectPlatform>(defaultPlatform, true, false);
         this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultJavaPlatform, true, false);
@@ -82,6 +86,13 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
             result = new DefaultMutableProperty<PredefinedTask>(null, true, true);
+            result.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    builtInChangeSignal.setValue(new Object());
+                }
+            });
+
             builtInTasks.putIfAbsent(command, result);
             result = builtInTasks.get(command);
         }
@@ -89,8 +100,22 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
+    public Set<String> getKnownBuiltInCommands() {
+        return Collections.unmodifiableSet(builtInTasks.keySet());
+    }
+
+    @Override
     public MutableProperty<Void> getAuxConfigListener() {
         return auxConfigListener;
+    }
+
+    @Override
+    public Collection<MutableProperty<?>> getAllProperties() {
+        Collection<MutableProperty<?>> superProperties = super.getAllProperties();
+        Collection<MutableProperty<?>> result = new ArrayList<MutableProperty<?>>(superProperties.size() + 1);
+        result.addAll(superProperties);
+        result.add(builtInChangeSignal);
+        return result;
     }
 
     @Override

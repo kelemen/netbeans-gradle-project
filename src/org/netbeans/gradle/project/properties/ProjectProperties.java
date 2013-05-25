@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
@@ -27,10 +28,8 @@ public interface ProjectProperties {
     public MutableProperty<List<PredefinedTask>> getCommonTasks();
     public MutableProperty<LicenseHeaderInfo> getLicenseHeader();
 
-    // In case you add more built-in tasks, don't forget to update
-    // AbstractProjectProperties.getCustomizableCommands().
-    // Also define the defaults in BuiltInTasks.
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
+    public Set<String> getKnownBuiltInCommands();
 
     // The listener of this property is always notified whenever any of the
     // auxilary configuration changes.

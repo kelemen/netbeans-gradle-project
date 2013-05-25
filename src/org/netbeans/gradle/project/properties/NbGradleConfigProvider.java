@@ -36,7 +36,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
 
-    public NbGradleConfigProvider(File rootDirectory) {
+    private NbGradleConfigProvider(File rootDirectory) {
         if (rootDirectory == null) throw new NullPointerException("rootDirectory");
 
         this.rootDirectory = rootDirectory;
@@ -231,7 +231,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     @Override
     public boolean configurationsAffectAction(String command) {
-        return AbstractProjectProperties.getCustomizableCommands().contains(command);
+        return true;
     }
 
     @Override

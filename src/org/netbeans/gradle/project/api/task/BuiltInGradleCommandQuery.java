@@ -32,6 +32,33 @@ public interface BuiltInGradleCommandQuery {
     public Set<String> getSupportedCommands();
 
     /**
+     * Returns the display name of the command, if know by the extension.
+     * The following commands are known by Gradle Support and the extension may
+     * choose to return {@code null} for them even if it
+     * {@link #getSupportedCommands() supports} the command:
+     * <ul>
+     *  <li>{@code ActionProvider.COMMAND_BUILD}</li>
+     *  <li>{@code ActionProvider.COMMAND_TEST}</li>
+     *  <li>{@code ActionProvider.COMMAND_CLEAN}</li>
+     *  <li>{@code ActionProvider.COMMAND_RUN}</li>
+     *  <li>{@code ActionProvider.COMMAND_DEBUG}</li>
+     *  <li>{@code ActionProvider.COMMAND_REBUILD}</li>
+     *  <li>{@code ActionProvider.COMMAND_TEST_SINGLE}</li>
+     *  <li>{@code ActionProvider.COMMAND_DEBUG_TEST_SINGLE}</li>
+     *  <li>{@code ActionProvider.COMMAND_RUN_SINGLE}</li>
+     *  <li>{@code ActionProvider.COMMAND_DEBUG_SINGLE}</li>
+     *  <li>{@code JavaProjectConstants.COMMAND_JAVADOC}</li>
+     *  <li>{@code JavaProjectConstants.COMMAND_DEBUG_FIX}</li>
+     * </ul>
+     *
+     * @param command the command whose display name is to be returned. This
+     *   argument cannot be {@code null}.
+     * @return the display name of the command or {@code null} if this query
+     *   does not know the display name for the specified command
+     */
+    public String tryGetDisplayNameOfCommand(String command);
+
+    /**
      * Defines the default Gradle command to run when the built-in command is to
      * be executed. This command might be reconfigured by users, so there is no
      * guarantee that this command will actually be executed.

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -175,6 +176,11 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
                 return task;
             }
         };
+    }
+
+    @Override
+    public Set<String> getKnownBuiltInCommands() {
+        return project.getMergedCommandQuery().getSupportedCommands();
     }
 
     @Override

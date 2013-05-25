@@ -190,8 +190,9 @@ final class XmlPropertyFormat {
     }
 
     private static void addBuiltInTasks(Node node, PropertiesSnapshot snapshot) {
-        List<PredefinedTask> tasks = new LinkedList<PredefinedTask>();
-        for (String command: AbstractProjectProperties.getCustomizableCommands()) {
+        Set<String> knownBuiltInCommands = snapshot.getKnownBuiltInCommands();
+        List<PredefinedTask> tasks = new ArrayList<PredefinedTask>(knownBuiltInCommands.size());
+        for (String command: knownBuiltInCommands) {
             PropertySource<PredefinedTask> taskProperty = snapshot.tryGetBuiltInTask(command);
             if (taskProperty != null && !taskProperty.isDefault()) {
                 PredefinedTask task = taskProperty.getValue();
@@ -202,6 +203,16 @@ final class XmlPropertyFormat {
         }
 
         if (!tasks.isEmpty()) {
+            // Sort them, so that they are saved in a deterministic order.
+            Collections.sort(tasks, new Comparator<PredefinedTask>() {
+                @Override
+                public int compare(PredefinedTask o1, PredefinedTask o2) {
+                    String displayName1 = o1.getDisplayName();
+                    String displayName2 = o2.getDisplayName();
+                    return displayName1.compareTo(displayName2);
+                }
+            });
+
             Element commonTasksNode = addChild(node, BUILT_IN_TASKS_NODE);
             for (PredefinedTask task: tasks) {
                 addSingleTask(commonTasksNode, task);
@@ -621,15 +632,9 @@ final class XmlPropertyFormat {
         List<PredefinedTask> commonTasks = Collections.unmodifiableList(readCommonTasks(root));
         result.setCommonTasks(asConst(commonTasks, commonTasks.isEmpty()));
 
-        Set<String> customizableCommands = AbstractProjectProperties.getCustomizableCommands();
         for (PredefinedTask builtInTask: readBuiltInTasks(root)) {
             String command = builtInTask.getDisplayName();
-            if (!customizableCommands.contains(command)) {
-                LOGGER.log(Level.WARNING, "Property file contains unknown built-in command: {0}", command);
-            }
-            else {
-                result.setBuiltInTask(command, asConst(builtInTask, false));
-            }
+            result.setBuiltInTask(command, asConst(builtInTask, false));
         }
 
         for (AuxConfig auxConfig: readAuxiliaryConfigs(root)) {

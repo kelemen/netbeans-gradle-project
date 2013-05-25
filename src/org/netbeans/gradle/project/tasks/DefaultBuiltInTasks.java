@@ -17,7 +17,6 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.output.DebugTextListener;
-import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.netbeans.spi.project.ActionProvider;
 
 // FIXME: We do not consider skip test global property.
@@ -131,20 +130,26 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         return StandardTaskVariable.PROJECT_NAME.getScriptReplaceConstant() + ":" + task;
     }
 
-    public static String getDisplayNameOfCommand(String command) {
+    public static String tryGetDisplayNameOfDefaultCommand(String command) {
         if (command == null) throw new NullPointerException("command");
+        return DISPLAY_NAME_MAP.get(command);
+    }
 
-        String displayName = DISPLAY_NAME_MAP.get(command);
-        if (displayName == null) {
-            if (AbstractProjectProperties.getCustomizableCommands().contains(command)) {
-                LOGGER.log(Level.WARNING, "Customizable command does not have a display name: {0}", command);
-            }
-            else {
-                LOGGER.log(Level.WARNING, "Unknown command does not have a display name: {0}", command);
-            }
-            displayName = command;
+    public static String getDisplayNameOfCommand(NbGradleProject project, String command) {
+        String displayName = tryGetDisplayNameOfDefaultCommand(command);
+        if (displayName != null) {
+            return displayName;
         }
-        return displayName;
+
+        for (BuiltInGradleCommandQuery commandQuery: project.getLookup().lookupAll(BuiltInGradleCommandQuery.class)) {
+            displayName = commandQuery.tryGetDisplayNameOfCommand(command);
+            if (displayName != null) {
+                return displayName;
+            }
+        }
+
+        LOGGER.log(Level.WARNING, "Command does not have a display name: {0}", command);
+        return command;
     }
 
     private final NbGradleProject project;
@@ -160,6 +165,11 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     @Override
     public Set<String> getSupportedCommands() {
         return supportedCommands;
+    }
+
+    @Override
+    public String tryGetDisplayNameOfCommand(String command) {
+        return getDisplayNameOfCommand(project, command);
     }
 
     @Override
