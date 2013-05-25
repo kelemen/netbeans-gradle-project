@@ -158,7 +158,10 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             addToConfig(currentConfigs);
         }
 
-        if (!configs.get().contains(activeConfig.get())) {
+        // Only switch automatically for custom profiles because our wrapper
+        // might actually allow other profiles.
+        NbGradleConfiguration config = activeConfig.get();
+        if (config.getProfileGroup() == null && !configs.get().contains(config)) {
             setActiveConfiguration(NbGradleConfiguration.DEFAULT_CONFIG);
         }
 
@@ -182,6 +185,15 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         }
     }
 
+    public void fireConfigurationListChange() {
+        executeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+            }
+        });
+    }
+
     @Override
     public Collection<NbGradleConfiguration> getConfigurations() {
         ensureLoadedAsynchronously();
@@ -191,13 +203,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     @Override
     public NbGradleConfiguration getActiveConfiguration() {
         ensureLoadedAsynchronously();
-
-        NbGradleConfiguration result = activeConfig.get();
-        if (!configs.get().contains(result)) {
-            result = NbGradleConfiguration.DEFAULT_CONFIG;
-            setActiveConfiguration(result);
-        }
-        return result;
+        return activeConfig.get();
     }
 
     @Override

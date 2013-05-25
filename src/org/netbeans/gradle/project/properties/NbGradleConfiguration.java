@@ -46,6 +46,10 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
         return profileDef;
     }
 
+    public String getProfileGroup() {
+        return profileDef != null ? profileDef.getGroupName() : null;
+    }
+
     @Override
     public String getDisplayName() {
         return profileDef != null

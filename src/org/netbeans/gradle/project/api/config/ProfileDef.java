@@ -3,7 +3,8 @@ package org.netbeans.gradle.project.api.config;
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
  * the projects of the same multi-project build always share their
- * configuration.
+ * configuration. Extensions may also define they own profiles via the
+ * {@link CustomProfileQuery} query.
  * <P>
  * The following properties define a profile:
  * <ul>
@@ -29,6 +30,8 @@ package org.netbeans.gradle.project.api.config;
  * The {@link #equals(Object) equals} and {@link #hashCode() hashCode} methods
  * define two {@code ProfileDef} instances to be equivalent, if, and only, if
  * they have the same group and filename.
+ *
+ * @see CustomProfileQuery
  */
 public final class ProfileDef {
     private final String groupName;

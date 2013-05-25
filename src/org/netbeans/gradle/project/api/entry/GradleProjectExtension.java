@@ -63,6 +63,7 @@ public interface GradleProjectExtension {
      * <P>
      * The following queries are known and used by the Gradle plugin itself:
      * <ul>
+     *  <li>{@link org.netbeans.gradle.project.api.config.CustomProfileQuery}</li>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectContextActions}</li>
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery}</li>
