@@ -16,6 +16,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 
@@ -75,8 +76,8 @@ public final class ProjectPropertiesManager {
     }
 
     public static ProjectPropertySource getPropertySourceForProject(
-            NbGradleProject project, String profileName) {
-        return new NbProfileProjectPropertySource(project, profileName);
+            NbGradleProject project, ProfileDef profileDef) {
+        return new NbProfileProjectPropertySource(project, profileDef);
     }
 
     public static ProjectPropertySource getPropertySourceForProject(NbGradleProject project) {
@@ -313,20 +314,20 @@ public final class ProjectPropertiesManager {
 
     private static final class NbProfileProjectPropertySource implements ProjectPropertySource {
         private final NbGradleProject project;
-        private final String profileName;
+        private final ProfileDef profileDef;
         private final ProjectPropertySource defaultSource;
 
-        public NbProfileProjectPropertySource(NbGradleProject project, String profileName) {
+        public NbProfileProjectPropertySource(NbGradleProject project, ProfileDef profileDef) {
             if (project == null) throw new NullPointerException("project");
 
             this.project = project;
-            this.profileName = profileName;
+            this.profileDef = profileDef;
             this.defaultSource = new DefaultProjectPropertySource(project);
         }
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
-            File[] files = SettingsFiles.getFilesForProfile(project, profileName);
+            File[] files = SettingsFiles.getFilesForProfile(project, profileDef);
             return filesWithDefault(project, files, defaultSource).load(onLoadTask);
         }
 
@@ -334,7 +335,7 @@ public final class ProjectPropertiesManager {
         public int hashCode() {
             int hash = 5;
             hash = 73 * hash + this.project.hashCode();
-            hash = 73 * hash + (this.profileName != null ? this.profileName.hashCode() : 0);
+            hash = 73 * hash + (this.profileDef != null ? this.profileDef.hashCode() : 0);
             return hash;
         }
 
@@ -346,7 +347,7 @@ public final class ProjectPropertiesManager {
 
             final NbProfileProjectPropertySource other = (NbProfileProjectPropertySource)obj;
             if (!this.project.equals(other.project)) return false;
-            if ((this.profileName == null) ? (other.profileName != null) : !this.profileName.equals(other.profileName)) {
+            if ((this.profileDef == null) ? (other.profileDef != null) : !this.profileDef.equals(other.profileDef)) {
                 return false;
             }
             return true;

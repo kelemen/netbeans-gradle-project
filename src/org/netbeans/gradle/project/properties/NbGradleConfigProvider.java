@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.openide.util.ChangeSupport;
 
@@ -49,6 +50,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
         File rootDir = SettingsFiles.getRootDirectory(project);
+
+        // TODO: Add configurations from enabled extensions.
+        //   NbGradleConfigProvider is needed to be wrapped for this.
 
         CONFIG_PROVIDERS_LOCK.lock();
         try {
@@ -101,7 +105,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             @Override
             public void run() {
                 removeFromConfig(config);
-                File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileName())[0];
+                File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
                 if (profileFile.isFile()) {
                     profileFile.delete();
                 }
@@ -138,13 +142,13 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
-        Collection<String> profileNames = SettingsFiles.getAvailableProfiles(rootDirectory);
+        Collection<ProfileDef> profileDefs = SettingsFiles.getAvailableProfiles(rootDirectory);
         List<NbGradleConfiguration> currentConfigs
-                = new ArrayList<NbGradleConfiguration>(profileNames.size() + 1);
+                = new ArrayList<NbGradleConfiguration>(profileDefs.size() + 1);
 
         currentConfigs.add(NbGradleConfiguration.DEFAULT_CONFIG);
-        for (String profileName: profileNames) {
-            currentConfigs.add(new NbGradleConfiguration(profileName));
+        for (ProfileDef profileDef: profileDefs) {
+            currentConfigs.add(new NbGradleConfiguration(profileDef));
         }
 
         if (mayRemove) {

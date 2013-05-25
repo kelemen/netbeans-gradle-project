@@ -326,6 +326,7 @@
                 <package>org.gradle.tooling.model.eclipse</package>
                 <package>org.gradle.tooling.model.idea</package>
                 <package>org.gradle.tooling.provider.model</package>
+                <package>org.netbeans.gradle.project.api.config</package>
                 <package>org.netbeans.gradle.project.api.entry</package>
                 <package>org.netbeans.gradle.project.api.event</package>
                 <package>org.netbeans.gradle.project.api.nodes</package>

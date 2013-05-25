@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfiguration;
 
 public final class NbGradleConfiguration implements ProjectConfiguration {
@@ -27,10 +28,10 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
         }
     };
 
-    private final String profileName;
+    private final ProfileDef profileDef;
 
-    public NbGradleConfiguration(String profileName) {
-        this.profileName = profileName;
+    public NbGradleConfiguration(ProfileDef profileDef) {
+        this.profileDef = profileDef;
     }
 
     public static void sortProfiles(NbGradleConfiguration[] profileArray) {
@@ -41,14 +42,14 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
         Collections.sort(profileList, ALPHABETICAL_ORDER);
     }
 
-    public String getProfileName() {
-        return profileName;
+    public ProfileDef getProfileDef() {
+        return profileDef;
     }
 
     @Override
     public String getDisplayName() {
-        return profileName != null
-                ? profileName
+        return profileDef != null
+                ? profileDef.getDisplayName()
                 : NbStrings.getDefaultProfileName();
     }
 
@@ -60,7 +61,7 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 79 * hash + (this.profileName != null ? this.profileName.hashCode() : 0);
+        hash = 79 * hash + (this.profileDef != null ? this.profileDef.hashCode() : 0);
         return hash;
     }
 
@@ -71,7 +72,7 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
         if (getClass() != obj.getClass())
             return false;
         final NbGradleConfiguration other = (NbGradleConfiguration)obj;
-        if ((this.profileName == null) ? (other.profileName != null) : !this.profileName.equals(other.profileName))
+        if ((this.profileDef == null) ? (other.profileDef != null) : !this.profileDef.equals(other.profileDef))
             return false;
         return true;
     }

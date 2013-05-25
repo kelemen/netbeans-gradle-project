@@ -31,6 +31,7 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.DialogDescriptor;
@@ -174,8 +175,6 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         saveShownProfile();
         currentlyShownProfile = null;
 
-        String profileName = selected.getProfileName();
-
         // If we already have a store for the properties then we should have
         // already edited it.
         ProjectProperties storedProperties = storeForProperties.get(selected);
@@ -186,7 +185,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         final PanelLockRef lock = lockPanel();
-        project.getPropertiesForProfile(profileName, true, new PropertiesLoadListener() {
+        project.getPropertiesForProfile(selected.getProfileDef(), true, new PropertiesLoadListener() {
             @Override
             public void loadedProperties(final ProjectProperties properties) {
                 SwingUtilities.invokeLater(new Runnable() {
@@ -304,7 +303,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         saveShownProfile();
         for (Map.Entry<ProfileItem, ProjectProperties> entry: storeForProperties.entrySet()) {
             ProjectProperties src = entry.getValue();
-            ProjectProperties dest = project.getPropertiesForProfile(entry.getKey().getProfileName(), false, null);
+            ProjectProperties dest = project.getPropertiesForProfile(entry.getKey().getProfileDef(), false, null);
 
             copyProperty(src.getScriptPlatform(), dest.getScriptPlatform());
             copyProperty(src.getGradleLocation(), dest.getGradleLocation());
@@ -460,7 +459,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             return;
         }
 
-        project.getPropertiesForProfile(selectedProfile.getProfileName(), useInheritance, listener);
+        project.getPropertiesForProfile(selectedProfile.getProfileDef(), useInheritance, listener);
     }
 
     private ProjectProperties getStoreForShownProfile() {
@@ -485,8 +484,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             this.config = config;
         }
 
-        public String getProfileName() {
-            return config.getProfileName();
+        public ProfileDef getProfileDef() {
+            return config.getProfileDef();
         }
 
         public NbGradleConfiguration getConfig() {
@@ -843,8 +842,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         if (profileName.isEmpty()) {
             return;
         }
-
-        NbGradleConfiguration newConfig = new NbGradleConfiguration(profileName);
+        ProfileDef profileDef = SettingsFiles.getStandardProfileDef(profileName);
+        NbGradleConfiguration newConfig = new NbGradleConfiguration(profileDef);
         ProfileItem newProfile = new ProfileItem(newConfig);
 
         project.getLookup().lookup(NbGradleConfigProvider.class).addConfiguration(newConfig);

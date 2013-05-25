@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
@@ -347,7 +348,7 @@ public final class NbGradleProject implements Project {
             return;
         }
 
-        getPropertiesForProfile(getCurrentProfile().getProfileName(), true, new PropertiesLoadListener() {
+        getPropertiesForProfile(getCurrentProfile().getProfileDef(), true, new PropertiesLoadListener() {
             @Override
             public void loadedProperties(ProjectProperties properties) {
                 GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
@@ -360,15 +361,15 @@ public final class NbGradleProject implements Project {
     }
 
     public ProjectProperties getPropertiesForProfile(
-            String profile,
+            ProfileDef profileDef,
             boolean useInheritance,
             PropertiesLoadListener onLoadTask) {
 
         if (useInheritance) {
-            return ProjectPropertiesManager.getPropertySourceForProject(this, profile).load(onLoadTask);
+            return ProjectPropertiesManager.getPropertySourceForProject(this, profileDef).load(onLoadTask);
         }
         else {
-            File profileFile = SettingsFiles.getProfileFile(this, profile);
+            File profileFile = SettingsFiles.getProfileFile(this, profileDef);
             return ProjectPropertiesManager.getFilePropertySource(this, profileFile).load(onLoadTask);
         }
     }

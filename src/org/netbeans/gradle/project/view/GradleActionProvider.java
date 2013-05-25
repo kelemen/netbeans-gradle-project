@@ -117,7 +117,7 @@ public final class GradleActionProvider implements ActionProvider {
         }
         else {
             final WaitableSignal loadedSignal = new WaitableSignal();
-            properties = project.getPropertiesForProfile(config.getProfileName(), true, new PropertiesLoadListener() {
+            properties = project.getPropertiesForProfile(config.getProfileDef(), true, new PropertiesLoadListener() {
                 @Override
                 public void loadedProperties(ProjectProperties properties) {
                     loadedSignal.signal();
