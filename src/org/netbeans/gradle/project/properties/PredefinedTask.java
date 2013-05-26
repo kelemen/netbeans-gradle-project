@@ -156,11 +156,11 @@ public final class PredefinedTask {
             rawTaskNames.add(name.getName());
         }
 
-        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(rawTaskNames);
-        builder.setArguments(arguments);
-        builder.setJvmArguments(jvmArguments);
-        builder.setBlocking(!nonBlocking);
-        return builder.create();
+        return new GradleCommandTemplate.Builder(rawTaskNames).
+                setArguments(arguments).
+                setJvmArguments(jvmArguments).
+                setBlocking(!nonBlocking).
+                create();
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {

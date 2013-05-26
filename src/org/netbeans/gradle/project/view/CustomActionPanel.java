@@ -44,11 +44,10 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return null;
         }
 
-        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(Arrays.asList(tasks));
-        builder.setArguments(Arrays.asList(getArguments()));
-        builder.setJvmArguments(Arrays.asList(getJvmArguments()));
-        builder.setBlocking(!isNonBlocking());
-        return builder.create();
+        return new GradleCommandTemplate.Builder(Arrays.asList(tasks)).
+                setArguments(Arrays.asList(getArguments())).
+                setJvmArguments(Arrays.asList(getJvmArguments())).
+                setBlocking(!isNonBlocking()).create();
     }
 
     public String[] getTasks() {

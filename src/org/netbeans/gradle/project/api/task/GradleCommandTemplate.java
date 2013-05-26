@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.task;
 
+import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
@@ -78,40 +79,6 @@ public final class GradleCommandTemplate {
         }
 
         /**
-         * Returns the list of tasks to be executed by Gradle. Tasks will be
-         * executed in the order they were specified if possible without
-         * violating task dependencies. This property can only be specified at
-         * construction time. The task names may contain
-         * {@link TaskVariable variables to be replaced}.
-         *
-         * @return the list of tasks to be executed by Gradle. This method never
-         *   returns {@code null}, the returned list does not contain
-         *   {@code null} elements and is never empty.
-         */
-        public List<String> getTasks() {
-            return tasks;
-        }
-
-        /**
-         * Returns the last set arguments for this Gradle command.
-         * <P>
-         * The default value for this property if unset is an empty list.
-         * <P>
-         * Note: These arguments are specified for Gradle itself and not for the
-         * JVM executing Gradle. JVM arguments need to be specified via the
-         * {@link #setJvmArguments(List) JvmArguments} property.
-         *
-         * @return the last set arguments for this Gradle command. This method
-         *   never returns {@code null} and the returned list does not contain
-         *   {@code null} elements but may be empty.
-         *
-         * @see #setArguments(List)
-         */
-        public List<String> getArguments() {
-            return arguments;
-        }
-
-        /**
          * Sets the arguments specified for the Gradle command. This method call
          * overwrites the values set by previous {@code setArguments} calls. The
          * arguments may contain {@link TaskVariable variables to be replaced}.
@@ -129,33 +96,14 @@ public final class GradleCommandTemplate {
          * @throws NullPointerException thrown if the specified list is
          *   {@code null} or contains {@code null} elements
          */
-        public void setArguments(List<String> arguments) {
+        public Builder setArguments(List<String> arguments) {
             this.arguments = CollectionUtils.copyNullSafeList(arguments);
+            return this;
         }
 
-        /**
-         * Returns the last set JVM arguments for this Gradle command.
-         * These arguments are used to start the JVM process executing Gradle
-         * which is executing the Gradle command.
-         * <P>
-         * Note: Users may specify additional JVM arguments in the global
-         * settings and these JVM arguments will be added regardless what is
-         * specified in this list.
-         * <P>
-         * <B>Warning</B>: Specifying different JVM arguments for different
-         * commands are likely to spawn a new Gradle daemon. Note that the
-         * Gradle daemon is a long lived process and by default has a
-         * considerable memory footprint. Therefore, spawning new Gradle daemons
-         * should be avoided if possible.
-         *
-         * @return the last set JVM arguments for this Gradle command. This
-         *   method never returns {@code null} and the returned list does not
-         *   contain {@code null} elements but may be empty.
-         *
-         * @see #setJvmArguments(List)
-         */
-        public List<String> getJvmArguments() {
-            return jvmArguments;
+        public Builder addArgument(String argument) {
+            arguments.add(Preconditions.checkNotNull(argument));
+            return this;
         }
 
         /**
@@ -180,31 +128,9 @@ public final class GradleCommandTemplate {
          * @throws NullPointerException thrown if the specified list is
          *   {@code null} or contains {@code null} elements
          */
-        public void setJvmArguments(List<String> jvmArguments) {
+        public Builder setJvmArguments(List<String> jvmArguments) {
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
-        }
-
-        /**
-         * Returns {@code true} if this Gradle command might block other
-         * commands indefinitely.
-         * <P>
-         * Gradle commands will be executed so that if a task is not blocking
-         * (this method returns {@code false}), then all subsequent tasks will
-         * wait for the non-blocking task to complete. The reason for this
-         * distinction is to prevent accidentally starting multiple Gradle
-         * daemons if multiple Gradle commands are scheduled concurrently.
-         * <P>
-         * <P>
-         * An example for a blocking task is "debug". An example for a
-         * non-blocking task is "build".
-         *
-         * @return {@code true} if this Gradle command might block other
-         *   commands indefinitely, {@code false} otherwise
-         *
-         * @see #setBlocking(boolean)
-         */
-        public boolean isBlocking() {
-            return blocking;
+            return this;
         }
 
         /**
@@ -224,8 +150,9 @@ public final class GradleCommandTemplate {
          * @param blocking {@code true} if this Gradle command might block other
          *   commands indefinitely, {@code false} otherwise
          */
-        public void setBlocking(boolean blocking) {
+        public Builder setBlocking(boolean blocking) {
             this.blocking = blocking;
+            return this;
         }
 
         /**
@@ -248,10 +175,11 @@ public final class GradleCommandTemplate {
     private final boolean blocking;
 
     private GradleCommandTemplate(Builder builder) {
-        this.tasks = builder.getTasks();
-        this.arguments = builder.getArguments();
-        this.jvmArguments = builder.getJvmArguments();
-        this.blocking = builder.isBlocking();
+        // XXX better to make a copy if we want to ensure immutability
+        this.tasks = builder.tasks;
+        this.arguments = builder.arguments;
+        this.jvmArguments = builder.jvmArguments;
+        this.blocking = builder.blocking;
     }
 
     /**
