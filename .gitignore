@@ -1,2 +1,6 @@
+/nb-configuration.xml
+/target/
+
+# Directories left from old Ant project
 /build/
 /nbproject/private/
