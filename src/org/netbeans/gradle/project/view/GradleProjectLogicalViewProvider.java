@@ -657,10 +657,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        GradleCommandTemplate.Builder command
-                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getPath()));
+                        GradleCommandTemplate command = 
+                                new GradleCommandTemplate.Builder(Arrays.asList(task.getPath())).create();
 
-                        executeCommandTemplate(project, command.create());
+                        executeCommandTemplate(project, command);
                     }
                 });
                 menu.add(menuItem);

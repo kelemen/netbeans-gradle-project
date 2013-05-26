@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.java.tasks;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -141,9 +140,9 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     }
 
     private CustomCommandActions debugActions(boolean test) {
-        CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.DEBUG);
-        result.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt, test)));
-        return result.create();
+        return new CustomCommandActions.Builder(TaskKind.DEBUG).
+                setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt, test))).
+                create();
     }
 
     private static CommandWithActions blockingCommand(
@@ -162,10 +161,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             CustomCommandActions customActions,
             boolean skipTestsIfNeeded) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
-        commandBuilder.setArguments(arguments);
-        commandBuilder.setJvmArguments(jvmArguments);
-        commandBuilder.setBlocking(true);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames).
+                setArguments(arguments).
+                setJvmArguments(jvmArguments).
+                setBlocking(true);
 
         return new CommandWithActions(commandBuilder.create(), customActions, skipTestsIfNeeded);
     }
@@ -185,10 +184,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             CustomCommandActions customActions,
             boolean skipTestsIfNeeded) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
-        commandBuilder.setArguments(arguments);
-        commandBuilder.setJvmArguments(jvmArguments);
-        commandBuilder.setBlocking(false);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames).
+                setArguments(arguments).
+                setJvmArguments(jvmArguments).
+                setBlocking(false);
 
         return new CommandWithActions(commandBuilder.create(), customActions, skipTestsIfNeeded);
     }
@@ -209,13 +208,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
         public GradleCommandTemplate getCommand() {
             if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()) {
-                GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(command);
-                List<String> prevArguments = builder.getArguments();
-                List<String> newArguments = new ArrayList<String>(prevArguments.size() + 2);
-                newArguments.add("-x");
-                newArguments.add("test");
-                builder.setArguments(newArguments);
-                return builder.create();
+                return new GradleCommandTemplate.Builder(command).
+                        addArgument("-x").
+                        addArgument("test").
+                        create();
             }
             return command;
         }
