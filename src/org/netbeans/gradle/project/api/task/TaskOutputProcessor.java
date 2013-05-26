@@ -8,7 +8,7 @@ package org.netbeans.gradle.project.api.task;
  * multiple threads concurrently. This interface must expect to be called from
  * any context, so should be <I>synchronization transparent</I>.
  *
- * @see BuiltInCommandDefs
+ * @see CustomCommandActions
  */
 public interface TaskOutputProcessor {
     /**

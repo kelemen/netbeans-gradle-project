@@ -6,7 +6,7 @@ package org.netbeans.gradle.project.api.task;
  * will not share the output window and so they may not overwrite each others
  * output.
  *
- * @see BuiltInCommandDefs
+ * @see CustomCommandActions
  */
 public enum TaskKind {
     /**
