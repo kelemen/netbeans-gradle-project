@@ -68,7 +68,11 @@ public interface GradleProjectExtension {
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
-     *  <li>{@link org.netbeans.spi.project.ui.support.ProjectCustomizer.CompositeCategoryProvider}</li>
+     *  <li>
+     *   {@link org.netbeans.spi.project.ui.support.ProjectCustomizer.CompositeCategoryProvider}:
+     *   You may add as many instances of this query as you want to the lookup,
+     *   if you need more than one customizer.
+     *  </li>
      * </ul>
      * <P>
      * Note: You may also return an implementation of
