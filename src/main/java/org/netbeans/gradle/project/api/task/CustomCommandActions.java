@@ -84,36 +84,6 @@ public final class CustomCommandActions {
         }
 
         /**
-         * Returns the kind of tasks affecting the output window handling of the
-         * executed task.
-         *
-         * @return the kind of tasks affecting the output window handling of the
-         *   executed task. This method may never return {@code null}.
-         */
-        public TaskKind getTaskKind() {
-            return taskKind;
-        }
-
-        /**
-         * Returns the {@code CommandCompleteListener} last set by the
-         * {@link #setCommandCompleteListener(CommandCompleteListener) setCommandCompleteListener}
-         * method.
-         * <P>
-         * The default value for this property is {@code null}.
-         * <P>
-         * The {@code CommandCompleteListener} is executed after the associated
-         * Gradle commands completes.
-         *
-         * @return the {@code CommandCompleteListener} last set by the
-         *   {@link #setCommandCompleteListener(CommandCompleteListener) setCommandCompleteListener}
-         *   method. This method may return {@code null} if {@code null} was
-         *   set.
-         */
-        public CommandCompleteListener getCommandCompleteListener() {
-            return commandCompleteListener;
-        }
-
-        /**
          * Sets the {@code CommandCompleteListener} to be executed after the
          * associated Gradle command completes. An invocation of this method
          * overwrites previous invocation of this method.
@@ -128,25 +98,6 @@ public final class CustomCommandActions {
          */
         public void setCommandCompleteListener(CommandCompleteListener commandCompleteListener) {
             this.commandCompleteListener = commandCompleteListener;
-        }
-
-        /**
-         * Returns the {@code TaskOutputProcessor} last set by the
-         * {@link #setStdOutProcessor(TaskOutputProcessor) setStdOutProcessor}
-         * method.
-         * <P>
-         * The default value for this property is {@code null}.
-         * <P>
-         * The {@code TaskOutputProcessor} is called after each line written to
-         * the standard output by the associated Gradle command.
-         *
-         * @return the {@code TaskOutputProcessor} last set by the
-         *   {@link #setStdOutProcessor(TaskOutputProcessor) setStdOutProcessor}
-         *   method. This method may return {@code null} if {@code null} was
-         *   set.
-         */
-        public TaskOutputProcessor getStdOutProcessor() {
-            return stdOutProcessor;
         }
 
         /**
@@ -165,25 +116,6 @@ public final class CustomCommandActions {
          */
         public void setStdOutProcessor(TaskOutputProcessor stdOutProcessor) {
             this.stdOutProcessor = stdOutProcessor;
-        }
-
-        /**
-         * Returns the {@code TaskOutputProcessor} last set by the
-         * {@link #setStdErrProcessor(TaskOutputProcessor) setStdErrProcessor}
-         * method.
-         * <P>
-         * The default value for this property is {@code null}.
-         * <P>
-         * The {@code TaskOutputProcessor} is called after each line written to
-         * the standard error by the associated Gradle command.
-         *
-         * @return the {@code TaskOutputProcessor} last set by the
-         *   {@link #setStdErrProcessor(TaskOutputProcessor) setStdErrProcessor}
-         *   method. This method may return {@code null} if {@code null} was
-         *   set.
-         */
-        public TaskOutputProcessor getStdErrProcessor() {
-            return stdErrProcessor;
         }
 
         /**
@@ -224,10 +156,10 @@ public final class CustomCommandActions {
     private final TaskOutputProcessor stdErrProcessor;
 
     private CustomCommandActions(Builder builder) {
-        this.taskKind = builder.getTaskKind();
-        this.commandCompleteListener = builder.getCommandCompleteListener();
-        this.stdOutProcessor = builder.getStdOutProcessor();
-        this.stdErrProcessor = builder.getStdErrProcessor();
+        this.taskKind = builder.taskKind;
+        this.commandCompleteListener = builder.commandCompleteListener;
+        this.stdOutProcessor = builder.stdOutProcessor;
+        this.stdErrProcessor = builder.stdErrProcessor;
     }
 
     /**
