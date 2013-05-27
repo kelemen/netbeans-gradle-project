@@ -175,12 +175,17 @@
             <artifactId>org-openide-windows</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
+
+        <!-- Packaged dependencies -->
+
         <dependency>
             <groupId>org.gradle</groupId>
             <artifactId>gradle-tooling-api</artifactId>
             <version>1.6</version>
         </dependency>
         <dependency>
+            <!-- We need to add slf4j-api only for gradle-tooling-api. -->
+            <!-- For some reason, the plugin won't build without explictly adding slf4j. -->
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.2</version>
