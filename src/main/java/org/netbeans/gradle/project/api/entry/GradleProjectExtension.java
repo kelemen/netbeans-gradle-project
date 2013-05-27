@@ -68,6 +68,7 @@ public interface GradleProjectExtension {
      *  <li>{@link org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
+     *  <li>{@link org.netbeans.spi.project.ui.support.ProjectCustomizer.CompositeCategoryProvider}</li>
      * </ul>
      * <P>
      * Note: You may also return an implementation of

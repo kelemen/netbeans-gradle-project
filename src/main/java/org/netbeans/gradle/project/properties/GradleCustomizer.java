@@ -57,6 +57,7 @@ public final class GradleCustomizer implements CustomizerProvider {
 
         allCategoriesList.add(new MainCustomizer(project));
         allCategoriesList.add(new LicenseCustomizer(project));
+        allCategoriesList.addAll(project.getLookup().lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
         allCategoriesList.addAll(Arrays.asList(externalCategories));
 
         return allCategoriesList.toArray(new ProjectCustomizer.CompositeCategoryProvider[allCategoriesList.size()]);
