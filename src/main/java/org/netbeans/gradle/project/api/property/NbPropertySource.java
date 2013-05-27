@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.property;
 
+import javax.annotation.Nullable;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -42,6 +43,7 @@ public interface NbPropertySource<ValueType> {
      *   {@code null} if the implementation allows {@code null} values for a
      *   property.
      */
+    @Nullable
     public ValueType getValue();
 
     /**

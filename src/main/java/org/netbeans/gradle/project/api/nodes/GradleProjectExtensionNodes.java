@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.nodes;
 
 import java.util.List;
+import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -29,7 +30,8 @@ public interface GradleProjectExtensionNodes {
      *   currently added listener, so that it may not be notified again. This
      *   method never returns {@code null}.
      */
-    public NbListenerRef addNodeChangeListener(Runnable listener);
+    @Nonnull
+    public NbListenerRef addNodeChangeListener(@Nonnull Runnable listener);
 
     /**
      * Returns the factory for the list of nodes to be displayed below the
@@ -39,5 +41,6 @@ public interface GradleProjectExtensionNodes {
      *   project node in the order they are to be displayed. This method never
      *   returns {@code null} but may return an empty list.
      */
+    @Nonnull
     public List<SingleNodeFactory> getNodeFactories();
 }

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.entry;
 
 import java.io.IOException;
+import javax.annotation.Nonnull;
 import org.netbeans.api.project.Project;
 
 /**
@@ -54,7 +55,7 @@ public interface GradleProjectExtensionQuery {
      *   extension from being loaded. Throwing this exception will prevent the
      *   extension from being applied to this project (even after it changes),
      *   so this exception should only be thrown in the extreme cases.
-     *
      */
-    public GradleProjectExtension loadExtensionForProject(Project project) throws IOException;
+    @Nonnull
+    public GradleProjectExtension loadExtensionForProject(@Nonnull Project project) throws IOException;
 }

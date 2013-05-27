@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Defines a map for retrieving values for a given {@code TaskVariable}.
  * Instances of this map are recommended to be lazily constructed.
@@ -29,5 +32,6 @@ public interface TaskVariableMap {
      *   {@code equals}) if called multiple times with the same (in terms of
      *   {@code equals}) {@code TaskVariable}.
      */
-    public String tryGetValueForVariable(TaskVariable variable);
+    @Nullable
+    public String tryGetValueForVariable(@Nonnull TaskVariable variable);
 }

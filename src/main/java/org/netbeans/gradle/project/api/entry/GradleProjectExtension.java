@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.openide.util.Lookup;
 
 /**
@@ -28,6 +30,7 @@ public interface GradleProjectExtension {
      * @return the unique name of this extension. This method never returns
      *   {@code null}.
      */
+    @Nonnull
     public String getExtensionName();
 
     /**
@@ -51,6 +54,7 @@ public interface GradleProjectExtension {
      *
      * @see #modelsLoaded(Lookup)
      */
+    @Nonnull
     public Iterable<List<Class<?>>> getGradleModels();
 
     /**
@@ -92,6 +96,7 @@ public interface GradleProjectExtension {
      *
      * @see org.openide.util.lookup.ProxyLookup
      */
+    @Nonnull
     public Lookup getExtensionLookup();
 
     /**
@@ -131,5 +136,6 @@ public interface GradleProjectExtension {
      *
      * @see #getGradleModels()
      */
-    public Set<String> modelsLoaded(Lookup modelLookup);
+    @Nullable
+    public Set<String> modelsLoaded(@Nonnull Lookup modelLookup);
 }

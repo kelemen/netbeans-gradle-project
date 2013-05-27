@@ -1,5 +1,9 @@
 package org.netbeans.gradle.project.api.config;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.openide.util.Parameters;
+
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
  * the projects of the same multi-project build always share their
@@ -50,9 +54,12 @@ public final class ProfileDef {
      * @param displayName the name to be displayed to the user on the GUI. This
      *   argument cannot be {@code null}.
      */
-    public ProfileDef(String groupName, String fileName, String displayName) {
-        if (fileName == null) throw new NullPointerException("fileName");
-        if (displayName == null) throw new NullPointerException("displayName");
+    public ProfileDef(
+            @Nullable String groupName,
+            @Nonnull String fileName,
+            @Nonnull String displayName) {
+        Parameters.notNull("fileName", fileName);
+        Parameters.notNull("displayName", displayName);
 
         this.groupName = groupName;
         this.fileName = fileName;

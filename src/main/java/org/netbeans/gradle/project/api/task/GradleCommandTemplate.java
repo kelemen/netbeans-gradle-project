@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.api.task;
 
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.CollectionUtils;
 
 /**
@@ -42,7 +43,7 @@ public final class GradleCommandTemplate {
          * @throws NullPointerException thrown if the specified command is
          *   {@code null}
          */
-        public Builder(GradleCommandTemplate command) {
+        public Builder(@Nonnull GradleCommandTemplate command) {
             this.tasks = command.getTasks();
             this.arguments = command.getArguments();
             this.jvmArguments = command.getJvmArguments();
@@ -66,7 +67,7 @@ public final class GradleCommandTemplate {
          * @throws IllegalArgumentException thrown if the specified list is
          *   empty
          */
-        public Builder(List<String> tasks) {
+        public Builder(@Nonnull List<String> tasks) {
             this.tasks = CollectionUtils.copyNullSafeList(tasks);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
@@ -88,6 +89,7 @@ public final class GradleCommandTemplate {
          *   returns {@code null}, the returned list does not contain
          *   {@code null} elements and is never empty.
          */
+        @Nonnull
         public List<String> getTasks() {
             return tasks;
         }
@@ -107,6 +109,7 @@ public final class GradleCommandTemplate {
          *
          * @see #setArguments(List)
          */
+        @Nonnull
         public List<String> getArguments() {
             return arguments;
         }
@@ -129,7 +132,7 @@ public final class GradleCommandTemplate {
          * @throws NullPointerException thrown if the specified list is
          *   {@code null} or contains {@code null} elements
          */
-        public void setArguments(List<String> arguments) {
+        public void setArguments(@Nonnull List<String> arguments) {
             this.arguments = CollectionUtils.copyNullSafeList(arguments);
         }
 
@@ -154,6 +157,7 @@ public final class GradleCommandTemplate {
          *
          * @see #setJvmArguments(List)
          */
+        @Nonnull
         public List<String> getJvmArguments() {
             return jvmArguments;
         }
@@ -180,7 +184,7 @@ public final class GradleCommandTemplate {
          * @throws NullPointerException thrown if the specified list is
          *   {@code null} or contains {@code null} elements
          */
-        public void setJvmArguments(List<String> jvmArguments) {
+        public void setJvmArguments(@Nonnull List<String> jvmArguments) {
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
         }
 
@@ -237,6 +241,7 @@ public final class GradleCommandTemplate {
          *   specified properties for this builder. This method never returns
          *   {@code null}.
          */
+        @Nonnull
         public GradleCommandTemplate create() {
             return new GradleCommandTemplate(this);
         }
@@ -264,6 +269,7 @@ public final class GradleCommandTemplate {
      *   returns {@code null}, the returned list does not contain
      *   {@code null} elements and is never empty.
      */
+    @Nonnull
     public List<String> getTasks() {
         return tasks;
     }
@@ -279,6 +285,7 @@ public final class GradleCommandTemplate {
      *   never returns {@code null} and the returned list does not contain
      *   {@code null} elements but may be empty.
      */
+    @Nonnull
     public List<String> getArguments() {
         return arguments;
     }
@@ -302,6 +309,7 @@ public final class GradleCommandTemplate {
      *   method never returns {@code null} and the returned list does not
      *   contain {@code null} elements but may be empty.
      */
+    @Nonnull
     public List<String> getJvmArguments() {
         return jvmArguments;
     }

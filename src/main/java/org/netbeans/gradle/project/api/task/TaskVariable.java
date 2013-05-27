@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.api.task;
 
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import org.openide.util.Parameters;
 
 /**
  * Defines a variable which might be replaced with a given string in Gradle
@@ -37,8 +39,9 @@ public final class TaskVariable {
      *
      * @see #isValidVariableName(String)
      */
-    public TaskVariable(String variableName) {
-        if (variableName == null) throw new NullPointerException("variableName");
+    public TaskVariable(@Nonnull String variableName) {
+        Parameters.notNull("variableName", variableName);
+
         if (!VARIABLE_NAME_PATTERN.matcher(variableName).matches()) {
             throw new IllegalArgumentException("Variable name contains an invalid character: " + variableName);
         }
@@ -65,8 +68,8 @@ public final class TaskVariable {
      *
      * @throws NullPointerException if the passed variable name is {@code null}
      */
-    public static boolean isValidVariableName(String variableName) {
-        if (variableName == null) throw new NullPointerException("variableName");
+    public static boolean isValidVariableName(@Nonnull String variableName) {
+        Parameters.notNull("variableName", variableName);
         return VARIABLE_NAME_PATTERN.matcher(variableName).matches();
     }
 
@@ -76,6 +79,7 @@ public final class TaskVariable {
      * @return the name of the variable as specified at construction time.
      *   This method never returns {@code null}.
      */
+    @Nonnull
     public String getVariableName() {
         return variableName;
     }
@@ -89,6 +93,7 @@ public final class TaskVariable {
      * @return the variable name as it needs to appear in strings to be
      *   replaced. This method never returns {@code null}.
      */
+    @Nonnull
     public String getScriptReplaceConstant() {
         return "${" + variableName + "}";
     }

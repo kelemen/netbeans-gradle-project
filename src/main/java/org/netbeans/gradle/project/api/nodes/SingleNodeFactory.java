@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.nodes;
 
+import javax.annotation.Nullable;
 import org.openide.nodes.Node;
 
 /**
@@ -19,5 +20,6 @@ public interface SingleNodeFactory {
      * @return a new node to be displayed under the project node. This method
      *   may return {@code null}, in which case no node is displayed.
      */
+    @Nullable
     public Node createNode();
 }

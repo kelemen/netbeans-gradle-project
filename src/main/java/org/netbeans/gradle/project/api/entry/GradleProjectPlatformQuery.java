@@ -2,6 +2,9 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.net.URI;
 import java.util.Collection;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -33,7 +36,8 @@ public interface GradleProjectPlatformQuery {
      *   currently added listener, so that it may not be notified again. This
      *   method never returns {@code null}.
      */
-    public NbListenerRef addPlatformChangeListener(Runnable listener);
+    @Nonnull
+    public NbListenerRef addPlatformChangeListener(@Nonnull Runnable listener);
 
     /**
      * Returns {@code true} if platforms with the specified name are to be
@@ -57,7 +61,7 @@ public interface GradleProjectPlatformQuery {
      * @see ProjectPlatform#getName()
      * @see #tryFindPlatformByName(String, String)
      */
-    public boolean isOwnerQuery(String platformName);
+    public boolean isOwnerQuery(@Nonnull String platformName);
 
     /**
      * Returns the platforms accessible by this query. This method is used
@@ -72,6 +76,7 @@ public interface GradleProjectPlatformQuery {
      *   {@code null} and the returns collection may not contain {@code null}
      *   elements.
      */
+    @Nonnull
     public Collection<ProjectPlatform> getAvailablePlatforms();
 
     /**
@@ -99,7 +104,8 @@ public interface GradleProjectPlatformQuery {
      * @see ProjectPlatform#getName()
      * @see ProjectPlatform#getVersion()
      */
-    public ProjectPlatform tryFindPlatformByName(String name, String version);
+    @CheckForNull
+    public ProjectPlatform tryFindPlatformByName(@Nonnull String name, @Nonnull String version);
 
     /**
      * Returns the project platform defined by the specified URI or {@code null}
@@ -115,5 +121,6 @@ public interface GradleProjectPlatformQuery {
      * @return the project platform defined by the specified URI or {@code null}
      *   if the URI does not define a valid platform
      */
-    public ProjectPlatform tryFindPlatformByUri(URI uri);
+    @CheckForNull
+    public ProjectPlatform tryFindPlatformByUri(@Nonnull URI uri);
 }

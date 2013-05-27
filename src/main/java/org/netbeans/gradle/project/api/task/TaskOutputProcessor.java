@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.Nonnull;
+
 /**
  * Defines a single method which is called after each line output by an executed
  * Gradle command.
@@ -20,5 +22,5 @@ public interface TaskOutputProcessor {
      * @param line the line written to the output. This argument cannot be
      *   {@code null}.
      */
-    public void processLine(String line);
+    public void processLine(@Nonnull String line);
 }

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.config;
 
+import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
@@ -23,6 +24,7 @@ public final class GlobalConfig {
      *   tasks not directly related to testing (such as build). This method
      *   never returns {@code null}.
      */
+    @Nonnull
     public static NbPropertySource<Boolean> skipTests() {
         return SKIP_TESTS;
     }

@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.Nonnull;
+
 /**
  * Defines an executor which is able to execute Gradle commands. The commands
  * are executed on a background thread. Note that there is a limit on how much
@@ -37,5 +39,7 @@ public interface GradleCommandExecutor {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public void executeCommand(GradleCommandTemplate command, CustomCommandActions customActions);
+    public void executeCommand(
+            @Nonnull GradleCommandTemplate command,
+            @Nonnull CustomCommandActions customActions);
 }

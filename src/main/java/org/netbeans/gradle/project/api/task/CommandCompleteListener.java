@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.Nullable;
+
 /**
  * Defines a listener to be notified whenever a Gradle command has been
  * executed. The listener is guaranteed to be notified only if the command has
@@ -19,5 +21,5 @@ public interface CommandCompleteListener {
      *   command. This argument is {@code null} if no error occurred. Also, in
      *   some cases this argument is {@code null} if the task has been canceled.
      */
-    public void onComplete(Throwable error);
+    public void onComplete(@Nullable Throwable error);
 }

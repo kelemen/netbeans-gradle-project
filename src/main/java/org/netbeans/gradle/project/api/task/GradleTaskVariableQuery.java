@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.Nonnull;
 import org.openide.util.Lookup;
 
 /**
@@ -40,5 +41,6 @@ public interface GradleTaskVariableQuery {
      *   returned map can be (and recommended to be) lazily constructed. This
      *   method may never return {@code null}.
      */
-    public TaskVariableMap getVariableMap(Lookup actionContext);
+    @Nonnull
+    public TaskVariableMap getVariableMap(@Nonnull Lookup actionContext);
 }

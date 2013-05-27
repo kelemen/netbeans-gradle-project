@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.net.URL;
 import java.util.Collection;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.openide.filesystems.FileObject;
 
 /**
@@ -23,6 +25,7 @@ public interface ProjectPlatform {
      * @return the root folder containing the platform or {@code null} if it is
      *   unknown
      */
+    @Nullable
     public FileObject getRootFolder();
 
     /**
@@ -36,6 +39,7 @@ public interface ProjectPlatform {
      *   This method never returns {@code null} and the returned list does not
      *   contain {@code null} elements.
      */
+    @Nonnull
     public Collection<URL> getBootLibraries();
 
     /**
@@ -45,6 +49,7 @@ public interface ProjectPlatform {
      *   This method never returns {@code null}, if the sources are unavailable,
      *   the return value is an empty list.
      */
+    @Nonnull
     public Collection<URL> getSourcePaths();
 
     /**
@@ -54,6 +59,7 @@ public interface ProjectPlatform {
      * @return the user friendly name of the platform which might be displayed
      *   to the user on a GUI. This method never returns {@code null}.
      */
+    @Nonnull
     public String getDisplayName() ;
 
     /**
@@ -65,6 +71,7 @@ public interface ProjectPlatform {
      * @return the programmatic name of this platform. This method never returns
      *   {@code null}.
      */
+    @Nonnull
     public String getName();
 
     /**
@@ -76,6 +83,7 @@ public interface ProjectPlatform {
      * @return the version of this platform. This method never returns
      *   {@code null}.
      */
+    @Nonnull
     public String getVersion();
 
     /**

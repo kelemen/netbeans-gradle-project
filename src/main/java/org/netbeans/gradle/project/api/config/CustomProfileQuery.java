@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.api.config;
 
+import javax.annotation.Nonnull;
+
 /**
  * Defines a query which might return custom profile names always available for
  * a project.
@@ -27,5 +29,6 @@ public interface CustomProfileQuery {
      * @return the profiles always available for the project using the
      *   associated extension. This method may never return {@code null}.
      */
+    @Nonnull
     public Iterable<ProfileDef> getCustomProfiles();
 }

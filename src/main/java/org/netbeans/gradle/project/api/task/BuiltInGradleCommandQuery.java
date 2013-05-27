@@ -1,6 +1,9 @@
 package org.netbeans.gradle.project.api.task;
 
 import java.util.Set;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 
 /**
@@ -29,6 +32,7 @@ public interface BuiltInGradleCommandQuery {
      *   an empty set, it is recommended not to implement
      *   {@code BuiltInGradleCommandQuery} in this case.
      */
+    @Nonnull
     public Set<String> getSupportedCommands();
 
     /**
@@ -56,7 +60,9 @@ public interface BuiltInGradleCommandQuery {
      * @return the display name of the command or {@code null} if this query
      *   does not know the display name for the specified command
      */
-    public String tryGetDisplayNameOfCommand(String command);
+    @Nullable
+    @CheckForNull
+    public String tryGetDisplayNameOfCommand(@Nonnull String command);
 
     /**
      * Defines the default Gradle command to run when the built-in command is to
@@ -79,7 +85,11 @@ public interface BuiltInGradleCommandQuery {
      *   no Gradle associated Gradle command with the specified command or
      *   profile.
      */
-    public GradleCommandTemplate tryGetDefaultGradleCommand(ProfileDef profileDef, String command);
+    @Nullable
+    @CheckForNull
+    public GradleCommandTemplate tryGetDefaultGradleCommand(
+            @Nullable ProfileDef profileDef,
+            @Nonnull String command);
 
     /**
      * Returns the custom tasks associated with the specified built-in command.
@@ -99,5 +109,9 @@ public interface BuiltInGradleCommandQuery {
      *   This method may return {@code null} if the associated extension does
      *   not define a Gradle command for the specified profile and command.
      */
-    public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command);
+    @Nullable
+    @CheckForNull
+    public CustomCommandActions tryGetCommandDefs(
+            @Nullable ProfileDef profileDef,
+            @Nonnull String command);
 }

@@ -1,5 +1,10 @@
 package org.netbeans.gradle.project.api.task;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.openide.util.Parameters;
+
 /**
  * Defines custom actions to be associated with a
  * {@link GradleCommandTemplate Gradle command}.
@@ -74,8 +79,8 @@ public final class CustomCommandActions {
          * @throws NullPointerException thrown if the specified task kind is
          *   {@code null}
          */
-        public Builder(TaskKind taskKind) {
-            if (taskKind == null) throw new NullPointerException("taskKind");
+        public Builder(@Nonnull TaskKind taskKind) {
+            Parameters.notNull("taskKind", taskKind);
 
             this.taskKind = taskKind;
             this.commandCompleteListener = null;
@@ -96,7 +101,7 @@ public final class CustomCommandActions {
          *   argument can be {@code null}, if there is nothing to do after the
          *   Gradle command completes.
          */
-        public void setCommandCompleteListener(CommandCompleteListener commandCompleteListener) {
+        public void setCommandCompleteListener(@Nullable CommandCompleteListener commandCompleteListener) {
             this.commandCompleteListener = commandCompleteListener;
         }
 
@@ -114,7 +119,7 @@ public final class CustomCommandActions {
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard output.
          */
-        public void setStdOutProcessor(TaskOutputProcessor stdOutProcessor) {
+        public void setStdOutProcessor(@Nullable TaskOutputProcessor stdOutProcessor) {
             this.stdOutProcessor = stdOutProcessor;
         }
 
@@ -132,7 +137,7 @@ public final class CustomCommandActions {
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard error.
          */
-        public void setStdErrProcessor(TaskOutputProcessor stdErrProcessor) {
+        public void setStdErrProcessor(@Nullable TaskOutputProcessor stdErrProcessor) {
             this.stdErrProcessor = stdErrProcessor;
         }
 
@@ -145,6 +150,7 @@ public final class CustomCommandActions {
          *   properties currently set for this builder. This method may never
          *   return {@code null}.
          */
+        @Nonnull
         public CustomCommandActions create() {
             return new CustomCommandActions(this);
         }
@@ -169,6 +175,7 @@ public final class CustomCommandActions {
      * @return the kind of tasks affecting the output window handling of the
      *   executed task. This method may never return {@code null}.
      */
+    @Nonnull
     public TaskKind getTaskKind() {
         return taskKind;
     }
@@ -182,6 +189,8 @@ public final class CustomCommandActions {
      *   associated Gradle commands completes or {@code null} if there is no
      *   action to be taken
      */
+    @Nullable
+    @CheckForNull
     public CommandCompleteListener getCommandCompleteListener() {
         return commandCompleteListener;
     }
@@ -197,6 +206,8 @@ public final class CustomCommandActions {
      *   {@code null} if there is nothing to do after lines are written to the
      *   standard output
      */
+    @Nullable
+    @CheckForNull
     public TaskOutputProcessor getStdOutProcessor() {
         return stdOutProcessor;
     }
@@ -212,6 +223,8 @@ public final class CustomCommandActions {
      *   {@code null} if there is nothing to do after lines are written to the
      *   standard error
      */
+    @Nullable
+    @CheckForNull
     public TaskOutputProcessor getStdErrProcessor() {
         return stdErrProcessor;
     }

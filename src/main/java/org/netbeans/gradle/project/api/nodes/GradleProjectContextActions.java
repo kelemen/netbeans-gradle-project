@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.nodes;
 
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.swing.Action;
 
 /**
@@ -33,5 +34,6 @@ public interface GradleProjectContextActions {
      * @return the actions to be displayed in the context menu of the project.
      *   This method may never return {@code null} but may return an empty list.
      */
+    @Nonnull
     public List<Action> getContextActions();
 }
