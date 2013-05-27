@@ -210,7 +210,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         public GradleCommandTemplate getCommand() {
             if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()) {
                 GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(command);
-                List<String> prevArguments = builder.getArguments();
+                List<String> prevArguments = command.getArguments();
                 List<String> newArguments = new ArrayList<String>(prevArguments.size() + 2);
                 newArguments.add("-x");
                 newArguments.add("test");
