@@ -126,7 +126,6 @@ public final class DebugUtils {
 
         String clazz = classname.replace('.', '/') + ".class"; //NOI18N
         GradleClassPathProvider prv = project.getLookup().lookup(GradleClassPathProvider.class);
-        ClassPath cp = prv.getClassPaths(ClassPath.COMPILE);
         FileObject fo2 = prv.getClassPaths(ClassPath.COMPILE).findResource(clazz);
 
         if (fo2 != null) {

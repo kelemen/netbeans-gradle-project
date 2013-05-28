@@ -71,11 +71,6 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
-    private void waitForProjectLoad() {
-        checkNotEdt();
-        project.tryWaitForLoadedProject();
-    }
-
     private ProjectProperties getLoadedProperties(NbGradleConfiguration config) {
         checkNotEdt();
 

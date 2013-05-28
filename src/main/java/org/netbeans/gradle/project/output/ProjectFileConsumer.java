@@ -43,7 +43,7 @@ public final class ProjectFileConsumer implements SmartOutputHandler.Consumer {
         int trimmedLength = trimmedLine.length();
         for (int i = 0; i < trimmedLength; i++) {
             char ch = trimmedLine.charAt(i);
-            if (ch < '0' | ch > '9') {
+            if (ch < '0' || ch > '9') {
                 return trimmedLine.substring(0, i);
             }
         }

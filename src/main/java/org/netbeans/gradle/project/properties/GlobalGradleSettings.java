@@ -21,6 +21,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.NbPreferences;
+import org.openide.util.Utilities;
 
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
@@ -194,11 +195,7 @@ public final class GlobalGradleSettings {
 
         @Override
         public String toString(Integer value) {
-            if (value != null && value.equals(defaultValue)) {
-                return null;
-            }
-            // This check only matters in case value and defaultValue are both nulls.
-            if (value == defaultValue) {
+            if (Utilities.compareObjects(value, defaultValue)) {
                 return null;
             }
 
@@ -229,11 +226,7 @@ public final class GlobalGradleSettings {
 
         @Override
         public String toString(Boolean value) {
-            if (value != null && value.equals(defaultValue)) {
-                return null;
-            }
-            // This check only matters in case value and defaultValue are both nulls.
-            if (value == defaultValue) {
+            if (Utilities.compareObjects(value, defaultValue)) {
                 return null;
             }
 

@@ -61,16 +61,19 @@ public final class StringUtils {
         try {
             resource = classLoader.getResourceAsStream(resourcePath);
             Reader reader = new InputStreamReader(resource, encoding);
+            try {
+                int bufferSize = 4096;
+                StringWriter writer = new StringWriter(bufferSize);
 
-            int bufferSize = 4096;
-            StringWriter writer = new StringWriter(bufferSize);
+                char[] buffer = new char[bufferSize];
+                for (int readCount = reader.read(buffer); readCount > 0; readCount = reader.read(buffer)) {
+                    writer.write(buffer, 0, readCount);
+                }
 
-            char[] buffer = new char[bufferSize];
-            for (int readCount = reader.read(buffer); readCount > 0; readCount = reader.read(buffer)) {
-                writer.write(buffer, 0, readCount);
+                return writer.toString();
+            } finally {
+                reader.close();
             }
-
-            return writer.toString();
         } finally {
             if (resource != null) {
                 resource.close();

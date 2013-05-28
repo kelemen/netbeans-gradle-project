@@ -14,40 +14,42 @@ import java.util.zip.ZipInputStream;
  * @author radim
  */
 public class TestUtils {
-    /**
-     * Unzip the file
-     * <code>f</code> to folder
-     * <code>destDir</code>.
-     *
-     * @param f file to unzip
-     * @param destDir destination directory
-     */
     public static void unzip(InputStream is, File destDir) throws IOException {
         final int BUFFER = 2048;
-        BufferedOutputStream dest;
         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(is));
-        ZipEntry entry;
-        while ((entry = zis.getNextEntry()) != null) {
-            if (entry.isDirectory()) {
-                File dir = new File(destDir, entry.getName());
-                dir.mkdir();
-            } else {
-                int count;
-                byte contents[] = new byte[BUFFER];
-                // write the files to the disk
-                FileOutputStream fos = new FileOutputStream(new File(destDir, entry.getName()));
-                dest = new BufferedOutputStream(fos, BUFFER);
-                while ((count = zis.read(contents, 0, BUFFER)) != -1) {
-                    dest.write(contents, 0, count);
+        try {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    File dir = new File(destDir, entry.getName());
+                    if (!dir.mkdir()) {
+                        throw new IOException("Failed to create directory " + dir);
+                    }
+                } else {
+                    int count;
+                    byte contents[] = new byte[BUFFER];
+                    // write the files to the disk
+                    FileOutputStream fos = new FileOutputStream(new File(destDir, entry.getName()));
+                    try {
+                        BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+                        try {
+                            while ((count = zis.read(contents, 0, BUFFER)) != -1) {
+                                dest.write(contents, 0, count);
+                            }
+                        } finally {
+                            dest.close();
+                        }
+                    } finally {
+                        fos.close();
+                    }
                 }
-                dest.flush();
-                dest.close();
             }
+        } finally {
+            zis.close();
         }
-        zis.close();
     }
-    
-    public static void recursiveDelete(File file) {
+
+    public static void recursiveDelete(File file) throws IOException {
         if (file == null) {
             return;
         }
@@ -57,6 +59,8 @@ public class TestUtils {
                 recursiveDelete(each);
             }
         }
-        file.delete();
+        if (!file.delete()) {
+            throw new IOException("Failed to remove " + file);
+        }
     }
 }

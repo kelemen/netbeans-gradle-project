@@ -87,8 +87,9 @@ import org.openide.windows.TopComponent;
         id = @ActionID(category = "System", id = "org.openide.actions.PropertiesAction"),
         position = 1400)
 })
-@SuppressWarnings("serial")
 public final class GradleDataObject extends MultiDataObject {
+    private static final long serialVersionUID = 814372868086075839L;
+
     public static final String GRADLE_MIME_TYPE = "text/x-gradle";
     private static final String GROOVY_MIME_TYPE = "text/x-groovy";
 

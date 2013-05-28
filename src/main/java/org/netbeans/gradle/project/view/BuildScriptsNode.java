@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -177,15 +178,13 @@ public final class BuildScriptsNode extends AbstractNode {
                     : null;
         }
 
-        private static File tryGetLocalGradleProperties(NbGradleModel model) {
+        private static File getLocalGradleProperties(NbGradleModel model) {
             return new File(model.getProjectDir(), GradleProjectConstants.GRADLE_PROPERTIES_NAME);
         }
 
         private static FileObject tryGetLocalGradlePropertiesObj(NbGradleModel model) {
-            File result = tryGetLocalGradleProperties(model);
-            return result != null
-                    ? FileUtil.toFileObject(result)
-                    : null;
+            File result = getLocalGradleProperties(model);
+            return FileUtil.toFileObject(result);
         }
 
         private FileObject getRootBuildDir(FileObject settingsGradle) {

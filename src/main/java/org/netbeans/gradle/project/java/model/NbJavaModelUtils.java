@@ -119,8 +119,7 @@ public final class NbJavaModelUtils {
                 NbDependencyType recType;
                 switch (type) {
                     case RUNTIME:
-                        recType = NbDependencyType.RUNTIME;
-                        break;
+                        /* falls through */
                     case TEST_RUNTIME:
                         recType = NbDependencyType.RUNTIME;
                         break;

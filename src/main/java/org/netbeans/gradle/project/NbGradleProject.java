@@ -19,6 +19,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -130,6 +131,7 @@ public final class NbGradleProject implements Project {
         this.protectedLookupRef = new AtomicReference<Lookup>(null);
     }
 
+    @Nonnull
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir, state);
         try {
@@ -169,6 +171,7 @@ public final class NbGradleProject implements Project {
         return project;
     }
 
+    @Nonnull
     public BuiltInGradleCommandQuery getMergedCommandQuery() {
         BuiltInGradleCommandQuery result = mergedCommandQueryRef.get();
         if (result == null) {
@@ -179,6 +182,7 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
+    @Nonnull
     public List<GradleProjectExtension> getExtensions() {
         return extensions;
     }
@@ -226,6 +230,7 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
+    @Nonnull
     public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
         final List<TaskVariableMap> maps = new LinkedList<TaskVariableMap>();
         maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
@@ -398,14 +403,17 @@ public final class NbGradleProject implements Project {
         }
     }
 
+    @Nonnull
     public String getName() {
         return name;
     }
 
+    @Nonnull
     public String getDisplayName() {
         return getAvailableModel().getDisplayName();
     }
 
+    @Nonnull
     public File getProjectDirectoryAsFile() {
         return projectDirAsFile;
     }

@@ -76,10 +76,6 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         map.put(command, task);
     }
 
-    private static String projectTask(String task) {
-        return StandardTaskVariable.PROJECT_NAME.getScriptReplaceConstant() + ":" + task;
-    }
-
     private static String tryGetDisplayNameOfDefaultCommand(String command) {
         if (command == null) throw new NullPointerException("command");
         return DISPLAY_NAME_MAP.get(command);

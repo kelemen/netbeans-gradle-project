@@ -4,12 +4,15 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nonnull;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -51,8 +54,12 @@ public class SimpleJavaProjectTest {
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
         tempFolder = File.createTempFile("junit", "");
-        tempFolder.delete();
-        tempFolder.mkdir();
+        if (!tempFolder.delete()) {
+            throw new IOException("Failed to remove " + tempFolder);
+        }
+        if (!tempFolder.mkdir()) {
+            throw new IOException("Failed to create " + tempFolder);
+        }
         TestUtils.unzip(SimpleJavaProjectTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
         projectDir = FileUtil.normalizeFile(new File(tempFolder, "gradle-sample"));
         TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(projectDir));
@@ -74,7 +81,9 @@ public class SimpleJavaProjectTest {
         assertNotNull(project);
         GradleTestExtension ext = gPrj.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
-        ext.loadedSignal.await(150, TimeUnit.SECONDS);
+        if (!ext.loadedSignal.await(150, TimeUnit.SECONDS)) {
+            throw new TimeoutException("Project was not loaded until the timeout elapsed.");
+        }
     }
 
     @After
@@ -83,7 +92,7 @@ public class SimpleJavaProjectTest {
     }
 
     @AfterClass
-    public static void clear() {
+    public static void clear() throws Exception {
         TestUtils.recursiveDelete(tempFolder);
     }
 

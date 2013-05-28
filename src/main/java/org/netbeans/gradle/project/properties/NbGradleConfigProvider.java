@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
@@ -107,7 +108,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 removeFromConfig(config);
                 File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
                 if (profileFile.isFile()) {
-                    profileFile.delete();
+                    if (!profileFile.delete()) {
+                        LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
+                    }
                 }
 
                 executeOnEdt(new Runnable() {

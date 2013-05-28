@@ -94,7 +94,9 @@ public final class GradleTasks {
             try {
                 writeToFile(getInitScript(), tmpFile);
             } catch (Throwable ex) {
-                tmpFile.delete();
+                if (!tmpFile.delete()) {
+                    LOGGER.log(Level.WARNING, "Failed to create temporary file after a failure: {0}", tmpFile);
+                }
                 throw ex;
             }
             return tmpFile;
@@ -265,7 +267,9 @@ public final class GradleTasks {
                 LOGGER.log(Level.WARNING, "Unexpected I/O exception.", ex);
             } finally {
                 if (initScript != null) {
-                    initScript.delete();
+                    if (!initScript.delete()) {
+                        LOGGER.log(Level.WARNING, "Init script could not be removed: {0}", initScript);
+                    }
                 }
             }
         } finally {

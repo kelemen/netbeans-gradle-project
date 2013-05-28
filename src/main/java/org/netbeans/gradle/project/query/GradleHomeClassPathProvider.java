@@ -87,7 +87,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
             return null;
         }
 
-        if (srcDir != null && srcDir.isFolder()) {
+        if (srcDir.isFolder()) {
             ClassPath classpath = sourcePathsCache.tryGetFromCache(gradleHome);
             if (classpath != null) {
                 return classpath;

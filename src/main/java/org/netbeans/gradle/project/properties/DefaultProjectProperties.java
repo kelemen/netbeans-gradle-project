@@ -169,7 +169,9 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         GradleCommandTemplate commandTemplate
                 = project.getMergedCommandQuery().tryGetDefaultGradleCommand(profile, command);
 
-        final PredefinedTask task = templateToPredefined(command, commandTemplate);
+        final PredefinedTask task = commandTemplate != null
+                ? templateToPredefined(command, commandTemplate)
+                : null;
         return new UnmodifiableProperty<PredefinedTask>("BuiltInTask-" + command) {
             @Override
             public PredefinedTask getValue() {

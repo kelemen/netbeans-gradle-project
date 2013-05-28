@@ -121,7 +121,9 @@ final class XmlPropertyFormat {
     private static void saveDocument(NbGradleProject project, File propertyfile, Document document) throws TransformerException, IOException {
         File dir = propertyfile.getParentFile();
         if (dir != null) {
-            dir.mkdirs();
+            if (!dir.mkdirs()) {
+                LOGGER.log(Level.WARNING, "Cannot create directory: {0}", dir);
+            }
         }
 
         String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);

@@ -121,9 +121,6 @@ public final class SettingsFiles {
             dir = project.getProjectDirectoryAsFile();
         }
 
-        if (dir == null) {
-            throw new IllegalArgumentException("Cannot get the root directory because the directory is missing: " + dir);
-        }
         return dir;
     }
 

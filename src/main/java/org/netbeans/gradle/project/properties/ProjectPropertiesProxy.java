@@ -53,49 +53,49 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.auxConfigListener = new MutablePropertyProxy<Void>(new ProjectMutablePropertyRef<Void>(this) {
             @Override
             public MutableProperty<Void> getProperty() {
-                return this.getProperties().getAuxConfigListener();
+                return super.getProperties().getAuxConfigListener();
             }
         });
         this.sourceLevelProxy = new MutablePropertyProxy<String>(new ProjectMutablePropertyRef<String>(this) {
             @Override
             public MutableProperty<String> getProperty() {
-                return this.getProperties().getSourceLevel();
+                return super.getProperties().getSourceLevel();
             }
         });
         this.platformProxy = new MutablePropertyProxy<ProjectPlatform>(new ProjectMutablePropertyRef<ProjectPlatform>(this) {
             @Override
             public MutableProperty<ProjectPlatform> getProperty() {
-                return this.getProperties().getPlatform();
+                return super.getProperties().getPlatform();
             }
         });
         this.scriptPlatformProxy = new MutablePropertyProxy<JavaPlatform>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
             @Override
             public MutableProperty<JavaPlatform> getProperty() {
-                return this.getProperties().getScriptPlatform();
+                return super.getProperties().getScriptPlatform();
             }
         });
         this.gradleHomeProxy = new MutablePropertyProxy<GradleLocation>(new ProjectMutablePropertyRef<GradleLocation>(this) {
             @Override
             public MutableProperty<GradleLocation> getProperty() {
-                return this.getProperties().getGradleLocation();
+                return super.getProperties().getGradleLocation();
             }
         });
         this.sourceEncodingProxy = new MutablePropertyProxy<Charset>(new ProjectMutablePropertyRef<Charset>(this) {
             @Override
             public MutableProperty<Charset> getProperty() {
-                return this.getProperties().getSourceEncoding();
+                return super.getProperties().getSourceEncoding();
             }
         });
         this.licenseHeaderProxy = new MutablePropertyProxy<LicenseHeaderInfo>(new ProjectMutablePropertyRef<LicenseHeaderInfo>(this) {
             @Override
             public MutableProperty<LicenseHeaderInfo> getProperty() {
-                return this.getProperties().getLicenseHeader();
+                return super.getProperties().getLicenseHeader();
             }
         });
         this.commonTasksProxy = new MutablePropertyProxy<List<PredefinedTask>>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
             @Override
             public MutableProperty<List<PredefinedTask>> getProperty() {
-                return this.getProperties().getCommonTasks();
+                return super.getProperties().getCommonTasks();
             }
         });
 
@@ -195,7 +195,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             MutablePropertyProxy<PredefinedTask> proxy = new MutablePropertyProxy<PredefinedTask>(new ProjectMutablePropertyRef<PredefinedTask>(this) {
                 @Override
                 public MutableProperty<PredefinedTask> getProperty() {
-                    MutableProperty<PredefinedTask> taskProperty = this.getProperties().tryGetBuiltInTask(command);
+                    MutableProperty<PredefinedTask> taskProperty = super.getProperties().tryGetBuiltInTask(command);
                     if (taskProperty == null) {
                         throw new IllegalStateException("Missing customizable command: " + command);
                     }
@@ -219,7 +219,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         MutablePropertyProxy<Element> proxy = new MutablePropertyProxy<Element>(new ProjectMutablePropertyRef<Element>(this) {
             @Override
             public MutableProperty<Element> getProperty() {
-                return this.getProperties().getAuxConfig(elementName, namespace).getProperty();
+                return super.getProperties().getAuxConfig(elementName, namespace).getProperty();
             }
         });
         auxProperties.putIfAbsent(key, new AuxConfigProperty(key, proxy));

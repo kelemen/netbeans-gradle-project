@@ -110,9 +110,6 @@ public final class GradleCacheSourceForBinaryQuery implements SourceForBinaryQue
                 }
 
                 String sourceFileName = GradleFileUtils.binaryToSourceName(binaryRootObj);
-                if (sourceFileName == null) {
-                    return NO_ROOTS;
-                }
 
                 FileObject srcFile = GradleFileUtils.getFileFromASubDir(srcDir, sourceFileName);
                 return srcFile != null ? new FileObject[]{srcFile} : NO_ROOTS;

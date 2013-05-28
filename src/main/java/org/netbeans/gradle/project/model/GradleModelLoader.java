@@ -113,7 +113,7 @@ public final class GradleModelLoader {
     private static NbGradleModel tryGetFromCache(File projectDir) {
         File settingsFile = NbGradleModel.findSettingsGradle(projectDir);
         if (settingsFile == null) {
-            LOGGER.log(Level.WARNING, "Settings file of the project disappeared: {0}", settingsFile);
+            LOGGER.log(Level.WARNING, "Settings file of the project disappeared: {0}", projectDir);
             return null;
         }
 
