@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.api.property;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -43,7 +43,6 @@ public interface NbPropertySource<ValueType> {
      *   {@code null} if the implementation allows {@code null} values for a
      *   property.
      */
-    @Nullable
     public ValueType getValue();
 
     /**
@@ -65,5 +64,6 @@ public interface NbPropertySource<ValueType> {
      *   currently added listener, so that it will no longer be notified of
      *   subsequent changes. This method may never return {@code null}.
      */
-    public NbListenerRef addChangeListener(Runnable listener);
+    @Nonnull
+    public NbListenerRef addChangeListener(@Nonnull Runnable listener);
 }

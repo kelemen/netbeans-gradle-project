@@ -5,25 +5,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.AbstractLookup;
-import org.openide.util.lookup.InstanceContent;
+import org.openide.util.lookup.Lookups;
 
 /**
  *
  * @author radim
  */
 public class GradleTestExtension implements GradleProjectExtension {
-
-    @VisibleForTesting final CountDownLatch loadedSignal = new CountDownLatch(1);
-
-    private final InstanceContent ic;
-    private final Lookup lookup;
+    @VisibleForTesting
+    final CountDownLatch loadedSignal;
+    private final AtomicReference<Lookup> lookupRef;
 
     public GradleTestExtension() {
-        ic = new InstanceContent();
-        lookup = new AbstractLookup(ic);
-        ic.add(this);
+        this.loadedSignal = new CountDownLatch(1);
+        this.lookupRef = new AtomicReference<Lookup>(null);
     }
 
     @Override
@@ -33,6 +30,11 @@ public class GradleTestExtension implements GradleProjectExtension {
 
     @Override
     public Lookup getExtensionLookup() {
+        Lookup lookup = lookupRef.get();
+        if (lookup == null) {
+            lookupRef.compareAndSet(null, Lookups.fixed(this));
+            lookup = lookupRef.get();
+        }
         return lookup;
     }
 

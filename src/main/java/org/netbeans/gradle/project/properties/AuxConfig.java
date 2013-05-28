@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.openide.util.Parameters;
 import org.w3c.dom.Element;
 
 public final class AuxConfig {
@@ -10,16 +13,19 @@ public final class AuxConfig {
         this(new DomElementKey(elementName, namespace), value);
     }
 
-    public AuxConfig(DomElementKey key, Element value) {
-        if (key == null) throw new NullPointerException("key");
+    public AuxConfig(@Nonnull DomElementKey key, @Nullable Element value) {
+        Parameters.notNull("key", key);
+
         this.key = key;
         this.value = value != null ? (Element)value.cloneNode(true) : null;
     }
 
+    @Nonnull
     public DomElementKey getKey() {
         return key;
     }
 
+    @Nonnull
     public Element getValue() {
         return (Element)value.cloneNode(true);
     }

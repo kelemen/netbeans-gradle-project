@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.Collection;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
