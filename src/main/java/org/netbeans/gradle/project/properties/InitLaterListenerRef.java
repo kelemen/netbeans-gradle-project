@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
- * Defines a {@link ListenerRef} forwarding its calls to another
- * {@code ListenerRef} which is specified after construction time. This class
+ * Defines a {@link NbListenerRef} forwarding its calls to another
+ * {@code NbListenerRef} which is specified after construction time. This class
  * is useful if you need to unregister a listener in the listener itself (or in
  * any code which is defined before actually registering the listener).
  * <P>
@@ -24,11 +24,11 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  * </pre>
  * <P>
  * Note that the actual unregistering of the listener will not happen until you
- * call the {@link #init(ListenerRef)} method. Therefore, if you unregister the
- * listener prior calling {@code init}, it may be possible, that the listener
+ * call the {@link #init(NbListenerRef)} method. Therefore, if you unregister
+ * the listener prior calling {@code init}, it may be possible, that the listener
  * will be notified even if you have called {@code unregister()} on the
  * {@code InitLaterListenerRef} which is a violation of the contract of the
- * {@code ListenerRef} interface. Therefore, it is not recommended not
+ * {@code NbListenerRef} interface. Therefore, it is not recommended not
  * unregister the listener before calling the {@code init} method. If you do
  * unregister it, don't forget that it is possible that you may receive event
  * notifications.
@@ -48,8 +48,8 @@ public final class InitLaterListenerRef implements NbListenerRef {
 
     /**
      * Creates a new {@code InitLaterListenerRef} with no underlying
-     * {@code ListenerRef}. Call the {@link #init(ListenerRef) init} method,
-     * to set the {@code ListenerRef} to which calls are to be forwarded.
+     * {@code NbListenerRef}. Call the {@link #init(NbListenerRef) init} method,
+     * to set the {@code NbListenerRef} to which calls are to be forwarded.
      */
     public InitLaterListenerRef() {
         this.currentRef = new AtomicReference<NbListenerRef>(null);
@@ -65,17 +65,17 @@ public final class InitLaterListenerRef implements NbListenerRef {
     }
 
     /**
-     * Sets to {@code ListenerRef} to which calls are forwarded to. This method
+     * Sets to {@code NbListenerRef} to which calls are forwarded to. This method
      * may not be called more than once.
      * <P>
      * If {@link #unregister()} has been called on this
      * {@code InitLaterListenerRef}, this method will call the
-     * {@code unregister()} method of the passed {@code ListenerRef}.
+     * {@code unregister()} method of the passed {@code NbListenerRef}.
      * <P>
      * Note that before calling this method, {@link #isRegistered()} will return
      * {@code true}.
      *
-     * @param listenerRef the {@code ListenerRef} to which class are forwarded
+     * @param listenerRef the {@code NbListenerRef} to which class are forwarded
      *   to. This argument cannot be {@code null}.
      *
      * @throws IllegalStateException thrown if this method has already been
@@ -101,7 +101,7 @@ public final class InitLaterListenerRef implements NbListenerRef {
      * {@inheritDoc }.
      * <P>
      * Implementation note: This method will always return {@code true} prior
-     * calling the {@link #init(ListenerRef) init} method.
+     * calling the {@link #init(NbListenerRef) init} method.
      */
     @Override
     public boolean isRegistered() {
@@ -113,9 +113,9 @@ public final class InitLaterListenerRef implements NbListenerRef {
      * {@inheritDoc }
      * <P>
      * Implementation note: If you call this method before calling the
-     * {@link #init(ListenerRef) init} method, this method will simply cause the
-     * subsequent {@code init} method to unregister the underlying
-     * {@code ListenerRef}.
+     * {@link #init(NbListenerRef) init} method, this method will simply cause
+     * the subsequent {@code init} method to unregister the underlying
+     * {@code NbListenerRef}.
      * <P>
      * This method is allowed to be called concurrently with the {@code init}
      * method.
