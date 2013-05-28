@@ -27,11 +27,9 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
-import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.model.GradleModelLoader;
@@ -55,26 +53,6 @@ public final class GradleTasks {
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final Charset UTF8 = Charset.forName("UTF-8");
-
-    @StaticResource
-    private static final String INIT_SCRIPT_PATH = "org/netbeans/gradle/project/resources/nb-init-script.gradle";
-
-    private static final AtomicReference<String> INIT_SCRIPT = new AtomicReference<String>(null);
-
-    private static String getInitScript() {
-        String result = INIT_SCRIPT.get();
-        if (result == null) {
-            try {
-                result = StringUtils.getResourceAsString(INIT_SCRIPT_PATH, Charset.forName("UTF-8"));
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "Missing init script", ex);
-            }
-
-            INIT_SCRIPT.compareAndSet(null, result);
-            result = INIT_SCRIPT.get();
-        }
-        return result;
-    }
 
     private static void writeToFile(String str, File file) throws IOException {
         OutputStream output = null;
