@@ -95,7 +95,7 @@ public final class GradleTasks {
                 writeToFile(getInitScript(), tmpFile);
             } catch (Throwable ex) {
                 if (!tmpFile.delete()) {
-                    LOGGER.log(Level.WARNING, "Failed to create temporary file after a failure: {0}", tmpFile);
+                    LOGGER.log(Level.WARNING, "Failed to delete temporary file after a failure: {0}", tmpFile);
                 }
                 throw ex;
             }
