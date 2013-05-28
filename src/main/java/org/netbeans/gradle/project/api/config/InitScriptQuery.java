@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
  * Gradle commands (including built-in commands like build). The init script is
  * passed using the "--init-script" Gradle argument.
  * <P>
+ * <B>It is recommended that init scripts only contain ASCII characters.</B>
+ * <P>
  * It is extremely important for init scripts to be defensively coded, so that
  * they do not interfere with the user's build script. That is, if the init
  * script breaks the build, users may be forced to disable the init script
@@ -25,6 +27,8 @@ public interface InitScriptQuery {
      * command. The returned init script must be coded as defensively as
      * possible. The script is passed using the "--init-script" argument of
      * Gradle.
+     * <P>
+     * <B>It is recommended that init scripts only contain ASCII characters.</B>
      *
      * @return the content of the init script to be executed before each Gradle
      *   command. This method may never return {@code null}.
