@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -25,7 +24,6 @@ import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
 import org.netbeans.gradle.project.model.EmptyGradleProject;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
@@ -35,7 +33,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
-import org.openide.util.lookup.Lookups;
 
 public final class NbJavaModelUtils {
     private static final Logger LOGGER = Logger.getLogger(NbJavaModelUtils.class.getName());
@@ -399,20 +396,7 @@ public final class NbJavaModelUtils {
         return result;
     }
 
-    private static GradleProjectInfo createProjectInfo(NbJavaModule javaModule) {
-        List<NbJavaModule> javaChildren = javaModule.getChildren();
-        List<GradleProjectInfo> children = new ArrayList<GradleProjectInfo>(javaChildren.size());
-        for (NbJavaModule child: javaChildren) {
-            children.add(createProjectInfo(child));
-        }
-
-        return new GradleProjectInfo(
-                javaModule.getGradleProject(),
-                javaModule.getModuleDir(),
-                children);
-    }
-
-    public static NbJavaModel parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
+    public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
         IdeaModule mainModule = GradleModelLoader.tryFindMainModule(projectDir, ideaModel);
         if (mainModule == null) {
             throw new IOException("Unable to find the main project in the model.");
@@ -434,31 +418,22 @@ public final class NbJavaModelUtils {
         }
 
         NbJavaModel mainModel = new NbJavaModel(parsedMainModule);
+        Collection<NbJavaModule> parsedModuleValues = parsedModules.values();
 
-        // If only the JavaExtension is available then we know what model
-        // would be created for projects in "parsedModules".
-        //
-        // This is just a hack to avoid regression when someone does not use
-        // any extension.
-        Collection<? extends GradleProjectExtensionQuery> extensions
-                = Lookup.getDefault().lookupAll(GradleProjectExtensionQuery.class);
+        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(2 * parsedModuleValues.size() + 1);
+        result.put(mainModel.getMainModule().getModuleDir(), mainModel);
 
-        if (extensions.size() == 1) {
-            for (NbJavaModule module: parsedModules.values()) {
-                if (module != null && module != parsedMainModule) {
-                    File moduleDir = module.getModuleDir();
-                    if (moduleDir != null) {
-                        NbJavaModel javaModel = new NbJavaModel(module);
-                        GradleProjectInfo projectInfo = createProjectInfo(module);
-                        NbGradleModel model
-                                = new NbGradleModel(projectInfo, module.getModuleDir(), Lookups.fixed(javaModel));
-                       GradleModelLoader.introduceLoadedModel(model);
-                    }
+        for (NbJavaModule module: parsedModuleValues) {
+            if (module != null && module != parsedMainModule) {
+                File moduleDir = module.getModuleDir();
+                if (moduleDir != null) {
+                    NbJavaModel javaModel = new NbJavaModel(module);
+                    result.put(javaModel.getMainModule().getModuleDir(), javaModel);
                 }
             }
         }
 
-        return mainModel;
+        return result;
     }
 
     public static File uriToFile(URI uri) {

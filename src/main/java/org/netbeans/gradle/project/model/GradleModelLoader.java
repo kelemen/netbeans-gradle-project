@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -36,8 +35,8 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbSourceRoot;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -56,10 +55,11 @@ public final class GradleModelLoader {
     private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
 
-    private static GradleModelCache CACHE = new GradleModelCache(100);
-    private static ModelLoadSupport LISTENERS = new ModelLoadSupport();
+    private static final GradleModelCache CACHE = new GradleModelCache(100);
+    private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
 
     static {
+        CACHE.setMaxCapacity(GlobalGradleSettings.getProjectCacheSize().getValue());
         GlobalGradleSettings.getProjectCacheSize().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -151,8 +151,8 @@ public final class GradleModelLoader {
                     if (mayFetchFromCache) {
                         model = tryGetFromCache(projectDir);
                     }
-                    if (model == null) {
-                        model = loadModelWithProgress(project, progress);
+                    if (model == null || model.hasUnloadedExtensions(project)) {
+                        model = loadModelWithProgress(project, progress, model);
                     }
                 } catch (IOException ex) {
                     error = ex;
@@ -189,20 +189,20 @@ public final class GradleModelLoader {
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 
-    private static Object getRawModelWithProgress(
+    private static <T> T getRawModelWithProgress(
             NbGradleProject project,
             final ProgressHandle progress,
             ProjectConnection projectConnection,
-            Class<?> model) {
+            Class<T> model) {
         return getModelWithProgress(project, progress, projectConnection, model);
     }
 
-    private static Object getModelWithProgress(
+    private static <T> T getModelWithProgress(
             NbGradleProject project,
             final ProgressHandle progress,
             ProjectConnection projectConnection,
-            Class<?> model) {
-        ModelBuilder<?> builder = projectConnection.model(model);
+            Class<T> model) {
+        ModelBuilder<T> builder = projectConnection.model(model);
 
         File jdkHome = getScriptJavaHome(project);
         if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
@@ -240,29 +240,31 @@ public final class GradleModelLoader {
         return null;
     }
 
-    public static void introduceLoadedModel(NbGradleModel model) {
+    private static void introduceLoadedModel(NbGradleModel model) {
         CACHE.addToCache(model);
         LISTENERS.fireEvent(model);
     }
 
-    private static Lookup getExtensionModels(
+    private static void getExtensionModels(
             NbGradleProject project,
             ProgressHandle progress,
-            ProjectConnection projectConnection) {
+            ProjectConnection projectConnection,
+            NbGradleModel result) {
 
-        Set<Class<?>> loadedClasses = Collections.newSetFromMap(new IdentityHashMap<Class<?>, Boolean>());
-        List<Object> models = new LinkedList<Object>();
-        for (GradleProjectExtension extension: project.getExtensions()) {
+        Lookup allModels = result.getAllModels();
+        for (ProjectExtensionRef extensionRef: result.getUnloadedExtensions(project)) {
+            GradleProjectExtension extension = extensionRef.getExtension();
+            List<Object> extensionModels = new LinkedList<Object>();
+
             for (List<Class<?>> modelRequest: extension.getGradleModels()) {
                 for (Class<?> modelClass: modelRequest) {
                     try {
-                        if (!loadedClasses.contains(modelClass)) {
-                            loadedClasses.add(modelClass);
-
-                            Object rawModel = getRawModelWithProgress(
+                        Object model = allModels.lookup(modelClass);
+                        if (model == null) {
+                            model = getRawModelWithProgress(
                                     project, progress, projectConnection, modelClass);
-                            models.add(rawModel);
                         }
+                        extensionModels.add(model);
                         break;
                     } catch (UnknownModelException ex) {
                         Throwable loggedException = LOGGER.isLoggable(Level.FINE)
@@ -272,26 +274,8 @@ public final class GradleModelLoader {
                     }
                 }
             }
-        }
 
-        progress.progress(NbStrings.getParsingModel());
-
-        JavaExtension javaExt = project.lookupExtension(JavaExtension.class);
-        if (javaExt != null) {
-            models.add(javaExt.addToModelLookup(Lookups.fixed(models.toArray())));
-        }
-
-        return Lookups.fixed(models.toArray());
-    }
-
-    private static IdeaModule tryFindIdeaModule(NbGradleProject project, Lookup lookup) {
-        IdeaProject ideaProject = lookup.lookup(IdeaProject.class);
-        if (ideaProject != null) {
-            File projectDir = project.getProjectDirectoryAsFile();
-            return tryFindMainModule(projectDir, ideaProject);
-        }
-        else {
-            return null;
+            result.setModelsForExtension(extensionRef, Lookups.fixed(extensionModels.toArray()));
         }
     }
 
@@ -311,14 +295,11 @@ public final class GradleModelLoader {
         return result;
     }
 
-
     private static GradleProjectInfo tryCreateProjectTreeFromIdea(IdeaModule module) {
-        DomainObjectSet<? extends IdeaContentRoot> contentRoots = module.getContentRoots();
-        if (contentRoots.isEmpty()) {
+        File moduleDir = tryGetModuleDir(module);
+        if (moduleDir == null) {
             return null;
         }
-
-        File moduleDir = contentRoots.iterator().next().getRootDirectory();
 
         int expectedChildCount = module.getGradleProject().getChildren().size();
         List<GradleProjectInfo> children = new ArrayList<GradleProjectInfo>(expectedChildCount);
@@ -332,15 +313,82 @@ public final class GradleModelLoader {
         return new GradleProjectInfo(module.getGradleProject(), moduleDir, children);
     }
 
+    private static NbGradleModel loadMainModelFromIdeaModule(IdeaModule ideaModule) throws IOException {
+        GradleProjectInfo projectInfo = tryCreateProjectTreeFromIdea(ideaModule);
+        if (projectInfo == null) {
+            throw new IOException("Failed to create project info for project: " + ideaModule.getName());
+        }
+
+        NbGradleModel result = new NbGradleModel(projectInfo, projectInfo.getProjectDir());
+        result.setMainModels(Lookups.singleton(ideaModule.getProject()));
+        return result;
+    }
+
+    private static NbGradleModel loadMainModel(
+            NbGradleProject project,
+            ProgressHandle progress,
+            ProjectConnection projectConnection,
+            List<NbGradleModel> deduced) throws IOException {
+
+        IdeaProject ideaProject
+                = getRawModelWithProgress(project, progress, projectConnection, IdeaProject.class);
+
+        File projectDir = project.getProjectDirectoryAsFile();
+        IdeaModule mainModule = tryFindMainModule(projectDir, ideaProject);
+        if (mainModule == null) {
+            throw new IOException("Failed to find idea module for project: " + project.getDisplayName());
+        }
+
+        for (IdeaModule otherModule: ideaProject.getModules()) {
+            // This comparison is not strictly necessary but there is no reason
+            // to reparse the main project.
+            if (otherModule != mainModule) {
+                deduced.add(loadMainModelFromIdeaModule(otherModule));
+            }
+        }
+
+        return loadMainModelFromIdeaModule(mainModule);
+    }
+
+    private static void introduceProjects(
+            NbGradleProject project,
+            List<NbGradleModel> otherModels,
+            NbGradleModel mainModel) {
+
+        Map<File, NbGradleModel> projects = new HashMap<File, NbGradleModel>(2 * otherModels.size() + 1);
+        for (NbGradleModel otherModel: otherModels) {
+            projects.put(otherModel.getProjectDir(), otherModel);
+        }
+        projects.put(mainModel.getProjectDir(), mainModel);
+
+        for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
+            GradleProjectExtension extension = extensionRef.getExtension();
+            Map<File, Lookup> deduced
+                    = extension.deduceModelsForProjects(mainModel.getModelsForExtension(extensionRef));
+
+            for (Map.Entry<File, Lookup> entry: deduced.entrySet()) {
+                NbGradleModel deducedModel = projects.get(entry.getKey());
+                if (deducedModel != null) {
+                    deducedModel.setModelsForExtension(extensionRef, entry.getValue());
+                }
+            }
+        }
+
+        for (NbGradleModel model: projects.values()) {
+            introduceLoadedModel(model);
+        }
+    }
+
     private static NbGradleModel loadModelWithProgress(
             NbGradleProject project,
-            ProgressHandle progress) throws IOException {
+            ProgressHandle progress,
+            NbGradleModel proposedModel) throws IOException {
         File projectDir = project.getProjectDirectoryAsFile();
 
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
-        IdeaModule ideaModule = null;
-        Lookup extensionModels;
+        List<NbGradleModel> otherModels = new LinkedList<NbGradleModel>();
+        NbGradleModel result = proposedModel;
 
         GradleConnector gradleConnector = createGradleConnector(project);
         gradleConnector.forProjectDirectory(projectDir);
@@ -348,27 +396,25 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            extensionModels = getExtensionModels(project, progress, projectConnection);
+            // TODO: We should fill otherModels from result if result is not
+            //   null. This could be done if NbGradleModel could store all
+            //   projects it could preparse.
+            if (result == null) {
+                result = loadMainModel(project, progress, projectConnection, otherModels);
+            }
 
-            ideaModule = tryFindIdeaModule(project, extensionModels);
+            getExtensionModels(project, progress, projectConnection, result);
         } finally {
             if (projectConnection != null) {
                 projectConnection.close();
             }
         }
 
-        if (ideaModule != null) {
-            GradleProjectInfo projectInfo = tryCreateProjectTreeFromIdea(ideaModule);
-            if (projectInfo != null) {
-                NbGradleModel result = new NbGradleModel(projectInfo, projectDir, extensionModels);
-                introduceLoadedModel(result);
-                return result;
-            }
+        progress.progress(NbStrings.getParsingModel());
 
-            LOGGER.log(Level.WARNING, "Failed to create project info for project: {0}", projectDir);
-        }
+        introduceProjects(project, otherModels, result);
 
-        return createEmptyModel(projectDir, extensionModels);
+        return result;
     }
 
     public static NbGradleModel createEmptyModel(File projectDir) {
@@ -376,7 +422,7 @@ public final class GradleModelLoader {
     }
 
     public static NbGradleModel createEmptyModel(File projectDir, Lookup extensionModels) {
-        return new NbGradleModel(GradleProjectInfo.createEmpty(projectDir), projectDir, extensionModels);
+        return new NbGradleModel(GradleProjectInfo.createEmpty(projectDir), projectDir);
     }
 
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {

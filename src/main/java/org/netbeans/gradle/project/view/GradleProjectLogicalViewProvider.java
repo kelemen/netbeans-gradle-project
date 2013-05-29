@@ -28,6 +28,7 @@ import org.gradle.tooling.model.GradleTask;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
@@ -127,8 +128,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
     private List<Action> getExtensionActions() {
         List<Action> extensionActions = new LinkedList<Action>();
-        for (GradleProjectExtension extension: project.getExtensions()) {
-            List<Action> actions = getActionsOfExtension(extension);
+        for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
+            List<Action> actions = getActionsOfExtension(extensionRef.getExtension());
 
             if (!actions.isEmpty()) {
                 extensionActions.add(null);

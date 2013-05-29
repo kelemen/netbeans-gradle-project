@@ -98,7 +98,7 @@ public final class NbGradleProject implements Project {
     private final WaitableSignal loadedAtLeastOnceSignal;
 
     private final AtomicReference<Queue<Runnable>> delayedInitTasks;
-    private volatile List<GradleProjectExtension> extensions;
+    private volatile List<ProjectExtensionRef> extensionRefs;
     private volatile Lookup extensionsOnLookup;
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
@@ -125,7 +125,7 @@ public final class NbGradleProject implements Project {
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
-        this.extensions = Collections.emptyList();
+        this.extensionRefs = Collections.emptyList();
         this.extensionsOnLookup = Lookup.EMPTY;
         this.lookupRef = new AtomicReference<DynamicLookup>(null);
         this.protectedLookupRef = new AtomicReference<Lookup>(null);
@@ -183,21 +183,25 @@ public final class NbGradleProject implements Project {
     }
 
     @Nonnull
-    public List<GradleProjectExtension> getExtensions() {
-        return extensions;
+    public List<ProjectExtensionRef> getExtensionRefs() {
+        return extensionRefs;
     }
 
     private void setExtensions(List<GradleProjectExtension> extensions) {
         List<GradleProjectExtension> newExtensions
                 = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
         List<Lookup> allLookups = new ArrayList<Lookup>(newExtensions.size() + 1);
+        List<ProjectExtensionRef> newExtensionRefs
+                = new ArrayList<ProjectExtensionRef>(newExtensions.size());
+
         allLookups.add(getDefaultLookup());
         for (final GradleProjectExtension extension: newExtensions) {
             allLookups.add(extension.getExtensionLookup());
+            newExtensionRefs.add(new ProjectExtensionRef(extension));
         }
 
         this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
-        this.extensions = newExtensions;
+        this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
         getMainLookup().replaceLookups(allLookups);
     }
 
@@ -633,26 +637,28 @@ public final class NbGradleProject implements Project {
         }
 
         private void notifyEmptyModelChange() {
-            for (GradleProjectExtension extension: extensions) {
-                safelyLoadExtensions(extension, Lookup.EMPTY);
+            for (ProjectExtensionRef extensionRef: extensionRefs) {
+                safelyLoadExtensions(extensionRef.getExtension(), Lookup.EMPTY);
             }
 
             fireModelChangeEvent();
         }
 
-        private void notifyModelChange(Lookup modelLookup) {
-            int setSize = 2 * extensions.size();
+        private void notifyModelChange(NbGradleModel model) {
+            int setSize = 2 * extensionRefs.size();
             Set<String> disabledExtensions = new HashSet<String>(setSize);
             Map<String, GradleProjectExtension> loadedExtensions
                     = new HashMap<String, GradleProjectExtension>(setSize);
 
-            for (GradleProjectExtension extension: extensions) {
+            for (ProjectExtensionRef extensionRef: extensionRefs) {
+                GradleProjectExtension extension = extensionRef.getExtension();
+
                 String name = extension.getExtensionName();
                 if (disabledExtensions.contains(name)) {
                     continue;
                 }
 
-                Set<String> conflicts = safelyLoadExtensions(extension, modelLookup);
+                Set<String> conflicts = safelyLoadExtensions(extension, model.getModelsForExtension(extensionRef));
                 disabledExtensions.addAll(conflicts);
                 loadedExtensions.put(name, extension);
             }
@@ -697,7 +703,7 @@ public final class NbGradleProject implements Project {
                     notifyEmptyModelChange();
                 }
                 else {
-                    notifyModelChange(model.getModels());
+                    notifyModelChange(model);
                 }
             }
         }

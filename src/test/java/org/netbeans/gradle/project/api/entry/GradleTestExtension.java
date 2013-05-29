@@ -1,8 +1,10 @@
 package org.netbeans.gradle.project.api.entry;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,5 +49,10 @@ public class GradleTestExtension implements GradleProjectExtension {
     @Override
     public String getExtensionName() {
         return getClass().getName();
+    }
+
+    @Override
+    public Map<File, Lookup> deduceModelsForProjects(Lookup modelLookup) {
+        return Collections.emptyMap();
     }
 }

@@ -5,8 +5,10 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -194,29 +196,25 @@ public final class JavaExtension implements GradleProjectExtension {
         return currentModel.getMainModule().getShortName();
     }
 
-    /**
-     * This method is a pure hack to prevent regression when no extension is
-     * used other than the standard Java project. That is, this method is called
-     * right when models are loaded and will add other projects to the cache
-     * if only the JavaExtension is present.
-     */
-    public List<?> addToModelLookup(Lookup modelLookup) {
-        NbJavaModel result = null;
+    @Override
+    public Map<File, Lookup> deduceModelsForProjects(Lookup modelLookup) {
         IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
-        if (ideaProject != null) {
-            try {
-                result = NbJavaModelUtils.parseFromIdeaModel(
-                        currentModel.getMainModule().getModuleDir(),
-                        ideaProject);
-            } catch (IOException ex) {
-                LOGGER.log(Level.FINE, "Failed to parse model.", ex);
-                // We will most likely log this exception again in modelsLoaded.
-            }
+        if (ideaProject == null) {
+            return Collections.emptyMap();
         }
 
-        return result != null
-                ? Collections.singletonList(result)
-                : Collections.emptyList();
+        File mainModuleDir = currentModel.getMainModule().getModuleDir();
+        try {
+            Map<File, NbJavaModel> models = NbJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
+            Map<File, Lookup> result = new HashMap<File, Lookup>(2 * models.size());
+            for (Map.Entry<File, NbJavaModel> entry: models.entrySet()) {
+                result.put(entry.getKey(), Lookups.fixed(entry.getValue()));
+            }
+            return result;
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected I/O exception when parsing NBJavaModel instances.", ex);
+            return Collections.emptyMap();
+        }
     }
 
     private void switchToEmptyModel() {
@@ -234,8 +232,6 @@ public final class JavaExtension implements GradleProjectExtension {
 
     @Override
     public Set<String> modelsLoaded(Lookup modelLookup) {
-        boolean loaded = false;
-
         NbJavaModel javaModel = modelLookup.lookup(NbJavaModel.class);
         if (javaModel == null) {
             IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
@@ -244,22 +240,21 @@ public final class JavaExtension implements GradleProjectExtension {
             }
             else {
                 try {
-                    currentModel = NbJavaModelUtils.parseFromIdeaModel(
-                            currentModel.getMainModule().getModuleDir(),
-                            ideaProject);
-                    loaded = true;
+                    File mainModuleDir = currentModel.getMainModule().getModuleDir();
+                    javaModel = NbJavaModelUtils
+                            .parseFromIdeaModel(mainModuleDir, ideaProject)
+                            .get(mainModuleDir);
                 } catch (IOException ex) {
                     LOGGER.log(Level.WARNING, "Failed to parse model.", ex);
                     switchToEmptyModel();
                 }
             }
         }
-        else {
-            currentModel = javaModel;
-            loaded = true;
-        }
 
-        updateLookup(loaded);
+        if (javaModel != null) {
+            currentModel = javaModel;
+        }
+        updateLookup(javaModel != null);
 
         for (JavaModelChangeListener listener: getExtensionLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();

@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.api.entry;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -119,6 +121,10 @@ public interface GradleProjectExtension {
      * If this method returns a non-empty set, then all of those extensions will
      * be notified with {@code modelsLoaded(Lookup.EMPTY)}.
      * <P>
+     * <B>Important note</B>: It is possible that the {@code Lookup} passed to
+     * this method is retrieved from a previous call to the
+     * {@link #deduceModelsForProjects(Lookup) deduceModelsForProjects} method.
+     * <P>
      * <B>Implementation note</B>: If this implementations can't find the
      * models it needs, the expected action is to remove instances from the
      * {@link #getExtensionLookup() lookup} which might conflict with other
@@ -139,4 +145,33 @@ public interface GradleProjectExtension {
      */
     @Nullable
     public Set<String> modelsLoaded(@Nonnull Lookup modelLookup);
+
+    /**
+     * Returns the lookups which might be used to fully load the given projects.
+     * <P>
+     * Often, an extension can deduce models it will need to load a project from
+     * models loaded for another project. This might enable to greatly reduce
+     * the loading time of projects because the Gradle plugin might cache the
+     * returned lookups instead of asking Gradle itself.
+     * <P>
+     * Note that this method is allowed to associate empty lookups with project
+     * directories, if it knows that for that particular project, attempting to
+     * load models for this extension is futile.
+     * <P>
+     * This method may always safely return an empty map. However, it is
+     * recommended to make a best effort to deduce whatever it can.
+     *
+     * @param modelLookup the {@code Lookup} from which this method should try
+     *   to deduce the models it needs for projects. This argument cannot be
+     *   {@code null}.
+     * @return the {@code Map}, mapping project directories to lookups of
+     *   models. If this method returns a {@code Lookup} for a specific
+     *   project directory, the Gradle plugin may pass the returned lookup to
+     *   the {@link #modelsLoaded(Lookup) modelsLoaded} instead of asking
+     *   Gradle for the {@link #getGradleModels() models}. This method may never
+     *   return {@code null} and must not contain a {@code null} key, or a
+     *   {@code null} value.
+     */
+    @Nonnull
+    public Map<File, Lookup> deduceModelsForProjects(@Nonnull Lookup modelLookup);
 }
