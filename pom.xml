@@ -182,7 +182,8 @@
         </dependency>
         <dependency>
             <!-- We need to add slf4j-api only for gradle-tooling-api. -->
-            <!-- For some reason, the plugin won't build without explictly adding slf4j. -->
+            <!-- We need to do this because slf4j-api only declares a runtime -->
+            <!-- dependency, yet uses it at compile time. -->
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.2</version>
