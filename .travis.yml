@@ -3,7 +3,7 @@ jdk:
   - openjdk6
   - oraclejdk7
   - openjdk7
-script: "mvn tests"
+script: "mvn test"
 branches:
   only:
     - master
