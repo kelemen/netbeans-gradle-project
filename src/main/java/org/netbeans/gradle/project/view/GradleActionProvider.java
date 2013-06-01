@@ -38,7 +38,11 @@ public final class GradleActionProvider implements ActionProvider {
 
     @Override
     public String[] getSupportedActions() {
-        return project.getMergedCommandQuery().getSupportedCommands().toArray(new String[0]);
+        String[] actions = project.getMergedCommandQuery().getSupportedCommands().toArray(new String[0]);
+        String[] result = new String[actions.length + 1];
+        System.arraycopy(actions, 0, result, 0, actions.length);
+        result[actions.length] = COMMAND_RELOAD;
+        return result;
     }
 
     @Override
