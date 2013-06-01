@@ -30,6 +30,9 @@ public final class NbGradleModel {
     private final DynamicLookup allModels;
 
     private final String displayName;
+    // This field is provided, so that the governing project can detect that
+    // something has changed in the model, so it needs to reparse things.
+    private final AtomicReference<Object> stateID;
 
     public NbGradleModel(
             GradleProjectInfo projectInfo,
@@ -70,8 +73,17 @@ public final class NbGradleModel {
         this.displayName = findDisplayName();
         this.mainModelsRef = mainLookupRef;
         this.allModels = new DynamicLookup();
+        this.stateID = new AtomicReference<Object>(new Object());
 
         updateAllModels();
+    }
+
+    private void changeState() {
+        stateID.set(new Object());
+    }
+
+    public Object getStateID() {
+        return stateID.get();
     }
 
     private void updateAllModels() {
@@ -136,6 +148,7 @@ public final class NbGradleModel {
             oldLookup.replaceLookups(models);
         }
 
+        changeState();
         updateAllModels();
     }
 
@@ -151,6 +164,7 @@ public final class NbGradleModel {
         if (!mainModelsRef.compareAndSet(null, new DynamicLookup(mainModels))) {
             mainModelsRef.get().replaceLookups(mainModels);
         }
+        changeState();
         updateAllModels();
     }
 

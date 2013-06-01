@@ -89,7 +89,7 @@ public final class NbGradleProject implements Project {
     private final ExceptionDisplayer exceptionDisplayer;
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
-    private final AtomicReference<NbGradleModel> currentModelRef;
+    private final AtomicReference<NbGradleModelRef> currentModelRef;
     private final ProjectPropertiesProxy properties;
     private final ProjectInfoManager projectInfoManager;
 
@@ -120,7 +120,8 @@ public final class NbGradleProject implements Project {
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
         this.modelChanges = new ChangeSupport(this);
-        this.currentModelRef = new AtomicReference<NbGradleModel>(GradleModelLoader.createEmptyModel(projectDirAsFile));
+        this.currentModelRef = new AtomicReference<NbGradleModelRef>(
+                new NbGradleModelRef(GradleModelLoader.createEmptyModel(projectDirAsFile)));
 
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
@@ -271,7 +272,8 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleModel getAvailableModel() {
-        NbGradleModel result = currentModelRef.get();
+        NbGradleModelRef resultRef = currentModelRef.get();
+        NbGradleModel result = resultRef.model;
         // This is not a completely correct solution. The correct
         // solution would be to listen when the model becomes dirty (based on
         // the directory of the project). The problem is that there is no place
@@ -279,9 +281,9 @@ public final class NbGradleProject implements Project {
         //
         // However this should work in most practical cases since
         // getAvailableModel() often gets called.
-        if (result.isDirty()) {
+        if (result.isDirty() || !resultRef.isUpdateToDate()) {
             // Set a non-dirty to prevent many unnecessary project reload.
-            currentModelRef.set(result.createNonDirtyCopy());
+            currentModelRef.set(new NbGradleModelRef(result.createNonDirtyCopy()));
             reloadProject(true);
         }
         return result;
@@ -682,8 +684,9 @@ public final class NbGradleProject implements Project {
 
             boolean hasChanged = false;
             if (model != null) {
-                NbGradleModel lastModel = currentModelRef.getAndSet(model);
-                hasChanged = lastModel != model;
+                NbGradleModelRef newModel = new NbGradleModelRef(model);
+                NbGradleModelRef lastModel = currentModelRef.getAndSet(newModel);
+                hasChanged = !lastModel.isSameModel(newModel);
             }
 
             if (error != null) {
@@ -744,6 +747,28 @@ public final class NbGradleProject implements Project {
                     }
                 }
             });
+        }
+    }
+
+    private static final class NbGradleModelRef {
+        public final NbGradleModel model;
+        private final Object stateID;
+
+        public NbGradleModelRef(NbGradleModel model) {
+            this.model = model;
+            this.stateID = model.getStateID();
+        }
+
+        public boolean isSameModel(NbGradleModelRef other) {
+            if (other != this) {
+                return false;
+            }
+
+            return stateID.equals(other.stateID);
+        }
+
+        public boolean isUpdateToDate() {
+            return stateID.equals(model.getStateID());
         }
     }
 }
