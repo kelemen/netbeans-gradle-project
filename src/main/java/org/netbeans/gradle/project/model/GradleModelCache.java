@@ -75,7 +75,7 @@ public final class GradleModelCache {
             cacheLock.unlock();
         }
 
-        if (prevModel != null) {
+        if (prevModel != null && prevModel != model) {
             prevModel.setDirty();
         }
     }
