@@ -17,26 +17,41 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
         this.project = project;
     }
 
-    @Override
-    public Sharability getSharability(URI uri) {
-        FileObject projectDir = project.getProjectDirectory();
-        FileObject buildDir = projectDir.getFileObject("build/");
+    private static boolean isInDirectory(FileObject containingDir, String subDir, FileObject queriedFile) {
+        FileObject dir = containingDir.getFileObject(subDir);
+        if (dir == null) {
+            return false;
+        }
+
+        return FileUtil.getRelativePath(dir, queriedFile) != null;
+    }
+
+    private static FileObject uriAsFileObject(URI uri) {
         File uriAsFile;
         try {
             uriAsFile = FileUtil.archiveOrDirForURL(uri.toURL());
         } catch (MalformedURLException ex) {
-            uriAsFile = null;
+            return null;
         }
 
-        FileObject queriedFile = uriAsFile != null
+        return uriAsFile != null
                 ? FileUtil.toFileObject(uriAsFile)
                 : null;
+    }
+
+    @Override
+    public Sharability getSharability(URI uri) {
+        FileObject queriedFile = uriAsFileObject(uri);
 
         if (queriedFile == null) {
             return Sharability.UNKNOWN;
         }
 
-        if (buildDir != null && FileUtil.getRelativePath(buildDir, queriedFile) != null) {
+        FileObject projectDir = project.getProjectDirectory();
+        if (isInDirectory(projectDir, "build/", queriedFile)) {
+            return Sharability.NOT_SHARABLE;
+        }
+        if (isInDirectory(projectDir, ".nb-gradle/private/", queriedFile)) {
             return Sharability.NOT_SHARABLE;
         }
 
