@@ -122,7 +122,9 @@ final class XmlPropertyFormat {
         File dir = propertyfile.getParentFile();
         if (dir != null) {
             if (!dir.mkdirs()) {
-                LOGGER.log(Level.WARNING, "Cannot create directory: {0}", dir);
+                if (!dir.isDirectory()) {
+                    LOGGER.log(Level.WARNING, "Cannot create directory: {0}", dir);
+                }
             }
         }
 
