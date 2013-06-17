@@ -386,6 +386,11 @@ public final class NbGradleProject implements Project {
         return properties;
     }
 
+    public ProjectProperties getPrivateProperties() {
+        ProfileDef privateDef = new ProfileDef("private", "aux-config", "Private profiles");
+        return getPropertiesForProfile(privateDef, false, null);
+    }
+
     public ProjectProperties getPropertiesForProfile(
             ProfileDef profileDef,
             boolean useInheritance,

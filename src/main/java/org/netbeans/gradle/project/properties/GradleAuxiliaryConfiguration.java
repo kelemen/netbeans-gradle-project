@@ -1,61 +1,43 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.swing.SwingUtilities;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
 
 public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguration {
-    private final NbGradleProject project;
-    private final Map<DomElementKey, Element> privateConfig;
+    private final SingleStoreAuxConfig sharedConfig;
+    private final SingleStoreAuxConfig privateConfig;
 
-    public GradleAuxiliaryConfiguration(NbGradleProject project) {
+    public GradleAuxiliaryConfiguration(final NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
-        this.project = project;
-        this.privateConfig = new ConcurrentHashMap<DomElementKey, Element>();
+
+        this.sharedConfig = new SingleStoreAuxConfig(
+                new ProjectPropertiesStorage(getSharedProperties(project)));
+        this.privateConfig = new SingleStoreAuxConfig(
+                new ProjectPropertiesStorage(getPrivateProperties(project)));
     }
 
-    private ProjectProperties getProperties() {
+    private static ProjectProperties getSharedProperties(NbGradleProject project) {
         return project.getPropertiesForProfile(null, false, null);
+    }
+
+    private static ProjectProperties getPrivateProperties(NbGradleProject project) {
+        return project.getPrivateProperties();
+    }
+
+    private SingleStoreAuxConfig getConfig(boolean shared) {
+        return shared ? sharedConfig : privateConfig;
     }
 
     @Override
     public Element getConfigurationFragment(String elementName, String namespace, boolean shared) {
-        DomElementKey key = new DomElementKey(elementName, namespace);
-        if (!shared) {
-            Element result = privateConfig.get(key);
-            return result != null ? (Element)result.cloneNode(true) : null;
-        }
-
-        return getProperties().getAuxConfig(elementName, namespace).getProperty().getValue();
+        return getConfig(shared).getConfigurationFragment(elementName, namespace);
     }
 
     @Override
     public void putConfigurationFragment(Element fragment, boolean shared) throws IllegalArgumentException {
-        final String elementName = fragment != null ? fragment.getTagName() : null;
-        final String namespace = fragment != null ? fragment.getNamespaceURI() : null;
-
-        final Element newElement = fragment != null
-                ? (Element)fragment.cloneNode(true)
-                : null;
-
-        DomElementKey key = new DomElementKey(elementName, namespace);
-        if (!shared) {
-            privateConfig.put(key, newElement);
-            return;
-        }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                getProperties().getAuxConfig(elementName, namespace).getProperty().setValue(newElement);
-            }
-        });
+        getConfig(shared).putConfigurationFragment(fragment);
     }
 
     @Override
@@ -64,30 +46,32 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
             final String namespace,
             boolean shared) throws IllegalArgumentException {
 
-        DomElementKey key = new DomElementKey(elementName, namespace);
-        if (!shared) {
-            return privateConfig.remove(key) != null;
-        }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                getProperties().getAuxConfig(elementName, namespace).getProperty().setValue(null);
-            }
-        });
-        return true;
+        return getConfig(shared).removeConfigurationFragment(elementName, namespace);
     }
 
     public Collection<DomElementKey> getConfigElements(boolean shared) {
-        List<DomElementKey> result = new LinkedList<DomElementKey>();
-        if (shared) {
-            for (AuxConfigProperty property: getProperties().getAllAuxConfigs()) {
-                result.add(property.getKey());
-            }
+        return getConfig(shared).getConfigElements();
+    }
+
+    private static final class ProjectPropertiesStorage
+    implements
+            SingleStoreAuxConfig.AuxConfigStorage {
+
+        private final ProjectProperties properties;
+
+        public ProjectPropertiesStorage(ProjectProperties properties) {
+            if (properties == null) throw new NullPointerException("properties");
+            this.properties = properties;
         }
-        else {
-            result.addAll(privateConfig.keySet());
+
+        @Override
+        public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
+            return getAuxConfig(elementName, namespace);
         }
-        return result;
+
+        @Override
+        public Collection<AuxConfigProperty> getAllAuxConfigs() {
+            return properties.getAllAuxConfigs();
+        }
     }
 }
