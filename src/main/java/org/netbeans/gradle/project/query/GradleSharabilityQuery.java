@@ -54,6 +54,9 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
         if (isInDirectory(projectDir, ".nb-gradle/private/", queriedFile)) {
             return Sharability.NOT_SHARABLE;
         }
+        if (isInDirectory(projectDir, ".nb-gradle/profiles/private/", queriedFile)) {
+            return Sharability.NOT_SHARABLE;
+        }
 
         if (FileUtil.getRelativePath(projectDir, queriedFile) != null) {
             return Sharability.SHARABLE;
