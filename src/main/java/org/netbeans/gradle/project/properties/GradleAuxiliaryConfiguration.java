@@ -66,7 +66,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
 
         @Override
         public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
-            return getAuxConfig(elementName, namespace);
+            return properties.getAuxConfig(elementName, namespace);
         }
 
         @Override
