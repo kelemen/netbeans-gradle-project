@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.util.ChangeSupport;
+import org.openide.util.Utilities;
 
 public final class DefaultMutableProperty<ValueType> implements MutableProperty<ValueType> {
     private static final Logger LOGGER = Logger.getLogger(DefaultMutableProperty.class.getName());
@@ -22,7 +23,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     }
 
     public DefaultMutableProperty(
-            PropertySource<? extends ValueType> initialValue,
+            final PropertySource<? extends ValueType> initialValue,
             boolean allowNulls) {
         if (initialValue == null) throw new NullPointerException("initialValue");
 
@@ -31,9 +32,17 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
         this.changesLock = new ReentrantLock();
         this.changes = new ChangeSupport(this);
         this.changeForwarder = new ChangeListener() {
+            private ValueType prevValue = initialValue.getValue();
+
             @Override
             public void stateChanged(ChangeEvent e) {
-                changes.fireChange();
+                ValueType value = prevValue;
+                ValueType newValue = getValue();
+                prevValue = newValue;
+
+                if (!Utilities.compareObjects(value, newValue)) {
+                    changes.fireChange();
+                }
             }
         };
     }
