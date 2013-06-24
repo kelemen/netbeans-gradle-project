@@ -152,8 +152,40 @@ public enum StandardTaskVariable {
         };
     }
 
+    public static String replaceVars(String str, TaskVariableMap varReplaceMap) {
+        return replaceVars(str, varReplaceMap, null);
+    }
+
+    private static DisplayedTaskVariable tryGetDisplayedVariable(String varDef) {
+        int nameSeparatorIndex = varDef.indexOf(':');
+
+        String varName;
+        String displayName;
+
+        if (nameSeparatorIndex >= 0) {
+            varName = varDef.substring(0, nameSeparatorIndex);
+            displayName = varDef.substring(nameSeparatorIndex + 1, varDef.length());
+        }
+        else {
+            varName = varDef;
+            displayName = varDef;
+        }
+
+        varName = varName.trim();
+        displayName = displayName.trim();
+
+        if (!TaskVariable.isValidVariableName(varName)) {
+            return null;
+        }
+
+        return new DisplayedTaskVariable(new TaskVariable(varName), displayName);
+    }
+
     public static String replaceVars(
-            String str, TaskVariableMap varReplaceMap) {
+            String str,
+            TaskVariableMap varReplaceMap,
+            List<? super DisplayedTaskVariable> collectedVariables) {
+
         StringBuilder result = new StringBuilder(str.length() * 2);
 
         int index = 0;
@@ -163,9 +195,15 @@ public enum StandardTaskVariable {
                 int varStart = str.indexOf('{', index + 1);
                 int varEnd = varStart >= 0 ? str.indexOf('}', varStart + 1) : -1;
                 if (varStart >= 0 && varEnd >= varStart) {
-                    String varName = str.substring(varStart + 1, varEnd);
-                    if (TaskVariable.isValidVariableName(varName)) {
-                        String value = varReplaceMap.tryGetValueForVariable(new TaskVariable(varName));
+                    String varDef = str.substring(varStart + 1, varEnd);
+                    DisplayedTaskVariable taskVar = tryGetDisplayedVariable(varDef);
+
+                    if (taskVar != null) {
+                        if (collectedVariables != null) {
+                            collectedVariables.add(taskVar);
+                        }
+
+                        String value = varReplaceMap.tryGetValueForVariable(taskVar.getVariable());
                         if (value != null) {
                             result.append(value);
                             index = varEnd + 1;
