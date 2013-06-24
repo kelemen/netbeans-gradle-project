@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,11 +64,6 @@ implements
     private volatile ProjectPlatform currentPlatform;
 
     private final AtomicReference<ProjectInfoRef> infoRefRef;
-    // This property is used to prevent eagrly loading a project due
-    // to changes in the project settings. That is, if this class path provider
-    // has never been used, there is no reason to calculate the classpath
-    // due to a change in the settings.
-    private final AtomicBoolean hasBeenUsed;
 
     private final AtomicReference<ClassPath> allSourcesClassPathRef;
     private volatile List<PathResourceImplementation> allSources;
@@ -86,7 +80,6 @@ implements
         int classPathTypeCount = ClassPathType.values().length;
         this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
         this.classpaths = new ConcurrentHashMap<ClassPathType, ClassPath>(classPathTypeCount);
-        this.hasBeenUsed = new AtomicBoolean(false);
         this.allSources = Collections.emptyList();
         this.allSourcesClassPathRef = new AtomicReference<ClassPath>(null);
 
@@ -139,10 +132,6 @@ implements
 
     @Override
     public void onModelChange() {
-        if (!hasBeenUsed.get()) {
-            return;
-        }
-
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
@@ -536,8 +525,6 @@ implements
         if (GradleFilesClassPathProvider.isGradleFile(file)) {
             return null;
         }
-
-        hasBeenUsed.set(true);
 
         NbJavaModel projectModel = javaExt.getCurrentModel();
         ClassPathType classPathType = getClassPathType(projectModel, file, type);
