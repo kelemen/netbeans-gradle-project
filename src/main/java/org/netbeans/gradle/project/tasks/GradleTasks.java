@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -16,12 +17,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProgressEvent;
@@ -32,6 +36,8 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -292,6 +298,77 @@ public final class GradleTasks {
         LifecycleManager.getDefault().saveAll();
     }
 
+    private static void collectTaskVars(String[] strings, List<DisplayedTaskVariable> taskVars) {
+        for (String str: strings) {
+            StandardTaskVariable.replaceVars(str, EmptyTaskVarMap.INSTANCE, taskVars);
+        }
+    }
+
+    private static TaskVariableMap queryVariablesNow(List<DisplayedTaskVariable> taskVars) {
+        assert SwingUtilities.isEventDispatchThread();
+
+        final Map<TaskVariable, DisplayedTaskVariable> names = new LinkedHashMap<TaskVariable, DisplayedTaskVariable>();
+        for (DisplayedTaskVariable var: taskVars) {
+            if (!names.containsKey(var.getVariable())) {
+                names.put(var.getVariable(), var);
+            }
+        }
+
+        TaskVariableQueryDialog dlg = new TaskVariableQueryDialog(names.values());
+        Map<DisplayedTaskVariable, String> varMap = dlg.queryVariables();
+        return DisplayedTaskVariable.variableMap(varMap);
+    }
+
+    private static TaskVariableMap queryVariables(final List<DisplayedTaskVariable> taskVars) {
+        final AtomicReference<TaskVariableMap> result = new AtomicReference<TaskVariableMap>(null);
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    result.set(queryVariablesNow(taskVars));
+                }
+            });
+            return result.get();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return EmptyTaskVarMap.INSTANCE;
+        } catch (InvocationTargetException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static GradleTaskDef queryUserDefinedInputOfTask(GradleTaskDef taskDef) {
+        String[] taskNames = taskDef.getTaskNamesArray();
+        String[] arguments = taskDef.getArgumentArray();
+        String[] jvmArguments = taskDef.getJvmArgumentsArray();
+
+        List<DisplayedTaskVariable> taskVars = new LinkedList<DisplayedTaskVariable>();
+        collectTaskVars(taskNames, taskVars);
+        collectTaskVars(arguments, taskVars);
+        collectTaskVars(jvmArguments, taskVars);
+
+        if (taskVars.isEmpty()) {
+            return taskDef;
+        }
+
+        TaskVariableMap varMap = queryVariables(taskVars);
+        replaceAllVars(taskNames, varMap);
+        replaceAllVars(arguments, varMap);
+        replaceAllVars(jvmArguments, varMap);
+
+        GradleTaskDef.Builder result = new GradleTaskDef.Builder(taskDef);
+        result.setTaskNames(Arrays.asList(taskNames));
+        result.setArguments(Arrays.asList(arguments));
+        result.setJvmArguments(Arrays.asList(jvmArguments));
+        return result.create();
+    }
+
+    private static void replaceAllVars(String[] strings, TaskVariableMap varMap) {
+        for (int i = 0; i < strings.length; i++) {
+            strings[i] = StandardTaskVariable.replaceVars(strings[i], varMap);
+        }
+    }
+
     private static void submitGradleTask(
             final NbGradleProject project,
             final Callable<GradleTaskDef> taskDefFactory,
@@ -324,7 +401,8 @@ public final class GradleTasks {
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        doGradleTasksWithProgress(progress, project, newTaskDef);
+                        GradleTaskDef taskWithUserDefined = queryUserDefinedInputOfTask(newTaskDef);
+                        doGradleTasksWithProgress(progress, project, taskWithUserDefined);
                     }
                 });
             }

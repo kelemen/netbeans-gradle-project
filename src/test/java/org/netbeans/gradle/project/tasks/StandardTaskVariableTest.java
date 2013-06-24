@@ -10,7 +10,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 
 import static org.junit.Assert.*;
@@ -33,17 +32,7 @@ public class StandardTaskVariableTest {
     }
 
     private static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
-        final Map<TaskVariable, String> appliedMap = new HashMap<TaskVariable, String>();
-        for (Map.Entry<DisplayedTaskVariable, String> entry: map.entrySet()) {
-            appliedMap.put(entry.getKey().getVariable(), entry.getValue());
-        }
-
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                return appliedMap.get(variable);
-            }
-        };
+        return DisplayedTaskVariable.variableMap(map);
     }
 
     /**

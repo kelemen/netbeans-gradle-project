@@ -1,7 +1,10 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.task.TaskVariable;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 
 public final class DisplayedTaskVariable {
     private final TaskVariable variable;
@@ -64,5 +67,19 @@ public final class DisplayedTaskVariable {
 
         return this.variable.equals(other.variable)
                 && this.displayName.equals(other.displayName);
+    }
+
+    public static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
+        final Map<TaskVariable, String> appliedMap = new HashMap<TaskVariable, String>();
+        for (Map.Entry<DisplayedTaskVariable, String> entry: map.entrySet()) {
+            appliedMap.put(entry.getKey().getVariable(), entry.getValue());
+        }
+
+        return new TaskVariableMap() {
+            @Override
+            public String tryGetValueForVariable(TaskVariable variable) {
+                return appliedMap.get(variable);
+            }
+        };
     }
 }

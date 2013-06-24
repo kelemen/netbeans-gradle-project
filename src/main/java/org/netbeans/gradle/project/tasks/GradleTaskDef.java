@@ -17,7 +17,7 @@ import org.openide.util.Lookup;
 public final class GradleTaskDef {
     public static final class Builder {
         private String caption;
-        private final List<String> taskNames;
+        private List<String> taskNames;
         private List<String> arguments;
         private List<String> jvmArguments;
 
@@ -100,6 +100,14 @@ public final class GradleTaskDef {
 
         public List<String> getTaskNames() {
             return taskNames;
+        }
+
+        public void setTaskNames(List<String> taskNames) {
+            List<String> safeTaskNames = CollectionUtils.copyNullSafeList(taskNames);
+            if (safeTaskNames.isEmpty()) {
+                throw new IllegalArgumentException("Must contain at least a single task.");
+            }
+            this.taskNames = safeTaskNames;
         }
 
         public List<String> getArguments() {
