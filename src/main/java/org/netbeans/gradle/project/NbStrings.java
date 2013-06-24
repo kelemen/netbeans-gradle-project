@@ -217,6 +217,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_OptionNo");
     }
 
+    public static String getOkOption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OptionOk");
+    }
+
+    public static String getTaskVariableQueryCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_TaskVariableQueryCaption");
+    }
+
     public static String getConfirmDeleteProject(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmDeleteProject", projectName);
     }

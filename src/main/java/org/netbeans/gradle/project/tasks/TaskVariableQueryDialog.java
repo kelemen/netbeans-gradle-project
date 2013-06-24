@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import org.netbeans.gradle.project.NbStrings;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {
@@ -95,8 +96,7 @@ public final class TaskVariableQueryDialog extends JDialog {
 
         JPanel queryPanel = createQueryPanel(labels, textFields);
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        // TODO: localize
-        JButton okButton = new JButton("Ok");
+        JButton okButton = new JButton(NbStrings.getOkOption());
         buttonPanel.add(okButton);
 
         okButton.addActionListener(new ActionListener() {
@@ -121,8 +121,7 @@ public final class TaskVariableQueryDialog extends JDialog {
                 .addComponent(buttonPanel, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE))
         );
 
-        // TODO: localize
-        setTitle("Enter values for variables");
+        setTitle(NbStrings.getTaskVariableQueryCaption());
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
