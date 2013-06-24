@@ -127,10 +127,10 @@ implements
             return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.BOOT), getPaths(ClassPathType.BOOT_FOR_TEST));
         }
         else if (ClassPath.COMPILE.equals(type)) {
-            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.COMPILE), getPaths(ClassPathType.COMPILE_FOR_TEST));
+            return getPaths(ClassPathType.COMPILE_FOR_GLOBAL);
         }
         else if (ClassPath.EXECUTE.equals(type)) {
-            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.RUNTIME), getPaths(ClassPathType.RUNTIME_FOR_TEST));
+            return getPaths(ClassPathType.RUNTIME_FOR_GLOBAL);
         }
         else {
             return ClassPath.EMPTY;
@@ -398,6 +398,9 @@ implements
         List<File> runtime = new LinkedList<File>();
         List<File> testRuntime = new LinkedList<File>();
 
+        List<File> globalCompile = new LinkedList<File>();
+        List<File> globalRuntime = new LinkedList<File>();
+
         // Contains build directories which does not necessarily exists
         Set<File> notRequiredPaths = new HashSet<File>();
 
@@ -410,6 +413,7 @@ implements
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, compile);
+                addExternalClassPaths((NbUriDependency)dependency, globalCompile);
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
@@ -419,6 +423,7 @@ implements
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, runtime);
+                addExternalClassPaths((NbUriDependency)dependency, globalRuntime);
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
@@ -428,6 +433,7 @@ implements
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, testCompile);
+                addExternalClassPaths((NbUriDependency)dependency, globalCompile);
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
@@ -437,6 +443,7 @@ implements
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {
             if (dependency instanceof NbUriDependency) {
                 addExternalClassPaths((NbUriDependency)dependency, testRuntime);
+                addExternalClassPaths((NbUriDependency)dependency, globalRuntime);
             }
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
@@ -455,6 +462,10 @@ implements
         setClassPathResources(ClassPathType.COMPILE_FOR_TEST, testCompilePaths);
 
         @SuppressWarnings("unchecked")
+        List<PathResourceImplementation> globalCompilePaths = getPathResources(new HashSet<File>(), globalCompile);
+        setClassPathResources(ClassPathType.COMPILE_FOR_GLOBAL, globalCompilePaths);
+
+        @SuppressWarnings("unchecked")
         List<PathResourceImplementation> runtimePaths = getPathResources(missing, compile, runtime);
         setClassPathResources(ClassPathType.RUNTIME, runtimePaths);
 
@@ -462,6 +473,10 @@ implements
         List<PathResourceImplementation> testRuntimePaths = getPathResources(
                 missing, compile, testCompile, runtime, testRuntime);
         setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
+
+        @SuppressWarnings("unchecked")
+        List<PathResourceImplementation> globalRuntimePaths = getPathResources(new HashSet<File>(), globalRuntime);
+        setClassPathResources(ClassPathType.RUNTIME_FOR_GLOBAL, globalRuntimePaths);
 
         List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
         ProjectPlatform platform = currentPlatform;
@@ -611,10 +626,12 @@ implements
         SOURCES_FOR_TEST,
         RUNTIME,
         RUNTIME_FOR_TEST,
+        RUNTIME_FOR_GLOBAL,
         BOOT,
         BOOT_FOR_TEST,
         COMPILE,
-        COMPILE_FOR_TEST
+        COMPILE_FOR_TEST,
+        COMPILE_FOR_GLOBAL,
     }
 
     private static final class EventSource implements ClassPathImplementation {
