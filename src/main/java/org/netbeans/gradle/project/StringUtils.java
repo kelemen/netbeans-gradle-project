@@ -98,6 +98,21 @@ public final class StringUtils {
         }
     }
 
+    public static int unescapedIndexOf(String str, int startIndex, char toFind) {
+        if (str.charAt(startIndex) == toFind) {
+            return startIndex;
+        }
+
+        for (int i = startIndex + 1; i < str.length(); i++) {
+            if (str.charAt(i) == toFind) {
+                if (str.charAt(i - 1) != '\\') {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
     private StringUtils() {
         throw new AssertionError();
     }

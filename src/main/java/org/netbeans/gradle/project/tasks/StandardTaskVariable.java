@@ -10,6 +10,7 @@ import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.openide.filesystems.FileObject;
@@ -156,31 +157,6 @@ public enum StandardTaskVariable {
         return replaceVars(str, varReplaceMap, null);
     }
 
-    private static DisplayedTaskVariable tryGetDisplayedVariable(String varDef) {
-        int nameSeparatorIndex = varDef.indexOf(':');
-
-        String varName;
-        String displayName;
-
-        if (nameSeparatorIndex >= 0) {
-            varName = varDef.substring(0, nameSeparatorIndex);
-            displayName = varDef.substring(nameSeparatorIndex + 1, varDef.length());
-        }
-        else {
-            varName = varDef;
-            displayName = varDef;
-        }
-
-        varName = varName.trim();
-        displayName = displayName.trim();
-
-        if (!TaskVariable.isValidVariableName(varName)) {
-            return null;
-        }
-
-        return new DisplayedTaskVariable(new TaskVariable(varName), displayName);
-    }
-
     public static String replaceVars(
             String str,
             TaskVariableMap varReplaceMap,
@@ -193,10 +169,12 @@ public enum StandardTaskVariable {
             char ch = str.charAt(index);
             if (ch == '$') {
                 int varStart = str.indexOf('{', index + 1);
-                int varEnd = varStart >= 0 ? str.indexOf('}', varStart + 1) : -1;
+                int varEnd = varStart >= 0
+                        ? StringUtils.unescapedIndexOf(str, varStart + 1, '}')
+                        : -1;
                 if (varStart >= 0 && varEnd >= varStart) {
                     String varDef = str.substring(varStart + 1, varEnd);
-                    DisplayedTaskVariable taskVar = tryGetDisplayedVariable(varDef);
+                    DisplayedTaskVariable taskVar = DisplayedTaskVariable.tryParseTaskVariable(varDef);
 
                     if (taskVar != null) {
                         if (collectedVariables != null) {
