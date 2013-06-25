@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.HashMap;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.ParallelGroup;
@@ -24,47 +24,50 @@ import org.netbeans.gradle.project.NbStrings;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {
-    private final List<DisplayedTaskVariable> variablesToQuery;
+    private final List<UserVariable> variablesToQuery;
 
     public TaskVariableQueryDialog(Collection<DisplayedTaskVariable> variablesToQuery) {
         super((Frame)null, true);
 
-        this.variablesToQuery = new ArrayList<DisplayedTaskVariable>(variablesToQuery);
+        this.variablesToQuery = toUserVariables(variablesToQuery);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
-    private static ParallelGroup createParallelGroup(GroupLayout layout, Component[] components) {
+    private static List<UserVariable> toUserVariables(Collection<DisplayedTaskVariable> variables) {
+        List<UserVariable> result = new ArrayList<UserVariable>(variables.size());
+        for (DisplayedTaskVariable variable: variables) {
+            result.add(new StringVariable(variable));
+        }
+        return result;
+    }
+
+    private ParallelGroup createParallelGroup(GroupLayout layout) {
         ParallelGroup group = layout.createParallelGroup(GroupLayout.Alignment.LEADING);
-        for (Component component: components) {
-            group.addComponent(component);
+        for (UserVariable variable: variablesToQuery) {
+            variable.addToParallel(group);
         }
         return group;
     }
 
-    private static SequentialGroup createSequentialGroup(GroupLayout layout, JLabel[] labels, JTextField[] textFields) {
-        assert labels.length == textFields.length;
-
+    private SequentialGroup createSequentialGroup(GroupLayout layout) {
         SequentialGroup group = layout.createSequentialGroup();
         group.addContainerGap();
-        for (int i = 0; i < labels.length; i++) {
-            if (i > 0) {
+
+        boolean first = true;
+        for (UserVariable variable: variablesToQuery) {
+            if (!first) {
                 group.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED);
             }
+            first = false;
 
-            group.addComponent(labels[i]);
-            group.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
-            group.addComponent(textFields[i], GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
+            variable.addToSequential(group);
         }
         group.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
         return group;
     }
 
-    private static JPanel createQueryPanel(JLabel[] labels, JTextField[] textFields) {
+    private JPanel createQueryPanel() {
         JPanel panel = new JPanel();
-
-        Component[] allComponents = new Component[labels.length + textFields.length];
-        System.arraycopy(textFields, 0, allComponents, 0, textFields.length);
-        System.arraycopy(labels, 0, allComponents, textFields.length, labels.length);
 
         GroupLayout layout = new GroupLayout(panel);
         panel.setLayout(layout);
@@ -72,32 +75,28 @@ public final class TaskVariableQueryDialog extends JDialog {
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(createParallelGroup(layout, allComponents))
+                .addGroup(createParallelGroup(layout))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(createSequentialGroup(layout, labels, textFields))
+            .addGroup(createSequentialGroup(layout))
         );
         return panel;
     }
 
     public Map<DisplayedTaskVariable, String> queryVariables() {
-        getContentPane().removeAll();
-
-        int varCount = variablesToQuery.size();
-
-        JLabel[] labels = new JLabel[varCount];
-        JTextField[] textFields = new JTextField[varCount];
-        for (int i = 0; i < varCount; i++) {
-            labels[i] = new JLabel(variablesToQuery.get(i).getDisplayName());
-            textFields[i] = new JTextField("");
+        if (variablesToQuery.isEmpty()) {
+            return Collections.emptyMap();
         }
 
-        JPanel queryPanel = createQueryPanel(labels, textFields);
+        getContentPane().removeAll();
+
+        JPanel queryPanel = createQueryPanel();
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton okButton = new JButton(NbStrings.getOkOption());
         buttonPanel.add(okButton);
+        getRootPane().setDefaultButton(okButton);
 
         okButton.addActionListener(new ActionListener() {
             @Override
@@ -127,9 +126,53 @@ public final class TaskVariableQueryDialog extends JDialog {
         setVisible(true);
 
         Map<DisplayedTaskVariable, String> result = new HashMap<DisplayedTaskVariable, String>();
-        for (int i = 0; i < textFields.length; i++) {
-            result.put(variablesToQuery.get(i), textFields[i].getText().trim());
+        for (UserVariable variable: variablesToQuery) {
+            result.put(variable.getDisplayedVariable(), variable.getValue());
         }
         return result;
+    }
+
+    private static final class StringVariable implements UserVariable {
+        private final DisplayedTaskVariable variable;
+        private final JLabel label;
+        private final JTextField value;
+
+        public StringVariable(DisplayedTaskVariable variable) {
+            if (variable == null) throw new NullPointerException("variable");
+
+            this.variable = variable;
+            this.label = new JLabel(variable.getDisplayName());
+            this.value = new JTextField(variable.getTypeDescription().getTypeArguments());
+        }
+
+        @Override
+        public DisplayedTaskVariable getDisplayedVariable() {
+            return variable;
+        }
+
+        @Override
+        public void addToSequential(SequentialGroup group) {
+            group.addComponent(label);
+            group.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
+            group.addComponent(value, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
+        }
+
+        @Override
+        public void addToParallel(ParallelGroup group) {
+            group.addComponent(label);
+            group.addComponent(value);
+        }
+
+        @Override
+        public String getValue() {
+            return value.getText().trim();
+        }
+    }
+
+    private interface UserVariable {
+        public DisplayedTaskVariable getDisplayedVariable();
+        public void addToSequential(SequentialGroup group);
+        public void addToParallel(ParallelGroup group);
+        public String getValue();
     }
 }
