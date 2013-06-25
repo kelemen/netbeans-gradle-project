@@ -309,7 +309,8 @@ public final class GradleTasks {
 
         final Map<TaskVariable, DisplayedTaskVariable> names = new LinkedHashMap<TaskVariable, DisplayedTaskVariable>();
         for (DisplayedTaskVariable var: taskVars) {
-            if (!names.containsKey(var.getVariable())) {
+            DisplayedTaskVariable currentValue = names.get(var.getVariable());
+            if (currentValue == null || currentValue.isDefault()) {
                 names.put(var.getVariable(), var);
             }
         }

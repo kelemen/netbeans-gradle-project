@@ -42,6 +42,11 @@ public final class DisplayedTaskVariable {
         return typeDescription;
     }
 
+    public boolean isDefault() {
+        return variable.getVariableName().equals(displayName)
+                && typeDescription.isDefault();
+    }
+
     @Nonnull
     public String getScriptReplaceConstant() {
         String varName = variable.getVariableName();
