@@ -99,16 +99,19 @@ public final class StringUtils {
     }
 
     public static int unescapedIndexOf(String str, int startIndex, char toFind) {
-        if (str.charAt(startIndex) == toFind) {
-            return startIndex;
+        if (toFind == '\\') {
+            throw new IllegalArgumentException("Cannot look for the escape character.");
         }
 
-        for (int i = startIndex + 1; i < str.length(); i++) {
-            if (str.charAt(i) == toFind) {
-                if (str.charAt(i - 1) != '\\') {
-                    return i;
-                }
+        int i = startIndex;
+        while (i < str.length()) {
+            char ch = str.charAt(i);
+            if (ch == toFind) {
+                return i;
             }
+
+            if (ch == '\\') i += 2;
+            else i++;
         }
         return -1;
     }
