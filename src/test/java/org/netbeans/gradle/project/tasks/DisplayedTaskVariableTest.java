@@ -48,6 +48,7 @@ public class DisplayedTaskVariableTest {
                 " varName [ varType : varArgs ] : Display Name ");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType:varArgs]:Display Name}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -57,6 +58,7 @@ public class DisplayedTaskVariableTest {
                 " varName [ varType : varArgs ]Display Name ");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType:varArgs]:Display Name}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -66,6 +68,7 @@ public class DisplayedTaskVariableTest {
                 " varName [ varType : varArgs ]");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType:varArgs]}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -75,6 +78,7 @@ public class DisplayedTaskVariableTest {
                 " varName [varType] : Display Name ");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType]:Display Name}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -84,6 +88,7 @@ public class DisplayedTaskVariableTest {
                 " varName:Display Name");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName:Display Name}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -93,6 +98,7 @@ public class DisplayedTaskVariableTest {
                 " varName:Display Name[1]");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName:Display Name[1]}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -102,6 +108,7 @@ public class DisplayedTaskVariableTest {
                 " varName ");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -111,6 +118,7 @@ public class DisplayedTaskVariableTest {
                 " varName [ varType : var\\\\Args\\[0\\] ]");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType:var\\\\Args[0\\]]}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -120,6 +128,7 @@ public class DisplayedTaskVariableTest {
                 " varName:Display\\\\Name\\[0\\]");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName:Display\\\\Name[0]}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -129,5 +138,6 @@ public class DisplayedTaskVariableTest {
                 " varName [ varType : var\\\\\\[Args\\] ] : Display\\{Name\\} ");
 
         assertEquals(expected, parsed);
+        assertEquals("${varName[varType:var\\\\[Args\\]]:Display{Name\\}}", parsed.getScriptReplaceConstant());
     }
 }
