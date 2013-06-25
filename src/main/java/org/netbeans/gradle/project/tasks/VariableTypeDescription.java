@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.Locale;
 import javax.annotation.Nonnull;
 
 public final class VariableTypeDescription {
@@ -16,7 +17,7 @@ public final class VariableTypeDescription {
         if (typeName == null) throw new NullPointerException("typeName");
         if (typeArguments == null) throw new NullPointerException("typeArguments");
 
-        this.typeName = typeName;
+        this.typeName = typeName.toLowerCase(Locale.ROOT);
         this.typeArguments = typeArguments;
     }
 
