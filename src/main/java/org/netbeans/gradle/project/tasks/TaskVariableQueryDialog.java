@@ -8,14 +8,18 @@ import java.util.Map;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.Collator;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,6 +31,8 @@ import org.netbeans.gradle.project.StringUtils;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {
+    private static final Collator STR_CMP = Collator.getInstance();
+
     private static final Map<String, UserVariableFactory> FACTORY_MAP = variableFactoryMap();
     private static final Map<String, Integer> TYPE_ORDER = typeOrderMap();
 
@@ -43,6 +49,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         Map<String, UserVariableFactory> result = new HashMap<String, UserVariableFactory>();
 
         result.put(VariableTypeDescription.TYPE_NAME_BOOL, BoolVariable.FACTORY);
+        result.put(VariableTypeDescription.TYPE_NAME_ENUM, EnumVariable.FACTORY);
         result.put(VariableTypeDescription.TYPE_NAME_STRING, StringVariable.FACTORY);
 
         return Collections.unmodifiableMap(result);
@@ -88,7 +95,7 @@ public final class TaskVariableQueryDialog extends JDialog {
                     return typeOrder1 < typeOrder2 ? -1 : 1;
                 }
 
-                return var1.getDisplayName().compareToIgnoreCase(var2.getDisplayName());
+                return STR_CMP.compare(var1.getDisplayName(), var2.getDisplayName());
             }
         });
 
@@ -209,7 +216,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         }
 
         private static String[] parsePossibleValues(String valuesStr, JCheckBox checkbox) {
-            String[] values = StringUtils.unescapedSplit(valuesStr, ',');
+            String[] values = StringUtils.unescapedSplit(valuesStr, ',', 2);
             if (values.length < 2) {
                 return new String[]{Boolean.FALSE.toString(), Boolean.TRUE.toString()};
             }
@@ -245,6 +252,93 @@ public final class TaskVariableQueryDialog extends JDialog {
             return checkBox.isSelected()
                     ? possibleValues[1]
                     : possibleValues[0];
+        }
+    }
+
+    private static final class EnumVariable implements UserVariable {
+        public static final UserVariableFactory FACTORY = new UserVariableFactory() {
+            @Override
+            public UserVariable createVariable(DisplayedTaskVariable variable) {
+                return new EnumVariable(variable);
+            }
+        };
+
+        private final DisplayedTaskVariable variable;
+        private final JLabel label;
+        private final JComboBox value;
+
+        public EnumVariable(DisplayedTaskVariable variable) {
+            if (variable == null) throw new NullPointerException("variable");
+
+            this.variable = variable;
+            this.label = new JLabel(variable.getDisplayName());
+            this.value = new JComboBox();
+
+            parseComboValues(variable.getTypeDescription().getEscapedTypeArguments(), value);
+        }
+
+        private static void parseComboValues(String valuesDef, JComboBox combo) {
+            String[] values = StringUtils.unescapedSplit(valuesDef, ',');
+
+            ComboValue[] comboValues = new ComboValue[values.length];
+            int selectedIndex = 0;
+            for (int i = 0; i < values.length; i++) {
+                String valueDef = values[i].trim();
+                if (valueDef.startsWith("*")) {
+                    valueDef = valueDef.substring(1).trim();
+                    selectedIndex = i;
+                }
+
+                comboValues[i] = parseComboValue(valueDef);
+            }
+
+            ComboValue selected = comboValues[selectedIndex];
+            Arrays.sort(comboValues, new Comparator<ComboValue>() {
+                @Override
+                public int compare(ComboValue o1, ComboValue o2) {
+                    return STR_CMP.compare(o1.displayValue, o2.displayValue);
+                }
+            });
+
+            combo.setModel(new DefaultComboBoxModel(comboValues));
+            combo.setSelectedItem(selected);
+        }
+
+        private static ComboValue parseComboValue(String valueDef) {
+            String[] valueAndDisplay = StringUtils.unescapedSplit(valueDef, ':', 2);
+            for (int i = 0; i < valueAndDisplay.length; i++) {
+                valueAndDisplay[i] = StringUtils.unescapeString(valueAndDisplay[i]).trim();
+            }
+
+            String value = valueAndDisplay[0];
+            String displayValue = valueAndDisplay.length < 2
+                    ? value
+                    : valueAndDisplay[1];
+            return new ComboValue(value, displayValue);
+        }
+
+        @Override
+        public DisplayedTaskVariable getDisplayedVariable() {
+            return variable;
+        }
+
+        @Override
+        public void addToSequential(SequentialGroup group) {
+            group.addComponent(label);
+            group.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
+            group.addComponent(value, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
+        }
+
+        @Override
+        public void addToParallel(ParallelGroup group) {
+            group.addComponent(label);
+            group.addComponent(value);
+        }
+
+        @Override
+        public String getValue() {
+            ComboValue selected = (ComboValue)value.getSelectedItem();
+            return selected != null ? selected.value : "";
         }
     }
 
@@ -304,5 +398,20 @@ public final class TaskVariableQueryDialog extends JDialog {
 
     private interface UserVariableFactory {
         public UserVariable createVariable(DisplayedTaskVariable variable);
+    }
+
+    private static final class ComboValue {
+        public final String value;
+        public final String displayValue;
+
+        public ComboValue(String value, String displayValue) {
+            this.value = value;
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String toString() {
+            return displayValue;
+        }
     }
 }

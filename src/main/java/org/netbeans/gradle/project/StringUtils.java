@@ -136,6 +136,18 @@ public final class StringUtils {
     }
 
     public static String[] unescapedSplit(String str, char splitChar) {
+        return unescapedSplit(str, splitChar, Integer.MAX_VALUE);
+    }
+
+    public static String[] unescapedSplit(String str, char splitChar, int maxSplitCount) {
+        if (maxSplitCount <= 0) {
+            throw new IllegalArgumentException("Illegal maxSplitCount: " + maxSplitCount);
+        }
+
+        if (maxSplitCount == 1) {
+            return new String[]{str};
+        }
+
         List<String> result = new LinkedList<String>();
 
         int pos = 0;
@@ -147,6 +159,11 @@ public final class StringUtils {
             }
 
             result.add(str.substring(pos, splitPos));
+            if (result.size() == maxSplitCount - 1) {
+                result.add(str.substring(splitPos + 1, str.length()));
+                break;
+            }
+
             pos = splitPos + 1;
         }
 

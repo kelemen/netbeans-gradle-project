@@ -110,4 +110,32 @@ public class StringUtilsTest {
                 new String[]{"one\\\\", "two"},
                 StringUtils.unescapedSplit("one\\\\:two", ':'));
     }
+
+    @Test
+    public void testUnescapedSplitLimitedToOne() {
+        assertArrayEquals(
+                new String[]{"one:two:three"},
+                StringUtils.unescapedSplit("one:two:three", ':', 1));
+    }
+
+    @Test
+    public void testUnescapedSplitLimitedSimple() {
+        assertArrayEquals(
+                new String[]{"one", "two:three"},
+                StringUtils.unescapedSplit("one:two:three", ':', 2));
+    }
+
+    @Test
+    public void testUnescapedSplitLimitedEndsWithSeparator1() {
+        assertArrayEquals(
+                new String[]{"one", ""},
+                StringUtils.unescapedSplit("one:", ':', 2));
+    }
+
+    @Test
+    public void testUnescapedSplitLimitedEndsWithSeparator2() {
+        assertArrayEquals(
+                new String[]{"one", "two:"},
+                StringUtils.unescapedSplit("one:two:", ':', 2));
+    }
 }
