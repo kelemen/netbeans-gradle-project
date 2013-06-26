@@ -113,12 +113,12 @@ public class DisplayedTaskVariableTest {
 
     @Test
     public void testWithoutDisplayNameWithSpecialChars() {
-        DisplayedTaskVariable expected = createVar("varName", "varName", "varType", "var\\Args[0]");
+        DisplayedTaskVariable expected = createVar("varName", "varName", "varType", "var\\\\Args\\[0\\]");
         DisplayedTaskVariable parsed = DisplayedTaskVariable.tryParseTaskVariable(
                 " varName [ varType : var\\\\Args\\[0\\] ]");
 
         assertEquals(expected, parsed);
-        assertEquals("${varName[vartype:var\\\\Args[0\\]]}", parsed.getScriptReplaceConstant());
+        assertEquals("${varName[vartype:var\\\\Args\\[0\\]]}", parsed.getScriptReplaceConstant());
     }
 
     @Test
@@ -133,11 +133,11 @@ public class DisplayedTaskVariableTest {
 
     @Test
     public void testCompleteWithSpecialChars() {
-        DisplayedTaskVariable expected = createVar("varName", "Display{Name}", "varType", "var\\[Args]");
+        DisplayedTaskVariable expected = createVar("varName", "Display{Name}", "varType", "var\\\\\\[Args\\]");
         DisplayedTaskVariable parsed = DisplayedTaskVariable.tryParseTaskVariable(
                 " varName [ varType : var\\\\\\[Args\\] ] : Display\\{Name\\} ");
 
         assertEquals(expected, parsed);
-        assertEquals("${varName[vartype:var\\\\[Args\\]]:Display{Name\\}}", parsed.getScriptReplaceConstant());
+        assertEquals("${varName[vartype:var\\\\\\[Args\\]]:Display{Name\\}}", parsed.getScriptReplaceConstant());
     }
 }

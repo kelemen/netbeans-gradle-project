@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.tasks;
 
 import java.util.Locale;
 import javax.annotation.Nonnull;
+import org.netbeans.gradle.project.StringUtils;
 
 public final class VariableTypeDescription {
     public static final String TYPE_NAME_STRING = "string";
@@ -11,46 +12,66 @@ public final class VariableTypeDescription {
     public static final VariableTypeDescription DEFAULT_TYPE = new VariableTypeDescription(TYPE_NAME_STRING, "");
 
     private final String typeName;
-    private final String typeArguments;
+    private final String escapedTypeArguments;
 
-    public VariableTypeDescription(String typeName, String typeArguments) {
+    public VariableTypeDescription(String typeName, String escapedTypeArguments) {
         if (typeName == null) throw new NullPointerException("typeName");
-        if (typeArguments == null) throw new NullPointerException("typeArguments");
+        if (escapedTypeArguments == null) throw new NullPointerException("typeArguments");
 
         this.typeName = typeName.toLowerCase(Locale.ROOT);
-        this.typeArguments = typeArguments;
+        this.escapedTypeArguments = escapedTypeArguments;
     }
 
     public String getTypeName() {
         return typeName;
     }
 
-    public String getTypeArguments() {
-        return typeArguments;
+    public String getEscapedTypeArguments() {
+        return escapedTypeArguments;
     }
 
     public boolean isDefault() {
         return equals(VariableTypeDescription.DEFAULT_TYPE);
     }
 
+    private static String escapeCharacter(String str, char toEscape) {
+        StringBuilder result = new StringBuilder(str.length());
+
+        int pos = 0;
+        while (pos < str.length()) {
+            int charPos = StringUtils.unescapedIndexOf(str, pos, toEscape);
+            if (charPos < 0) {
+                result.append(str.substring(pos, str.length()));
+                break;
+            }
+
+            result.append(str.substring(pos, charPos));
+            result.append('\\');
+            result.append(toEscape);
+            pos = charPos + 1;
+        }
+
+        return result.toString();
+    }
+
     @Nonnull
     public String getScriptString() {
-        if (typeArguments.isEmpty()) {
+        if (escapedTypeArguments.isEmpty()) {
             return typeName;
         }
 
-        String escapedTypeArguments = typeArguments
-                .replace("\\", "\\\\")
-                .replace("]", "\\]")
-                .replace("}", "\\}");
-        return typeName + ":" + escapedTypeArguments;
+        String formattedTypeArguments = escapedTypeArguments;
+        formattedTypeArguments = escapeCharacter(formattedTypeArguments, ']');
+        formattedTypeArguments = escapeCharacter(formattedTypeArguments, '}');
+
+        return typeName + ":" + formattedTypeArguments;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 37 * hash + typeName.hashCode();
-        hash = 37 * hash + typeArguments.hashCode();
+        hash = 37 * hash + escapedTypeArguments.hashCode();
         return hash;
     }
 
@@ -63,6 +84,6 @@ public final class VariableTypeDescription {
         final VariableTypeDescription other = (VariableTypeDescription)obj;
 
         return this.typeName.equals(other.typeName)
-                && this.typeArguments.equals(other.typeArguments);
+                && this.escapedTypeArguments.equals(other.escapedTypeArguments);
     }
 }

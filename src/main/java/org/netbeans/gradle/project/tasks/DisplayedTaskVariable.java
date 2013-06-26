@@ -117,24 +117,9 @@ public final class DisplayedTaskVariable {
         return StringUtils.unescapedIndexOf(str, startIndex, toFind);
     }
 
-    private static String normalizeEscapedString(String arguments) {
-        StringBuilder result = new StringBuilder(arguments.length());
-        int i = 0;
-        while (i < arguments.length()) {
-            char ch = arguments.charAt(i);
-            if (ch == '\\') {
-                if (i + 1 < arguments.length()) {
-                    result.append(arguments.charAt(i + 1));
-                    i += 2;
-                    continue;
-                }
-            }
-
-            result.append(ch);
-            i++;
-        }
-
-        return result.toString().trim();
+    private static String normalizeEscapedString(String str) {
+        String result = StringUtils.unescapeString(str);
+        return result.trim();
     }
 
     private static VariableTypeDescription parseType(String typeDef) {
@@ -152,7 +137,7 @@ public final class DisplayedTaskVariable {
         }
 
         typeName = typeName.trim();
-        typeArguments = normalizeEscapedString(typeArguments);
+        typeArguments = typeArguments.trim();
 
         return new VariableTypeDescription(typeName, typeArguments);
     }

@@ -116,6 +116,43 @@ public final class StringUtils {
         return -1;
     }
 
+    public static String unescapeString(String str) {
+        StringBuilder result = new StringBuilder(str.length());
+        int i = 0;
+        while (i < str.length()) {
+            char ch = str.charAt(i);
+            if (ch == '\\') {
+                if (i + 1 < str.length()) {
+                    result.append(str.charAt(i + 1));
+                    i += 2;
+                    continue;
+                }
+            }
+
+            result.append(ch);
+            i++;
+        }
+        return result.toString();
+    }
+
+    public static String[] unescapedSplit(String str, char splitChar) {
+        List<String> result = new LinkedList<String>();
+
+        int pos = 0;
+        while (true) {
+            int splitPos = unescapedIndexOf(str, pos, splitChar);
+            if (splitPos < 0) {
+                result.add(str.substring(pos, str.length()));
+                break;
+            }
+
+            result.add(str.substring(pos, splitPos));
+            pos = splitPos + 1;
+        }
+
+        return result.toArray(new String[result.size()]);
+    }
+
     private StringUtils() {
         throw new AssertionError();
     }

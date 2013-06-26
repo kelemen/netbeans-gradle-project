@@ -54,4 +54,60 @@ public class StringUtilsTest {
         assertEquals(-1, StringUtils.unescapedIndexOf("012378", 0, ':'));
         assertEquals(-1, StringUtils.unescapedIndexOf("", 0, ':'));
     }
+
+    @Test
+    public void testUnescapedSplitSimple() {
+        assertArrayEquals(
+                new String[]{"one", "two"},
+                StringUtils.unescapedSplit("one:two", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitEmptyEnd() {
+        assertArrayEquals(
+                new String[]{"one", "two", ""},
+                StringUtils.unescapedSplit("one:two:", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitEmptyStart() {
+        assertArrayEquals(
+                new String[]{"", "one", "two"},
+                StringUtils.unescapedSplit(":one:two", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitNoSplit() {
+        assertArrayEquals(
+                new String[]{"single"},
+                StringUtils.unescapedSplit("single", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitEmpty() {
+        assertArrayEquals(
+                new String[]{""},
+                StringUtils.unescapedSplit("", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitWithEscaped1() {
+        assertArrayEquals(
+                new String[]{"one", "two\\:three"},
+                StringUtils.unescapedSplit("one:two\\:three", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitWithEscaped2() {
+        assertArrayEquals(
+                new String[]{"one", "two\\\\\\:three"},
+                StringUtils.unescapedSplit("one:two\\\\\\:three", ':'));
+    }
+
+    @Test
+    public void testUnescapedSplitSimpleWithEscapedEscape() {
+        assertArrayEquals(
+                new String[]{"one\\\\", "two"},
+                StringUtils.unescapedSplit("one\\\\:two", ':'));
+    }
 }

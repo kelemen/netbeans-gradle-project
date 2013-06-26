@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.StringUtils;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {
@@ -202,17 +203,25 @@ public final class TaskVariableQueryDialog extends JDialog {
 
             this.variable = variable;
             this.checkBox = new JCheckBox(variable.getDisplayName());
-            this.possibleValues = parsePossibleValues(variable.getTypeDescription().getTypeArguments());
+
+            String typeArguments = variable.getTypeDescription().getEscapedTypeArguments();
+            this.possibleValues = parsePossibleValues(typeArguments, checkBox);
         }
 
-        private static String[] parsePossibleValues(String valuesStr) {
-            String[] values = valuesStr.split(",");
-            if (values.length != 2) {
+        private static String[] parsePossibleValues(String valuesStr, JCheckBox checkbox) {
+            String[] values = StringUtils.unescapedSplit(valuesStr, ',');
+            if (values.length < 2) {
                 return new String[]{Boolean.FALSE.toString(), Boolean.TRUE.toString()};
             }
 
-            values[0] = values[0].trim();
-            values[1] = values[1].trim();
+            for (int i = 0; i < 2; i++) {
+                values[i] = values[i].trim();
+                if (values[i].startsWith("*")) {
+                    values[i] = values[i].substring(1).trim();
+                    checkbox.setSelected(i != 0);
+                }
+                values[i] = StringUtils.unescapeString(values[i]);
+            }
             return values;
         }
 
@@ -256,8 +265,11 @@ public final class TaskVariableQueryDialog extends JDialog {
 
             this.variable = variable;
             this.label = new JLabel(variable.getDisplayName());
-            this.value = new JTextField(variable.getTypeDescription().getTypeArguments());
+
+            String typeArguments = variable.getTypeDescription().getEscapedTypeArguments();
+            this.value = new JTextField(StringUtils.unescapeString(typeArguments));
         }
+
 
         @Override
         public DisplayedTaskVariable getDisplayedVariable() {
