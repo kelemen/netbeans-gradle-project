@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 
@@ -43,6 +44,7 @@ public final class TaskVariableQueryDialog extends JDialog {
 
         this.variablesToQuery = toUserVariables(variablesToQuery);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setIconImage(NbIcons.getGradleIcon());
     }
 
     private static Map<String, UserVariableFactory> variableFactoryMap() {
