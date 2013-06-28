@@ -221,6 +221,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_OptionOk");
     }
 
+    public static String getCancelOption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_OptionCancel");
+    }
+
     public static String getTaskVariableQueryCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_TaskVariableQueryCaption");
     }

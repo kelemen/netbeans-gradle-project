@@ -316,7 +316,10 @@ public final class GradleTasks {
         }
 
         Map<DisplayedTaskVariable, String> varMap = TaskVariableQueryDialog.queryVariables(names.values());
-        return DisplayedTaskVariable.variableMap(varMap);
+
+        return varMap != null
+                ? DisplayedTaskVariable.variableMap(varMap)
+                : null;
     }
 
     private static TaskVariableMap queryVariables(final List<DisplayedTaskVariable> taskVars) {
@@ -352,6 +355,10 @@ public final class GradleTasks {
         }
 
         TaskVariableMap varMap = queryVariables(taskVars);
+        if (varMap == null) {
+            return null;
+        }
+
         replaceAllVars(taskNames, varMap);
         replaceAllVars(arguments, varMap);
         replaceAllVars(jvmArguments, varMap);
@@ -402,7 +409,9 @@ public final class GradleTasks {
                     @Override
                     public void run(ProgressHandle progress) {
                         GradleTaskDef taskWithUserDefined = queryUserDefinedInputOfTask(newTaskDef);
-                        doGradleTasksWithProgress(progress, project, taskWithUserDefined);
+                        if (taskWithUserDefined != null) {
+                            doGradleTasksWithProgress(progress, project, taskWithUserDefined);
+                        }
                     }
                 });
             }

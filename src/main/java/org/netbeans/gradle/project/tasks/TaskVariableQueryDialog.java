@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.ParallelGroup;
@@ -164,10 +165,22 @@ public final class TaskVariableQueryDialog extends JDialog {
         JPanel queryPanel = createQueryPanel();
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton okButton = new JButton(NbStrings.getOkOption());
+        JButton cancelButton = new JButton(NbStrings.getCancelOption());
+
         buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+
         getRootPane().setDefaultButton(okButton);
 
+        final AtomicBoolean okPressed = new AtomicBoolean(false);
         okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                okPressed.set(true);
+                dispose();
+            }
+        });
+        cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -193,6 +206,10 @@ public final class TaskVariableQueryDialog extends JDialog {
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
+
+        if (!okPressed.get()) {
+            return null;
+        }
 
         Map<DisplayedTaskVariable, String> result = new HashMap<DisplayedTaskVariable, String>();
         for (UserVariable variable: variablesToQuery) {
