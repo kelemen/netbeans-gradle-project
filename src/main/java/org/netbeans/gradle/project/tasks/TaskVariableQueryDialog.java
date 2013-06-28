@@ -39,7 +39,7 @@ public final class TaskVariableQueryDialog extends JDialog {
 
     private final List<UserVariable> variablesToQuery;
 
-    public TaskVariableQueryDialog(Collection<DisplayedTaskVariable> variablesToQuery) {
+    private TaskVariableQueryDialog(Collection<DisplayedTaskVariable> variablesToQuery) {
         super((Frame)null, true);
 
         this.variablesToQuery = toUserVariables(variablesToQuery);
@@ -148,7 +148,13 @@ public final class TaskVariableQueryDialog extends JDialog {
         return panel;
     }
 
-    public Map<DisplayedTaskVariable, String> queryVariables() {
+    public static Map<DisplayedTaskVariable, String> queryVariables(
+            Collection<DisplayedTaskVariable> variablesToQuery) {
+        TaskVariableQueryDialog dlg = new TaskVariableQueryDialog(variablesToQuery);
+        return dlg.queryVariables();
+    }
+
+    private Map<DisplayedTaskVariable, String> queryVariables() {
         if (variablesToQuery.isEmpty()) {
             return Collections.emptyMap();
         }

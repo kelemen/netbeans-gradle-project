@@ -315,8 +315,7 @@ public final class GradleTasks {
             }
         }
 
-        TaskVariableQueryDialog dlg = new TaskVariableQueryDialog(names.values());
-        Map<DisplayedTaskVariable, String> varMap = dlg.queryVariables();
+        Map<DisplayedTaskVariable, String> varMap = TaskVariableQueryDialog.queryVariables(names.values());
         return DisplayedTaskVariable.variableMap(varMap);
     }
 
