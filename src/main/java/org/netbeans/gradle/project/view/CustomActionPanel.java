@@ -2,6 +2,9 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import javax.swing.JTextArea;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -51,13 +54,67 @@ public class CustomActionPanel extends javax.swing.JPanel {
         return builder.create();
     }
 
+    private static String[] splitTextIgnoreVars(String text, String delimiters) {
+        List<String> result = new LinkedList<String>();
+
+        StringBuilder currentPart = new StringBuilder();
+
+        int i = 0;
+        while (i < text.length()) {
+            char ch = text.charAt(i);
+            if (ch == '$') {
+                int nextIndex = i + 1;
+                if (nextIndex < text.length()) {
+                    char nextCh = text.charAt(nextIndex);
+                    if (nextCh == '{') {
+                        int varClose = StringUtils.unescapedIndexOf(text, i + 2, '}');
+                        if (varClose >= 0) {
+                            currentPart.append(text.substring(i, varClose + 1));
+                            i = varClose + 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+            else if (delimiters.indexOf(ch) >= 0) {
+                result.add(currentPart.toString().trim());
+                currentPart.setLength(0);
+                i++;
+                continue;
+            }
+
+            currentPart.append(ch);
+            i++;
+        }
+
+        result.add(currentPart.toString().trim());
+
+        Iterator<String> resultItr = result.iterator();
+        while (resultItr.hasNext()) {
+            String value = resultItr.next();
+            if (value.isEmpty()) {
+                resultItr.remove();
+            }
+        }
+
+        return result.toArray(new String[result.size()]);
+    }
+
+    private static String[] splitBySpacesIgnoreVars(String text) {
+        return splitTextIgnoreVars(text, " \t\n\r\f");
+    }
+
+    private static String[] splitLinesIgnoreVars(String text) {
+        return splitTextIgnoreVars(text, "\n\r");
+    }
+
     public String[] getTasks() {
         String text = jTasksEdit.getText();
         if (text == null) {
             return new String[0];
         }
 
-        return StringUtils.splitBySpaces(text);
+        return splitBySpacesIgnoreVars(text);
     }
 
     public String[] getArguments() {
@@ -66,7 +123,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return new String[0];
         }
 
-        return StringUtils.splitLines(text);
+        return splitLinesIgnoreVars(text);
     }
 
     public String[] getJvmArguments() {
@@ -75,7 +132,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return new String[0];
         }
 
-        return StringUtils.splitLines(text);
+        return splitLinesIgnoreVars(text);
     }
 
     public boolean isNonBlocking() {
