@@ -392,7 +392,7 @@ public final class GradleTasks {
 
                 List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
 
-                final GradleTaskDef newTaskDef;
+                GradleTaskDef newTaskDef;
                 if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
                     GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
                     builder.addJvmArguments(globalJvmArgs);
@@ -402,16 +402,18 @@ public final class GradleTasks {
                     newTaskDef = taskDef;
                 }
 
-                String caption = NbStrings.getExecuteTasksText(newTaskDef.getTaskNames());
-                boolean nonBlocking = newTaskDef.isNonBlocking();
+                final GradleTaskDef taskWithUserDefined = queryUserDefinedInputOfTask(newTaskDef);
+                if (taskWithUserDefined == null) {
+                    return null;
+                }
+
+                String caption = NbStrings.getExecuteTasksText(taskWithUserDefined.getTaskNames());
+                boolean nonBlocking = taskWithUserDefined.isNonBlocking();
 
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        GradleTaskDef taskWithUserDefined = queryUserDefinedInputOfTask(newTaskDef);
-                        if (taskWithUserDefined != null) {
-                            doGradleTasksWithProgress(progress, project, taskWithUserDefined);
-                        }
+                        doGradleTasksWithProgress(progress, project, taskWithUserDefined);
                     }
                 });
             }
