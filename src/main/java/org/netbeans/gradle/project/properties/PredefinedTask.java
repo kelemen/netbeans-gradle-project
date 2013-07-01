@@ -100,6 +100,10 @@ public final class PredefinedTask {
     }
 
     private static GradleProject findProject(GradleProject project, String projectPath) {
+        if (projectPath.isEmpty()) {
+            return getRootProject(project);
+        }
+
         if (projectPath.startsWith(":")) {
             return getRootProject(project).findByPath(projectPath);
         }
@@ -169,11 +173,14 @@ public final class PredefinedTask {
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
         GradleProject gradleProject = project.getAvailableModel().getGradleProject();
+        return isTasksExistsIfRequired(gradleProject, varReplaceMap);
+    }
 
+    public boolean isTasksExistsIfRequired(GradleProject project, TaskVariableMap varReplaceMap) {
         for (Name name: taskNames) {
             if (name.mustExist) {
                 String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
-                if (!isTaskExists(gradleProject, processedName)) {
+                if (!isTaskExists(project, processedName)) {
                     return false;
                 }
             }
