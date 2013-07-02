@@ -1,11 +1,14 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,9 +18,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.netbeans.gradle.project.persistent.XmlPropertiesPersister;
 
@@ -25,6 +30,8 @@ public final class ProjectPropertiesManager {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesManager.class.getName());
 
     private static final Lock MAIN_LOCK = new ReentrantLock();
+    // Don't forget that the value can't be wrapped, it must be the one to be
+    // returned, otherwise it might get garbage collected.
     private static final Map<ProjectPropertySource, CachedProperties> PROPERTIES
             = new WeakValueHashMap<ProjectPropertySource, CachedProperties>();
 
@@ -125,13 +132,13 @@ public final class ProjectPropertiesManager {
         PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                persister.load(result.properties, false, new Runnable() {
+                persister.load(result, false, new Runnable() {
                     @Override
                     public void run() {
                         try {
                             result.signalPropertiesLoaded();
                         } finally {
-                            setSaveOnChange(project, result.properties, persister);
+                            setSaveOnChange(project, result, persister);
                         }
                     }
                 });
@@ -181,7 +188,7 @@ public final class ProjectPropertiesManager {
                 result.notifyOnLoad(onLoadTask);
             }
 
-            return result.properties;
+            return result;
         }
 
         @Override
@@ -272,14 +279,14 @@ public final class ProjectPropertiesManager {
                 }
 
                 resultRef.set(result);
-                resultForwarder.loadedProperties(result.properties);
+                resultForwarder.loadedProperties(result);
             }
 
             if (onLoadTask != null) {
                 result.notifyOnLoad(onLoadTask);
             }
 
-            return result.properties;
+            return result;
         }
 
         @Override
@@ -385,9 +392,8 @@ public final class ProjectPropertiesManager {
         }
     }
 
-    private static final class CachedProperties {
-        public final ProjectProperties properties;
-
+    private static final class CachedProperties implements ProjectProperties {
+        private final ProjectProperties properties;
         private final Lock loadLock;
         private final List<PropertiesLoadListener> onLoadedTask;
         private volatile boolean loaded;
@@ -438,6 +444,76 @@ public final class ProjectPropertiesManager {
             }
 
             listener.loadedProperties(properties);
+        }
+
+        @Override
+        public MutableProperty<String> getSourceLevel() {
+            return properties.getSourceLevel();
+        }
+
+        @Override
+        public MutableProperty<ProjectPlatform> getPlatform() {
+            return properties.getPlatform();
+        }
+
+        @Override
+        public MutableProperty<JavaPlatform> getScriptPlatform() {
+            return properties.getScriptPlatform();
+        }
+
+        @Override
+        public MutableProperty<GradleLocation> getGradleLocation() {
+            return properties.getGradleLocation();
+        }
+
+        @Override
+        public MutableProperty<Charset> getSourceEncoding() {
+            return properties.getSourceEncoding();
+        }
+
+        @Override
+        public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+            return properties.getCommonTasks();
+        }
+
+        @Override
+        public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+            return properties.getLicenseHeader();
+        }
+
+        @Override
+        public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+            return properties.tryGetBuiltInTask(command);
+        }
+
+        @Override
+        public Set<String> getKnownBuiltInCommands() {
+            return properties.getKnownBuiltInCommands();
+        }
+
+        @Override
+        public MutableProperty<Void> getAuxConfigListener() {
+            return properties.getAuxConfigListener();
+        }
+
+        @Override
+        public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
+            return properties.getAuxConfig(elementName, namespace);
+        }
+
+        @Override
+        public void setAllAuxConfigs(Collection<AuxConfig> configs) {
+            properties.setAllAuxConfigs(configs);
+        }
+
+        @Override
+        public Collection<AuxConfigProperty> getAllAuxConfigs() {
+            return properties.getAllAuxConfigs();
+        }
+
+        @Override
+        public Collection<MutableProperty<?>> getAllProperties() {
+            return properties.getAllProperties();
         }
     }
 
