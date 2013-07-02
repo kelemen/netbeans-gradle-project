@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,8 +25,8 @@ public final class ProjectPropertiesManager {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesManager.class.getName());
 
     private static final Lock MAIN_LOCK = new ReentrantLock();
-    private static final Map<ProjectPropertySource, ProjectProperties> PROPERTIES
-            = new WeakValueHashMap<ProjectPropertySource, ProjectProperties>();
+    private static final Map<ProjectPropertySource, CachedProperties> PROPERTIES
+            = new WeakValueHashMap<ProjectPropertySource, CachedProperties>();
 
     private static void saveIfRequired(
             final NbGradleProject project,
@@ -115,31 +116,28 @@ public final class ProjectPropertiesManager {
         return new CombinedProjectPropertySource(propertySources, offset);
     }
 
-    private static ProjectProperties loadPropertiesAlways(
+    private static CachedProperties loadPropertiesAlways(
             final NbGradleProject project,
-            File propertiesFile,
-            final PropertiesLoadListener onLoadTask) {
+            File propertiesFile) {
 
-        final ProjectProperties properties = new MemProjectProperties();
+        final CachedProperties result = new CachedProperties(new MemProjectProperties());
         final PropertiesPersister persister = new XmlPropertiesPersister(propertiesFile);
         PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
             @Override
             public void run() {
-                persister.load(properties, false, new Runnable() {
+                persister.load(result.properties, false, new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            if (onLoadTask != null) {
-                                onLoadTask.loadedProperties(properties);
-                            }
+                            result.signalPropertiesLoaded();
                         } finally {
-                            setSaveOnChange(project, properties, persister);
+                            setSaveOnChange(project, result.properties, persister);
                         }
                     }
                 });
             }
         });
-        return properties;
+        return result;
     }
 
     private static class FileProjectPropertySource implements ProjectPropertySource {
@@ -154,7 +152,7 @@ public final class ProjectPropertiesManager {
 
         @Override
         public ProjectProperties load(PropertiesLoadListener onLoadTask) {
-            ProjectProperties result;
+            CachedProperties result;
             MAIN_LOCK.lock();
             try {
                 result = PROPERTIES.get(this);
@@ -163,8 +161,7 @@ public final class ProjectPropertiesManager {
             }
 
             if (result == null) {
-                final ProjectProperties newProperties
-                        = loadPropertiesAlways(project, propertiesFile, onLoadTask);
+                final CachedProperties newProperties = loadPropertiesAlways(project, propertiesFile);
 
                 MAIN_LOCK.lock();
                 try {
@@ -177,13 +174,14 @@ public final class ProjectPropertiesManager {
                     MAIN_LOCK.unlock();
                 }
             }
-            else {
-                if (onLoadTask != null) {
-                    onLoadTask.loadedProperties(result);
-                }
+
+            assert result != null;
+
+            if (onLoadTask != null) {
+                result.notifyOnLoad(onLoadTask);
             }
 
-            return result;
+            return result.properties;
         }
 
         @Override
@@ -215,7 +213,7 @@ public final class ProjectPropertiesManager {
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
-            ProjectProperties result;
+            CachedProperties result;
             MAIN_LOCK.lock();
             try {
                 result = PROPERTIES.get(this);
@@ -224,8 +222,8 @@ public final class ProjectPropertiesManager {
             }
 
             if (result == null) {
-                final AtomicReference<ProjectProperties> resultRef
-                        = new AtomicReference<ProjectProperties>(null);
+                final AtomicReference<CachedProperties> resultRef
+                        = new AtomicReference<CachedProperties>(null);
 
                 final AtomicInteger subTaskCount = new AtomicInteger();
                 // Setting the value of resultRef is counted as a subTask as well.
@@ -235,13 +233,13 @@ public final class ProjectPropertiesManager {
                     @Override
                     public void loadedProperties(ProjectProperties properties) {
                         if (subTaskCount.decrementAndGet() == 0 && onLoadTask != null) {
-                            ProjectProperties loadedProperties = resultRef.get();
+                            CachedProperties loadedProperties = resultRef.get();
                             if (loadedProperties == null) {
                                 String message = "Internal error while loading properties.";
                                 LOGGER.log(Level.SEVERE, message, new IllegalStateException(message));
                                 return;
                             }
-                            onLoadTask.loadedProperties(loadedProperties);
+                            loadedProperties.signalPropertiesLoaded();
                         }
                     }
                 };
@@ -261,27 +259,27 @@ public final class ProjectPropertiesManager {
                     newProperties = new FallbackProjectProperties(mainProperties, fallbackProperties);
                 }
 
+                CachedProperties cachedNewProperties = new CachedProperties(newProperties);
                 MAIN_LOCK.lock();
                 try {
                     result = PROPERTIES.get(this);
                     if (result == null) {
-                        PROPERTIES.put(this, newProperties);
-                        result = newProperties;
+                        PROPERTIES.put(this, cachedNewProperties);
+                        result = cachedNewProperties;
                     }
                 } finally {
                     MAIN_LOCK.unlock();
                 }
 
                 resultRef.set(result);
-                resultForwarder.loadedProperties(result);
-            }
-            else {
-                if (onLoadTask != null) {
-                    onLoadTask.loadedProperties(result);
-                }
+                resultForwarder.loadedProperties(result.properties);
             }
 
-            return result;
+            if (onLoadTask != null) {
+                result.notifyOnLoad(onLoadTask);
+            }
+
+            return result.properties;
         }
 
         @Override
@@ -384,6 +382,62 @@ public final class ProjectPropertiesManager {
 
             final NbCurrentProfileProjectPropertySource other = (NbCurrentProfileProjectPropertySource)obj;
             return this.project.equals(other.project);
+        }
+    }
+
+    private static final class CachedProperties {
+        public final ProjectProperties properties;
+
+        private final Lock loadLock;
+        private final List<PropertiesLoadListener> onLoadedTask;
+        private volatile boolean loaded;
+
+        public CachedProperties(ProjectProperties properties) {
+            assert properties != null;
+            this.properties = properties;
+            this.loadLock = new ReentrantLock();
+            this.onLoadedTask = new LinkedList<PropertiesLoadListener>();
+        }
+
+        public void signalPropertiesLoaded() {
+            PropertiesLoadListener[] toNotify;
+            loadLock.lock();
+            try {
+                loaded = true;
+                if (onLoadedTask.isEmpty()) {
+                    return;
+                }
+
+                toNotify = onLoadedTask.toArray(new PropertiesLoadListener[onLoadedTask.size()]);
+                onLoadedTask.clear();
+            } finally {
+                loadLock.unlock();
+            }
+
+            for (PropertiesLoadListener listener: toNotify) {
+                listener.loadedProperties(properties);
+            }
+        }
+
+        public void notifyOnLoad(PropertiesLoadListener listener) {
+            if (listener == null) throw new NullPointerException("listener");
+
+            if (loaded) {
+                listener.loadedProperties(properties);
+                return;
+            }
+
+            loadLock.lock();
+            try {
+                if (!loaded) {
+                    onLoadedTask.add(listener);
+                    return;
+                }
+            } finally {
+                loadLock.unlock();
+            }
+
+            listener.loadedProperties(properties);
         }
     }
 

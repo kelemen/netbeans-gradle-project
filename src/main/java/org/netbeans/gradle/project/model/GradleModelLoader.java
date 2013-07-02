@@ -40,6 +40,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.java.model.NbSourceRoot;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
@@ -84,7 +85,15 @@ public final class GradleModelLoader {
             result.useGradleUserHomeDir(gradleUserHome);
         }
 
-        GradleLocation gradleLocation = project.getProperties().getGradleLocation().getValue();
+        GradleLocation gradleLocation;
+        ProjectProperties projectProperties = project.tryGetLoadedProperties();
+        if (projectProperties == null) {
+            LOGGER.warning("Could not wait for retrieving the project properties. Using the globally defined one");
+            gradleLocation = GlobalGradleSettings.getGradleHome().getValue();
+        }
+        else {
+            gradleLocation = projectProperties.getGradleLocation().getValue();
+        }
 
         gradleLocation.applyLocation(new GradleLocation.Applier() {
             @Override
