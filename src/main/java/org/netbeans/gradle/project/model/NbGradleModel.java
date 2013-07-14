@@ -173,13 +173,17 @@ public final class NbGradleModel {
     }
 
     public static File getBuildFile(File projectDir) {
-        // TODO: Check build file on the disk.
-        // try build.gradle first, then directory.gradle.
-        return new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
-    }
+        File buildFile = new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
+        if (buildFile.isFile()) {
+            return buildFile;
+        }
 
-    public static FileObject getBuildFile(FileObject projectDir) {
-        return projectDir.getFileObject(GradleProjectConstants.BUILD_FILE_NAME);
+        buildFile = new File(projectDir, projectDir.getName() + ".gradle");
+        if (buildFile.isFile()) {
+            return buildFile;
+        }
+
+        return null;
     }
 
     public static File findSettingsGradle(File projectDir) {
