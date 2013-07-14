@@ -107,7 +107,7 @@ implements
     }
 
     public ClassPath getAllRuntimeClassPaths() {
-        return getPaths(ClassPathType.RUNTIME);
+        return getPaths(ClassPathType.RUNTIME_FOR_TEST);
     }
 
     public ClassPath getClassPaths(String type) {
