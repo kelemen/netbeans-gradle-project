@@ -178,7 +178,7 @@ public final class NbGradleModel {
             return buildFile;
         }
 
-        buildFile = new File(projectDir, projectDir.getName() + ".gradle");
+        buildFile = new File(projectDir, projectDir.getName() + GradleProjectConstants.DEFAULT_GRADLE_EXTENSION);
         if (buildFile.isFile()) {
             return buildFile;
         }

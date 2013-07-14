@@ -19,6 +19,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFileUtils;
+import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -243,7 +244,7 @@ public final class BuildScriptsNode extends AbstractNode {
                     continue;
                 }
 
-                if ("gradle".equalsIgnoreCase(file.getExt())) {
+                if (GradleFilesClassPathProvider.isGradleFile(file)) {
                     gradleFiles.add(file);
                 }
             }

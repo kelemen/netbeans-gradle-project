@@ -32,6 +32,7 @@ import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
@@ -73,7 +74,7 @@ public final class GradleTasks {
     }
 
     private static File getInitScriptFile(InitScriptQuery scriptQuery) throws Throwable {
-        File tmpFile = File.createTempFile("nb-gradle-init", ".gradle");
+        File tmpFile = File.createTempFile("nb-gradle-init", GradleProjectConstants.DEFAULT_GRADLE_EXTENSION);
         try {
             writeToFile(scriptQuery.getInitScript(), tmpFile);
         } catch (Throwable ex) {

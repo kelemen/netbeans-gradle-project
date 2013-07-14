@@ -22,6 +22,7 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -59,7 +60,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
     public static boolean isGradleFile(FileObject file) {
         // case-insensitive check, so that there is no surprise on Windows.
-        return "gradle".equals(file.getExt().toLowerCase(Locale.US));
+        return GradleProjectConstants.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(file.getExt());
     }
 
     // These PropertyChangeListener methods are declared because
