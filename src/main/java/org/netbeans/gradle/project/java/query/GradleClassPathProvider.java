@@ -106,6 +106,10 @@ implements
         return result;
     }
 
+    public ClassPath getAllRuntimeClassPaths() {
+        return getPaths(ClassPathType.RUNTIME);
+    }
+
     public ClassPath getClassPaths(String type) {
         if (ClassPath.SOURCE.equals(type)) {
             ClassPath result = allSourcesClassPathRef.get();

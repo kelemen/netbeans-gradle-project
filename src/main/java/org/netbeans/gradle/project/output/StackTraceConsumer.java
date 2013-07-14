@@ -38,7 +38,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
             return ClassPath.EMPTY;
         }
 
-        ClassPath classPath = classPaths.getClassPaths(ClassPath.EXECUTE);
+        ClassPath classPath = classPaths.getAllRuntimeClassPaths();
         if (classPath == null) {
             LOGGER.log(Level.WARNING, "No runtime class path for project: {0}", project.getName());
             return ClassPath.EMPTY;
