@@ -12,7 +12,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = JavadocForBinaryQueryImplementation.class)})
-public final class AutoJavaJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery{
+public final class AutoJavaJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery {
     private static final URL[] NO_ROOTS = new URL[0];
 
     private static final String JAVADOC_SUFFIX = "-javadoc.zip";
