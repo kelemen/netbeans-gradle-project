@@ -18,7 +18,7 @@ import static org.netbeans.gradle.project.java.query.AutoJavaBinaryForSourceQuer
 public final class AutoJavaSourceForBinaryQuery extends AbstractSourceForBinaryQuery {
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
-    private static FileObject sourceForJar(FileObject binaryRoot) {
+    public static FileObject sourceForJar(FileObject binaryRoot) {
         String srcFileName = binaryRoot.getName() + SOURCES_SUFFIX;
 
         FileObject dir = binaryRoot.getParent();
