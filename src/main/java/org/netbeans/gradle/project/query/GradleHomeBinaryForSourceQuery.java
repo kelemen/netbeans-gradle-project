@@ -18,10 +18,6 @@ public final class GradleHomeBinaryForSourceQuery extends AbstractBinaryForSourc
 
     @Override
     protected Result tryFindBinaryRoots(File sourceRoot) {
-        if (GradleFileUtils.GRADLE_USER_HOME == null) {
-            return null;
-        }
-
         final FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
         if (sourceRootObj == null) {
             return null;

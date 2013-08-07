@@ -1,29 +1,26 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbOutput;
 import org.netbeans.gradle.project.java.model.NbSourceType;
+import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
 public final class GradleSourceForBinaryQuery
+extends
+        AbstractSourceForBinaryQuery
 implements
-        SourceForBinaryQueryImplementation2,
         JavaModelChangeListener {
     // First, I thought this is an important query for the debugger but this
     // query is not really used by the debugger.
@@ -41,14 +38,12 @@ implements
 
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
-    private final ConcurrentMap<File, SourceForBinaryQueryImplementation2.Result> cache;
     private final JavaExtension javaExt;
     private final ChangeSupport changes;
 
     public GradleSourceForBinaryQuery(JavaExtension javaExt) {
         if (javaExt == null) throw new NullPointerException("javaExt");
         this.javaExt = javaExt;
-        this.cache = new ConcurrentHashMap<File, SourceForBinaryQueryImplementation2.Result>();
 
         EventSource eventSource = new EventSource();
         this.changes = new ChangeSupport(eventSource);
@@ -103,28 +98,18 @@ implements
     }
 
     @Override
-    public SourceForBinaryQueryImplementation2.Result findSourceRoots2(URL binaryRoot) {
-        final File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
-        if (binaryRootFile == null) {
-            return null;
-        }
-
-        if (!javaExt.isOwnerProject(binaryRootFile)) {
+    protected Result tryFindSourceRoot(final File binaryRoot) {
+        if (!javaExt.isOwnerProject(binaryRoot)) {
             return null;
         }
 
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        BinaryType rootType = getBinaryRootType(mainModule, binaryRootFile);
+        BinaryType rootType = getBinaryRootType(mainModule, binaryRoot);
         if (rootType == BinaryType.UNKNOWN) {
             return null;
         }
 
-        SourceForBinaryQueryImplementation2.Result result = cache.get(binaryRootFile);
-        if (result != null) {
-            return result;
-        }
-
-        result = new SourceForBinaryQueryImplementation2.Result() {
+        return new SourceForBinaryQueryImplementation2.Result() {
             @Override
             public boolean preferSources() {
                 return getRoots().length > 0;
@@ -135,7 +120,7 @@ implements
                 NbJavaModel projectModel = javaExt.getCurrentModel();
                 NbJavaModule mainModule = projectModel.getMainModule();
 
-                return tryGetRoots(mainModule, binaryRootFile);
+                return tryGetRoots(mainModule, binaryRoot);
             }
 
             @Override
@@ -153,13 +138,6 @@ implements
                 return Arrays.toString(getRoots());
             }
         };
-        SourceForBinaryQueryImplementation2.Result prevResult = cache.putIfAbsent(binaryRootFile, result);
-        return prevResult != null ? prevResult : result;
-    }
-
-    @Override
-    public SourceForBinaryQuery.Result findSourceRoots(URL binaryRoot) {
-        return findSourceRoots2(binaryRoot);
     }
 
     private static final class EventSource implements SourceForBinaryQueryImplementation2.Result {
