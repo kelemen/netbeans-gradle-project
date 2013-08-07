@@ -2,8 +2,6 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URL;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -14,29 +12,17 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = BinaryForSourceQueryImplementation.class)})
-public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQueryImplementation {
-    // This cache cannot shrink because SourceForBinaryQueryImplementation
-    // requires that we return the exact same object when the same URL is
-    // querried. This is a very limiting constraint but I don't want to risk to
-    // violate the constraint.
-    private final ConcurrentMap<File, Result> cache;
-
+public final class GradleHomeBinaryForSourceQuery extends AbstractBinaryForSourceQuery {
     public GradleHomeBinaryForSourceQuery() {
-        this.cache = new ConcurrentHashMap<File, Result>();
     }
 
     @Override
-    public Result findBinaryRoots(URL sourceRoot) {
+    protected Result tryFindBinaryRoots(File sourceRoot) {
         if (GradleFileUtils.GRADLE_USER_HOME == null) {
             return null;
         }
 
-        File sourceRootFile = FileUtil.archiveOrDirForURL(sourceRoot);
-        if (sourceRootFile == null) {
-            return null;
-        }
-
-        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRootFile);
+        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
         if (sourceRootObj == null) {
             return null;
         }
@@ -60,14 +46,9 @@ public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQuer
             return null;
         }
 
-        Result result = cache.get(gradleHome);
-        if (result != null) {
-            return result;
-        }
-
         final URL[] gradleLibs = GradleHomeClassPathProvider.getGradleBinaries(gradleHomeObj);
 
-        result = new Result() {
+        return new Result() {
             @Override
             public URL[] getRoots() {
                 return gradleLibs.clone();
@@ -81,8 +62,5 @@ public final class GradleHomeBinaryForSourceQuery implements BinaryForSourceQuer
             public void removeChangeListener(ChangeListener l) {
             }
         };
-
-        Result oldResult = cache.putIfAbsent(gradleHome, result);
-        return oldResult != null ? oldResult : result;
     }
 }

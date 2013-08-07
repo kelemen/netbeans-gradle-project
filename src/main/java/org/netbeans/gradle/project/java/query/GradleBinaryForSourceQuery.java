@@ -4,8 +4,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -15,28 +13,27 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbSourceType;
-import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
+import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.Utilities;
 
 public final class GradleBinaryForSourceQuery
+extends
+        AbstractBinaryForSourceQuery
 implements
-        BinaryForSourceQueryImplementation,
         JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(GradleSourceForBinaryQuery.class.getName());
 
     private static final URL[] NO_ROOTS = new URL[0];
 
-    private final ConcurrentMap<FileObject, BinaryForSourceQuery.Result> cache;
     private final JavaExtension javaExt;
     private final ChangeSupport changes;
 
     public GradleBinaryForSourceQuery(JavaExtension javaExt) {
         if (javaExt == null) throw new NullPointerException("javaExt");
         this.javaExt = javaExt;
-        this.cache = new ConcurrentHashMap<FileObject, BinaryForSourceQuery.Result>();
 
         EventSource eventSource = new EventSource();
         this.changes = new ChangeSupport(eventSource);
@@ -107,12 +104,8 @@ implements
     }
 
     @Override
-    public BinaryForSourceQuery.Result findBinaryRoots(URL sourceRoot) {
-        File sourceRootFile = FileUtil.archiveOrDirForURL(sourceRoot);
-        if (sourceRootFile == null) {
-            return null;
-        }
-        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRootFile);
+    protected BinaryForSourceQuery.Result tryFindBinaryRoots(File sourceRoot) {
+        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
         if (sourceRootObj == null) {
             return null;
         }
@@ -127,12 +120,7 @@ implements
             return null;
         }
 
-        BinaryForSourceQuery.Result result = cache.get(sourceRootObj);
-        if (result != null) {
-            return result;
-        }
-
-        result = new BinaryForSourceQuery.Result() {
+        return new BinaryForSourceQuery.Result() {
             @Override
             public URL[] getRoots() {
                 NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
@@ -155,8 +143,6 @@ implements
                 return Arrays.toString(getRoots());
             }
         };
-        BinaryForSourceQuery.Result prevResult = cache.putIfAbsent(sourceRootObj, result);
-        return prevResult != null ? prevResult : result;
     }
 
     private enum SourceType {

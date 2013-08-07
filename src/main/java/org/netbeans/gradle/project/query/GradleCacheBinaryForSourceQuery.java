@@ -2,8 +2,6 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URL;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -16,7 +14,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = BinaryForSourceQueryImplementation.class)})
-public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQueryImplementation {
+public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSourceQuery {
     private static final URL[] NO_ROOTS = new URL[0];
     private static final ChangeSupport CHANGES;
 
@@ -33,14 +31,7 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
         });
     }
 
-    // This cache cannot shrink because SourceForBinaryQueryImplementation
-    // requires that we return the exact same object when the same URL is
-    // querried. This is a very limiting constraint but I don't want to risk to
-    // violate the constraint.
-    private final ConcurrentMap<FileObject, Result> cache;
-
     public GradleCacheBinaryForSourceQuery() {
-        this.cache = new ConcurrentHashMap<FileObject, Result>();
     }
 
     public static void notifyCacheChange() {
@@ -53,24 +44,15 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
     }
 
     @Override
-    public Result findBinaryRoots(URL sourceRoot) {
+    protected Result tryFindBinaryRoots(File sourceRoot) {
         File gradleUserHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
         if (gradleUserHome == null) {
             return null;
         }
 
-        File sourceRootFile = FileUtil.archiveOrDirForURL(sourceRoot);
-        if (sourceRootFile == null) {
-            return null;
-        }
-        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRootFile);
+        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
         if (sourceRootObj == null) {
             return null;
-        }
-
-        Result result = cache.get(sourceRootObj);
-        if (result != null) {
-            return result;
         }
 
         FileObject gradleUserHomeObj = FileUtil.toFileObject(gradleUserHome);
@@ -102,7 +84,7 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
             return null;
         }
 
-        result = new Result() {
+        return new Result() {
             @Override
             public URL[] getRoots() {
                 // The cache directory of Gradle looks like this:
@@ -137,9 +119,6 @@ public final class GradleCacheBinaryForSourceQuery implements BinaryForSourceQue
                 CHANGES.removeChangeListener(l);
             }
         };
-
-        Result oldResult = cache.putIfAbsent(sourceRootObj, result);
-        return oldResult != null ? oldResult : result;
     }
 
     private static final class EventSource implements Result {
