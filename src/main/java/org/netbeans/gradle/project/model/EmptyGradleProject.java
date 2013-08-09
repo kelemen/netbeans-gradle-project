@@ -6,20 +6,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import org.gradle.tooling.internal.gradle.DefaultGradleScript;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.GradleScript;
 import org.gradle.tooling.model.GradleTask;
+import org.netbeans.gradle.project.GradleProjectConstants;
 
 public final class EmptyGradleProject implements GradleProject {
     private static final DomainObjectSet<GradleTask> NO_TASKS = new EmptySet<GradleTask>();
     private static final DomainObjectSet<GradleProject> NO_PROJECTS = new EmptySet<GradleProject>();
 
+    private final DefaultGradleScript script;
     private final String path;
     private final String name;
 
     public EmptyGradleProject(File projectDir) {
         this.name = projectDir.getName();
         this.path = ":" + name;
+        this.script = new DefaultGradleScript();
+        this.script.setSourceFile(new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME));
     }
 
     @Override
@@ -55,6 +61,11 @@ public final class EmptyGradleProject implements GradleProject {
     @Override
     public String getDescription() {
         return "";
+    }
+
+    @Override
+    public GradleScript getBuildScript() {
+        return script;
     }
 
     private static final class EmptySet<E>
