@@ -8,17 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
+import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.spi.project.ActionProvider;
+import org.openide.util.Lookup;
+import org.openide.windows.OutputWriter;
 
 public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuery {
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
@@ -74,7 +80,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Arrays.asList(projectTask("classes")),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
+            applyClassesActions());
 
     private static final Map<String, CommandWithActions> DEFAULT_TASKS;
 
@@ -143,6 +149,27 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private CustomCommandActions debugActions(boolean test) {
         CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.DEBUG);
         result.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt, test)));
+        return result.create();
+    }
+
+    private static ContextAwareCommandFinalizer applyClassesFinalizer(final Project project, final String className) {
+        return new ContextAwareCommandFinalizer() {
+            @Override
+            public void finalizeSuccessfulCommand(OutputWriter output, OutputWriter errOutput) {
+                DebugUtils.applyChanges(project, output, className);
+            }
+        };
+    }
+
+    private static CustomCommandActions applyClassesActions() {
+        CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.BUILD);
+        result.setContextAwareAction(new ContextAwareCommandAction() {
+            @Override
+            public ContextAwareCommandFinalizer startCommand(Project project, Lookup commandContext) {
+                String className = DebugUtils.getActiveClassName(project, commandContext);
+                return applyClassesFinalizer(project, className);
+            }
+        });
         return result.create();
     }
 

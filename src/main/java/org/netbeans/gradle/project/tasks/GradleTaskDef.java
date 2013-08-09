@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskKind;
@@ -13,6 +15,7 @@ import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.openide.util.Lookup;
+import org.openide.windows.OutputWriter;
 
 public final class GradleTaskDef {
     public static final class Builder {
@@ -23,6 +26,8 @@ public final class GradleTaskDef {
 
         private SmartOutputHandler.Visitor stdOutListener;
         private SmartOutputHandler.Visitor stdErrListener;
+        private ContextAwareCommandFinalizer commandFinalizer;
+
         private boolean cleanOutput;
         private boolean reuseOutput;
         private boolean nonBlocking;
@@ -37,6 +42,7 @@ public final class GradleTaskDef {
             this.nonBlocking = taskDef.isNonBlocking();
             this.reuseOutput = taskDef.isReuseOutput();
             this.cleanOutput = taskDef.isCleanOutput();
+            this.commandFinalizer = taskDef.getCommandFinalizer();
         }
 
         public Builder(String caption, String taskName) {
@@ -59,6 +65,7 @@ public final class GradleTaskDef {
             this.nonBlocking = false;
             this.reuseOutput = true;
             this.cleanOutput = false;
+            this.commandFinalizer = NoOpFinalizer.INSTANCE;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
@@ -164,6 +171,15 @@ public final class GradleTaskDef {
             this.stdErrListener = stdErrListener;
         }
 
+        public ContextAwareCommandFinalizer getCommandFinalizer() {
+            return commandFinalizer;
+        }
+
+        public void setCommandFinalizer(ContextAwareCommandFinalizer commandFinalizer) {
+            if (commandFinalizer == null) throw new NullPointerException("commandFinalizer");
+            this.commandFinalizer = commandFinalizer;
+        }
+
         public GradleTaskDef create() {
             return new GradleTaskDef(this);
         }
@@ -175,6 +191,7 @@ public final class GradleTaskDef {
     private final List<String> jvmArguments;
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
+    private final ContextAwareCommandFinalizer commandFinalizer;
     private final boolean reuseOutput;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
@@ -189,6 +206,7 @@ public final class GradleTaskDef {
         this.nonBlocking = builder.isNonBlocking();
         this.reuseOutput = builder.isReuseOutput();
         this.cleanOutput = builder.isCleanOutput();
+        this.commandFinalizer = builder.getCommandFinalizer();
     }
 
     private static String[] stringListToArray(List<String> list) {
@@ -241,6 +259,10 @@ public final class GradleTaskDef {
 
     public SmartOutputHandler.Visitor getStdErrListener() {
         return stdErrListener;
+    }
+
+    public ContextAwareCommandFinalizer getCommandFinalizer() {
+        return commandFinalizer;
     }
 
     private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
@@ -312,6 +334,12 @@ public final class GradleTaskDef {
         TaskOutputProcessor stdErrProcessor = customActions.getStdErrProcessor();
         builder.setStdErrListener(outputProcessorToLineVisitor(stdErrProcessor));
 
+        ContextAwareCommandAction contextAwareAction = customActions.getContextAwareAction();
+        if (contextAwareAction != null) {
+            ContextAwareCommandFinalizer finalizer = contextAwareAction.startCommand(project, actionContext);
+            builder.setCommandFinalizer(finalizer);
+        }
+
         return builder;
     }
 
@@ -320,6 +348,14 @@ public final class GradleTaskDef {
 
         @Override
         public void visitLine(String line) {
+        }
+    }
+
+    private enum NoOpFinalizer implements ContextAwareCommandFinalizer {
+        INSTANCE;
+
+        @Override
+        public void finalizeSuccessfulCommand(OutputWriter output, OutputWriter errOutput) {
         }
     }
 }

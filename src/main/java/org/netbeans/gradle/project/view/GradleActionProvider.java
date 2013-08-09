@@ -146,6 +146,7 @@ public final class GradleActionProvider implements ActionProvider {
                 if (customActions == null) {
                     customActions = CustomCommandActions.OTHER;
                 }
+
                 customActionsRef.set(customActions);
 
                 return GradleTaskDef.createFromTemplate(project,

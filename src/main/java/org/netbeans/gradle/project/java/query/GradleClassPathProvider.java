@@ -110,6 +110,10 @@ implements
         return getPaths(ClassPathType.RUNTIME_FOR_TEST);
     }
 
+    public ClassPath getBuildOutputClassPaths() {
+        return getPaths(ClassPathType.PROJECT_BUILD_OUTPUT);
+    }
+
     public ClassPath getClassPaths(String type) {
         if (ClassPath.SOURCE.equals(type)) {
             ClassPath result = allSourcesClassPathRef.get();
@@ -296,6 +300,7 @@ implements
         allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
     }
 
+    @SuppressWarnings("varargs")
     public static List<PathResourceImplementation> getPathResources(
             Set<File> invalid, List<File>... fileGroups) {
 
@@ -394,12 +399,17 @@ implements
         List<File> globalCompile = new LinkedList<File>();
         List<File> globalRuntime = new LinkedList<File>();
 
+        List<File> buildOutputDirs = new LinkedList<File>();
+
         // Contains build directories which does not necessarily exists
         Set<File> notRequiredPaths = new HashSet<File>();
 
         NbJavaModule mainModule = projectModel.getMainModule();
-        testCompile.add(mainModule.getProperties().getOutput().getBuildDir());
-        testRuntime.add(mainModule.getProperties().getOutput().getBuildDir());
+
+        File mainModuleBuildOutput = mainModule.getProperties().getOutput().getBuildDir();
+        testCompile.add(mainModuleBuildOutput);
+        testRuntime.add(mainModuleBuildOutput);
+        buildOutputDirs.add(mainModuleBuildOutput);
 
         addModuleClassPaths(mainModule, runtime, testRuntime, notRequiredPaths);
 
@@ -411,6 +421,9 @@ implements
             else if (dependency instanceof NbModuleDependency) {
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
                 addModuleClassPaths(moduleDep.getModule(), compile, null, notRequiredPaths);
+
+                buildOutputDirs.add(moduleDep.getModule().getProperties().getOutput().getBuildDir());
+                buildOutputDirs.add(moduleDep.getModule().getProperties().getOutput().getTestBuildDir());
             }
         }
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
@@ -445,6 +458,10 @@ implements
         }
 
         Set<File> missing = new HashSet<File>();
+
+        @SuppressWarnings("unchecked")
+        List<PathResourceImplementation> buildOutputPaths = getPathResources(missing, buildOutputDirs);
+        setClassPathResources(ClassPathType.PROJECT_BUILD_OUTPUT, buildOutputPaths);
 
         @SuppressWarnings("unchecked")
         List<PathResourceImplementation> compilePaths = getPathResources(missing, compile);
@@ -623,6 +640,7 @@ implements
         COMPILE,
         COMPILE_FOR_TEST,
         COMPILE_FOR_GLOBAL,
+        PROJECT_BUILD_OUTPUT
     }
 
     private static final class EventSource implements ClassPathImplementation {

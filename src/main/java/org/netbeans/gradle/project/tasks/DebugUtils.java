@@ -12,6 +12,7 @@ import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
+import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -29,7 +30,7 @@ import org.openide.windows.OutputWriter;
 //   - org.netbeans.modules.maven.debug.DebuggerChecker
 //   - org.netbeans.modules.maven.execute.DefaultReplaceTokenProvider
 public final class DebugUtils {
-    public static String getActiveClassName(NbGradleProject project, Lookup lookup) {
+    public static String getActiveClassName(Project project, Lookup lookup) {
         FileObject[] filesOnLookup = extractFileObjectsfromLookup(lookup);
         SourceGroup group = findGroup(ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA), filesOnLookup);
 
@@ -98,7 +99,7 @@ public final class DebugUtils {
         return selected;
     }
 
-    public static void applyChanges(NbGradleProject project, OutputWriter logger, String classname) {
+    public static void applyChanges(Project project, OutputWriter logger, String classname) {
         // check debugger state
         DebuggerEngine debuggerEngine = DebuggerManager.getDebuggerManager().
                 getCurrentEngine();
@@ -126,7 +127,7 @@ public final class DebugUtils {
 
         String clazz = classname.replace('.', '/') + ".class"; //NOI18N
         GradleClassPathProvider prv = project.getLookup().lookup(GradleClassPathProvider.class);
-        FileObject fo2 = prv.getClassPaths(ClassPath.COMPILE).findResource(clazz);
+        FileObject fo2 = prv.getBuildOutputClassPaths().findResource(clazz);
 
         if (fo2 != null) {
             try {
@@ -143,7 +144,13 @@ public final class DebugUtils {
                     map.put(classname + basename2.substring(basename.length()), classfile.asBytes());
                 }
             } catch (IOException ex) {
-                project.displayError("Unexpected error.", ex, true);
+                NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+                if (gradleProject != null) {
+                    gradleProject.displayError("Unexpected error.", ex, true);
+                }
+                else {
+                    throw new IllegalStateException("Unexpected error in an unexpected project type.", ex);
+                }
             }
         }
 

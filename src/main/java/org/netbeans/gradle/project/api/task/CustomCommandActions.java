@@ -66,6 +66,7 @@ public final class CustomCommandActions {
         private CommandCompleteListener commandCompleteListener;
         private TaskOutputProcessor stdOutProcessor;
         private TaskOutputProcessor stdErrProcessor;
+        private ContextAwareCommandAction contextAwareAction;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -86,6 +87,7 @@ public final class CustomCommandActions {
             this.commandCompleteListener = null;
             this.stdOutProcessor = null;
             this.stdErrProcessor = null;
+            this.contextAwareAction = null;
         }
 
         /**
@@ -142,6 +144,23 @@ public final class CustomCommandActions {
         }
 
         /**
+         * Sets the custom code to be executed before and after the Gradle
+         * command has. The custom code may use the {@code Lookup} context
+         * used to start the associated Gradle command and also the
+         * {@link org.netbeans.api.project.Project Project} instance.
+         * <P>
+         * You may set this property to {@code null}, if there is no such action
+         * is needed. The default value for this property is {@code null}.
+         *
+         * @param contextAwareAction the custom code to be executed before and
+         *   after the Gradle command has. This argument can be {@code null}, if
+         *   no code needs to be executed.
+         */
+        public void setContextAwareAction(@Nullable ContextAwareCommandAction contextAwareAction) {
+            this.contextAwareAction = contextAwareAction;
+        }
+
+        /**
          * Creates a new {@code CustomCommandActions} instances with the
          * properties currently set for this builder. Subsequent modifications
          * to this builder has no effect on the returned instance.
@@ -160,12 +179,14 @@ public final class CustomCommandActions {
     private final CommandCompleteListener commandCompleteListener;
     private final TaskOutputProcessor stdOutProcessor;
     private final TaskOutputProcessor stdErrProcessor;
+    private final ContextAwareCommandAction contextAwareAction;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
         this.commandCompleteListener = builder.commandCompleteListener;
         this.stdOutProcessor = builder.stdOutProcessor;
         this.stdErrProcessor = builder.stdErrProcessor;
+        this.contextAwareAction = builder.contextAwareAction;
     }
 
     /**
@@ -227,5 +248,21 @@ public final class CustomCommandActions {
     @CheckForNull
     public TaskOutputProcessor getStdErrProcessor() {
         return stdErrProcessor;
+    }
+
+    /**
+     * Returns the custom code to be executed before and after the Gradle
+     * command has. The custom code may use the {@code Lookup} context
+     * used to start the associated Gradle command and also the
+     * {@link org.netbeans.api.project.Project Project} instance.
+     *
+     * @return the custom code to be executed before and after the Gradle
+     *   command has. This method may return {@code null}, if no such action
+     *   needs to be executed.
+     */
+    @Nullable
+    @CheckForNull
+    public ContextAwareCommandAction getContextAwareAction() {
+        return contextAwareAction;
     }
 }

@@ -262,6 +262,8 @@ public final class GradleTasks {
                         try {
                             ioRef.getIo().select();
                             buildLauncher.run();
+
+                            taskDef.getCommandFinalizer().finalizeSuccessfulCommand(buildOutput, ioRef.getErrRef());
                         } finally {
                             // This close method will only forward the last lines
                             // if they were not terminated with a line separator.
