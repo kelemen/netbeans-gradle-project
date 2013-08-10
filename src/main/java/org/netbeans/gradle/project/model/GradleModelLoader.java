@@ -21,6 +21,10 @@ import javax.swing.event.ChangeListener;
 import org.gradle.tooling.BuildException;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.LongRunningOperation;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProgressEvent;
+import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
@@ -28,6 +32,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -48,6 +53,8 @@ import org.openide.util.RequestProcessor;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
+
+    private static final GradleVersion GRADLE_VERSION_1_7 = GradleVersion.version("1.7");
 
     private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
@@ -260,8 +267,8 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleModel loadModelWithProgress(
-            NbGradleProject project,
-            ProgressHandle progress,
+            final NbGradleProject project,
+            final ProgressHandle progress,
             NbGradleModel proposedModel) throws IOException {
         File projectDir = project.getProjectDirectoryAsFile();
 
@@ -275,8 +282,18 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            BuildEnvironment env = projectConnection.getModel(BuildEnvironment.class);
-            NbModelLoader modelLoader = chooseModel(env, proposedModel);
+            LongRunningOperationSetup setup = new LongRunningOperationSetup() {
+                @Override
+                public void setupLongRunningOperation(LongRunningOperation op) {
+                    GradleModelLoader.setupLongRunningOperation(op, project, progress);
+                }
+            };
+
+            ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
+            setup.setupLongRunningOperation(modelBuilder);
+
+            BuildEnvironment env = modelBuilder.get();
+            NbModelLoader modelLoader = chooseModel(env, proposedModel, setup);
 
             loadedModels = modelLoader.loadModels(project, projectConnection, progress);
         } finally {
@@ -293,9 +310,44 @@ public final class GradleModelLoader {
         return result;
     }
 
-    private static NbModelLoader chooseModel(BuildEnvironment env, NbGradleModel proposedModel) {
-        LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
-        return new NbCompatibleModelLoader(proposedModel);
+    private static NbModelLoader chooseModel(
+            BuildEnvironment env,
+            NbGradleModel proposedModel,
+            LongRunningOperationSetup setup) {
+
+        GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
+        if (version.compareTo(GRADLE_VERSION_1_7) <= 0) {
+            LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
+            return new NbCompatibleModelLoader(proposedModel, setup);
+        }
+        else {
+            LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
+            return new NbGradle18ModelLoader(proposedModel, setup);
+        }
+    }
+
+    private static void setupLongRunningOperation(
+            LongRunningOperation op,
+            NbGradleProject project,
+            final ProgressHandle progress) {
+
+        File jdkHome = GradleModelLoader.getScriptJavaHome(project);
+        if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
+            op.setJavaHome(jdkHome);
+        }
+
+        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+
+        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+            op.setJvmArguments(globalJvmArgs.toArray(new String[0]));
+        }
+
+        op.addProgressListener(new ProgressListener() {
+            @Override
+            public void statusChanged(ProgressEvent pe) {
+                progress.progress(pe.getDescription());
+            }
+        });
     }
 
     public static NbGradleModel createEmptyModel(File projectDir) {

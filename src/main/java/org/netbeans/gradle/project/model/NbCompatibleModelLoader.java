@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ModelBuilder;
-import org.gradle.tooling.ProgressEvent;
-import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -18,7 +16,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -26,9 +23,13 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbCompatibleModelLoader.class.getName());
 
     private final NbGradleModel proposedModel;
+    private final LongRunningOperationSetup setup;
 
-    public NbCompatibleModelLoader(NbGradleModel proposedModel) {
+    public NbCompatibleModelLoader(NbGradleModel proposedModel, LongRunningOperationSetup setup) {
+        if (setup == null) throw new NullPointerException("setup");
+
         this.proposedModel = proposedModel;
+        this.setup = setup;
     }
 
     @Override
@@ -41,53 +42,25 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         NbGradleModel mainModel = proposedModel;
 
         if (mainModel == null) {
-            mainModel = loadMainModel(project, progress, connection, otherModels);
+            mainModel = loadMainModel(project, connection, otherModels);
         }
 
-        getExtensionModels(project, progress, connection, mainModel);
+        getExtensionModels(project, connection, mainModel);
 
         return new Result(mainModel, otherModels);
     }
 
-    private static <T> T getRawModelWithProgress(
-            NbGradleProject project,
-            final ProgressHandle progress,
-            ProjectConnection projectConnection,
-            Class<T> model) {
-        return getModelWithProgress(project, progress, projectConnection, model);
-    }
-
-    private static <T> T getModelWithProgress(
-            NbGradleProject project,
-            final ProgressHandle progress,
+    private <T> T getModelWithProgress(
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
-
-        File jdkHome = GradleModelLoader.getScriptJavaHome(project);
-        if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
-            builder.setJavaHome(jdkHome);
-        }
-
-        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
-
-        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
-            builder.setJvmArguments(globalJvmArgs.toArray(new String[0]));
-        }
-
-        builder.addProgressListener(new ProgressListener() {
-            @Override
-            public void statusChanged(ProgressEvent pe) {
-                progress.progress(pe.getDescription());
-            }
-        });
+        setup.setupLongRunningOperation(builder);
 
         return builder.get();
     }
 
-    private static void getExtensionModels(
+    private void getExtensionModels(
             NbGradleProject project,
-            ProgressHandle progress,
             ProjectConnection projectConnection,
             NbGradleModel result) {
 
@@ -101,8 +74,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
                     try {
                         Object model = allModels.lookup(modelClass);
                         if (model == null) {
-                            model = getRawModelWithProgress(
-                                    project, progress, projectConnection, modelClass);
+                            model = getModelWithProgress(projectConnection, modelClass);
                         }
                         extensionModels.add(model);
                         break;
@@ -148,14 +120,24 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return result;
     }
 
-    private static NbGradleModel loadMainModel(
+    private NbGradleModel loadMainModel(
             NbGradleProject project,
-            ProgressHandle progress,
             ProjectConnection projectConnection,
             List<NbGradleModel> deduced) throws IOException {
 
         IdeaProject ideaProject
-                = getRawModelWithProgress(project, progress, projectConnection, IdeaProject.class);
+                = getModelWithProgress(projectConnection, IdeaProject.class);
+
+        return parseMainModel(project, ideaProject, deduced);
+    }
+
+    public static NbGradleModel parseMainModel(
+            NbGradleProject project,
+            IdeaProject ideaProject,
+            List<? super NbGradleModel> deduced) throws IOException {
+        if (project == null) throw new NullPointerException("project");
+        if (ideaProject == null) throw new NullPointerException("ideaProject");
+        if (deduced == null) throw new NullPointerException("deduced");
 
         File projectDir = project.getProjectDirectoryAsFile();
         IdeaModule mainModule = GradleModelLoader.tryFindMainModule(projectDir, ideaProject);
