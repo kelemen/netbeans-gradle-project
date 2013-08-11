@@ -50,17 +50,19 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         for (ProjectExtensionRef extensionRef: extensionRefs) {
             GradleProjectExtension extension = extensionRef.getExtension();
 
-            Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
-            for (List<Class<?>> extensionModel: extensionModels) {
-                requestedModels.add(extensionModel);
-            }
-
-            String extensionName = extension.getExtensionName();
-
             Collection<? extends BuildAction<?>> actions
                     = extension.getExtensionLookup().lookupAll(buildActionClass());
 
-            extensionActions.put(extensionName, new ArrayList<BuildAction<?>>(actions));
+            if (actions.isEmpty()) {
+                Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
+                for (List<Class<?>> extensionModel: extensionModels) {
+                    requestedModels.add(extensionModel);
+                }
+            }
+            else {
+                String extensionName = extension.getExtensionName();
+                extensionActions.put(extensionName, new ArrayList<BuildAction<?>>(actions));
+            }
         }
 
         return new ModelLoaderAction(requestedModels, extensionActions);
