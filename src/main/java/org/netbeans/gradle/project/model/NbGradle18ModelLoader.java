@@ -3,7 +3,9 @@ package org.netbeans.gradle.project.model;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +20,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -32,6 +35,36 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         this.setup = setup;
     }
 
+    @SuppressWarnings("unchecked")
+    private static Class<BuildAction<?>> buildActionClass() {
+        return (Class<BuildAction<?>>)(Class<?>)BuildAction.class;
+    }
+
+    private ModelLoaderAction getBuildAction(List<ProjectExtensionRef> extensionRefs) {
+        List<List<Class<?>>> requestedModels = new LinkedList<List<Class<?>>>();
+        requestedModels.add(Collections.<Class<?>>singletonList(IdeaProject.class));
+
+        Map<String, Collection<BuildAction<?>>> extensionActions
+                = new HashMap<String, Collection<BuildAction<?>>>(2 * extensionRefs.size());
+
+        for (ProjectExtensionRef extensionRef: extensionRefs) {
+            GradleProjectExtension extension = extensionRef.getExtension();
+
+            Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
+            for (List<Class<?>> extensionModel: extensionModels) {
+                requestedModels.add(extensionModel);
+            }
+
+            String extensionName = extension.getExtensionName();
+
+            Collection<? extends BuildAction<?>> actions
+                    = extension.getExtensionLookup().lookupAll(buildActionClass());
+
+            extensionActions.put(extensionName, new ArrayList<BuildAction<?>>(actions));
+        }
+
+        return new ModelLoaderAction(requestedModels, extensionActions);
+    }
 
     @Override
     public Result loadModels(
@@ -49,30 +82,26 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             extensionRefs = project.getExtensionRefs();
         }
 
-        List<List<Class<?>>> requestedModels = new LinkedList<List<Class<?>>>();
-        requestedModels.add(Collections.<Class<?>>singletonList(IdeaProject.class));
+        ModelLoaderAction buildAction = getBuildAction(extensionRefs);
 
-        for (ProjectExtensionRef extensionRef: extensionRefs) {
-            Iterable<List<Class<?>>> extensionModels = extensionRef.getExtension().getGradleModels();
-            for (List<Class<?>> extensionModel: extensionModels) {
-                requestedModels.add(extensionModel);
-            }
-        }
-
-        BuildActionExecuter<Models> executer = connection.action(new ModelLoaderAction(requestedModels));
+        BuildActionExecuter<Models> executer = connection.action(buildAction);
         setup.setupLongRunningOperation(executer);
 
         Models loadedModels = executer.run();
         Lookup modelLookup = Lookups.fixed(loadedModels.getModels().toArray());
 
         IdeaProject mainIdeaProject = modelLookup.lookup(IdeaProject.class);
+        if (mainIdeaProject == null) {
+            throw new IOException("Failed to load IdeaProject for " + project.getProjectDirectory());
+        }
+
         List<NbGradleModel> otherModels = new LinkedList<NbGradleModel>();
 
         if (mainModel == null) {
             mainModel = NbCompatibleModelLoader.parseMainModel(project, mainIdeaProject, otherModels);
         }
 
-        loadModelsForExtensions(project, mainModel, modelLookup);
+        loadModelsForExtensions(project, mainModel, loadedModels.getBuildActionObjects(), modelLookup);
 
         return new Result(mainModel, otherModels);
     }
@@ -80,10 +109,13 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     private static void loadModelsForExtensions(
             NbGradleProject project,
             NbGradleModel mainModel,
+            Map<String, Collection<Object>> extensionObjects,
             Lookup modelLookup) {
 
         for (ProjectExtensionRef extensionRef: mainModel.getUnloadedExtensions(project)) {
-            Iterable<List<Class<?>>> extensionModels = extensionRef.getExtension().getGradleModels();
+            GradleProjectExtension extension = extensionRef.getExtension();
+
+            Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
             List<Object> extensionLookupContent = new LinkedList<Object>();
 
             for (List<Class<?>> extensionModelPrefList: extensionModels) {
@@ -95,22 +127,44 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                     }
                 }
             }
+            Collection<Object> customObjects = extensionObjects.get(extension.getExtensionName());
+
+            if (customObjects != null) {
+                extensionLookupContent.addAll(customObjects);
+            }
 
             mainModel.setModelsForExtension(extensionRef, Lookups.fixed(extensionLookupContent.toArray()));
         }
+    }
+
+    private static <K, V> Map<K, Collection<V>> copyMultiValueMap(Map<K, Collection<V>> source) {
+        Map<K, Collection<V>> result
+                = new HashMap<K, Collection<V>>(2 * source.size());
+
+        for (Map.Entry<K, Collection<V>> entry: source.entrySet()) {
+            result.put(entry.getKey(), CollectionUtils.copyNullSafeList(entry.getValue()));
+        }
+
+        return Collections.unmodifiableMap(result);
     }
 
     private static final class Models implements Serializable {
         private static final long serialVersionUID = 6282985709430938034L;
 
         private final List<Object> models;
+        private final Map<String, Collection<Object>> buildActionObjects;
 
-        public Models(List<?> models) {
+        public Models(List<?> models, Map<String, Collection<Object>> buildActionObjects) {
             this.models = CollectionUtils.copyNullSafeList(models);
+            this.buildActionObjects = copyMultiValueMap(buildActionObjects);
         }
 
         public List<Object> getModels() {
             return models;
+        }
+
+        public Map<String, Collection<Object>> getBuildActionObjects() {
+            return buildActionObjects;
         }
     }
 
@@ -118,13 +172,16 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private static final long serialVersionUID = 8168780059406328344L;
 
         private final List<List<Class<?>>> models;
+        private final Map<String, Collection<BuildAction<?>>> buildActions;
 
-        public ModelLoaderAction(List<List<Class<?>>> models) {
+        public ModelLoaderAction(List<List<Class<?>>> models, Map<String, Collection<BuildAction<?>>> buildActions) {
             this.models = new ArrayList<List<Class<?>>>(models.size());
 
             for (List<Class<?>> modelsForEntity: models) {
                 this.models.add(new ArrayList<Class<?>>(modelsForEntity));
             }
+
+            this.buildActions = copyMultiValueMap(buildActions);
         }
 
         @Override
@@ -151,7 +208,23 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 }
             }
 
-            return new Models(result);
+            Map<String, Collection<Object>> actionResults
+                    = new HashMap<String, Collection<Object>>(2 * buildActions.size());
+
+            for (Map.Entry<String, Collection<BuildAction<?>>> entry: buildActions.entrySet()) {
+                Collection<BuildAction<?>> actions = entry.getValue();
+                List<Object> extensionResults = new ArrayList<Object>(actions.size());
+
+                for (BuildAction<?> action: actions) {
+                    Object actionResult = action.execute(controller);
+                    if (actionResult != null) {
+                        extensionResults.add(actionResult);
+                    }
+                }
+                actionResults.put(entry.getKey(), extensionResults);
+            }
+
+            return new Models(result, actionResults);
         }
     }
 }
