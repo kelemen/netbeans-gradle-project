@@ -282,12 +282,7 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            LongRunningOperationSetup setup = new LongRunningOperationSetup() {
-                @Override
-                public void setupLongRunningOperation(LongRunningOperation op) {
-                    GradleModelLoader.setupLongRunningOperation(op, project, progress);
-                }
-            };
+            LongRunningOperationSetup setup = new ModelBuilderSetup(project, progress);
 
             ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
             setup.setupLongRunningOperation(modelBuilder);
@@ -324,30 +319,6 @@ public final class GradleModelLoader {
             LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
             return new NbGradle18ModelLoader(proposedModel, setup);
         }
-    }
-
-    private static void setupLongRunningOperation(
-            LongRunningOperation op,
-            NbGradleProject project,
-            final ProgressHandle progress) {
-
-        File jdkHome = GradleModelLoader.getScriptJavaHome(project);
-        if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
-            op.setJavaHome(jdkHome);
-        }
-
-        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
-
-        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
-            op.setJvmArguments(globalJvmArgs.toArray(new String[0]));
-        }
-
-        op.addProgressListener(new ProgressListener() {
-            @Override
-            public void statusChanged(ProgressEvent pe) {
-                progress.progress(pe.getDescription());
-            }
-        });
     }
 
     public static NbGradleModel createEmptyModel(File projectDir) {
@@ -446,5 +417,41 @@ public final class GradleModelLoader {
 
     private GradleModelLoader() {
         throw new AssertionError();
+    }
+
+    private static class ModelBuilderSetup implements LongRunningOperationSetup {
+        private final ProgressHandle progress;
+
+        private final File jdkHome;
+        private final List<String> globalJvmArgs;
+
+        public ModelBuilderSetup(NbGradleProject project, ProgressHandle progress) {
+            this.progress = progress;
+
+            this.jdkHome = GradleModelLoader.getScriptJavaHome(project);
+
+            List<String> currentJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+            this.globalJvmArgs = currentJvmArgs != null
+                    ? new ArrayList<String>(currentJvmArgs)
+                    : Collections.<String>emptyList();
+        }
+
+        @Override
+        public void setupLongRunningOperation(LongRunningOperation op) {
+            if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
+                op.setJavaHome(jdkHome);
+            }
+
+            if (!globalJvmArgs.isEmpty()) {
+                op.setJvmArguments(globalJvmArgs.toArray(new String[0]));
+            }
+
+            op.addProgressListener(new ProgressListener() {
+                @Override
+                public void statusChanged(ProgressEvent pe) {
+                    progress.progress(pe.getDescription());
+                }
+            });
+        }
     }
 }
