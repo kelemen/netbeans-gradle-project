@@ -8,6 +8,9 @@ import java.io.Serializable;
  * <P>
  * Instances of this class are immutable and therefore are safe to be shared
  * across multiple threads.
+ * <P>
+ * The serialized format of this class is not subject to any kind of backward
+ * or forward compatibility.
  */
 public final class GenericProjectProperties implements Serializable {
     private static final long serialVersionUID = 1L;
