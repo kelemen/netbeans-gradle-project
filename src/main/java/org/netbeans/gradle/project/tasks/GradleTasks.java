@@ -32,9 +32,9 @@ import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.StringAsFileRef;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.TaskVariable;
@@ -73,32 +73,17 @@ public final class GradleTasks {
         }
     }
 
-    private static File getInitScriptFile(InitScriptQuery scriptQuery) throws Throwable {
-        File tmpFile = File.createTempFile("nb-gradle-init", GradleProjectConstants.DEFAULT_GRADLE_EXTENSION);
-        try {
-            writeToFile(scriptQuery.getInitScript(), tmpFile);
-        } catch (Throwable ex) {
-            if (!tmpFile.delete()) {
-                LOGGER.log(Level.WARNING, "Failed to delete temporary file after a failure: {0}", tmpFile);
-            }
-            throw ex;
-        }
-        return tmpFile;
-    }
-
-    private static void deleteAllFiles(List<? extends File> files) {
-        for (File file: files) {
+    private static void closeAll(List<? extends Closeable> toClose) {
+        for (Closeable ref: toClose) {
             try {
-                if (!file.delete()) {
-                    throw new IOException("Failed to remove file " + file);
-                }
+                ref.close();
             } catch (Throwable ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove temporary file: " + file, ex);
+                LOGGER.log(Level.SEVERE, "Failed to close reference: " + ref, ex);
             }
         }
     }
 
-    private static List<File> getAllInitScriptFiles(NbGradleProject project) {
+    private static List<StringAsFileRef> getAllInitScriptFiles(NbGradleProject project) {
         if (GlobalGradleSettings.getOmitInitScript().getValue()) {
             return Collections.emptyList();
         }
@@ -106,11 +91,12 @@ public final class GradleTasks {
         Collection<? extends InitScriptQuery> scriptQueries
                 = project.getLookup().lookupAll(InitScriptQuery.class);
 
-        List<File> results = new ArrayList<File>(scriptQueries.size());
+        List<StringAsFileRef> results = new ArrayList<StringAsFileRef>(scriptQueries.size());
         try {
             for (InitScriptQuery scriptQuery: scriptQueries) {
                 try {
-                    results.add(getInitScriptFile(scriptQuery));
+                    String scriptContent = scriptQuery.getInitScript();
+                    results.add(StringAsFileRef.createRef("task-init-script", scriptContent, UTF8));
                 } catch (Throwable ex) {
                     LOGGER.log(Level.SEVERE,
                             "Failed to create initialization script provided by " + scriptQuery.getClass().getName(),
@@ -120,7 +106,7 @@ public final class GradleTasks {
             return results;
         } catch (Throwable ex) {
             LOGGER.log(Level.SEVERE, "Failed to create initialization scripts.", ex);
-            deleteAllFiles(results);
+            closeAll(results);
             return Collections.emptyList();
         }
     }
@@ -141,7 +127,7 @@ public final class GradleTasks {
             NbGradleProject project,
             BuildLauncher buildLauncher,
             GradleTaskDef taskDef,
-            List<File> initScripts,
+            List<StringAsFileRef> initScripts,
             final ProgressHandle progress) {
 
         File javaHome = GradleModelLoader.getScriptJavaHome(project);
@@ -156,10 +142,10 @@ public final class GradleTasks {
         List<String> arguments = new LinkedList<String>();
         arguments.addAll(taskDef.getArguments());
 
-        for (File initScript: initScripts) {
+        for (StringAsFileRef initScript: initScripts) {
             LOGGER.log(Level.INFO, "Applying init-script: {0}", initScript);
             arguments.add("--init-script");
-            arguments.add(initScript.getPath());
+            arguments.add(initScript.getFile().getPath());
         }
 
         if (!arguments.isEmpty()) {
@@ -238,7 +224,7 @@ public final class GradleTasks {
             projectConnection = gradleConnector.connect();
 
             BuildLauncher buildLauncher = projectConnection.newBuild();
-            List<File> initScripts = getAllInitScriptFiles(project);
+            List<StringAsFileRef> initScripts = getAllInitScriptFiles(project);
             try {
                 configureBuildLauncher(project, buildLauncher, taskDef, initScripts, progress);
 
@@ -288,7 +274,7 @@ public final class GradleTasks {
             } catch (IOException ex) {
                 LOGGER.log(Level.WARNING, "Unexpected I/O exception.", ex);
             } finally {
-                deleteAllFiles(initScripts);
+                closeAll(initScripts);
             }
         } finally {
             if (projectConnection != null) {

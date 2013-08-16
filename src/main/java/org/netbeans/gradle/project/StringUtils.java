@@ -15,7 +15,17 @@ import java.util.StringTokenizer;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
+    private static final String HEX_TABLE = "0123456789abcdef";
     private static final String SEPARATORS = ",./?;:'\"\\";
+
+    public static String byteArrayToHex(byte[] array) {
+        StringBuilder result = new StringBuilder(array.length * 2);
+        for (byte value: array) {
+            result.append(HEX_TABLE.charAt(((int)value & 0xF0) >>> 4));
+            result.append(HEX_TABLE.charAt((int)value & 0x0F));
+        }
+        return result.toString();
+    }
 
     public static String emptyForNull(String str) {
         return str != null ? str : "";
