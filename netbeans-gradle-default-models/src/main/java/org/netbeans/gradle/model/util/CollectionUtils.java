@@ -1,4 +1,4 @@
-package org.netbeans.gradle.model;
+package org.netbeans.gradle.model.util;
 
 import java.util.Collection;
 

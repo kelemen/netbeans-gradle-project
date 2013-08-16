@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
  * Defines a set of source roots of a Gradle project. For example, a source
