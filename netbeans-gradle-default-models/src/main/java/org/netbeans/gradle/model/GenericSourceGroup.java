@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -52,7 +52,7 @@ public final class GenericSourceGroup implements Serializable {
         if (groupName == null) throw new NullPointerException("groupName");
 
         this.groupName = groupName;
-        this.sourceRoots = Collections.unmodifiableSet(new HashSet<File>(sourceRoots));
+        this.sourceRoots = Collections.unmodifiableSet(new LinkedHashSet<File>(sourceRoots));
 
         CollectionUtils.checkNoNullElements(this.sourceRoots, "sourceRoots");
     }

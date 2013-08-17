@@ -3,7 +3,7 @@ package org.netbeans.gradle.model.java;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -49,7 +49,7 @@ public final class JavaOutputDirs implements Serializable {
 
         this.classesDir = classesDir;
         this.resourcesDir = resourcesDir;
-        this.otherDirs = Collections.unmodifiableSet(new HashSet<File>(otherDirs));
+        this.otherDirs = Collections.unmodifiableSet(new LinkedHashSet<File>(otherDirs));
 
         CollectionUtils.checkNoNullElements(this.otherDirs, "otherDirs");
     }
