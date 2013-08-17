@@ -2,6 +2,7 @@ package org.netbeans.gradle.model.java;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -42,7 +43,7 @@ public final class JavaOutputDirs implements Serializable {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public JavaOutputDirs(File classesDir, File resourcesDir, Set<File> otherDirs) {
+    public JavaOutputDirs(File classesDir, File resourcesDir, Collection<? extends File> otherDirs) {
         if (classesDir == null) throw new NullPointerException("classesDir");
         if (resourcesDir == null) throw new NullPointerException("resourcesDir");
         if (otherDirs == null) throw new NullPointerException("otherDirs");
