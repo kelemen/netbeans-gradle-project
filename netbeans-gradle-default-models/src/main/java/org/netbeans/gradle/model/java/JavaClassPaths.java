@@ -22,6 +22,12 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 public final class JavaClassPaths implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Defines an empty class path. That is, both the compile and runtime
+     * class paths are empty sets.
+     */
+    public static final JavaClassPaths EMPTY = new JavaClassPaths();
+
     private final Set<File> compileClasspaths;
     private final Set<File> runtimeClasspaths;
 
@@ -50,6 +56,11 @@ public final class JavaClassPaths implements Serializable {
 
         CollectionUtils.checkNoNullElements(this.compileClasspaths, "compileClasspaths");
         CollectionUtils.checkNoNullElements(this.runtimeClasspaths, "runtimeClasspaths");
+    }
+
+    private JavaClassPaths() {
+        this.compileClasspaths = Collections.emptySet();
+        this.runtimeClasspaths = Collections.emptySet();
     }
 
     /**
