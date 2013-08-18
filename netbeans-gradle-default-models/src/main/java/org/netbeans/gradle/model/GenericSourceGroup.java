@@ -28,6 +28,11 @@ public final class GenericSourceGroup implements Serializable {
     public static final String GROUP_NAME_JAVA = "java";
 
     /**
+     * Defines a {@link #getGroupName() group name} for Groovy source files.
+     */
+    public static final String GROUP_NAME_GROOVY = "groovy";
+
+    /**
      * Defines a {@link #getGroupName() group name} for resources of a Java
      * project.
      */
