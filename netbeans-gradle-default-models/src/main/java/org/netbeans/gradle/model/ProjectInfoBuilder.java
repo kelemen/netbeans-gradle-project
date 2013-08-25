@@ -29,8 +29,8 @@ public interface ProjectInfoBuilder<T> extends Serializable {
      *   to be extracted. This argument cannot be {@code null}.
      *
      * @return the required information extracted from the given project. This
-     *   method may return which is interpreted as no useful information could
-     *   be extracted.
+     *   method may return {@code null} which is interpreted as no useful
+     *   information could be extracted.
      */
     public T getProjectInfo(Project project);
 }
