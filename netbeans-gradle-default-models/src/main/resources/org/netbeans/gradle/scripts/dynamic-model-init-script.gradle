@@ -9,14 +9,30 @@ private class DynamicGradleModelPlugin implements Plugin<Project> {
     }
 
     public void apply(Project project) {
-        registry.register(project.modelClassForDynamicGradleModelPlugin.newInstance())
+        def input = project.inputForDynamicGradleModelPlugin
+        registry.register(project.modelClassForDynamicGradleModelPlugin.newInstance(input))
     }
 }
 
-List<File> jarFiles = $MODEL_JAR_FILE_PATHS;
+private class CustomClassObjectInputStream extends ObjectInputStream {
+    private final ClassLoader classLoader;
+
+    public CustomClassObjectInputStream(ClassLoader classLoader, InputStream input) throws IOException {
+        super(input)
+
+        this.classLoader = classLoader
+    }
+
+    @Override
+    protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+        return classLoader.loadClass(desc.getName())
+    }
+}
+
+List<String> jarFiles = $MODEL_JAR_FILE_PATHS;
 List<URL> jarURLList = new ArrayList(jarFiles.size());
-jarFiles.each { File jarFile ->
-    jarURLList.add(jarFile.toURI().toURL())
+jarFiles.each { String jarFile ->
+    jarURLList.add(new File(jarFile).toURI().toURL())
 }
 
 URL[] urls = jarURLList.toArray(new URL[jarURLList.size()]);
@@ -24,7 +40,21 @@ URL[] urls = jarURLList.toArray(new URL[jarURLList.size()]);
 URLClassLoader classLoader = new URLClassLoader(urls, getClass().classLoader)
 Class modelClass = classLoader.loadClass('org.netbeans.gradle.model.internal.DynamicModelLoader')
 
+Object inputForPlugin = null
+
+String inputFileAsStr = $INPUT_FILE
+if (inputFileAsStr != null) {
+    File inputFile = new File(inputFileAsStr)
+    ObjectInputStream serializedInput = new CustomClassObjectInputStream(classLoader, inputFile.newInputStream())
+    try {
+        inputForPlugin = serializedInput.readObject()
+    } finally {
+        serializedInput.close()
+    }
+}
+
 allprojects {
     ext.modelClassForDynamicGradleModelPlugin = modelClass
+    ext.inputForDynamicGradleModelPlugin = inputForPlugin
     apply plugin: DynamicGradleModelPlugin
 }
