@@ -1,0 +1,30 @@
+import org.gradle.tooling.provider.model.*
+
+private class DynamicGradleModelPlugin implements Plugin<Project> {
+    private final ToolingModelBuilderRegistry registry
+
+    @javax.inject.Inject
+    public DynamicGradleModelPlugin(ToolingModelBuilderRegistry registry) {
+        this.registry = registry
+    }
+
+    public void apply(Project project) {
+        registry.register(project.modelClassForDynamicGradleModelPlugin.newInstance())
+    }
+}
+
+List<File> jarFiles = $MODEL_JAR_FILE_PATHS;
+List<URL> jarURLList = new ArrayList(jarFiles.size());
+jarFiles.each { File jarFile ->
+    jarURLList.add(jarFile.toURI().toURL())
+}
+
+URL[] urls = jarURLList.toArray(new URL[jarURLList.size()]);
+
+URLClassLoader classLoader = new URLClassLoader(urls, getClass().classLoader)
+Class modelClass = classLoader.loadClass('org.netbeans.gradle.model.internal.DynamicModelLoader')
+
+allprojects {
+    ext.modelClassForDynamicGradleModelPlugin = modelClass
+    apply plugin: DynamicGradleModelPlugin
+}
