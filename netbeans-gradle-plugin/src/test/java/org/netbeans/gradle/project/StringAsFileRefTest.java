@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import org.netbeans.gradle.model.util.StringAsFileRef;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;

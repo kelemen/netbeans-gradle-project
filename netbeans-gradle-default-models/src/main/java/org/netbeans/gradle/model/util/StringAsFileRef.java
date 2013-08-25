@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.model.util;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -13,6 +13,8 @@ import java.util.Arrays;
 // This class assumes that files in NB_GRADLE_TEMP_DIR are only used by this class.
 // An external agent is allowed to delete the files if it can.
 public final class StringAsFileRef implements Closeable {
+    private static final String HEX_TABLE = "0123456789abcdef";
+
     private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"));
     private static final File NB_GRADLE_TEMP_DIR = new File(new File(TEMP_DIR, "nb-gradle-plugin"), "str-files");
 
@@ -82,7 +84,7 @@ public final class StringAsFileRef implements Closeable {
         if (content == null) throw new NullPointerException("content");
         if (encoding == null) throw new NullPointerException("encoding");
 
-        byte[] contentBytes = content.getBytes(encoding);
+        byte[] contentBytes = content.getBytes(encoding.name());
         String md5 = getMD5(contentBytes);
 
         String fileName = name + "-" + md5;
@@ -111,10 +113,19 @@ public final class StringAsFileRef implements Closeable {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] md5Hash = md.digest(input);
-            return StringUtils.byteArrayToHex(md5Hash);
+            return byteArrayToHex(md5Hash);
         } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException("Missing MD5 MessageDigest");
         }
+    }
+
+    private static String byteArrayToHex(byte[] array) {
+        StringBuilder result = new StringBuilder(array.length * 2);
+        for (byte value: array) {
+            result.append(HEX_TABLE.charAt(((int)value & 0xF0) >>> 4));
+            result.append(HEX_TABLE.charAt((int)value & 0x0F));
+        }
+        return result.toString();
     }
 
     private StringAsFileRef(File file, RandomAccessFile fileRef) {
@@ -131,7 +142,6 @@ public final class StringAsFileRef implements Closeable {
         return "FileReference{" + file + "}";
     }
 
-    @Override
     public void close() throws IOException {
         fileRef.close();
 
