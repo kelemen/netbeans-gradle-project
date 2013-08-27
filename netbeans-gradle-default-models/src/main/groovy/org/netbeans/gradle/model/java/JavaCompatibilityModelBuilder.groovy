@@ -29,7 +29,7 @@ implements
      *   This argument cannot be {@code null}.
      *
      * @return the {@code JavaCompatibilityModel} extracted from the given
-     *   project or {@code null} if the project does not applyies the "java"
+     *   project or {@code null} if the project does not applies the "java"
      *   plugin
      */
     public JavaCompatibilityModel getProjectInfo(Project project) {
