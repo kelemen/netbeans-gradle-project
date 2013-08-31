@@ -26,4 +26,8 @@ public final class CollectionUtils {
         }
         return result;
     }
+
+    private CollectionUtils() {
+        throw new AssertionError();
+    }
 }
