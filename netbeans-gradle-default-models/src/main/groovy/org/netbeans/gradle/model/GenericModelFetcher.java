@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.model.util.StringAsFileRef;
 
 public final class GenericModelFetcher {
@@ -75,22 +77,48 @@ public final class GenericModelFetcher {
         return result;
     }
 
+    private static void setupExecuter(BuildActionExecuter<?> executer, BuildOperationArgs buildOPArgs) {
+        File javaHome = buildOPArgs.getJavaHome();
+        if (javaHome != null) {
+            executer.setJavaHome(javaHome);
+        }
+
+        String[] jvmArguments = buildOPArgs.getJvmArguments();
+        if (jvmArguments != null) {
+            executer.setJvmArguments(jvmArguments);
+        }
+
+        OutputStream standardOutput = buildOPArgs.getStandardOutput();
+        if (standardOutput != null) {
+            executer.setStandardOutput(standardOutput);
+        }
+
+        OutputStream standardError = buildOPArgs.getStandardError();
+        if (standardError != null) {
+            executer.setStandardError(standardError);
+        }
+
+        InputStream standardInput = buildOPArgs.getStandardInput();
+        if (standardInput != null) {
+            executer.setStandardInput(standardInput);
+        }
+
+        for (ProgressListener listener: buildOPArgs.getProgressListeners()) {
+            executer.addProgressListener(listener);
+        }
+    }
+
     public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
         BuildActionExecuter<FetchedModels> executer
                 = connection.action(new ModelFetcherBuildAction(getBuildInfoBuilders()));
 
         BuildOperationArgs buildOPArgs = new BuildOperationArgs();
         init.initOperation(buildOPArgs);
+        setupExecuter(executer, buildOPArgs);
 
         String[] userArgs = buildOPArgs.getArguments();
-
-        executer.setJavaHome(buildOPArgs.getJavaHome());
-        executer.setJvmArguments(buildOPArgs.getJvmArguments());
-        executer.setStandardError(buildOPArgs.getStandardError());
-        executer.setStandardInput(buildOPArgs.getStandardInput());
-        executer.setStandardOutput(buildOPArgs.getStandardOutput());
-        for (ProgressListener listener: buildOPArgs.getProgressListeners()) {
-            executer.addProgressListener(listener);
+        if (userArgs == null) {
+            userArgs = new String[0];
         }
 
         List<File> classPath = new LinkedList<File>();
@@ -114,7 +142,7 @@ public final class GenericModelFetcher {
                 System.arraycopy(userArgs, 0, executerArgs, 0, userArgs.length);
 
                 executerArgs[executerArgs.length - 2] = "--init-script";
-                executerArgs[executerArgs.length - 1] = modelInputFile.getAbsolutePath();
+                executerArgs[executerArgs.length - 1] = initScriptRef.getFile().getPath();
 
                 executer.withArguments(executerArgs);
 
@@ -217,7 +245,12 @@ public final class GenericModelFetcher {
     }
 
     private static String readResourceText(String resourcePath, Charset charset) throws IOException {
-        InputStream resourceIS = GenericModelFetcher.class.getResourceAsStream(resourcePath);
+        URL resourceURL = GenericModelFetcher.class.getResource(resourcePath);
+        if (resourceURL == null) {
+            throw new IOException("Missing resource: " + resourcePath);
+        }
+
+        InputStream resourceIS = resourceURL.openStream();
         try {
             Reader resourceReader = new InputStreamReader(resourceIS, charset);
             try {
@@ -234,9 +267,9 @@ public final class GenericModelFetcher {
         String result = INIT_SCRIPT_REF.get();
         if (result == null) {
             try {
-                result = readResourceText("org/netbeans/gradle/scripts/dynamic-model-init-script.gradle", INIT_SCRIPT_ENCODING);
+                result = readResourceText("/org/netbeans/gradle/scripts/dynamic-model-init-script.gradle", INIT_SCRIPT_ENCODING);
             } catch (IOException ex) {
-                throw new IllegalStateException("Missing init-script file from resource.");
+                throw new IllegalStateException("Missing init-script file from resource.", ex);
             }
             INIT_SCRIPT_REF.set(result);
             result = INIT_SCRIPT_REF.get();
@@ -262,9 +295,18 @@ public final class GenericModelFetcher {
                 }
             }
 
-            ModelQueryOutput queryOutput = controller.getModel(ModelQueryOutputRef.class).getModelQueryOutput();
-            Map<Object, Object> projectInfoResults = queryOutput.getProjectInfoResults();
+            byte[] serializedModelQueryOutput
+                    = controller.getModel(ModelQueryOutputRef.class).getSerializedModelQueryOutput();
 
+            ModelQueryOutput queryOutput;
+
+            try {
+                queryOutput = (ModelQueryOutput)SerializationUtils.deserializeObject(serializedModelQueryOutput);
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            Map<Object, Object> projectInfoResults = queryOutput.getProjectInfoResults();
             return new FetchedModels(buildInfoResults, projectInfoResults);
         }
     }

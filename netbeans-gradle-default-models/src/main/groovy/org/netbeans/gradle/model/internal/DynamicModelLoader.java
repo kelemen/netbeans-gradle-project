@@ -5,6 +5,7 @@ import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.SerializationUtils;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {
     private final ModelQueryInput input;
@@ -43,8 +44,8 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             this.modelQueryOutput = modelQueryOutput;
         }
 
-        public ModelQueryOutput getModelQueryOutput() {
-            return modelQueryOutput;
+        public byte[] getSerializedModelQueryOutput() {
+            return SerializationUtils.serializeObject(modelQueryOutput);
         }
     }
 }

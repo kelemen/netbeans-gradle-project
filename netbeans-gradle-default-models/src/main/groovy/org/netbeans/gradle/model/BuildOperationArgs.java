@@ -12,7 +12,7 @@ public final class BuildOperationArgs {
     private File javaHome;
     private String[] jvmArguments;
     private String[] arguments;
-    private ProgressListener[] progressListeners;
+    private ProgressListener[] progressListeners = new ProgressListener[0];
 
     public OutputStream getStandardOutput() {
         return standardOutput;
@@ -50,23 +50,23 @@ public final class BuildOperationArgs {
         return jvmArguments != null ? jvmArguments.clone() : null;
     }
 
-    public void setJvmArguments(String[] jvmArguments) {
-        this.jvmArguments = jvmArguments;
+    public void setJvmArguments(String... jvmArguments) {
+        this.jvmArguments = jvmArguments != null ? jvmArguments.clone() : null;
     }
 
     public String[] getArguments() {
         return arguments != null ? arguments.clone() : null;
     }
 
-    public void setArguments(String[] arguments) {
-        this.arguments = arguments;
+    public void setArguments(String... arguments) {
+        this.arguments = arguments != null ? arguments.clone() : null;
     }
 
     public ProgressListener[] getProgressListeners() {
-        return progressListeners != null ? progressListeners.clone() : null;
+        return progressListeners.clone();
     }
 
     public void setProgressListeners(ProgressListener[] progressListeners) {
-        this.progressListeners = progressListeners;
+        this.progressListeners = progressListeners.clone();
     }
 }
