@@ -80,4 +80,8 @@ public final class ClassLoaderUtils {
         }
         return result;
     }
+
+    private ClassLoaderUtils() {
+        throw new AssertionError();
+    }
 }
