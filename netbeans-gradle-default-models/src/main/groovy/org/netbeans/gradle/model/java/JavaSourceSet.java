@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
-import org.netbeans.gradle.model.GenericSourceGroup;
 
 /**
  * Defines the source set of a Gradle Java project. A source set is set of
@@ -53,7 +52,7 @@ public final class JavaSourceSet implements Serializable {
     public static final class Builder {
         private final String name;
         private final JavaOutputDirs outputDirs;
-        private final Collection<GenericSourceGroup> sourceGroups;
+        private final Collection<JavaSourceGroup> sourceGroups;
         private JavaClassPaths classpaths;
 
         /**
@@ -80,7 +79,7 @@ public final class JavaSourceSet implements Serializable {
 
             this.name = name;
             this.outputDirs = outputDirs;
-            this.sourceGroups = new LinkedList<GenericSourceGroup>();
+            this.sourceGroups = new LinkedList<JavaSourceGroup>();
             this.classpaths = JavaClassPaths.EMPTY;
         }
 
@@ -94,7 +93,7 @@ public final class JavaSourceSet implements Serializable {
          * @throws NullPointerException thrown if the specified source group
          *   is {@code null}
          */
-        public void addSourceGroup(GenericSourceGroup sourceGroup) {
+        public void addSourceGroup(JavaSourceGroup sourceGroup) {
             if (sourceGroup == null) throw new NullPointerException("sourceGroup");
             sourceGroups.add(sourceGroup);
         }
@@ -131,13 +130,13 @@ public final class JavaSourceSet implements Serializable {
 
     private final String name;
     private final JavaOutputDirs outputDirs;
-    private final Collection<GenericSourceGroup> sourceGroups;
+    private final Collection<JavaSourceGroup> sourceGroups;
     private final JavaClassPaths classpaths;
 
     private JavaSourceSet(Builder builder) {
         this.name = builder.name;
         this.outputDirs = builder.outputDirs;
-        this.sourceGroups = new ArrayList<GenericSourceGroup>(builder.sourceGroups);
+        this.sourceGroups = new ArrayList<JavaSourceGroup>(builder.sourceGroups);
         this.classpaths = builder.classpaths;
     }
 
@@ -178,7 +177,7 @@ public final class JavaSourceSet implements Serializable {
      *   This method never returns {@code null} and the returned collection
      *   does not contain {@code null} elements.
      */
-    public Collection<GenericSourceGroup> getSourceGroups() {
+    public Collection<JavaSourceGroup> getSourceGroups() {
         return sourceGroups;
     }
 

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.model;
+package org.netbeans.gradle.model.java;
 
 import java.io.File;
 import java.io.Serializable;
@@ -19,7 +19,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  * The serialized format of this class is not subject to any kind of backward
  * or forward compatibility.
  */
-public final class GenericSourceGroup implements Serializable {
+public final class JavaSourceGroup implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -53,7 +53,7 @@ public final class GenericSourceGroup implements Serializable {
     private final Set<File> sourceRoots;
 
     /**
-     * Creates a new {@code GenericSourceGroup} with the given properties.
+     * Creates a new {@code JavaSourceGroup} with the given properties.
      *
      * @param groupName the name of these source roots representing the type of
      *   sources they contain. This argument cannot be {@code null}.
@@ -64,7 +64,7 @@ public final class GenericSourceGroup implements Serializable {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public GenericSourceGroup(String groupName, Collection<? extends File> sourceRoots) {
+    public JavaSourceGroup(String groupName, Collection<? extends File> sourceRoots) {
         if (groupName == null) throw new NullPointerException("groupName");
 
         this.groupName = groupName;
