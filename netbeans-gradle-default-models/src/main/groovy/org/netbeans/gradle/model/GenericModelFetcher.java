@@ -33,6 +33,7 @@ import org.netbeans.gradle.model.util.StringAsFileRef;
 
 public final class GenericModelFetcher {
     private static final Charset INIT_SCRIPT_ENCODING = Charset.forName("UTF-8");
+    private static final String INIT_SCRIPT_LOCATION = "/org/netbeans/gradle/scripts/dynamic-model-init-script.gradle";
 
     private static final AtomicReference<String> INIT_SCRIPT_REF = new AtomicReference<String>(null);
 
@@ -268,7 +269,7 @@ public final class GenericModelFetcher {
         String result = INIT_SCRIPT_REF.get();
         if (result == null) {
             try {
-                result = readResourceText("/org/netbeans/gradle/scripts/dynamic-model-init-script.gradle", INIT_SCRIPT_ENCODING);
+                result = readResourceText(INIT_SCRIPT_LOCATION, INIT_SCRIPT_ENCODING);
             } catch (IOException ex) {
                 throw new IllegalStateException("Missing init-script file from resource.", ex);
             }
