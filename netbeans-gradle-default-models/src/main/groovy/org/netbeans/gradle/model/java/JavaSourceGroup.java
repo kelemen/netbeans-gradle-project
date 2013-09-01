@@ -22,34 +22,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 public final class JavaSourceGroup implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Defines a {@link #getGroupName() group name} for Java source files.
-     */
-    public static final String GROUP_NAME_JAVA = "java";
-
-    /**
-     * Defines a {@link #getGroupName() group name} for Groovy source files.
-     */
-    public static final String GROUP_NAME_GROOVY = "groovy";
-
-    /**
-     * Defines a {@link #getGroupName() group name} for Scala source files.
-     */
-    public static final String GROUP_NAME_SCALA = "scala";
-
-    /**
-     * Defines a {@link #getGroupName() group name} for resources of a Java
-     * project.
-     */
-    public static final String GROUP_NAME_RESOURCES = "resources";
-
-    /**
-     * Defines a {@link #getGroupName() group name} for the source group
-     * containing all the source roots.
-     */
-    public static final String GROUP_NAME_ALL_SOURCE = "allSource";
-
-    private final String groupName;
+    private final JavaSourceGroupName groupName;
     private final Set<File> sourceRoots;
 
     /**
@@ -64,7 +37,7 @@ public final class JavaSourceGroup implements Serializable {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public JavaSourceGroup(String groupName, Collection<? extends File> sourceRoots) {
+    public JavaSourceGroup(JavaSourceGroupName groupName, Collection<? extends File> sourceRoots) {
         if (groupName == null) throw new NullPointerException("groupName");
 
         this.groupName = groupName;
@@ -87,12 +60,12 @@ public final class JavaSourceGroup implements Serializable {
      *     }
      * }
      * </pre>
-     * "java" could be a name of a source group.
+     * {@code JavaSourceGroupName.JAVA} could be a name of a source group.
      *
      * @return the name of these source roots representing the type of sources
      *   they contain. This method never returns {@code null}.
      */
-    public String getGroupName() {
+    public JavaSourceGroupName getGroupName() {
         return groupName;
     }
 

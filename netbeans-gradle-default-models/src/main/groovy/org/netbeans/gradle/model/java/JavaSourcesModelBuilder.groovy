@@ -1,7 +1,6 @@
 package org.netbeans.gradle.model.java;
 
 import org.gradle.api.*;
-import org.netbeans.gradle.model.GenericSourceGroup;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
 
 /**
@@ -59,19 +58,19 @@ implements
         def outputDirs = parseOutputDirs(sourceSet.output);
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(sourceSet.name, outputDirs);
 
-        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_JAVA, sourceSet.java));
+        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.JAVA, sourceSet.java));
 
         if (project.plugins.hasPlugin('groovy')) {
-            result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_GROOVY, sourceSet.groovy));
+            result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.GROOVY, sourceSet.groovy));
         }
 
         if (project.plugins.hasPlugin('scala')) {
-            result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_SCALA, sourceSet.scala));
+            result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.SCALA, sourceSet.scala));
         }
 
-        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_RESOURCES, sourceSet.resources));
+        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.RESOURCES, sourceSet.resources));
 
-        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_ALL_SOURCE, sourceSet.allSource));
+        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.ALL, sourceSet.allSource));
 
         result.setClasspaths(parseClassPaths(sourceSet));
 
@@ -85,8 +84,8 @@ implements
         return new JavaClassPaths(compile, runtime);
     }
 
-    private GenericSourceGroup parseSourceGroup(String name, def sourceGroup) {
-        return new GenericSourceGroup(name, sourceGroup.srcDirs);
+    private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, def sourceGroup) {
+        return new JavaSourceGroup(name, sourceGroup.srcDirs);
     }
 
     private JavaOutputDirs parseOutputDirs(def outputDirs) {
