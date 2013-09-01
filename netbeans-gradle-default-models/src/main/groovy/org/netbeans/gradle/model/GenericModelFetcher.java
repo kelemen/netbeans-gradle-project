@@ -22,6 +22,7 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.HierarchicalElement;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
@@ -286,7 +287,27 @@ public final class GenericModelFetcher {
             this.buildInfoRequests = buildInfoRequests;
         }
 
-        public FetchedModels execute(BuildController controller) {
+        private ModelQueryOutput getModelOutput(ModelGetter getter) {
+            byte[] serializedResult = getter
+                    .getModel(ModelQueryOutputRef.class)
+                    .getSerializedModelQueryOutput();
+
+            try {
+                return (ModelQueryOutput)SerializationUtils.deserializeObject(serializedResult);
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        private FetchedProjectModels getFetchedProjectModels(ModelGetter getter) {
+            ModelQueryOutput modelOutput = getModelOutput(getter);
+
+            return new FetchedProjectModels(
+                    modelOutput.getGenericProperties(),
+                    modelOutput.getProjectInfoResults());
+        }
+
+        public FetchedModels execute(final BuildController controller) {
             Map<Object, Object> buildInfoResults = new HashMap<Object, Object>(2 * buildInfoRequests.size());
             for (Map.Entry<Object, BuildInfoBuilder<?>> entry: buildInfoRequests.entrySet()) {
                 Object info = entry.getValue().getInfo(controller);
@@ -295,19 +316,28 @@ public final class GenericModelFetcher {
                 }
             }
 
-            byte[] serializedModelQueryOutput
-                    = controller.getModel(ModelQueryOutputRef.class).getSerializedModelQueryOutput();
+            FetchedProjectModels defaultProjectModels = getFetchedProjectModels(new ModelGetter() {
+                public <T> T getModel(Class<T> modelClass) {
+                    return controller.getModel(modelClass);
+                }
+            });
 
-            ModelQueryOutput queryOutput;
+            List<FetchedProjectModels> otherModels = new LinkedList<FetchedProjectModels>();
+            for (final HierarchicalElement projectRef: controller.getBuildModel().getProjects()) {
+                FetchedProjectModels otherModel = getFetchedProjectModels(new ModelGetter() {
+                    public <T> T getModel(Class<T> modelClass) {
+                        return controller.getModel(projectRef, modelClass);
+                    }
+                });
 
-            try {
-                queryOutput = (ModelQueryOutput)SerializationUtils.deserializeObject(serializedModelQueryOutput);
-            } catch (ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
+                otherModels.add(otherModel);
             }
 
-            Map<Object, Object> projectInfoResults = queryOutput.getProjectInfoResults();
-            return new FetchedModels(buildInfoResults, projectInfoResults);
+            return new FetchedModels(buildInfoResults, defaultProjectModels, otherModels);
         }
+    }
+
+    private interface ModelGetter {
+        public <T> T getModel(Class<T> modelClass);
     }
 }

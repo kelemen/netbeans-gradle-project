@@ -1,9 +1,11 @@
 package org.netbeans.gradle.model.internal;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
@@ -34,7 +36,15 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             }
         }
 
-        return new DefaultModelQueryOutputRef(new ModelQueryOutput(projectInfoResults));
+        GenericProjectProperties genericProperties = getGenericProperties(project);
+        return new DefaultModelQueryOutputRef(new ModelQueryOutput(genericProperties, projectInfoResults));
+    }
+
+    private GenericProjectProperties getGenericProperties(Project project) {
+        String name = project.getName();
+        String path = project.getPath();
+        File projectDir = project.getProjectDir();
+        return new GenericProjectProperties(name, path, projectDir);
     }
 
     private static final class DefaultModelQueryOutputRef implements ModelQueryOutputRef {
