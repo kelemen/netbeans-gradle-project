@@ -76,19 +76,26 @@ public class MultiLevelJavaProjectTest {
         runTestsForProject(subDir, task);
     }
 
+    private static <T> T fetchSingleProjectInfo(
+            ProjectConnection connection,
+            ProjectInfoBuilder<T> infoBuilder) throws IOException {
+
+        GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
+        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+
+        assertTrue(models.getBuildInfoResults().isEmpty());
+
+        @SuppressWarnings("unchecked")
+        T result = (T)models.getDefaultProjectModels().getProjectInfoResults().get(0);
+        return result;
+    }
+
     @Test
     public void testJavaSourcesModel() {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
-                GenericModelFetcher modelFetcher = projectInfoFetcher(JavaSourcesModelBuilder.INSTANCE);
-                FetchedModels models = modelFetcher.getModels(connection, defaultInit());
-
-                assertTrue(models.getBuildInfoResults().isEmpty());
-
-                JavaSourcesModel sourcesModel = (JavaSourcesModel)models
-                        .getDefaultProjectModels()
-                        .getProjectInfoResults()
-                        .get(0);
+                JavaSourcesModel sourcesModel
+                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.INSTANCE);
                 assertNotNull("Must have a JavaSourcesModel.", sourcesModel);
             }
         });
@@ -98,16 +105,9 @@ public class MultiLevelJavaProjectTest {
     public void testJavaCompatibilityModel() throws IOException {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
-                GenericModelFetcher modelFetcher = projectInfoFetcher(JavaCompatibilityModelBuilder.INSTANCE);
-                FetchedModels models = modelFetcher.getModels(connection, defaultInit());
-
-                assertTrue(models.getBuildInfoResults().isEmpty());
-
-                JavaCompatibilityModel sourcesModel = (JavaCompatibilityModel)models
-                        .getDefaultProjectModels()
-                        .getProjectInfoResults()
-                        .get(0);
-                assertNotNull("Must have a JavaCompatibilityModel.", sourcesModel);
+                JavaCompatibilityModel compatibilityModel
+                        = fetchSingleProjectInfo(connection, JavaCompatibilityModelBuilder.INSTANCE);
+                assertNotNull("Must have a JavaCompatibilityModel.", compatibilityModel);
             }
         });
     }
