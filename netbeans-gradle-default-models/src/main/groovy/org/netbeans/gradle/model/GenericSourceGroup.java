@@ -43,6 +43,12 @@ public final class GenericSourceGroup implements Serializable {
      */
     public static final String GROUP_NAME_RESOURCES = "resources";
 
+    /**
+     * Defines a {@link #getGroupName() group name} for the source group
+     * containing all the source roots.
+     */
+    public static final String GROUP_NAME_ALL_SOURCE = "allSource";
+
     private final String groupName;
     private final Set<File> sourceRoots;
 

@@ -40,19 +40,38 @@ implements
         List<JavaSourceSet> result = new LinkedList();
 
         project.sourceSets.each {
-            result.add(parseSourceSet(it));
+            result.add(parseSourceSet(project, it));
         }
 
         return new JavaSourcesModel(result);
     }
 
-    private JavaSourceSet parseSourceSet(def sourceSet) {
+    private static boolean implementsInterface(def obj, String ifName) {
+        try {
+            Class<?> cl = Class.forName('org.gradle.api.tasks.GroovySourceSet');
+            return cl.isAssignableFrom(obj.getClass());
+        } catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
+    private JavaSourceSet parseSourceSet(Project project, def sourceSet) {
         def outputDirs = parseOutputDirs(sourceSet.output);
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(sourceSet.name, outputDirs);
 
-        sourceSet.allSource.each {
-            result.addSourceGroup(parseSourceGroup(it));
+        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_JAVA, sourceSet.java));
+
+        if (project.plugins.hasPlugin('groovy')) {
+            result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_GROOVY, sourceSet.groovy));
         }
+
+        if (project.plugins.hasPlugin('scala')) {
+            result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_SCALA, sourceSet.scala));
+        }
+
+        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_RESOURCES, sourceSet.resources));
+
+        result.addSourceGroup(parseSourceGroup(GenericSourceGroup.GROUP_NAME_ALL_SOURCE, sourceSet.allSource));
 
         result.setClasspaths(parseClassPaths(sourceSet));
 
@@ -66,8 +85,8 @@ implements
         return new JavaClassPaths(compile, runtime);
     }
 
-    private GenericSourceGroup parseSourceGroup(def sourceGroup) {
-        return new GenericSourceGroup(sourceGroup.name, sourceGroup.srcDirs);
+    private GenericSourceGroup parseSourceGroup(String name, def sourceGroup) {
+        return new GenericSourceGroup(name, sourceGroup.srcDirs);
     }
 
     private JavaOutputDirs parseOutputDirs(def outputDirs) {
