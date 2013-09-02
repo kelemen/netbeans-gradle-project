@@ -665,7 +665,10 @@ public final class NbGradleProject implements Project {
                     continue;
                 }
 
-                Set<String> conflicts = safelyLoadExtensions(extension, model.getModelsForExtension(extensionRef));
+                Set<String> conflicts = safelyLoadExtensions(
+                        extension,
+                        model.getModelsForExtension(extensionRef.getName()));
+
                 disabledExtensions.addAll(conflicts);
                 loadedExtensions.put(name, extension);
             }

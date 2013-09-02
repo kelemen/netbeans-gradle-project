@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,6 +16,10 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.UnknownModelException;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.HierarchicalElement;
+import org.gradle.tooling.model.eclipse.EclipseProject;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.CollectionUtils;
@@ -25,13 +30,11 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
-    private final NbGradleModel proposedModel;
     private final LongRunningOperationSetup setup;
 
-    public NbGradle18ModelLoader(NbGradleModel proposedModel, LongRunningOperationSetup setup) {
+    public NbGradle18ModelLoader(LongRunningOperationSetup setup) {
         if (setup == null) throw new NullPointerException("setup");
 
-        this.proposedModel = proposedModel;
         this.setup = setup;
     }
 
@@ -42,30 +45,37 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
     private ModelLoaderAction getBuildAction(List<ProjectExtensionRef> extensionRefs) {
         List<List<Class<?>>> requestedModels = new LinkedList<List<Class<?>>>();
+        requestedModels.add(Collections.<Class<?>>singletonList(IdeaModule.class));
         requestedModels.add(Collections.<Class<?>>singletonList(IdeaProject.class));
-
-        Map<String, Collection<BuildAction<?>>> extensionActions
-                = new HashMap<String, Collection<BuildAction<?>>>(2 * extensionRefs.size());
+        requestedModels.add(Collections.<Class<?>>singletonList(GradleProject.class));
+        requestedModels.add(Collections.<Class<?>>singletonList(EclipseProject.class));
 
         for (ProjectExtensionRef extensionRef: extensionRefs) {
             GradleProjectExtension extension = extensionRef.getExtension();
 
-            Collection<? extends BuildAction<?>> actions
-                    = extension.getExtensionLookup().lookupAll(buildActionClass());
-
-            if (actions.isEmpty()) {
-                Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
-                for (List<Class<?>> extensionModel: extensionModels) {
-                    requestedModels.add(extensionModel);
-                }
-            }
-            else {
-                String extensionName = extension.getExtensionName();
-                extensionActions.put(extensionName, new ArrayList<BuildAction<?>>(actions));
+            Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
+            for (List<Class<?>> extensionModel: extensionModels) {
+                requestedModels.add(extensionModel);
             }
         }
 
-        return new ModelLoaderAction(requestedModels, extensionActions);
+        return new ModelLoaderAction(requestedModels);
+    }
+
+    private NbGradleModel getNBModel(Models models) throws IOException {
+        Lookup modelLookup = Lookups.fixed(models.getModels().toArray());
+        IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
+        EclipseProject eclipseProject = modelLookup.lookup(EclipseProject.class);
+        if (ideaProject == null || eclipseProject == null) {
+            return null;
+        }
+
+        IdeaModule module = GradleModelLoader.tryFindMainModule(
+                eclipseProject.getProjectDirectory(), ideaProject);
+
+        return module != null
+                ? NbCompatibleModelLoader.loadMainModelFromIdeaModule(module)
+                : null;
     }
 
     @Override
@@ -74,47 +84,40 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException {
 
-        NbGradleModel mainModel = proposedModel;
-
-        List<ProjectExtensionRef> extensionRefs;
-        if (mainModel != null) {
-            extensionRefs = mainModel.getUnloadedExtensions(project);
-        }
-        else {
-            extensionRefs = project.getExtensionRefs();
-        }
-
+        List<ProjectExtensionRef> extensionRefs = project.getExtensionRefs();
         ModelLoaderAction buildAction = getBuildAction(extensionRefs);
 
-        BuildActionExecuter<Models> executer = connection.action(buildAction);
+        BuildActionExecuter<ModelsForAll> executer = connection.action(buildAction);
         setup.setupLongRunningOperation(executer);
 
-        Models loadedModels = executer.run();
-        Lookup modelLookup = Lookups.fixed(loadedModels.getModels().toArray());
-
-        IdeaProject mainIdeaProject = modelLookup.lookup(IdeaProject.class);
-        if (mainIdeaProject == null) {
-            throw new IOException("Failed to load IdeaProject for " + project.getProjectDirectory());
+        ModelsForAll loadedModelsForAll = executer.run();
+        NbGradleModel mainModel = getNBModel(loadedModelsForAll.getModelForDefaultProject());
+        if (mainModel == null) {
+            throw new IOException("Failed to load required model classes for " + project.getProjectDirectory());
         }
+
+        loadModelsForExtensions(mainModel, loadedModelsForAll.getModelForDefaultProject(), extensionRefs);
 
         List<NbGradleModel> otherModels = new LinkedList<NbGradleModel>();
-
-        if (mainModel == null) {
-            mainModel = NbCompatibleModelLoader.parseMainModel(project, mainIdeaProject, otherModels);
+        for (Map.Entry<File, Models> projectEntry: loadedModelsForAll.getProjectModels().entrySet()) {
+            NbGradleModel otherModel = getNBModel(projectEntry.getValue());
+            if (otherModel != null) {
+                loadModelsForExtensions(otherModel, projectEntry.getValue(), extensionRefs);
+                otherModels.add(otherModel);
+            }
         }
-
-        loadModelsForExtensions(project, mainModel, loadedModels.getBuildActionObjects(), modelLookup);
 
         return new Result(mainModel, otherModels);
     }
 
     private static void loadModelsForExtensions(
-            NbGradleProject project,
-            NbGradleModel mainModel,
-            Map<String, Collection<Object>> extensionObjects,
-            Lookup modelLookup) {
+            NbGradleModel nbModel,
+            Models foundModels,
+            List<ProjectExtensionRef> extensionRefs) {
 
-        for (ProjectExtensionRef extensionRef: mainModel.getUnloadedExtensions(project)) {
+        Lookup modelLookup = Lookups.fixed(foundModels.getModels().toArray());
+
+        for (ProjectExtensionRef extensionRef: extensionRefs) {
             GradleProjectExtension extension = extensionRef.getExtension();
 
             Iterable<List<Class<?>>> extensionModels = extension.getGradleModels();
@@ -129,13 +132,8 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                     }
                 }
             }
-            Collection<Object> customObjects = extensionObjects.get(extension.getExtensionName());
 
-            if (customObjects != null) {
-                extensionLookupContent.addAll(customObjects);
-            }
-
-            mainModel.setModelsForExtension(extensionRef, Lookups.fixed(extensionLookupContent.toArray()));
+            nbModel.setModelsForExtension(extensionRef.getName(), Lookups.fixed(extensionLookupContent.toArray()));
         }
     }
 
@@ -150,83 +148,164 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         return Collections.unmodifiableMap(result);
     }
 
-    private static final class Models implements Serializable {
-        private static final long serialVersionUID = 6282985709430938034L;
-
-        private final List<Object> models;
-        private final Map<String, Collection<Object>> buildActionObjects;
-
-        public Models(List<?> models, Map<String, Collection<Object>> buildActionObjects) {
-            this.models = CollectionUtils.copyNullSafeList(models);
-            this.buildActionObjects = copyMultiValueMap(buildActionObjects);
-        }
-
-        public List<Object> getModels() {
-            return models;
-        }
-
-        public Map<String, Collection<Object>> getBuildActionObjects() {
-            return buildActionObjects;
-        }
-    }
-
-    private static class ModelLoaderAction implements BuildAction<Models> {
+    private static class ModelLoaderAction implements BuildAction<NbGradle18ModelLoader.ModelsForAll> {
         private static final long serialVersionUID = 8168780059406328344L;
-
         private final List<List<Class<?>>> models;
-        private final Map<String, Collection<BuildAction<?>>> buildActions;
 
-        public ModelLoaderAction(List<List<Class<?>>> models, Map<String, Collection<BuildAction<?>>> buildActions) {
+        public ModelLoaderAction(List<List<Class<?>>> models) {
             this.models = new ArrayList<List<Class<?>>>(models.size());
-
             for (List<Class<?>> modelsForEntity: models) {
                 this.models.add(new ArrayList<Class<?>>(modelsForEntity));
             }
-
-            this.buildActions = copyMultiValueMap(buildActions);
         }
 
-        @Override
-        public Models execute(BuildController controller) {
+        private Object loadModel(
+                NbGradle18ModelLoader.ModelFinder modelFinder,
+                Class<?> modelClass,
+                List<Object> result,
+                Map<Class<?>, Object> resultMap) {
+
+            Object model = resultMap.get(modelClass);
+            if (model != null) {
+                return model;
+            }
+
+            if (modelClass == IdeaProject.class) {
+                IdeaModule ideaModule = (IdeaModule)loadModel(modelFinder, IdeaModule.class, result, resultMap);
+                if (ideaModule == null) {
+                    model = modelFinder.tryGetModel(modelClass);
+                }
+                else {
+                    model = ideaModule.getProject();
+                }
+            }
+            else {
+                model = modelFinder.tryGetModel(modelClass);
+            }
+
+            if (model != null) {
+                result.add(model);
+                resultMap.put(modelClass, model);
+            }
+            return model;
+        }
+
+        private NbGradle18ModelLoader.Models findModels(NbGradle18ModelLoader.ModelFinder modelFinder) {
             List<Object> result = new ArrayList<Object>(models.size());
             Map<Class<?>, Object> loadedModels = new IdentityHashMap<Class<?>, Object>(2 * models.size());
 
             for (List<Class<?>> modelsForEntity: models) {
                 for (Class<?> modelClass: modelsForEntity) {
-                    try {
-                        Object model = loadedModels.get(modelClass);
-                        if (model == null) {
-                            model = controller.getModel(modelClass);
-                        }
-
-                        if (model != null) {
-                            loadedModels.put(modelClass, model);
-                            result.add(model);
-                            break;
-                        }
-                    } catch (UnknownModelException ex) {
-                        // Try the next model in the list.
+                    Object model = loadModel(modelFinder, modelClass, result, loadedModels);
+                    if (model != null) {
+                        break;
                     }
                 }
             }
-
-            Map<String, Collection<Object>> actionResults
-                    = new HashMap<String, Collection<Object>>(2 * buildActions.size());
-
-            for (Map.Entry<String, Collection<BuildAction<?>>> entry: buildActions.entrySet()) {
-                Collection<BuildAction<?>> actions = entry.getValue();
-                List<Object> extensionResults = new ArrayList<Object>(actions.size());
-
-                for (BuildAction<?> action: actions) {
-                    Object actionResult = action.execute(controller);
-                    if (actionResult != null) {
-                        extensionResults.add(actionResult);
-                    }
-                }
-                actionResults.put(entry.getKey(), extensionResults);
-            }
-
-            return new Models(result, actionResults);
+            return new NbGradle18ModelLoader.Models(result);
         }
+
+        private <T> T getModel(Class<T> modelClass, NbGradle18ModelLoader.ModelFinder modelFinder, NbGradle18ModelLoader.Models loadedModels) {
+            Lookup modelLookup = Lookups.fixed(loadedModels.getModels().toArray());
+            T result = modelLookup.lookup(modelClass);
+            if (result == null) {
+                result = modelFinder.tryGetModel(modelClass);
+            }
+            return result;
+        }
+
+        @Override
+        public NbGradle18ModelLoader.ModelsForAll execute(final BuildController controller) {
+            NbGradle18ModelLoader.ModelFinder mainModelFinder = new NbGradle18ModelLoader.ModelFinder() {
+                @Override
+                public <T> T tryGetModel(Class<T> modelClass) {
+                    // TODO: Replace with findModel in next version
+                    try {
+                        return controller.getModel(modelClass);
+                    } catch (UnknownModelException ex) {
+                        return null;
+                    }
+                }
+            };
+            NbGradle18ModelLoader.Models modelsForDefault = findModels(mainModelFinder);
+            IdeaModule mainIdeaModule = getModel(IdeaModule.class, mainModelFinder, modelsForDefault);
+            File mainModuleDir = mainIdeaModule != null
+                    ? GradleModelLoader.tryGetModuleDir(mainIdeaModule)
+                    : null;
+
+            Collection<? extends HierarchicalElement> projects = controller.getBuildModel().getProjects();
+            Map<File, NbGradle18ModelLoader.Models> projectModels = new HashMap<File, NbGradle18ModelLoader.Models>(2 * projects.size());
+            for (final HierarchicalElement project: projects) {
+                NbGradle18ModelLoader.ModelFinder otherModelFinder = new NbGradle18ModelLoader.ModelFinder() {
+                    @Override
+                    public <T> T tryGetModel(Class<T> modelClass) {
+                        // TODO: Replace with findModel in next version
+                        try {
+                            return controller.getModel(project, modelClass);
+                        } catch (UnknownModelException ex) {
+                            return null;
+                        }
+                    }
+                };
+
+                NbGradle18ModelLoader.Models otherModels = findModels(otherModelFinder);
+                EclipseProject eclipseProject = getModel(EclipseProject.class, mainModelFinder, otherModels);
+                if (eclipseProject != null) {
+                    File moduleDir = eclipseProject.getProjectDirectory();
+                    if (moduleDir != null && !moduleDir.equals(mainModuleDir)) {
+                        projectModels.put(moduleDir, otherModels);
+                    }
+                }
+//                IdeaModule ideaModule = getModel(IdeaModule.class, mainModelFinder, otherModels);
+//                if (ideaModule != null) {
+//                    File moduleDir = GradleModelLoader.tryGetModuleDir(ideaModule);
+//                    if (moduleDir != null && !moduleDir.equals(mainModuleDir)) {
+//                        projectModels.put(moduleDir, otherModels);
+//                    }
+//                }
+            }
+            return new NbGradle18ModelLoader.ModelsForAll(modelsForDefault, projectModels);
+        }
+    }
+
+    private static final class ModelsForAll implements Serializable {
+        private static final long serialVersionUID = 1327087236723573084L;
+
+        private final Models modelForDefaultProject;
+        private final Map<File, Models> projectModels;
+
+        public ModelsForAll(Models modelForDefaultProject, Map<File, Models> projectModels) {
+            if (modelForDefaultProject == null) throw new NullPointerException("modelForDefaultProject");
+            if (projectModels == null) throw new NullPointerException("projectModels");
+
+            this.modelForDefaultProject = modelForDefaultProject;
+            this.projectModels = CollectionUtils.copyNullSafeHashMap(projectModels);
+        }
+
+        public Models getModelForDefaultProject() {
+            return modelForDefaultProject;
+        }
+
+        public Map<File, Models> getProjectModels() {
+            return projectModels;
+        }
+    }
+
+    private static final class Models implements Serializable {
+        private static final long serialVersionUID = 6282985709430938034L;
+
+        private final List<Object> models;
+
+        public Models(List<?> models) {
+            this.models = CollectionUtils.copyNullSafeList(models);
+        }
+
+        public List<Object> getModels() {
+            return models;
+        }
+    }
+
+    public interface ModelFinder {
+        public <T> T tryGetModel(Class<T> modelClass);
     }
 }

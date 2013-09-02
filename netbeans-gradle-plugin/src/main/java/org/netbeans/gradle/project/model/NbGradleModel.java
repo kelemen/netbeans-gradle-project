@@ -26,7 +26,9 @@ public final class NbGradleModel {
     private volatile boolean dirty;
 
     private final AtomicReference<DynamicLookup> mainModelsRef;
-    private final ConcurrentMap<ProjectExtensionRef, DynamicLookup> extensionModels;
+
+    // Maps extension name to DynamicLookup
+    private final ConcurrentMap<String, DynamicLookup> extensionModels;
     private final DynamicLookup allModels;
 
     private final String displayName;
@@ -49,7 +51,7 @@ public final class NbGradleModel {
                 getBuildFile(projectDir),
                 settingsFile,
                 new AtomicReference<DynamicLookup>(null),
-                new ConcurrentHashMap<ProjectExtensionRef, DynamicLookup>());
+                new ConcurrentHashMap<String, DynamicLookup>());
     }
 
     private NbGradleModel(
@@ -58,7 +60,7 @@ public final class NbGradleModel {
             File buildFile,
             File settingsFile,
             AtomicReference<DynamicLookup> mainLookupRef,
-            ConcurrentMap<ProjectExtensionRef, DynamicLookup> extensionModels) {
+            ConcurrentMap<String, DynamicLookup> extensionModels) {
         if (projectInfo == null) throw new NullPointerException("projectInfo");
         if (projectDir == null) throw new NullPointerException("projectDir");
         if (mainLookupRef == null) throw new NullPointerException("mainLookupRef");
@@ -122,7 +124,7 @@ public final class NbGradleModel {
 
     public boolean hasUnloadedExtensions(NbGradleProject project) {
         for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
-            if (!extensionModels.containsKey(extensionRef)) {
+            if (!extensionModels.containsKey(extensionRef.getName())) {
                 return true;
             }
         }
@@ -132,18 +134,18 @@ public final class NbGradleModel {
     public List<ProjectExtensionRef> getUnloadedExtensions(NbGradleProject project) {
         List<ProjectExtensionRef> result = new LinkedList<ProjectExtensionRef>();
         for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
-            if (!extensionModels.containsKey(extensionRef)) {
+            if (!extensionModels.containsKey(extensionRef.getName())) {
                 result.add(extensionRef);
             }
         }
         return result;
     }
 
-    public void setModelsForExtension(ProjectExtensionRef extensionRef, Lookup models) {
-        Parameters.notNull("extensionRef", extensionRef);
+    public void setModelsForExtension(String extensionName, Lookup models) {
+        Parameters.notNull("extensionName", extensionName);
         Parameters.notNull("models", models);
 
-        DynamicLookup oldLookup = extensionModels.putIfAbsent(extensionRef, new DynamicLookup(models));
+        DynamicLookup oldLookup = extensionModels.putIfAbsent(extensionName, new DynamicLookup(models));
         if (oldLookup != null) {
             oldLookup.replaceLookups(models);
         }
@@ -152,10 +154,10 @@ public final class NbGradleModel {
         updateAllModels();
     }
 
-    public Lookup getModelsForExtension(ProjectExtensionRef extensionRef) {
-        Parameters.notNull("extensionRef", extensionRef);
+    public Lookup getModelsForExtension(String extensionName) {
+        Parameters.notNull("extensionName", extensionName);
 
-        Lookup result = extensionModels.get(extensionRef);
+        Lookup result = extensionModels.get(extensionName);
         return result != null ? result : Lookup.EMPTY;
     }
 

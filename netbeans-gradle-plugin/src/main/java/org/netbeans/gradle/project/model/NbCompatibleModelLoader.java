@@ -87,7 +87,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
                 }
             }
 
-            result.setModelsForExtension(extensionRef, Lookups.fixed(extensionModels.toArray()));
+            result.setModelsForExtension(extensionRef.getName(), Lookups.fixed(extensionModels.toArray()));
         }
     }
 
@@ -109,14 +109,14 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return new GradleProjectInfo(module.getGradleProject(), moduleDir, children);
     }
 
-    private static NbGradleModel loadMainModelFromIdeaModule(IdeaModule ideaModule) throws IOException {
+    public static NbGradleModel loadMainModelFromIdeaModule(IdeaModule ideaModule) throws IOException {
         GradleProjectInfo projectInfo = tryCreateProjectTreeFromIdea(ideaModule);
         if (projectInfo == null) {
             throw new IOException("Failed to create project info for project: " + ideaModule.getName());
         }
 
         NbGradleModel result = new NbGradleModel(projectInfo, projectInfo.getProjectDir());
-        result.setMainModels(Lookups.singleton(ideaModule.getProject()));
+        result.setMainModels(Lookups.fixed(ideaModule, ideaModule.getProject()));
         return result;
     }
 

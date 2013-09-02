@@ -251,12 +251,12 @@ public final class GradleModelLoader {
         for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
             GradleProjectExtension extension = extensionRef.getExtension();
             Map<File, Lookup> deduced
-                    = extension.deduceModelsForProjects(mainModel.getModelsForExtension(extensionRef));
+                    = extension.deduceModelsForProjects(mainModel.getModelsForExtension(extensionRef.getName()));
 
             for (Map.Entry<File, Lookup> entry: deduced.entrySet()) {
                 NbGradleModel deducedModel = projects.get(entry.getKey());
                 if (deducedModel != null) {
-                    deducedModel.setModelsForExtension(extensionRef, entry.getValue());
+                    deducedModel.setModelsForExtension(extensionRef.getName(), entry.getValue());
                 }
             }
         }
@@ -317,7 +317,7 @@ public final class GradleModelLoader {
         }
         else {
             LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
-            return new NbGradle18ModelLoader(proposedModel, setup);
+            return new NbGradle18ModelLoader(setup);
         }
     }
 

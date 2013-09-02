@@ -4,7 +4,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -21,6 +20,7 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
+import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -52,14 +52,7 @@ public class SimpleJavaProjectTest {
         GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.6"));
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
-        tempFolder = File.createTempFile("junit", "");
-        if (!tempFolder.delete()) {
-            throw new IOException("Failed to remove " + tempFolder);
-        }
-        if (!tempFolder.mkdir()) {
-            throw new IOException("Failed to create " + tempFolder);
-        }
-        TestUtils.unzip(SimpleJavaProjectTest.class.getResourceAsStream("gradle-sample.zip"), tempFolder);
+        tempFolder = ZipUtils.unzipResourceToTemp(SimpleJavaProjectTest.class, "gradle-sample.zip");
         projectDir = FileUtil.normalizeFile(new File(tempFolder, "gradle-sample"));
         TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(projectDir));
     }
@@ -92,7 +85,7 @@ public class SimpleJavaProjectTest {
 
     @AfterClass
     public static void clear() throws Exception {
-        TestUtils.recursiveDelete(tempFolder);
+        ZipUtils.recursiveDelete(tempFolder);
     }
 
     @Test

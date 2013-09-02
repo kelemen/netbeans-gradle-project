@@ -18,6 +18,10 @@ public final class ProjectExtensionRef {
         this.extensionClass = extension.getClass();
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Nonnull
     public GradleProjectExtension getExtension() {
         return extension;
