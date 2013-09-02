@@ -38,6 +38,18 @@ public final class JavaSourceSet implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Defines the {@link #getName() name} for the main source set in Gradle
+     * Java projects.
+     */
+    public static final String NAME_MAIN = "main";
+
+    /**
+     * Defines the {@link #getName() name} for the test source set in Gradle
+     * Java projects.
+     */
+    public static final String NAME_TEST = "test";
+
+    /**
      * A builder to create new instances of {@link JavaSourceSet}.
      * Once you have initialized all the properties, you have to call
      * {@link #create() create()} to create a new {@code JavaSourceSet} instance.
