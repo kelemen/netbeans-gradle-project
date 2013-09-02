@@ -4,10 +4,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.gradle.tooling.model.GradleProject;
 
 public final class NbJavaModule {
-    private final GradleProject gradleProject;
     private final Properties properties;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
@@ -15,26 +13,19 @@ public final class NbJavaModule {
 
     // Should only be called by NbJavaModuleBuilder
     NbJavaModule(
-            GradleProject gradleProject,
             Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs,
             Map<NbDependencyType, NbDependencyGroup> dependencies) {
 
-        if (gradleProject == null) throw new NullPointerException("gradleProject");
         if (properties == null) throw new NullPointerException("properties");
         if (dependencies == null) throw new NullPointerException("dependencies");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
 
-        this.gradleProject = gradleProject;
         this.properties = properties;
         this.sources = Collections.unmodifiableMap(sources);
         this.listedDirs = Collections.unmodifiableList(listedDirs);
         this.dependencies = Collections.unmodifiableMap(dependencies);
-    }
-
-    public GradleProject getGradleProject() {
-        return gradleProject;
     }
 
     public Properties getProperties() {

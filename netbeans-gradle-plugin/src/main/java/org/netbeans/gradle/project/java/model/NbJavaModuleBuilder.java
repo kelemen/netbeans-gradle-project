@@ -26,7 +26,6 @@ public final class NbJavaModuleBuilder {
 
         this.dependencies = new EnumMap<NbDependencyType, NbDependencyGroup>(NbDependencyType.class);
         this.view = new NbJavaModule(
-                gradleProject,
                 properties,
                 copyNullSafeMutableMap(NbSourceType.class, sources),
                 CollectionUtils.copyNullSafeMutableList(listedDirs),
