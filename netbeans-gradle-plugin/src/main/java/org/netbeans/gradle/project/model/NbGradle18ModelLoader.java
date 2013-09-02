@@ -15,7 +15,6 @@ import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.eclipse.EclipseProject;
@@ -219,12 +218,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             NbGradle18ModelLoader.ModelFinder mainModelFinder = new NbGradle18ModelLoader.ModelFinder() {
                 @Override
                 public <T> T tryGetModel(Class<T> modelClass) {
-                    // TODO: Replace with findModel in next version
-                    try {
-                        return controller.getModel(modelClass);
-                    } catch (UnknownModelException ex) {
-                        return null;
-                    }
+                    return controller.findModel(modelClass);
                 }
             };
             NbGradle18ModelLoader.Models modelsForDefault = findModels(mainModelFinder);
@@ -239,12 +233,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 NbGradle18ModelLoader.ModelFinder otherModelFinder = new NbGradle18ModelLoader.ModelFinder() {
                     @Override
                     public <T> T tryGetModel(Class<T> modelClass) {
-                        // TODO: Replace with findModel in next version
-                        try {
-                            return controller.getModel(project, modelClass);
-                        } catch (UnknownModelException ex) {
-                            return null;
-                        }
+                        return controller.findModel(project, modelClass);
                     }
                 };
 
