@@ -24,7 +24,8 @@ import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.model.EmptyGradleProject;
+import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -60,20 +61,16 @@ public final class NbJavaModelUtils {
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
         String name = projectDir.getName();
-
         String level = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
-        NbJavaModule.Properties properties = new NbJavaModule.Properties(
-                name,
-                name,
-                projectDir,
-                createDefaultOutput(projectDir),
-                level,
-                level);
+        GenericProjectProperties properties = new GenericProjectProperties(name, name, projectDir);
+        JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
+        NbOutput output = createDefaultOutput(projectDir);
 
         NbJavaModuleBuilder mainModuleBuilder = new NbJavaModuleBuilder(
-                new EmptyGradleProject(projectDir),
                 properties,
+                compatibilityModel,
+                output,
                 Collections.<NbSourceType, NbSourceGroup>emptyMap(),
                 Collections.<File>emptyList());
 
@@ -364,17 +361,14 @@ public final class NbJavaModelUtils {
         String scriptDisplayName = module.getName();
         if (scriptDisplayName == null) scriptDisplayName = "";
 
-        NbJavaModule.Properties properties = new NbJavaModule.Properties(
-                scriptDisplayName,
-                uniqueName,
-                moduleDir,
-                NbJavaModelUtils.createDefaultOutput(moduleDir),
-                sourceLevel,
-                targetLevel);
+        GenericProjectProperties properties = new GenericProjectProperties(scriptDisplayName, uniqueName, moduleDir);
+        JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
+        NbOutput output = NbJavaModelUtils.createDefaultOutput(moduleDir);
+
         List<File> listedDirs = lookupListedDirs(sources);
 
         NbJavaModuleBuilder moduleBuilder = new NbJavaModuleBuilder(
-                module.getGradleProject(), properties, sources, listedDirs);
+                properties, compatibilityModel, output, sources, listedDirs);
         NbJavaModule result = moduleBuilder.getReadOnlyView();
         parsedModules.put(uniqueName, result);
 

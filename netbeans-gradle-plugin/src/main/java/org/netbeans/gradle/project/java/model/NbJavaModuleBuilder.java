@@ -4,7 +4,8 @@ import java.io.File;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import org.gradle.tooling.model.GradleProject;
+import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.project.CollectionUtils;
 
 public final class NbJavaModuleBuilder {
@@ -15,8 +16,9 @@ public final class NbJavaModuleBuilder {
     private final NbJavaModule view;
 
     public NbJavaModuleBuilder(
-            GradleProject gradleProject,
-            NbJavaModule.Properties properties,
+            GenericProjectProperties properties,
+            JavaCompatibilityModel compatibilityModel,
+            NbOutput outputDirs,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs) {
 
@@ -27,6 +29,8 @@ public final class NbJavaModuleBuilder {
         this.dependencies = new EnumMap<NbDependencyType, NbDependencyGroup>(NbDependencyType.class);
         this.view = new NbJavaModule(
                 properties,
+                compatibilityModel,
+                outputDirs,
                 copyNullSafeMutableMap(NbSourceType.class, sources),
                 CollectionUtils.copyNullSafeMutableList(listedDirs),
                 dependencies);

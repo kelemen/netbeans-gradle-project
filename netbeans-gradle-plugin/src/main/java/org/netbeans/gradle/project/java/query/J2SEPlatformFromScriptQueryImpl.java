@@ -18,13 +18,12 @@ implements
 
     @Override
     public ProjectPlatform getPlatform() {
-        // TODO: Try to find out the type of the platform.
-        String targetLevel = javaExt.getCurrentModel().getMainModule().getProperties().getTargetLevel();
+        String targetLevel = javaExt.getCurrentModel().getMainModule().getCompatibilityModel().getTargetCompatibility();
         return new ProjectPlatformSource("j2se", targetLevel, true).getValue();
     }
 
     @Override
     public String getSourceLevel() {
-        return javaExt.getCurrentModel().getMainModule().getProperties().getSourceLevel();
+        return javaExt.getCurrentModel().getMainModule().getCompatibilityModel().getSourceCompatibility();
     }
 }

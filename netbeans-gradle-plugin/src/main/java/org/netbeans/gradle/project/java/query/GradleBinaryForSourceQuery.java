@@ -56,7 +56,7 @@ implements
     }
 
     private static URL[] getBinariesOfModule(NbJavaModule module) {
-        File buildDir = module.getProperties().getOutput().getBuildDir();
+        File buildDir = module.getOutputDirs().getBuildDir();
         try {
             URL url = Utilities.toURI(buildDir).toURL();
             return new URL[]{url};
@@ -68,7 +68,7 @@ implements
     }
 
     private static URL[] getTestBinariesOfModule(NbJavaModule module) {
-        File testBuildDir = module.getProperties().getOutput().getTestBuildDir();
+        File testBuildDir = module.getOutputDirs().getTestBuildDir();
         try {
             URL url = Utilities.toURI(testBuildDir).toURL();
             return new URL[]{url};

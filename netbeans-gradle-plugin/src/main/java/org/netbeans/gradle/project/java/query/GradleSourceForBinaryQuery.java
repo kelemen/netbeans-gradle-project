@@ -52,7 +52,7 @@ implements
 
     private static BinaryType getBinaryRootType(
             NbJavaModule module, File root) {
-        NbOutput output = module.getProperties().getOutput();
+        NbOutput output = module.getOutputDirs();
 
         if (GradleFileUtils.isParentOrSame(output.getBuildDir(), root)) {
             return BinaryType.NORMAL;

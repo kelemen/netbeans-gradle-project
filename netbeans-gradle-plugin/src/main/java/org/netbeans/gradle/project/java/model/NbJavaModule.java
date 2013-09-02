@@ -4,44 +4,63 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 
 public final class NbJavaModule {
-    private final Properties properties;
+    private final GenericProjectProperties properties;
+    private final JavaCompatibilityModel compatibilityModel;
+    private final NbOutput outputDirs;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
     private final List<File> listedDirs;
 
     // Should only be called by NbJavaModuleBuilder
     NbJavaModule(
-            Properties properties,
+            GenericProjectProperties properties,
+            JavaCompatibilityModel compatibilityModel,
+            NbOutput outputDirs,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs,
             Map<NbDependencyType, NbDependencyGroup> dependencies) {
 
         if (properties == null) throw new NullPointerException("properties");
+        if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
+        if (outputDirs == null) throw new NullPointerException("outputDirs");
         if (dependencies == null) throw new NullPointerException("dependencies");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
 
         this.properties = properties;
+        this.compatibilityModel = compatibilityModel;
+        this.outputDirs = outputDirs;
         this.sources = Collections.unmodifiableMap(sources);
         this.listedDirs = Collections.unmodifiableList(listedDirs);
         this.dependencies = Collections.unmodifiableMap(dependencies);
     }
 
-    public Properties getProperties() {
+    public GenericProjectProperties getProperties() {
         return properties;
     }
 
+    public JavaCompatibilityModel getCompatibilityModel() {
+        return compatibilityModel;
+    }
+
+    public NbOutput getOutputDirs() {
+        return outputDirs;
+    }
+
+
     public File getModuleDir() {
-        return properties.getModuleDir();
+        return properties.getProjectDir();
     }
 
     public String getShortName() {
-        return properties.getShortName();
+        return properties.getProjectName();
     }
 
     public String getUniqueName() {
-        return properties.getUniqueName();
+        return properties.getProjectFullName();
     }
 
     public NbSourceGroup getSources(NbSourceType sourceType) {
@@ -64,61 +83,5 @@ public final class NbJavaModule {
 
     public Map<NbDependencyType, NbDependencyGroup> getDependencies() {
         return dependencies;
-    }
-
-    public static final class Properties {
-        private final String shortName;
-        private final File moduleDir;
-        private final NbOutput output;
-        private final String uniqueName;
-        private final String sourceLevel;
-        private final String targetLevel;
-
-        public Properties(
-                String shortName,
-                String uniqueName,
-                File moduleDir,
-                NbOutput output,
-                String sourceLevel,
-                String targetLevel) {
-
-            if (shortName == null) throw new NullPointerException("scriptDisplayName");
-            if (uniqueName == null) throw new NullPointerException("uniqueName");
-            if (moduleDir == null) throw new NullPointerException("moduleDir");
-            if (output == null) throw new NullPointerException("output");
-            if (sourceLevel == null) throw new NullPointerException("sourceLevel");
-            if (targetLevel == null) throw new NullPointerException("targetLevel");
-
-            this.shortName = shortName;
-            this.uniqueName = uniqueName;
-            this.moduleDir = moduleDir;
-            this.output = output;
-            this.sourceLevel = sourceLevel;
-            this.targetLevel = targetLevel;
-        }
-
-        public String getShortName() {
-            return shortName;
-        }
-
-        public String getSourceLevel() {
-            return sourceLevel;
-        }
-
-        public String getTargetLevel() {
-            return targetLevel;
-        }
-
-        public NbOutput getOutput() {
-            return output;
-        }
-
-        public File getModuleDir() {
-            return moduleDir;
-        }
-
-        public String getUniqueName() {
-            return uniqueName;
-        }
     }
 }

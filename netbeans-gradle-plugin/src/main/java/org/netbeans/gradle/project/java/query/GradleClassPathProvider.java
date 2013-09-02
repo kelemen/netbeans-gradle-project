@@ -184,7 +184,7 @@ implements
             }
         }
 
-        NbOutput output = module.getProperties().getOutput();
+        NbOutput output = module.getOutputDirs();
 
         FileObject outputDir = FileUtil.toFileObject(output.getBuildDir());
         if (outputDir != null && FileUtil.getRelativePath(outputDir, file) != null) {
@@ -363,7 +363,7 @@ implements
             List<File> paths,
             List<File> testPaths,
             Collection<File> combinedPaths) {
-        NbOutput output = module.getProperties().getOutput();
+        NbOutput output = module.getOutputDirs();
 
         if (paths != null) {
             paths.add(output.getBuildDir());
@@ -406,7 +406,7 @@ implements
 
         NbJavaModule mainModule = projectModel.getMainModule();
 
-        File mainModuleBuildOutput = mainModule.getProperties().getOutput().getBuildDir();
+        File mainModuleBuildOutput = mainModule.getOutputDirs().getBuildDir();
         testCompile.add(mainModuleBuildOutput);
         testRuntime.add(mainModuleBuildOutput);
         buildOutputDirs.add(mainModuleBuildOutput);
@@ -422,8 +422,8 @@ implements
                 NbModuleDependency moduleDep = (NbModuleDependency)dependency;
                 addModuleClassPaths(moduleDep.getModule(), compile, null, notRequiredPaths);
 
-                buildOutputDirs.add(moduleDep.getModule().getProperties().getOutput().getBuildDir());
-                buildOutputDirs.add(moduleDep.getModule().getProperties().getOutput().getTestBuildDir());
+                buildOutputDirs.add(moduleDep.getModule().getOutputDirs().getBuildDir());
+                buildOutputDirs.add(moduleDep.getModule().getOutputDirs().getTestBuildDir());
             }
         }
         for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
