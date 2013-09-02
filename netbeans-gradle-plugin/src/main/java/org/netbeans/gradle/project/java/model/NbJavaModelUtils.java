@@ -383,16 +383,6 @@ public final class NbJavaModelUtils {
 
         moduleBuilder.addDependencies(getDependencies(module, parsedModules));
 
-        for (IdeaModule child: GradleModelLoader.getChildModules(module)) {
-            NbJavaModule parsedChild = tryParseModule(child, parsedModules);
-            if (parsedChild == null) {
-                LOGGER.log(Level.WARNING, "Failed to parse a child module: {0}", child.getName());
-            }
-            else {
-                moduleBuilder.addChild(parsedChild);
-            }
-        }
-
         return result;
     }
 

@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.util.EnumMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.gradle.tooling.model.GradleProject;
@@ -13,7 +12,6 @@ public final class NbJavaModuleBuilder {
     // not able to create an immutable NbJavaModule instance.
 
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
-    private final List<NbJavaModule> children;
     private final NbJavaModule view;
 
     public NbJavaModuleBuilder(
@@ -27,14 +25,12 @@ public final class NbJavaModuleBuilder {
         if (listedDirs == null) throw new NullPointerException("listedDirs");
 
         this.dependencies = new EnumMap<NbDependencyType, NbDependencyGroup>(NbDependencyType.class);
-        this.children = new LinkedList<NbJavaModule>();
         this.view = new NbJavaModule(
                 gradleProject,
                 properties,
                 copyNullSafeMutableMap(NbSourceType.class, sources),
                 CollectionUtils.copyNullSafeMutableList(listedDirs),
-                dependencies,
-                children);
+                dependencies);
     }
 
     private static <K extends Enum<K>, V> Map<K, V> copyNullSafeMutableMap(
@@ -59,11 +55,6 @@ public final class NbJavaModuleBuilder {
         }
 
         this.dependencies.putAll(dependencies);
-    }
-
-    public void addChild(NbJavaModule child) {
-        if (child == null) throw new NullPointerException("child");
-        this.children.add(child);
     }
 
     public NbJavaModule getReadOnlyView() {

@@ -11,7 +11,6 @@ public final class NbJavaModule {
     private final Properties properties;
     private final Map<NbSourceType, NbSourceGroup> sources;
     private final Map<NbDependencyType, NbDependencyGroup> dependencies;
-    private final List<NbJavaModule> children;
     private final List<File> listedDirs;
 
     // Should only be called by NbJavaModuleBuilder
@@ -20,21 +19,18 @@ public final class NbJavaModule {
             Properties properties,
             Map<NbSourceType, NbSourceGroup> sources,
             List<File> listedDirs,
-            Map<NbDependencyType, NbDependencyGroup> dependencies,
-            List<NbJavaModule> children) {
+            Map<NbDependencyType, NbDependencyGroup> dependencies) {
 
         if (gradleProject == null) throw new NullPointerException("gradleProject");
         if (properties == null) throw new NullPointerException("properties");
         if (dependencies == null) throw new NullPointerException("dependencies");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
-        if (children == null) throw new NullPointerException("children");
 
         this.gradleProject = gradleProject;
         this.properties = properties;
         this.sources = Collections.unmodifiableMap(sources);
         this.listedDirs = Collections.unmodifiableList(listedDirs);
         this.dependencies = Collections.unmodifiableMap(dependencies);
-        this.children = Collections.unmodifiableList(children);
     }
 
     public GradleProject getGradleProject() {
@@ -77,10 +73,6 @@ public final class NbJavaModule {
 
     public Map<NbDependencyType, NbDependencyGroup> getDependencies() {
         return dependencies;
-    }
-
-    public List<NbJavaModule> getChildren() {
-        return children;
     }
 
     public static final class Properties {
