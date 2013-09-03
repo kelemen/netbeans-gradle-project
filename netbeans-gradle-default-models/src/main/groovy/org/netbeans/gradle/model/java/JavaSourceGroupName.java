@@ -16,6 +16,6 @@ public enum JavaSourceGroupName {
     /** Defines a group for resource files. */
     RESOURCES,
 
-    /** Defines a group for all source files (including JAVA, RESOURCES, etc.). */
-    ALL;
+    /** Defines a group for other source files not classifiable into one of the other categories. */
+    OTHER;
 }

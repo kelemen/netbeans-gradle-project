@@ -54,23 +54,35 @@ implements
         }
     }
 
+    private Collection<File> addSourceGroup(
+            JavaSourceGroupName name,
+            def sourceGroup,
+            JavaSourceSet.Builder result) {
+
+        JavaSourceGroup parsedGroup = parseSourceGroup(name, sourceGroup);
+        result.addSourceGroup(parsedGroup);
+        return parsedGroup.sourceRoots;
+    }
+
     private JavaSourceSet parseSourceSet(Project project, def sourceSet) {
         def outputDirs = parseOutputDirs(sourceSet.output);
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(sourceSet.name, outputDirs);
 
-        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.JAVA, sourceSet.java));
+        Set<File> others = new HashSet(sourceSet.allSource.srcDirs);
+
+        others.removeAll(addSourceGroup(JavaSourceGroupName.JAVA, sourceSet.java, result));
 
         if (project.plugins.hasPlugin('groovy')) {
-            result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.GROOVY, sourceSet.groovy));
+            others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet.groovy, result));
         }
 
         if (project.plugins.hasPlugin('scala')) {
-            result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.SCALA, sourceSet.scala));
+            others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet.scala, result));
         }
 
-        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.RESOURCES, sourceSet.resources));
+        others.removeAll(addSourceGroup(JavaSourceGroupName.RESOURCES, sourceSet.resources, result));
 
-        result.addSourceGroup(parseSourceGroup(JavaSourceGroupName.ALL, sourceSet.allSource));
+        result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.OTHER, others));
 
         result.setClasspaths(parseClassPaths(sourceSet));
 
