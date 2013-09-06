@@ -1,27 +1,26 @@
 package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.Image;
+import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.model.java.JavaClassPaths;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
-import org.netbeans.gradle.project.java.model.NbDependencyType;
 import org.netbeans.gradle.project.java.model.NbJavaDependency;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbModuleDependency;
 import org.netbeans.gradle.project.java.model.NbUriDependency;
@@ -32,7 +31,6 @@ import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
-import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 public final class JavaDependenciesNode extends AbstractNode implements JavaModelChangeListener {
@@ -91,7 +89,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
         private void addDependencyGroup(
                 final String groupName,
-                final Collection<NbJavaDependency> dependencies,
+                final Collection<SingleNodeFactory> dependencies,
                 List<SingleNodeFactory> toPopulate) {
 
             if (dependencies.isEmpty()) {
@@ -159,31 +157,32 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             return result;
         }
 
+        private static List<SingleNodeFactory> filesToNodes(Collection<File> files) {
+            List<SingleNodeFactory> result = new ArrayList<SingleNodeFactory>(files.size());
+            for (File file: files) {
+                result.add(new FileDependency(file));
+            }
+            return result;
+        }
+
         private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
             NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
-            Set<NbJavaDependency> compile = new LinkedHashSet<NbJavaDependency>(
-                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE));
-            Set<NbJavaDependency> runtime = new LinkedHashSet<NbJavaDependency>(
-                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME));
-            Set<NbJavaDependency> testCompile = new LinkedHashSet<NbJavaDependency>(
-                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE));
-            Set<NbJavaDependency> testRuntime = new LinkedHashSet<NbJavaDependency>(
-                    NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME));
+            for (JavaSourceSet sourceSet: mainModule.getSources()) {
+                JavaClassPaths classpaths = sourceSet.getClasspaths();
 
-            testRuntime.removeAll(runtime);
-            testRuntime.removeAll(testCompile);
-            runtime.removeAll(compile);
-            testCompile.removeAll(compile);
+                // TODO: 1. Adjust node names (localize)
+                //       2. Display project output jars
+                //       3. Remove inherited dependencies: Detect this by
+                //          finding the output dir of a source set as a dependency.
+                //       4. Order dependencies
 
-            addDependencyGroup(NbStrings.getCompileDependenciesNodeCaption(),
-                    orderDependencies(compile), toPopulate);
-            addDependencyGroup(NbStrings.getRuntimeDependenciesNodeCaption(),
-                    orderDependencies(runtime), toPopulate);
-            addDependencyGroup(NbStrings.getTestCompileDependenciesNodeCaption(),
-                    orderDependencies(testCompile), toPopulate);
-            addDependencyGroup(NbStrings.getTestRuntimeDependenciesNodeCaption(),
-                    orderDependencies(testRuntime), toPopulate);
+                List<SingleNodeFactory> compileNodes = filesToNodes(classpaths.getCompileClasspaths());
+                addDependencyGroup("Compile for "+ sourceSet.getName(), compileNodes, toPopulate);
+
+                List<SingleNodeFactory> runtimeNodes = filesToNodes(classpaths.getRuntimeClasspaths());
+                addDependencyGroup("Runtime for "+ sourceSet.getName(), runtimeNodes, toPopulate);
+            }
 
             LOGGER.fine("Dependencies for the Gradle project were found.");
         }
@@ -205,126 +204,14 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
     }
 
     private static class DependencyGroupChildFactory extends ChildFactory<SingleNodeFactory> {
-        private final List<NbJavaDependency> dependencies;
+        private final List<SingleNodeFactory> dependencies;
 
-        public DependencyGroupChildFactory(Collection<NbJavaDependency> dependencies) {
-            this.dependencies = new ArrayList<NbJavaDependency>(dependencies);
-        }
-
-        private void addModuleDependency(
-                final NbModuleDependency dependency,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-
-            FileObject moduleRoot = FileUtil.toFileObject(dependency.getModule().getModuleDir());
-            final String displayName = dependency.getModule().getShortName();
-
-            if (moduleRoot != null) {
-                final DataObject fileObject = DataObject.find(moduleRoot);
-                toPopulate.add(new SingleNodeFactory() {
-                    @Override
-                    public Node createNode() {
-                        return new FilterNode(fileObject.getNodeDelegate()) {
-                            @Override
-                            public Image getIcon(int type) {
-                                return NbIcons.getGradleIcon();
-                            }
-
-                            @Override
-                            public Image getOpenedIcon(int type) {
-                                return getIcon(type);
-                            }
-
-                            @Override
-                            public String getDisplayName() {
-                                return displayName;
-                            }
-                        };
-                    }
-                });
-            }
-            else {
-                toPopulate.add(new SingleNodeFactory() {
-                    @Override
-                    public Node createNode() {
-                        return new FilterNode(Node.EMPTY) {
-                            @Override
-                            public Image getIcon(int type) {
-                                return NbIcons.getGradleIcon();
-                            }
-
-                            @Override
-                            public Image getOpenedIcon(int type) {
-                                return getIcon(type);
-                            }
-
-                            @Override
-                            public String getDisplayName() {
-                                return displayName;
-                            }
-                        };
-                    }
-                });
-            }
-        }
-
-        private void addFileDependency(
-                NbUriDependency dependency,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-
-            FileObject file = dependency.tryGetAsFileObject();
-            if (file == null) {
-                LOGGER.log(Level.WARNING, "Dependency is not available: {0}", dependency.getUri());
-                return;
-            }
-            final DataObject fileObject = DataObject.find(file);
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return fileObject.getNodeDelegate().cloneNode();
-                }
-            });
-        }
-
-        private void addGenericDependency(
-                NbJavaDependency dependency,
-                List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-
-            final String nodeCaption = dependency.toString();
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new FilterNode(Node.EMPTY) {
-                        @Override
-                        public Image getIcon(int type) {
-                            return NbIcons.getLibraryIcon();
-                        }
-
-                        @Override
-                        public Image getOpenedIcon(int type) {
-                            return getIcon(type);
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return nodeCaption;
-                        }
-                    };
-                }
-            });
+        public DependencyGroupChildFactory(Collection<SingleNodeFactory> dependencies) {
+            this.dependencies = new ArrayList<SingleNodeFactory>(dependencies);
         }
 
         protected void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-            for (NbJavaDependency dependency: dependencies) {
-                if (dependency instanceof NbModuleDependency) {
-                    addModuleDependency((NbModuleDependency)dependency, toPopulate);
-                }
-                else if (dependency instanceof NbUriDependency) {
-                    addFileDependency((NbUriDependency)dependency, toPopulate);
-                }
-                else {
-                    addGenericDependency(dependency, toPopulate);
-                }
-            }
+            toPopulate.addAll(dependencies);
         }
 
         @Override
@@ -340,6 +227,35 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private static final class FileDependency implements SingleNodeFactory {
+        private final File file;
+
+        public FileDependency(File file) {
+            assert file != null;
+
+            this.file = file;
+        }
+
+        @Override
+        public Node createNode() {
+            File normalizedFile = FileUtil.normalizeFile(file);
+            FileObject fileObj = normalizedFile != null ? FileUtil.toFileObject(normalizedFile) : null;
+            if (fileObj == null) {
+                LOGGER.log(Level.WARNING, "Dependency is not available: {0}", file);
+                return null;
+            }
+
+            final DataObject dataObj;
+            try {
+                dataObj = DataObject.find(fileObj);
+            } catch (DataObjectNotFoundException ex) {
+                LOGGER.log(Level.INFO, "Unexpected DataObjectNotFoundException for file: " + file, ex);
+                return null;
+            }
+            return dataObj.getNodeDelegate().cloneNode();
         }
     }
 }

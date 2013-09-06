@@ -16,8 +16,8 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.eclipse.EclipseProject;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
@@ -227,9 +227,9 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                     ? GradleModelLoader.tryGetModuleDir(mainIdeaModule)
                     : null;
 
-            Collection<? extends HierarchicalElement> projects = controller.getBuildModel().getProjects();
+            Collection<? extends BasicGradleProject> projects = controller.getBuildModel().getProjects();
             Map<File, NbGradle18ModelLoader.Models> projectModels = new HashMap<File, NbGradle18ModelLoader.Models>(2 * projects.size());
-            for (final HierarchicalElement project: projects) {
+            for (final BasicGradleProject project: projects) {
                 NbGradle18ModelLoader.ModelFinder otherModelFinder = new NbGradle18ModelLoader.ModelFinder() {
                     @Override
                     public <T> T tryGetModel(Class<T> modelClass) {

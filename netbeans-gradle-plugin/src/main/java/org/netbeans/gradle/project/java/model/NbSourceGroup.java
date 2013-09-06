@@ -11,22 +11,22 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 public final class NbSourceGroup {
-    public static final NbSourceGroup EMPTY = new NbSourceGroup(Collections.<NbSourceRoot>emptyList());
+    public static final NbSourceGroup EMPTY = new NbSourceGroup(Collections.<NamedFile>emptyList());
 
-    private final List<NbSourceRoot> paths;
+    private final List<NamedFile> paths;
 
-    public NbSourceGroup(List<NbSourceRoot> paths) {
+    public NbSourceGroup(List<NamedFile> paths) {
         if (paths == null) throw new NullPointerException("paths");
         this.paths = CollectionUtils.copyNullSafeList(paths);
     }
 
-    public List<NbSourceRoot> getPaths() {
+    public List<NamedFile> getPaths() {
         return paths;
     }
 
     public List<File> getFiles() {
         List<File> result = new ArrayList<File>(paths.size());
-        for (NbSourceRoot root: paths) {
+        for (NamedFile root: paths) {
             result.add(root.getPath());
         }
         return result;
@@ -34,7 +34,7 @@ public final class NbSourceGroup {
 
     public List<FileObject> getFileObjects() {
         List<FileObject> result = new ArrayList<FileObject>(paths.size());
-        for (NbSourceRoot root: paths) {
+        for (NamedFile root: paths) {
             FileObject fileObject = FileUtil.toFileObject(root.getPath());
             if (fileObject != null) {
                 result.add(fileObject);
@@ -45,7 +45,7 @@ public final class NbSourceGroup {
 
     public List<URI> getUris() {
         List<URI> result = new ArrayList<URI>(paths.size());
-        for (NbSourceRoot root: paths) {
+        for (NamedFile root: paths) {
             result.add(Utilities.toURI(root.getPath()));
         }
         return result;

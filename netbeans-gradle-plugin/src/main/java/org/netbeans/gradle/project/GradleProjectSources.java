@@ -4,10 +4,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,12 +20,13 @@ import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
+import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
+import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbSourceRoot;
-import org.netbeans.gradle.project.java.model.NbSourceType;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
@@ -53,109 +53,76 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         this.scanRequestId = new AtomicReference<Object>(null);
     }
 
-    private static SourceGroup createSourceGroup(File sourceDir, String caption) {
+    public static SourceGroup tryCreateSourceGroup(NamedSourceRoot root) {
+        File sourceDir = root.getRoot();
+
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(groupRoot, caption);
+                return new GradleSourceGroup(groupRoot, root.getDisplayName());
             }
         }
         return null;
     }
 
-    private static SourceGroup[] toSourceGroup(String displayName, List<NbSourceRoot> rootDirs) {
-        // Don't add a marker when there are only one source roots
-        if (rootDirs.size() == 1) {
-            SourceGroup group = createSourceGroup(rootDirs.get(0).getPath(), displayName);
-            return group != null
-                    ? new SourceGroup[]{group}
-                    : NO_SOURCE_GROUPS;
+    private static <K, V> void addToMultiMap(K key, V value, Map<K, List<V>> map) {
+        List<V> sourceGroupList = map.get(key);
+        if (sourceGroupList == null) {
+            sourceGroupList = new LinkedList<V>();
+            map.put(key, sourceGroupList);
         }
 
-        List<SourceGroup> result = new ArrayList<SourceGroup>(rootDirs.size());
-        for (NbSourceRoot root: rootDirs) {
-            String rootName = displayName + " [" + root.getName() + "]";
-            SourceGroup group = createSourceGroup(root.getPath(), rootName);
-            if (group != null) {
-                result.add(group);
-            }
-        }
-        return result.toArray(NO_SOURCE_GROUPS);
+        sourceGroupList.add(value);
     }
 
-    private static SourceGroup[] mergeGroups(SourceGroup[]... groups) {
-        int size = 0;
-        for (SourceGroup[] group: groups) {
-            size += group.length;
+    private static Map<String, List<SourceGroup>> findSourceGroupsOfModule(
+            NbJavaModule module) {
+        Map<String, List<SourceGroup>> result = new HashMap<String, List<SourceGroup>>(8);
+
+        for (NamedSourceRoot root: module.getNamedSourceRoots()) {
+            SourceGroup newGroup = tryCreateSourceGroup(root);
+            if (newGroup == null) {
+                continue;
+            }
+
+            JavaSourceGroupID groupID = root.getGroupID();
+
+            if (groupID.getGroupName() == JavaSourceGroupName.RESOURCES) {
+                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
+            }
+            else {
+                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_JAVA, newGroup, result);
+                if (groupID.isTest()) {
+                    addToMultiMap(JavaProjectConstants.SOURCES_HINT_TEST, newGroup, result);
+                }
+
+                // TODO: Consider "SOURCES_TYPE_GROOVY" and "SOURCES_TYPE_SCALA", "SOURCES_TYPE_ANTLR"
+            }
         }
 
-        SourceGroup[] result = new SourceGroup[size];
-        int offset = 0;
-        for (SourceGroup[] group: groups) {
-            System.arraycopy(group, 0, result, offset, group.length);
-            offset += group.length;
-        }
         return result;
     }
 
-    private static Map<String, SourceGroup[]> findSourceGroupsOfModule(
-            NbJavaModule module) {
-        Map<String, SourceGroup[]> groups = new LinkedHashMap<String, SourceGroup[]>(8);
-
-        String sourceGroupCaption = NbStrings.getSrcPackageCaption();
-        String resourceGroupCaption = NbStrings.getResourcesPackageCaption();
-        String testGroupCaption = NbStrings.getTestPackageCaption();
-        String testResourceGroupCaption = NbStrings.getTestResourcesPackageCaption();
-
-        SourceGroup[] sources = toSourceGroup(
-                sourceGroupCaption,
-                module.getSources(NbSourceType.SOURCE).getPaths());
-        SourceGroup[] resources = toSourceGroup(
-                resourceGroupCaption,
-                module.getSources(NbSourceType.RESOURCE).getPaths());
-        SourceGroup[] testSources = toSourceGroup(
-                testGroupCaption,
-                module.getSources(NbSourceType.TEST_SOURCE).getPaths());
-        SourceGroup[] testResources = toSourceGroup(
-                testResourceGroupCaption,
-                module.getSources(NbSourceType.TEST_RESOURCE).getPaths());
-
-        groups.put(GradleProjectConstants.SOURCES, sources);
-        groups.put(GradleProjectConstants.RESOURCES, resources);
-        groups.put(GradleProjectConstants.TEST_SOURCES, testSources);
-        groups.put(GradleProjectConstants.TEST_RESOURCES, testResources);
-        return groups;
-    }
-
-    private static Map<String, SourceGroup[]> findSourceGroups(JavaExtension javaExt) {
+    private Map<String, SourceGroup[]> findSourceGroups(JavaExtension javaExt) {
         NbJavaModel projectModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = projectModel.getMainModule();
 
-        Map<String, SourceGroup[]> moduleSources = findSourceGroupsOfModule(mainModule);
-        SourceGroup[] sources = moduleSources.get(GradleProjectConstants.SOURCES);
-        SourceGroup[] resources = moduleSources.get(GradleProjectConstants.RESOURCES);
-        SourceGroup[] testSources = moduleSources.get(GradleProjectConstants.TEST_SOURCES);
-        SourceGroup[] testResources = moduleSources.get(GradleProjectConstants.TEST_RESOURCES);
+        Map<String, List<SourceGroup>> moduleSources = findSourceGroupsOfModule(mainModule);
 
-        Map<String, SourceGroup[]> groups = new HashMap<String, SourceGroup[]>();
-
-        if (sources.length > 0) {
-            groups.put(JavaProjectConstants.SOURCES_HINT_MAIN, new SourceGroup[]{sources[0]});
+        Map<String, SourceGroup[]> result = new HashMap<String, SourceGroup[]>(2 * moduleSources.size());
+        for (Map.Entry<String, List<SourceGroup>> entry: moduleSources.entrySet()) {
+            List<SourceGroup> entryValue = entry.getValue();
+            result.put(entry.getKey(), entryValue.toArray(new SourceGroup[entryValue.size()]));
         }
 
-        groups.put(JavaProjectConstants.SOURCES_TYPE_JAVA, mergeGroups(sources, testSources));
-        groups.put(JavaProjectConstants.SOURCES_HINT_TEST, testSources);
-        groups.put(JavaProjectConstants.SOURCES_TYPE_RESOURCES, mergeGroups(resources, testResources));
+        SourceGroup[] sources = result.get(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        if (sources != null && sources.length > 0) {
+            result.put(JavaProjectConstants.SOURCES_HINT_MAIN, new SourceGroup[]{sources[0]});
+        }
 
-        groups.put(GradleProjectConstants.SOURCES, sources);
-        groups.put(GradleProjectConstants.RESOURCES, resources);
-        groups.put(GradleProjectConstants.TEST_SOURCES, testSources);
-        groups.put(GradleProjectConstants.TEST_RESOURCES, testResources);
+        result.put(Sources.TYPE_GENERIC, getGenericGroup());
 
-        groups.put(Sources.TYPE_GENERIC, new SourceGroup[] {
-            new GradleSourceGroup(javaExt.getProjectDirectory())});
-
-        return groups;
+        return result;
     }
 
     @Override
@@ -209,14 +176,19 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         });
     }
 
+    private SourceGroup[] getGenericGroup() {
+        return new SourceGroup[]{
+            new GradleSourceGroup(javaExt.getProjectDirectory())
+        };
+    }
+
     @Override
     public SourceGroup[] getSourceGroups(String type) {
         ensureScanForSources();
 
         SourceGroup[] foundGroup = currentGroups.get(type);
         if (foundGroup == null && Sources.TYPE_GENERIC.equals(type)) {
-            return new SourceGroup[] {
-                new GradleSourceGroup(javaExt.getProjectDirectory())};
+            return getGenericGroup();
         }
         else {
             return foundGroup != null ? foundGroup.clone() : NO_SOURCE_GROUPS;

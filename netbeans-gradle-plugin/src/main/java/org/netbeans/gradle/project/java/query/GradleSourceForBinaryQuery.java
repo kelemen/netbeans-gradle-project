@@ -1,20 +1,24 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.model.java.JavaOutputDirs;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbOutput;
-import org.netbeans.gradle.project.java.model.NbSourceType;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 
 public final class GradleSourceForBinaryQuery
@@ -50,41 +54,40 @@ implements
         eventSource.init(this.changes);
     }
 
-    private static BinaryType getBinaryRootType(
-            NbJavaModule module, File root) {
-        NbOutput output = module.getOutputDirs();
+    private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+            if (GradleFileUtils.isParentOrSame(outputDirs.getClassesDir(), binaryRoot)) {
+                List<File> result = new LinkedList<File>();
 
-        if (GradleFileUtils.isParentOrSame(output.getBuildDir(), root)) {
-            return BinaryType.NORMAL;
+                for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                    result.addAll(sourceGroup.getSourceRoots());
+                }
+
+                return result;
+            }
         }
-        if (GradleFileUtils.isParentOrSame(output.getTestBuildDir(), root)) {
-            return BinaryType.TEST;
-        }
-        return BinaryType.UNKNOWN;
+        return null;
     }
 
-    private static FileObject[] getSourcesOfModule(NbJavaModule module) {
-        List<FileObject> result = module.getSources(NbSourceType.SOURCE).getFileObjects();
-        return result.toArray(NO_ROOTS);
-    }
+    private static FileObject[] getSourceRoots(
+            NbJavaModule module, File binaryRoot) {
 
-    private static FileObject[] getTestSourcesOfModule(NbJavaModule module) {
-        List<FileObject> result = module.getSources(NbSourceType.TEST_SOURCE).getFileObjects();
-        return result.toArray(NO_ROOTS);
-    }
-
-    private static FileObject[] tryGetRoots(
-            NbJavaModule module, File root) {
-        BinaryType binaryType = getBinaryRootType(module, root);
-        switch (binaryType) {
-            case NORMAL:
-                return getSourcesOfModule(module);
-            case TEST:
-                return getTestSourcesOfModule(module);
-            default:
-                return NO_ROOTS;
-
+        List<File> srcRoots = tryGetSourceRoots(module, binaryRoot);
+        if (srcRoots == null) {
+            return NO_ROOTS;
         }
+
+        List<FileObject> result = new ArrayList<FileObject>(srcRoots.size());
+
+        for (File srcRoot: srcRoots) {
+            FileObject rootObj = FileUtil.toFileObject(srcRoot);
+            if (rootObj != null) {
+                result.add(rootObj);
+            }
+        }
+
+        return result.toArray(new FileObject[result.size()]);
     }
 
     @Override
@@ -99,13 +102,8 @@ implements
 
     @Override
     protected Result tryFindSourceRoot(final File binaryRoot) {
-        if (!javaExt.isOwnerProject(binaryRoot)) {
-            return null;
-        }
-
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        BinaryType rootType = getBinaryRootType(mainModule, binaryRoot);
-        if (rootType == BinaryType.UNKNOWN) {
+        if (tryGetSourceRoots(mainModule, binaryRoot) == null) {
             return null;
         }
 
@@ -120,7 +118,7 @@ implements
                 NbJavaModel projectModel = javaExt.getCurrentModel();
                 NbJavaModule mainModule = projectModel.getMainModule();
 
-                return tryGetRoots(mainModule, binaryRoot);
+                return getSourceRoots(mainModule, binaryRoot);
             }
 
             @Override

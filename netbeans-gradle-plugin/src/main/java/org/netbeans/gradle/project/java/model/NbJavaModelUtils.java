@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.java.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.ExternalDependency;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaDependency;
@@ -25,7 +27,12 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
+import org.netbeans.gradle.model.java.JavaOutputDirs;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
+import org.netbeans.gradle.model.java.JavaSourceGroupName;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -51,12 +58,21 @@ public final class NbJavaModelUtils {
         return createEmptyModel(projectDir, Lookup.EMPTY);
     }
 
+    private static File getDefaultBuildDir(File projectDir) {
+        return new File(projectDir, "build");
+    }
+
     public static NbOutput createDefaultOutput(File projectDir) {
-        File buildDir = new File(projectDir, "build" + File.separatorChar + "classes");
+        File buildDir = new File(getDefaultBuildDir(projectDir), "classes");
 
         return new NbOutput(
                 new File(buildDir, "main"),
                 new File(buildDir, "test"));
+    }
+
+    private static NbOutput createDefaultOutput(IdeaModule module) {
+        File moduleDir = GradleModelLoader.tryGetModuleDir(module);
+        return moduleDir != null ? createDefaultOutput(moduleDir) : null;
     }
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
@@ -67,14 +83,12 @@ public final class NbJavaModelUtils {
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
         NbOutput output = createDefaultOutput(projectDir);
 
-        NbJavaModuleBuilder mainModuleBuilder = new NbJavaModuleBuilder(
+        return new NbJavaModel(new NbJavaModule(
                 properties,
                 compatibilityModel,
+                Collections.<JavaSourceSet>emptyList(),
                 output,
-                Collections.<NbSourceType, NbSourceGroup>emptyMap(),
-                Collections.<File>emptyList());
-
-        return new NbJavaModel(mainModuleBuilder.getReadOnlyView());
+                Collections.<File>emptyList()));
     }
 
     private static void getAllChildren(GradleProjectInfo module, List<GradleProjectInfo> result) {
@@ -97,253 +111,169 @@ public final class NbJavaModelUtils {
         return result;
     }
 
-    private static void getAllDependencies(
-            NbJavaModule module,
-            NbDependencyType type,
-            Collection<NbJavaDependency> toAdd,
-            Set<String> toSkip) {
-        if (!toSkip.add(module.getUniqueName())) {
+    private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {
+        List<File> javaRoots = new LinkedList<File>();
+        List<File> resourceRoots = new LinkedList<File>();
+
+        for (IdeaSourceDirectory root: roots) {
+            File dir = root.getDirectory();
+            if (isResourcePath(dir)) {
+                resourceRoots.add(dir);
+            }
+            else {
+                javaRoots.add(dir);
+            }
+        }
+        return Arrays.asList(
+                new JavaSourceGroup(JavaSourceGroupName.JAVA, javaRoots),
+                new JavaSourceGroup(JavaSourceGroupName.RESOURCES, resourceRoots));
+    }
+
+    private static List<JavaSourceSet> parseSourceSets(
+            IdeaModule module,
+            File projectDir,
+            Map<String, IdeaDependencyBuilder> cache) {
+
+        ProjectClassPaths classPaths = fetchAllDependencies(module, cache);
+        File buildOutputDir = getDefaultBuildDir(projectDir);
+        File classesDir = new File(buildOutputDir, "classes");
+        File resourcesDir = new File(buildOutputDir, "resources");
+
+        JavaOutputDirs mainOutputs = new JavaOutputDirs(
+                new File(classesDir, JavaSourceSet.NAME_MAIN),
+                new File(resourcesDir, JavaSourceSet.NAME_MAIN),
+                Collections.<File>emptyList());
+
+        JavaSourceSet.Builder main
+                = new JavaSourceSet.Builder(JavaSourceSet.NAME_MAIN, mainOutputs);
+        main.setClasspaths(classPaths.main);
+
+        JavaOutputDirs testOutputs = new JavaOutputDirs(
+                new File(classesDir, JavaSourceSet.NAME_TEST),
+                new File(resourcesDir, JavaSourceSet.NAME_TEST),
+                Collections.<File>emptyList());
+
+        JavaSourceSet.Builder test
+                = new JavaSourceSet.Builder(JavaSourceSet.NAME_TEST, testOutputs);
+        test.setClasspaths(classPaths.test);
+
+        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
+            for (JavaSourceGroup group: fromIdeaSourceRoots(contentRoot.getSourceDirectories())) {
+                main.addSourceGroup(group);
+            }
+            for (JavaSourceGroup group: fromIdeaSourceRoots(contentRoot.getTestDirectories())) {
+                test.addSourceGroup(group);
+            }
+        }
+
+        return Arrays.asList(main.create(), test.create());
+    }
+
+    private static ProjectClassPaths fetchAllDependencies(
+            IdeaModule module,
+            Map<String, IdeaDependencyBuilder> cache) {
+
+        IdeaDependencyBuilder result = new IdeaDependencyBuilder();
+        fetchAllDependencies(module, result, Collections.<String>emptySet(), cache);
+
+        JavaClassPaths mainClassPath = new JavaClassPaths(result.mainCompile, result.mainRuntime);
+        JavaClassPaths testClassPath = new JavaClassPaths(result.testCompile, result.testRuntime);
+        return new ProjectClassPaths(mainClassPath, testClassPath);
+    }
+
+    private static void fetchAllDependencies(
+            IdeaModule module,
+            IdeaDependencyBuilder result,
+            Set<String> projectsToSkip,
+            Map<String, IdeaDependencyBuilder> cache) {
+
+        String uniqueProjectName = module.getGradleProject().getPath();
+
+        if (projectsToSkip.contains(uniqueProjectName)) {
             return;
         }
 
-        for (NbJavaDependency dependency: module.getDependencies(NbDependencyType.COMPILE).getAllDependencies()) {
-            toAdd.add(dependency);
-            if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                NbDependencyType recType;
-                switch (type) {
-                    case RUNTIME:
-                        /* falls through */
-                    case TEST_RUNTIME:
-                        recType = NbDependencyType.RUNTIME;
-                        break;
-                    default:
-                        recType = NbDependencyType.COMPILE;
-                        break;
-                }
-                getAllDependencies(moduleDep.getModule(), recType, toAdd, toSkip);
-            }
+        IdeaDependencyBuilder parsed = cache.get(uniqueProjectName);
+        if (parsed != null) {
+            result.setFrom(parsed);
+            return;
         }
 
-        if (type == NbDependencyType.RUNTIME || type == NbDependencyType.TEST_RUNTIME) {
-            for (NbJavaDependency dependency: module.getDependencies(NbDependencyType.RUNTIME).getAllDependencies()) {
-                toAdd.add(dependency);
-                if (dependency instanceof NbModuleDependency) {
-                    NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                    getAllDependencies(moduleDep.getModule(), NbDependencyType.RUNTIME, toAdd, toSkip);
-                }
-            }
+        NbOutput defaultOutput = createDefaultOutput(module);
+        if (defaultOutput != null) {
+            result.addTestCompile(defaultOutput.getBuildDir());
         }
 
-        if (type == NbDependencyType.TEST_COMPILE || type == NbDependencyType.TEST_RUNTIME) {
-            for (NbJavaDependency dependency: module.getDependencies(NbDependencyType.TEST_COMPILE).getAllDependencies()) {
-                toAdd.add(dependency);
-                if (dependency instanceof NbModuleDependency) {
-                    NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                    NbDependencyType recType;
-                    switch (type) {
-                        case TEST_COMPILE:
-                            recType = NbDependencyType.COMPILE;
-                            break;
-                        case TEST_RUNTIME:
-                            recType = NbDependencyType.RUNTIME;
-                            break;
-                        default:
-                            throw new AssertionError();
-                    }
-                    getAllDependencies(moduleDep.getModule(), recType, toAdd, toSkip);
-                }
-            }
-        }
-
-        if (type == NbDependencyType.TEST_RUNTIME) {
-            for (NbJavaDependency dependency: module.getDependencies(NbDependencyType.TEST_RUNTIME).getAllDependencies()) {
-                toAdd.add(dependency);
-                if (dependency instanceof NbModuleDependency) {
-                    NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                    getAllDependencies(moduleDep.getModule(), NbDependencyType.RUNTIME, toAdd, toSkip);
-                }
-            }
-        }
-    }
-
-    public static Collection<NbJavaDependency> getAllDependencies(
-            NbJavaModule module, NbDependencyType type) {
-        if (module == null) throw new NullPointerException("module");
-        if (type == null) throw new NullPointerException("type");
-        if (type == NbDependencyType.OTHER) {
-            throw new IllegalArgumentException("Cannot fetch this kind of dependencies: " + type);
-        }
-
-        Set<NbJavaDependency> dependencies = new LinkedHashSet<NbJavaDependency>();
-        getAllDependencies(module, type, dependencies, new HashSet<String>());
-
-        return dependencies;
-    }
-
-    public static Collection<NbJavaDependency> getAllDependencies(NbJavaModule module) {
-        return getAllDependencies(module, NbDependencyType.TEST_RUNTIME);
-    }
-
-    public static Collection<NbJavaModule> getAllModuleDependencies(
-            NbJavaModule module, NbDependencyType type) {
-        List<NbJavaModule> result = new LinkedList<NbJavaModule>();
-        for (NbJavaDependency dependency: getAllDependencies(module, type)) {
-            if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                result.add(moduleDep.getModule());
-            }
-        }
-        return result;
-    }
-
-    public static Collection<NbJavaModule> getAllModuleDependencies(NbJavaModule module) {
-        return getAllModuleDependencies(module, NbDependencyType.TEST_RUNTIME);
-    }
-
-    private static List<File> lookupListedDirs(Map<NbSourceType, NbSourceGroup> sources) {
-        List<File> result = new LinkedList<File>();
-
-        NbSourceGroup sourceGroups = sources.get(NbSourceType.SOURCE);
-        if (sourceGroups != null) {
-            for (NbSourceRoot sourceRoot: sourceGroups.getPaths()) {
-                File parent = sourceRoot.getPath().getParentFile();
-                if (parent != null) {
-                    File webapp = new File(parent, "webapp");
-                    if (webapp.isDirectory()) {
-                        result.add(webapp);
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static Map<NbDependencyType, NbDependencyGroup> getDependencies(
-            IdeaModule module, Map<String, NbJavaModule> parsedModules) {
-
-        DependencyBuilder dependencies = new DependencyBuilder();
+        Set<String> nextProjectsToSkip = null;
 
         for (IdeaDependency dependency: module.getDependencies()) {
             String scope = dependency.getScope().getScope();
-            NbDependencyType dependencyType;
-            if ("COMPILE".equalsIgnoreCase(scope) || "PROVIDED".equalsIgnoreCase(scope)) {
-                dependencyType = NbDependencyType.COMPILE;
-            }
-            else if ("TEST".equalsIgnoreCase(scope)) {
-                dependencyType = NbDependencyType.TEST_COMPILE;
-            }
-            else if ("RUNTIME".equalsIgnoreCase(scope)) {
-                dependencyType = NbDependencyType.RUNTIME;
-            }
-            else {
-                dependencyType = NbDependencyType.OTHER;
-            }
+            NbDependencyType dependencyType = NbDependencyType.fromIdeaScope(scope);
 
             if (dependency instanceof IdeaModuleDependency) {
-                IdeaModuleDependency moduleDep = (IdeaModuleDependency)dependency;
-
-                NbJavaModule parsedDependency = tryParseModule(moduleDep.getDependencyModule(), parsedModules);
-                if (parsedDependency != null) {
-                    dependencies.addModuleDependency(
-                            dependencyType,
-                            new NbModuleDependency(parsedDependency, true));
+                if (nextProjectsToSkip == null) {
+                    nextProjectsToSkip = new HashSet<String>(projectsToSkip);
+                    nextProjectsToSkip.add(uniqueProjectName);
                 }
+
+                IdeaModule moduleDep = ((IdeaModuleDependency)dependency).getDependencyModule();
+
+                IdeaDependencyBuilder subDependencies = new IdeaDependencyBuilder();
+                fetchAllDependencies(moduleDep, subDependencies, nextProjectsToSkip, cache);
+
+                NbOutput moduleOutput = createDefaultOutput(moduleDep);
+                if (moduleOutput != null) {
+                    result.add(dependencyType, moduleOutput.getBuildDir());
+                }
+                result.addAll(dependencyType, subDependencies);
             }
             else if (dependency instanceof ExternalDependency) {
                 ExternalDependency externalDep = (ExternalDependency)dependency;
-                URI uri = Utilities.toURI(externalDep.getFile());
-
-                File src = externalDep.getSource();
-                URI srcUri = src != null
-                        ? Utilities.toURI(src)
-                        : null;
-
-                dependencies.addUriDependency(
-                        dependencyType,
-                        new NbUriDependency(uri, srcUri, true));
+                result.add(dependencyType, externalDep.getFile());
             }
             else {
                 LOGGER.log(Level.WARNING, "Unknown dependency: {0}", dependency);
             }
         }
-        Map<NbDependencyType, NbDependencyGroup> dependencyMap
-                = new EnumMap<NbDependencyType, NbDependencyGroup>(NbDependencyType.class);
-        for (NbDependencyType type: NbDependencyType.values()) {
-            NbDependencyGroup group = dependencies.getGroup(type);
-            if (!group.isEmpty()) {
-                dependencyMap.put(type, group);
-            }
-        }
-        return dependencyMap;
+
+        cache.put(uniqueProjectName, result);
     }
 
-    private static boolean isResourcePath(IdeaSourceDirectory srcDir) {
-        return srcDir.getDirectory().getName().toLowerCase(Locale.US).startsWith("resource");
+    private static List<File> lookupListedDirs(Collection<JavaSourceSet> sources) {
+        List<File> result = new LinkedList<File>();
+
+        for (JavaSourceSet sourceSet: sources) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File sourceRoot: sourceGroup.getSourceRoots()) {
+                    File parent = sourceRoot.getParentFile();
+                    if (parent != null) {
+                        File webapp = new File(parent, "webapp");
+                        if (webapp.isDirectory()) {
+                            result.add(webapp);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
-    private static Map<NbSourceType, NbSourceGroup> getSources(IdeaModule module) {
-        List<File> sources = new LinkedList<File>();
-        List<File> resources = new LinkedList<File>();
-        List<File> testSources = new LinkedList<File>();
-        List<File> testResources = new LinkedList<File>();
-
-        for (IdeaContentRoot contentRoot: module.getContentRoots()) {
-            for (IdeaSourceDirectory ideaSrcDir: contentRoot.getSourceDirectories()) {
-                if (isResourcePath(ideaSrcDir)) {
-                    resources.add(ideaSrcDir.getDirectory());
-                }
-                else {
-                    sources.add(ideaSrcDir.getDirectory());
-                }
-            }
-            for (IdeaSourceDirectory ideaTestDir: contentRoot.getTestDirectories()) {
-                if (isResourcePath(ideaTestDir)) {
-                    testResources.add(ideaTestDir.getDirectory());
-                }
-                else {
-                    testSources.add(ideaTestDir.getDirectory());
-                }
-            }
-        }
-
-        Map<NbSourceType, NbSourceGroup> groups = new EnumMap<NbSourceType, NbSourceGroup>(NbSourceType.class);
-        if (!sources.isEmpty()) {
-            groups.put(NbSourceType.SOURCE,
-                    new NbSourceGroup(GradleModelLoader.nameSourceRoots(sources)));
-        }
-        if (!resources.isEmpty()) {
-            groups.put(NbSourceType.RESOURCE,
-                    new NbSourceGroup(GradleModelLoader.nameSourceRoots(resources)));
-        }
-        if (!testSources.isEmpty()) {
-            groups.put(NbSourceType.TEST_SOURCE,
-                    new NbSourceGroup(GradleModelLoader.nameSourceRoots(testSources)));
-        }
-        if (!testResources.isEmpty()) {
-            groups.put(NbSourceType.TEST_RESOURCE,
-                    new NbSourceGroup(GradleModelLoader.nameSourceRoots(testResources)));
-        }
-        return groups;
+    private static boolean isResourcePath(File dir) {
+        return dir.getName().toLowerCase(Locale.US).startsWith("resource");
     }
 
     private static NbJavaModule tryParseModule(IdeaModule module,
-            Map<String, NbJavaModule> parsedModules) {
+            Map<String, IdeaDependencyBuilder> cache) {
         String uniqueName = module.getGradleProject().getPath();
-
-        NbJavaModule parsedModule = parsedModules.get(uniqueName);
-        if (parsedModule != null) {
-            return parsedModule;
-        }
-
-        Map<NbSourceType, NbSourceGroup> sources = getSources(module);
 
         File moduleDir = GradleModelLoader.tryGetModuleDir(module);
         if (moduleDir == null) {
             LOGGER.log(Level.WARNING, "Unable to find the project directory: {0}", uniqueName);
             return null;
         }
+
+        List<JavaSourceSet> sourceSets = parseSourceSets(module, moduleDir, cache);
 
         String defaultLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
@@ -365,19 +295,9 @@ public final class NbJavaModelUtils {
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
         NbOutput output = NbJavaModelUtils.createDefaultOutput(moduleDir);
 
-        List<File> listedDirs = lookupListedDirs(sources);
+        List<File> listedDirs = lookupListedDirs(sourceSets);
 
-        NbJavaModuleBuilder moduleBuilder = new NbJavaModuleBuilder(
-                properties, compatibilityModel, output, sources, listedDirs);
-        NbJavaModule result = moduleBuilder.getReadOnlyView();
-        parsedModules.put(uniqueName, result);
-
-        // Recursion is only allowed from this point to avoid infinite
-        // recursion.
-
-        moduleBuilder.addDependencies(getDependencies(module, parsedModules));
-
-        return result;
+        return new NbJavaModule(properties, compatibilityModel, sourceSets, output, listedDirs);
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
@@ -386,32 +306,24 @@ public final class NbJavaModelUtils {
             throw new IOException("Unable to find the main project in the model.");
         }
 
-        Map<String, NbJavaModule> parsedModules = new HashMap<String, NbJavaModule>();
-        NbJavaModule parsedMainModule = tryParseModule(mainModule, parsedModules);
+        DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
+        Map<String, IdeaDependencyBuilder> cache = new HashMap<String, IdeaDependencyBuilder>(2 * modules.size());
+
+        NbJavaModule parsedMainModule = tryParseModule(mainModule, cache);
         if (parsedMainModule == null) {
             throw new IOException("Unable to parse the main project from the model.");
         }
 
-        for (IdeaModule module: ideaModel.getModules()) {
-            String uniqueName = module.getGradleProject().getPath();
-
-            NbJavaModule parsedModule = parsedModules.get(uniqueName);
-            if (parsedModule == null) {
-                tryParseModule(module, parsedModules);
-            }
-        }
-
+        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(2 * modules.size());
         NbJavaModel mainModel = new NbJavaModel(parsedMainModule);
-        Collection<NbJavaModule> parsedModuleValues = parsedModules.values();
-
-        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(2 * parsedModuleValues.size() + 1);
         result.put(mainModel.getMainModule().getModuleDir(), mainModel);
 
-        for (NbJavaModule module: parsedModuleValues) {
-            if (module != null && module != parsedMainModule) {
-                File moduleDir = module.getModuleDir();
+        for (IdeaModule module: modules) {
+            NbJavaModule parsedModule = tryParseModule(module, cache);
+            if (parsedModule != null && !parsedMainModule.getUniqueName().equals(parsedModule.getUniqueName())) {
+                File moduleDir = parsedModule.getModuleDir();
                 if (moduleDir != null) {
-                    NbJavaModel javaModel = new NbJavaModel(module);
+                    NbJavaModel javaModel = new NbJavaModel(parsedModule);
                     result.put(javaModel.getMainModule().getModuleDir(), javaModel);
                 }
             }
@@ -432,6 +344,160 @@ public final class NbJavaModelUtils {
     public static FileObject uriToFileObject(URI uri) {
         File file = uriToFile(uri);
         return file != null ? FileUtil.toFileObject(file) : null;
+    }
+
+    private static class ProjectClassPaths {
+        public final JavaClassPaths main;
+        public final JavaClassPaths test;
+
+        public ProjectClassPaths(JavaClassPaths main, JavaClassPaths test) {
+            assert main != null;
+            assert test != null;
+
+            this.main = main;
+            this.test = test;
+        }
+    }
+
+    private static class IdeaDependencyBuilder {
+        private Set<File> mainCompile;
+        private Set<File> mainRuntime;
+        private Set<File> testCompile;
+        private Set<File> testRuntime;
+
+        public IdeaDependencyBuilder() {
+            this.mainCompile = new LinkedHashSet<File>();
+            this.mainRuntime = new LinkedHashSet<File>();
+            this.testCompile = new LinkedHashSet<File>();
+            this.testRuntime = new LinkedHashSet<File>();
+        }
+
+        public void addAll(NbDependencyType type, IdeaDependencyBuilder dependencies) {
+            switch (type) {
+                case COMPILE:
+                    addMainCompile(dependencies);
+                    break;
+                case RUNTIME:
+                    addMainRuntime(dependencies);
+                    break;
+                case TEST_COMPILE:
+                    addTestCompile(dependencies);
+                    break;
+                case TEST_RUNTIME:
+                    addTestRuntime(dependencies);
+                    break;
+                default:
+                    LOGGER.log(Level.WARNING, "Unknown dependency type: {0}", type);
+                    break;
+            }
+        }
+
+        public void addMainCompile(IdeaDependencyBuilder dependencies) {
+            addMainCompile(dependencies.mainCompile);
+            addMainRuntime(dependencies.mainRuntime);
+        }
+
+        public void addMainRuntime(IdeaDependencyBuilder dependencies) {
+            addMainRuntime(dependencies.mainRuntime);
+        }
+
+        public void addTestCompile(IdeaDependencyBuilder dependencies) {
+            addTestCompile(dependencies.mainCompile);
+            addTestRuntime(dependencies.mainRuntime);
+        }
+
+        public void addTestRuntime(IdeaDependencyBuilder dependencies) {
+            addTestRuntime(dependencies.mainRuntime);
+        }
+
+        public void addAll(NbDependencyType type, Collection<File> files) {
+            switch (type) {
+                case COMPILE:
+                    addMainCompile(files);
+                    break;
+                case RUNTIME:
+                    addMainRuntime(files);
+                    break;
+                case TEST_COMPILE:
+                    addTestCompile(files);
+                    break;
+                case TEST_RUNTIME:
+                    addTestRuntime(files);
+                    break;
+                default:
+                    LOGGER.log(Level.WARNING, "Unknown dependency type: {0}", type);
+                    break;
+            }
+        }
+
+        public void addMainCompile(Collection<File> files) {
+            mainCompile.addAll(files);
+            mainRuntime.addAll(files);
+            testCompile.addAll(files);
+            testRuntime.addAll(files);
+        }
+
+        public void addMainRuntime(Collection<File> files) {
+            mainRuntime.addAll(files);
+            testRuntime.addAll(files);
+        }
+
+        public void addTestCompile(Collection<File> files) {
+            testCompile.addAll(files);
+            testRuntime.addAll(files);
+        }
+
+        public void addTestRuntime(Collection<File> files) {
+            testRuntime.addAll(files);
+        }
+
+        public void add(NbDependencyType type, File file) {
+            switch (type) {
+                case COMPILE:
+                    addMainCompile(file);
+                    break;
+                case RUNTIME:
+                    addMainRuntime(file);
+                    break;
+                case TEST_COMPILE:
+                    addTestCompile(file);
+                    break;
+                case TEST_RUNTIME:
+                    addTestRuntime(file);
+                    break;
+                default:
+                    LOGGER.log(Level.WARNING, "Unknown dependency type: {0}", type);
+                    break;
+            }
+        }
+
+        public void addMainCompile(File file) {
+            mainCompile.add(file);
+            mainRuntime.add(file);
+            testCompile.add(file);
+            testRuntime.add(file);
+        }
+
+        public void addMainRuntime(File file) {
+            mainRuntime.add(file);
+            testRuntime.add(file);
+        }
+
+        public void addTestCompile(File file) {
+            testCompile.add(file);
+            testRuntime.add(file);
+        }
+
+        public void addTestRuntime(File file) {
+            testRuntime.add(file);
+        }
+
+        public void setFrom(IdeaDependencyBuilder other) {
+            this.mainCompile = other.mainCompile;
+            this.mainRuntime = other.mainRuntime;
+            this.testCompile = other.testCompile;
+            this.testRuntime = other.testRuntime;
+        }
     }
 
     private static class DependencyBuilder {
@@ -474,26 +540,6 @@ public final class NbJavaModelUtils {
             return new NbDependencyGroup(
                     getDependencies(type, moduleDependencies),
                     getDependencies(type, uriDependencies));
-        }
-    }
-
-    private static final class DependenciesResult {
-        private final boolean circular;
-        private final Map<NbDependencyType, NbDependencyGroup> dependencies;
-
-        public DependenciesResult(
-                boolean circular,
-                Map<NbDependencyType, NbDependencyGroup> dependencies) {
-            this.circular = circular;
-            this.dependencies = dependencies;
-        }
-
-        public boolean hasCircular() {
-            return circular;
-        }
-
-        public Map<NbDependencyType, NbDependencyGroup> getDependencies() {
-            return dependencies;
         }
     }
 

@@ -39,7 +39,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.netbeans.gradle.project.java.model.NbSourceRoot;
+import org.netbeans.gradle.project.java.model.NamedFile;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -338,11 +338,11 @@ public final class GradleModelLoader {
         valueList.add(value);
     }
 
-    public static List<NbSourceRoot> nameSourceRoots(List<File> files) {
+    public static List<NamedFile> nameSourceRoots(Collection<File> files) {
         // The common case
         if (files.size() == 1) {
-            File file = files.get(0);
-            return Collections.singletonList(new NbSourceRoot(file, file.getName()));
+            File file = files.iterator().next();
+            return Collections.singletonList(new NamedFile(file, file.getName()));
         }
 
         Map<String, List<FileWithBase>> nameToFile
@@ -390,11 +390,11 @@ public final class GradleModelLoader {
             }
         } while (didSomething);
 
-        NbSourceRoot[] result = new NbSourceRoot[fileIndex];
+        NamedFile[] result = new NamedFile[fileIndex];
         for (Map.Entry<String, List<FileWithBase>> entry: nameToFile.entrySet()) {
             String entryName = entry.getKey();
             for (FileWithBase file: entry.getValue()) {
-                result[file.index] = new NbSourceRoot(file.file, entryName);
+                result[file.index] = new NamedFile(file.file, entryName);
             }
         }
 

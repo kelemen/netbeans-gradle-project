@@ -3,11 +3,15 @@ package org.netbeans.gradle.project.java.query;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import org.netbeans.api.project.SourceGroup;
+import org.netbeans.gradle.project.GradleProjectSources;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
+import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
@@ -62,10 +66,29 @@ public final class JavaExtensionNodes implements GradleProjectExtensionNodes {
         });
     }
 
+    private void addSourceRoots(List<SingleNodeFactory> toPopulate) {
+        List<NamedSourceRoot> namedRoots = javaExt.getCurrentModel().getMainModule().getNamedSourceRoots();
+
+        for (final NamedSourceRoot root: namedRoots) {
+            final SourceGroup group = GradleProjectSources.tryCreateSourceGroup(root);
+            if (group == null) {
+                continue;
+            }
+
+            toPopulate.add(new SingleNodeFactory() {
+                @Override
+                public Node createNode() {
+                    return PackageView.createPackageView(group);
+                }
+            });
+        }
+    }
+
     @Override
     public List<SingleNodeFactory> getNodeFactories() {
         List<SingleNodeFactory> result = new LinkedList<SingleNodeFactory>();
 
+        addSourceRoots(result);
         addListedDirs(result);
         addDependencies(result);
 

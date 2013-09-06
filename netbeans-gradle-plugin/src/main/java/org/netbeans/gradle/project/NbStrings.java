@@ -22,6 +22,22 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_TestResources");
     }
 
+    public static String getOtherPackageCaption(String sourceSetName) {
+        String adjustedName;
+        if (sourceSetName.isEmpty()) {
+            adjustedName = "?";
+        }
+        else {
+            adjustedName = Character.toUpperCase(sourceSetName.charAt(0)) + sourceSetName.substring(1);
+        }
+
+        return NbBundle.getMessage(NbStrings.class, "LBL_OtherSources", adjustedName);
+    }
+
+    public static String getMultiRootSourceGroups(String mainName, String subName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_MultiRootSourceGroups", mainName, subName);
+    }
+
     public static String getSubProjectsCaption() {
         return NbBundle.getMessage(NbStrings.class, "LBL_SubProjects");
     }

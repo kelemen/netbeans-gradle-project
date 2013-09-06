@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -20,6 +20,10 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
+import org.netbeans.gradle.model.java.JavaOutputDirs;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
+import org.netbeans.gradle.model.java.JavaSourceGroupName;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
@@ -30,16 +34,9 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
-import org.netbeans.gradle.project.java.model.NbDependencyType;
-import org.netbeans.gradle.project.java.model.NbJavaDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbModuleDependency;
-import org.netbeans.gradle.project.java.model.NbOutput;
-import org.netbeans.gradle.project.java.model.NbSourceGroup;
-import org.netbeans.gradle.project.java.model.NbSourceType;
-import org.netbeans.gradle.project.java.model.NbUriDependency;
+import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -57,8 +54,8 @@ implements
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
 
     private final JavaExtension javaExt;
-    private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
-    private final ConcurrentMap<ClassPathType, ClassPath> classpaths;
+    private final ConcurrentMap<ClassPathKey, List<PathResourceImplementation>> classpathResources;
+    private final ConcurrentMap<ClassPathKey, ClassPath> classpaths;
 
     private final PropertyChangeSupport changes;
     private volatile ProjectPlatform currentPlatform;
@@ -68,18 +65,18 @@ implements
     private final AtomicReference<ClassPath> allSourcesClassPathRef;
     private volatile List<PathResourceImplementation> allSources;
 
-    // EnumMap is not a ConcurrentMap, so it cannot be used.
-    @SuppressWarnings("MapReplaceableByEnumMap")
+    private volatile boolean loadedOnce;
+
     public GradleClassPathProvider(JavaExtension javaExt) {
         if (javaExt == null) throw new NullPointerException("javaExt");
 
         this.javaExt = javaExt;
         this.currentPlatform = null;
         this.infoRefRef = new AtomicReference<ProjectInfoRef>(null);
+        this.loadedOnce = false;
 
-        int classPathTypeCount = ClassPathType.values().length;
-        this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>(classPathTypeCount);
-        this.classpaths = new ConcurrentHashMap<ClassPathType, ClassPath>(classPathTypeCount);
+        this.classpathResources = new ConcurrentHashMap<ClassPathKey, List<PathResourceImplementation>>();
+        this.classpaths = new ConcurrentHashMap<ClassPathKey, ClassPath>();
         this.allSources = Collections.emptyList();
         this.allSourcesClassPathRef = new AtomicReference<ClassPath>(null);
 
@@ -98,7 +95,7 @@ implements
         return result;
     }
 
-    private ClassPath getPaths(ClassPathType classPathType) {
+    private ClassPath getPaths(ClassPathKey classPathType) {
         ClassPath result = classpaths.get(classPathType);
         if (result == null) {
             result = ClassPathFactory.createClassPath(new GradleClassPaths(classPathType));
@@ -107,11 +104,11 @@ implements
     }
 
     public ClassPath getAllRuntimeClassPaths() {
-        return getPaths(ClassPathType.RUNTIME_FOR_TEST);
+        return getPaths(SpecialClassPath.ALL_RUNTIME);
     }
 
     public ClassPath getBuildOutputClassPaths() {
-        return getPaths(ClassPathType.PROJECT_BUILD_OUTPUT);
+        return getPaths(SpecialClassPath.ALL_BUILD_OUTPUT);
     }
 
     public ClassPath getClassPaths(String type) {
@@ -125,13 +122,13 @@ implements
             return result;
         }
         else if (ClassPath.BOOT.equals(type)) {
-            return ClassPathSupport.createProxyClassPath(getPaths(ClassPathType.BOOT), getPaths(ClassPathType.BOOT_FOR_TEST));
+            return getPaths(SpecialClassPath.BOOT);
         }
         else if (ClassPath.COMPILE.equals(type)) {
-            return getPaths(ClassPathType.COMPILE_FOR_GLOBAL);
+            return getPaths(SpecialClassPath.COMPILE_FOR_GLOBAL);
         }
         else if (ClassPath.EXECUTE.equals(type)) {
-            return getPaths(ClassPathType.RUNTIME_FOR_GLOBAL);
+            return getPaths(SpecialClassPath.RUNTIME_FOR_GLOBAL);
         }
         else {
             return ClassPath.EMPTY;
@@ -175,149 +172,97 @@ implements
         changes.removePropertyChangeListener(listener);
     }
 
-    private FileType getTypeOfFile(NbJavaModule module, FileObject file) {
-        for (Map.Entry<NbSourceType, NbSourceGroup> entry: module.getSources().entrySet()) {
-            for (FileObject sourceRoot: entry.getValue().getFileObjects()) {
-                if (FileUtil.getRelativePath(sourceRoot, file) != null) {
-                    return sourceTypeToFileType(entry.getKey());
+    private boolean isInOneOf(File file, Collection<File> roots) {
+        for (File root: roots) {
+            if (GradleFileUtils.isParentOrSame(root, file)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private JavaSourceSet findAssociatedSourceSet(NbJavaModel projectModel, FileObject fileObj) {
+        File file = FileUtil.toFile(fileObj);
+        if (file == null) {
+            return null;
+        }
+
+        for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
+            JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+            outputDirs.getClassesDir();
+
+            if (isInOneOf(file, sourceSet.getClasspaths().getCompileClasspaths())) {
+                return sourceSet;
+            }
+
+            if (isInOneOf(file, sourceSet.getClasspaths().getRuntimeClasspaths())) {
+                return sourceSet;
+            }
+
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                if (isInOneOf(file, sourceGroup.getSourceRoots())) {
+                    return sourceSet;
                 }
             }
         }
 
-        NbOutput output = module.getOutputDirs();
-
-        FileObject outputDir = FileUtil.toFileObject(output.getBuildDir());
-        if (outputDir != null && FileUtil.getRelativePath(outputDir, file) != null) {
-            return FileType.COMPILED;
-        }
-
-        FileObject testOutputDir = FileUtil.toFileObject(output.getTestBuildDir());
-        if (testOutputDir != null && FileUtil.getRelativePath(testOutputDir, file) != null) {
-            return FileType.COMPILED_TEST;
-        }
-
         return null;
     }
 
-    private static FileType sourceTypeToFileType(NbSourceType sourceType) {
-        switch (sourceType) {
-            case RESOURCE:
-                return FileType.RESOURCE;
-            case SOURCE:
-                return FileType.SOURCE;
-            case TEST_RESOURCE:
-                return FileType.TEST_RESOURCE;
-            case TEST_SOURCE:
-                return FileType.TEST_SOURCE;
-            case OTHER:
-                return FileType.RESOURCE;
-            default:
-                throw new AssertionError("Unexpected source type: " + sourceType);
-        }
-    }
-
-    private FileType getTypeOfFile(NbJavaModel projectModel, FileObject file) {
-        NbJavaModule mainModule = projectModel.getMainModule();
-        FileType result = getTypeOfFile(mainModule, file);
-        if (result != null) {
-            return result;
-        }
-        for (NbJavaModule module: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
-            FileType depResult = getTypeOfFile(module, file);
-            if (depResult != null) {
-                return depResult;
-            }
-        }
-
-        return null;
-    }
-
-    private static ClassPathType getClassPathType(FileType fileType, String type) {
-        if (fileType == null) {
+    private ClassPathKey getClassPathType(NbJavaModel projectModel, FileObject fileObj, String type) {
+        JavaSourceSet sourceSet = findAssociatedSourceSet(projectModel, fileObj);
+        if (sourceSet == null) {
             return null;
         }
 
-        if (ClassPath.SOURCE.equals(type)) {
-            return fileType.isTest()
-                    ? ClassPathType.SOURCES_FOR_TEST
-                    : ClassPathType.SOURCES;
-        }
-        else if (ClassPath.BOOT.equals(type)) {
-            return fileType.isTest()
-                    ? ClassPathType.BOOT_FOR_TEST
-                    : ClassPathType.BOOT;
-        }
-        else if (ClassPath.COMPILE.equals(type)) {
-            return fileType.isTest()
-                    ? ClassPathType.COMPILE_FOR_TEST
-                    : ClassPathType.COMPILE;
-        }
-        else if (ClassPath.EXECUTE.equals(type)) {
-            return fileType.isTest()
-                    ? ClassPathType.RUNTIME_FOR_TEST
-                    : ClassPathType.RUNTIME;
-        }
-        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
-            return fileType.isTest()
-                    ? ClassPathType.COMPILE_FOR_TEST
-                    : ClassPathType.COMPILE;
+        if (ClassPath.BOOT.equals(type)) {
+            return SpecialClassPath.BOOT;
         }
 
+        String name = sourceSet.getName();
+
+        if (ClassPath.SOURCE.equals(type)) {
+            return new SourceSetClassPathType(name, ClassPathType.SOURCES);
+        }
+        else if (ClassPath.COMPILE.equals(type)) {
+            return new SourceSetClassPathType(name, ClassPathType.COMPILE);
+        }
+        else if (ClassPath.EXECUTE.equals(type)) {
+            return new SourceSetClassPathType(name, ClassPathType.RUNTIME);
+        }
+        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
+            return new SourceSetClassPathType(name, ClassPathType.COMPILE);
+        }
+
+        LOGGER.log(Level.WARNING, "Unexpected classpath type: {0}", type);
         return null;
     }
 
-    private ClassPathType getClassPathType(NbJavaModel projectModel, FileObject file, String type) {
-        FileType fileType = getTypeOfFile(projectModel, file);
-        return getClassPathType(fileType, type);
-    }
-
-    private void addSourcesToList(
-            NbJavaModule module,
-            List<PathResourceImplementation> result,
-            NbSourceType... sourceTypes) {
-
-        for (NbSourceType sourceType: sourceTypes) {
-            NbSourceGroup sources = module.getSources(sourceType);
-            if (sources != null) {
-                @SuppressWarnings("unchecked")
-                List<PathResourceImplementation> resources
-                        = getPathResources(new HashSet<File>(), sources.getFiles());
-                result.addAll(resources);
+    private static void addSourcesOfModule(NbJavaModule module, List<File> sources) {
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                if (sourceGroup.getGroupName() != JavaSourceGroupName.RESOURCES) {
+                    sources.addAll(sourceGroup.getSourceRoots());
+                }
             }
         }
     }
 
     private void updateAllSources() {
-        List<PathResourceImplementation> sourceContainer = new LinkedList<PathResourceImplementation>();
-
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        addSourcesToList(mainModule, sourceContainer, NbSourceType.SOURCE, NbSourceType.TEST_SOURCE);
 
-        for (NbJavaModule module: NbJavaModelUtils.getAllModuleDependencies(mainModule)) {
-            addSourcesToList(module, sourceContainer, NbSourceType.SOURCE);
-        }
+        List<File> sources = new LinkedList<File>();
+        addSourcesOfModule(mainModule, sources);
 
+        List<PathResourceImplementation> sourceContainer = getPathResources(sources, new HashSet<File>());
+
+        // TODO: Add other projects' sources
         allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
     }
 
-    @SuppressWarnings("varargs")
-    public static List<PathResourceImplementation> getPathResources(
-            Set<File> invalid, List<File>... fileGroups) {
-
-        int size = 0;
-        for (List<?> fileGroup: fileGroups) {
-            size += fileGroup.size();
-        }
-
-        Set<File> filesSet = new HashSet<File>(4 * size / 3 + 1);
-        for (List<File> fileGroup: fileGroups) {
-            for (File file: fileGroup) {
-                filesSet.add(file);
-            }
-        }
-
-        List<PathResourceImplementation> result = new ArrayList<PathResourceImplementation>(filesSet.size());
-        for (File file: filesSet) {
+    public static List<PathResourceImplementation> getPathResources(Collection<File> files, Set<File> invalid) {
+        List<PathResourceImplementation> result = new ArrayList<PathResourceImplementation>(files.size());
+        for (File file: new LinkedHashSet<File>(files)) {
             URL url = FileUtil.urlForArchiveOrDir(file);
 
             // Ignore invalid classpath entries
@@ -333,161 +278,35 @@ implements
     }
 
     private void setClassPathResources(
-            ClassPathType classPathType,
+            ClassPathKey classPathKey,
             List<PathResourceImplementation> paths) {
-        classpathResources.put(classPathType, Collections.unmodifiableList(paths));
+        classpathResources.put(classPathKey, Collections.unmodifiableList(paths));
     }
 
-    private void loadPathResourcesForSources(NbJavaModel projectModel) {
+    private void loadPathResources(JavaSourceSet sourceSet, Set<File> invalid) {
+        Set<File> compileCP = sourceSet.getClasspaths().getCompileClasspaths();
+        setClassPathResources(
+                new SourceSetClassPathType(sourceSet.getName(), ClassPathType.COMPILE),
+                getPathResources(compileCP, invalid));
+
+        Set<File> runtimeCP = sourceSet.getClasspaths().getCompileClasspaths();
+        setClassPathResources(
+                new SourceSetClassPathType(sourceSet.getName(), ClassPathType.RUNTIME),
+                getPathResources(runtimeCP, invalid));
+
         List<File> sources = new LinkedList<File>();
-        List<File> testSources = new LinkedList<File>();
+        for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+            if (sourceGroup.getGroupName() != JavaSourceGroupName.RESOURCES) {
+                sources.addAll(sourceGroup.getSourceRoots());
+            }
+        }
 
-        NbJavaModule mainModule = projectModel.getMainModule();
-
-        sources.addAll(mainModule.getSources(NbSourceType.SOURCE).getFiles());
-        testSources.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFiles());
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> sourcePaths = getPathResources(
-                new HashSet<File>(), sources);
-        setClassPathResources(ClassPathType.SOURCES, sourcePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> testSourcePaths = getPathResources(
-                new HashSet<File>(), testSources);
-        setClassPathResources(ClassPathType.SOURCES_FOR_TEST, testSourcePaths);
+        setClassPathResources(
+                new SourceSetClassPathType(sourceSet.getName(), ClassPathType.SOURCES),
+                getPathResources(sources, invalid));
     }
 
-    private static void addModuleClassPaths(
-            NbJavaModule module,
-            List<File> paths,
-            List<File> testPaths,
-            Collection<File> combinedPaths) {
-        NbOutput output = module.getOutputDirs();
-
-        if (paths != null) {
-            paths.add(output.getBuildDir());
-            combinedPaths.add(output.getBuildDir());
-        }
-
-        if (testPaths != null) {
-            testPaths.add(output.getTestBuildDir());
-            combinedPaths.add(output.getTestBuildDir());
-        }
-    }
-
-    private static void addExternalClassPaths(
-            NbUriDependency dependency,
-            List<File> paths) {
-        File file = dependency.tryGetAsFile();
-        if (file != null) {
-            paths.add(file);
-        }
-        else {
-            LOGGER.log(Level.WARNING, "Dependency cannot be added to classpath: {0}", dependency.getUri());
-        }
-    }
-
-    private void loadPathResources(NbJavaModel projectModel) {
-        loadPathResourcesForSources(projectModel);
-
-        List<File> compile = new LinkedList<File>();
-        List<File> testCompile = new LinkedList<File>();
-        List<File> runtime = new LinkedList<File>();
-        List<File> testRuntime = new LinkedList<File>();
-
-        List<File> globalCompile = new LinkedList<File>();
-        List<File> globalRuntime = new LinkedList<File>();
-
-        List<File> buildOutputDirs = new LinkedList<File>();
-
-        // Contains build directories which does not necessarily exists
-        Set<File> notRequiredPaths = new HashSet<File>();
-
-        NbJavaModule mainModule = projectModel.getMainModule();
-
-        File mainModuleBuildOutput = mainModule.getOutputDirs().getBuildDir();
-        testCompile.add(mainModuleBuildOutput);
-        testRuntime.add(mainModuleBuildOutput);
-        buildOutputDirs.add(mainModuleBuildOutput);
-
-        addModuleClassPaths(mainModule, runtime, testRuntime, notRequiredPaths);
-
-        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.COMPILE)) {
-            if (dependency instanceof NbUriDependency) {
-                addExternalClassPaths((NbUriDependency)dependency, compile);
-                addExternalClassPaths((NbUriDependency)dependency, globalCompile);
-            }
-            else if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), compile, null, notRequiredPaths);
-
-                buildOutputDirs.add(moduleDep.getModule().getOutputDirs().getBuildDir());
-                buildOutputDirs.add(moduleDep.getModule().getOutputDirs().getTestBuildDir());
-            }
-        }
-        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.RUNTIME)) {
-            if (dependency instanceof NbUriDependency) {
-                addExternalClassPaths((NbUriDependency)dependency, runtime);
-                addExternalClassPaths((NbUriDependency)dependency, globalRuntime);
-            }
-            else if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), runtime, null, notRequiredPaths);
-            }
-        }
-        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_COMPILE)) {
-            if (dependency instanceof NbUriDependency) {
-                addExternalClassPaths((NbUriDependency)dependency, testCompile);
-                addExternalClassPaths((NbUriDependency)dependency, globalCompile);
-            }
-            else if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), testCompile, null, notRequiredPaths);
-            }
-        }
-        for (NbJavaDependency dependency: NbJavaModelUtils.getAllDependencies(mainModule, NbDependencyType.TEST_RUNTIME)) {
-            if (dependency instanceof NbUriDependency) {
-                addExternalClassPaths((NbUriDependency)dependency, testRuntime);
-                addExternalClassPaths((NbUriDependency)dependency, globalRuntime);
-            }
-            else if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                addModuleClassPaths(moduleDep.getModule(), testRuntime, null, notRequiredPaths);
-            }
-        }
-
-        Set<File> missing = new HashSet<File>();
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> buildOutputPaths = getPathResources(missing, buildOutputDirs);
-        setClassPathResources(ClassPathType.PROJECT_BUILD_OUTPUT, buildOutputPaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> compilePaths = getPathResources(missing, compile);
-        setClassPathResources(ClassPathType.COMPILE, compilePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> testCompilePaths = getPathResources(missing, compile, testCompile);
-        setClassPathResources(ClassPathType.COMPILE_FOR_TEST, testCompilePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> globalCompilePaths = getPathResources(new HashSet<File>(), globalCompile);
-        setClassPathResources(ClassPathType.COMPILE_FOR_GLOBAL, globalCompilePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> runtimePaths = getPathResources(missing, compile, runtime);
-        setClassPathResources(ClassPathType.RUNTIME, runtimePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> testRuntimePaths = getPathResources(
-                missing, compile, testCompile, runtime, testRuntime);
-        setClassPathResources(ClassPathType.RUNTIME_FOR_TEST, testRuntimePaths);
-
-        @SuppressWarnings("unchecked")
-        List<PathResourceImplementation> globalRuntimePaths = getPathResources(new HashSet<File>(), globalRuntime);
-        setClassPathResources(ClassPathType.RUNTIME_FOR_GLOBAL, globalRuntimePaths);
-
+    private void loadBootClassPath() {
         List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
         ProjectPlatform platform = currentPlatform;
         if (platform == null) {
@@ -497,12 +316,80 @@ implements
             platformResources.add(ClassPathSupport.createResource(url));
         }
 
-        setClassPathResources(ClassPathType.BOOT, platformResources);
-        setClassPathResources(ClassPathType.BOOT_FOR_TEST, platformResources);
+        setClassPathResources(SpecialClassPath.BOOT, platformResources);
+    }
 
-        updateAllSources();
+    private void loadAllRuntimeClassPath(NbJavaModule mainModule) {
+        Set<File> classPaths = new HashSet<File>();
 
-        missing.removeAll(notRequiredPaths);
+        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+            classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+            classPaths.addAll(sourceSet.getClasspaths().getRuntimeClasspaths());
+        }
+
+        setClassPathResources(
+                SpecialClassPath.ALL_RUNTIME,
+                getPathResources(classPaths, new HashSet<File>()));
+    }
+
+    private void loadRuntimeForGlobalClassPath(NbJavaModel projectModel) {
+        Set<File> classPaths = new HashSet<File>();
+
+        for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
+            classPaths.addAll(sourceSet.getClasspaths().getRuntimeClasspaths());
+        }
+
+        // TODO: Remove other projects' build output directories from the class path.
+
+        setClassPathResources(
+                SpecialClassPath.RUNTIME_FOR_GLOBAL,
+                getPathResources(classPaths, new HashSet<File>()));
+    }
+
+    private void loadCompileForGlobalClassPath(NbJavaModel projectModel) {
+        Set<File> classPaths = new HashSet<File>();
+
+        for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
+            classPaths.addAll(sourceSet.getClasspaths().getCompileClasspaths());
+        }
+
+        // TODO: Remove other projects' build output directories from the class path.
+
+        setClassPathResources(
+                SpecialClassPath.COMPILE_FOR_GLOBAL,
+                getPathResources(classPaths, new HashSet<File>()));
+    }
+
+    private void loadAllBuildOutputClassPath(NbJavaModel projectModel) {
+        Set<File> classPaths = new HashSet<File>();
+
+        for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
+            classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+        }
+
+        // TODO: Add the build output of other projects
+
+        setClassPathResources(
+                SpecialClassPath.ALL_BUILD_OUTPUT,
+                getPathResources(classPaths, new HashSet<File>()));
+    }
+
+    private void loadPathResources(NbJavaModel projectModel) {
+        Set<File> missing = new HashSet<File>();
+
+        NbJavaModule mainModule = projectModel.getMainModule();
+        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+            loadPathResources(sourceSet, missing);
+        }
+
+        loadBootClassPath();
+        loadAllRuntimeClassPath(mainModule);
+        loadAllBuildOutputClassPath(projectModel);
+
+        loadCompileForGlobalClassPath(projectModel);
+        loadRuntimeForGlobalClassPath(projectModel);
+
+        // TODO: Should we report all invalid?
 
         if (missing.isEmpty()) {
             getInfoRef().setInfo(null);
@@ -516,29 +403,22 @@ implements
             getInfoRef().setInfo(new ProjectInfo(infos));
         }
 
+        updateAllSources();
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
             }
         });
+
+        loadedOnce = true;
     }
 
-    private void loadClassPath(ClassPathType classPathType) {
+    private void loadClassPath(ClassPathKey classPathKey) {
         classpaths.putIfAbsent(
-                classPathType,
-                ClassPathFactory.createClassPath(new GradleClassPaths(classPathType)));
-    }
-
-    private void loadClassPaths() {
-        loadClassPath(ClassPathType.COMPILE);
-        loadClassPath(ClassPathType.COMPILE_FOR_TEST);
-        loadClassPath(ClassPathType.RUNTIME);
-        loadClassPath(ClassPathType.RUNTIME_FOR_TEST);
-        loadClassPath(ClassPathType.BOOT);
-        loadClassPath(ClassPathType.BOOT_FOR_TEST);
-        loadClassPath(ClassPathType.SOURCES);
-        loadClassPath(ClassPathType.SOURCES_FOR_TEST);
+                classPathKey,
+                ClassPathFactory.createClassPath(new GradleClassPaths(classPathKey)));
     }
 
     @Override
@@ -548,8 +428,8 @@ implements
         }
 
         NbJavaModel projectModel = javaExt.getCurrentModel();
-        ClassPathType classPathType = getClassPathType(projectModel, file, type);
-        if (classPathType == null) {
+        ClassPathKey classPathKey = getClassPathType(projectModel, file, type);
+        if (classPathKey == null) {
             // We don't really know if we will know the classpath of this file
             // or not so we should return ClassPath which returns the classpaths
             // as soon as they become known. However, this means that we never
@@ -563,15 +443,18 @@ implements
             return null;
         }
 
-        ClassPath result = classpaths.get(classPathType);
+        ClassPath result = classpaths.get(classPathKey);
         if (result != null) {
             return result;
         }
 
-        loadPathResources(projectModel);
-        loadClassPaths();
+        if (!loadedOnce) {
+            loadPathResources(projectModel);
+        }
 
-        return classpaths.get(classPathType);
+        loadClassPath(classPathKey);
+
+        return classpaths.get(classPathKey);
     }
 
     private abstract class AbstractGradleClassPaths implements ClassPathImplementation {
@@ -594,53 +477,71 @@ implements
     }
 
     private class GradleClassPaths extends AbstractGradleClassPaths {
-        private final ClassPathType classPathType;
+        private final ClassPathKey classPathKey;
 
-        public GradleClassPaths(ClassPathType classPathType) {
-            assert classPathType != null;
-            this.classPathType = classPathType;
+        public GradleClassPaths(ClassPathKey classPathKey) {
+            assert classPathKey != null;
+            this.classPathKey = classPathKey;
         }
 
         @Override
         public List<PathResourceImplementation> getResources() {
-            List<PathResourceImplementation> result = classpathResources.get(classPathType);
+            List<PathResourceImplementation> result = classpathResources.get(classPathKey);
             return result != null
                     ? result
                     : Collections.<PathResourceImplementation>emptyList();
         }
     }
 
-    private enum FileType {
-        SOURCE(false),
-        RESOURCE(false),
-        TEST_SOURCE(true),
-        TEST_RESOURCE(true),
-        COMPILED(false),
-        COMPILED_TEST(true);
+    // Just a marker for type safety
+    private static interface ClassPathKey {
+    }
 
-        private final boolean test;
+    private static final class SourceSetClassPathType implements ClassPathKey {
+        private final String sourceSetName;
+        private final ClassPathType classPathType;
 
-        private FileType(boolean test) {
-            this.test = test;
+        public SourceSetClassPathType(String sourceSetName, ClassPathType classPathType) {
+            assert sourceSetName != null;
+            assert classPathType != null;
+
+            this.sourceSetName = sourceSetName;
+            this.classPathType = classPathType;
         }
 
-        public boolean isTest() {
-            return test;
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 97 * hash + sourceSetName.hashCode();
+            hash = 97 * hash + classPathType.hashCode();
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final SourceSetClassPathType other = (SourceSetClassPathType)obj;
+
+            if (!this.sourceSetName.equals(other.sourceSetName)) return false;
+            if (this.classPathType != other.classPathType) return false;
+            return true;
         }
     }
 
     private enum ClassPathType {
         SOURCES,
-        SOURCES_FOR_TEST,
-        RUNTIME,
-        RUNTIME_FOR_TEST,
-        RUNTIME_FOR_GLOBAL,
-        BOOT,
-        BOOT_FOR_TEST,
         COMPILE,
-        COMPILE_FOR_TEST,
+        RUNTIME;
+    }
+
+    private enum SpecialClassPath implements ClassPathKey {
+        BOOT,
+        ALL_RUNTIME,
+        ALL_BUILD_OUTPUT,
         COMPILE_FOR_GLOBAL,
-        PROJECT_BUILD_OUTPUT
+        RUNTIME_FOR_GLOBAL,
     }
 
     private static final class EventSource implements ClassPathImplementation {

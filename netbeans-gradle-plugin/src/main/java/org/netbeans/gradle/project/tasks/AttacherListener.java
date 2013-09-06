@@ -1,8 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.net.URI;
+import java.io.File;
 import java.net.URL;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,22 +11,17 @@ import java.util.logging.Logger;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.model.NbDependencyType;
-import org.netbeans.gradle.project.java.model.NbJavaDependency;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbModuleDependency;
-import org.netbeans.gradle.project.java.model.NbSourceGroup;
-import org.netbeans.gradle.project.java.model.NbSourceType;
-import org.netbeans.gradle.project.java.model.NbUriDependency;
 import org.netbeans.gradle.project.output.DebugTextListener;
-import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -44,34 +38,18 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     private ClassPath getSources() {
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
         List<FileObject> srcRoots = new LinkedList<FileObject>();
-
-        srcRoots.addAll(mainModule.getSources(NbSourceType.SOURCE).getFileObjects());
-        if (test) {
-            srcRoots.addAll(mainModule.getSources(NbSourceType.TEST_SOURCE).getFileObjects());
-        }
-
-        Collection<NbJavaDependency> allDependencies = NbJavaModelUtils.getAllDependencies(
-                mainModule,
-                test ? NbDependencyType.TEST_RUNTIME : NbDependencyType.RUNTIME);
-
-        for (NbJavaDependency dependency: allDependencies) {
-            if (dependency instanceof NbModuleDependency) {
-                NbModuleDependency moduleDep = (NbModuleDependency)dependency;
-                NbSourceGroup sources = moduleDep.getModule().getSources(NbSourceType.SOURCE);
-                srcRoots.addAll(sources.getFileObjects());
-            }
-            else if (dependency instanceof NbUriDependency) {
-                NbUriDependency uriDep = (NbUriDependency)dependency;
-                URI srcUri = uriDep.getSrcUri();
-                FileObject srcRoot = srcUri != null
-                        ? NbJavaModelUtils.uriToFileObject(srcUri) : null;
-                srcRoot = GradleFileUtils.asArchiveOrDir(srcRoot);
-
-                if (srcRoot != null) {
-                    srcRoots.add(srcRoot);
+        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File root: sourceGroup.getSourceRoots()) {
+                    FileObject rootObj = FileUtil.toFileObject(root);
+                    if (rootObj != null) {
+                        srcRoots.add(rootObj);
+                    }
                 }
             }
         }
+        // TODO: Add the sources of dependent modules
+
         return ClassPathSupport.createClassPath(srcRoots.toArray(new FileObject[0]));
     }
 

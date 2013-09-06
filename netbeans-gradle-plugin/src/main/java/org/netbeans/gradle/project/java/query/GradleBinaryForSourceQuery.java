@@ -9,10 +9,11 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.NbSourceType;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -40,56 +41,36 @@ implements
         eventSource.init(this.changes);
     }
 
-    private static SourceType getSourceRootType(NbJavaModule module, FileObject root) {
-        for (FileObject src: module.getSources(NbSourceType.SOURCE).getFileObjects()) {
-            if (FileUtil.getRelativePath(src, root) != null) {
-                return SourceType.NORMAL;
-            }
-        }
-        for (FileObject src: module.getSources(NbSourceType.TEST_SOURCE).getFileObjects()) {
-            if (FileUtil.getRelativePath(src, root) != null) {
-                return SourceType.TEST;
-            }
-        }
-
-        return SourceType.UNKNOWN;
-    }
-
-    private static URL[] getBinariesOfModule(NbJavaModule module) {
-        File buildDir = module.getOutputDirs().getBuildDir();
-        try {
-            URL url = Utilities.toURI(buildDir).toURL();
-            return new URL[]{url};
-        } catch (MalformedURLException ex) {
-            LOGGER.log(Level.INFO, "Cannot convert to URL: " + buildDir, ex);
-        }
-
-        return NO_ROOTS;
-    }
-
-    private static URL[] getTestBinariesOfModule(NbJavaModule module) {
-        File testBuildDir = module.getOutputDirs().getTestBuildDir();
-        try {
-            URL url = Utilities.toURI(testBuildDir).toURL();
-            return new URL[]{url};
-        } catch (MalformedURLException ex) {
-            LOGGER.log(Level.INFO, "Cannot convert to URL: " + testBuildDir, ex);
-        }
-
-        return NO_ROOTS;
-    }
-
-    private static URL[] tryGetRoots(
+    private static File tryGetOutputDir(
             NbJavaModule module, FileObject root) {
-        SourceType sourceType = getSourceRootType(module, root);
-        switch (sourceType) {
-            case NORMAL:
-                return getBinariesOfModule(module);
-            case TEST:
-                return getTestBinariesOfModule(module);
-            default:
-                return NO_ROOTS;
 
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File sourceRoot: sourceGroup.getSourceRoots()) {
+                    FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
+                    if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, root) != null) {
+                        return sourceSet.getOutputDirs().getClassesDir();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static URL[] getRootsAsURLs(
+            NbJavaModule module, FileObject root) {
+
+        File outputDir = tryGetOutputDir(module, root);
+        if (outputDir == null) {
+            return NO_ROOTS;
+        }
+
+        try {
+            URL url = Utilities.toURI(outputDir).toURL();
+            return new URL[]{url};
+        } catch (MalformedURLException ex) {
+            LOGGER.log(Level.INFO, "Cannot convert to URL: " + outputDir, ex);
+            return NO_ROOTS;
         }
     }
 
@@ -110,13 +91,8 @@ implements
             return null;
         }
 
-        if (!javaExt.isOwnerProject(sourceRootObj)) {
-            return null;
-        }
-
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        SourceType rootType = getSourceRootType(mainModule, sourceRootObj);
-        if (rootType == SourceType.UNKNOWN) {
+        if (tryGetOutputDir(mainModule, sourceRootObj) == null) {
             return null;
         }
 
@@ -125,7 +101,7 @@ implements
             public URL[] getRoots() {
                 NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
-                return tryGetRoots(mainModule, sourceRootObj);
+                return getRootsAsURLs(mainModule, sourceRootObj);
             }
 
             @Override
@@ -143,12 +119,6 @@ implements
                 return Arrays.toString(getRoots());
             }
         };
-    }
-
-    private enum SourceType {
-        NORMAL,
-        TEST,
-        UNKNOWN
     }
 
     private static final class EventSource implements BinaryForSourceQuery.Result {

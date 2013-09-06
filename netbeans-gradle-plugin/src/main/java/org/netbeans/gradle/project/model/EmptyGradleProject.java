@@ -9,8 +9,8 @@ import java.util.List;
 import org.gradle.tooling.internal.gradle.DefaultGradleScript;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.GradleScript;
 import org.gradle.tooling.model.GradleTask;
+import org.gradle.tooling.model.gradle.GradleScript;
 import org.netbeans.gradle.project.GradleProjectConstants;
 
 public final class EmptyGradleProject implements GradleProject {
@@ -65,7 +65,7 @@ public final class EmptyGradleProject implements GradleProject {
 
     @Override
     public GradleScript getBuildScript() {
-        return script;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private static final class EmptySet<E>
