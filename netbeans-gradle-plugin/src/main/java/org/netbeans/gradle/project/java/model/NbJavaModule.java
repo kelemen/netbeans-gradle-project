@@ -15,7 +15,6 @@ public final class NbJavaModule {
     private final GenericProjectProperties properties;
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
-    private final NbOutput outputDirs;
     private final List<File> listedDirs;
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
@@ -26,18 +25,15 @@ public final class NbJavaModule {
             GenericProjectProperties properties,
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
-            NbOutput outputDirs,
             List<File> listedDirs) {
 
         if (properties == null) throw new NullPointerException("properties");
         if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
         if (sources == null) throw new NullPointerException("sources");
-        if (outputDirs == null) throw new NullPointerException("outputDirs");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
-        this.outputDirs = outputDirs;
         this.sources = Collections.unmodifiableList(new ArrayList<JavaSourceSet>(sources));
         this.listedDirs = Collections.unmodifiableList(listedDirs);
 
@@ -52,10 +48,6 @@ public final class NbJavaModule {
 
     public JavaCompatibilityModel getCompatibilityModel() {
         return compatibilityModel;
-    }
-
-    public NbOutput getOutputDirs() {
-        return outputDirs;
     }
 
     public File getModuleDir() {

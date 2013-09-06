@@ -15,7 +15,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.openide.loaders.DataFolder;
@@ -133,7 +133,7 @@ extends
         if (immediateChildren.isEmpty()) {
             return;
         }
-        final List<GradleProjectInfo> children = NbJavaModelUtils.getAllChildren(shownModule);
+        final List<GradleProjectInfo> children = IdeaJavaModelUtils.getAllChildren(shownModule);
 
         toPopulate.add(new SingleNodeFactory() {
             @Override

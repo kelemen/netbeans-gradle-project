@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project;
 
-import org.netbeans.gradle.model.util.StringAsFileRef;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.netbeans.gradle.model.util.StringAsFileRef;
 
 import static org.junit.Assert.*;
 

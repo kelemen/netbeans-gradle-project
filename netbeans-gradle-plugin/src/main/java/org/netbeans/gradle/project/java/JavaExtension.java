@@ -24,7 +24,7 @@ import org.netbeans.gradle.project.GradleProjectSources;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
@@ -68,7 +68,7 @@ public final class JavaExtension implements GradleProjectExtension {
         if (projectDirectoryAsFile == null) throw new NullPointerException("projectDirAsFile");
 
         this.project = project;
-        this.currentModel = NbJavaModelUtils.createEmptyModel(project.getProjectDirectory());
+        this.currentModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
         this.cpProvider = new GradleClassPathProvider(this);
         this.lookupRef = new AtomicReference<Lookup>(null);
         this.permanentLookupRef = new AtomicReference<Lookup>(null);
@@ -205,7 +205,7 @@ public final class JavaExtension implements GradleProjectExtension {
 
         File mainModuleDir = currentModel.getMainModule().getModuleDir();
         try {
-            Map<File, NbJavaModel> models = NbJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
+            Map<File, NbJavaModel> models = IdeaJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
             Map<File, Lookup> result = new HashMap<File, Lookup>(2 * models.size());
             for (Map.Entry<File, NbJavaModel> entry: models.entrySet()) {
                 result.put(entry.getKey(), Lookups.fixed(entry.getValue()));
@@ -218,7 +218,7 @@ public final class JavaExtension implements GradleProjectExtension {
     }
 
     private void switchToEmptyModel() {
-        currentModel = NbJavaModelUtils.createEmptyModel(currentModel.getMainModule().getModuleDir());
+        currentModel = IdeaJavaModelUtils.createEmptyModel(currentModel.getMainModule().getModuleDir());
     }
 
     private void updateLookup(boolean loaded) {
@@ -241,7 +241,7 @@ public final class JavaExtension implements GradleProjectExtension {
             else {
                 try {
                     File mainModuleDir = currentModel.getMainModule().getModuleDir();
-                    javaModel = NbJavaModelUtils
+                    javaModel = IdeaJavaModelUtils
                             .parseFromIdeaModel(mainModuleDir, ideaProject)
                             .get(mainModuleDir);
                 } catch (IOException ex) {

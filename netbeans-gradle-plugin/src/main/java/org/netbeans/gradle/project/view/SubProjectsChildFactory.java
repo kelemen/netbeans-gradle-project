@@ -15,7 +15,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.java.model.NbJavaModelUtils;
+import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.ChildFactory;
@@ -112,7 +112,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
                     createSubprojectsChild(project, children),
                     Lookups.fixed(module));
             this.module = module;
-            this.immediateChildren = Collections.unmodifiableList(NbJavaModelUtils.getAllChildren(module));
+            this.immediateChildren = Collections.unmodifiableList(IdeaJavaModelUtils.getAllChildren(module));
             this.children = Collections.unmodifiableList(new ArrayList<GradleProjectInfo>(children));
         }
 

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.java.model;
+package org.netbeans.gradle.project.java.model.idea;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,7 +6,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -33,6 +32,8 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -42,8 +43,8 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 
-public final class NbJavaModelUtils {
-    private static final Logger LOGGER = Logger.getLogger(NbJavaModelUtils.class.getName());
+public final class IdeaJavaModelUtils {
+    private static final Logger LOGGER = Logger.getLogger(IdeaJavaModelUtils.class.getName());
 
     public static NbJavaModel createEmptyModel(FileObject projectDir) {
         File projectDirAsFile = FileUtil.toFile(projectDir);
@@ -62,7 +63,7 @@ public final class NbJavaModelUtils {
         return new File(projectDir, "build");
     }
 
-    public static NbOutput createDefaultOutput(File projectDir) {
+    private static NbOutput createDefaultOutput(File projectDir) {
         File buildDir = new File(getDefaultBuildDir(projectDir), "classes");
 
         return new NbOutput(
@@ -81,13 +82,11 @@ public final class NbJavaModelUtils {
 
         GenericProjectProperties properties = new GenericProjectProperties(name, name, projectDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
-        NbOutput output = createDefaultOutput(projectDir);
 
         return new NbJavaModel(new NbJavaModule(
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                output,
                 Collections.<File>emptyList()));
     }
 
@@ -208,7 +207,7 @@ public final class NbJavaModelUtils {
 
         for (IdeaDependency dependency: module.getDependencies()) {
             String scope = dependency.getScope().getScope();
-            NbDependencyType dependencyType = NbDependencyType.fromIdeaScope(scope);
+            IdeaDependencyType dependencyType = IdeaDependencyType.fromIdeaScope(scope);
 
             if (dependency instanceof IdeaModuleDependency) {
                 if (nextProjectsToSkip == null) {
@@ -293,11 +292,11 @@ public final class NbJavaModelUtils {
 
         GenericProjectProperties properties = new GenericProjectProperties(scriptDisplayName, uniqueName, moduleDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
-        NbOutput output = NbJavaModelUtils.createDefaultOutput(moduleDir);
+        NbOutput output = IdeaJavaModelUtils.createDefaultOutput(moduleDir);
 
         List<File> listedDirs = lookupListedDirs(sourceSets);
 
-        return new NbJavaModule(properties, compatibilityModel, sourceSets, output, listedDirs);
+        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs);
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
@@ -372,7 +371,7 @@ public final class NbJavaModelUtils {
             this.testRuntime = new LinkedHashSet<File>();
         }
 
-        public void addAll(NbDependencyType type, IdeaDependencyBuilder dependencies) {
+        public void addAll(IdeaDependencyType type, IdeaDependencyBuilder dependencies) {
             switch (type) {
                 case COMPILE:
                     addMainCompile(dependencies);
@@ -410,7 +409,7 @@ public final class NbJavaModelUtils {
             addTestRuntime(dependencies.mainRuntime);
         }
 
-        public void addAll(NbDependencyType type, Collection<File> files) {
+        public void addAll(IdeaDependencyType type, Collection<File> files) {
             switch (type) {
                 case COMPILE:
                     addMainCompile(files);
@@ -451,7 +450,7 @@ public final class NbJavaModelUtils {
             testRuntime.addAll(files);
         }
 
-        public void add(NbDependencyType type, File file) {
+        public void add(IdeaDependencyType type, File file) {
             switch (type) {
                 case COMPILE:
                     addMainCompile(file);
@@ -500,50 +499,28 @@ public final class NbJavaModelUtils {
         }
     }
 
-    private static class DependencyBuilder {
-        private final Map<NbDependencyType, List<NbModuleDependency>> moduleDependencies;
-        private final Map<NbDependencyType, List<NbUriDependency>> uriDependencies;
+    private static final class NbOutput {
+        private final File buildDir;
+        private final File testBuildDir;
 
-        public DependencyBuilder() {
-            this.moduleDependencies = new EnumMap<NbDependencyType, List<NbModuleDependency>>(NbDependencyType.class);
-            this.uriDependencies = new EnumMap<NbDependencyType, List<NbUriDependency>>(NbDependencyType.class);
+        public NbOutput(File buildDir, File testBuildDir) {
+            if (buildDir == null) throw new NullPointerException("buildDir");
+            if (testBuildDir == null) throw new NullPointerException("testBuildDir");
+
+            this.buildDir = buildDir;
+            this.testBuildDir = testBuildDir;
         }
 
-        public static <T> void addDependency(
-                NbDependencyType type,
-                T dependency,
-                Map<NbDependencyType, List<T>> storage) {
-            List<T> list = storage.get(type);
-            if (list == null) {
-                list = new LinkedList<T>();
-                storage.put(type, list);
-            }
-            list.add(dependency);
+        public File getBuildDir() {
+            return buildDir;
         }
 
-        public void addModuleDependency(NbDependencyType type, NbModuleDependency dependency) {
-            addDependency(type, dependency, moduleDependencies);
-        }
-
-        public void addUriDependency(NbDependencyType type, NbUriDependency dependency) {
-            addDependency(type, dependency, uriDependencies);
-        }
-
-        private static <T> List<T> getDependencies(
-                NbDependencyType type,
-                Map<NbDependencyType, List<T>> storage) {
-            List<T> dependencies = storage.get(type);
-            return dependencies != null ? dependencies : Collections.<T>emptyList();
-        }
-
-        public NbDependencyGroup getGroup(NbDependencyType type) {
-            return new NbDependencyGroup(
-                    getDependencies(type, moduleDependencies),
-                    getDependencies(type, uriDependencies));
+        public File getTestBuildDir() {
+            return testBuildDir;
         }
     }
 
-    private NbJavaModelUtils() {
+    private IdeaJavaModelUtils() {
         throw new AssertionError();
     }
 }
