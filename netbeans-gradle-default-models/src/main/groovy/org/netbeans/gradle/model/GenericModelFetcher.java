@@ -22,7 +22,7 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.HierarchicalElement;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
@@ -324,7 +324,7 @@ public final class GenericModelFetcher {
             });
 
             List<FetchedProjectModels> otherModels = new LinkedList<FetchedProjectModels>();
-            for (final HierarchicalElement projectRef: controller.getBuildModel().getProjects()) {
+            for (final BasicGradleProject projectRef: controller.getBuildModel().getProjects()) {
                 FetchedProjectModels otherModel = getFetchedProjectModels(new ModelGetter() {
                     public <T> T getModel(Class<T> modelClass) {
                         return controller.getModel(projectRef, modelClass);
