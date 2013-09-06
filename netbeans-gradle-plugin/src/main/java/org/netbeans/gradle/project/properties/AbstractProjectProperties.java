@@ -41,7 +41,6 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
     }
 
     public static GradleLocation getGradleLocationFromString(String gradleLocation) {
-        // TODO: implement "?VER=
         if (gradleLocation == null) throw new NullPointerException("gradleLocation");
 
         String location = gradleLocation.trim();
