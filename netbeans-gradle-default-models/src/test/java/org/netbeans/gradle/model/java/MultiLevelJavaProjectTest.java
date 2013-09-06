@@ -122,7 +122,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
-                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.ONLY_COMPILE);
                 assertNotNull("Must have a JavaSourcesModel.", sourcesModel);
             }
         });

@@ -7,17 +7,29 @@ import org.netbeans.gradle.model.ProjectInfoBuilder;
  * Defines a {@code ProjectInfoBuilder} which is able to extract
  * {@link JavaSourcesModel} from a Gradle project.
  * <P>
- * Since this builder does not have any input argument, it is singleton and its
- * instance can be accessed through {@code JavaSourcesModelBuilder.INSTANCE}.
+ * This builder has only two instances {@link #ONLY_COMPILE} and
+ * {@link #COMPLETE}.
  */
 public enum JavaSourcesModelBuilder
 implements
         ProjectInfoBuilder<JavaSourcesModel> {
 
     /**
-     * The one and only instance of {@code JavaSourcesModelBuilder}.
+     * The builder instance which will not attempt to query runtime dependencies.
      */
-    INSTANCE;
+    ONLY_COMPILE(false),
+
+    /**
+     * The builder instance which will request both runtime and compile time
+     * dependencies.
+     */
+    COMPLETE(true);
+
+    private final boolean needRuntime;
+
+    public JavaSourcesModelBuilder(boolean needRuntime) {
+        this.needRuntime = needRuntime;
+    }
 
     /**
      *Extracts and returns the {@code JavaSourcesModel} from the given
@@ -91,7 +103,7 @@ implements
 
     private JavaClassPaths parseClassPaths(def sourceSet) {
         def compile = sourceSet.compileClasspath.files;
-        def runtime = sourceSet.runtimeClasspath.files;
+        def runtime = needRuntime ? sourceSet.runtimeClasspath.files : Collections.emptySet();
 
         return new JavaClassPaths(compile, runtime);
     }
