@@ -3,9 +3,11 @@ package org.netbeans.gradle.project.java.model.idea;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -110,22 +112,45 @@ public final class IdeaJavaModelUtils {
         return result;
     }
 
+    private static boolean isResourcePath(File dir) {
+        return dir.getName().toLowerCase(Locale.US).startsWith("resource");
+    }
+
     private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {
-        List<File> javaRoots = new LinkedList<File>();
-        List<File> resourceRoots = new LinkedList<File>();
+        Map<JavaSourceGroupName, List<File>> sourceRootMap
+                = new EnumMap<JavaSourceGroupName, List<File>>(JavaSourceGroupName.class);
 
         for (IdeaSourceDirectory root: roots) {
             File dir = root.getDirectory();
-            if (isResourcePath(dir)) {
-                resourceRoots.add(dir);
+            String name = dir.getName().toLowerCase(Locale.US);
+
+            JavaSourceGroupName choice;
+            if (name.startsWith("resource")) {
+                choice = JavaSourceGroupName.RESOURCES;
+            }
+            else if ("groovy".equals(name)) {
+                choice = JavaSourceGroupName.GROOVY;
+            }
+            else if ("scala".equals(name)) {
+                choice = JavaSourceGroupName.SCALA;
             }
             else {
-                javaRoots.add(dir);
+                choice = JavaSourceGroupName.JAVA;
             }
+
+            List<File> rootsList = sourceRootMap.get(choice);
+            if (rootsList == null) {
+                rootsList = new LinkedList<File>();
+                sourceRootMap.put(choice, rootsList);
+            }
+            rootsList.add(dir);
         }
-        return Arrays.asList(
-                new JavaSourceGroup(JavaSourceGroupName.JAVA, javaRoots),
-                new JavaSourceGroup(JavaSourceGroupName.RESOURCES, resourceRoots));
+
+        List<JavaSourceGroup> result = new ArrayList<JavaSourceGroup>(sourceRootMap.size());
+        for (Map.Entry<JavaSourceGroupName, List<File>> entry: sourceRootMap.entrySet()) {
+            result.add(new JavaSourceGroup(entry.getKey(), entry.getValue()));
+        }
+        return result;
     }
 
     private static List<JavaSourceSet> parseSourceSets(
@@ -256,10 +281,6 @@ public final class IdeaJavaModelUtils {
         }
 
         return result;
-    }
-
-    private static boolean isResourcePath(File dir) {
-        return dir.getName().toLowerCase(Locale.US).startsWith("resource");
     }
 
     private static NbJavaModule tryParseModule(IdeaModule module,
