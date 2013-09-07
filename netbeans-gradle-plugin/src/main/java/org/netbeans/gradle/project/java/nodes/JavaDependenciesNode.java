@@ -131,10 +131,10 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 //       4. Order dependencies: Projects first
 
                 List<SingleNodeFactory> compileNodes = filesToNodes(classpaths.getCompileClasspaths());
-                addDependencyGroup("Compile for "+ sourceSet.getName(), compileNodes, toPopulate);
+                addDependencyGroup("Compile for " + sourceSet.getName(), compileNodes, toPopulate);
 
                 List<SingleNodeFactory> runtimeNodes = filesToNodes(classpaths.getRuntimeClasspaths());
-                addDependencyGroup("Runtime for "+ sourceSet.getName(), runtimeNodes, toPopulate);
+                addDependencyGroup("Runtime for " + sourceSet.getName(), runtimeNodes, toPopulate);
             }
 
             LOGGER.fine("Dependencies for the Gradle project were found.");
