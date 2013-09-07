@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.java.model;
 import java.io.File;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,8 +52,18 @@ public final class NamedSourceRoot {
         }
     }
 
+    private static int countNonResource(Collection<JavaSourceGroup> sourceGroups) {
+        int result = 0;
+        for (JavaSourceGroup sourceGroup: sourceGroups) {
+            if (sourceGroup.getGroupName() != JavaSourceGroupName.RESOURCES) {
+                result++;
+            }
+        }
+        return result;
+    }
+
     public static List<NamedSourceRoot> getAllSourceRoots(NbJavaModule module) {
-        List<NamedSourceRoot> namedRoots = new LinkedList<NamedSourceRoot>();
+        List<NamedSourceRoot> result = new LinkedList<NamedSourceRoot>();
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
@@ -66,8 +77,11 @@ public final class NamedSourceRoot {
                 mainName = NbStrings.getTestPackageCaption();
             }
             else {
-                mainName = NbStrings.getOtherPackageCaption(displaySourceSetName);
+                mainName = null;
             }
+
+            Collection<JavaSourceGroup> sourceGroups = sourceSet.getSourceGroups();
+            int nonResourceCount = countNonResource(sourceGroups);
 
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 JavaSourceGroupName groupName = sourceGroup.getGroupName();
@@ -79,22 +93,34 @@ public final class NamedSourceRoot {
                 if (groupName == JavaSourceGroupName.RESOURCES) {
                     groupNamePrefix = NbStrings.getResourcesPackageCaption() + " [" + displaySourceSetName + "]";
                 }
+                else if (nonResourceCount == 1) {
+                    groupNamePrefix = mainName != null
+                            ? mainName
+                            : NbStrings.getOtherPackageCaption(displaySourceSetName);
+                }
                 else {
-                    groupNamePrefix = mainName;
+                    String groupDisplayName = groupName.toString().toLowerCase();
+                    groupNamePrefix = mainName != null
+                            ? mainName + " [" + groupDisplayName + "]"
+                            :  NbStrings.getOtherPackageCaption(displaySourceSetName + "/" + groupDisplayName);
                 }
 
                 if (sourceRoots.size() == 1) {
-                    namedRoots.add(new NamedSourceRoot(groupID, groupNamePrefix, sourceRoots.iterator().next()));
+                    result.add(new NamedSourceRoot(groupID, groupNamePrefix, sourceRoots.iterator().next()));
                 }
                 else {
                     for (NamedFile root: GradleModelLoader.nameSourceRoots(sourceRoots)) {
                         String rootName = NbStrings.getMultiRootSourceGroups(groupNamePrefix, root.getName());
-                        namedRoots.add(new NamedSourceRoot(groupID, rootName, root.getPath()));
+                        result.add(new NamedSourceRoot(groupID, rootName, root.getPath()));
                     }
                 }
             }
         }
 
+        return sortNamedSourceRoots(result);
+    }
+
+    private static List<NamedSourceRoot> sortNamedSourceRoots(Collection<NamedSourceRoot> namedRoots) {
         NamedSourceRoot[] orderedRoots = namedRoots.toArray(new NamedSourceRoot[namedRoots.size()]);
         Arrays.sort(orderedRoots, new Comparator<NamedSourceRoot>() {
             @Override
