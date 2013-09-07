@@ -42,11 +42,21 @@ public final class NamedSourceRoot {
         return root;
     }
 
+    private static String displayNameOfSourceSet(String sourceSetName) {
+        if (sourceSetName.isEmpty()) {
+            return "?";
+        }
+        else {
+            return Character.toUpperCase(sourceSetName.charAt(0)) + sourceSetName.substring(1);
+        }
+    }
+
     public static List<NamedSourceRoot> getAllSourceRoots(NbJavaModule module) {
         List<NamedSourceRoot> namedRoots = new LinkedList<NamedSourceRoot>();
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
+            String displaySourceSetName = displayNameOfSourceSet(sourceSetName);
 
             String mainName;
             if (JavaSourceSet.NAME_MAIN.equals(sourceSetName)) {
@@ -56,7 +66,7 @@ public final class NamedSourceRoot {
                 mainName = NbStrings.getTestPackageCaption();
             }
             else {
-                mainName = NbStrings.getOtherPackageCaption(sourceSetName);
+                mainName = NbStrings.getOtherPackageCaption(displaySourceSetName);
             }
 
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
@@ -67,7 +77,7 @@ public final class NamedSourceRoot {
 
                 String groupNamePrefix;
                 if (groupName == JavaSourceGroupName.RESOURCES) {
-                    groupNamePrefix = NbStrings.getResourcesPackageCaption() + "[" + sourceSetName + "]";
+                    groupNamePrefix = NbStrings.getResourcesPackageCaption() + " [" + displaySourceSetName + "]";
                 }
                 else {
                     groupNamePrefix = mainName;

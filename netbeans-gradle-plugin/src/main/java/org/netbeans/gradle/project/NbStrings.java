@@ -23,15 +23,7 @@ public final class NbStrings {
     }
 
     public static String getOtherPackageCaption(String sourceSetName) {
-        String adjustedName;
-        if (sourceSetName.isEmpty()) {
-            adjustedName = "?";
-        }
-        else {
-            adjustedName = Character.toUpperCase(sourceSetName.charAt(0)) + sourceSetName.substring(1);
-        }
-
-        return NbBundle.getMessage(NbStrings.class, "LBL_OtherSources", adjustedName);
+        return NbBundle.getMessage(NbStrings.class, "LBL_OtherSources", sourceSetName);
     }
 
     public static String getMultiRootSourceGroups(String mainName, String subName) {
