@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.model.idea;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +33,8 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.java.model.JavaProjectDependency;
+import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.model.GradleModelLoader;
@@ -43,7 +44,6 @@ import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
-import org.openide.util.Utilities;
 
 public final class IdeaJavaModelUtils {
     private static final Logger LOGGER = Logger.getLogger(IdeaJavaModelUtils.class.getName());
@@ -85,11 +85,12 @@ public final class IdeaJavaModelUtils {
         GenericProjectProperties properties = new GenericProjectProperties(name, name, projectDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
 
-        return new NbJavaModel(new NbJavaModule(
+        NbJavaModule result = new NbJavaModule(
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                Collections.<File>emptyList()));
+                Collections.<File>emptyList());
+        return NbJavaModel.createModel(result, Collections.<File, JavaProjectDependency>emptyMap());
     }
 
     private static void getAllChildren(GradleProjectInfo module, List<GradleProjectInfo> result) {
@@ -327,43 +328,44 @@ public final class IdeaJavaModelUtils {
         }
 
         DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
-        Map<String, IdeaDependencyBuilder> cache = new HashMap<String, IdeaDependencyBuilder>(2 * modules.size());
+        int mapCapacity = 2 * modules.size();
 
-        NbJavaModule parsedMainModule = tryParseModule(mainModule, cache);
-        if (parsedMainModule == null) {
-            throw new IOException("Unable to parse the main project from the model.");
-        }
+        Map<String, IdeaDependencyBuilder> cache = new HashMap<String, IdeaDependencyBuilder>(mapCapacity);
 
-        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(2 * modules.size());
-        NbJavaModel mainModel = new NbJavaModel(parsedMainModule);
-        result.put(mainModel.getMainModule().getModuleDir(), mainModel);
-
+        Map<File, NbJavaModule> parsedModules = new HashMap<File, NbJavaModule>(mapCapacity);
         for (IdeaModule module: modules) {
             NbJavaModule parsedModule = tryParseModule(module, cache);
-            if (parsedModule != null && !parsedMainModule.getUniqueName().equals(parsedModule.getUniqueName())) {
-                File moduleDir = parsedModule.getModuleDir();
-                if (moduleDir != null) {
-                    NbJavaModel javaModel = new NbJavaModel(parsedModule);
-                    result.put(javaModel.getMainModule().getModuleDir(), javaModel);
-                }
+            if (parsedModule != null) {
+                parsedModules.put(parsedModule.getModuleDir(), parsedModule);
             }
         }
 
+        if (!parsedModules.containsKey(projectDir)) {
+            throw new IOException("Unable to parse the main project from the model.");
+        }
+
+        Map<File, JavaProjectReference> asDependency = new HashMap<File, JavaProjectReference>(mapCapacity);
+        Map<File, JavaProjectDependency> outputDirToProject = new HashMap<File, JavaProjectDependency>(mapCapacity);
+
+        for (NbJavaModule module: parsedModules.values()) {
+            File moduleDir = module.getModuleDir();
+            JavaProjectReference projectRef = new JavaProjectReference(moduleDir, module);
+            asDependency.put(moduleDir, projectRef);
+
+            for (JavaSourceSet sourceSet: module.getSources()) {
+                File classesDir = sourceSet.getOutputDirs().getClassesDir();
+                String sourceSetName = sourceSet.getName();
+
+                outputDirToProject.put(classesDir, new JavaProjectDependency(sourceSetName, projectRef));
+            }
+        }
+
+        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(mapCapacity);
+        for (NbJavaModule module: parsedModules.values()) {
+            NbJavaModel model = NbJavaModel.createModel(module, outputDirToProject);
+            result.put(module.getModuleDir(), model);
+        }
         return result;
-    }
-
-    public static File uriToFile(URI uri) {
-        if ("file".equals(uri.getScheme())) {
-            return Utilities.toFile(uri);
-        }
-        else {
-            return null;
-        }
-    }
-
-    public static FileObject uriToFileObject(URI uri) {
-        File file = uriToFile(uri);
-        return file != null ? FileUtil.toFileObject(file) : null;
     }
 
     private static class ProjectClassPaths {

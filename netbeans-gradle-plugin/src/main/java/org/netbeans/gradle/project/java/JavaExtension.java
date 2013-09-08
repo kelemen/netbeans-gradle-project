@@ -52,6 +52,7 @@ public final class JavaExtension implements GradleProjectExtension {
     private final Project project;
     private final File projectDirectoryAsFile;
     private volatile NbJavaModel currentModel;
+    private volatile boolean hasEverBeenLoaded;
 
     private final GradleClassPathProvider cpProvider;
 
@@ -74,6 +75,7 @@ public final class JavaExtension implements GradleProjectExtension {
         this.permanentLookupRef = new AtomicReference<Lookup>(null);
         this.extensionLookup = new DynamicLookup();
         this.protectedExtensionLookup = DynamicLookup.viewLookup(extensionLookup);
+        this.hasEverBeenLoaded = false;
     }
 
     @Override
@@ -230,6 +232,10 @@ public final class JavaExtension implements GradleProjectExtension {
         }
     }
 
+    public boolean hasEverBeenLoaded() {
+        return hasEverBeenLoaded;
+    }
+
     @Override
     public Set<String> modelsLoaded(Lookup modelLookup) {
         NbJavaModel javaModel = modelLookup.lookup(NbJavaModel.class);
@@ -253,6 +259,7 @@ public final class JavaExtension implements GradleProjectExtension {
 
         if (javaModel != null) {
             currentModel = javaModel;
+            hasEverBeenLoaded = true;
         }
         updateLookup(javaModel != null);
 
