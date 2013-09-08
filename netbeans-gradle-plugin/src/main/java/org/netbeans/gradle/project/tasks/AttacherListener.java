@@ -17,6 +17,8 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -35,20 +37,34 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         this.test = test;
     }
 
-    private ClassPath getSources() {
-        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-        List<FileObject> srcRoots = new LinkedList<FileObject>();
-        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+    private static void addSourcesOfModule(NbJavaModule module, List<FileObject> result) {
+        for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File root: sourceGroup.getSourceRoots()) {
                     FileObject rootObj = FileUtil.toFileObject(root);
                     if (rootObj != null) {
-                        srcRoots.add(rootObj);
+                        result.add(rootObj);
                     }
                 }
             }
         }
-        // TODO: Add the sources of dependent modules
+    }
+
+    private ClassPath getSources() {
+        NbJavaModel currentModel = javaExt.getCurrentModel();
+
+        NbJavaModule mainModule = currentModel.getMainModule();
+        List<FileObject> srcRoots = new LinkedList<FileObject>();
+
+        addSourcesOfModule(mainModule, srcRoots);
+        for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
+            NbJavaModule module = projectRef.tryGetModule();
+            if (module != null) {
+                addSourcesOfModule(module, srcRoots);
+            }
+        }
+
+        // TODO: Add sources of packaged dependencies.
 
         return ClassPathSupport.createClassPath(srcRoots.toArray(new FileObject[0]));
     }
