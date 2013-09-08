@@ -399,6 +399,9 @@ public final class IdeaJavaModelUtils {
                 case COMPILE:
                     addMainCompile(dependencies);
                     break;
+                case PROVIDED_COMPILE:
+                    addMainProvidedCompile(dependencies);
+                    break;
                 case RUNTIME:
                     addMainRuntime(dependencies);
                     break;
@@ -419,6 +422,11 @@ public final class IdeaJavaModelUtils {
             addMainRuntime(dependencies.mainRuntime);
         }
 
+        public void addMainProvidedCompile(IdeaDependencyBuilder dependencies) {
+            addMainProvidedCompile(dependencies.mainCompile);
+            addMainRuntime(dependencies.mainRuntime);
+        }
+
         public void addMainRuntime(IdeaDependencyBuilder dependencies) {
             addMainRuntime(dependencies.mainRuntime);
         }
@@ -436,6 +444,9 @@ public final class IdeaJavaModelUtils {
             switch (type) {
                 case COMPILE:
                     addMainCompile(files);
+                    break;
+                case PROVIDED_COMPILE:
+                    addMainProvidedCompile(files);
                     break;
                 case RUNTIME:
                     addMainRuntime(files);
@@ -459,6 +470,11 @@ public final class IdeaJavaModelUtils {
             testRuntime.addAll(files);
         }
 
+        public void addMainProvidedCompile(Collection<File> files) {
+            mainCompile.addAll(files);
+            testCompile.addAll(files);
+        }
+
         public void addMainRuntime(Collection<File> files) {
             mainRuntime.addAll(files);
             testRuntime.addAll(files);
@@ -477,6 +493,9 @@ public final class IdeaJavaModelUtils {
             switch (type) {
                 case COMPILE:
                     addMainCompile(file);
+                    break;
+                case PROVIDED_COMPILE:
+                    addMainProvidedCompile(file);
                     break;
                 case RUNTIME:
                     addMainRuntime(file);
@@ -498,6 +517,11 @@ public final class IdeaJavaModelUtils {
             mainRuntime.add(file);
             testCompile.add(file);
             testRuntime.add(file);
+        }
+
+        public void addMainProvidedCompile(File file) {
+            mainCompile.add(file);
+            testCompile.add(file);
         }
 
         public void addMainRuntime(File file) {
