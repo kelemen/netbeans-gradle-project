@@ -34,6 +34,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.GradleFileUtils;
@@ -249,14 +250,21 @@ implements
     }
 
     private void updateAllSources() {
-        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+        NbJavaModel currentModel = javaExt.getCurrentModel();
+        NbJavaModule mainModule = currentModel.getMainModule();
 
         List<File> sources = new LinkedList<File>();
         addSourcesOfModule(mainModule, sources);
 
+        for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
+            NbJavaModule module = projectRef.tryGetModule();
+            if (module != null) {
+                addSourcesOfModule(module, sources);
+            }
+        }
+
         List<PathResourceImplementation> sourceContainer = getPathResources(sources, new HashSet<File>());
 
-        // TODO: Add other projects' sources
         allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
     }
 
@@ -332,6 +340,17 @@ implements
                 getPathResources(classPaths, new HashSet<File>()));
     }
 
+    private static void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
+        for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
+            NbJavaModule module = dependency.tryGetModule();
+            if (module != null) {
+                for (JavaSourceSet sourceSet: module.getSources()) {
+                    classPaths.remove(sourceSet.getOutputDirs().getClassesDir());
+                }
+            }
+        }
+    }
+
     private void loadRuntimeForGlobalClassPath(NbJavaModel projectModel) {
         Set<File> classPaths = new HashSet<File>();
 
@@ -339,7 +358,7 @@ implements
             classPaths.addAll(sourceSet.getClasspaths().getRuntimeClasspaths());
         }
 
-        // TODO: Remove other projects' build output directories from the class path.
+        removeOtherBuildOutputDirs(projectModel, classPaths);
 
         setClassPathResources(
                 SpecialClassPath.RUNTIME_FOR_GLOBAL,
@@ -353,7 +372,7 @@ implements
             classPaths.addAll(sourceSet.getClasspaths().getCompileClasspaths());
         }
 
-        // TODO: Remove other projects' build output directories from the class path.
+        removeOtherBuildOutputDirs(projectModel, classPaths);
 
         setClassPathResources(
                 SpecialClassPath.COMPILE_FOR_GLOBAL,
@@ -367,7 +386,14 @@ implements
             classPaths.add(sourceSet.getOutputDirs().getClassesDir());
         }
 
-        // TODO: Add the build output of other projects
+        for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
+            NbJavaModule module = dependency.tryGetModule();
+            if (module != null) {
+                for (JavaSourceSet sourceSet: module.getSources()) {
+                    classPaths.add(sourceSet.getOutputDirs().getClassesDir());
+                }
+            }
+        }
 
         setClassPathResources(
                 SpecialClassPath.ALL_BUILD_OUTPUT,
@@ -375,6 +401,9 @@ implements
     }
 
     private void loadPathResources(NbJavaModel projectModel) {
+        // TODO: This method must be called whenever any of the dependent projects
+        //   is reloaded.
+
         Set<File> missing = new HashSet<File>();
 
         NbJavaModule mainModule = projectModel.getMainModule();
