@@ -2,9 +2,12 @@ package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.Image;
 import java.io.File;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +38,7 @@ import org.openide.nodes.Node;
 
 public final class JavaDependenciesNode extends AbstractNode implements JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
+    private static final Collator STR_CMP = Collator.getInstance();
 
     private final DependenciesChildFactory childFactory;
 
@@ -89,7 +93,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
         private void addDependencyGroup(
                 final String groupName,
-                final Collection<SingleNodeFactory> dependencies,
+                final Collection<? extends SingleNodeFactory> dependencies,
                 List<SingleNodeFactory> toPopulate) {
 
             if (dependencies.isEmpty()) {
@@ -128,19 +132,6 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 }
                 else {
                     result.add(new ProjectDependencyFactory(projectDep));
-                }
-            }
-            return result;
-        }
-
-        private static List<String> removeInherited(
-                Set<File> compileClasspaths,
-                NbJavaModule module) {
-
-            List<String> result = new ArrayList<String>();
-            for (JavaSourceSet sourceSet: module.getSources()) {
-                if (compileClasspaths.remove(sourceSet.getOutputDirs().getClassesDir())) {
-                    result.add(sourceSet.getName());
                 }
             }
             return result;
@@ -192,6 +183,66 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             }
         }
 
+        private static int compareProjectDependencyNodes(ProjectDependencyFactory node1, ProjectDependencyFactory node2) {
+            NbJavaModule module1 = node1.projectDep.tryGetModule();
+            NbJavaModule module2 = node2.projectDep.tryGetModule();
+
+            if (module1 == module2) {
+                return 0;
+            }
+
+            if (module1 == null) {
+                return 1;
+            }
+            if (module2 == null) {
+                return -1;
+            }
+
+            return STR_CMP.compare(module1.getShortName(), module2.getShortName());
+        }
+
+        private static int compareFileDependencyNodes(FileDependency node1, FileDependency node2) {
+            String name1 = node1.file.getName();
+            String name2 = node2.file.getName();
+
+            return STR_CMP.compare(name1, name2);
+        }
+
+        private static int compareDependencyNodes(SingleNodeFactory node1, SingleNodeFactory node2) {
+            if (node1 instanceof ProjectDependencyFactory) {
+                if (node2 instanceof ProjectDependencyFactory) {
+                    return compareProjectDependencyNodes(
+                            (ProjectDependencyFactory)node1,
+                            (ProjectDependencyFactory)node2);
+                }
+                else {
+                    return -1;
+                }
+            }
+            else if (node2 instanceof ProjectDependencyFactory) {
+                return 1;
+            }
+            else if (node1 instanceof FileDependency && node2 instanceof FileDependency) {
+                return compareFileDependencyNodes((FileDependency)node1, (FileDependency)node2);
+            }
+            else {
+                return 0;
+            }
+        }
+
+        private static List<SingleNodeFactory> sortDependencyNodes(List<SingleNodeFactory> nodes) {
+            SingleNodeFactory[] nodesArray = nodes.toArray(new SingleNodeFactory[nodes.size()]);
+
+            Arrays.sort(nodesArray, new Comparator<SingleNodeFactory>() {
+                @Override
+                public int compare(SingleNodeFactory o1, SingleNodeFactory o2) {
+                    return compareDependencyNodes(o1, o2);
+                }
+            });
+
+            return Arrays.asList(nodesArray);
+        }
+
         private void addSourceSetDependencyNodes(
                 NbJavaModel currentModel,
                 String nodeGroupName,
@@ -211,6 +262,8 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             }
 
             List<SingleNodeFactory> dependencyNodes = filesToNodes(currentModel, classpaths);
+            dependencyNodes = sortDependencyNodes(dependencyNodes);
+
             addDependencyGroup(nodeGroupName, dependencyNodes, toPopulate);
         }
 
@@ -273,8 +326,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 JavaClassPaths classpaths = sourceSet.getClasspaths();
-                // TODO: 1. Adjust node names (localize)
-                //       2. Order dependencies: Projects first
+                // TODO: Adjust node names (localize)
 
                 Set<File> providedClassPaths = new HashSet<File>(classpaths.getCompileClasspaths());
                 Set<File> runtimeClassPaths = new HashSet<File>(classpaths.getRuntimeClasspaths());
@@ -329,7 +381,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
     private static class DependencyGroupChildFactory extends ChildFactory<SingleNodeFactory> {
         private final List<SingleNodeFactory> dependencies;
 
-        public DependencyGroupChildFactory(Collection<SingleNodeFactory> dependencies) {
+        public DependencyGroupChildFactory(Collection<? extends SingleNodeFactory> dependencies) {
             this.dependencies = new ArrayList<SingleNodeFactory>(dependencies);
         }
 
