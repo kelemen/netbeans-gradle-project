@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.tasks;
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
@@ -37,7 +37,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         this.test = test;
     }
 
-    private static void addSourcesOfModule(NbJavaModule module, List<FileObject> result) {
+    private static void addSourcesOfModule(NbJavaModule module, Set<FileObject> result) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File root: sourceGroup.getSourceRoots()) {
@@ -48,13 +48,20 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
                 }
             }
         }
+
+        for (File root: module.getRelatedSources().getAllSourcesFiles()) {
+            FileObject srcRootObj = FileUtil.toFileObject(root);
+            if (srcRootObj != null) {
+                result.add(srcRootObj);
+            }
+        }
     }
 
     private ClassPath getSources() {
         NbJavaModel currentModel = javaExt.getCurrentModel();
 
         NbJavaModule mainModule = currentModel.getMainModule();
-        List<FileObject> srcRoots = new LinkedList<FileObject>();
+        Set<FileObject> srcRoots = new LinkedHashSet<FileObject>();
 
         addSourcesOfModule(mainModule, srcRoots);
         for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
@@ -63,8 +70,6 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
                 addSourcesOfModule(module, srcRoots);
             }
         }
-
-        // TODO: Add sources of packaged dependencies.
 
         return ClassPathSupport.createClassPath(srcRoots.toArray(new FileObject[0]));
     }

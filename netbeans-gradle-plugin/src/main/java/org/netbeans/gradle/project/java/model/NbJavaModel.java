@@ -77,4 +77,18 @@ public final class NbJavaModel {
         }
         return result;
     }
+
+    public Set<File> getAllRelatedSources() {
+        Set<File> result = new HashSet<File>();
+        result.addAll(mainModule.getRelatedSources().getAllSourcesFiles());
+
+        for (JavaProjectReference projectRef: getAllDependencies()) {
+            NbJavaModule module = projectRef.tryGetModule();
+            if (module != null) {
+                result.addAll(module.getRelatedSources().getAllSourcesFiles());
+            }
+        }
+
+        return result;
+    }
 }
