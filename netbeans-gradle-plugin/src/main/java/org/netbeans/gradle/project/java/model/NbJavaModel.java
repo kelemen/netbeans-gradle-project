@@ -39,6 +39,7 @@ public final class NbJavaModel {
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
         if (mainModule == null) throw new NullPointerException("mainModule");
+        if (possibleDependencies == null) throw new NullPointerException("possibleDependencies");
 
         Map<File, JavaProjectDependency> relevantDependencies
                 = new HashMap<File, JavaProjectDependency>();
