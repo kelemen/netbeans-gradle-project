@@ -156,13 +156,15 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 DependencyType dependencyType,
                 JavaSourceSet sourceSet) {
 
+            String sourceSetName = sourceSet.getName();
+
             switch (dependencyType) {
                 case COMPILE:
-                    return "Compile for " + sourceSet.getName();
+                    return NbStrings.getCompileForSourceSet(sourceSetName);
                 case RUNTIME:
-                    return "Runtime for " + sourceSet.getName();
+                    return NbStrings.getRuntimeForSourceSet(sourceSetName);
                 case PROVIDED:
-                    return "Provided for " + sourceSet.getName();
+                    return NbStrings.getProvidedForSourceSet(sourceSetName);
                 default:
                     throw new AssertionError(dependencyType.name());
             }
@@ -179,7 +181,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 return baseName;
             }
             else {
-                return baseName + " (inherits " + listToString(dependencies) + ")";
+                return NbStrings.getSourceSetInherits(baseName, listToString(dependencies));
             }
         }
 
@@ -326,7 +328,6 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 JavaClassPaths classpaths = sourceSet.getClasspaths();
-                // TODO: Adjust node names (localize)
 
                 Set<File> providedClassPaths = new HashSet<File>(classpaths.getCompileClasspaths());
                 Set<File> runtimeClassPaths = new HashSet<File>(classpaths.getRuntimeClasspaths());

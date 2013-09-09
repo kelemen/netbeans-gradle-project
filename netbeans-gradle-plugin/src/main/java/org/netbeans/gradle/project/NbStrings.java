@@ -62,20 +62,20 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_BuildScripts");
     }
 
-    public static String getCompileDependenciesNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_CompileDependencies");
+    public static String getCompileForSourceSet(String sourceSetName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_CompileForSourceSet", sourceSetName);
     }
 
-    public static String getRuntimeDependenciesNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_RuntimeDependencies");
+    public static String getProvidedForSourceSet(String sourceSetName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ProvidedForSourceSet", sourceSetName);
     }
 
-    public static String getTestCompileDependenciesNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TestCompileDependencies");
+    public static String getRuntimeForSourceSet(String sourceSetName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_RuntimeForSourceSet", sourceSetName);
     }
 
-    public static String getTestRuntimeDependenciesNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TestRuntimeDependencies");
+    public static String getSourceSetInherits(String baseName, String inherited) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_SourceSetInherits", baseName, inherited);
     }
 
     public static String getRunCommandCaption() {
