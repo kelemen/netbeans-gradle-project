@@ -29,12 +29,10 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
 
     private final JavaExtension javaExt;
-    private final boolean test;
 
-    public AttacherListener(JavaExtension javaExt, boolean test) {
+    public AttacherListener(JavaExtension javaExt) {
         if (javaExt == null) throw new NullPointerException("javaExt");
         this.javaExt = javaExt;
-        this.test = test;
     }
 
     private static void addSourcesOfModule(NbJavaModule module, Set<FileObject> result) {

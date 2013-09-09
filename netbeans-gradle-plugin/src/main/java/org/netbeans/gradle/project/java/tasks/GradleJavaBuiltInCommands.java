@@ -141,14 +141,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command) {
         CommandWithActions task = DEFAULT_TASKS.get(command);
         if (task != null && task.getCustomActions().getTaskKind() == TaskKind.DEBUG) {
-            return debugActions(true);
+            return debugActions();
         }
         return task != null ? task.getCustomActions() : null;
     }
 
-    private CustomCommandActions debugActions(boolean test) {
+    private CustomCommandActions debugActions() {
         CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.DEBUG);
-        result.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt, test)));
+        result.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt)));
         return result.create();
     }
 
