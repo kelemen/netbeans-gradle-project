@@ -136,7 +136,7 @@ public final class JavaExtension implements GradleProjectExtension {
     private Lookup getPermanentLookup() {
         Lookup lookup = permanentLookupRef.get();
         if (lookup == null) {
-            lookup = Lookups.singleton(new OpenHook());
+            lookup = Lookups.fixed(this, new OpenHook());
 
             if (permanentLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);
