@@ -132,6 +132,11 @@ public final class GradleFileUtils {
                 + "." + srcFileExt;
     }
 
+    public static FileObject asArchiveOrDir(File file) {
+        FileObject result = FileUtil.toFileObject(file);
+        return asArchiveOrDir(result);
+    }
+
     public static FileObject asArchiveOrDir(FileObject file) {
         if (file == null) {
             return null;

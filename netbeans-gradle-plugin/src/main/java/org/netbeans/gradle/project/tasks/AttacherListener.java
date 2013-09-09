@@ -21,9 +21,9 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.output.DebugTextListener;
+import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -41,7 +41,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File root: sourceGroup.getSourceRoots()) {
-                    FileObject rootObj = FileUtil.toFileObject(root);
+                    FileObject rootObj = GradleFileUtils.asArchiveOrDir(root);
                     if (rootObj != null) {
                         result.add(rootObj);
                     }
@@ -50,7 +50,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         }
 
         for (File root: module.getRelatedSources().getAllSourcesFiles()) {
-            FileObject srcRootObj = FileUtil.toFileObject(root);
+            FileObject srcRootObj = GradleFileUtils.asArchiveOrDir(root);
             if (srcRootObj != null) {
                 result.add(srcRootObj);
             }
