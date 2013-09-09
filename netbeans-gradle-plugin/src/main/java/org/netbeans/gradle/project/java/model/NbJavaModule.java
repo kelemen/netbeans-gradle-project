@@ -20,6 +20,7 @@ public final class NbJavaModule {
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
     private final List<File> listedDirs;
+    private final SourceBinaryMap relatedSources;
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
@@ -31,23 +32,30 @@ public final class NbJavaModule {
             GenericProjectProperties properties,
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
-            List<File> listedDirs) {
+            List<File> listedDirs,
+            SourceBinaryMap relatedSources) {
 
         if (properties == null) throw new NullPointerException("properties");
         if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
         if (sources == null) throw new NullPointerException("sources");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
+        if (relatedSources == null) throw new NullPointerException("relatedSources");
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
         this.sources = Collections.unmodifiableList(new ArrayList<JavaSourceSet>(sources));
         this.listedDirs = Collections.unmodifiableList(listedDirs);
+        this.relatedSources = relatedSources;
 
         this.mainSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.testSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.namedSourceRootsRef = new AtomicReference<List<NamedSourceRoot>>(null);
         this.nameToSourceSetRef = new AtomicReference<Map<String, JavaSourceSet>>(null);
         this.allBuildOutputRefs = new AtomicReference<Set<File>>(null);
+    }
+
+    public SourceBinaryMap getRelatedSources() {
+        return relatedSources;
     }
 
     public GenericProjectProperties getProperties() {

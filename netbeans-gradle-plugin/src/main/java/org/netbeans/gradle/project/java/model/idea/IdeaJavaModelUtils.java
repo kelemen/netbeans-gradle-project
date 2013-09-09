@@ -37,6 +37,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.SourceBinaryMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -65,17 +66,15 @@ public final class IdeaJavaModelUtils {
         return new File(projectDir, "build");
     }
 
-    private static NbOutput createDefaultOutput(File projectDir) {
-        File buildDir = new File(getDefaultBuildDir(projectDir), "classes");
 
-        return new NbOutput(
-                new File(buildDir, "main"),
-                new File(buildDir, "test"));
+    private static File getDefaultMainClasses(File projectDir) {
+        File classesDir = new File(getDefaultBuildDir(projectDir), "classes");
+        return new File(classesDir, "main");
     }
 
-    private static NbOutput createDefaultOutput(IdeaModule module) {
+    private static File getDefaultMainClasses(IdeaModule module) {
         File moduleDir = GradleModelLoader.tryGetModuleDir(module);
-        return moduleDir != null ? createDefaultOutput(moduleDir) : null;
+        return moduleDir != null ? getDefaultMainClasses(moduleDir) : null;
     }
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
@@ -89,8 +88,11 @@ public final class IdeaJavaModelUtils {
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                Collections.<File>emptyList());
-        return NbJavaModel.createModel(result, Collections.<File, JavaProjectDependency>emptyMap());
+                Collections.<File>emptyList(),
+                SourceBinaryMap.EMPTY);
+
+        return NbJavaModel.createModel(result,
+                Collections.<File, JavaProjectDependency>emptyMap());
     }
 
     private static void getAllChildren(GradleProjectInfo module, List<GradleProjectInfo> result) {
@@ -224,9 +226,9 @@ public final class IdeaJavaModelUtils {
             return;
         }
 
-        NbOutput defaultOutput = createDefaultOutput(module);
-        if (defaultOutput != null) {
-            result.addTestCompile(defaultOutput.getBuildDir());
+        File defaultMainBuildDir = getDefaultMainClasses(module);
+        if (defaultMainBuildDir != null) {
+            result.addTestCompile(defaultMainBuildDir);
         }
 
         Set<String> nextProjectsToSkip = null;
@@ -246,9 +248,9 @@ public final class IdeaJavaModelUtils {
                 IdeaDependencyBuilder subDependencies = new IdeaDependencyBuilder();
                 fetchAllDependencies(moduleDep, subDependencies, nextProjectsToSkip, cache);
 
-                NbOutput moduleOutput = createDefaultOutput(moduleDep);
-                if (moduleOutput != null) {
-                    result.add(dependencyType, moduleOutput.getBuildDir());
+                File mainBuildDir = getDefaultMainClasses(moduleDep);
+                if (mainBuildDir != null) {
+                    result.add(dependencyType, mainBuildDir);
                 }
                 result.addAll(dependencyType, subDependencies);
             }
@@ -314,11 +316,23 @@ public final class IdeaJavaModelUtils {
 
         GenericProjectProperties properties = new GenericProjectProperties(scriptDisplayName, uniqueName, moduleDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
-        NbOutput output = IdeaJavaModelUtils.createDefaultOutput(moduleDir);
 
         List<File> listedDirs = lookupListedDirs(sourceSets);
+        SourceBinaryMap relatedSources = getSourceBinaryMap(module);
 
-        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs);
+        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs, relatedSources);
+    }
+
+    private static SourceBinaryMap getSourceBinaryMap(IdeaModule module) {
+        SourceBinaryMap.Builder result = new SourceBinaryMap.Builder();
+        for (IdeaDependency dependency: module.getDependencies()) {
+            if (dependency instanceof ExternalDependency) {
+                ExternalDependency extDep = (ExternalDependency)dependency;
+
+                result.addSourceEntry(extDep.getFile(), extDep.getSource(), extDep.getJavadoc());
+            }
+        }
+        return result.create();
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
@@ -546,24 +560,29 @@ public final class IdeaJavaModelUtils {
         }
     }
 
-    private static final class NbOutput {
-        private final File buildDir;
-        private final File testBuildDir;
+    private static final class ModuleWithSources {
+        public final NbJavaModule module;
+        public final SourceBinaryMap sources;
 
-        public NbOutput(File buildDir, File testBuildDir) {
-            if (buildDir == null) throw new NullPointerException("buildDir");
-            if (testBuildDir == null) throw new NullPointerException("testBuildDir");
+        public ModuleWithSources(NbJavaModule module, SourceBinaryMap sources) {
+            assert module != null;
+            assert sources != null;
 
-            this.buildDir = buildDir;
-            this.testBuildDir = testBuildDir;
+            this.module = module;
+            this.sources = sources;
         }
+    }
 
-        public File getBuildDir() {
-            return buildDir;
-        }
+    private static final class ModuleSources {
+        public final List<JavaSourceSet> moduleSources;
+        public final SourceBinaryMap otherSources;
 
-        public File getTestBuildDir() {
-            return testBuildDir;
+        public ModuleSources(List<JavaSourceSet> moduleSources, SourceBinaryMap otherSources) {
+            assert moduleSources != null;
+            assert otherSources != null;
+
+            this.moduleSources = moduleSources;
+            this.otherSources = otherSources;
         }
     }
 
