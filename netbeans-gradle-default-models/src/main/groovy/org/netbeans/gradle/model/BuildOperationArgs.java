@@ -76,7 +76,7 @@ public final class BuildOperationArgs {
             op.setJavaHome(javaHome);
         }
 
-        if (arguments == null) {
+        if (arguments != null) {
             op.withArguments(arguments.clone());
         }
 
