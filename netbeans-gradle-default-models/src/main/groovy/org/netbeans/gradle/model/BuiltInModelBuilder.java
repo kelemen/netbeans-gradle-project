@@ -6,7 +6,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.BuildController;
-import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class BuiltInModelBuilder implements BuildInfoBuilder<Map<Class<?>, Object>> {
