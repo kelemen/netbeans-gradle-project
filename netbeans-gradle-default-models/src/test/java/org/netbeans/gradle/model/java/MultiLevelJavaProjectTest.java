@@ -139,6 +139,17 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    @Test
+    public void testJarOutputsModel() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JarOutputsModel jarOutputs
+                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                assertNotNull("Must have a JarOutputsModelBuilder.", jarOutputs);
+            }
+        });
+    }
+
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
             Class<?>... modelClasses) throws IOException {
