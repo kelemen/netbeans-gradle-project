@@ -54,7 +54,7 @@ import org.openide.util.RequestProcessor;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    private static final GradleVersion GRADLE_VERSION_1_7 = GradleVersion.version("1.7");
+    private static final GradleVersion GRADLE_VERSION_1_8_RC_1 = GradleVersion.version("1.8-rc-1");
 
     private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
@@ -311,7 +311,7 @@ public final class GradleModelLoader {
             LongRunningOperationSetup setup) {
 
         GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
-        if (version.compareTo(GRADLE_VERSION_1_7) <= 0) {
+        if (version.compareTo(GRADLE_VERSION_1_8_RC_1) < 0) {
             LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
             return new NbCompatibleModelLoader(proposedModel, setup);
         }
