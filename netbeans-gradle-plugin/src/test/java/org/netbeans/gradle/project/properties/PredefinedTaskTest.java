@@ -1,21 +1,23 @@
 package org.netbeans.gradle.project.properties;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.gradle.tooling.internal.gradle.DefaultGradleProject;
-import org.gradle.tooling.internal.gradle.DefaultGradleTask;
-import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.GradleTask;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.GradleMultiProjectDef;
+import org.netbeans.gradle.project.model.GradleProjectTree;
+import org.netbeans.gradle.project.model.GradleTaskID;
 
 import static org.junit.Assert.*;
 
@@ -120,39 +122,71 @@ public class PredefinedTaskTest {
         assertTrue(commandTemplate.isBlocking());
     }
 
-    private static List<GradleTask> gradleTasks(GradleProject project, String... names) {
-        List<GradleTask> result = new ArrayList<GradleTask>(names.length);
+    private static List<GradleTaskID> gradleTasks(String projectFullName, String... names) {
+        List<GradleTaskID> result = new ArrayList<GradleTaskID>(names.length);
         for (String name: names) {
-            DefaultGradleTask task = new DefaultGradleTask();
-            task.setName(name);
-            task.setProject(project);
-            result.add(task);
+            String fullName = projectFullName.endsWith(":")
+                    ? projectFullName + name
+                    : projectFullName + ":" + name;
+            result.add(new GradleTaskID(name, fullName));
         }
         return result;
     }
 
-    private static GradleProject createDummyProject() {
-        DefaultGradleProject root = new DefaultGradleProject(":");
-        root.setTasks(gradleTasks(root, "rootTask1", "rootTask2"));
+    private static GradleProjectTree createProject(
+            String fullName,
+            Collection<GradleTaskID> tasks,
+            Collection<GradleProjectTree> subProjects) {
+        String[] names = fullName.split(":");
+        String name = names.length > 0 ? names[names.length - 1] : "";
+        GenericProjectProperties properties = new GenericProjectProperties(name, fullName, new File(""));
 
-        DefaultGradleProject sub1 = new DefaultGradleProject(":sub1");
-        sub1.setTasks(gradleTasks(sub1, "sub1Task1", "sub1Task2"));
+        return new GradleProjectTree(properties, tasks, subProjects);
+    }
 
-        DefaultGradleProject sub2 = new DefaultGradleProject(":sub2");
+    private static GradleProjectTree sub2Sub2() {
+        String fullName = ":sub2:subsub2";
 
-        sub1.setParent(root);
-        sub2.setParent(root);
-        root.setChildren(Arrays.asList(sub1, sub2));
+        return createProject(fullName,
+                gradleTasks(fullName, "sub2_2Task1", "sub2_2Task2"),
+                Collections.<GradleProjectTree>emptyList());
+    }
 
-        DefaultGradleProject sub2_1 = new DefaultGradleProject(":sub2:subsub1");
-        DefaultGradleProject sub2_2 = new DefaultGradleProject(":sub2:subsub2");
-        sub2_2.setTasks(gradleTasks(sub2_2, "sub2_2Task1", "sub2_2Task2"));
+    private static GradleProjectTree sub2Sub1() {
+        String fullName = ":sub2:subsub1";
 
-        sub2_1.setParent(sub2);
-        sub2_2.setParent(sub2);
-        sub2.setChildren(Arrays.asList(sub2_1, sub2_2));
+        return createProject(fullName,
+                Collections.<GradleTaskID>emptyList(),
+                Collections.<GradleProjectTree>emptyList());
+    }
 
-        return root;
+    private static GradleProjectTree sub2() {
+        String fullName = ":sub2";
+
+        return createProject(fullName,
+                Collections.<GradleTaskID>emptyList(),
+                Arrays.asList(sub2Sub1(), sub2Sub2()));
+    }
+
+    private static GradleProjectTree sub1() {
+        String fullName = ":sub1";
+
+        return createProject(fullName,
+                gradleTasks(fullName, "sub1Task1", "sub1Task2"),
+                Collections.<GradleProjectTree>emptyList());
+    }
+
+    private static GradleProjectTree rootProject() {
+        String fullName = ":";
+
+        return createProject(fullName,
+                gradleTasks(fullName, "rootTask1", "rootTask2"),
+                Arrays.asList(sub1(), sub2()));
+    }
+
+    private static GradleMultiProjectDef createDummyProject() {
+        GradleProjectTree root = rootProject();
+        return new GradleMultiProjectDef(root, root);
     }
 
     private static PredefinedTask createTestTask(String name, boolean mustExist) {
@@ -164,32 +198,32 @@ public class PredefinedTaskTest {
     }
 
     private void taskExistsInProject(
-            GradleProject project,
+            GradleMultiProjectDef project,
             String taskName,
             TaskVariableMap varMap) {
         assertTrue(taskName + " should be found in the project",
                 createTestTask(taskName, true).isTasksExistsIfRequired(project, varMap));
     }
 
-    private void taskExistsInProject(GradleProject project, String taskName) {
+    private void taskExistsInProject(GradleMultiProjectDef project, String taskName) {
         taskExistsInProject(project, taskName, EmptyVarMap.INSTANCE);
     }
 
     private void taskDoesNotExistInProject(
-            GradleProject project,
+            GradleMultiProjectDef project,
             String taskName,
             TaskVariableMap varMap) {
         assertFalse(taskName + " should not be found in the project",
                 createTestTask(taskName, true).isTasksExistsIfRequired(project, varMap));
     }
 
-    private void taskDoesNotExistInProject(GradleProject project, String taskName) {
+    private void taskDoesNotExistInProject(GradleMultiProjectDef project, String taskName) {
         taskDoesNotExistInProject(project, taskName, EmptyVarMap.INSTANCE);
     }
 
     @Test
     public void testIsTasksExistsIfRequired_MustExist_DoesExist() {
-        GradleProject project = createDummyProject();
+        GradleMultiProjectDef project = createDummyProject();
 
         taskExistsInProject(project, ":rootTask1");
         taskExistsInProject(project, ":rootTask2");
@@ -210,7 +244,7 @@ public class PredefinedTaskTest {
 
     @Test
     public void testIsTasksExistsIfRequired_MustExist_DoesntExist() {
-        GradleProject project = createDummyProject();
+        GradleMultiProjectDef project = createDummyProject();
 
         taskDoesNotExistInProject(project, ":sub1:rootTask1");
         taskDoesNotExistInProject(project, ":sub1:rootTask1");
@@ -222,7 +256,7 @@ public class PredefinedTaskTest {
 
     @Test
     public void testIsTasksExistsIfRequired_MustExist_WithVar() {
-        GradleProject project = createDummyProject();
+        GradleMultiProjectDef project = createDummyProject();
 
         taskExistsInProject(project, ":root${var1}", singletonVarMap("var1", "Task1"));
         taskExistsInProject(project, "${testVar}:sub1Task1", singletonVarMap("testVar", ":sub1"));

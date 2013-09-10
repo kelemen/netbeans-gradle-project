@@ -218,6 +218,37 @@ public final class GradleModelLoader {
         return null;
     }
 
+    private static GradleProject getRoot(GradleProject project) {
+        GradleProject prev = null;
+        GradleProject current = project;
+        do {
+            prev = current;
+            current = current.getParent();
+        } while (current != null);
+        return prev;
+    }
+
+    public static IdeaModule tryFindRootModule(IdeaProject ideaModel) {
+        DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
+        if (modules.isEmpty()) {
+            return null;
+        }
+
+        GradleProject rootProject = getRoot(modules.iterator().next().getGradleProject());
+        if (rootProject == null) {
+            return null;
+        }
+
+        String rootName = rootProject.getPath();
+
+        for (IdeaModule module: ideaModel.getModules()) {
+            if (rootName.equals(module.getGradleProject().getPath())) {
+                return module;
+            }
+        }
+        return null;
+    }
+
     private static void introduceLoadedModel(NbGradleModel model) {
         CACHE.addToCache(model);
         LISTENERS.fireEvent(model);
@@ -334,7 +365,7 @@ public final class GradleModelLoader {
     }
 
     public static NbGradleModel createEmptyModel(File projectDir, Lookup extensionModels) {
-        return new NbGradleModel(GradleProjectInfo.createEmpty(projectDir), projectDir);
+        return new NbGradleModel(GradleMultiProjectDef.createEmpty(projectDir));
     }
 
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {

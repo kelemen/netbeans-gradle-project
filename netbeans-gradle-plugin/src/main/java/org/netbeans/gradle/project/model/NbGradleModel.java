@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import org.gradle.tooling.model.GradleProject;
 import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -19,10 +18,10 @@ import org.openide.util.Lookup;
 import org.openide.util.Parameters;
 
 public final class NbGradleModel {
-    private final File projectDir;
     private final File buildFile;
     private final File settingsFile;
-    private final GradleProjectInfo projectInfo;
+    private final GradleMultiProjectDef projectDef;
+
     private volatile boolean dirty;
 
     private final AtomicReference<DynamicLookup> mainModelsRef;
@@ -36,38 +35,29 @@ public final class NbGradleModel {
     // something has changed in the model, so it needs to reparse things.
     private final AtomicReference<Object> stateID;
 
-    public NbGradleModel(
-            GradleProjectInfo projectInfo,
-            File projectDir) {
-        this(projectInfo, projectDir, findSettingsGradle(projectDir));
+    public NbGradleModel(GradleMultiProjectDef projectDef) {
+        this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
     }
 
-    public NbGradleModel(
-            GradleProjectInfo projectInfo,
-            File projectDir,
-            File settingsFile) {
-        this(projectInfo,
-                projectDir,
-                getBuildFile(projectDir),
+    public NbGradleModel(GradleMultiProjectDef projectDef, File settingsFile) {
+        this(projectDef,
+                getBuildFile(projectDef.getProjectDir()),
                 settingsFile,
                 new AtomicReference<DynamicLookup>(null),
                 new ConcurrentHashMap<String, DynamicLookup>());
     }
 
     private NbGradleModel(
-            GradleProjectInfo projectInfo,
-            File projectDir,
+            GradleMultiProjectDef projectDef,
             File buildFile,
             File settingsFile,
             AtomicReference<DynamicLookup> mainLookupRef,
             ConcurrentMap<String, DynamicLookup> extensionModels) {
-        if (projectInfo == null) throw new NullPointerException("projectInfo");
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        if (projectDef == null) throw new NullPointerException("projectTree");
         if (mainLookupRef == null) throw new NullPointerException("mainLookupRef");
         if (extensionModels == null) throw new NullPointerException("extensionModels");
 
-        this.projectInfo = projectInfo;
-        this.projectDir = projectDir;
+        this.projectDef = projectDef;
         this.buildFile = buildFile;
         this.settingsFile = settingsFile;
         this.extensionModels = extensionModels;
@@ -107,7 +97,7 @@ public final class NbGradleModel {
             return NbStrings.getBuildSrcMarker(parentName);
         }
         else {
-            String scriptName = getGradleProject().getName();
+            String scriptName = getMainProject().getProjectName();
             scriptName = scriptName.trim();
             if (scriptName.isEmpty()) {
                 scriptName = getProjectDir().getName();
@@ -215,11 +205,11 @@ public final class NbGradleModel {
     }
 
     public boolean isBuildSrc() {
-        return projectDir.getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
+        return getProjectDir().getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
     }
 
     public boolean isRootProject() {
-        String uniqueName = getGradleProject().getPath();
+        String uniqueName = getMainProject().getProjectFullName();
         for (int i = 0; i < uniqueName.length(); i++) {
             if (uniqueName.charAt(i) != ':') {
                 return false;
@@ -228,12 +218,12 @@ public final class NbGradleModel {
         return true;
     }
 
-    public GradleProjectInfo getGradleProjectInfo() {
-        return projectInfo;
+    public GradleMultiProjectDef getProjectDef() {
+        return projectDef;
     }
 
-    public GradleProject getGradleProject() {
-        return projectInfo.getGradleProject();
+    public GradleProjectTree getMainProject() {
+        return projectDef.getMainProject();
     }
 
     public void setDirty() {
@@ -241,11 +231,11 @@ public final class NbGradleModel {
     }
 
     public NbGradleModel createNonDirtyCopy() {
-        return new NbGradleModel(projectInfo, projectDir, buildFile, settingsFile, mainModelsRef, extensionModels);
+        return new NbGradleModel(projectDef, buildFile, settingsFile, mainModelsRef, extensionModels);
     }
 
     public File getProjectDir() {
-        return projectDir;
+        return projectDef.getProjectDir();
     }
 
     public File getRootProjectDir() {
@@ -255,7 +245,7 @@ public final class NbGradleModel {
         }
 
         if (result == null) {
-            result = projectDir;
+            result = getProjectDir();
         }
         return result;
     }
@@ -273,7 +263,7 @@ public final class NbGradleModel {
     }
 
     public FileObject tryGetProjectDirAsObj() {
-        return FileUtil.toFileObject(projectDir);
+        return FileUtil.toFileObject(getProjectDir());
     }
 
     public FileObject tryGetBuildFileObj() {

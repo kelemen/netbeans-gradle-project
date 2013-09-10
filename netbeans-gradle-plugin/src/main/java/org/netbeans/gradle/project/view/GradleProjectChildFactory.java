@@ -15,8 +15,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
-import org.netbeans.gradle.project.model.GradleProjectInfo;
+import org.netbeans.gradle.project.model.GradleProjectTree;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObjectNotFoundException;
@@ -116,24 +115,44 @@ extends
         return projectFolder.getNodeDelegate().cloneNode();
     }
 
-    private Children createSubprojectsChild(List<? extends GradleProjectInfo> children) {
+    private Children createSubprojectsChild(Collection<? extends GradleProjectTree> children) {
         return Children.create(new SubProjectsChildFactory(project, children), true);
     }
 
     private static Action createOpenAction(String caption,
-            Collection<? extends GradleProjectInfo> modules) {
+            Collection<? extends GradleProjectTree> modules) {
         return OpenProjectsAction.createFromModules(caption, modules);
+    }
+
+    private static void getAllChildren(GradleProjectTree module, List<GradleProjectTree> result) {
+        Collection<GradleProjectTree> children = module.getChildren();
+        result.addAll(children);
+        for (GradleProjectTree child: children) {
+            getAllChildren(child, result);
+        }
+    }
+
+    public static List<GradleProjectTree> getAllChildren(GradleProjectTree module) {
+        List<GradleProjectTree> result = new LinkedList<GradleProjectTree>();
+        getAllChildren(module, result);
+        return result;
+    }
+
+    private static List<GradleProjectTree> getAllChildren(NbGradleModel model) {
+        List<GradleProjectTree> result = new LinkedList<GradleProjectTree>();
+        getAllChildren(model.getMainProject(), result);
+        return result;
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
         NbGradleModel shownModule = getShownModule();
-        final List<GradleProjectInfo> immediateChildren
-                = shownModule.getGradleProjectInfo().getChildren();
+        final Collection<GradleProjectTree> immediateChildren
+                = shownModule.getMainProject().getChildren();
 
         if (immediateChildren.isEmpty()) {
             return;
         }
-        final List<GradleProjectInfo> children = IdeaJavaModelUtils.getAllChildren(shownModule);
+        final List<GradleProjectTree> children = getAllChildren(shownModule);
 
         toPopulate.add(new SingleNodeFactory() {
             @Override
@@ -144,7 +163,7 @@ extends
                         Lookups.fixed(immediateChildren.toArray())) {
                     @Override
                     public String getName() {
-                        return "SubProjectsNode_" + getShownModule().getGradleProject().getPath().replace(':', '_');
+                        return "SubProjectsNode_" + getShownModule().getMainProject().getProjectFullName().replace(':', '_');
                     }
 
                     @Override

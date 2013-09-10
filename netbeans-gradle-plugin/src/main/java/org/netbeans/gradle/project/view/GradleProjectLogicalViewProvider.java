@@ -24,7 +24,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.gradle.tooling.model.GradleTask;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -37,6 +36,7 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.GradleTaskID;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.MutableProperty;
@@ -650,16 +650,16 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
             lastUsedModel = projectModel;
 
-            Collection<? extends GradleTask> tasks = projectModel.getGradleProject().getTasks();
+            Collection<GradleTaskID> tasks = projectModel.getMainProject().getTasks();
 
             menu.removeAll();
-            for (final GradleTask task: tasks) {
+            for (final GradleTaskID task: tasks) {
                 JMenuItem menuItem = new JMenuItem(task.getName());
                 menuItem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         GradleCommandTemplate.Builder command
-                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getPath()));
+                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getFullName()));
 
                         executeCommandTemplate(project, command.create());
                     }

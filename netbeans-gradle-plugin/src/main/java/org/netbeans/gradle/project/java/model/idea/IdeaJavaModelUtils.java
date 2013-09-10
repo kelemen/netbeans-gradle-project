@@ -39,8 +39,6 @@ import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.SourceBinaryMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
-import org.netbeans.gradle.project.model.GradleProjectInfo;
-import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -93,30 +91,6 @@ public final class IdeaJavaModelUtils {
 
         return NbJavaModel.createModel(result,
                 Collections.<File, JavaProjectDependency>emptyMap());
-    }
-
-    private static void getAllChildren(GradleProjectInfo module, List<GradleProjectInfo> result) {
-        Collection<GradleProjectInfo> children = module.getChildren();
-        result.addAll(children);
-        for (GradleProjectInfo child: children) {
-            getAllChildren(child, result);
-        }
-    }
-
-    public static List<GradleProjectInfo> getAllChildren(GradleProjectInfo module) {
-        List<GradleProjectInfo> result = new LinkedList<GradleProjectInfo>();
-        getAllChildren(module, result);
-        return result;
-    }
-
-    public static List<GradleProjectInfo> getAllChildren(NbGradleModel model) {
-        List<GradleProjectInfo> result = new LinkedList<GradleProjectInfo>();
-        getAllChildren(model.getGradleProjectInfo(), result);
-        return result;
-    }
-
-    private static boolean isResourcePath(File dir) {
-        return dir.getName().toLowerCase(Locale.US).startsWith("resource");
     }
 
     private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {

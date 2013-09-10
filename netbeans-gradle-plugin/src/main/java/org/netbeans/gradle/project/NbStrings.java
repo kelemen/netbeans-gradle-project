@@ -2,7 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.util.Collection;
 import java.util.List;
-import org.netbeans.gradle.project.model.GradleProjectInfo;
+import org.netbeans.gradle.project.model.GradleProjectTree;
 import org.openide.util.NbBundle;
 
 public final class NbStrings {
@@ -158,10 +158,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_OpenEverySubProject");
     }
 
-    public static String getOpenSubProjectCaption(Collection<? extends GradleProjectInfo> projects) {
+    public static String getOpenSubProjectCaption(Collection<? extends GradleProjectTree> projects) {
         int numberOfProjects = projects.size();
         if (numberOfProjects == 1) {
-            String name = projects.iterator().next().getGradleProject().getName();
+            String name = projects.iterator().next().getProjectName();
             return NbBundle.getMessage(NbStrings.class, "LBL_OpenSingleSubProject", name);
         }
         else {
