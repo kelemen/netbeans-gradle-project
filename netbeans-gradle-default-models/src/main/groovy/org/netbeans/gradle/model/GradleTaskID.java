@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.model;
 
 public final class GradleTaskID {
     private final String name;

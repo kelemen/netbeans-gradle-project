@@ -36,6 +36,7 @@ import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.BuildOperationArgs;
+import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;

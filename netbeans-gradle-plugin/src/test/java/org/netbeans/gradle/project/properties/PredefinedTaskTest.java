@@ -12,12 +12,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.GradleMultiProjectDef;
+import org.netbeans.gradle.model.GradleProjectTree;
+import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.model.GradleMultiProjectDef;
-import org.netbeans.gradle.project.model.GradleProjectTree;
-import org.netbeans.gradle.project.model.GradleTaskID;
 
 import static org.junit.Assert.*;
 

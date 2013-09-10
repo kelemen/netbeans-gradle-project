@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import org.netbeans.gradle.model.GradleMultiProjectDef;
+import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;

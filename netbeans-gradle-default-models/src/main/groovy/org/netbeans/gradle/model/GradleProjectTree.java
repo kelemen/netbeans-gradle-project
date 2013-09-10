@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.model;
 
 import java.io.File;
 import java.util.Collection;
@@ -6,8 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import org.netbeans.gradle.model.GenericProjectProperties;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class GradleProjectTree {
     private final GenericProjectProperties genericProperties;
@@ -79,7 +78,7 @@ public final class GradleProjectTree {
     public GradleProjectTree findByPath(String path) {
         GradleProjectTree result = this;
         for (String name: path.split(":")) {
-            if (!name.isEmpty()) {
+            if (name.length() != 0) {
                 result = result.getChildrenMap().get(name);
                 if (result == null) {
                     return null;

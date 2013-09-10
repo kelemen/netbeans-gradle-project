@@ -2,7 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.util.Collection;
 import java.util.List;
-import org.netbeans.gradle.project.model.GradleProjectTree;
+import org.netbeans.gradle.model.GradleProjectTree;
 import org.openide.util.NbBundle;
 
 public final class NbStrings {

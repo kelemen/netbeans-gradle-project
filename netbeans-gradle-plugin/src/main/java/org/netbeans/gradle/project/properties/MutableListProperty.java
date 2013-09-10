@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.List;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class MutableListProperty<ElementType> implements MutableProperty<List<ElementType>> {
     private final MutableProperty<List<ElementType>> wrapped;

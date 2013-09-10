@@ -22,7 +22,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;

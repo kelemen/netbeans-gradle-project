@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;

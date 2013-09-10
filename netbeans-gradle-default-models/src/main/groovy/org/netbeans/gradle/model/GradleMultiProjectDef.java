@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.model;
+package org.netbeans.gradle.model;
 
 import java.io.File;
 

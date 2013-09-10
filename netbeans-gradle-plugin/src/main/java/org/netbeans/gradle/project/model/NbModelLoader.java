@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public interface NbModelLoader {

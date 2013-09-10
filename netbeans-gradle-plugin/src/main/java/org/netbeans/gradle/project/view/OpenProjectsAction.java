@@ -12,9 +12,9 @@ import javax.swing.AbstractAction;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
+import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.model.GradleProjectTree;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 

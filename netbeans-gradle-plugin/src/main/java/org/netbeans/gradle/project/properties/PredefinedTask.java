@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.GradleMultiProjectDef;
+import org.netbeans.gradle.model.GradleProjectTree;
+import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.model.GradleMultiProjectDef;
-import org.netbeans.gradle.project.model.GradleProjectTree;
-import org.netbeans.gradle.project.model.GradleTaskID;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 

@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.api.task;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
-import org.netbeans.gradle.project.CollectionUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
  * Defines a Gradle command which might also contain
