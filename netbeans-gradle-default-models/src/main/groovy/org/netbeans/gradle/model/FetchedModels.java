@@ -10,25 +10,30 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 public final class FetchedModels implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final Map<Object, Object> buildInfoResults;
+    private final FetchedBuildModels buildModels;
     private final FetchedProjectModels defaultProjectModels;
     private final Collection<FetchedProjectModels> otherProjectModels;
 
     public FetchedModels(
-            Map<Object, Object> buildInfoResults,
+            FetchedBuildModels buildModels,
             FetchedProjectModels defaultProjectModels,
             Collection<FetchedProjectModels> otherProjectModels) {
+        if (buildModels == null) throw new NullPointerException("buildModels");
         if (defaultProjectModels == null) throw new NullPointerException("defaultProjectModels");
 
-        this.buildInfoResults = CollectionUtils.copyNullSafeHashMap(buildInfoResults);
+        this.buildModels = buildModels;
         this.defaultProjectModels = defaultProjectModels;
         this.otherProjectModels = Collections.unmodifiableList(new ArrayList<FetchedProjectModels>(otherProjectModels));
 
         CollectionUtils.checkNoNullElements(this.otherProjectModels, "otherProjectModels");
     }
 
+    public FetchedBuildModels getBuildModels() {
+        return buildModels;
+    }
+
     public Map<Object, Object> getBuildInfoResults() {
-        return buildInfoResults;
+        return buildModels.getBuildInfoResults();
     }
 
     public FetchedProjectModels getDefaultProjectModels() {

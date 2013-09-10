@@ -302,7 +302,8 @@ public final class GenericModelFetcher {
                 otherModels.add(otherModel);
             }
 
-            return new FetchedModels(buildInfoResults, defaultProjectModels, otherModels);
+            FetchedBuildModels buildModels = new FetchedBuildModels(buildInfoResults);
+            return new FetchedModels(buildModels, defaultProjectModels, otherModels);
         }
     }
 
