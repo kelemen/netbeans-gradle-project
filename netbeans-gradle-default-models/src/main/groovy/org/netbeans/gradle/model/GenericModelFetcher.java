@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
@@ -79,44 +78,13 @@ public final class GenericModelFetcher {
         return result;
     }
 
-    private static void setupExecuter(BuildActionExecuter<?> executer, BuildOperationArgs buildOPArgs) {
-        File javaHome = buildOPArgs.getJavaHome();
-        if (javaHome != null) {
-            executer.setJavaHome(javaHome);
-        }
-
-        String[] jvmArguments = buildOPArgs.getJvmArguments();
-        if (jvmArguments != null) {
-            executer.setJvmArguments(jvmArguments);
-        }
-
-        OutputStream standardOutput = buildOPArgs.getStandardOutput();
-        if (standardOutput != null) {
-            executer.setStandardOutput(standardOutput);
-        }
-
-        OutputStream standardError = buildOPArgs.getStandardError();
-        if (standardError != null) {
-            executer.setStandardError(standardError);
-        }
-
-        InputStream standardInput = buildOPArgs.getStandardInput();
-        if (standardInput != null) {
-            executer.setStandardInput(standardInput);
-        }
-
-        for (ProgressListener listener: buildOPArgs.getProgressListeners()) {
-            executer.addProgressListener(listener);
-        }
-    }
-
     public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
         BuildActionExecuter<FetchedModels> executer
                 = connection.action(new ModelFetcherBuildAction(getBuildInfoBuilders()));
 
         BuildOperationArgs buildOPArgs = new BuildOperationArgs();
         init.initOperation(buildOPArgs);
-        setupExecuter(executer, buildOPArgs);
+        buildOPArgs.setupLongRunningOP(executer);
 
         String[] userArgs = buildOPArgs.getArguments();
         if (userArgs == null) {

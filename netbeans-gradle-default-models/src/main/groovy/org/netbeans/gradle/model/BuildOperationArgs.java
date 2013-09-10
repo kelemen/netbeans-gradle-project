@@ -3,6 +3,7 @@ package org.netbeans.gradle.model;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ProgressListener;
 
 public final class BuildOperationArgs {
@@ -68,5 +69,35 @@ public final class BuildOperationArgs {
 
     public void setProgressListeners(ProgressListener[] progressListeners) {
         this.progressListeners = progressListeners.clone();
+    }
+
+    public void setupLongRunningOP(LongRunningOperation op) {
+        if (javaHome != null) {
+            op.setJavaHome(javaHome);
+        }
+
+        if (arguments == null) {
+            op.withArguments(arguments.clone());
+        }
+
+        if (jvmArguments != null) {
+            op.setJvmArguments(jvmArguments.clone());
+        }
+
+        if (standardOutput != null) {
+            op.setStandardOutput(standardOutput);
+        }
+
+        if (standardError != null) {
+            op.setStandardError(standardError);
+        }
+
+        if (standardInput != null) {
+            op.setStandardInput(standardInput);
+        }
+
+        for (ProgressListener listener: progressListeners) {
+            op.addProgressListener(listener);
+        }
     }
 }
