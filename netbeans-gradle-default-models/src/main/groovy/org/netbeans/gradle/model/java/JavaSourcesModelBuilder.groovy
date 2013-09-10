@@ -57,15 +57,6 @@ implements
         return new JavaSourcesModel(result);
     }
 
-    private static boolean implementsInterface(def obj, String ifName) {
-        try {
-            Class<?> cl = Class.forName('org.gradle.api.tasks.GroovySourceSet');
-            return cl.isAssignableFrom(obj.getClass());
-        } catch (ClassNotFoundException ex) {
-            return false;
-        }
-    }
-
     private Collection<File> addSourceGroup(
             JavaSourceGroupName name,
             def sourceGroup,
