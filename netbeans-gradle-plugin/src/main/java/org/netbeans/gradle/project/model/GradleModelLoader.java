@@ -35,6 +35,8 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.BuildOperationArgs;
+import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectExtensionRef;
@@ -266,6 +268,12 @@ public final class GradleModelLoader {
         }
     }
 
+    public static void setupLongRunningOP(OperationInitializer setup, LongRunningOperation op) {
+        BuildOperationArgs args = new BuildOperationArgs();
+        setup.initOperation(args);
+        args.setupLongRunningOP(op);
+    }
+
     private static NbGradleModel loadModelWithProgress(
             final NbGradleProject project,
             final ProgressHandle progress,
@@ -282,10 +290,10 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            LongRunningOperationSetup setup = new ModelBuilderSetup(project, progress);
+            OperationInitializer setup = new ModelBuilderSetup(project, progress);
 
             ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
-            setup.setupLongRunningOperation(modelBuilder);
+            setupLongRunningOP(setup, modelBuilder);
 
             BuildEnvironment env = modelBuilder.get();
             NbModelLoader modelLoader = chooseModel(env, proposedModel, setup);
@@ -308,7 +316,7 @@ public final class GradleModelLoader {
     private static NbModelLoader chooseModel(
             BuildEnvironment env,
             NbGradleModel proposedModel,
-            LongRunningOperationSetup setup) {
+            OperationInitializer setup) {
 
         GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
         if (version.compareTo(GRADLE_VERSION_1_8_RC_1) < 0) {
@@ -419,7 +427,7 @@ public final class GradleModelLoader {
         throw new AssertionError();
     }
 
-    private static class ModelBuilderSetup implements LongRunningOperationSetup {
+    private static class ModelBuilderSetup implements OperationInitializer {
         private final ProgressHandle progress;
 
         private final File jdkHome;
@@ -437,19 +445,21 @@ public final class GradleModelLoader {
         }
 
         @Override
-        public void setupLongRunningOperation(LongRunningOperation op) {
+        public void initOperation(BuildOperationArgs args) {
             if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
-                op.setJavaHome(jdkHome);
+                args.setJavaHome(jdkHome);
             }
 
             if (!globalJvmArgs.isEmpty()) {
-                op.setJvmArguments(globalJvmArgs.toArray(new String[0]));
+                args.setJvmArguments(globalJvmArgs.toArray(new String[0]));
             }
 
-            op.addProgressListener(new ProgressListener() {
-                @Override
-                public void statusChanged(ProgressEvent pe) {
-                    progress.progress(pe.getDescription());
+            args.setProgressListeners(new ProgressListener[]{
+                new ProgressListener() {
+                    @Override
+                    public void statusChanged(ProgressEvent pe) {
+                        progress.progress(pe.getDescription());
+                    }
                 }
             });
         }

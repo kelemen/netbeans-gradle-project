@@ -21,6 +21,7 @@ import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
@@ -29,17 +30,12 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
-    private final LongRunningOperationSetup setup;
+    private final OperationInitializer setup;
 
-    public NbGradle18ModelLoader(LongRunningOperationSetup setup) {
+    public NbGradle18ModelLoader(OperationInitializer setup) {
         if (setup == null) throw new NullPointerException("setup");
 
         this.setup = setup;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Class<BuildAction<?>> buildActionClass() {
-        return (Class<BuildAction<?>>)(Class<?>)BuildAction.class;
     }
 
     private ModelLoaderAction getBuildAction(List<ProjectExtensionRef> extensionRefs) {
@@ -87,7 +83,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         ModelLoaderAction buildAction = getBuildAction(extensionRefs);
 
         BuildActionExecuter<ModelsForAll> executer = connection.action(buildAction);
-        setup.setupLongRunningOperation(executer);
+        GradleModelLoader.setupLongRunningOP(setup, executer);
 
         ModelsForAll loadedModelsForAll = executer.run();
         NbGradleModel mainModel = getNBModel(loadedModelsForAll.getModelForDefaultProject());
@@ -134,17 +130,6 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
             nbModel.setModelsForExtension(extensionRef.getName(), Lookups.fixed(extensionLookupContent.toArray()));
         }
-    }
-
-    private static <K, V> Map<K, Collection<V>> copyMultiValueMap(Map<K, Collection<V>> source) {
-        Map<K, Collection<V>> result
-                = new HashMap<K, Collection<V>>(2 * source.size());
-
-        for (Map.Entry<K, Collection<V>> entry: source.entrySet()) {
-            result.put(entry.getKey(), CollectionUtils.copyNullSafeList(entry.getValue()));
-        }
-
-        return Collections.unmodifiableMap(result);
     }
 
     private static class ModelLoaderAction implements BuildAction<NbGradle18ModelLoader.ModelsForAll> {

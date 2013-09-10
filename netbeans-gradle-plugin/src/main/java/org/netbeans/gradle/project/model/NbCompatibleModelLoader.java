@@ -13,6 +13,7 @@ import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
@@ -23,9 +24,9 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbCompatibleModelLoader.class.getName());
 
     private final NbGradleModel proposedModel;
-    private final LongRunningOperationSetup setup;
+    private final OperationInitializer setup;
 
-    public NbCompatibleModelLoader(NbGradleModel proposedModel, LongRunningOperationSetup setup) {
+    public NbCompatibleModelLoader(NbGradleModel proposedModel, OperationInitializer setup) {
         if (setup == null) throw new NullPointerException("setup");
 
         this.proposedModel = proposedModel;
@@ -54,7 +55,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
-        setup.setupLongRunningOperation(builder);
+        GradleModelLoader.setupLongRunningOP(setup, builder);
 
         return builder.get();
     }
