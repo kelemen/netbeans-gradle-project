@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.model.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -12,7 +12,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.gradle.model.util.StringAsFileRef;
 
 import static org.junit.Assert.*;
 
@@ -59,7 +58,7 @@ public class StringAsFileRefTest {
     }
 
     private static void assertContent(StringAsFileRef fileRef, String expectedContent, Charset encoding) throws IOException {
-        String fileContent = new String(readAll(fileRef.getFile()), UTF8);
+        String fileContent = new String(readAll(fileRef.getFile()), UTF8.name());
         assertEquals(expectedContent, fileContent);
     }
 
