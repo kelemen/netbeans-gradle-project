@@ -1,12 +1,15 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -27,6 +30,24 @@ public final class NbGradleProjectTree {
         this.children = CollectionUtils.copyNullSafeList(children);
 
         this.childrenMap = new AtomicReference<Map<String, NbGradleProjectTree>>(null);
+    }
+
+    public NbGradleProjectTree(GradleProjectTree tree) {
+        if (tree == null) throw new NullPointerException("tree");
+
+        this.genericProperties = tree.getGenericProperties();
+        this.tasks = tree.getTasks();
+        this.children = fromModels(tree.getChildren());
+
+        this.childrenMap = new AtomicReference<Map<String, NbGradleProjectTree>>(null);
+    }
+
+    private static Collection<NbGradleProjectTree> fromModels(Collection<GradleProjectTree> models) {
+        List<NbGradleProjectTree> result = new ArrayList<NbGradleProjectTree>(models.size());
+        for (GradleProjectTree model: models) {
+            result.add(new NbGradleProjectTree(model));
+        }
+        return Collections.unmodifiableList(result);
     }
 
     public static NbGradleProjectTree createEmpty(File projectDir) {
