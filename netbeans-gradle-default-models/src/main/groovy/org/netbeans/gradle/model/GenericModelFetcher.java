@@ -26,6 +26,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
+import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
@@ -282,13 +283,33 @@ public final class GenericModelFetcher {
             ModelQueryOutput modelOutput = getModelOutput(getter);
             GradleProjectTree projectTree = projects.get(modelOutput.getProjectFullName());
             if (projectTree == null) {
-                // Shouldn't happen.
-                return null;
+                // Shouldn't happen but try not to fail.
+                EclipseProject eclipseProject = getter.getModel(EclipseProject.class);
+                GradleProject gradleProject = eclipseProject.getGradleProject();
+
+                GenericProjectProperties properties = new GenericProjectProperties(
+                        gradleProject.getName(),
+                        gradleProject.getPath(),
+                        eclipseProject.getProjectDirectory());
+
+                projectTree = new GradleProjectTree(
+                        properties,
+                        getTasksOfProjects(gradleProject),
+                        Collections.<GradleProjectTree>emptyList());
             }
 
             return new FetchedProjectModels(
                     new GradleMultiProjectDef(rootTree, projectTree),
                     modelOutput.getProjectInfoResults());
+        }
+
+        private Collection<GradleTaskID> getTasksOfProjects(GradleProject project) {
+            DomainObjectSet<? extends GradleTask> modelTasks = project.getTasks();
+            List<GradleTaskID> result = new ArrayList<GradleTaskID>(modelTasks.size());
+            for (GradleTask modelTask: modelTasks) {
+                result.add(new GradleTaskID(modelTask.getName(), modelTask.getPath()));
+            }
+            return result;
         }
 
         private Collection<GradleTaskID> getTasksOfProjects(
@@ -302,12 +323,7 @@ public final class GenericModelFetcher {
                 return Collections.emptyList();
             }
 
-            DomainObjectSet<? extends GradleTask> modelTasks = gradleProject.getTasks();
-            List<GradleTaskID> result = new ArrayList<GradleTaskID>(modelTasks.size());
-            for (GradleTask modelTask: modelTasks) {
-                result.add(new GradleTaskID(modelTask.getName(), modelTask.getPath()));
-            }
-            return result;
+            return getTasksOfProjects(gradleProject);
         }
 
         private GradleProjectTree parseTree(
