@@ -7,20 +7,20 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 public final class FetchedProjectModels implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final GenericProjectProperties genericProperties;
+    private final GradleMultiProjectDef projectDef;
     private final Map<Object, Object> projectInfoResults;
 
     public FetchedProjectModels(
-            GenericProjectProperties genericProperties,
+            GradleMultiProjectDef projectDef,
             Map<Object, Object> projectInfoResults) {
-        if (genericProperties == null) throw new NullPointerException("genericProperties");
+        if (projectDef == null) throw new NullPointerException("projectDef");
 
-        this.genericProperties = genericProperties;
+        this.projectDef = projectDef;
         this.projectInfoResults = CollectionUtils.copyNullSafeHashMap(projectInfoResults);
     }
 
-    public GenericProjectProperties getGenericProperties() {
-        return genericProperties;
+    public GradleMultiProjectDef getProjectDef() {
+        return projectDef;
     }
 
     public Map<Object, Object> getProjectInfoResults() {

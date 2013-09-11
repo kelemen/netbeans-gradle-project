@@ -10,7 +10,9 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +23,11 @@ import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
+import org.gradle.tooling.model.gradle.GradleBuild;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
@@ -268,15 +274,69 @@ public final class GenericModelFetcher {
             }
         }
 
-        private FetchedProjectModels getFetchedProjectModels(ModelGetter getter) {
+        private FetchedProjectModels getFetchedProjectModels(
+                GradleProjectTree rootTree,
+                Map<String, GradleProjectTree> projects,
+                ModelGetter getter) {
+
             ModelQueryOutput modelOutput = getModelOutput(getter);
+            GradleProjectTree projectTree = projects.get(modelOutput.getProjectFullName());
+            if (projectTree == null) {
+                // Shouldn't happen.
+                return null;
+            }
 
             return new FetchedProjectModels(
-                    modelOutput.getGenericProperties(),
+                    new GradleMultiProjectDef(rootTree, projectTree),
                     modelOutput.getProjectInfoResults());
         }
 
+        private Collection<GradleTaskID> getTasksOfProjects(
+                BuildController controller, BasicGradleProject project) {
+
+            // TODO: Do not load tasks in later versions if the project is not
+            //   evaluated.
+
+            GradleProject gradleProject = controller.findModel(project, GradleProject.class);
+            if (gradleProject == null) {
+                return Collections.emptyList();
+            }
+
+            DomainObjectSet<? extends GradleTask> modelTasks = gradleProject.getTasks();
+            List<GradleTaskID> result = new ArrayList<GradleTaskID>(modelTasks.size());
+            for (GradleTask modelTask: modelTasks) {
+                result.add(new GradleTaskID(modelTask.getName(), modelTask.getPath()));
+            }
+            return result;
+        }
+
+        private GradleProjectTree parseTree(
+                BuildController controller,
+                BasicGradleProject basicProject,
+                Map<String, GradleProjectTree> projects) {
+
+            DomainObjectSet<? extends BasicGradleProject> modelChildren = basicProject.getChildren();
+            List<GradleProjectTree> children = new ArrayList<GradleProjectTree>(modelChildren.size());
+
+            for (BasicGradleProject modelChild: modelChildren) {
+                children.add(parseTree(controller, modelChild, projects));
+            }
+
+            GenericProjectProperties properties = new GenericProjectProperties(
+                    basicProject.getName(),
+                    basicProject.getPath(),
+                    basicProject.getProjectDirectory());
+
+            Collection<GradleTaskID> tasks = getTasksOfProjects(controller, basicProject);
+
+            GradleProjectTree result = new GradleProjectTree(properties, tasks, children);
+            projects.put(properties.getProjectFullName(), result);
+            return result;
+        }
+
         public FetchedModels execute(final BuildController controller) {
+            GradleBuild buildModel = controller.getBuildModel();
+
             Map<Object, Object> buildInfoResults = new HashMap<Object, Object>(2 * buildInfoRequests.size());
             for (Map.Entry<Object, BuildInfoBuilder<?>> entry: buildInfoRequests.entrySet()) {
                 Object info = entry.getValue().getInfo(controller);
@@ -285,15 +345,18 @@ public final class GenericModelFetcher {
                 }
             }
 
-            FetchedProjectModels defaultProjectModels = getFetchedProjectModels(new ModelGetter() {
+            Map<String, GradleProjectTree> projectTrees = new HashMap<String, GradleProjectTree>(64);
+            GradleProjectTree rootTree = parseTree(controller, buildModel.getRootProject(), projectTrees);
+
+            FetchedProjectModels defaultProjectModels = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
                 public <T> T getModel(Class<T> modelClass) {
                     return controller.getModel(modelClass);
                 }
             });
 
             List<FetchedProjectModels> otherModels = new LinkedList<FetchedProjectModels>();
-            for (final BasicGradleProject projectRef: controller.getBuildModel().getProjects()) {
-                FetchedProjectModels otherModel = getFetchedProjectModels(new ModelGetter() {
+            for (final BasicGradleProject projectRef: buildModel.getProjects()) {
+                FetchedProjectModels otherModel = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
                     public <T> T getModel(Class<T> modelClass) {
                         return controller.getModel(projectRef, modelClass);
                     }
