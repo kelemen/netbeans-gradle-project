@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.netbeans.gradle.model.GradleMultiProjectDef;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
+import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.util.Lookup;
 
@@ -89,7 +89,7 @@ public final class PredefinedTask {
                 false);
     }
 
-    private static GradleProjectTree findProject(GradleMultiProjectDef project, String projectPath) {
+    private static NbGradleProjectTree findProject(NbGradleMultiProjectDef project, String projectPath) {
         if (projectPath.isEmpty()) {
             return project.getRootProject();
         }
@@ -102,7 +102,7 @@ public final class PredefinedTask {
         }
     }
 
-    private static boolean isProjectHasTask(GradleProjectTree project, String taskName) {
+    private static boolean isProjectHasTask(NbGradleProjectTree project, String taskName) {
         for (GradleTaskID task: project.getTasks()) {
             if (taskName.equals(task.getName())) {
                 return true;
@@ -111,15 +111,15 @@ public final class PredefinedTask {
         return false;
     }
 
-    private static boolean isProjectOrChildrenHasTask(GradleMultiProjectDef project, String taskName) {
+    private static boolean isProjectOrChildrenHasTask(NbGradleMultiProjectDef project, String taskName) {
         return isProjectOrChildrenHasTask(project.getMainProject(), taskName);
     }
 
-    private static boolean isProjectOrChildrenHasTask(GradleProjectTree project, String taskName) {
+    private static boolean isProjectOrChildrenHasTask(NbGradleProjectTree project, String taskName) {
         if (isProjectHasTask(project, taskName)) {
             return true;
         }
-        for (GradleProjectTree child: project.getChildren()) {
+        for (NbGradleProjectTree child: project.getChildren()) {
             if (isProjectOrChildrenHasTask(child, taskName)) {
                 return true;
             }
@@ -127,8 +127,8 @@ public final class PredefinedTask {
         return false;
     }
 
-    private static boolean isTaskExists(GradleMultiProjectDef project, String projectPath, String taskName) {
-        GradleProjectTree taskProject = findProject(project, projectPath);
+    private static boolean isTaskExists(NbGradleMultiProjectDef project, String projectPath, String taskName) {
+        NbGradleProjectTree taskProject = findProject(project, projectPath);
         if (taskProject == null) {
             return false;
         }
@@ -136,7 +136,7 @@ public final class PredefinedTask {
         return isProjectHasTask(taskProject, taskName);
     }
 
-    private static boolean isTaskExists(GradleMultiProjectDef project, String taskName) {
+    private static boolean isTaskExists(NbGradleMultiProjectDef project, String taskName) {
         int taskNameSepIndex = taskName.lastIndexOf(':');
         if (taskNameSepIndex >= 0) {
             return isTaskExists(project,
@@ -166,11 +166,11 @@ public final class PredefinedTask {
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
-        GradleMultiProjectDef gradleProject = project.getAvailableModel().getProjectDef();
+        NbGradleMultiProjectDef gradleProject = project.getAvailableModel().getProjectDef();
         return isTasksExistsIfRequired(gradleProject, varReplaceMap);
     }
 
-    public boolean isTasksExistsIfRequired(GradleMultiProjectDef project, TaskVariableMap varReplaceMap) {
+    public boolean isTasksExistsIfRequired(NbGradleMultiProjectDef project, TaskVariableMap varReplaceMap) {
         for (Name name: taskNames) {
             if (name.mustExist) {
                 String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);

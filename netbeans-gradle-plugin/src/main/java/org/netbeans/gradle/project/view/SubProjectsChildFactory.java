@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -30,24 +30,24 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
     private static final Collator STR_SMP = Collator.getInstance();
 
     private final NbGradleProject project;
-    private final List<GradleProjectTree> subProjects;
+    private final List<NbGradleProjectTree> subProjects;
 
-    public SubProjectsChildFactory(NbGradleProject project, Collection<? extends GradleProjectTree> subProjects) {
+    public SubProjectsChildFactory(NbGradleProject project, Collection<? extends NbGradleProjectTree> subProjects) {
         if (project == null) throw new NullPointerException("project");
 
         this.project = project;
-        this.subProjects = new ArrayList<GradleProjectTree>(subProjects);
+        this.subProjects = new ArrayList<NbGradleProjectTree>(subProjects);
         sortModules(this.subProjects);
 
-        for (GradleProjectTree subProject: this.subProjects) {
+        for (NbGradleProjectTree subProject: this.subProjects) {
             if (subProject == null) throw new NullPointerException("project");
         }
     }
 
-    private static void sortModules(List<GradleProjectTree> modules) {
-        Collections.sort(modules, new Comparator<GradleProjectTree>(){
+    private static void sortModules(List<NbGradleProjectTree> modules) {
+        Collections.sort(modules, new Comparator<NbGradleProjectTree>(){
             @Override
-            public int compare(GradleProjectTree o1, GradleProjectTree o2) {
+            public int compare(NbGradleProjectTree o1, NbGradleProjectTree o2) {
                 return STR_SMP.compare(o1.getProjectName(), o2.getProjectName());
             }
         });
@@ -60,7 +60,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
 
     @Override
     protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-        for (final GradleProjectTree subProject: subProjects) {
+        for (final NbGradleProjectTree subProject: subProjects) {
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
@@ -78,7 +78,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
 
     private static Children createSubprojectsChild(
             NbGradleProject project,
-            Collection<? extends GradleProjectTree> children) {
+            Collection<? extends NbGradleProjectTree> children) {
 
         return Children.create(new SubProjectsChildFactory(project, children), true);
     }
@@ -89,30 +89,30 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
     }
 
     private static Action createOpenAction(String caption,
-            Collection<GradleProjectTree> projects) {
+            Collection<NbGradleProjectTree> projects) {
         return OpenProjectsAction.createFromModules(caption, projects);
     }
 
     private static class SubModuleWithChildren extends FilterNode {
-        private final GradleProjectTree module;
-        private final List<GradleProjectTree> immediateChildren;
-        private final List<GradleProjectTree> children;
+        private final NbGradleProjectTree module;
+        private final List<NbGradleProjectTree> immediateChildren;
+        private final List<NbGradleProjectTree> children;
 
-        public SubModuleWithChildren(NbGradleProject project, GradleProjectTree module) {
+        public SubModuleWithChildren(NbGradleProject project, NbGradleProjectTree module) {
             this(project, module, module.getChildren());
         }
 
         private SubModuleWithChildren(
                 NbGradleProject project,
-                GradleProjectTree module,
-                Collection<? extends GradleProjectTree> children) {
+                NbGradleProjectTree module,
+                Collection<? extends NbGradleProjectTree> children) {
 
             super(createSimpleNode(project),
                     createSubprojectsChild(project, children),
                     Lookups.fixed(module));
             this.module = module;
             this.immediateChildren = Collections.unmodifiableList(GradleProjectChildFactory.getAllChildren(module));
-            this.children = Collections.unmodifiableList(new ArrayList<GradleProjectTree>(children));
+            this.children = Collections.unmodifiableList(new ArrayList<NbGradleProjectTree>(children));
         }
 
         @Override
@@ -156,9 +156,9 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
     }
 
     private static class SubModuleNode extends FilterNode {
-        private final GradleProjectTree module;
+        private final NbGradleProjectTree module;
 
-        public SubModuleNode(NbGradleProject project, GradleProjectTree module) {
+        public SubModuleNode(NbGradleProject project, NbGradleProjectTree module) {
             super(Node.EMPTY.cloneNode(), null, Lookups.fixed(project, module));
             this.module = module;
         }
@@ -227,8 +227,8 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
 
         @Override
         public Action createContextAwareInstance(Lookup actionContext) {
-            final Collection<? extends GradleProjectTree> projects
-                    = actionContext.lookupAll(GradleProjectTree.class);
+            final Collection<? extends NbGradleProjectTree> projects
+                    = actionContext.lookupAll(NbGradleProjectTree.class);
 
             return createOpenAction(
                     NbStrings.getOpenSubProjectCaption(projects),

@@ -17,8 +17,6 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.GenericProjectProperties;
-import org.netbeans.gradle.model.GradleMultiProjectDef;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -109,16 +107,16 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return result;
     }
 
-    private static GradleProjectTree tryCreateProjectTreeFromIdea(IdeaModule module) {
+    private static NbGradleProjectTree tryCreateProjectTreeFromIdea(IdeaModule module) {
         File moduleDir = GradleModelLoader.tryGetModuleDir(module);
         if (moduleDir == null) {
             return null;
         }
 
         int expectedChildCount = module.getGradleProject().getChildren().size();
-        List<GradleProjectTree> children = new ArrayList<GradleProjectTree>(expectedChildCount);
+        List<NbGradleProjectTree> children = new ArrayList<NbGradleProjectTree>(expectedChildCount);
         for (IdeaModule child: GradleModelLoader.getChildModules(module)) {
-            GradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child);
+            NbGradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child);
             if (childInfo != null) {
                 children.add(childInfo);
             }
@@ -130,21 +128,21 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         GenericProjectProperties properties
                 = new GenericProjectProperties(projectName, projectFullName, moduleDir);
 
-        return new GradleProjectTree(properties, getTasksOfModule(module), children);
+        return new NbGradleProjectTree(properties, getTasksOfModule(module), children);
     }
 
     private static NbGradleModel loadMainModelFromIdeaModule(
-            GradleProjectTree rootProject,
+            NbGradleProjectTree rootProject,
             IdeaModule ideaModule) throws IOException {
         if (rootProject == null) throw new NullPointerException("rootProject");
         if (ideaModule == null) throw new NullPointerException("ideaModule");
 
-        GradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
+        NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
         if (projectTree == null) {
             throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
         }
 
-        NbGradleModel result = new NbGradleModel(new GradleMultiProjectDef(rootProject, projectTree));
+        NbGradleModel result = new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree));
         result.setMainModels(Lookups.fixed(ideaModule, ideaModule.getProject()));
         return result;
     }
@@ -152,7 +150,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     public static NbGradleModel loadMainModelFromIdeaModule(IdeaModule ideaModule) throws IOException {
         // TODO: Remove this method once it is no longer needed.
 
-        GradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
+        NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
         if (projectTree == null) {
             throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
         }
@@ -162,12 +160,12 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find root module for project: " + ideaModule.getName());
         }
 
-        GradleProjectTree root = tryCreateProjectTreeFromIdea(rootModule);
+        NbGradleProjectTree root = tryCreateProjectTreeFromIdea(rootModule);
         if (root == null) {
             throw new IOException("Failed to find root tree for project: " + ideaModule.getName());
         }
 
-        NbGradleModel result = new NbGradleModel(new GradleMultiProjectDef(root, projectTree));
+        NbGradleModel result = new NbGradleModel(new NbGradleMultiProjectDef(root, projectTree));
         result.setMainModels(Lookups.fixed(ideaModule, ideaModule.getProject()));
         return result;
     }
@@ -202,7 +200,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find root module for project: " + project.getDisplayName());
         }
 
-        GradleProjectTree rootTree = tryCreateProjectTreeFromIdea(rootModule);
+        NbGradleProjectTree rootTree = tryCreateProjectTreeFromIdea(rootModule);
         if (rootTree == null) {
             throw new IOException("Failed to find root tree for project: " + rootModule.getName());
         }
@@ -213,7 +211,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             // to reparse the main project.
             if (otherModule != mainModule) {
                 if (rootPath.equals(otherModule.getGradleProject().getPath())) {
-                    deduced.add(new NbGradleModel(new GradleMultiProjectDef(rootTree, rootTree)));
+                    deduced.add(new NbGradleModel(new NbGradleMultiProjectDef(rootTree, rootTree)));
                 }
                 else {
                     deduced.add(loadMainModelFromIdeaModule(rootTree, otherModule));
@@ -221,7 +219,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             }
         }
 
-        GradleProjectTree mainTree;
+        NbGradleProjectTree mainTree;
         if (rootPath.equals(mainModule.getGradleProject().getPath())) {
             mainTree = rootTree;
         }
@@ -233,6 +231,6 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find tree for project: " + mainModule.getName());
         }
 
-        return new NbGradleModel(new GradleMultiProjectDef(rootTree, mainTree));
+        return new NbGradleModel(new NbGradleMultiProjectDef(rootTree, mainTree));
     }
 }

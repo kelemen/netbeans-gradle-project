@@ -1,8 +1,10 @@
 package org.netbeans.gradle.model;
 
-import java.io.File;
+import java.io.Serializable;
 
-public final class GradleMultiProjectDef {
+public final class GradleMultiProjectDef implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final GradleProjectTree rootProject;
     private final GradleProjectTree mainProject;
 
@@ -14,21 +16,11 @@ public final class GradleMultiProjectDef {
         this.mainProject = mainProject;
     }
 
-    public static GradleMultiProjectDef createEmpty(File projectDir) {
-        GradleProjectTree emptyTree = GradleProjectTree.createEmpty(projectDir);
-        return new GradleMultiProjectDef(emptyTree, emptyTree);
-    }
-
-
     public GradleProjectTree getRootProject() {
         return rootProject;
     }
 
     public GradleProjectTree getMainProject() {
         return mainProject;
-    }
-
-    public File getProjectDir() {
-        return mainProject.getProjectDir();
     }
 }

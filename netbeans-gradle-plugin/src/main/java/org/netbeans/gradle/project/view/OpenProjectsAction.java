@@ -12,9 +12,9 @@ import javax.swing.AbstractAction;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
+import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -26,9 +26,9 @@ public final class OpenProjectsAction extends AbstractAction {
 
     public static OpenProjectsAction createFromModules(
             String caption,
-            Collection<? extends GradleProjectTree> projects) {
+            Collection<? extends NbGradleProjectTree> projects) {
         Collection<File> projectDirs = new ArrayList<File>(projects.size());
-        for (GradleProjectTree project: projects) {
+        for (NbGradleProjectTree project: projects) {
             if (project == null) throw new NullPointerException("project");
             projectDirs.add(project.getProjectDir());
         }

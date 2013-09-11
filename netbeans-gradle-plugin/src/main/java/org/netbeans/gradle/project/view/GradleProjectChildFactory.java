@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -17,6 +16,7 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.ChildFactory;
@@ -115,44 +115,44 @@ extends
         return projectFolder.getNodeDelegate().cloneNode();
     }
 
-    private Children createSubprojectsChild(Collection<? extends GradleProjectTree> children) {
+    private Children createSubprojectsChild(Collection<? extends NbGradleProjectTree> children) {
         return Children.create(new SubProjectsChildFactory(project, children), true);
     }
 
     private static Action createOpenAction(String caption,
-            Collection<? extends GradleProjectTree> modules) {
+            Collection<? extends NbGradleProjectTree> modules) {
         return OpenProjectsAction.createFromModules(caption, modules);
     }
 
-    private static void getAllChildren(GradleProjectTree module, List<GradleProjectTree> result) {
-        Collection<GradleProjectTree> children = module.getChildren();
+    private static void getAllChildren(NbGradleProjectTree module, List<NbGradleProjectTree> result) {
+        Collection<NbGradleProjectTree> children = module.getChildren();
         result.addAll(children);
-        for (GradleProjectTree child: children) {
+        for (NbGradleProjectTree child: children) {
             getAllChildren(child, result);
         }
     }
 
-    public static List<GradleProjectTree> getAllChildren(GradleProjectTree module) {
-        List<GradleProjectTree> result = new LinkedList<GradleProjectTree>();
+    public static List<NbGradleProjectTree> getAllChildren(NbGradleProjectTree module) {
+        List<NbGradleProjectTree> result = new LinkedList<NbGradleProjectTree>();
         getAllChildren(module, result);
         return result;
     }
 
-    private static List<GradleProjectTree> getAllChildren(NbGradleModel model) {
-        List<GradleProjectTree> result = new LinkedList<GradleProjectTree>();
+    private static List<NbGradleProjectTree> getAllChildren(NbGradleModel model) {
+        List<NbGradleProjectTree> result = new LinkedList<NbGradleProjectTree>();
         getAllChildren(model.getMainProject(), result);
         return result;
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
         NbGradleModel shownModule = getShownModule();
-        final Collection<GradleProjectTree> immediateChildren
+        final Collection<NbGradleProjectTree> immediateChildren
                 = shownModule.getMainProject().getChildren();
 
         if (immediateChildren.isEmpty()) {
             return;
         }
-        final List<GradleProjectTree> children = getAllChildren(shownModule);
+        final List<NbGradleProjectTree> children = getAllChildren(shownModule);
 
         toPopulate.add(new SingleNodeFactory() {
             @Override

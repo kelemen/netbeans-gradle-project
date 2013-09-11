@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import org.netbeans.gradle.model.GradleMultiProjectDef;
-import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -22,7 +20,7 @@ import org.openide.util.Parameters;
 public final class NbGradleModel {
     private final File buildFile;
     private final File settingsFile;
-    private final GradleMultiProjectDef projectDef;
+    private final NbGradleMultiProjectDef projectDef;
 
     private volatile boolean dirty;
 
@@ -37,11 +35,11 @@ public final class NbGradleModel {
     // something has changed in the model, so it needs to reparse things.
     private final AtomicReference<Object> stateID;
 
-    public NbGradleModel(GradleMultiProjectDef projectDef) {
+    public NbGradleModel(NbGradleMultiProjectDef projectDef) {
         this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
     }
 
-    public NbGradleModel(GradleMultiProjectDef projectDef, File settingsFile) {
+    public NbGradleModel(NbGradleMultiProjectDef projectDef, File settingsFile) {
         this(projectDef,
                 getBuildFile(projectDef.getProjectDir()),
                 settingsFile,
@@ -50,7 +48,7 @@ public final class NbGradleModel {
     }
 
     private NbGradleModel(
-            GradleMultiProjectDef projectDef,
+            NbGradleMultiProjectDef projectDef,
             File buildFile,
             File settingsFile,
             AtomicReference<DynamicLookup> mainLookupRef,
@@ -220,11 +218,11 @@ public final class NbGradleModel {
         return true;
     }
 
-    public GradleMultiProjectDef getProjectDef() {
+    public NbGradleMultiProjectDef getProjectDef() {
         return projectDef;
     }
 
-    public GradleProjectTree getMainProject() {
+    public NbGradleProjectTree getMainProject() {
         return projectDef.getMainProject();
     }
 

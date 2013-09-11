@@ -366,7 +366,7 @@ public final class GradleModelLoader {
     }
 
     public static NbGradleModel createEmptyModel(File projectDir, Lookup extensionModels) {
-        return new NbGradleModel(GradleMultiProjectDef.createEmpty(projectDir));
+        return new NbGradleModel(NbGradleMultiProjectDef.createEmpty(projectDir));
     }
 
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {
