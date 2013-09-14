@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +47,18 @@ public final class GenericModelFetcher {
 
     private final Map<Object, GradleBuildInfoQuery<?>> buildInfoRequests;
     private final Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests;
+    private final Set<Class<?>> modelClasses;
 
     public GenericModelFetcher(
             Map<Object, GradleBuildInfoQuery<?>> buildInfoRequests,
-            Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests) {
+            Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests,
+            Collection<Class<?>> modelClasses) {
 
         this.buildInfoRequests = CollectionUtils.copyNullSafeHashMap(buildInfoRequests);
         this.projectInfoRequests = CollectionUtils.copyNullSafeHashMap(projectInfoRequests);
+        this.modelClasses = Collections.unmodifiableSet(new HashSet<Class<?>>(modelClasses));
+
+        CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
     }
 
     private static void getJars(
@@ -87,7 +94,7 @@ public final class GenericModelFetcher {
 
     public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
         BuildActionExecuter<FetchedModels> executer
-                = connection.action(new ModelFetcherBuildAction(getBuildInfoBuilders()));
+                = connection.action(new ModelFetcherBuildAction(getBuildInfoBuilders(), modelClasses));
 
         BuildOperationArgs buildOPArgs = new BuildOperationArgs();
         init.initOperation(buildOPArgs);
@@ -258,14 +265,17 @@ public final class GenericModelFetcher {
         private static final long serialVersionUID = 1L;
 
         private final Map<Object, BuildInfoBuilder<?>> buildInfoRequests;
+        private final Set<Class<?>> modelClasses;
 
-        public ModelFetcherBuildAction(Map<Object, BuildInfoBuilder<?>> buildInfoRequests) {
+        public ModelFetcherBuildAction(
+                Map<Object, BuildInfoBuilder<?>> buildInfoRequests,
+                Set<Class<?>> modelClasses) {
             this.buildInfoRequests = buildInfoRequests;
+            this.modelClasses = modelClasses;
         }
 
         private ModelQueryOutput getModelOutput(ModelGetter getter) {
-            byte[] serializedResult = getter
-                    .getModel(ModelQueryOutputRef.class)
+            byte[] serializedResult = getModel(getter, ModelQueryOutputRef.class)
                     .getSerializedModelQueryOutput();
 
             try {
@@ -273,6 +283,14 @@ public final class GenericModelFetcher {
             } catch (ClassNotFoundException ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        private static <T> T getModel(ModelGetter getter, Class<T> modelClass) {
+            T result = getter.findModel(modelClass);
+            if (result == null) {
+                throw new RuntimeException("Required model could not be loaded: " + modelClass);
+            }
+            return result;
         }
 
         private FetchedProjectModels getFetchedProjectModels(
@@ -284,7 +302,7 @@ public final class GenericModelFetcher {
             GradleProjectTree projectTree = projects.get(modelOutput.getProjectFullName());
             if (projectTree == null) {
                 // Shouldn't happen but try not to fail.
-                EclipseProject eclipseProject = getter.getModel(EclipseProject.class);
+                EclipseProject eclipseProject = getModel(getter, EclipseProject.class);
                 GradleProject gradleProject = eclipseProject.getGradleProject();
 
                 GenericProjectProperties properties = new GenericProjectProperties(
@@ -298,9 +316,18 @@ public final class GenericModelFetcher {
                         Collections.<GradleProjectTree>emptyList());
             }
 
+            Map<Class<?>, Object> toolingModels = new IdentityHashMap<Class<?>, Object>(2 * modelClasses.size());
+            for (Class<?> modelClass: modelClasses) {
+                Object modelValue = getter.findModel(modelClass);
+                if (modelValue != null) {
+                    toolingModels.put(modelClass, modelValue);
+                }
+            }
+
             return new FetchedProjectModels(
                     new GradleMultiProjectDef(rootTree, projectTree),
-                    modelOutput.getProjectInfoResults());
+                    modelOutput.getProjectInfoResults(),
+                    toolingModels);
         }
 
         private Collection<GradleTaskID> getTasksOfProjects(GradleProject project) {
@@ -365,16 +392,16 @@ public final class GenericModelFetcher {
             GradleProjectTree rootTree = parseTree(controller, buildModel.getRootProject(), projectTrees);
 
             FetchedProjectModels defaultProjectModels = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
-                public <T> T getModel(Class<T> modelClass) {
-                    return controller.getModel(modelClass);
+                public <T> T findModel(Class<T> modelClass) {
+                    return controller.findModel(modelClass);
                 }
             });
 
             List<FetchedProjectModels> otherModels = new LinkedList<FetchedProjectModels>();
             for (final BasicGradleProject projectRef: buildModel.getProjects()) {
                 FetchedProjectModels otherModel = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
-                    public <T> T getModel(Class<T> modelClass) {
-                        return controller.getModel(projectRef, modelClass);
+                    public <T> T findModel(Class<T> modelClass) {
+                        return controller.findModel(projectRef, modelClass);
                     }
                 });
 
@@ -387,6 +414,6 @@ public final class GenericModelFetcher {
     }
 
     private interface ModelGetter {
-        public <T> T getModel(Class<T> modelClass);
+        public <T> T findModel(Class<T> modelClass);
     }
 }

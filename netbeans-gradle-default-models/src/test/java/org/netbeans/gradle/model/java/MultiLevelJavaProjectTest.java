@@ -83,11 +83,12 @@ public class MultiLevelJavaProjectTest {
     private static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder<?>... builders) {
         Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
         Map<Object, GradleProjectInfoQuery<?>> projectInfos = new HashMap<Object, GradleProjectInfoQuery<?>>();
+        Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
             projectInfos.put(i, toQuery(builders[i]));
         }
-        return new GenericModelFetcher(buildInfos, projectInfos);
+        return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
     private void runTestForSubProject(String projectName, ProjectConnectionTask task) {
@@ -156,10 +157,11 @@ public class MultiLevelJavaProjectTest {
 
         Map<Object, GradleBuildInfoQuery<?>> buildInfos = new HashMap<Object, GradleBuildInfoQuery<?>>();
         Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
+        Set<Class<?>> toolingModels = Collections.emptySet();
 
         buildInfos.put(0, toQuery(new BuiltInModelBuilder(modelClasses)));
 
-        GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos);
+        GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         FetchedModels models = modelFetcher.getModels(connection, defaultInit());
 
         @SuppressWarnings("unchecked")

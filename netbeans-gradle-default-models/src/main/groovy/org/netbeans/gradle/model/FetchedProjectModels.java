@@ -9,14 +9,17 @@ public final class FetchedProjectModels implements Serializable {
 
     private final GradleMultiProjectDef projectDef;
     private final Map<Object, Object> projectInfoResults;
+    private final Map<Class<?>, Object> toolingModels;
 
     public FetchedProjectModels(
             GradleMultiProjectDef projectDef,
-            Map<Object, Object> projectInfoResults) {
+            Map<Object, Object> projectInfoResults,
+            Map<Class<?>, Object> toolingModels) {
         if (projectDef == null) throw new NullPointerException("projectDef");
 
         this.projectDef = projectDef;
         this.projectInfoResults = CollectionUtils.copyNullSafeHashMap(projectInfoResults);
+        this.toolingModels = CollectionUtils.copyNullSafeHashMap(toolingModels);
     }
 
     public GradleMultiProjectDef getProjectDef() {
@@ -25,5 +28,9 @@ public final class FetchedProjectModels implements Serializable {
 
     public Map<Object, Object> getProjectInfoResults() {
         return projectInfoResults;
+    }
+
+    public Map<Class<?>, Object> getToolingModels() {
+        return toolingModels;
     }
 }
