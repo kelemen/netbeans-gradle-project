@@ -83,7 +83,12 @@ public final class JavaProjectReference {
         }
 
         if (!javaExt.hasEverBeenLoaded()) {
-            return initialModule;
+            NbJavaModule result = initialModule;
+            if (result != null) {
+                return result;
+            }
+            // Else: This means that some other thread noticed that
+            //   javaExt has been loaded and set initialModule to null.
         }
 
         // This reference is no longer needed, allow it to be garbage collected.
