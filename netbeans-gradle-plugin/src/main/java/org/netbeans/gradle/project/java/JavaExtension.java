@@ -4,6 +4,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,7 +24,10 @@ import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectSources;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.java.model.JavaParsingUtils;
+import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
@@ -37,6 +41,7 @@ import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaInitScriptQuery;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
+import org.netbeans.gradle.project.model.GradleBuildInfo;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -136,7 +141,7 @@ public final class JavaExtension implements GradleProjectExtension {
     private Lookup getPermanentLookup() {
         Lookup lookup = permanentLookupRef.get();
         if (lookup == null) {
-            lookup = Lookups.fixed(this, new OpenHook());
+            lookup = Lookups.fixed(this, new OpenHook(), JavaParsingUtils.requiredModels());
 
             if (permanentLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);
@@ -198,25 +203,73 @@ public final class JavaExtension implements GradleProjectExtension {
         return currentModel.getMainModule().getShortName();
     }
 
-    @Override
-    public Map<File, Lookup> deduceModelsForProjects(Lookup modelLookup) {
-        IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
-        if (ideaProject == null) {
-            return Collections.emptyMap();
+    private Map<File, Lookup> deduceFromIdeaProject(IdeaProject ideaProject) throws IOException {
+        File mainModuleDir = currentModel.getMainModule().getModuleDir();
+        Map<File, NbJavaModel> models = IdeaJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
+
+        Map<File, Lookup> result = new HashMap<File, Lookup>(2 * models.size());
+        for (Map.Entry<File, NbJavaModel> entry: models.entrySet()) {
+            result.put(entry.getKey(), Lookups.fixed(entry.getValue()));
+        }
+        return result;
+    }
+
+    private Map<File, Lookup> deduceFromGradleBuildInfo(GradleBuildInfo buildInfo) {
+        Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(buildInfo);
+        Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
+
+        Map<File, Lookup> result = new HashMap<File, Lookup>(2 * modules.size());
+        for (NbJavaModule module: modules) {
+            NbJavaModel model = NbJavaModel.createModel(module, moduleDependencies);
+            result.put(module.getModuleDir(), Lookups.singleton(model));
         }
 
-        File mainModuleDir = currentModel.getMainModule().getModuleDir();
-        try {
-            Map<File, NbJavaModel> models = IdeaJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
-            Map<File, Lookup> result = new HashMap<File, Lookup>(2 * models.size());
-            for (Map.Entry<File, NbJavaModel> entry: models.entrySet()) {
-                result.put(entry.getKey(), Lookups.fixed(entry.getValue()));
+        // TODO: Empty Lookup for non Java projects.
+
+        return result;
+    }
+
+    private NbJavaModel parseFromGradleBuildInfo(GradleBuildInfo buildInfo) {
+        if (!JavaParsingUtils.isJavaProject(buildInfo.getDefaultProjectInfo())) {
+            return null;
+        }
+
+        Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(buildInfo);
+        Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
+
+        File mainModuleDir = buildInfo
+                .getDefaultProjectInfo()
+                .getProjectDef()
+                .getMainProject()
+                .getGenericProperties()
+                .getProjectDir();
+
+        for (NbJavaModule module: modules) {
+            if (module.getModuleDir().equals(mainModuleDir)) {
+                return NbJavaModel.createModel(module, moduleDependencies);
             }
-            return result;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Map<File, Lookup> deduceModelsForProjects(Lookup modelLookup) {
+        try {
+            GradleBuildInfo buildInfo = modelLookup.lookup(GradleBuildInfo.class);
+            if (buildInfo != null) {
+                return deduceFromGradleBuildInfo(buildInfo);
+            }
+
+            IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
+            if (ideaProject != null) {
+                return deduceFromIdeaProject(ideaProject);
+            }
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected I/O exception when parsing NBJavaModel instances.", ex);
-            return Collections.emptyMap();
         }
+
+        return Collections.emptyMap();
     }
 
     private void switchToEmptyModel() {
@@ -239,6 +292,13 @@ public final class JavaExtension implements GradleProjectExtension {
     @Override
     public Set<String> modelsLoaded(Lookup modelLookup) {
         NbJavaModel javaModel = modelLookup.lookup(NbJavaModel.class);
+        if (javaModel == null) {
+            GradleBuildInfo buildInfo = modelLookup.lookup(GradleBuildInfo.class);
+            if (buildInfo != null) {
+                javaModel = parseFromGradleBuildInfo(buildInfo);
+            }
+        }
+
         if (javaModel == null) {
             IdeaProject ideaProject = modelLookup.lookup(IdeaProject.class);
             if (ideaProject == null) {

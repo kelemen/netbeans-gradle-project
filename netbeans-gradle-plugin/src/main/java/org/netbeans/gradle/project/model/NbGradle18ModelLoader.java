@@ -84,13 +84,13 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
             for (Map.Entry<Object, GradleBuildInfoQuery<?>> entry: extensionNeeds.getBuildInfoQueries().entrySet()) {
                 buildInfoRequests.put(
-                        MultiKey.create(extensionName, entry.getValue()),
+                        MultiKey.create(extensionName, entry.getKey()),
                         entry.getValue());
             }
 
             for (Map.Entry<Object, GradleProjectInfoQuery<?>> entry: extensionNeeds.getProjectInfoQueries().entrySet()) {
                 projectInfoRequests.put(
-                        MultiKey.create(extensionName, entry.getValue()),
+                        MultiKey.create(extensionName, entry.getKey()),
                         entry.getValue());
             }
         }

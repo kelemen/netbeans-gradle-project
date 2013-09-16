@@ -303,16 +303,21 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
             Map<String, Set<String>> result = new HashMap<String, Set<String>>();
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
+                String sourceSetName = sourceSet.getName();
+
                 Set<File> runtimeClasspaths = sourceSet.getClasspaths().getRuntimeClasspaths();
 
                 Set<String> dependencies = new HashSet<String>();
                 for (Map.Entry<File, String> entry: buildOutput.entrySet()) {
                     if (runtimeClasspaths.contains(entry.getKey())) {
-                        dependencies.add(entry.getValue());
+                        String dependencyName = entry.getValue();
+                        if (!sourceSetName.equals(dependencyName)) {
+                            dependencies.add(entry.getValue());
+                        }
                     }
                 }
 
-                result.put(sourceSet.getName(), dependencies);
+                result.put(sourceSetName, dependencies);
             }
 
             // TODO: Remove redundant edges
