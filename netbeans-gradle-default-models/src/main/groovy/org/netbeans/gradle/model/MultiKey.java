@@ -1,9 +1,12 @@
 package org.netbeans.gradle.model;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-public final class MultiKey {
+public final class MultiKey implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final Object[] keys;
 
     private MultiKey(Object[] keys) {
