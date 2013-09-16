@@ -118,21 +118,18 @@ public final class JavaParsingUtils {
         return result;
     }
 
-    private static JavaClassPaths adjustedClassPaths(
-            JavaClassPaths classPaths,
-            Map<File, File> dependencyMap) {
-
-        Collection<File> compile = adjustedClassPaths(classPaths.getCompileClasspaths(), dependencyMap);
-        Collection<File> runtime = adjustedClassPaths(classPaths.getRuntimeClasspaths(), dependencyMap);
-        return new JavaClassPaths(compile, runtime);
-    }
-
-
     private static JavaSourceSet adjustedSources(
             JavaSourceSet sourceSet,
             Map<File, File> dependencyMap) {
 
-        JavaClassPaths classPaths = adjustedClassPaths(sourceSet.getClasspaths(), dependencyMap);
+        JavaClassPaths origClassPaths = sourceSet.getClasspaths();
+        Collection<File> compile = adjustedClassPaths(origClassPaths.getCompileClasspaths(), dependencyMap);
+        Collection<File> runtime = adjustedClassPaths(origClassPaths.getRuntimeClasspaths(), dependencyMap);
+
+        runtime.remove(sourceSet.getOutputDirs().getClassesDir());
+        runtime.remove(sourceSet.getOutputDirs().getResourcesDir());
+
+        JavaClassPaths classPaths = new JavaClassPaths(compile, runtime);
 
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(sourceSet.getName(), sourceSet.getOutputDirs());
         result.setClasspaths(classPaths);
