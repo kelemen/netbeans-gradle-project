@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -15,17 +16,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.tasks.DaemonTaskDef;
+import org.netbeans.gradle.project.tasks.DownloadSourcesTask;
+import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -35,21 +43,27 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.RequestProcessor;
 
 public final class JavaDependenciesNode extends AbstractNode implements JavaModelChangeListener {
     private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
+    private static final RequestProcessor SOURCES_DOWNLOADER
+            = new RequestProcessor("Sources-downloader", 1, true);
+
+    private final JavaExtension javaExt;
     private final DependenciesChildFactory childFactory;
 
     public JavaDependenciesNode(JavaExtension javaExt) {
-        this(new DependenciesChildFactory(javaExt));
+        this(new DependenciesChildFactory(javaExt), javaExt);
     }
 
-    private JavaDependenciesNode(DependenciesChildFactory childFactory) {
+    private JavaDependenciesNode(DependenciesChildFactory childFactory, JavaExtension javaExt) {
         super(createChildren(childFactory));
 
         this.childFactory = childFactory;
+        this.javaExt = javaExt;
     }
 
     private static Children createChildren(DependenciesChildFactory childFactory) {
@@ -74,6 +88,14 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
     @Override
     public String getDisplayName() {
         return NbStrings.getDependenciesNodeCaption();
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        NbGradleProject project = javaExt.getProject().getLookup().lookup(NbGradleProject.class);
+        return new Action[]{
+            new DownloadSourcesAction(project)
+        };
     }
 
     private static class DependenciesChildFactory
@@ -495,5 +517,26 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
         COMPILE,
         RUNTIME,
         PROVIDED
+    }
+
+    @SuppressWarnings("serial")
+    private static final class DownloadSourcesAction extends AbstractAction {
+        private final NbGradleProject project;
+
+        public DownloadSourcesAction(NbGradleProject project) {
+            super(NbStrings.getDownloadSources());
+            this.project = project;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DaemonTaskDef taskDef = DownloadSourcesTask.createTaskDef(project);
+            GradleDaemonManager.submitGradleTask(SOURCES_DOWNLOADER, taskDef, new CommandCompleteListener() {
+                @Override
+                public void onComplete(Throwable error) {
+                    project.displayError(NbStrings.getDownloadSourcesFailure(), error, false);
+                }
+            });
+        }
     }
 }

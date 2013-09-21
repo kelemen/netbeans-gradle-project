@@ -35,6 +35,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -82,8 +83,13 @@ public final class GradleModelLoader {
         LISTENERS.removeListener(listener);
     }
 
-    public static GradleConnector createGradleConnector(final NbGradleProject project) {
+    public static GradleConnector createGradleConnector(final Project project) {
         final GradleConnector result = GradleConnector.newConnector();
+
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
+        }
 
         File gradleUserHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         if (gradleUserHome != null) {
@@ -91,7 +97,7 @@ public final class GradleModelLoader {
         }
 
         GradleLocation gradleLocation;
-        ProjectProperties projectProperties = project.tryGetLoadedProperties();
+        ProjectProperties projectProperties = gradleProject.tryGetLoadedProperties();
         if (projectProperties == null) {
             LOGGER.warning("Could not wait for retrieving the project properties. Using the globally defined one");
             gradleLocation = GlobalGradleSettings.getGradleHome().getValue();
@@ -181,10 +187,14 @@ public final class GradleModelLoader {
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
-    public static File getScriptJavaHome(NbGradleProject project) {
+    public static File getScriptJavaHome(Project project) {
         if (project == null) throw new NullPointerException("project");
 
-        JavaPlatform platform = project.getProperties().getScriptPlatform().getValue();
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+
+        JavaPlatform platform = gradleProject != null
+                ? gradleProject.getProperties().getScriptPlatform().getValue()
+                : null;
         FileObject jdkHomeObj = platform != null
                 ? GlobalGradleSettings.getHomeFolder(platform)
                 : null;
@@ -305,6 +315,10 @@ public final class GradleModelLoader {
         args.setupLongRunningOP(op);
     }
 
+    public static OperationInitializer modelBuilderSetup(Project project, ProgressHandle progress) {
+        return new ModelBuilderSetup(project, progress);
+    }
+
     private static NbGradleModel loadModelWithProgress(
             final NbGradleProject project,
             final ProgressHandle progress,
@@ -321,7 +335,7 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            OperationInitializer setup = new ModelBuilderSetup(project, progress);
+            OperationInitializer setup = modelBuilderSetup(project, progress);
 
             ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
             setupLongRunningOP(setup, modelBuilder);
@@ -464,7 +478,7 @@ public final class GradleModelLoader {
         private final File jdkHome;
         private final List<String> globalJvmArgs;
 
-        public ModelBuilderSetup(NbGradleProject project, ProgressHandle progress) {
+        public ModelBuilderSetup(Project project, ProgressHandle progress) {
             this.progress = progress;
 
             this.jdkHome = GradleModelLoader.getScriptJavaHome(project);

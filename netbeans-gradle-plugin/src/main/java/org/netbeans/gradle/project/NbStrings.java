@@ -331,6 +331,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectLicenseCategoryName");
     }
 
+    public static String getDownloadSourcesProgressCaption() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSourcesProgressCaption");
+    }
+
+    public static String getDownloadSources() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSources");
+    }
+
+    public static String getDownloadSourcesFailure() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSourcesFailure");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
