@@ -3,6 +3,11 @@ package org.netbeans.gradle.project.properties;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +31,8 @@ import org.openide.util.ChangeSupport;
 public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
 
+    private static final String LAST_PROFILE_FILE = "last-profile";
+
     private static final Lock CONFIG_PROVIDERS_LOCK = new ReentrantLock();
     private static final Map<File, NbGradleConfigProvider> CONFIG_PROVIDERS
             = new WeakValueHashMap<File, NbGradleConfigProvider>();
@@ -36,6 +43,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final AtomicReference<List<NbGradleConfiguration>> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
+    private volatile boolean hasActiveBeenSet;
 
     private NbGradleConfigProvider(File rootDirectory) {
         if (rootDirectory == null) throw new NullPointerException("rootDirectory");
@@ -47,6 +55,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.activeConfig = new AtomicReference<NbGradleConfiguration>(NbGradleConfiguration.DEFAULT_CONFIG);
         this.configs = new AtomicReference<List<NbGradleConfiguration>>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
+        this.hasActiveBeenSet = false;
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
@@ -177,12 +186,94 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return configs.get();
     }
 
+    private File getLastProfileFile() {
+        return new File(SettingsFiles.getPrivateSettingsDir(rootDirectory), LAST_PROFILE_FILE);
+    }
+
+    private void readAndUpdateDefaultProfile() {
+        File lastProfileFile = getLastProfileFile();
+        if (!lastProfileFile.isFile()) {
+            return;
+        }
+
+        SavedProfileDef savedDef;
+        try {
+            ObjectInputStream input = new ObjectInputStream(new FileInputStream(lastProfileFile));
+            try {
+                savedDef = (SavedProfileDef)input.readObject();
+            } finally {
+                input.close();
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);
+            return;
+        }
+
+        NbGradleConfiguration lastConfig = savedDef.findSameConfig(configs.get());
+        if (lastConfig == null) {
+            return;
+        }
+
+        // FIXME: This is not actually thread-safe. If the user sets the
+        // configuration concurrently with this call, we may overwrite the user's
+        // choice. However, this is very unlikely and even if it happens it is
+        // just a minor inconvenience.
+        if (!hasActiveBeenSet) {
+            setActiveConfiguration(lastConfig);
+        }
+    }
+
+    private void saveActiveProfileNow() {
+        assert NbGradleProject.PROJECT_PROCESSOR.isRequestProcessorThread();
+
+        File lastProfileFile = getLastProfileFile();
+
+        NbGradleConfiguration config = activeConfig.get();
+        if (config != null) {
+            ProfileDef profileDef = config.getProfileDef();
+            if (profileDef == null) {
+                if (!lastProfileFile.delete()) {
+                    LOGGER.log(Level.FINE, "Last profile file could not be deleted: {0}", lastProfileFile);
+                }
+                return;
+            }
+
+            SavedProfileDef savedDef = new SavedProfileDef(profileDef);
+
+            try {
+                File parentFile = lastProfileFile.getParentFile();
+                if (parentFile != null) {
+                    parentFile.mkdirs();
+                }
+
+                ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(lastProfileFile));
+                try {
+                    output.writeObject(savedDef);
+                } finally {
+                    output.close();
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);
+            }
+        }
+    }
+
+    private void saveActiveProfile() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                saveActiveProfileNow();
+            }
+        });
+    }
+
     private void ensureLoadedAsynchronously() {
         if (hasBeenUsed.compareAndSet(false, true)) {
             NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     findAndUpdateConfigurations(false);
+                    readAndUpdateDefaultProfile();
                 }
             });
         }
@@ -216,6 +307,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             return;
         }
 
+        hasActiveBeenSet = true;
+
         final NbGradleConfiguration prevConfig = activeConfig.getAndSet(configuration);
         if (!prevConfig.equals(configuration)) {
             executeOnEdt(new Runnable() {
@@ -226,6 +319,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 }
             });
         }
+        saveActiveProfile();
     }
 
     @Override
