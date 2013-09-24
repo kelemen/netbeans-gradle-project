@@ -175,11 +175,7 @@ public final class JavaParsingUtils {
             // TODO: webapp dir
             List<File> listedDirs = Collections.emptyList();
 
-            // TODO: Needed for debugging.
-            SourceBinaryMap relatedSources = SourceBinaryMap.EMPTY;
-
-            NbJavaModule module = new NbJavaModule(
-                    properties, versions, sourceSets, listedDirs, relatedSources);
+            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs);
             result.add(module);
         }
 

@@ -2,7 +2,10 @@ package org.netbeans.gradle.project.tasks;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +14,7 @@ import java.util.logging.Logger;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -24,6 +28,7 @@ import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -46,12 +51,27 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
                 }
             }
         }
+    }
 
-        for (File root: module.getRelatedSources().getAllSourcesFiles()) {
-            FileObject srcRootObj = GradleFileUtils.asArchiveOrDir(root);
-            if (srcRootObj != null) {
-                result.add(srcRootObj);
-            }
+    private void getBinaryRuntimeDependencies(NbJavaModule module, Set<File> binaries) {
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            Set<File> runtimeClasspath = sourceSet.getClasspaths().getRuntimeClasspaths();
+            binaries.addAll(runtimeClasspath);
+        }
+    }
+
+    private void addSourcesOfBinaries(Collection<File> binaries, Set<FileObject> result) {
+        for (File binary: binaries) {
+            URL url = FileUtil.urlForArchiveOrDir(binary);
+            if (url == null) continue;
+
+            SourceForBinaryQuery.Result2 sourceResult = SourceForBinaryQuery.findSourceRoots2(url);
+            if (sourceResult == null) continue;
+
+            FileObject[] roots = sourceResult.getRoots();
+            if (roots == null) continue;
+
+            result.addAll(Arrays.asList(roots));
         }
     }
 
@@ -60,14 +80,20 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
 
         NbJavaModule mainModule = currentModel.getMainModule();
         Set<FileObject> srcRoots = new LinkedHashSet<FileObject>();
+        Set<File> runtimeDependencies = new HashSet<File>(100);
 
         addSourcesOfModule(mainModule, srcRoots);
+        getBinaryRuntimeDependencies(mainModule, runtimeDependencies);
+
         for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
             NbJavaModule module = projectRef.tryGetModule();
             if (module != null) {
                 addSourcesOfModule(module, srcRoots);
+                getBinaryRuntimeDependencies(module, runtimeDependencies);
             }
         }
+
+        addSourcesOfBinaries(runtimeDependencies, srcRoots);
 
         return ClassPathSupport.createClassPath(srcRoots.toArray(new FileObject[0]));
     }

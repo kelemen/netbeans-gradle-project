@@ -86,8 +86,7 @@ public final class IdeaJavaModelUtils {
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                Collections.<File>emptyList(),
-                SourceBinaryMap.EMPTY);
+                Collections.<File>emptyList());
 
         return NbJavaModel.createModel(result,
                 Collections.<File, JavaProjectDependency>emptyMap());
@@ -292,21 +291,8 @@ public final class IdeaJavaModelUtils {
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
 
         List<File> listedDirs = lookupListedDirs(sourceSets);
-        SourceBinaryMap relatedSources = getSourceBinaryMap(module);
 
-        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs, relatedSources);
-    }
-
-    private static SourceBinaryMap getSourceBinaryMap(IdeaModule module) {
-        SourceBinaryMap.Builder result = new SourceBinaryMap.Builder();
-        for (IdeaDependency dependency: module.getDependencies()) {
-            if (dependency instanceof ExternalDependency) {
-                ExternalDependency extDep = (ExternalDependency)dependency;
-
-                result.addSourceEntry(extDep.getFile(), extDep.getSource(), extDep.getJavadoc());
-            }
-        }
-        return result.create();
+        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs);
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
