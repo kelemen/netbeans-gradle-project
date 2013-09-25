@@ -146,10 +146,22 @@ public class MultiLevelJavaProjectTest {
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
                         = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
-                assertNotNull("Must have a JarOutputsModelBuilder.", jarOutputs);
+                assertNotNull("Must have a JarOutputsModel.", jarOutputs);
             }
         });
     }
+
+    @Test
+    public void testWarFoldersModel() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                WarFoldersModel warFolders
+                        = fetchSingleProjectInfo(connection, WarFoldersModelBuilder.INSTANCE);
+                assertNull("Must not have a WarFoldersModel.", warFolders);
+            }
+        });
+    }
+
 
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
