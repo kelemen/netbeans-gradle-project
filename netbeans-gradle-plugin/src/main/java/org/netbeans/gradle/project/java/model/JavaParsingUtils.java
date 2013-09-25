@@ -26,6 +26,8 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaSourcesModel;
 import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
+import org.netbeans.gradle.model.java.WarFoldersModel;
+import org.netbeans.gradle.model.java.WarFoldersModelBuilder;
 import org.netbeans.gradle.project.model.CustomModelQuery;
 import org.netbeans.gradle.project.model.GradleBuildInfo;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
@@ -36,6 +38,7 @@ public final class JavaParsingUtils {
     private static final Integer KEY_SOURCES = 0;
     private static final Integer KEY_VERSIONS = 1;
     private static final Integer KEY_JAR_OUTPUTS = 2;
+    private static final Integer KEY_WAR_FOLDERS = 3;
 
     public static CustomModelQuery requiredModels() {
         return RequiredModels.INSTANCE;
@@ -172,8 +175,12 @@ public final class JavaParsingUtils {
 
             Collection<JavaSourceSet> sourceSets = adjustedSources(sourcesModel, jarsToBuildDirs);
 
-            // TODO: webapp dir
-            List<File> listedDirs = Collections.emptyList();
+            List<File> listedDirs = new LinkedList<File>();
+
+            WarFoldersModel warFolders = RequiredModels.extractWarFolders(projectInfo);
+            if (warFolders != null) {
+                listedDirs.add(warFolders.getWebAppDir());
+            }
 
             NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs);
             result.add(module);
@@ -232,6 +239,7 @@ public final class JavaParsingUtils {
             result.put(KEY_SOURCES, createQuery(JavaSourcesModelBuilder.COMPLETE));
             result.put(KEY_VERSIONS, createQuery(JavaCompatibilityModelBuilder.INSTANCE));
             result.put(KEY_JAR_OUTPUTS, createQuery(JarOutputsModelBuilder.INSTANCE));
+            result.put(KEY_WAR_FOLDERS, createQuery(WarFoldersModelBuilder.INSTANCE));
 
             return Collections.unmodifiableMap(result);
         }
@@ -246,6 +254,10 @@ public final class JavaParsingUtils {
 
         public static JarOutputsModel extractJars(GradleProjectInfo projectInfo) {
             return (JarOutputsModel)projectInfo.tryGetProjectInfoResult(KEY_JAR_OUTPUTS);
+        }
+
+        public static WarFoldersModel extractWarFolders(GradleProjectInfo projectInfo) {
+            return (WarFoldersModel)projectInfo.tryGetProjectInfoResult(KEY_WAR_FOLDERS);
         }
 
         @Override
