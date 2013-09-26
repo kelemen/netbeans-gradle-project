@@ -19,7 +19,7 @@ public final class NbJavaModule {
     private final GenericProjectProperties properties;
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
-    private final List<File> listedDirs;
+    private final List<NbListedDir> listedDirs;
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
@@ -31,7 +31,7 @@ public final class NbJavaModule {
             GenericProjectProperties properties,
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
-            List<File> listedDirs) {
+            List<NbListedDir> listedDirs) {
 
         if (properties == null) throw new NullPointerException("properties");
         if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
@@ -74,7 +74,7 @@ public final class NbJavaModule {
         return sources;
     }
 
-    public List<File> getListedDirs() {
+    public List<NbListedDir> getListedDirs() {
         return listedDirs;
     }
 

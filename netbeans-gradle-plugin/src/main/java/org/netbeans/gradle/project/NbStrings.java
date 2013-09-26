@@ -343,6 +343,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSourcesFailure");
     }
 
+    public static String getWebPages() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_WebAppDir");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

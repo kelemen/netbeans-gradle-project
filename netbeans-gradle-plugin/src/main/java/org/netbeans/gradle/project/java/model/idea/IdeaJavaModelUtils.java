@@ -33,10 +33,12 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.model.SourceBinaryMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
@@ -86,7 +88,7 @@ public final class IdeaJavaModelUtils {
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                Collections.<File>emptyList());
+                Collections.<NbListedDir>emptyList());
 
         return NbJavaModel.createModel(result,
                 Collections.<File, JavaProjectDependency>emptyMap());
@@ -239,8 +241,8 @@ public final class IdeaJavaModelUtils {
         cache.put(uniqueProjectName, result);
     }
 
-    private static List<File> lookupListedDirs(Collection<JavaSourceSet> sources) {
-        List<File> result = new LinkedList<File>();
+    private static List<NbListedDir> lookupListedDirs(Collection<JavaSourceSet> sources) {
+        List<NbListedDir> result = new LinkedList<NbListedDir>();
 
         for (JavaSourceSet sourceSet: sources) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
@@ -249,7 +251,7 @@ public final class IdeaJavaModelUtils {
                     if (parent != null) {
                         File webapp = new File(parent, "webapp");
                         if (webapp.isDirectory()) {
-                            result.add(webapp);
+                            result.add(new NbListedDir(NbStrings.getWebPages(), webapp));
                         }
                     }
                 }
@@ -290,7 +292,7 @@ public final class IdeaJavaModelUtils {
         GenericProjectProperties properties = new GenericProjectProperties(scriptDisplayName, uniqueName, moduleDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
 
-        List<File> listedDirs = lookupListedDirs(sourceSets);
+        List<NbListedDir> listedDirs = lookupListedDirs(sourceSets);
 
         return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs);
     }

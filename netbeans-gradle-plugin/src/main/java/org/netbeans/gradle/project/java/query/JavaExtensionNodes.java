@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.java.query;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.api.project.SourceGroup;
@@ -10,11 +9,13 @@ import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NamedSourceRoot;
+import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 public final class JavaExtensionNodes implements GradleProjectExtensionNodes {
@@ -43,14 +44,21 @@ public final class JavaExtensionNodes implements GradleProjectExtensionNodes {
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {
-        for (File listedDir: javaExt.getCurrentModel().getMainModule().getListedDirs()) {
-            FileObject listedDirObj = FileUtil.toFileObject(listedDir);
+        for (NbListedDir listedDir: javaExt.getCurrentModel().getMainModule().getListedDirs()) {
+            FileObject listedDirObj = FileUtil.toFileObject(listedDir.getDirectory());
             if (listedDirObj != null) {
+                final String dirName = listedDir.getName();
                 final DataFolder listedFolder = DataFolder.findFolder(listedDirObj);
+
                 toPopulate.add(new SingleNodeFactory() {
                     @Override
                     public Node createNode() {
-                        return listedFolder.getNodeDelegate().cloneNode();
+                        return new FilterNode(listedFolder.getNodeDelegate().cloneNode()) {
+                            @Override
+                            public String getDisplayName() {
+                                return dirName;
+                            }
+                        };
                     }
                 });
             }

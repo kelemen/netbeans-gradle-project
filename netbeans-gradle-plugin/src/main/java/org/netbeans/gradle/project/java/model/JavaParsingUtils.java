@@ -28,6 +28,7 @@ import org.netbeans.gradle.model.java.JavaSourcesModel;
 import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
 import org.netbeans.gradle.model.java.WarFoldersModel;
 import org.netbeans.gradle.model.java.WarFoldersModelBuilder;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.CustomModelQuery;
 import org.netbeans.gradle.project.model.GradleBuildInfo;
 import org.netbeans.gradle.project.model.GradleProjectInfo;
@@ -155,6 +156,17 @@ public final class JavaParsingUtils {
         return result;
     }
 
+    private static List<NbListedDir> getListedDirs(GradleProjectInfo projectInfo) {
+        List<NbListedDir> listedDirs = new LinkedList<NbListedDir>();
+
+        WarFoldersModel warFolders = RequiredModels.extractWarFolders(projectInfo);
+        if (warFolders != null) {
+            listedDirs.add(new NbListedDir(NbStrings.getWebPages(), warFolders.getWebAppDir()));
+        }
+
+        return listedDirs;
+    }
+
     public static Collection<NbJavaModule> parseModules(GradleBuildInfo buildInfo) {
         Map<File, File> jarsToBuildDirs = getJarsToBuildDirs(buildInfo);
 
@@ -174,13 +186,7 @@ public final class JavaParsingUtils {
                     .getGenericProperties();
 
             Collection<JavaSourceSet> sourceSets = adjustedSources(sourcesModel, jarsToBuildDirs);
-
-            List<File> listedDirs = new LinkedList<File>();
-
-            WarFoldersModel warFolders = RequiredModels.extractWarFolders(projectInfo);
-            if (warFolders != null) {
-                listedDirs.add(warFolders.getWebAppDir());
-            }
+            List<NbListedDir> listedDirs = getListedDirs(projectInfo);
 
             NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs);
             result.add(module);
