@@ -241,9 +241,7 @@ public final class IdeaJavaModelUtils {
         cache.put(uniqueProjectName, result);
     }
 
-    private static List<NbListedDir> lookupListedDirs(Collection<JavaSourceSet> sources) {
-        List<NbListedDir> result = new LinkedList<NbListedDir>();
-
+    private static NbListedDir findWebAppDir(Collection<JavaSourceSet> sources) {
         for (JavaSourceSet sourceSet: sources) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
@@ -251,11 +249,22 @@ public final class IdeaJavaModelUtils {
                     if (parent != null) {
                         File webapp = new File(parent, "webapp");
                         if (webapp.isDirectory()) {
-                            result.add(new NbListedDir(NbStrings.getWebPages(), webapp));
+                            return new NbListedDir(NbStrings.getWebPages(), webapp);
                         }
                     }
                 }
             }
+        }
+
+        return null;
+    }
+
+    private static List<NbListedDir> lookupListedDirs(Collection<JavaSourceSet> sources) {
+        List<NbListedDir> result = new LinkedList<NbListedDir>();
+
+        NbListedDir webAppDir = findWebAppDir(sources);
+        if (webAppDir != null) {
+            result.add(webAppDir);
         }
 
         return result;
