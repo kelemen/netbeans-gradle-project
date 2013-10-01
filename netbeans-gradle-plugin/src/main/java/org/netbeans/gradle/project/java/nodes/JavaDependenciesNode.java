@@ -442,13 +442,32 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             this.file = file;
         }
 
+        private Node createPlainNode() {
+            return new FilterNode(Node.EMPTY) {
+                @Override
+                public String getDisplayName() {
+                    return file.getName();
+                }
+
+                @Override
+                public Image getIcon(int type) {
+                    return NbIcons.getFolderIcon();
+                }
+
+                @Override
+                public Image getOpenedIcon(int type) {
+                    return getIcon(type);
+                }
+            };
+        }
+
         @Override
         public Node createNode() {
             File normalizedFile = FileUtil.normalizeFile(file);
             FileObject fileObj = normalizedFile != null ? FileUtil.toFileObject(normalizedFile) : null;
             if (fileObj == null) {
                 LOGGER.log(Level.WARNING, "Dependency is not available: {0}", file);
-                return null;
+                return createPlainNode();
             }
 
             final DataObject dataObj;
@@ -456,7 +475,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 dataObj = DataObject.find(fileObj);
             } catch (DataObjectNotFoundException ex) {
                 LOGGER.log(Level.INFO, "Unexpected DataObjectNotFoundException for file: " + file, ex);
-                return null;
+                return createPlainNode();
             }
             return dataObj.getNodeDelegate().cloneNode();
         }
