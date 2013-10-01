@@ -282,6 +282,9 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 if (inherited != null) {
                     classpaths.removeAll(inherited.getClasspaths().getCompileClasspaths());
                     classpaths.removeAll(inherited.getClasspaths().getRuntimeClasspaths());
+                    classpaths.remove(inherited.getOutputDirs().getClassesDir());
+                    classpaths.remove(inherited.getOutputDirs().getResourcesDir());
+                    classpaths.removeAll(inherited.getOutputDirs().getOtherDirs());
                 }
             }
 
