@@ -224,7 +224,11 @@ public final class JavaExtension implements GradleProjectExtension {
             result.put(module.getModuleDir(), Lookups.singleton(model));
         }
 
-        // TODO: Empty Lookup for non Java projects.
+        for (File projectDir: buildInfo.getAllProjectInfos().keySet()) {
+            if (!result.containsKey(projectDir)) {
+                result.put(projectDir, Lookup.EMPTY);
+            }
+        }
 
         return result;
     }
