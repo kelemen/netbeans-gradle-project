@@ -7,16 +7,19 @@ import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Validators;
+import org.openide.WizardDescriptor;
 
 @SuppressWarnings("serial")
 public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
     private final GroupValidator validators;
     private final BackgroundValidator bckgValidator;
+    private final WizardDescriptor wizard;
 
     /**
      * Creates new form GradleMultiProjectPropertiesPanel
      */
-    public GradleMultiProjectPropertiesPanel() {
+    public GradleMultiProjectPropertiesPanel(WizardDescriptor wizard) {
+        this.wizard = wizard;
         bckgValidator = new BackgroundValidator();
 
         initComponents();
@@ -31,7 +34,7 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
 
-        Validators.connectLabelToProblems(bckgValidator, jInformationLabel);
+        Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
                 jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
 
@@ -104,7 +107,6 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
         jMavenGroupEdit = new javax.swing.JTextField();
         jMavenVersionEdit = new javax.swing.JTextField();
         jMavenVersionCaption = new javax.swing.JLabel();
-        jInformationLabel = new javax.swing.JLabel();
 
         jProjectNameCaption.setText(org.openide.util.NbBundle.getMessage(GradleMultiProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jProjectNameCaption.text")); // NOI18N
 
@@ -132,8 +134,6 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
 
         jMavenVersionCaption.setText("Maven Version:");
 
-        jInformationLabel.setText("NO_MESSAGE");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -141,26 +141,21 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jProjectLocationCaption)
+                    .addComponent(jProjectNameCaption)
+                    .addComponent(jProjectFolderLocationLabel)
+                    .addComponent(jMavenGroupCaption)
+                    .addComponent(jMavenVersionCaption))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jProjectNameEdit)
+                    .addComponent(jProjectFolderEdit, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jProjectLocationCaption)
-                            .addComponent(jProjectNameCaption)
-                            .addComponent(jProjectFolderLocationLabel)
-                            .addComponent(jMavenGroupCaption)
-                            .addComponent(jMavenVersionCaption))
+                        .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 337, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jProjectNameEdit)
-                            .addComponent(jProjectFolderEdit, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 337, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jBrowseButton))
-                            .addComponent(jMavenGroupEdit)
-                            .addComponent(jMavenVersionEdit)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jInformationLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(jBrowseButton))
+                    .addComponent(jMavenGroupEdit)
+                    .addComponent(jMavenVersionEdit))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -187,9 +182,7 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMavenVersionEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jMavenVersionCaption))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
-                .addComponent(jInformationLabel)
-                .addContainerGap())
+                .addContainerGap(52, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -199,7 +192,6 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBrowseButton;
-    private javax.swing.JLabel jInformationLabel;
     private javax.swing.JLabel jMavenGroupCaption;
     private javax.swing.JTextField jMavenGroupEdit;
     private javax.swing.JLabel jMavenVersionCaption;
