@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -114,7 +115,12 @@ implements
         uninitialize(wizard);
 
         descriptorIndex = 0;
-        descriptors.add(new GradleMultiProjectConfigPanel(configRef));
+        descriptors.add(new GradleMultiProjectConfigPanel(configRef, wizard));
+        wizard.putProperty ("NewProjectWizard_Title", "Gradle Project"); // NOI18N
+        JComponent c = (JComponent) descriptors.get(0).getComponent();
+        c.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, 0);
+        c.putClientProperty(WizardDescriptor.PROP_CONTENT_DATA, new String[] {"Name and Location"});
+        c.setName("Name and Location");
     }
 
     @Override

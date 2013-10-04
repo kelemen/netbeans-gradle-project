@@ -8,6 +8,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
 import org.netbeans.gradle.project.NbStrings;
+import org.openide.WizardDescriptor;
 
 public final class Validators {
     private static final Pattern LEGAL_FILENAME_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]*");
@@ -133,5 +134,45 @@ public final class Validators {
                 }
             }
         });
+    }
+        
+    public static void connectWizardDescriptorToProblems(
+            final BackgroundValidator validator,
+            final WizardDescriptor wizard) {
+        if (validator == null) throw new NullPointerException("validator");
+        if (wizard == null) throw new NullPointerException("wizard");
+
+        wizard.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
+        validator.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Problem currentProblem = validator.getCurrentProblem();
+                String message = currentProblem != null
+                        ? currentProblem.getMessage()
+                        : "";
+                if (message.isEmpty()) {
+                    wizard.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
+                }
+                else {
+                    assert currentProblem != null;
+                    String level;
+                    switch (currentProblem.getLevel()) {
+                        case INFO:
+                            level = WizardDescriptor.PROP_INFO_MESSAGE;
+                            break;
+                        case WARNING:
+                            level = WizardDescriptor.PROP_WARNING_MESSAGE;
+                            break;
+                        case SEVERE:
+                            level = WizardDescriptor.PROP_ERROR_MESSAGE;
+                            break;
+                        default:
+                            throw new AssertionError(currentProblem.getLevel().name());
+                    }
+                    wizard.putProperty(level, message);
+                }
+            }
+        });
+        
     }
 }
