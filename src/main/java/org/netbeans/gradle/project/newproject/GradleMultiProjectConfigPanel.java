@@ -9,18 +9,20 @@ import org.openide.util.HelpCtx;
 public final class GradleMultiProjectConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
     private final AtomicReference<GradleMultiProjectPropertiesPanel> panel;
     private final AtomicReference<GradleMultiProjectConfig> configRef;
+    private final WizardDescriptor wizard;
 
-    public GradleMultiProjectConfigPanel(AtomicReference<GradleMultiProjectConfig> configRef) {
+    public GradleMultiProjectConfigPanel(AtomicReference<GradleMultiProjectConfig> configRef, WizardDescriptor wizard) {
         if (configRef == null) throw new NullPointerException("configRef");
 
         this.configRef = configRef;
         this.panel = new AtomicReference<GradleMultiProjectPropertiesPanel>();
+        this.wizard = wizard;
     }
 
     private GradleMultiProjectPropertiesPanel getPanel() {
         GradleMultiProjectPropertiesPanel result = panel.get();
         if (result == null) {
-            panel.compareAndSet(null, new GradleMultiProjectPropertiesPanel());
+            panel.compareAndSet(null, new GradleMultiProjectPropertiesPanel(wizard));
             result = panel.get();
         }
         return result;

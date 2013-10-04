@@ -8,17 +8,20 @@ import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
+import org.openide.WizardDescriptor;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
     private final GroupValidator validators;
     private final BackgroundValidator bckgValidator;
+    private final WizardDescriptor wizard;
 
     /**
      * Creates new form GradleSingleProjectPropertiesPanel
      */
-    public GradleSingleProjectPropertiesPanel() {
+    public GradleSingleProjectPropertiesPanel(WizardDescriptor wizard) {
         bckgValidator = new BackgroundValidator();
+        this.wizard = wizard;
 
         initComponents();
 
@@ -29,7 +32,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
 
-        Validators.connectLabelToProblems(bckgValidator, jInformationLabel);
+        Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
                 jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
 
@@ -108,7 +111,6 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         jProjectFolderEdit = new javax.swing.JTextField();
         jMainClassLabel = new javax.swing.JLabel();
         jMainClassEdit = new javax.swing.JTextField();
-        jInformationLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jProjectNameCaption, org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jProjectNameCaption.text")); // NOI18N
 
@@ -134,8 +136,6 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
         jMainClassEdit.setText(org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jMainClassEdit.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jInformationLabel, org.openide.util.NbBundle.getMessage(GradleSingleProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jInformationLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -160,10 +160,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                                 .addComponent(jProjectLocationEdit)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jBrowseButton))
-                            .addComponent(jMainClassEdit)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jInformationLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(jMainClassEdit))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -186,9 +183,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMainClassLabel)
                     .addComponent(jMainClassEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-                .addComponent(jInformationLabel)
-                .addContainerGap())
+                .addContainerGap(49, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -198,7 +193,6 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBrowseButton;
-    private javax.swing.JLabel jInformationLabel;
     private javax.swing.JTextField jMainClassEdit;
     private javax.swing.JLabel jMainClassLabel;
     private javax.swing.JTextField jProjectFolderEdit;

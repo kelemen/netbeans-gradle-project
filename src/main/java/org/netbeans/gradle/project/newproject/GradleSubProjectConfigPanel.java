@@ -13,11 +13,13 @@ import org.openide.util.HelpCtx;
 public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
     private final AtomicReference<GradleSingleProjectPropertiesPanel> panel;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
+    private final WizardDescriptor wizard;
 
-    public GradleSubProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef) {
+    public GradleSubProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef, WizardDescriptor wizard) {
         if (configRef == null) throw new NullPointerException("configRef");
 
         this.configRef = configRef;
+        this.wizard = wizard;
         this.panel = new AtomicReference<GradleSingleProjectPropertiesPanel>();
     }
 
@@ -25,7 +27,7 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
         GradleSingleProjectPropertiesPanel result = panel.get();
         if (result == null) {
             GradleSingleProjectPropertiesPanel newPanel
-                    = new GradleSingleProjectPropertiesPanel();
+                    = new GradleSingleProjectPropertiesPanel(wizard);
             if (panel.compareAndSet(null, newPanel)) {
                 newPanel.addProjectLocationValidator(new Validator<String>() {
                     private Problem checkFile(File projectDir, String fileName) {

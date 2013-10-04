@@ -19,31 +19,23 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jProjectLocationCaption" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jProjectNameCaption" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jProjectFolderLocationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jMavenGroupCaption" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jMavenVersionCaption" alignment="0" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jProjectNameEdit" max="32767" attributes="0"/>
+                  <Component id="jProjectFolderEdit" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jProjectLocationCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jProjectNameCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jProjectFolderLocationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jMavenGroupCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jMavenVersionCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="jProjectLocationEdit" pref="337" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jProjectNameEdit" max="32767" attributes="0"/>
-                          <Component id="jProjectFolderEdit" alignment="1" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jProjectLocationEdit" pref="337" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jBrowseButton" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jMavenGroupEdit" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jMavenVersionEdit" alignment="0" max="32767" attributes="0"/>
-                      </Group>
+                      <Component id="jBrowseButton" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="jInformationLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="jMavenGroupEdit" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jMavenVersionEdit" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -78,9 +70,7 @@
                   <Component id="jMavenVersionEdit" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jMavenVersionCaption" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="30" max="32767" attributes="0"/>
-              <Component id="jInformationLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace pref="52" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -154,11 +144,6 @@
     <Component class="javax.swing.JLabel" name="jMavenVersionCaption">
       <Properties>
         <Property name="text" type="java.lang.String" value="Maven Version:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jInformationLabel">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="NO_MESSAGE"/>
       </Properties>
     </Component>
   </SubComponents>
