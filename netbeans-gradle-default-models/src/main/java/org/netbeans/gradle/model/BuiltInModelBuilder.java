@@ -20,8 +20,6 @@ public final class BuiltInModelBuilder implements BuildInfoBuilder<Map<Class<?>,
     }
 
     public Map<Class<?>, Object> getInfo(BuildController controller) {
-        System.out.println("BuiltInModelQuery.getInfo");
-
         Map<Class<?>, Object> result = new IdentityHashMap<Class<?>, Object>();
         for (Class<?> modelClass: modelClasses) {
             Object model = controller.findModel(modelClass);
