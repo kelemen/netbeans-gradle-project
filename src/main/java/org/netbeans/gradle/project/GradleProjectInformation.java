@@ -2,12 +2,11 @@ package org.netbeans.gradle.project;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
+import org.openide.util.ImageUtilities;
 
 public final class GradleProjectInformation implements ProjectInformation {
-    private static final Icon GRADLE_ICON = new ImageIcon(NbIcons.getGradleIcon());
 
     private final NbGradleProject project;
 
@@ -17,7 +16,7 @@ public final class GradleProjectInformation implements ProjectInformation {
 
     @Override
     public Icon getIcon() {
-        return GRADLE_ICON;
+        return ImageUtilities.image2Icon(NbIcons.getGradleIcon());
     }
 
     @Override

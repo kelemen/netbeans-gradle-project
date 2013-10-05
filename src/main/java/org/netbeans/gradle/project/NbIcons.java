@@ -29,89 +29,28 @@ public final class NbIcons {
     @StaticResource
     private static final String WARNING_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/warning-badge.png";
 
-    private static class GradleIconHolder {
-        public static final Image IMAGE = loadIcon();
-        public static final Icon ICON = new ImageIcon(IMAGE);
-
-        private static Image loadIcon() {
-            Image result = ImageUtilities.loadImage(PROJECT_ICON_PATH);
-            if (result == null) {
-                LOGGER.warning("Failed to load the Gradle icon.");
-            }
-            return result;
-        }
-    }
-
     public static Image getGradleIcon() {
-        return GradleIconHolder.IMAGE;
+        return ImageUtilities.loadImage(PROJECT_ICON_PATH);
     }
 
     public static Icon getGradleIconAsIcon() {
-        return GradleIconHolder.ICON;
-    }
-
-    private static class TaskIconHolder {
-        public static final Image IMAGE = loadIcon();
-
-        private static Image loadIcon() {
-            Image result = ImageUtilities.loadImage(TASK_ICON_PATH);
-            if (result == null) {
-                LOGGER.warning("Failed to load the task icon.");
-            }
-            return result;
-        }
+        return ImageUtilities.loadImageIcon(PROJECT_ICON_PATH, true);
     }
 
     public static Image getTaskIcon() {
-        return TaskIconHolder.IMAGE;
-    }
-
-    private static class LibraryIconHolder {
-        public static final Image IMAGE = loadIcon();
-
-        private static Image loadIcon() {
-            Image result = ImageUtilities.loadImage(LIBRARY_ICON_PATH);
-            if (result == null) {
-                LOGGER.warning("Failed to load the library icon.");
-            }
-            return result;
-        }
+        return ImageUtilities.loadImage(TASK_ICON_PATH);
     }
 
     public static Image getLibraryIcon() {
-        return LibraryIconHolder.IMAGE;
-    }
-
-    private static class LibrariesBadgeHolder {
-        public static final Image IMAGE = loadIcon();
-
-        private static Image loadIcon() {
-            Image result = ImageUtilities.loadImage(LIBRARIES_BADGE_ICON_PATH);
-            if (result == null) {
-                LOGGER.warning("Failed to load the libraries badge.");
-            }
-            return result;
-        }
+        return ImageUtilities.loadImage(LIBRARY_ICON_PATH);
     }
 
     public static Image getLibrariesBadge() {
-        return LibrariesBadgeHolder.IMAGE;
-    }
-
-    private static class WarningBadgeHolder {
-        public static final Image IMAGE = loadIcon();
-
-        private static Image loadIcon() {
-            Image result = ImageUtilities.loadImage(WARNING_BADGE_ICON_PATH);
-            if (result == null) {
-                LOGGER.warning("Failed to load the warning badge.");
-            }
-            return result;
-        }
+        return ImageUtilities.loadImage(LIBRARIES_BADGE_ICON_PATH);
     }
 
     public static Image getWarningBadge() {
-        return WarningBadgeHolder.IMAGE;
+        return ImageUtilities.loadImage(WARNING_BADGE_ICON_PATH);
     }
 
 
