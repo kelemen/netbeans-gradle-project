@@ -4,7 +4,9 @@ jdk:
   - oraclejdk7
   - openjdk7
 before_script:
-  - cd netbeans-gradle-plugin
+  - cd netbeans-gradle-default-models
+  - gradlew check install
+  - cd ../netbeans-gradle-plugin
 script: "mvn test"
 branches:
   only:
