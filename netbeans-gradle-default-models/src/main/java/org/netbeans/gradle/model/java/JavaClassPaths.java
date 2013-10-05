@@ -58,6 +58,26 @@ public final class JavaClassPaths implements Serializable {
         CollectionUtils.checkNoNullElements(this.runtimeClasspaths, "runtimeClasspaths");
     }
 
+    /**
+     * Creates a new {@code JavaClassPaths} with the same classpath for the
+     * compile time and runtime classpaths.
+     *
+     * @param classpaths the class path required to compile (and at runtime)
+     *   the associated source set. This argument cannot be {@code null} and cannot
+     *   contain {@code null} elements.
+     *
+     * @throws NullPointerException thrown if any of the arguments is
+     *   {@code null}
+     */
+    public JavaClassPaths(Collection<? extends File> classpaths) {
+        if (classpaths == null) throw new NullPointerException("classpaths");
+
+        this.compileClasspaths = Collections.unmodifiableSet(new LinkedHashSet<File>(classpaths));
+        this.runtimeClasspaths = compileClasspaths;
+
+        CollectionUtils.checkNoNullElements(this.compileClasspaths, "compileClasspaths");
+    }
+
     private JavaClassPaths() {
         this.compileClasspaths = Collections.emptySet();
         this.runtimeClasspaths = Collections.emptySet();
