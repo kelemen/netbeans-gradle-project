@@ -2,7 +2,6 @@ package org.netbeans.gradle.model.java;
 
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
-import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 
 /**
  * Defines a {@code ProjectInfoBuilder} which is able to extract
@@ -33,12 +32,12 @@ implements
      *   plugin
      */
     public JavaCompatibilityModel getProjectInfo(Project project) {
-        if (!project.plugins.hasPlugin('java')) {
+        if (!project.getPlugins().hasPlugin("java")) {
             return null;
         }
 
-        String srcLevel = project.sourceCompatibility.toString();
-        String targetLevel = project.targetCompatibility.toString();
+        String srcLevel = project.property("sourceCompatibility").toString();
+        String targetLevel = project.property("targetCompatibility").toString();
 
         return new JavaCompatibilityModel(srcLevel, targetLevel);
     }
