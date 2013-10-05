@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -51,9 +50,7 @@ public class ClassLoaderUtilsTest {
         verifyPathParts(file, "c", "my-path", "\u00e1b\u0678\u040c\u039e\u05de");
     }
 
-    // Ignore for now, until the test code can depend on the directories again.
     @Test
-    @Ignore
     public void testGetLocationOfClassPath() {
         File dir = ClassLoaderUtils.getLocationOfClassPath();
         assertTrue("The project binaries must be in a directory and not a jar for this test to be executed",

@@ -1,4 +1,4 @@
-apply plugin: 'groovy';
+apply plugin: 'java';
 
 group = 'com.github.kelemen';
 version = '1.2.6.1-SNAPSHOT';
@@ -20,34 +20,6 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
 artifacts {
     archives jar
     archives sourcesJar
-}
-
-sourceSets {
-    secondary {
-        compileClasspath += main.output;
-        compileClasspath += configurations.compile;
-
-        runtimeClasspath += main.output;
-        runtimeClasspath += configurations.runtime;
-    }
-}
-
-jar.from sourceSets.secondary.output;
-
-// Test (when run) must depend on the JAR file for now to workaround a classpath
-// issue in the new Tooling API.
-test.dependsOn jar
-sourceSets.test.runtimeClasspath -= sourceSets.main.output;
-sourceSets.test.runtimeClasspath += files(jar.archivePath);
-
-sourceSets.test.compileClasspath += sourceSets.secondary.output;
-
-apply plugin: 'idea';
-
-idea {
-    module {
-        sourceDirs += sourceSets.secondary.allSource.srcDirs;
-    }
 }
 
 repositories {
