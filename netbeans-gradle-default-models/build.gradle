@@ -39,7 +39,7 @@ configurations {
 }
 
 dependencies {
-    compile group: 'org.gradle', name: 'gradle-tooling-api', version: '1.8-rc-1';
+    compile group: 'org.gradle', name: 'gradle-tooling-api', version: '1.8';
     provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6';
 
     testCompile group: 'junit', name: 'junit', version: '4.11';
