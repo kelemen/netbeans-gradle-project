@@ -46,6 +46,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
         jReliableJavaVersionCheck.setSelected(GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue());
+        jPost18ApiCheck.setSelected(GlobalGradleSettings.getAllowUsing18Api().getValue());
 
         File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -55,12 +56,13 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         GlobalGradleSettings.getGradleHome().setValueFromString(getGradleInstallDir());
         GlobalGradleSettings.getGradleJvmArgs().setValueFromString(getGradleJvmArgs());
         GlobalGradleSettings.getGradleJdk().setValue(getJdk());
-        GlobalGradleSettings.getSkipTests().setValue(isSkipTests());
+        GlobalGradleSettings.getSkipTests().setValue(jSkipTestsCheck.isSelected());
         GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
-        GlobalGradleSettings.getAlwaysClearOutput().setValue(isAlwaysClearOutput());
-        GlobalGradleSettings.getOmitInitScript().setValue(isDontAddInitScript());
-        GlobalGradleSettings.getMayRelyOnJavaOfScript().setValue(isReliableJavaVersion());
+        GlobalGradleSettings.getAlwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
+        GlobalGradleSettings.getOmitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
+        GlobalGradleSettings.getMayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
         GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
+        GlobalGradleSettings.getAllowUsing18Api().setValue(jPost18ApiCheck.isSelected());
     }
 
     private String getGradleUserHomeDir() {
@@ -82,22 +84,6 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         @SuppressWarnings("unchecked")
         JavaPlatformItem selected = (JavaPlatformItem)jJdkCombo.getSelectedItem();
         return selected != null ? selected.getPlatform() : JavaPlatform.getDefault();
-    }
-
-    private boolean isSkipTests() {
-        return jSkipTestsCheck.isSelected();
-    }
-
-    private boolean isAlwaysClearOutput() {
-        return jAlwayClearOutput.isSelected();
-    }
-
-    private boolean isDontAddInitScript() {
-        return jDontAddInitScriptCheck.isSelected();
-    }
-
-    private boolean isReliableJavaVersion() {
-        return jReliableJavaVersionCheck.isSelected();
     }
 
     private int getProjectCacheSize() {
@@ -180,6 +166,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleUserHomeEdit = new javax.swing.JTextField();
         jBrowseUserHomeDirButton = new javax.swing.JButton();
         jReliableJavaVersionCheck = new javax.swing.JCheckBox();
+        jPost18ApiCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -221,6 +208,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jReliableJavaVersionCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jReliableJavaVersionCheck.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jPost18ApiCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jPost18ApiCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -241,6 +230,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPost18ApiCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption)
                             .addComponent(jGradleUserHomeCaption)
@@ -277,7 +267,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPost18ApiCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSkipTestsCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -290,7 +282,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jDontAddInitScriptCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jReliableJavaVersionCheck)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -328,6 +320,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField jGradleUserHomeEdit;
     private javax.swing.JLabel jGradleVMArgsCaption;
     private javax.swing.JComboBox jJdkCombo;
+    private javax.swing.JCheckBox jPost18ApiCheck;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
     private javax.swing.JCheckBox jReliableJavaVersionCheck;

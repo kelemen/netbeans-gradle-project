@@ -364,13 +364,14 @@ public final class GradleModelLoader {
             OperationInitializer setup) {
 
         GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
-        if (version.compareTo(GRADLE_VERSION_1_8_RC_1) < 0) {
-            LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
-            return new NbCompatibleModelLoader(proposedModel, setup);
-        }
-        else {
+
+        if (GlobalGradleSettings.getAllowUsing18Api().getValue() && version.compareTo(GRADLE_VERSION_1_8_RC_1) >= 0) {
             LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
             return new NbGradle18ModelLoader(setup);
+        }
+        else {
+            LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
+            return new NbCompatibleModelLoader(proposedModel, setup);
         }
     }
 

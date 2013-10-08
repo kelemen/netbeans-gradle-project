@@ -35,6 +35,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> ALWAYS_CLEAR_OUTPUT;
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
     private static final StringBasedProperty<Boolean> MAY_RELY_ON_JAVA_OF_SCRIPT;
+    private static final StringBasedProperty<Boolean> ALLOW_USING_1_8_API;
 
     static {
         // "gradle-home" is probably not the best name but it must remain so
@@ -48,6 +49,7 @@ public final class GlobalGradleSettings {
         ALWAYS_CLEAR_OUTPUT = new GlobalProperty<Boolean>("always-clear-output", new BooleanConverter(false));
         OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
         MAY_RELY_ON_JAVA_OF_SCRIPT = new GlobalProperty<Boolean>("rely-on-java-of-script", new BooleanConverter(false));
+        ALLOW_USING_1_8_API = new GlobalProperty<Boolean>("allow-using-1.8-api", new BooleanConverter(true));
     }
 
     public static File getGradleInstallationAsFile() {
@@ -61,6 +63,10 @@ public final class GlobalGradleSettings {
     public static FileObject getGradleLocation() {
         File result = getGradleInstallationAsFile();
         return result != null ? FileUtil.toFileObject(result) : null;
+    }
+
+    public static StringBasedProperty<Boolean> getAllowUsing18Api() {
+        return ALLOW_USING_1_8_API;
     }
 
     public static StringBasedProperty<File> getGradleUserHomeDir() {
