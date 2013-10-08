@@ -34,6 +34,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
@@ -77,6 +78,12 @@ public final class IdeaJavaModelUtils {
         return moduleDir != null ? getDefaultMainClasses(moduleDir) : null;
     }
 
+    private static NbJavaModel createUnreliableModel(
+            NbJavaModule mainModule,
+            Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
+        return NbJavaModel.createModel(JavaModelSource.COMPATIBLE_API, mainModule, possibleDependencies);
+    }
+
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
         String name = projectDir.getName();
         String level = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
@@ -90,7 +97,7 @@ public final class IdeaJavaModelUtils {
                 Collections.<JavaSourceSet>emptyList(),
                 Collections.<NbListedDir>emptyList());
 
-        return NbJavaModel.createModel(result,
+        return createUnreliableModel(result,
                 Collections.<File, JavaProjectDependency>emptyMap());
     }
 
@@ -347,7 +354,7 @@ public final class IdeaJavaModelUtils {
 
         Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(mapCapacity);
         for (NbJavaModule module: parsedModules.values()) {
-            NbJavaModel model = NbJavaModel.createModel(module, outputDirToProject);
+            NbJavaModel model = createUnreliableModel(module, outputDirToProject);
             result.put(module.getModuleDir(), model);
         }
         return result;

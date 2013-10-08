@@ -14,6 +14,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.w3c.dom.Element;
 
@@ -21,10 +22,12 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     private static final Logger LOGGER = Logger.getLogger(DefaultProjectProperties.class.getName());
 
     private final NbGradleProject project;
+    private final JavaExtension javaExt;
 
     public DefaultProjectProperties(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
+        this.javaExt = project.getLookup().lookup(JavaExtension.class);
     }
 
     @Override
@@ -51,12 +54,17 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         return query != null ? query.getPlatform(): null;
     }
 
+    private boolean isReliableJavaVersion() {
+        return javaExt.getCurrentModel().getModelSource().isReliableJavaVersion()
+                || GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue();
+    }
+
     @Override
     public MutableProperty<String> getSourceLevel() {
         return new UnmodifiableProperty<String>("SourceLevel") {
             @Override
             public String getValue() {
-                if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
+                if (isReliableJavaVersion()) {
                     String sourceLevel = tryGetScriptSourceLevel();
                     if (sourceLevel != null) {
                         return sourceLevel;
@@ -93,7 +101,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
 
             @Override
             public ProjectPlatform getValue() {
-                if (GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue()) {
+                if (isReliableJavaVersion()) {
                     ProjectPlatform platform = tryGetScriptPlatform();
                     if (platform != null) {
                         return platform;

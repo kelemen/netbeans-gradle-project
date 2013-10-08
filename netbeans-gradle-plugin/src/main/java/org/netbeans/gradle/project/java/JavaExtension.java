@@ -24,6 +24,7 @@ import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.GradleProjectSources;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaParsingUtils;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
@@ -214,13 +215,19 @@ public final class JavaExtension implements GradleProjectExtension {
         return result;
     }
 
+    private static NbJavaModel createReliableModel(
+            NbJavaModule mainModule,
+            Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
+        return NbJavaModel.createModel(JavaModelSource.GRADLE_1_8_API, mainModule, possibleDependencies);
+    }
+
     private Map<File, Lookup> deduceFromGradleBuildInfo(GradleBuildInfo buildInfo) {
         Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(buildInfo);
         Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
 
         Map<File, Lookup> result = new HashMap<File, Lookup>(2 * modules.size());
         for (NbJavaModule module: modules) {
-            NbJavaModel model = NbJavaModel.createModel(module, moduleDependencies);
+            NbJavaModel model = createReliableModel(module, moduleDependencies);
             result.put(module.getModuleDir(), Lookups.singleton(model));
         }
 
@@ -250,7 +257,7 @@ public final class JavaExtension implements GradleProjectExtension {
 
         for (NbJavaModule module: modules) {
             if (module.getModuleDir().equals(mainModuleDir)) {
-                return NbJavaModel.createModel(module, moduleDependencies);
+                return createReliableModel(module, moduleDependencies);
             }
         }
 

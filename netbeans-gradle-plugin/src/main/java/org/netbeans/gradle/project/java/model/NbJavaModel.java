@@ -12,11 +12,17 @@ import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 
 public final class NbJavaModel {
+    private final JavaModelSource modelSource;
     private final NbJavaModule mainModule;
     private final Map<File, JavaProjectDependency> projectDependencies;
     private final AtomicReference<Set<JavaProjectReference>> allDependenciesRef;
 
-    private NbJavaModel(NbJavaModule mainModule, Map<File, JavaProjectDependency> projectDependencies) {
+    private NbJavaModel(
+            JavaModelSource modelSource,
+            NbJavaModule mainModule,
+            Map<File, JavaProjectDependency> projectDependencies) {
+
+        this.modelSource = modelSource;
         this.mainModule = mainModule;
         this.projectDependencies = projectDependencies;
         this.allDependenciesRef = new AtomicReference<Set<JavaProjectReference>>(null);
@@ -36,8 +42,11 @@ public final class NbJavaModel {
     }
 
     public static NbJavaModel createModel(
+            JavaModelSource modelSource,
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
+
+        if (modelSource == null) throw new NullPointerException("modelSource");
         if (mainModule == null) throw new NullPointerException("mainModule");
         if (possibleDependencies == null) throw new NullPointerException("possibleDependencies");
 
@@ -50,11 +59,15 @@ public final class NbJavaModel {
             addAll(classpaths.getRuntimeClasspaths(), possibleDependencies, relevantDependencies);
         }
 
-        return new NbJavaModel(mainModule, relevantDependencies);
+        return new NbJavaModel(modelSource, mainModule, relevantDependencies);
     }
 
     public JavaProjectDependency tryGetDepedency(File outputDir) {
         return projectDependencies.get(outputDir);
+    }
+
+    public JavaModelSource getModelSource() {
+        return modelSource;
     }
 
     public NbJavaModule getMainModule() {
