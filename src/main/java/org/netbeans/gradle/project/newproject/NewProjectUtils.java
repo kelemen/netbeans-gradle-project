@@ -24,6 +24,8 @@ import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
 import static org.netbeans.gradle.project.validate.Validators.*;
+import org.netbeans.spi.project.ui.support.ProjectChooser;
+import org.openide.WizardDescriptor;
 
 public final class NewProjectUtils {
     public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
@@ -52,12 +54,16 @@ public final class NewProjectUtils {
         StringUtils.writeStringToFile(resourceContent, encoding, destination);
     }
 
-    public static String getDefaultProjectDir() {
-        String defaultDir = NewProjectUtils.getPreferences().get(DEFAULT_PROJECTDIR_SETTINGS_KEY, "");
-        if (defaultDir.isEmpty()) {
-            defaultDir = new File(System.getProperty("user.home"), "Projects").getAbsolutePath();
+    public static String getDefaultProjectDir(WizardDescriptor settings) {
+        // TODO: CommonProjectActions.PROJECT_PARENT_FOLDER is not availbale on NetBeans 7.2?
+        // File projectLocation = (File) settings.getProperty(CommonProjectActions.PROJECT_PARENT_FOLDER); //NOI18N
+        File projectLocation = (File) settings.getProperty("projdir"); //NOI18N
+        if (projectLocation == null || projectLocation.getParentFile() == null
+                || !projectLocation.getParentFile().isDirectory()) {
+            projectLocation = ProjectChooser.getProjectsFolder();
         }
-        return defaultDir;
+        
+        return projectLocation.getAbsolutePath();
     }
 
     public static void setDefaultProjectDir(String newValue) {
