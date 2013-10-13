@@ -12,6 +12,7 @@ import org.openide.WizardDescriptor;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
+
     private final GroupValidator validators;
     private final BackgroundValidator bckgValidator;
     private final WizardDescriptor wizard;
@@ -30,7 +31,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 NewProjectUtils.createClassNameValidator(true),
                 Validators.createCollector(jMainClassEdit));
 
-        jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
+        jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir(wizard));
 
         Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
@@ -77,7 +78,9 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         String projectName = jProjectNameEdit.getText().trim();
         String projectDirStr = jProjectFolderEdit.getText().trim();
         String mainClass = jMainClassEdit.getText().trim();
-        if (mainClass.isEmpty()) mainClass = null;
+        if (mainClass.isEmpty()) {
+            mainClass = null;
+        }
 
         if (projectName.isEmpty() || projectDirStr.isEmpty()) {
             return null;
@@ -141,36 +144,27 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jProjectNameCaption)
-                        .addGap(18, 18, 18)
-                        .addComponent(jProjectNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 409, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jProjectLocationCaption)
-                            .addComponent(jProjectFolderLocationLabel)
-                            .addComponent(jMainClassLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jProjectFolderEdit, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jProjectLocationEdit)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jBrowseButton))
-                            .addComponent(jMainClassEdit))))
-                .addContainerGap())
+                    .addComponent(jProjectNameCaption)
+                    .addComponent(jMainClassLabel)
+                    .addComponent(jProjectLocationCaption)
+                    .addComponent(jProjectFolderLocationLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jProjectNameEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+                    .addComponent(jMainClassEdit)
+                    .addComponent(jProjectLocationEdit)
+                    .addComponent(jProjectFolderEdit))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jBrowseButton))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectNameCaption)
                     .addComponent(jProjectNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectLocationCaption)
                     .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -182,8 +176,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMainClassLabel)
-                    .addComponent(jMainClassEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(49, Short.MAX_VALUE))
+                    .addComponent(jMainClassEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
