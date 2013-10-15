@@ -37,6 +37,11 @@
             <name>Gradle Nightly</name>
             <url>http://repo.gradle.org/gradle/libs-snapshots-local</url>
         </repository>
+        <repository>
+            <id>bintray-kelemen</id>
+            <name>BinTray - Kelemen</name>
+            <url>http://dl.bintray.com/kelemen/maven</url>
+        </repository>
     </repositories>
 
     <dependencies>
