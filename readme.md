@@ -1,8 +1,11 @@
 Downloads
 ---------
 
-The latest build (nbm file) can be downloaded from
-[http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support).
+The latest release can be downloaded from
+[http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support) and is also
+available via the Update Center (Tools/Plugins: Look for "Gradle Support").
+
+The latest beta release (1.2.7) can be downloaded from [BinTray](http://dl.bintray.com/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.2.7/netbeans-gradle-plugin-1.2.7.nbm). Some captions in the project navigator have been adjusted. See if you like it and report an issue in case something needs to be fixed. There is no known issue in 1.2.7.
 
 General Description
 -------------------
@@ -12,13 +15,18 @@ The implementation is based on [Geertjan Wielenga's](https://blogs.oracle.com/ge
 You can open a folder as a project in NetBeans like with any other project and
 start editing the code without actually generating any other NetBeans project files.
 
-The project is usable with no major limitations. Open a new issue if you believe something needs
-to be fixed.
-
 You can read more about the plugin on the [wiki pages](https://github.com/kelemen/netbeans-gradle-project/wiki).
 
 Troubleshooting
 --------------
+
+### LinkageError: "loader constraint violation", debugging does not work ###
+
+Attempting to use Gradle 1.8 will break debugging functionality in NetBeans (not only for Gradle projects). The workaround is not to use Gradle 1.8: Specify another version to load the Gradle project in the project properties. Note that once you have loaded a Gradle 1.8 project, you have to restart NetBeans to fix debugging features.
+
+The issue in Gradle is fixed in *Gradle 1.9-rc-1*. However, when using nightly builds, you have to use *1.10-20131011231056+0000* or later.
+
+Read issue [#74](https://github.com/kelemen/netbeans-gradle-project/issues/74) for details.
 
 ### NetBeans hangs while starting ###
 
