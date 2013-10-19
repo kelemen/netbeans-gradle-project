@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.java;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.gradle.api.Project;
@@ -32,12 +33,20 @@ implements
         return null;
     }
 
+    private static Class<? extends Task> findJarClass(Project project) {
+        Task task = findTaskByName(project, "jar");
+        return task != null ? task.getClass() : null;
+    }
+
     public JarOutputsModel getProjectInfo(Project project) {
         if (!project.getPlugins().hasPlugin("java")) {
             return null;
         }
 
-        Class<? extends Task> jarClass = findTaskByName(project, "jar").getClass();
+        Class<? extends Task> jarClass = findJarClass(project);
+        if (jarClass == null) {
+            return new JarOutputsModel(Collections.<JarOutput>emptySet());
+        }
 
         List<JarOutput> result = new LinkedList<JarOutput>();
         TaskCollection<? extends Task> allJars = project.getTasks().withType(jarClass);
