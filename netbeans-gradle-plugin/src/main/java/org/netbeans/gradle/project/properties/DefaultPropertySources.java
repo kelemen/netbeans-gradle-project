@@ -125,6 +125,10 @@ public final class DefaultPropertySources {
             }
         }
 
+        if (bestMatch == null) {
+            return JavaPlatform.getDefault();
+        }
+
         if (version.compareTo(bestMatch.getSpecification().getVersion()) > 0) {
             LOGGER.log(Level.WARNING,
                     "The choosen platform has a higher version number than the requested one: {0}",
