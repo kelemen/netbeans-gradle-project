@@ -129,16 +129,15 @@ public final class DefaultPropertySources {
             return JavaPlatform.getDefault();
         }
 
-        if (version.compareTo(bestMatch.getSpecification().getVersion()) > 0) {
-            LOGGER.log(Level.WARNING,
-                    "The choosen platform has a higher version number than the requested one: {0}",
-                    versionStr);
-        }
-        else {
-            LOGGER.log(Level.WARNING,
-                    "The choosen platform has a lower version number than the requested one: {0}",
-                    versionStr);
-        }
+        SpecificationVersion bestMatchVersion = bestMatch.getSpecification().getVersion();
+
+        String higherOrLower = version.compareTo(bestMatchVersion) > 0
+                ? "higher"
+                : "lower";
+
+        LOGGER.log(Level.WARNING,
+                "The chosen platform has a {0} version number than the requested one: {1}. Chosen: {2}",
+                new Object[]{higherOrLower, versionStr, bestMatchVersion});
 
         return bestMatch;
     }
