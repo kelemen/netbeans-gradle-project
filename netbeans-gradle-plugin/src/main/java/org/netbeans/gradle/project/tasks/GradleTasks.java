@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.tasks;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,18 +59,6 @@ public final class GradleTasks {
 
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final Charset UTF8 = Charset.forName("UTF-8");
-
-    private static void writeToFile(String str, File file) throws IOException {
-        OutputStream output = null;
-        try {
-            output = new FileOutputStream(file);
-            output.write(str.getBytes(UTF8));
-        } finally {
-            if (output != null) {
-                output.close();
-            }
-        }
-    }
 
     private static void closeAll(List<? extends Closeable> toClose) {
         for (Closeable ref: toClose) {
