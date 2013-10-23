@@ -10,6 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.project.Exceptions;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
@@ -50,13 +51,7 @@ public final class InputOutputManager {
             return new IORef(name, IOProvider.getDefault().getIO(caption, createNew));
         } catch (Throwable ex) {
             decUseCount(caption);
-            if (ex instanceof RuntimeException) {
-                throw (RuntimeException)ex;
-            }
-            if (ex instanceof Error) {
-                throw (Error)ex;
-            }
-            throw new RuntimeException(ex.getMessage(), ex);
+            throw Exceptions.throwUnchecked(ex);
         }
     }
 
