@@ -395,7 +395,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     actionPanel.isNonBlocking());
         }
 
-        private boolean doSaveTask(CustomActionPanel actionPanel) {
+        private String doSaveTask(CustomActionPanel actionPanel) {
             AddNewTaskPanel panel = new AddNewTaskPanel();
 
             DialogDescriptor dlgDescriptor = new DialogDescriptor(
@@ -411,11 +411,11 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             dlg.pack();
             dlg.setVisible(true);
             if (dlgDescriptor.getValue() != DialogDescriptor.OK_OPTION) {
-                return false;
+                return null;
             }
             String displayName = panel.getDisplayName();
             if (displayName.isEmpty()) {
-                return false;
+                return null;
             }
 
             PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
@@ -428,7 +428,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             List<PredefinedTask> newTasks = new LinkedList<PredefinedTask>(commonTasks.getValue());
             newTasks.add(newTaskDef);
             commonTasks.setValue(newTasks);
-            return true;
+            return displayName;
         }
 
         @Override
@@ -449,14 +449,18 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
             dlg.setVisible(true);
 
+            String displayName;
             boolean doExecute = false;
             boolean okToClose;
             do {
+                displayName = null;
                 okToClose = true;
                 Object selectedButton = dlgDescriptor.getValue();
 
                 if (saveAndExecuteButton == selectedButton) {
-                    okToClose = doSaveTask(panel);
+                    displayName = doSaveTask(panel);
+                    okToClose = displayName != null;
+
                     if (!okToClose) {
                         dlg.setVisible(true);
                     }
@@ -468,7 +472,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             } while (!okToClose);
 
             if (doExecute) {
-                final GradleCommandTemplate commandTemplate = panel.tryGetGradleCommand();
+                final GradleCommandTemplate commandTemplate = panel.tryGetGradleCommand(displayName);
                 if (commandTemplate != null) {
                     executeCommandTemplate(project, commandTemplate);
                 }
@@ -659,7 +663,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         GradleCommandTemplate.Builder command
-                                = new GradleCommandTemplate.Builder(Arrays.asList(task.getFullName()));
+                                = new GradleCommandTemplate.Builder("", Arrays.asList(task.getFullName()));
 
                         executeCommandTemplate(project, command.create());
                     }

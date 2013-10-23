@@ -149,8 +149,13 @@ public final class GradleActionProvider implements ActionProvider {
 
                 customActionsRef.set(customActions);
 
+                String displayName = project.getMergedCommandQuery().tryGetDisplayNameOfCommand(command);
+                if (displayName == null) {
+                    displayName = task.getDisplayName();
+                }
+
                 return GradleTaskDef.createFromTemplate(project,
-                        task.toCommandTemplate(),
+                        task.toCommandTemplate(displayName),
                         customActions,
                         appliedContext).create();
             }

@@ -38,8 +38,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_LoadingProject", projectName);
     }
 
-    public static String getExecuteTasksText(List<String> taskNames) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ExecutingGradleTasks", taskNames);
+    public static String getExecuteTasksText(String taskName) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ExecutingGradleTasks", taskName);
     }
 
     public static String getExecutingTaskMessage(String command) {

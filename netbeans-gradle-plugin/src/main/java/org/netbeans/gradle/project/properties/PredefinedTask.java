@@ -148,17 +148,23 @@ public final class PredefinedTask {
         }
     }
 
-    public GradleCommandTemplate toCommandTemplate() {
+    public GradleCommandTemplate toCommandTemplate(String displayName) {
         List<String> rawTaskNames = new ArrayList<String>(taskNames.size());
         for (Name name: taskNames) {
             rawTaskNames.add(name.getName());
         }
 
-        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(rawTaskNames);
+        GradleCommandTemplate.Builder builder
+                = new GradleCommandTemplate.Builder(displayName, rawTaskNames);
+
         builder.setArguments(arguments);
         builder.setJvmArguments(jvmArguments);
         builder.setBlocking(!nonBlocking);
         return builder.create();
+    }
+
+    public GradleCommandTemplate toCommandTemplate() {
+        return toCommandTemplate(displayName);
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {

@@ -136,7 +136,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             List<String> jvmArguments,
             CustomCommandActions customActions) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(true);
@@ -150,7 +150,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             List<String> jvmArguments,
             CustomCommandActions customActions) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(false);

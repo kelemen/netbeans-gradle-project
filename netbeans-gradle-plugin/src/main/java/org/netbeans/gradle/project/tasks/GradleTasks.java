@@ -385,7 +385,8 @@ public final class GradleTasks {
                     return null;
                 }
 
-                String caption = NbStrings.getExecuteTasksText(taskWithUserDefined.getTaskNames());
+                String taskName = taskWithUserDefined.getSafeCommandName();
+                String caption = NbStrings.getExecuteTasksText(taskName);
                 boolean nonBlocking = taskWithUserDefined.isNonBlocking();
 
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {

@@ -41,13 +41,16 @@ public class CustomActionPanel extends javax.swing.JPanel {
         jNonBlockingCheck.setSelected(task.isNonBlocking());
     }
 
-    public GradleCommandTemplate tryGetGradleCommand() {
+    public GradleCommandTemplate tryGetGradleCommand(String displayName) {
         String[] tasks = getTasks();
         if (tasks.length == 0) {
             return null;
         }
 
-        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(Arrays.asList(tasks));
+        GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(
+                displayName != null ? displayName : "",
+                Arrays.asList(tasks));
+
         builder.setArguments(Arrays.asList(getArguments()));
         builder.setJvmArguments(Arrays.asList(getJvmArguments()));
         builder.setBlocking(!isNonBlocking());

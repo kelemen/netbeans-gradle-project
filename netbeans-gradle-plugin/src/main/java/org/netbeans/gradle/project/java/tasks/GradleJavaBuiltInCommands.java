@@ -189,7 +189,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             CustomCommandActions customActions,
             boolean skipTestsIfNeeded) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(true);
@@ -212,7 +212,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             CustomCommandActions customActions,
             boolean skipTestsIfNeeded) {
 
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder(taskNames);
+        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(false);

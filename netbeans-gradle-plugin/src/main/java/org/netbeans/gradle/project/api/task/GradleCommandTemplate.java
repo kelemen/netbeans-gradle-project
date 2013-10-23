@@ -28,6 +28,7 @@ public final class GradleCommandTemplate {
      * <I>synchronization transparent</I>, so they might be used in any context.
      */
     public static final class Builder {
+        private final String displayName;
         private final List<String> tasks;
         private List<String> arguments;
         private List<String> jvmArguments;
@@ -44,6 +45,7 @@ public final class GradleCommandTemplate {
          *   {@code null}
          */
         public Builder(@Nonnull GradleCommandTemplate command) {
+            this.displayName = command.getDisplayName();
             this.tasks = command.getTasks();
             this.arguments = command.getArguments();
             this.jvmArguments = command.getJvmArguments();
@@ -54,6 +56,7 @@ public final class GradleCommandTemplate {
          * Creates a new {@code Builder} with the given task names.
          * The default value for the other properties are the following:
          * <ul>
+         *  <li>{@link #getDisplayName() DisplayName}: Empty string.</li>
          *  <li>{@link #getArguments() Arguments}: Empty list.</li>
          *  <li>{@link #getJvmArguments() JvmArguments}: Empty list.</li>
          *  <li>{@link #isBlocking() Blocking}: {@code true}.</li>
@@ -67,7 +70,39 @@ public final class GradleCommandTemplate {
          * @throws IllegalArgumentException thrown if the specified list is
          *   empty
          */
+        @Deprecated
         public Builder(@Nonnull List<String> tasks) {
+            this("", tasks);
+        }
+
+        /**
+         * Creates a new {@code Builder} with the given task names.
+         * The default value for the other properties are the following:
+         * <ul>
+         *  <li>{@link #getArguments() Arguments}: Empty list.</li>
+         *  <li>{@link #getJvmArguments() JvmArguments}: Empty list.</li>
+         *  <li>{@link #isBlocking() Blocking}: {@code true}.</li>
+         * </ul>
+         *
+         * @param displayName the name of the command as displayed to the user.
+         *   This argument cannot be {@code null} but can be an empty string
+         *   which implies that some other sensible value is to be used
+         *   (like the list of the tasks).
+         * @param tasks the list of tasks to be executed by Gradle. This list
+         *   cannot contain {@code null} elements nor can it be an empty list.
+         *
+         * @throws NullPointerException thrown if the specified list is
+         *   {@code null} or contains {@code null} elements or the display name
+         *   is {@code null}.
+         * @throws IllegalArgumentException thrown if the specified list is
+         *   empty
+         */
+        public Builder(
+                @Nonnull String displayName,
+                @Nonnull List<String> tasks) {
+            if (displayName == null) throw new NullPointerException("displayName");
+
+            this.displayName = displayName;
             this.tasks = CollectionUtils.copyNullSafeList(tasks);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
@@ -162,16 +197,51 @@ public final class GradleCommandTemplate {
         }
     }
 
+    private final String displayName;
     private final List<String> tasks;
     private final List<String> arguments;
     private final List<String> jvmArguments;
     private final boolean blocking;
 
     private GradleCommandTemplate(Builder builder) {
+        this.displayName = builder.displayName;
         this.tasks = builder.tasks;
         this.arguments = builder.arguments;
         this.jvmArguments = builder.jvmArguments;
         this.blocking = builder.blocking;
+    }
+
+    /**
+     * Returns the display name of the command to be executed. This display name
+     * can be used in progress text and output window captions.
+     * <P>
+     * In case this method returns an empty a string a sensible default value
+     * is to be used.
+     *
+     * @return the display name of the command to be executed. This method
+     *   never returns {@code null}.
+     *
+     * @see #getSafeDisplayName()
+     */
+    @Nonnull
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * Returns the display name of the command to be executed or a sensible
+     * default when the display name is an empty string. This display name
+     * can be used in progress text and output window captions.
+     * <P>
+     * In case this method returns an empty a string a sensible default value
+     * is to be used.
+     *
+     * @return the display name of the command to be executed. This method
+     *   never returns {@code null}.
+     */
+    @Nonnull
+    public String getSafeDisplayName() {
+        return displayName.isEmpty() ? tasks.toString() : displayName;
     }
 
     /**
