@@ -19,7 +19,7 @@ import org.openide.windows.OutputWriter;
 
 public final class GradleTaskDef {
     public static final class Builder {
-        private String caption;
+        private TaskOutputDef outputDef;
         private List<String> taskNames;
         private List<String> arguments;
         private List<String> jvmArguments;
@@ -29,41 +29,38 @@ public final class GradleTaskDef {
         private ContextAwareCommandFinalizer commandFinalizer;
 
         private boolean cleanOutput;
-        private boolean reuseOutput;
         private boolean nonBlocking;
 
         public Builder(GradleTaskDef taskDef) {
-            this.caption = taskDef.getCaption();
+            this.outputDef = taskDef.getOutputDef();
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
             this.jvmArguments = taskDef.getJvmArguments();
             this.stdOutListener = taskDef.getStdOutListener();
             this.stdErrListener = taskDef.getStdErrListener();
             this.nonBlocking = taskDef.isNonBlocking();
-            this.reuseOutput = taskDef.isReuseOutput();
             this.cleanOutput = taskDef.isCleanOutput();
             this.commandFinalizer = taskDef.getCommandFinalizer();
         }
 
-        public Builder(String caption, String taskName) {
-            this(caption, Collections.singletonList(taskName));
+        public Builder(TaskOutputDef outputDef, String taskName) {
+            this(outputDef, Collections.singletonList(taskName));
         }
 
-        public Builder(String caption, String[] taskNames) {
-            this(caption, Arrays.asList(taskNames));
+        public Builder(TaskOutputDef outputDef, String[] taskNames) {
+            this(outputDef, Arrays.asList(taskNames));
         }
 
-        public Builder(String caption, List<String> taskNames) {
-            if (caption == null) throw new NullPointerException("caption");
+        public Builder(TaskOutputDef outputDef, List<String> taskNames) {
+            if (outputDef == null) throw new NullPointerException("outputDef");
 
-            this.caption = caption;
+            this.outputDef = outputDef;
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
             this.stdOutListener = NoOpTaskOutputListener.INSTANCE;
             this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
             this.nonBlocking = false;
-            this.reuseOutput = true;
             this.cleanOutput = false;
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
 
@@ -80,21 +77,13 @@ public final class GradleTaskDef {
             this.cleanOutput = cleanOutput;
         }
 
-        public String getCaption() {
-            return caption;
+        public TaskOutputDef getOutputDef() {
+            return outputDef;
         }
 
-        public void setCaption(String caption) {
-            if (caption == null) throw new NullPointerException("caption");
-            this.caption = caption;
-        }
-
-        public boolean isReuseOutput() {
-            return reuseOutput;
-        }
-
-        public void setReuseOutput(boolean reuseOutput) {
-            this.reuseOutput = reuseOutput;
+        public void setOutputDef(TaskOutputDef outputDef) {
+            if (outputDef == null) throw new NullPointerException("outputDef");
+            this.outputDef = outputDef;
         }
 
         public boolean isNonBlocking() {
@@ -185,26 +174,24 @@ public final class GradleTaskDef {
         }
     }
 
-    private final String caption;
+    private final TaskOutputDef outputDef;
     private final List<String> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
     private final ContextAwareCommandFinalizer commandFinalizer;
-    private final boolean reuseOutput;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
 
     private GradleTaskDef(Builder builder) {
-        this.caption = builder.getCaption();
+        this.outputDef = builder.getOutputDef();
         this.taskNames = builder.getTaskNames();
         this.arguments = builder.getArguments();
         this.jvmArguments = builder.getJvmArguments();
         this.stdOutListener = builder.getStdOutListener();
         this.stdErrListener = builder.getStdErrListener();
         this.nonBlocking = builder.isNonBlocking();
-        this.reuseOutput = builder.isReuseOutput();
         this.cleanOutput = builder.isCleanOutput();
         this.commandFinalizer = builder.getCommandFinalizer();
     }
@@ -217,12 +204,8 @@ public final class GradleTaskDef {
         return cleanOutput;
     }
 
-    public String getCaption() {
-        return caption;
-    }
-
-    public boolean isReuseOutput() {
-        return reuseOutput;
+    public TaskOutputDef getOutputDef() {
+        return outputDef;
     }
 
     public boolean isNonBlocking() {
@@ -274,19 +257,18 @@ public final class GradleTaskDef {
     }
 
     public static GradleTaskDef.Builder createFromTemplate(
-            String caption,
+            TaskOutputDef outputDef,
             GradleCommandTemplate command,
             TaskVariableMap varReplaceMap) {
-        if (caption == null) throw new NullPointerException("caption");
+        if (outputDef == null) throw new NullPointerException("outputDef");
         if (command == null) throw new NullPointerException("command");
         if (varReplaceMap == null) throw new NullPointerException("varReplaceMap");
 
-        GradleTaskDef.Builder builder = new Builder(caption, processList(command.getTasks(), varReplaceMap));
+        GradleTaskDef.Builder builder = new Builder(outputDef, processList(command.getTasks(), varReplaceMap));
         builder.setArguments(processList(command.getArguments(), varReplaceMap));
         builder.setJvmArguments(processList(command.getJvmArguments(), varReplaceMap));
         builder.setNonBlocking(!command.isBlocking());
         builder.setCleanOutput(command.isBlocking());
-        builder.setReuseOutput(!command.isBlocking());
         return builder;
     }
 
@@ -303,19 +285,33 @@ public final class GradleTaskDef {
         };
     }
 
-    private static String getOutputTabCaption(NbGradleProject project, TaskKind kind, List<String> taskNames) {
+    private static TaskOutputDef getOutputDef(NbGradleProject project, TaskKind kind, List<String> taskNames) {
+        Object additionalKey;
+        String caption;
+
         switch (kind) {
             case DEBUG:
-                return project.getDisplayName() + " - debug";
+                additionalKey = null;
+                caption = project.getDisplayName() + " - debug";
+                break;
             case RUN:
-                return project.getDisplayName() + " - run";
+                additionalKey = null;
+                caption = project.getDisplayName() + " - run";
+                break;
             case BUILD:
-                return project.getDisplayName();
+                additionalKey = null;
+                caption = project.getDisplayName();
+                break;
             case OTHER:
-                return project.getDisplayName() + " - " + taskNames.toString();
+                additionalKey = new ArrayList<String>(taskNames);
+                caption = project.getDisplayName() + " - " + taskNames.toString();
+                break;
             default:
                 throw new AssertionError(kind.name());
         }
+
+        TaskOutputKey outputKey = new TaskOutputKey(kind, project.getProjectDirectoryAsFile(), additionalKey);
+        return new TaskOutputDef(outputKey, caption);
     }
 
     public static GradleTaskDef.Builder createFromTemplate(
@@ -325,7 +321,7 @@ public final class GradleTaskDef {
             Lookup actionContext) {
 
         TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
-        String caption = getOutputTabCaption(project, customActions.getTaskKind(), command.getTasks());
+        TaskOutputDef caption = getOutputDef(project, customActions.getTaskKind(), command.getTasks());
         GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
 
         TaskOutputProcessor stdOutProcessor = customActions.getStdOutProcessor();

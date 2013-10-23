@@ -41,13 +41,14 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
-import org.netbeans.gradle.project.output.InputOutputManager;
-import org.netbeans.gradle.project.output.InputOutputManager.IORef;
+import org.netbeans.gradle.project.output.IOTabRef;
+import org.netbeans.gradle.project.output.IOTabs;
 import org.netbeans.gradle.project.output.LineOutputWriter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
+import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.LifecycleManager;
 import org.openide.util.RequestProcessor;
@@ -153,7 +154,7 @@ public final class GradleTasks {
             NbGradleProject project,
             GradleTaskDef taskDef,
             BuildLauncher buildLauncher,
-            IORef buildIo) {
+            IOTabRef<TaskIOTab> buildIo) {
 
         List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
         consumers.add(new StackTraceConsumer(project));
@@ -169,17 +170,17 @@ public final class GradleTasks {
         errorConsumers.add(new FileLineConsumer());
 
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                buildIo.getOutRef(),
+                buildIo.getTab().getIo().getOutRef(),
                 Arrays.asList(taskDef.getStdOutListener()),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                buildIo.getErrRef(),
+                buildIo.getTab().getIo().getErrRef(),
                 Arrays.asList(taskDef.getStdErrListener()),
                 errorConsumers));
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
-        buildLauncher.setStandardInput(new ReaderInputStream(buildIo.getInRef()));
+        buildLauncher.setStandardInput(new ReaderInputStream(buildIo.getTab().getIo().getInRef()));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
@@ -215,13 +216,14 @@ public final class GradleTasks {
             try {
                 configureBuildLauncher(project, buildLauncher, taskDef, initScripts, progress);
 
-                IORef ioRef = InputOutputManager.getInputOutput(
-                        taskDef.getCaption(),
-                        taskDef.isReuseOutput(),
-                        taskDef.isCleanOutput());
+                TaskOutputDef outputDef = taskDef.getOutputDef();
+
+                IOTabRef<TaskIOTab> ioRef
+                        = IOTabs.taskTabs().getTab(outputDef.getKey(), outputDef.getCaption());
+
                 try {
                     try {
-                        OutputWriter buildOutput = ioRef.getOutRef();
+                        OutputWriter buildOutput = ioRef.getTab().getIo().getOutRef();
                         if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
                                 || taskDef.isCleanOutput()) {
                             buildOutput.reset();
@@ -233,10 +235,12 @@ public final class GradleTasks {
 
                         OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, ioRef);
                         try {
-                            ioRef.getIo().select();
+                            ioRef.getTab().getIo().getIo().select();
                             buildLauncher.run();
 
-                            taskDef.getCommandFinalizer().finalizeSuccessfulCommand(buildOutput, ioRef.getErrRef());
+                            taskDef.getCommandFinalizer().finalizeSuccessfulCommand(
+                                    buildOutput,
+                                    ioRef.getTab().getIo().getErrRef());
                         } finally {
                             // This close method will only forward the last lines
                             // if they were not terminated with a line separator.
@@ -250,7 +254,7 @@ public final class GradleTasks {
 
                         String buildFailureMessage = NbStrings.getBuildFailure(command);
 
-                        OutputWriter buildErrOutput = ioRef.getErrRef();
+                        OutputWriter buildErrOutput = ioRef.getTab().getIo().getErrRef();
                         buildErrOutput.println();
                         buildErrOutput.println(buildFailureMessage);
                         project.displayError(buildFailureMessage, ex, false);
@@ -258,8 +262,6 @@ public final class GradleTasks {
                 } finally {
                     ioRef.close();
                 }
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Unexpected I/O exception.", ex);
             } finally {
                 closeAll(initScripts);
             }
