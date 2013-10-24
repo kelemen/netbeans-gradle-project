@@ -15,6 +15,11 @@ The implementation is based on [Geertjan Wielenga's](https://blogs.oracle.com/ge
 You can open a folder as a project in NetBeans like with any other project and
 start editing the code without actually generating any other NetBeans project files.
 
+**About J2EE projects**: This plugin sees web projects as simple J2SE projects with an additional "webapp" directory, so many
+features related to web projects will be disabled in Gradle projects. If someone is willing to write a plugin for
+Gradle web projects, I will gladly help such an effort. The Gradle plugin can already be extended, so you don't need
+to implement features already there.
+
 You can read more about the plugin on the [wiki pages](https://github.com/kelemen/netbeans-gradle-project/wiki).
 
 Troubleshooting
