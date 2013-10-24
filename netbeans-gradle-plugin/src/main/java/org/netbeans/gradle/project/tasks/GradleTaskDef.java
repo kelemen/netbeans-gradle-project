@@ -308,6 +308,14 @@ public final class GradleTaskDef {
         };
     }
 
+    private static Object getTabKeyForCommand(GradleCommandTemplate command) {
+        String displayName = command.getDisplayName();
+
+        return displayName.isEmpty()
+                ? new ArrayList<String>(command.getTasks())
+                : displayName;
+    }
+
     private static TaskOutputDef getOutputDef(
             NbGradleProject project,
             TaskKind kind,
@@ -330,7 +338,7 @@ public final class GradleTaskDef {
                 caption = project.getDisplayName();
                 break;
             case OTHER:
-                additionalKey = new ArrayList<String>(command.getTasks());
+                additionalKey = getTabKeyForCommand(command);
                 caption = project.getDisplayName() + " - " + command.getSafeDisplayName();
                 break;
             default:
