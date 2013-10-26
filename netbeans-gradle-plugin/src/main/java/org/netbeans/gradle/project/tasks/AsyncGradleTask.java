@@ -243,7 +243,7 @@ public final class AsyncGradleTask implements Runnable {
 
                 try {
                     TaskIOTab tab = ioRef.getTab();
-                    tab.setLastTask(this);
+                    tab.setLastTask(adjust(taskDef));
                     tab.taskStarted();
 
                     try {
@@ -380,6 +380,22 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
+        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+
+        GradleTaskDef result;
+        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+            GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
+            builder.addJvmArguments(globalJvmArgs);
+            result = builder.create();
+        }
+        else {
+            result = taskDef;
+        }
+
+        return queryUserDefinedInputOfTask(result);
+    }
+
     private void submitGradleTask(
             final NbGradleProject project,
             final Callable<GradleTaskDef> taskDefFactory,
@@ -394,37 +410,75 @@ public final class AsyncGradleTask implements Runnable {
                     return null;
                 }
 
-                List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
-
-                GradleTaskDef newTaskDef;
-                if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
-                    GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-                    builder.addJvmArguments(globalJvmArgs);
-                    newTaskDef = builder.create();
-                }
-                else {
-                    newTaskDef = taskDef;
-                }
-
-                final GradleTaskDef taskWithUserDefined = queryUserDefinedInputOfTask(newTaskDef);
-                if (taskWithUserDefined == null) {
+                final GradleTaskDef updatedTaskDef = taskDef.isNeedsAdjustement()
+                        ? updateGradleTaskDef(taskDef)
+                        : taskDef;
+                if (updatedTaskDef == null) {
                     return null;
                 }
 
-                String taskName = taskWithUserDefined.getSafeCommandName();
+                String taskName = updatedTaskDef.getSafeCommandName();
                 String caption = NbStrings.getExecuteTasksText(taskName);
-                boolean nonBlocking = taskWithUserDefined.isNonBlocking();
+                boolean nonBlocking = updatedTaskDef.isNonBlocking();
 
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        doGradleTasksWithProgress(progress, project, taskWithUserDefined);
+                        doGradleTasksWithProgress(progress, project, updatedTaskDef);
                     }
                 });
             }
         };
 
         GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, daemonTaskDefFactory, listener);
+    }
+
+    private AsyncGradleTask adjust(GradleTaskDef taskDef) {
+        return adjust(new CommandAdjusterFactory(taskDefFactroy, taskDef));
+    }
+
+    private AsyncGradleTask adjust(Callable<GradleTaskDef> newFactory) {
+        return new AsyncGradleTask(project, newFactory, listener);
+    }
+
+    private static final class CommandAdjusterFactory implements Callable<GradleTaskDef> {
+        private final Callable<GradleTaskDef> source;
+        private final List<String> taskNames;
+        private final List<String> arguments;
+        private final List<String> jvmArguments;
+
+        public CommandAdjusterFactory(Callable<GradleTaskDef> source, GradleTaskDef taskDef) {
+            this.source = source;
+            this.taskNames = taskDef.getTaskNames();
+            this.arguments = taskDef.getArguments();
+            this.jvmArguments = taskDef.getJvmArguments();
+        }
+
+        public CommandAdjusterFactory(
+                Callable<GradleTaskDef> source,
+                List<String> taskNames,
+                List<String> arguments,
+                List<String> jvmArguments) {
+            this.source = source;
+            this.taskNames = new ArrayList<String>(taskNames);
+            this.arguments = new ArrayList<String>(arguments);
+            this.jvmArguments = new ArrayList<String>(jvmArguments);
+        }
+
+        @Override
+        public GradleTaskDef call() throws Exception {
+            GradleTaskDef original = source.call();
+            if (original == null) {
+                return null;
+            }
+
+            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original);
+            result.setTaskNames(taskNames);
+            result.setArguments(arguments);
+            result.setJvmArguments(jvmArguments);
+            result.setNeedsAdjustement(false);
+            return result.create();
+        }
     }
 
     private static class OutputRef implements Closeable {
