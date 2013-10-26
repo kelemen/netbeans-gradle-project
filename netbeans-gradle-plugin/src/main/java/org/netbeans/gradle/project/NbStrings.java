@@ -347,6 +347,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_WebAppDir");
     }
 
+    public static String getReRunName() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunName");
+    }
+
+    public static String getReRunDescription() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDescription");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

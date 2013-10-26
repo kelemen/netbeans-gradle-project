@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.output;
 import java.awt.event.ActionEvent;
 import javax.swing.Action;
 import org.netbeans.api.annotations.common.StaticResource;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.TaskOutputKey;
 import org.openide.util.ImageUtilities;
@@ -42,8 +43,8 @@ public final class IOTabs {
         public ReRunTask() {
             putValue(Action.SMALL_ICON, ImageUtilities.loadImage(RERUN_ICON));
 
-            putValue(Action.NAME, "Re-run");
-            putValue(Action.SHORT_DESCRIPTION, "Runs the last executed command again.");
+            putValue(Action.NAME, NbStrings.getReRunName());
+            putValue(Action.SHORT_DESCRIPTION, NbStrings.getReRunDescription());
         }
 
         @Override
