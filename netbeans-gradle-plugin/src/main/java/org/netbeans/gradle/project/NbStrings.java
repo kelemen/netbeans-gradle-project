@@ -355,6 +355,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDescription");
     }
 
+    public static String getReRunDiffName() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDiffName");
+    }
+
+    public static String getReRunDiffDescription() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDiffDescription");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

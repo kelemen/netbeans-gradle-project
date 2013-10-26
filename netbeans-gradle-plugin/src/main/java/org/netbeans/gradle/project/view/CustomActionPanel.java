@@ -13,7 +13,15 @@ import org.netbeans.gradle.project.properties.PredefinedTask;
 @SuppressWarnings("serial") // Don't care about serialization
 public class CustomActionPanel extends javax.swing.JPanel {
     public CustomActionPanel() {
+        this(true);
+    }
+
+    public CustomActionPanel(boolean showNonBlockingCheckBox) {
         initComponents();
+
+        if (!showNonBlockingCheckBox) {
+            jNonBlockingCheck.setVisible(false);
+        }
     }
 
     public void updatePanel(PredefinedTask task) {

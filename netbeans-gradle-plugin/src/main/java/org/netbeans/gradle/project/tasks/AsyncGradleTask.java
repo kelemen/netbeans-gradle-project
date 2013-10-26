@@ -76,6 +76,18 @@ public final class AsyncGradleTask implements Runnable {
         this.listener = listener;
     }
 
+    public NbGradleProject getProject() {
+        return project;
+    }
+
+    public Callable<GradleTaskDef> getTaskDefFactroy() {
+        return taskDefFactroy;
+    }
+
+    public CommandCompleteListener getListener() {
+        return listener;
+    }
+
     @Override
     public void run() {
         submitGradleTask(project, taskDefFactroy, listener);
