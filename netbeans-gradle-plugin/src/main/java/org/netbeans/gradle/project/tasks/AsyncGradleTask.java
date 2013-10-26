@@ -208,6 +208,7 @@ public final class AsyncGradleTask implements Runnable {
     private void doGradleTasksWithProgress(
             final ProgressHandle progress,
             NbGradleProject project,
+            GradleTaskDef source,
             GradleTaskDef taskDef) {
         StringBuilder commandBuilder = new StringBuilder(128);
         commandBuilder.append("gradle");
@@ -243,7 +244,7 @@ public final class AsyncGradleTask implements Runnable {
 
                 try {
                     TaskIOTab tab = ioRef.getTab();
-                    tab.setLastTask(adjust(taskDef));
+                    tab.setLastTask(source, adjust(taskDef));
                     tab.taskStarted();
 
                     try {
@@ -405,7 +406,7 @@ public final class AsyncGradleTask implements Runnable {
         Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
             @Override
             public DaemonTaskDef call() throws Exception {
-                GradleTaskDef taskDef = taskDefFactory.call();
+                final GradleTaskDef taskDef = taskDefFactory.call();
                 if (taskDef == null) {
                     return null;
                 }
@@ -424,7 +425,7 @@ public final class AsyncGradleTask implements Runnable {
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        doGradleTasksWithProgress(progress, project, updatedTaskDef);
+                        doGradleTasksWithProgress(progress, project, taskDef, updatedTaskDef);
                     }
                 });
             }
@@ -452,17 +453,6 @@ public final class AsyncGradleTask implements Runnable {
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
             this.jvmArguments = taskDef.getJvmArguments();
-        }
-
-        public CommandAdjusterFactory(
-                Callable<GradleTaskDef> source,
-                List<String> taskNames,
-                List<String> arguments,
-                List<String> jvmArguments) {
-            this.source = source;
-            this.taskNames = new ArrayList<String>(taskNames);
-            this.arguments = new ArrayList<String>(arguments);
-            this.jvmArguments = new ArrayList<String>(jvmArguments);
         }
 
         @Override

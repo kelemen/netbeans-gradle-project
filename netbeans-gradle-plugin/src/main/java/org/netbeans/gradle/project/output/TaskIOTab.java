@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.output;
 import java.util.Arrays;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
+import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.openide.windows.InputOutput;
 
 public final class TaskIOTab implements IOTabDef {
@@ -16,9 +17,9 @@ public final class TaskIOTab implements IOTabDef {
         CollectionUtils.checkNoNullElements(Arrays.asList(this.actions), "actions");
     }
 
-    public void setLastTask(AsyncGradleTask lastTask) {
+    public void setLastTask(GradleTaskDef source, AsyncGradleTask lastTask) {
         for (TaskTabAction action: actions) {
-            action.setLastTask(lastTask);
+            action.setLastTask(source, lastTask);
         }
     }
 
