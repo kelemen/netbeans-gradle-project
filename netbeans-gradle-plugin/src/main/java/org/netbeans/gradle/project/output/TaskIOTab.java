@@ -1,13 +1,37 @@
 package org.netbeans.gradle.project.output;
 
+import java.util.Arrays;
+import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.openide.windows.InputOutput;
 
-// TODO: Add ReRun, etc... button handlers
 public final class TaskIOTab implements IOTabDef {
     private final InputOutputWrapper io;
+    private final TaskTabAction[] actions;
 
-    public TaskIOTab(InputOutput io) {
+    public TaskIOTab(InputOutput io, TaskTabAction... actions) {
         this.io = new InputOutputWrapper(io);
+        this.actions = actions.clone();
+
+        CollectionUtils.checkNoNullElements(Arrays.asList(this.actions), "actions");
+    }
+
+    public void setLastTask(AsyncGradleTask lastTask) {
+        for (TaskTabAction action: actions) {
+            action.setLastTask(lastTask);
+        }
+    }
+
+    public void taskStarted() {
+        for (TaskTabAction action: actions) {
+            action.taskStarted();
+        }
+    }
+
+    public void taskCompleted() {
+        for (TaskTabAction action: actions) {
+            action.taskCompleted();
+        }
     }
 
     public InputOutputWrapper getIo() {

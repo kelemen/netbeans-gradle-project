@@ -247,6 +247,8 @@ public final class AsyncGradleTask implements Runnable {
 
                 try {
                     TaskIOTab tab = ioRef.getTab();
+                    tab.setLastTask(this);
+                    tab.taskStarted();
 
                     try {
                         OutputWriter buildOutput = tab.getIo().getOutRef();
@@ -285,6 +287,8 @@ public final class AsyncGradleTask implements Runnable {
                         buildErrOutput.println(buildFailureMessage);
                         project.displayError(buildFailureMessage, ex, false);
                     }
+
+                    tab.taskCompleted();
                 } finally {
                     ioRef.close();
                 }
