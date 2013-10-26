@@ -178,7 +178,7 @@ public final class AsyncGradleTask implements Runnable {
             NbGradleProject project,
             GradleTaskDef taskDef,
             BuildLauncher buildLauncher,
-            IOTabRef<TaskIOTab> buildIo) {
+            TaskIOTab tab) {
 
         List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
         consumers.add(new StackTraceConsumer(project));
@@ -194,22 +194,22 @@ public final class AsyncGradleTask implements Runnable {
         errorConsumers.add(new FileLineConsumer());
 
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                buildIo.getTab().getIo().getOutRef(),
+                tab.getIo().getOutRef(),
                 Arrays.asList(taskDef.getStdOutListener()),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                buildIo.getTab().getIo().getErrRef(),
+                tab.getIo().getErrRef(),
                 Arrays.asList(taskDef.getStdErrListener()),
                 errorConsumers));
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
-        buildLauncher.setStandardInput(new ReaderInputStream(buildIo.getTab().getIo().getInRef()));
+        buildLauncher.setStandardInput(new ReaderInputStream(tab.getIo().getInRef()));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
 
-    private static void doGradleTasksWithProgress(
+    private void doGradleTasksWithProgress(
             final ProgressHandle progress,
             NbGradleProject project,
             GradleTaskDef taskDef) {
@@ -246,8 +246,10 @@ public final class AsyncGradleTask implements Runnable {
                         = IOTabs.taskTabs().getTab(outputDef.getKey(), outputDef.getCaption());
 
                 try {
+                    TaskIOTab tab = ioRef.getTab();
+
                     try {
-                        OutputWriter buildOutput = ioRef.getTab().getIo().getOutRef();
+                        OutputWriter buildOutput = tab.getIo().getOutRef();
                         if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
                                 || taskDef.isCleanOutput()) {
                             buildOutput.reset();
@@ -257,14 +259,14 @@ public final class AsyncGradleTask implements Runnable {
                         }
                         printCommand(buildOutput, command, taskDef);
 
-                        OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, ioRef);
+                        OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab);
                         try {
-                            ioRef.getTab().getIo().getIo().select();
+                            tab.getIo().getIo().select();
                             buildLauncher.run();
 
                             taskDef.getCommandFinalizer().finalizeSuccessfulCommand(
                                     buildOutput,
-                                    ioRef.getTab().getIo().getErrRef());
+                                    tab.getIo().getErrRef());
                         } finally {
                             // This close method will only forward the last lines
                             // if they were not terminated with a line separator.
@@ -278,7 +280,7 @@ public final class AsyncGradleTask implements Runnable {
 
                         String buildFailureMessage = NbStrings.getBuildFailure(command);
 
-                        OutputWriter buildErrOutput = ioRef.getTab().getIo().getErrRef();
+                        OutputWriter buildErrOutput = tab.getIo().getErrRef();
                         buildErrOutput.println();
                         buildErrOutput.println(buildFailureMessage);
                         project.displayError(buildFailureMessage, ex, false);
@@ -378,7 +380,7 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static void submitGradleTask(
+    private void submitGradleTask(
             final NbGradleProject project,
             final Callable<GradleTaskDef> taskDefFactory,
             final CommandCompleteListener listener) {
