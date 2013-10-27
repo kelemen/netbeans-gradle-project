@@ -57,12 +57,12 @@ public final class AsyncGradleTask implements Runnable {
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final NbGradleProject project;
-    private final Callable<GradleTaskDef> taskDefFactroy;
+    private final Callable<GradleCommandSpec> taskDefFactroy;
     private final CommandCompleteListener listener;
 
     public AsyncGradleTask(
             NbGradleProject project,
-            Callable<GradleTaskDef> taskDefFactroy,
+            Callable<GradleCommandSpec> taskDefFactroy,
             CommandCompleteListener listener) {
         if (project == null)
             throw new NullPointerException("project");
@@ -80,7 +80,7 @@ public final class AsyncGradleTask implements Runnable {
         return project;
     }
 
-    public Callable<GradleTaskDef> getTaskDefFactroy() {
+    public Callable<GradleCommandSpec> getTaskDefFactroy() {
         return taskDefFactroy;
     }
 
@@ -220,8 +220,11 @@ public final class AsyncGradleTask implements Runnable {
     private void doGradleTasksWithProgress(
             final ProgressHandle progress,
             NbGradleProject project,
-            GradleTaskDef source,
-            GradleTaskDef taskDef) {
+            GradleCommandSpec commandSpec) {
+
+        GradleTaskDef taskDef = commandSpec.getProcessed();
+        if (taskDef == null) throw new NullPointerException("command.processed");
+
         StringBuilder commandBuilder = new StringBuilder(128);
         commandBuilder.append("gradle");
         for (String task : taskDef.getTaskNames()) {
@@ -256,7 +259,7 @@ public final class AsyncGradleTask implements Runnable {
 
                 try {
                     TaskIOTab tab = ioRef.getTab();
-                    tab.setLastTask(source, adjust(taskDef));
+                    tab.setLastTask(commandSpec.getSource(), adjust(taskDef));
                     tab.taskStarted();
 
                     try {
@@ -411,33 +414,39 @@ public final class AsyncGradleTask implements Runnable {
 
     private void submitGradleTask(
             final NbGradleProject project,
-            final Callable<GradleTaskDef> taskDefFactory,
+            final Callable<GradleCommandSpec> taskDefFactory,
             final CommandCompleteListener listener) {
         preSubmitGradleTask();
 
         Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
             @Override
             public DaemonTaskDef call() throws Exception {
-                final GradleTaskDef taskDef = taskDefFactory.call();
+                GradleCommandSpec commandSpec = taskDefFactory.call();
+                if (commandSpec == null) {
+                    return null;
+                }
+
+                GradleTaskDef taskDef = commandSpec.getProcessed();
                 if (taskDef == null) {
-                    return null;
+                    taskDef = updateGradleTaskDef(commandSpec.getSource());
+                    if (taskDef == null) {
+                        LOGGER.log(Level.WARNING,
+                                "Cannot process Gradle command template: {0}",
+                                commandSpec.getSource().getSafeCommandName());
+                        return null;
+                    }
                 }
 
-                final GradleTaskDef updatedTaskDef = taskDef.isNeedsAdjustement()
-                        ? updateGradleTaskDef(taskDef)
-                        : taskDef;
-                if (updatedTaskDef == null) {
-                    return null;
-                }
+                final GradleCommandSpec processedCommand = new GradleCommandSpec(commandSpec.getSource(), taskDef);
 
-                String taskName = updatedTaskDef.getSafeCommandName();
+                String taskName = taskDef.getSafeCommandName();
                 String caption = NbStrings.getExecuteTasksText(taskName);
-                boolean nonBlocking = updatedTaskDef.isNonBlocking();
+                boolean nonBlocking = taskDef.isNonBlocking();
 
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        doGradleTasksWithProgress(progress, project, taskDef, updatedTaskDef);
+                        doGradleTasksWithProgress(progress, project, processedCommand);
                     }
                 });
             }
@@ -450,17 +459,17 @@ public final class AsyncGradleTask implements Runnable {
         return adjust(new CommandAdjusterFactory(taskDefFactroy, taskDef));
     }
 
-    private AsyncGradleTask adjust(Callable<GradleTaskDef> newFactory) {
+    private AsyncGradleTask adjust(Callable<GradleCommandSpec> newFactory) {
         return new AsyncGradleTask(project, newFactory, listener);
     }
 
-    private static final class CommandAdjusterFactory implements Callable<GradleTaskDef> {
-        private final Callable<GradleTaskDef> source;
+    private static final class CommandAdjusterFactory implements Callable<GradleCommandSpec> {
+        private final Callable<GradleCommandSpec> source;
         private final List<String> taskNames;
         private final List<String> arguments;
         private final List<String> jvmArguments;
 
-        public CommandAdjusterFactory(Callable<GradleTaskDef> source, GradleTaskDef taskDef) {
+        public CommandAdjusterFactory(Callable<GradleCommandSpec> source, GradleTaskDef taskDef) {
             this.source = source;
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
@@ -468,18 +477,18 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         @Override
-        public GradleTaskDef call() throws Exception {
-            GradleTaskDef original = source.call();
+        public GradleCommandSpec call() throws Exception {
+            GradleCommandSpec original = source.call();
             if (original == null) {
                 return null;
             }
 
-            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original);
+            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original.getSource());
             result.setTaskNames(taskNames);
             result.setArguments(arguments);
             result.setJvmArguments(jvmArguments);
-            result.setNeedsAdjustement(false);
-            return result.create();
+
+            return new GradleCommandSpec(original.getSource(), result.create());
         }
     }
 

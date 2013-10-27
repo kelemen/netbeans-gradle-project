@@ -11,6 +11,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
+import org.netbeans.gradle.project.tasks.GradleCommandSpec;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.TaskOutputKey;
 import org.netbeans.gradle.project.view.CustomActionPanel;
@@ -129,14 +130,14 @@ public final class IOTabs {
         }
     }
 
-    private static final class CommandAdjusterFactory implements Callable<GradleTaskDef> {
-        private final Callable<GradleTaskDef> source;
+    private static final class CommandAdjusterFactory implements Callable<GradleCommandSpec> {
+        private final Callable<GradleCommandSpec> source;
         private final List<String> taskNames;
         private final List<String> arguments;
         private final List<String> jvmArguments;
 
         public CommandAdjusterFactory(
-                Callable<GradleTaskDef> source,
+                Callable<GradleCommandSpec> source,
                 GradleCommandTemplate template) {
 
             this.source = source;
@@ -146,18 +147,18 @@ public final class IOTabs {
         }
 
         @Override
-        public GradleTaskDef call() throws Exception {
-            GradleTaskDef original = source.call();
+        public GradleCommandSpec call() throws Exception {
+            GradleCommandSpec original = source.call();
             if (original == null) {
                 return null;
             }
 
-            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original);
+            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original.getSource());
             result.setTaskNames(taskNames);
             result.setArguments(arguments);
             result.setJvmArguments(jvmArguments);
-            result.setNeedsAdjustement(true);
-            return result.create();
+
+            return new GradleCommandSpec(result.create(), null);
         }
     }
 

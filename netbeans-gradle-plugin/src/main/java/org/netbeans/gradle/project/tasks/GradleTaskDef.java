@@ -32,8 +32,6 @@ public final class GradleTaskDef {
         private boolean cleanOutput;
         private boolean nonBlocking;
 
-        private boolean needsAdjustement;
-
         public Builder(GradleTaskDef taskDef) {
             this.commandName = taskDef.getCommandName();
             this.outputDef = taskDef.getOutputDef();
@@ -45,7 +43,6 @@ public final class GradleTaskDef {
             this.nonBlocking = taskDef.isNonBlocking();
             this.cleanOutput = taskDef.isCleanOutput();
             this.commandFinalizer = taskDef.getCommandFinalizer();
-            this.needsAdjustement = taskDef.isNeedsAdjustement();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -69,19 +66,10 @@ public final class GradleTaskDef {
             this.nonBlocking = false;
             this.cleanOutput = false;
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
-            this.needsAdjustement = true;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
-        }
-
-        public boolean isNeedsAdjustement() {
-            return needsAdjustement;
-        }
-
-        public void setNeedsAdjustement(boolean needsAdjustement) {
-            this.needsAdjustement = needsAdjustement;
         }
 
         public boolean isCleanOutput() {
@@ -208,7 +196,6 @@ public final class GradleTaskDef {
     private final ContextAwareCommandFinalizer commandFinalizer;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
-    private final boolean needsAdjustement;
 
     private GradleTaskDef(Builder builder) {
         this.commandName = builder.getCommandName();
@@ -221,15 +208,10 @@ public final class GradleTaskDef {
         this.nonBlocking = builder.isNonBlocking();
         this.cleanOutput = builder.isCleanOutput();
         this.commandFinalizer = builder.getCommandFinalizer();
-        this.needsAdjustement = builder.isNeedsAdjustement();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
-    }
-
-    public boolean isNeedsAdjustement() {
-        return needsAdjustement;
     }
 
     public boolean isCleanOutput() {
