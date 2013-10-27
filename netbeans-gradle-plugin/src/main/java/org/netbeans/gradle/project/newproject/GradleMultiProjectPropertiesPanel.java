@@ -32,7 +32,7 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
                 NewProjectUtils.createVersionValidator(),
                 Validators.createCollector(jMavenVersionEdit));
 
-        jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir());
+        jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir(wizard));
 
         Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
         NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
@@ -125,10 +125,11 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
 
         jProjectFolderLocationLabel.setText(org.openide.util.NbBundle.getMessage(GradleMultiProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jProjectFolderLocationLabel.text")); // NOI18N
 
+        jProjectFolderEdit.setEditable(false);
         jProjectFolderEdit.setText(org.openide.util.NbBundle.getMessage(GradleMultiProjectPropertiesPanel.class, "GradleSingleProjectPropertiesPanel.jProjectFolderEdit.text")); // NOI18N
         jProjectFolderEdit.setEnabled(false);
 
-        jMavenGroupCaption.setText("Maven GroupId:");
+        jMavenGroupCaption.setText("Maven Group Id:");
 
         jMavenVersionEdit.setText("1.0-SNAPSHOT");
 
@@ -139,38 +140,35 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jProjectLocationCaption)
                     .addComponent(jProjectNameCaption)
                     .addComponent(jProjectFolderLocationLabel)
                     .addComponent(jMavenGroupCaption)
                     .addComponent(jMavenVersionCaption))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jMavenVersionEdit)
                     .addComponent(jProjectNameEdit)
-                    .addComponent(jProjectFolderEdit, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 337, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jBrowseButton))
                     .addComponent(jMavenGroupEdit)
-                    .addComponent(jMavenVersionEdit))
-                .addContainerGap())
+                    .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
+                    .addComponent(jProjectFolderEdit))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jBrowseButton)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectNameCaption)
                     .addComponent(jProjectNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectLocationCaption)
                     .addComponent(jProjectLocationEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jBrowseButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jProjectFolderEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jProjectFolderLocationLabel))
@@ -178,11 +176,10 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMavenGroupEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jMavenGroupCaption))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jMavenVersionEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jMavenVersionCaption))
-                .addContainerGap(52, Short.MAX_VALUE))
+                    .addComponent(jMavenVersionCaption)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
