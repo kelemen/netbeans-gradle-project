@@ -18,19 +18,18 @@ import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
+import org.netbeans.spi.project.ui.support.ProjectChooser;
+import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
 import static org.netbeans.gradle.project.validate.Validators.*;
-import org.netbeans.spi.project.ui.support.ProjectChooser;
-import org.openide.WizardDescriptor;
 
 public final class NewProjectUtils {
     public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
 
-    private static final String DEFAULT_PROJECTDIR_SETTINGS_KEY = "default-project-dir";
     private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
     private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
     private static final Pattern MAVEN_VERSION_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
@@ -55,19 +54,11 @@ public final class NewProjectUtils {
     }
 
     public static String getDefaultProjectDir(WizardDescriptor settings) {
-        // TODO: CommonProjectActions.PROJECT_PARENT_FOLDER is not availbale on NetBeans 7.2?
-        // File projectLocation = (File) settings.getProperty(CommonProjectActions.PROJECT_PARENT_FOLDER); //NOI18N
-        File projectLocation = (File) settings.getProperty("projdir"); //NOI18N
-        if (projectLocation == null || projectLocation.getParentFile() == null
-                || !projectLocation.getParentFile().isDirectory()) {
-            projectLocation = ProjectChooser.getProjectsFolder();
-        }
-        
-        return projectLocation.getAbsolutePath();
+        return ProjectChooser.getProjectsFolder().getAbsolutePath();
     }
 
     public static void setDefaultProjectDir(String newValue) {
-        getPreferences().put(DEFAULT_PROJECTDIR_SETTINGS_KEY, newValue.trim());
+        ProjectChooser.setProjectsFolder(new File(newValue.trim()));
     }
 
     public static void createDefaultSourceDirs(FileObject projectDir) throws IOException {
