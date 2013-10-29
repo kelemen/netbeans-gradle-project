@@ -46,7 +46,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
         jReliableJavaVersionCheck.setSelected(GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue());
-        jPost18ApiCheck.setSelected(GlobalGradleSettings.getAllowUsing18Api().getValue());
+
+        boolean allow18Api = GlobalGradleSettings.getModelLoadingStrategy().getValue()
+                == ModelLoadingStrategy.BEST_POSSIBLE;
+        jPost18ApiCheck.setSelected(allow18Api);
 
         File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -62,7 +65,13 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         GlobalGradleSettings.getOmitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
         GlobalGradleSettings.getMayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
         GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
-        GlobalGradleSettings.getAllowUsing18Api().setValue(jPost18ApiCheck.isSelected());
+        GlobalGradleSettings.getModelLoadingStrategy().setValue(getModelLoadingStrategy());
+    }
+
+    private ModelLoadingStrategy getModelLoadingStrategy() {
+        return jPost18ApiCheck.isSelected()
+                ? ModelLoadingStrategy.BEST_POSSIBLE
+                : ModelLoadingStrategy.USE_IDEA_MODEL;
     }
 
     private String getGradleUserHomeDir() {

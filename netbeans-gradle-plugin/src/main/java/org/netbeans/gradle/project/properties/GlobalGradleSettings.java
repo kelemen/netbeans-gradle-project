@@ -35,7 +35,7 @@ public final class GlobalGradleSettings {
     private static final StringBasedProperty<Boolean> ALWAYS_CLEAR_OUTPUT;
     private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
     private static final StringBasedProperty<Boolean> MAY_RELY_ON_JAVA_OF_SCRIPT;
-    private static final StringBasedProperty<Boolean> ALLOW_USING_1_8_API;
+    private static final StringBasedProperty<ModelLoadingStrategy> MODEL_LOADING_STRATEGY;
 
     static {
         // "gradle-home" is probably not the best name but it must remain so
@@ -49,7 +49,8 @@ public final class GlobalGradleSettings {
         ALWAYS_CLEAR_OUTPUT = new GlobalProperty<Boolean>("always-clear-output", new BooleanConverter(false));
         OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
         MAY_RELY_ON_JAVA_OF_SCRIPT = new GlobalProperty<Boolean>("rely-on-java-of-script", new BooleanConverter(false));
-        ALLOW_USING_1_8_API = new GlobalProperty<Boolean>("allow-using-1.8-api", new BooleanConverter(true));
+        MODEL_LOADING_STRATEGY = new GlobalProperty<ModelLoadingStrategy>("model-load-strategy",
+                new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.UNSET));
     }
 
     public static File getGradleInstallationAsFile() {
@@ -65,8 +66,8 @@ public final class GlobalGradleSettings {
         return result != null ? FileUtil.toFileObject(result) : null;
     }
 
-    public static StringBasedProperty<Boolean> getAllowUsing18Api() {
-        return ALLOW_USING_1_8_API;
+    public static StringBasedProperty<ModelLoadingStrategy> getModelLoadingStrategy() {
+        return MODEL_LOADING_STRATEGY;
     }
 
     public static StringBasedProperty<File> getGradleUserHomeDir() {
@@ -206,6 +207,44 @@ public final class GlobalGradleSettings {
             }
 
             return value != null ? value.toString() : null;
+        }
+    }
+
+    private static class EnumConverter<EnumType extends Enum<EnumType>>
+    implements
+            ValueConverter<EnumType> {
+
+        private final EnumType defaultValue;
+        private final Class<EnumType> enumClass;
+
+        @SuppressWarnings("unchecked")
+        public EnumConverter(EnumType defaultValue) {
+            this.defaultValue = defaultValue;
+            this.enumClass = (Class<EnumType>)defaultValue.getClass();
+        }
+
+        @Override
+        public EnumType toValue(String strValue) {
+            if (strValue == null || strValue.isEmpty()) {
+                return defaultValue;
+            }
+
+            try {
+                return Enum.valueOf(enumClass, strValue);
+            } catch (IllegalArgumentException ex) {
+                LOGGER.log(Level.INFO,
+                        "Illegal enum value for config: " + strValue + " expected an instance of " + enumClass.getSimpleName(),
+                        ex);
+                return defaultValue;
+            }
+        }
+
+        @Override
+        public String toString(EnumType value) {
+            if (value == defaultValue || value == null) {
+                return null;
+            }
+            return value.name();
         }
     }
 

@@ -57,8 +57,6 @@ import org.openide.util.RequestProcessor;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    private static final GradleVersion GRADLE_VERSION_1_8_RC_1 = GradleVersion.version("1.8-rc-1");
-
     private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
 
@@ -365,7 +363,7 @@ public final class GradleModelLoader {
 
         GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
 
-        if (GlobalGradleSettings.getAllowUsing18Api().getValue() && version.compareTo(GRADLE_VERSION_1_8_RC_1) >= 0) {
+        if (GlobalGradleSettings.getModelLoadingStrategy().getValue().canUse18Api(version)) {
             LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
             return new NbGradle18ModelLoader(setup);
         }
