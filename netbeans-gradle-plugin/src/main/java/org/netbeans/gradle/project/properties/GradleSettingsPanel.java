@@ -1,10 +1,13 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import javax.swing.DefaultComboBoxModel;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbStrings;
+import org.openide.awt.HtmlBrowser;
 import org.openide.filesystems.FileChooserBuilder;
 
 // !!! Note: This file cannot be renamed, moved or deleted. !!!
@@ -15,11 +18,21 @@ import org.openide.filesystems.FileChooserBuilder;
 // class (and not something else which may happen due to automated refactoring).
 @SuppressWarnings("serial")
 public class GradleSettingsPanel extends javax.swing.JPanel {
+    private static final URL HELP_URL = getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+
     public GradleSettingsPanel() {
         initComponents();
 
         fillModelLoadStrategyCombo();
         updateSettings();
+    }
+
+    private static URL getSafeURL(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private void fillModelLoadStrategyCombo() {
@@ -213,6 +226,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jReliableJavaVersionCheck = new javax.swing.JCheckBox();
         jModelLoadStrategy = new javax.swing.JComboBox();
         jModelLoadStrategyLabel = new javax.swing.JLabel();
+        jReadWikiButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -228,7 +242,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jGradleVMArgsCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleVMArgsCaption.text")); // NOI18N
 
         jGradleJVMArgs.setColumns(20);
-        jGradleJVMArgs.setRows(5);
+        jGradleJVMArgs.setRows(3);
         jScrollPane1.setViewportView(jGradleJVMArgs);
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleJdkCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradleJdkCaption.text")); // NOI18N
@@ -256,6 +270,13 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jModelLoadStrategyLabel, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jModelLoadStrategyLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jReadWikiButton, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jReadWikiButton.text")); // NOI18N
+        jReadWikiButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jReadWikiButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -263,8 +284,12 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jJdkCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jModelLoadStrategyLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jModelLoadStrategy, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jJdkCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jGradleUserHomeEdit, javax.swing.GroupLayout.Alignment.LEADING)
@@ -276,9 +301,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption)
-                            .addComponent(jGradleUserHomeCaption)
+                            .addComponent(jReadWikiButton)
                             .addComponent(jSkipTestsCheck)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jProjectCacheSizeLabel)
@@ -286,18 +310,18 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                                 .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jAlwayClearOutput)
                             .addComponent(jDontAddInitScriptCheck)
-                            .addComponent(jReliableJavaVersionCheck))
-                        .addGap(0, 114, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jModelLoadStrategyLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jModelLoadStrategy, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(jReliableJavaVersionCheck)
+                            .addComponent(jGradleJdkCaption)
+                            .addComponent(jGradleUserHomeCaption))
+                        .addGap(0, 114, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jReadWikiButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradlePathCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -316,7 +340,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jModelLoadStrategy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -333,7 +357,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jDontAddInitScriptCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jReliableJavaVersionCheck)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -358,6 +382,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_jBrowseUserHomeDirButtonActionPerformed
 
+    private void jReadWikiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jReadWikiButtonActionPerformed
+        HtmlBrowser.URLDisplayer.getDefault().showURLExternal(HELP_URL);
+    }//GEN-LAST:event_jReadWikiButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
@@ -375,6 +403,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jModelLoadStrategyLabel;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
+    private javax.swing.JButton jReadWikiButton;
     private javax.swing.JCheckBox jReliableJavaVersionCheck;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JCheckBox jSkipTestsCheck;
