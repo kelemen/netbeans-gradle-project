@@ -210,8 +210,8 @@ public final class GlobalGradleSettings {
     }
 
     private static class BooleanConverter implements ValueConverter<Boolean> {
-        private static String TRUE_STR = Boolean.TRUE.toString();
-        private static String FALSE_STR = Boolean.FALSE.toString();
+        private static final String TRUE_STR = Boolean.TRUE.toString();
+        private static final String FALSE_STR = Boolean.FALSE.toString();
 
         private final Boolean defaultValue;
 
