@@ -25,6 +25,14 @@ You can read more about the plugin on the [wiki pages](https://github.com/keleme
 Troubleshooting
 --------------
 
+### I have updated the plugin and now cannot load projects ###
+
+You may see an exception like this: `FileNotFoundException: JAR entry XXX.class not found in YYY\gradle-tooling-api.jar`.
+This happens because the Gradle daemon caches some jars and some of them might change when updating. The issue can be
+reproduced using Gradle 1.8 and above when using the new API to load a project (can be adjusted in the global settings).
+
+To fix this, you have to kill the Gradle daemon (a java process) and reload the project.
+
 ### LinkageError: "loader constraint violation", debugging does not work ###
 
 Attempting to use Gradle 1.8 will break debugging functionality in NetBeans (not only for Gradle projects). The workaround is not to use Gradle 1.8: Specify another version to load the Gradle project in the project properties. Note that once you have loaded a Gradle 1.8 project, you have to restart NetBeans to fix debugging features.
