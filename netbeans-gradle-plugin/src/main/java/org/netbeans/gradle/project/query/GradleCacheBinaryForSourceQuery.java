@@ -70,55 +70,23 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
             return null;
         }
 
-        if (!GradleFileUtils.SOURCE_DIR_NAME.equals(srcDir.getNameExt())) {
-            return null;
-        }
-
-        final FileObject artifactRoot = srcDir.getParent();
-        if (artifactRoot == null) {
-            return null;
-        }
-
         final String binFileName = GradleFileUtils.sourceToBinaryName(sourceRootObj);
         if (binFileName == null) {
             return null;
         }
 
-        return new Result() {
-            @Override
-            public URL[] getRoots() {
-                // The cache directory of Gradle looks like this:
-                //
-                // ...... \\source\\HASH_OF_SOURCE\\binary-sources.jar
-                // ...... \\packaging type\\HASH_OF_BINARY\\binary.jar
-
-                for (String binDirName: GradleFileUtils.BINARY_DIR_NAMES) {
-                    FileObject binDir = artifactRoot.getFileObject(binDirName);
-                    if (binDir == null) {
-                        continue;
-                    }
-
-                    FileObject binFile = GradleFileUtils.getFileFromASubDir(binDir, binFileName);
-                    if (binFile != null) {
-                        return new URL[]{binFile.toURL()};
-                    }
-                    else {
-                        continue;
-                    }
-                }
-                return NO_ROOTS;
+        if (GradleFileUtils.SOURCE_DIR_NAME.equals(srcDir.getNameExt())) {
+            final FileObject artifactRoot = srcDir.getParent();
+            if (artifactRoot == null) {
+                return null;
             }
 
-            @Override
-            public void addChangeListener(ChangeListener l) {
-                CHANGES.addChangeListener(l);
-            }
+            return new OldFormatCacheResult(artifactRoot, binFileName);
+        }
 
-            @Override
-            public void removeChangeListener(ChangeListener l) {
-                CHANGES.removeChangeListener(l);
-            }
-        };
+        return GradleFileUtils.isSourceFile(sourceRootObj)
+                ? new NewFormatCacheResult(srcDir, binFileName)
+                : null;
     }
 
     private static final class EventSource implements Result {
@@ -142,6 +110,80 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
         @Override
         public void removeChangeListener(ChangeListener l) {
             changes.removeChangeListener(l);
+        }
+    }
+
+    private static class NewFormatCacheResult implements Result {
+        private final FileObject artifactRoot;
+        private final String binFileName;
+
+        public NewFormatCacheResult(FileObject artifactRoot, String binFileName) {
+            this.artifactRoot = artifactRoot;
+            this.binFileName = binFileName;
+        }
+
+        @Override
+        public URL[] getRoots() {
+            // The cache directory of Gradle looks like this:
+            //
+            // ...... \\HASH_OF_SOURCE\\binary-sources.XXX
+            // ...... \\HASH_OF_BINARY\\binary.XXX
+
+            FileObject binFile = GradleFileUtils.getFileFromASubDir(artifactRoot, binFileName);
+            return binFile != null
+                    ? new URL[]{binFile.toURL()}
+                    : NO_ROOTS;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            CHANGES.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            CHANGES.removeChangeListener(l);
+        }
+    }
+
+    private static class OldFormatCacheResult implements Result {
+        private final FileObject artifactRoot;
+        private final String binFileName;
+
+        public OldFormatCacheResult(FileObject artifactRoot, String binFileName) {
+            this.artifactRoot = artifactRoot;
+            this.binFileName = binFileName;
+        }
+
+        @Override
+        public URL[] getRoots() {
+            // The cache directory of Gradle looks like this:
+            //
+            // ...... \\source\\HASH_OF_SOURCE\\binary-sources.jar
+            // ...... \\packaging type\\HASH_OF_BINARY\\binary.jar
+
+            for (String binDirName: GradleFileUtils.BINARY_DIR_NAMES) {
+                FileObject binDir = artifactRoot.getFileObject(binDirName);
+                if (binDir == null) {
+                    continue;
+                }
+
+                FileObject binFile = GradleFileUtils.getFileFromASubDir(binDir, binFileName);
+                if (binFile != null) {
+                    return new URL[]{binFile.toURL()};
+                }
+            }
+            return NO_ROOTS;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener l) {
+            CHANGES.addChangeListener(l);
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener l) {
+            CHANGES.removeChangeListener(l);
         }
     }
 }

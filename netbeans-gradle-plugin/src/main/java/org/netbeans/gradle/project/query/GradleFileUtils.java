@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,6 +26,8 @@ public final class GradleFileUtils {
     public static final String POM_DIR_NAME = "pom";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
+
+    public static final String SOURCES_SUFFIX = SOURCES_CLASSIFIER + ".jar";
 
     private static File getUserHome() {
         String userHome = System.getProperty("user.home");
@@ -102,17 +105,16 @@ public final class GradleFileUtils {
         return false;
     }
 
-    public static boolean canBeBinaryDirName(String dirName) {
+    public static boolean isKnownBinaryDirName(String dirName) {
         if (dirName == null) throw new NullPointerException("dirName");
 
-        boolean result = !POM_DIR_NAME.equals(dirName)
-                && !SOURCE_DIR_NAME.equals(dirName);
-        if (result && LOGGER.isLoggable(Level.WARNING)) {
-            if (!BINARY_DIR_NAMES.contains(dirName)) {
-                LOGGER.log(Level.WARNING, "{0} is assumed to be a possible binary container folder of the cache.", dirName);
-            }
-        }
-        return result;
+        String lowerDirName = dirName.toLowerCase(Locale.US);
+        return BINARY_DIR_NAMES.contains(lowerDirName);
+    }
+
+    public static boolean isSourceFile(FileObject sourcePath) {
+        String name = sourcePath.getNameExt();
+        return name.endsWith(SOURCES_SUFFIX);
     }
 
     public static String binaryToSourceName(FileObject binaryPath) {
