@@ -4,6 +4,7 @@ import java.io.File;
 import javax.swing.DefaultComboBoxModel;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.filesystems.FileChooserBuilder;
 
 // !!! Note: This file cannot be renamed, moved or deleted. !!!
@@ -17,7 +18,15 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     public GradleSettingsPanel() {
         initComponents();
 
+        fillModelLoadStrategyCombo();
         updateSettings();
+    }
+
+    private void fillModelLoadStrategyCombo() {
+        jModelLoadStrategy.removeAllItems();
+        for (ModelLoadingStrategy strategy: ModelLoadingStrategy.values()) {
+            jModelLoadStrategy.addItem(new ModelLoadStrategyItem(strategy));
+        }
     }
 
     private void fillPlatformCombo() {
@@ -46,10 +55,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
         jReliableJavaVersionCheck.setSelected(GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue());
-
-        boolean allow18Api = GlobalGradleSettings.getModelLoadingStrategy().getValue()
-                == ModelLoadingStrategy.BEST_POSSIBLE;
-        jPost18ApiCheck.setSelected(allow18Api);
+        jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
+                GlobalGradleSettings.getModelLoadingStrategy().getValue()));
 
         File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -69,9 +76,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     }
 
     private ModelLoadingStrategy getModelLoadingStrategy() {
-        return jPost18ApiCheck.isSelected()
-                ? ModelLoadingStrategy.BEST_POSSIBLE
-                : ModelLoadingStrategy.USE_IDEA_MODEL;
+        ModelLoadStrategyItem selected = (ModelLoadStrategyItem)jModelLoadStrategy.getSelectedItem();
+        return selected != null
+                ? selected.strategy
+                : ModelLoadingStrategy.UNSET;
     }
 
     private String getGradleUserHomeDir() {
@@ -150,6 +158,34 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         }
     }
 
+    private static final class ModelLoadStrategyItem {
+        public final ModelLoadingStrategy strategy;
+        private final String displayName;
+
+        public ModelLoadStrategyItem(ModelLoadingStrategy strategy) {
+            this.strategy = strategy;
+            this.displayName = NbStrings.getModelLoadStrategy(strategy);
+        }
+
+        @Override
+        public int hashCode() {
+            return 235 + strategy.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+            final ModelLoadStrategyItem other = (ModelLoadStrategyItem)obj;
+            return this.strategy == other.strategy;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -175,7 +211,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleUserHomeEdit = new javax.swing.JTextField();
         jBrowseUserHomeDirButton = new javax.swing.JButton();
         jReliableJavaVersionCheck = new javax.swing.JCheckBox();
-        jPost18ApiCheck = new javax.swing.JCheckBox();
+        jModelLoadStrategy = new javax.swing.JComboBox();
+        jModelLoadStrategyLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -217,7 +254,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jReliableJavaVersionCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jReliableJavaVersionCheck.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jPost18ApiCheck, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jPost18ApiCheck.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jModelLoadStrategyLabel, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jModelLoadStrategyLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -239,7 +276,6 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jBrowseUserHomeDirButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPost18ApiCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleVMArgsCaption)
                             .addComponent(jGradleUserHomeCaption)
@@ -251,7 +287,11 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jAlwayClearOutput)
                             .addComponent(jDontAddInitScriptCheck)
                             .addComponent(jReliableJavaVersionCheck))
-                        .addGap(0, 114, Short.MAX_VALUE)))
+                        .addGap(0, 114, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jModelLoadStrategyLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jModelLoadStrategy, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -276,9 +316,11 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleVMArgsCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPost18ApiCheck)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jModelLoadStrategy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jModelLoadStrategyLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSkipTestsCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -329,7 +371,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField jGradleUserHomeEdit;
     private javax.swing.JLabel jGradleVMArgsCaption;
     private javax.swing.JComboBox jJdkCombo;
-    private javax.swing.JCheckBox jPost18ApiCheck;
+    private javax.swing.JComboBox jModelLoadStrategy;
+    private javax.swing.JLabel jModelLoadStrategyLabel;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
     private javax.swing.JCheckBox jReliableJavaVersionCheck;

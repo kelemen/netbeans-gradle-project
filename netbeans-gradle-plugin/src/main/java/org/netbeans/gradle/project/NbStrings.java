@@ -3,6 +3,7 @@ package org.netbeans.gradle.project;
 import java.util.Collection;
 import java.util.List;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
+import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.openide.util.NbBundle;
 
 public final class NbStrings {
@@ -361,6 +362,10 @@ public final class NbStrings {
 
     public static String getReRunDiffDescription() {
         return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDiffDescription");
+    }
+
+    public static String getModelLoadStrategy(ModelLoadingStrategy strategy) {
+        return NbBundle.getMessage(NbStrings.class, "LBL_ModelLoadStrategy." + strategy.name());
     }
 
     private NbStrings() {

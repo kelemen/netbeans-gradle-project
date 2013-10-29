@@ -5,8 +5,9 @@ import org.gradle.util.GradleVersion;
 // Warning: Never rename instances of this enum because they are used to save
 //          the actual configuration.
 public enum ModelLoadingStrategy {
+    NEWEST_POSSIBLE(true),
+    GRADLE_1_8(true),
     USE_IDEA_MODEL(false),
-    BEST_POSSIBLE(true),
     UNSET(false);
 
     private static final GradleVersion GRADLE_VERSION_1_8_RC_1 = GradleVersion.version("1.8-rc-1");
