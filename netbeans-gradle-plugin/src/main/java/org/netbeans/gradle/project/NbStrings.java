@@ -324,6 +324,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker", projectName);
     }
 
+    public static String getRootProjectDescription(String projectName, String projectPath) {
+        return NbBundle.getMessage(NbStrings.class, "HINT_RootProjectMarker", projectName, projectPath);
+    }
+
+    public static String getSubProjectDescription(String projectName, String projectPath) {
+        return NbBundle.getMessage(NbStrings.class, "HINT_SubProjectMarker", projectName, projectPath);
+    }
+
     public static String getGradleProjectCategoryName() {
         return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectCategoryName");
     }

@@ -280,6 +280,11 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         public String getDisplayName() {
             return project.getDisplayName();
         }
+
+        @Override
+        public String getShortDescription() {
+            return project.getDescription();
+        }
     }
 
     @Override
