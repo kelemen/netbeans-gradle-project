@@ -31,6 +31,7 @@ public final class NbGradleModel {
     private final DynamicLookup allModels;
 
     private final String displayName;
+    private final String description;
     // This field is provided, so that the governing project can detect that
     // something has changed in the model, so it needs to reparse things.
     private final AtomicReference<Object> stateID;
@@ -63,6 +64,7 @@ public final class NbGradleModel {
         this.extensionModels = extensionModels;
         this.dirty = false;
         this.displayName = findDisplayName();
+        this.description = findDescription();
         this.mainModelsRef = mainLookupRef;
         this.allModels = new DynamicLookup();
         this.stateID = new AtomicReference<Object>(new Object());
@@ -108,6 +110,29 @@ public final class NbGradleModel {
             }
             else {
                 return scriptName;
+            }
+        }
+    }
+
+    private String findDescription() {
+        if (isBuildSrc()) {
+          // TODO(radimk) need some better descriptio
+          return findDisplayName();
+        }
+        else {
+            String scriptName = getMainProject().getProjectFullName();
+            scriptName = scriptName.trim();
+            if (scriptName.isEmpty()) {
+                scriptName = getProjectDir().getName();
+            }
+
+            String path = getMainProject().getProjectDir() != null ? 
+                    getMainProject().getProjectDir().getAbsolutePath() : "(unknown)";
+            if (isRootProject()) {
+                return NbStrings.getRootProjectDescription(scriptName, path);
+            }
+            else {
+                return NbStrings.getSubProjectDescription(scriptName, path);
             }
         }
     }
@@ -202,6 +227,10 @@ public final class NbGradleModel {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public boolean isBuildSrc() {

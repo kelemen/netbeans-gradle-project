@@ -425,6 +425,11 @@ public final class NbGradleProject implements Project {
     }
 
     @Nonnull
+    public String getDescription() {
+        return getAvailableModel().getDescription();
+    }
+
+    @Nonnull
     public File getProjectDirectoryAsFile() {
         return projectDirAsFile;
     }
