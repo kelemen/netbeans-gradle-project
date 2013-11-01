@@ -339,13 +339,38 @@ public final class GenericModelFetcher {
             return result;
         }
 
+        private static GradleProject findAssociatedGradleProject(
+                BasicGradleProject requiredProject,
+                GradleProject projectTree) {
+            String requiredPath = requiredProject.getPath();
+            if (requiredPath.equals(projectTree.getPath())) {
+                return projectTree;
+            }
+
+            return projectTree.findByPath(requiredPath);
+        }
+
+        // The reason why this method exists is because requesting
+        // GradleProject for a particular BasicGradleProject returns the
+        // root GradleProject instance (tested with 1.8 and 1.9).
+        private GradleProject getGradleProjectForBasicProject(
+                BuildController controller,
+                BasicGradleProject project) {
+            GradleProject gradleProject = controller.findModel(project, GradleProject.class);
+            if (gradleProject == null) {
+                return null;
+            }
+
+            return findAssociatedGradleProject(project, gradleProject);
+        }
+
         private Collection<GradleTaskID> getTasksOfProjects(
                 BuildController controller, BasicGradleProject project) {
 
             // TODO: Do not load tasks in later versions if the project is not
             //   evaluated.
 
-            GradleProject gradleProject = controller.findModel(project, GradleProject.class);
+            GradleProject gradleProject = getGradleProjectForBasicProject(controller, project);
             if (gradleProject == null) {
                 return Collections.emptyList();
             }

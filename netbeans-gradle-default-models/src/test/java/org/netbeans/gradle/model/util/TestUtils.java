@@ -7,7 +7,7 @@ import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 
 public final class TestUtils {
-    private static final String MAIN_GRADLE_VERSION = "1.8-rc-1";
+    private static final String MAIN_GRADLE_VERSION = "1.8";
 
     private static void runTestForProject(
             String gradleVersion,

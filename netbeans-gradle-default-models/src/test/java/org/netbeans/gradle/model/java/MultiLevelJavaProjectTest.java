@@ -3,11 +3,14 @@ package org.netbeans.gradle.model.java;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.eclipse.EclipseProject;
@@ -21,8 +24,12 @@ import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuiltInModelBuilder;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
+import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.GradleProjectTree;
+import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
@@ -54,6 +61,14 @@ public class MultiLevelJavaProjectTest {
 
     @After
     public void tearDown() {
+    }
+
+    private static File getProjectDir(String... subprojectNames) throws IOException {
+        File result = testedProjectDir;
+        for (String subprojectName: subprojectNames) {
+            result = new File(result, subprojectName);
+        }
+        return result.getCanonicalFile();
     }
 
     private static <T> GradleProjectInfoQuery<T> toQuery(final ProjectInfoBuilder<T> builder) {
@@ -91,6 +106,14 @@ public class MultiLevelJavaProjectTest {
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
+    private static GenericModelFetcher basicInfoFetcher() {
+        Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
+        Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
+        Set<Class<?>> toolingModels = Collections.emptySet();
+
+        return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+    }
+
     private void runTestForSubProject(String projectName, ProjectConnectionTask task) {
         File subDir;
         if (projectName.length() > 0) {
@@ -116,6 +139,77 @@ public class MultiLevelJavaProjectTest {
         @SuppressWarnings("unchecked")
         T result = (T)models.getDefaultProjectModels().getProjectInfoResults().get(0);
         return result;
+    }
+
+    private static GradleMultiProjectDef fetchProjectDef(
+            ProjectConnection connection) throws IOException {
+
+        GenericModelFetcher modelFetcher = basicInfoFetcher();
+        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+
+        return models.getDefaultProjectModels().getProjectDef();
+    }
+
+    private static Set<String> toTaskNames(Collection<GradleTaskID> tasks) {
+        Set<String> result = new LinkedHashSet<String>(2 * tasks.size());
+        for (GradleTaskID task: tasks) {
+            result.add(task.getName());
+        }
+        return result;
+    }
+
+    private static Set<String> mustHaveTasks(
+            String projectPath,
+            Collection<GradleTaskID> tasks,
+            String... expectedNames) {
+        Set<String> otherTasks = new LinkedHashSet<String>();
+
+        Set<String> expectedSet = new LinkedHashSet<String>(Arrays.asList(expectedNames));
+        for (GradleTaskID task: tasks) {
+            String name = task.getName();
+            assertEquals(projectPath + ":" + name, task.getFullName());
+
+            if (!expectedSet.remove(name)) {
+                otherTasks.add(name);
+            }
+        }
+
+        if (!expectedSet.isEmpty()) {
+            fail("The following tasks were not found but were expected: " + expectedSet
+                    + ". The project has the following tasks: " + toTaskNames(tasks));
+        }
+
+        return otherTasks;
+    }
+
+    @Test
+    public void testBasicInfo() {
+        final String projectName = "app1";
+        final String relativeProjectName = "apps:app1";
+        final String[] projectPathParts = relativeProjectName.split(Pattern.quote(":"));
+        final String projectPath = ":" + relativeProjectName;
+
+        runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                GradleMultiProjectDef projectDef = fetchProjectDef(connection);
+                assertNotNull("Must have a GradleMultiProjectDef.", projectDef);
+
+                GradleProjectTree projectTree = projectDef.getMainProject();
+                GenericProjectProperties genericProperties = projectTree.getGenericProperties();
+
+                String fullName = genericProperties.getProjectFullName();
+                assertEquals(projectPath, fullName);
+
+                String simpleName = genericProperties.getProjectName();
+                assertEquals(projectName, simpleName);
+
+                File projectDir = genericProperties.getProjectDir();
+                assertEquals(getProjectDir(projectPathParts), projectDir.getCanonicalFile());
+
+                Collection<GradleTaskID> tasks = projectTree.getTasks();
+                mustHaveTasks(projectPath, tasks, "clean", "build", "compileJava", "compileGroovy");
+            }
+        });
     }
 
     @Test
@@ -162,7 +256,6 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
-
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
             Class<?>... modelClasses) throws IOException {
@@ -197,8 +290,8 @@ public class MultiLevelJavaProjectTest {
                 expected.removeAll(fetched.keySet());
 
                 if (!expected.isEmpty()) {
-                    fail("The following models are unavailable: " +
-                            expected.toString().replace(",", ",\n"));
+                    fail("The following models are unavailable: "
+                            + expected.toString().replace(",", ",\n"));
                 }
             }
         });
