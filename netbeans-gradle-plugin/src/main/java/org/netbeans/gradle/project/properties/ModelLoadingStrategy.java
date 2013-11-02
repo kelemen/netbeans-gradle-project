@@ -6,7 +6,6 @@ import org.gradle.util.GradleVersion;
 //          the actual configuration.
 public enum ModelLoadingStrategy {
     NEWEST_POSSIBLE(true),
-    GRADLE_1_8(true),
     USE_IDEA_MODEL(false),
     UNSET(false);
 
