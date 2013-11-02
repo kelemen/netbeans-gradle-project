@@ -200,7 +200,12 @@
         </dependency>
         <dependency>
             <groupId>com.github.kelemen</groupId>
-            <artifactId>netbeans-gradle-default-models</artifactId>
+            <!-- We have to include the version number in the artifact name  -->
+            <!-- because the Gradle daemon caches jar files and the nbm      -->
+            <!-- plugin packages dependencies without their version number   -->
+            <!-- added to their filename. These issues would cause model     -->
+            <!-- loading failures when updating the plugin.                  -->
+            <artifactId>netbeans-gradle-default-models-${project.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
 
