@@ -38,6 +38,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
+import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectExtensionRef;
@@ -50,6 +51,7 @@ import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
+import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
@@ -343,6 +345,7 @@ public final class GradleModelLoader {
             setupLongRunningOP(setup, modelBuilder);
 
             BuildEnvironment env = modelBuilder.get();
+            reportKnownIssues(env);
             NbModelLoader modelLoader = chooseModel(env, proposedModel, setup);
 
             loadedModels = modelLoader.loadModels(project, projectConnection, progress);
@@ -358,6 +361,17 @@ public final class GradleModelLoader {
         introduceProjects(project, loadedModels.getOtherModels(), result);
 
         return result;
+    }
+
+    private static void reportKnownIssues(BuildEnvironment env) {
+        GradleVersion version = GradleVersion.version(env.getGradle().getGradleVersion());
+        if (GradleVersions.VERSION_1_7.compareTo(version) < 0
+                && GradleVersions.VERSION_1_8.compareTo(version) >= 0) {
+
+            GlobalErrorReporter.showIssue(
+                    NbStrings.getIssueWithGradle18Message(env.getGradle().getGradleVersion()),
+                    null);
+        }
     }
 
     private static NbModelLoader chooseModel(

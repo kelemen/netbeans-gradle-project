@@ -384,6 +384,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "MSG_CachedJarIssueMessage");
     }
 
+    public static String getIssueWithGradle18Message(String gradleVersion) {
+        return NbBundle.getMessage(NbStrings.class, "MSG_IssueWithGradle18Message", gradleVersion);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

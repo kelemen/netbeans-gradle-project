@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import org.gradle.util.GradleVersion;
+import org.netbeans.gradle.project.GradleVersions;
 
 // Warning: Never rename instances of this enum because they are used to save
 //          the actual configuration.
@@ -8,8 +9,6 @@ public enum ModelLoadingStrategy {
     NEWEST_POSSIBLE(true),
     USE_IDEA_MODEL(false),
     UNSET(false);
-
-    private static final GradleVersion GRADLE_VERSION_1_8_RC_1 = GradleVersion.version("1.8-rc-1");
 
     private final boolean mayUse18Api;
 
@@ -22,6 +21,6 @@ public enum ModelLoadingStrategy {
             return false;
         }
 
-        return gradleVersion.compareTo(GRADLE_VERSION_1_8_RC_1) >= 0;
+        return gradleVersion.compareTo(GradleVersions.VERSION_1_8_RC_1) >= 0;
     }
 }
