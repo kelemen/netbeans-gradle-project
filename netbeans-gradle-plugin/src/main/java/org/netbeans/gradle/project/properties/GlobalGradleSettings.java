@@ -50,7 +50,7 @@ public final class GlobalGradleSettings {
         OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
         MAY_RELY_ON_JAVA_OF_SCRIPT = new GlobalProperty<Boolean>("rely-on-java-of-script", new BooleanConverter(false));
         MODEL_LOADING_STRATEGY = new GlobalProperty<ModelLoadingStrategy>("model-load-strategy",
-                new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.UNSET));
+                new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.NEWEST_POSSIBLE));
     }
 
     public static File getGradleInstallationAsFile() {

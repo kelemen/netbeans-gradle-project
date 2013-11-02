@@ -92,7 +92,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         ModelLoadStrategyItem selected = (ModelLoadStrategyItem)jModelLoadStrategy.getSelectedItem();
         return selected != null
                 ? selected.strategy
-                : ModelLoadingStrategy.UNSET;
+                : ModelLoadingStrategy.NEWEST_POSSIBLE;
     }
 
     private String getGradleUserHomeDir() {

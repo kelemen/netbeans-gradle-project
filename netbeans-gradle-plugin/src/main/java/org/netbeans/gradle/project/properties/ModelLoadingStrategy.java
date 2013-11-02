@@ -7,8 +7,7 @@ import org.netbeans.gradle.project.GradleVersions;
 //          the actual configuration.
 public enum ModelLoadingStrategy {
     NEWEST_POSSIBLE(true),
-    USE_IDEA_MODEL(false),
-    UNSET(false);
+    USE_IDEA_MODEL(false);
 
     private final boolean mayUse18Api;
 
