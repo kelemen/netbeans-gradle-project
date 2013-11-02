@@ -204,6 +204,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
 
         public void fireModelChange() {
             fireDisplayNameChange(null, null);
+            fireShortDescriptionChange(null, null);
             updateActionsList();
         }
 
