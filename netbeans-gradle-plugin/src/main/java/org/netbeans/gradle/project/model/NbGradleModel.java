@@ -126,8 +126,7 @@ public final class NbGradleModel {
                 scriptName = getProjectDir().getName();
             }
 
-            String path = getMainProject().getProjectDir() != null ? 
-                    getMainProject().getProjectDir().getAbsolutePath() : "(unknown)";
+            String path = getMainProject().getProjectDir().getAbsolutePath();
             if (isRootProject()) {
                 return NbStrings.getRootProjectDescription(scriptName, path);
             }
