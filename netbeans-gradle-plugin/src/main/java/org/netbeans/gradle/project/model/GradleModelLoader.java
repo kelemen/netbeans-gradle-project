@@ -47,6 +47,7 @@ import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.tasks.DaemonTask;
+import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.openide.filesystems.FileObject;
@@ -180,6 +181,9 @@ public final class GradleModelLoader {
                     error = ex;
                 } finally {
                     listener.onComplete(model, error);
+                    if (error != null) {
+                        GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
+                    }
                 }
             }
         }, true, GradleTasks.projectTaskCompleteListener(project));

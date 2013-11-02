@@ -376,6 +376,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "LBL_ModelLoadStrategy." + strategy.name());
     }
 
+    public static String getGlobalErrorReporterTitle() {
+        return NbBundle.getMessage(NbStrings.class, "LBL_GlobalErrorReporterTitle");
+    }
+
+    public static String getCachedJarIssueMessage() {
+        return NbBundle.getMessage(NbStrings.class, "MSG_CachedJarIssueMessage");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
