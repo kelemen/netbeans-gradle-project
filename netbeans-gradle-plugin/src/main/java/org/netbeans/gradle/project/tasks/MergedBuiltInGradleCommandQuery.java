@@ -51,9 +51,8 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
     @Override
     public GradleCommandTemplate tryGetDefaultGradleCommand(ProfileDef profileDef, String command) {
         for (BuiltInGradleCommandQuery query: getAllQueries()) {
-            GradleCommandTemplate result = query.tryGetDefaultGradleCommand(profileDef, command);
-            if (result != null) {
-                return result;
+            if (query.getSupportedCommands().contains(command)) {
+                return query.tryGetDefaultGradleCommand(profileDef, command);
             }
         }
         return null;
@@ -62,12 +61,10 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
     @Override
     public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command) {
         for (BuiltInGradleCommandQuery query: getAllQueries()) {
-            CustomCommandActions result = query.tryGetCommandDefs(profileDef, command);
-            if (result != null) {
-                return result;
+            if (query.getSupportedCommands().contains(command)) {
+                return query.tryGetCommandDefs(profileDef, command);
             }
         }
         return null;
     }
-
 }
