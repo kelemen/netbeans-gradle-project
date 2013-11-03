@@ -8,254 +8,254 @@ import org.openide.util.NbBundle;
 
 public final class NbStrings {
     public static String getSrcPackageCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_SrcJava");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SrcJava");
     }
 
     public static String getResourcesPackageCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Resources");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Resources");
     }
 
     public static String getTestPackageCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TestJava");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TestJava");
     }
 
     public static String getTestResourcesPackageCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TestResources");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TestResources");
     }
 
     public static String getOtherPackageCaption(String sourceSetName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OtherSources", sourceSetName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OtherSources", sourceSetName);
     }
 
     public static String getMultiRootSourceGroups(String mainName, String subName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_MultiRootSourceGroups", mainName, subName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.MultiRootSourceGroups", mainName, subName);
     }
 
     public static String getSubProjectsCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_SubProjects");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SubProjects");
     }
 
     public static String getLoadingProjectText(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_LoadingProject", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.LoadingProject", projectName);
     }
 
     public static String getExecuteTasksText(String taskName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ExecutingGradleTasks", taskName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ExecutingGradleTasks", taskName);
     }
 
     public static String getExecutingTaskMessage(String command) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ExecutingTask", command);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ExecutingTask", command);
     }
 
     public static String getTaskArgumentsMessage(List<String> arguments) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_TaskArguments", arguments);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TaskArguments", arguments);
     }
 
     public static String getTaskJvmArgumentsMessage(List<String> arguments) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_TaskJvmArguments", arguments);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TaskJvmArguments", arguments);
     }
 
     public static String getDependenciesNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Dependencies");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Dependencies");
     }
 
     public static String getBuildScriptsNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_BuildScripts");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildScripts");
     }
 
     public static String getCompileForSourceSet(String sourceSetName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_CompileForSourceSet", sourceSetName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CompileForSourceSet", sourceSetName);
     }
 
     public static String getProvidedForSourceSet(String sourceSetName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ProvidedForSourceSet", sourceSetName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ProvidedForSourceSet", sourceSetName);
     }
 
     public static String getRuntimeForSourceSet(String sourceSetName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_RuntimeForSourceSet", sourceSetName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RuntimeForSourceSet", sourceSetName);
     }
 
     public static String getSourceSetInherits(String baseName, String inherited) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_SourceSetInherits", baseName, inherited);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SourceSetInherits", baseName, inherited);
     }
 
     public static String getRunCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Run");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Run");
     }
 
     public static String getDebugCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Debug");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Debug");
     }
 
     public static String getBuildCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Build");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Build");
     }
 
     public static String getTestCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Test");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Test");
     }
 
     public static String getCleanCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Clean");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Clean");
     }
 
     public static String getRebuildCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Rebuild");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Rebuild");
     }
 
     public static String getJavadocCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Javadoc");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Javadoc");
     }
 
     public static String getCustomTasksCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_CustomTasks");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTasks");
     }
 
     public static String getTestSingleCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TestSingle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TestSingle");
     }
 
     public static String getDebugTestSingleCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DebugTestSingle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DebugTestSingle");
     }
 
     public static String getRunSingleCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_RunSingle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RunSingle");
     }
 
     public static String getDebugSingleCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DebugSingle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DebugSingle");
     }
 
     public static String getApplyCodeChangesCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ApplyCodeChanges");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ApplyCodeChanges");
     }
 
     public static String getTasksMenuCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Tasks");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Tasks");
     }
 
     public static String getReloadCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ReloadProject");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReloadProject");
     }
 
     public static String getOpenImmediateSubProjectsCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OpenImmediateSubProjects");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenImmediateSubProjects");
     }
 
     public static String getBuildSrcNodeCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_BuildSrcNode");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildSrcNode");
     }
 
     public static String getOpenBuildSrcCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OpenBuildSrc");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenBuildSrc");
     }
 
     public static String getBuildSrcMarker(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_BuildSrcMarker", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildSrcMarker", projectName);
     }
 
     public static String getOpenSubProjectsCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OpenEverySubProject");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenEverySubProject");
     }
 
     public static String getOpenSubProjectCaption(Collection<? extends NbGradleProjectTree> projects) {
         int numberOfProjects = projects.size();
         if (numberOfProjects == 1) {
             String name = projects.iterator().next().getProjectName();
-            return NbBundle.getMessage(NbStrings.class, "LBL_OpenSingleSubProject", name);
+            return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenSingleSubProject", name);
         }
         else {
-            return NbBundle.getMessage(NbStrings.class, "LBL_OpenMoreSubProject", numberOfProjects);
+            return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenMoreSubProject", numberOfProjects);
         }
     }
 
     public static String getCustomTaskDlgTitle() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_CustomTaskTitle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTaskTitle");
     }
 
     public static String getManageTasksDlgTitle(String profile) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ManageTasksTitle", profile);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageTasksTitle", profile);
     }
 
     public static String getManageBuiltInTasksDlgTitle(String profile) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ManageBuiltInTasksTitle", profile);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageBuiltInTasksTitle", profile);
     }
 
     public static String getAddNewTaskDlgTitle() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_AddNewTaskTitle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewTaskTitle");
     }
 
     public static String getProjectPropertiesDlgTitle(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ProjectPropertiesTitle", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectPropertiesTitle", projectName);
     }
 
     public static String getInvalidClassPathEntry(String entryName) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_InvalidClassPathEntry", entryName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.InvalidClassPathEntry", entryName);
     }
 
     public static String getErrorCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Error");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Error");
     }
 
     public static String getWarningCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Warning");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Warning");
     }
 
     public static String getInfoCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Info");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Info");
     }
 
     public static String getExecuteLabel() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_Execute");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Execute");
     }
 
     public static String getSaveAndExecuteLabel() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_SaveAndExecute");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SaveAndExecute");
     }
 
     public static String getDeleteProjectCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DeleteProject");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DeleteProject");
     }
 
     public static String getYesOption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OptionYes");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OptionYes");
     }
 
     public static String getNoOption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OptionNo");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OptionNo");
     }
 
     public static String getOkOption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OptionOk");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OptionOk");
     }
 
     public static String getCancelOption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_OptionCancel");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OptionCancel");
     }
 
     public static String getTaskVariableQueryCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_TaskVariableQueryCaption");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TaskVariableQueryCaption");
     }
 
     public static String getConfirmDeleteProject(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmDeleteProject", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmDeleteProject", projectName);
     }
 
     public static String getConfirmDeleteProjectTitle() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmDeleteProjectTitle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmDeleteProjectTitle");
     }
 
     public static String getDeleteProjectProgress(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DeleteProjectProgress", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DeleteProjectProgress", projectName);
     }
 
     public static String getErrorDeleteProject(Throwable error) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorDeleteProject", error);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ErrorDeleteProject", error);
     }
 
     public static String getErrorDeleteProjectTitle() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorDeleteProjectTitle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ErrorDeleteProjectTitle");
     }
 
     public static String getErrorLoadingProject(Throwable ex) {
@@ -269,123 +269,123 @@ public final class NbStrings {
             currentError = currentError.getCause();
         }
 
-        return NbBundle.getMessage(NbStrings.class, "MSG_ErrorLoadingProject", errorText.toString());
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ErrorLoadingProject", errorText.toString());
     }
 
     public static String getSelectProjectLocationCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_SelectProjectLocation");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SelectProjectLocation");
     }
 
     public static String getParsingModel() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ParsingModel");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ParsingModel");
     }
 
     public static String getProjectErrorTitle(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ProjectErrorTitle", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectErrorTitle", projectName);
     }
 
     public static String getProjectLoadFailure(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ProjectLoadFailure", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectLoadFailure", projectName);
     }
 
     public static String getBuildFailure(String tasks) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_BuildFailure", tasks);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildFailure", tasks);
     }
 
     public static String getGradleTaskFailure() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_GradleTaskFailure");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleTaskFailure");
     }
 
     public static String getDefaultProfileName() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DefaultProfile");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DefaultProfile");
     }
 
     public static String getAddNewProfileCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_AddNewProfileCaption");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewProfileCaption");
     }
 
     public static String getInvalidProfileName() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_InvalidProfileName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.InvalidProfileName");
     }
 
     public static String getEmptyProfileName() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_EmptyProfileName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.EmptyProfileName");
     }
 
     public static String getConfirmRemoveProfile(String profileName) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_ConfirmRemoveProfile", profileName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmRemoveProfile", profileName);
     }
 
     public static String getUserHomeFileName(String fileName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_UserHomeFile", fileName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.UserHomeFile", fileName);
     }
 
     public static String getRootProjectMarker(String projectName) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_RootProjectMarker", projectName);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectMarker", projectName);
     }
 
     public static String getRootProjectDescription(String projectName, String projectPath) {
-        return NbBundle.getMessage(NbStrings.class, "HINT_RootProjectMarker", projectName, projectPath);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectMarker", projectName, projectPath);
     }
 
     public static String getSubProjectDescription(String projectName, String projectPath) {
-        return NbBundle.getMessage(NbStrings.class, "HINT_SubProjectMarker", projectName, projectPath);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SubProjectMarker", projectName, projectPath);
     }
 
     public static String getGradleProjectCategoryName() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectCategoryName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleProjectCategoryName");
     }
 
     public static String getGradleProjectLicenseCategoryName() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_GradleProjectLicenseCategoryName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleProjectLicenseCategoryName");
     }
 
     public static String getDownloadSourcesProgressCaption() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSourcesProgressCaption");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DownloadSourcesProgressCaption");
     }
 
     public static String getDownloadSources() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSources");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DownloadSources");
     }
 
     public static String getDownloadSourcesFailure() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_DownloadSourcesFailure");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DownloadSourcesFailure");
     }
 
     public static String getWebPages() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_WebAppDir");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.WebAppDir");
     }
 
     public static String getReRunName() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunName");
     }
 
     public static String getReRunDescription() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDescription");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDescription");
     }
 
     public static String getReRunDiffName() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDiffName");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDiffName");
     }
 
     public static String getReRunDiffDescription() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ReRunDiffDescription");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDiffDescription");
     }
 
     public static String getModelLoadStrategy(ModelLoadingStrategy strategy) {
-        return NbBundle.getMessage(NbStrings.class, "LBL_ModelLoadStrategy." + strategy.name());
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ModelLoadStrategy." + strategy.name());
     }
 
     public static String getGlobalErrorReporterTitle() {
-        return NbBundle.getMessage(NbStrings.class, "LBL_GlobalErrorReporterTitle");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GlobalErrorReporterTitle");
     }
 
     public static String getCachedJarIssueMessage() {
-        return NbBundle.getMessage(NbStrings.class, "MSG_CachedJarIssueMessage");
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CachedJarIssueMessage");
     }
 
     public static String getIssueWithGradle18Message(String gradleVersion) {
-        return NbBundle.getMessage(NbStrings.class, "MSG_IssueWithGradle18Message", gradleVersion);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.IssueWithGradle18Message", gradleVersion);
     }
 
     private NbStrings() {
