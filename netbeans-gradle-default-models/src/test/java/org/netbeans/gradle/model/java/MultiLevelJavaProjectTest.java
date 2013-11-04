@@ -276,6 +276,10 @@ public class MultiLevelJavaProjectTest {
         return concatArrays(groovyProjects(), javaProjects());
     }
 
+    private static String[] allProjects() {
+        return concatArrays(new String[]{""}, subprojects());
+    }
+
     @Test
     public void testBasicInfoForJavaProjects() {
         String[] expectedTasks = {"clean", "build", "compileJava"};
@@ -359,13 +363,15 @@ public class MultiLevelJavaProjectTest {
 
     @Test
     public void testWarFoldersModel() throws IOException {
-        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
-            public void doTask(ProjectConnection connection) throws Exception {
-                WarFoldersModel warFolders
-                        = fetchSingleProjectInfo(connection, WarFoldersModelBuilder.INSTANCE);
-                assertNull("Must not have a WarFoldersModel.", warFolders);
-            }
-        });
+        for (String project: allProjects()) {
+            runTestForSubProject(project, new ProjectConnectionTask() {
+                public void doTask(ProjectConnection connection) throws Exception {
+                    WarFoldersModel warFolders
+                            = fetchSingleProjectInfo(connection, WarFoldersModelBuilder.INSTANCE);
+                    assertNull("Must not have a WarFoldersModel.", warFolders);
+                }
+            });
+        }
     }
 
     private static Map<Class<?>, Object> fetchBuiltInModels(
