@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.eclipse.EclipseProject;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -392,9 +393,10 @@ public class MultiLevelJavaProjectTest {
         return result;
     }
 
-    @Test
-    public void testBuiltInModels() throws IOException {
-        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+    private void testBuiltInModels(String relativeProjectPath) throws IOException {
+        final String projectPath = ":" + relativeProjectPath;
+
+        runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 Class<?>[] models = new Class<?>[]{
                     EclipseProject.class,
@@ -411,7 +413,32 @@ public class MultiLevelJavaProjectTest {
                     fail("The following models are unavailable: "
                             + expected.toString().replace(",", ",\n"));
                 }
+
+                // FIXME: We don't test the GradleProject instance because
+                //  Gradle returns the root project for each project. Is this a bug?
+
+                EclipseProject eclipseProject = (EclipseProject)fetched.get(EclipseProject.class);
+                assertEquals("EclipseProject must match the requested one",
+                        projectPath, eclipseProject.getGradleProject().getPath());
+
+                IdeaProject ideaProject = (IdeaProject)fetched.get(IdeaProject.class);
+                GradleProject gradleProjectOfIdea = null;
+                for (IdeaModule ideaModule: ideaProject.getModules()) {
+                    if (projectPath.equals(ideaModule.getGradleProject().getPath())) {
+                        gradleProjectOfIdea = ideaModule.getGradleProject();
+                        break;
+                    }
+                }
+
+                assertNotNull("IdeaProject must contain the requested module.", gradleProjectOfIdea);
             }
         });
+    }
+
+    @Test
+    public void testBuiltInModels() throws IOException {
+        for (String project: allProjects()) {
+            testBuiltInModels(project);
+        }
     }
 }
