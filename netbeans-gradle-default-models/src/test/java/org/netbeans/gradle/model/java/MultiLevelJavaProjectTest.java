@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -34,6 +36,7 @@ import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
+import org.netbeans.gradle.model.util.SourceSetVerification;
 import org.netbeans.gradle.model.util.ZipUtils;
 
 import static org.junit.Assert.*;
@@ -313,13 +316,93 @@ public class MultiLevelJavaProjectTest {
         testBasicInfoForProjectWithTasks("", expectedTasks, unexpectedTasks);
     }
 
+    private static JavaClassPaths classPathsOfSourceSet(JavaSourcesModel model, String sourceSetName) {
+        for (JavaSourceSet sourceSet: model.getSourceSets()) {
+            if (sourceSetName.equals(sourceSet.getName())) {
+                return sourceSet.getClasspaths();
+            }
+        }
+
+        throw new AssertionError("Missing source set: " + sourceSetName);
+    }
+
+    private Map<File, String> parseProjectDependencies(String... projectDependencies) throws IOException {
+        Map<File, String> result = new HashMap<File, String>(2 * projectDependencies.length);
+        for (String dep: projectDependencies) {
+            String[] nameParts = dep.split(Pattern.quote(":"));
+            String name = nameParts[nameParts.length - 1];
+            File projectDir = getProjectDir(nameParts);
+            result.put(getSubPath(projectDir, "build", "libs", name + ".jar"), dep);
+        }
+        return result;
+    }
+
+    private void verifyProjectDependencies(Set<File> files, String... projectDependencies) throws IOException {
+        Map<File, String> expected = parseProjectDependencies(projectDependencies);
+        for (Map.Entry<File, String> entry: expected.entrySet()) {
+            if (!files.contains(entry.getKey())) {
+                fail("Expected project dependency " + entry.getValue());
+            }
+        }
+    }
+
+    private void verifyArtifact(Set<File> files, String artifactName, String version) {
+        for (File file: files) {
+            String name = file.getName();
+            if (name.contains(artifactName) && name.contains(version)) {
+                return;
+            }
+        }
+
+        fail("Missing required artifact: " + artifactName + ":" + version);
+    }
+
+    private void verifyTestClassPath(Set<File> files) {
+        verifyArtifact(files, "junit", "4.11");
+        verifyArtifact(files, "mockito-core", "1.9.5");
+    }
+
+    private void testJavaSourcesModelForJavaProject(
+            String relativeProjectName,
+            final JavaSourcesModel expected,
+            final String... projectDependencies) {
+
+        runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JavaSourcesModel sourcesModel
+                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.COMPLETE);
+                assertNotNull("Must have a JavaSourcesModel.", sourcesModel);
+                SourceSetVerification.verifySourcesModelWithoutDependencies(expected, sourcesModel);
+
+                JavaClassPaths mainClassPaths = classPathsOfSourceSet(sourcesModel, "main");
+                verifyProjectDependencies(mainClassPaths.getCompileClasspaths(), projectDependencies);
+                verifyProjectDependencies(mainClassPaths.getRuntimeClasspaths(), projectDependencies);
+
+                JavaClassPaths testClassPaths = classPathsOfSourceSet(sourcesModel, "test");
+                verifyTestClassPath(testClassPaths.getCompileClasspaths());
+                verifyTestClassPath(testClassPaths.getRuntimeClasspaths());
+            }
+        });
+    }
+
     @Test
-    public void testJavaSourcesModel() {
-        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+    public void testJavaSourcesModel() throws IOException {
+        testJavaSourcesModelForJavaProject("apps:app1", sourcesOfApp1(), "libs:lib1", "libs:lib2");
+        testJavaSourcesModelForJavaProject("apps:app2", sourcesOfApp2(), "libs:lib1", "libs:lib2");
+        testJavaSourcesModelForJavaProject("libs:lib1", sourcesOfLib1(), "libs:lib2");
+        testJavaSourcesModelForJavaProject("libs:lib2", sourcesOfLib2());
+        testJavaSourcesModelForJavaProject("libs:lib3", sourcesOfLib3());
+        testJavaSourcesModelForJavaProject("libs:lib3:lib1", sourcesOfLib3Lib1());
+        testJavaSourcesModelForJavaProject("libs:lib3:lib2", sourcesOfLib3Lib2());
+    }
+
+    @Test
+    public void testJavaSourcesModelForRoot() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
                         = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.ONLY_COMPILE);
-                assertNotNull("Must have a JavaSourcesModel.", sourcesModel);
+                assertNull("Root must not have a JavaSourcesModel.", sourcesModel);
             }
         });
     }
@@ -478,5 +561,107 @@ public class MultiLevelJavaProjectTest {
         for (String project: allProjects()) {
             testBuiltInModels(project);
         }
+    }
+
+    private static JavaOutputDirs defaultOutputOfSourceSet(
+            File projectDir,
+            String name) throws IOException {
+
+        File classesDir = getSubPath(projectDir, "build", "classes", name);
+        File resourcesDir = getSubPath(projectDir, "build", "resources", name);
+        return new JavaOutputDirs(classesDir, resourcesDir, Collections.<File>emptySet());
+    }
+
+    private static JavaSourceGroup sourceGroupOfSourceSet(
+            File projectDir,
+            String name,
+            JavaSourceGroupName sourceGroupName) throws IOException {
+
+        File sourceRoot = getSubPath(projectDir, name, sourceGroupName.name().toLowerCase(Locale.US));
+        return new JavaSourceGroup(sourceGroupName, Collections.singleton(sourceRoot));
+    }
+
+    private static JavaSourceSet.Builder defaultSourceSetBuilder(
+            File projectDir,
+            String name) throws IOException {
+
+        JavaSourceSet.Builder sourceSet = new JavaSourceSet.Builder(
+                name,
+                defaultOutputOfSourceSet(projectDir, name));
+
+        sourceSet.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.JAVA));
+        sourceSet.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.RESOURCES));
+
+        return sourceSet;
+    }
+
+    private static File projectDirByRelativeName(String relativeProjectName) throws IOException {
+        String[] projectParts = relativeProjectName.length() > 0
+                ? relativeProjectName.split(Pattern.quote(":"))
+                : new String[0];
+        return getProjectDir(projectParts);
+    }
+
+    private static JavaSourceSet defaultJavaSourceSet(
+            File projectDir,
+            String name) throws IOException {
+
+        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name);
+        return builder.create();
+    }
+
+    private static JavaSourceSet defaultGroovySourceSet(
+            File projectDir,
+            String name) throws IOException {
+
+        JavaSourceSet.Builder builder = defaultSourceSetBuilder(projectDir, name);
+        builder.addSourceGroup(sourceGroupOfSourceSet(projectDir, name, JavaSourceGroupName.GROOVY));
+
+        return builder.create();
+    }
+
+    private static JavaSourcesModel sourcesOfJavaProject(String relativeProjectName) throws IOException {
+        File projectDir = projectDirByRelativeName(relativeProjectName);
+
+        Collection<JavaSourceSet> sourceSets = new LinkedList<JavaSourceSet>();
+        sourceSets.add(defaultJavaSourceSet(projectDir, "main"));
+        sourceSets.add(defaultJavaSourceSet(projectDir, "test"));
+
+        return new JavaSourcesModel(sourceSets);
+    }
+
+    private static JavaSourcesModel sourcesOfApp1() throws IOException {
+        String relativeProjectName = "apps:app1";
+        File projectDir = projectDirByRelativeName(relativeProjectName);
+
+        Collection<JavaSourceSet> sourceSets = new LinkedList<JavaSourceSet>();
+        sourceSets.add(defaultGroovySourceSet(projectDir, "main"));
+        sourceSets.add(defaultGroovySourceSet(projectDir, "test"));
+
+        return new JavaSourcesModel(sourceSets);
+    }
+
+    private static JavaSourcesModel sourcesOfApp2() throws IOException {
+        return sourcesOfJavaProject("apps:app2");
+    }
+
+    private static JavaSourcesModel sourcesOfLib1() throws IOException {
+        return sourcesOfJavaProject("libs:lib1");
+    }
+
+    private static JavaSourcesModel sourcesOfLib2() throws IOException {
+        return sourcesOfJavaProject("libs:lib2");
+    }
+
+    private static JavaSourcesModel sourcesOfLib3() throws IOException {
+        return sourcesOfJavaProject("libs:lib3");
+    }
+
+    private static JavaSourcesModel sourcesOfLib3Lib1() throws IOException {
+        return sourcesOfJavaProject("libs:lib3:lib1");
+    }
+
+    private static JavaSourcesModel sourcesOfLib3Lib2() throws IOException {
+        return sourcesOfJavaProject("libs:lib3:lib2");
     }
 }
