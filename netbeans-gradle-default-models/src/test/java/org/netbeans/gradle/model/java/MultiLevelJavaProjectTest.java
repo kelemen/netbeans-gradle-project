@@ -257,6 +257,25 @@ public class MultiLevelJavaProjectTest {
         };
     }
 
+    private static String[] concatArrays(String[]... arrays) {
+        int length = 0;
+        for (String[] array: arrays) {
+            length += array.length;
+        }
+
+        String[] result = new String[length];
+        int offset = 0;
+        for (String[] array: arrays) {
+            System.arraycopy(array, 0, result, offset, array.length);
+            offset += array.length;
+        }
+        return result;
+    }
+
+    private static String[] subprojects() {
+        return concatArrays(groovyProjects(), javaProjects());
+    }
+
     @Test
     public void testBasicInfoForJavaProjects() {
         String[] expectedTasks = {"clean", "build", "compileJava"};
@@ -296,13 +315,33 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
-    @Test
-    public void testJavaCompatibilityModel() throws IOException {
-        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+    private void testJavaCompatibilityModel(String relativeProjectName) throws IOException {
+        runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaCompatibilityModel compatibilityModel
                         = fetchSingleProjectInfo(connection, JavaCompatibilityModelBuilder.INSTANCE);
                 assertNotNull("Must have a JavaCompatibilityModel.", compatibilityModel);
+
+                assertEquals("1.5", compatibilityModel.getSourceCompatibility());
+                assertEquals("1.7", compatibilityModel.getTargetCompatibility());
+            }
+        });
+    }
+
+    @Test
+    public void testJavaCompatibilityModel() throws IOException {
+        for (String project: subprojects()) {
+            testJavaCompatibilityModel(project);
+        }
+    }
+
+    @Test
+    public void testJavaCompatibilityModelForRoot() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JavaCompatibilityModel compatibilityModel
+                        = fetchSingleProjectInfo(connection, JavaCompatibilityModelBuilder.INSTANCE);
+                assertNull("Root must not have a JavaCompatibilityModel.", compatibilityModel);
             }
         });
     }
