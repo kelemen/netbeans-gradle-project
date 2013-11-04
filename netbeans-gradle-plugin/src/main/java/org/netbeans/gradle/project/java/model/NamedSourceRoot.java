@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 
 public final class NamedSourceRoot {
@@ -48,7 +50,7 @@ public final class NamedSourceRoot {
             return "?";
         }
         else {
-            return Character.toUpperCase(sourceSetName.charAt(0)) + sourceSetName.substring(1);
+            return StringUtils.capitalizeFirstCharacter(sourceSetName);
         }
     }
 
@@ -99,7 +101,8 @@ public final class NamedSourceRoot {
                             : NbStrings.getOtherPackageCaption(displaySourceSetName);
                 }
                 else {
-                    String groupDisplayName = groupName.toString().toLowerCase();
+                    String groupDisplayName = StringUtils.capitalizeFirstCharacter(
+                            groupName.toString().toLowerCase(Locale.ROOT));
                     groupNamePrefix = mainName != null
                             ? mainName + " [" + groupDisplayName + "]"
                             :  NbStrings.getOtherPackageCaption(displaySourceSetName + "/" + groupDisplayName);

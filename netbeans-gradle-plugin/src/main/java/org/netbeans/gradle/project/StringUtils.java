@@ -180,6 +180,22 @@ public final class StringUtils {
         return result.toArray(new String[result.size()]);
     }
 
+    public static String capitalizeFirstCharacter(String str) {
+        if (str.length() == 0) {
+            return str;
+        }
+
+        char firstChar = str.charAt(0);
+        char capitalized = Character.toUpperCase(firstChar);
+        if (capitalized == firstChar) {
+            return str;
+        }
+
+        StringBuilder result = new StringBuilder(str);
+        result.setCharAt(0, capitalized);
+        return result.toString();
+    }
+
     private StringUtils() {
         throw new AssertionError();
     }
