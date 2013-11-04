@@ -64,12 +64,16 @@ public class MultiLevelJavaProjectTest {
     public void tearDown() {
     }
 
-    private static File getProjectDir(String... subprojectNames) throws IOException {
-        File result = testedProjectDir;
+    private static File getSubPath(File root, String... subprojectNames) throws IOException {
+        File result = root;
         for (String subprojectName: subprojectNames) {
             result = new File(result, subprojectName);
         }
         return result.getCanonicalFile();
+    }
+
+    private static File getProjectDir(String... subprojectNames) throws IOException {
+        return getSubPath(testedProjectDir, subprojectNames);
     }
 
     private static <T> GradleProjectInfoQuery<T> toQuery(final ProjectInfoBuilder<T> builder) {
@@ -351,13 +355,47 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
-    @Test
-    public void testJarOutputsModel() throws IOException {
-        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+    private void testJarOutputsModel(String relativeProjectPath) throws IOException {
+        String[] projectPathParts = relativeProjectPath.split(Pattern.quote(":"));
+        String name = projectPathParts[projectPathParts.length - 1];
+        File projectDir = getProjectDir(projectPathParts);
+        final File expectedJarPath = getSubPath(projectDir, "build", "libs", name + ".jar");
+
+        runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
                         = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
                 assertNotNull("Must have a JarOutputsModel.", jarOutputs);
+
+                JarOutput mainJar = null;
+                for (JarOutput jar: jarOutputs.getJars()) {
+                    if (jar.getTaskName().equals("jar")) {
+                        mainJar = jar;
+                        break;
+                    }
+                }
+
+                assertNotNull("Project must contain a main jar.", mainJar);
+                assertEquals("Output jar must be at the expected location",
+                        expectedJarPath, mainJar.getJar().getCanonicalFile());
+            }
+        });
+    }
+
+    @Test
+    public void testJarOutputsModel() throws IOException {
+        for (String project: subprojects()) {
+            testJarOutputsModel(project);
+        }
+    }
+
+    @Test
+    public void testJarOutputsModelForRoot() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JarOutputsModel jarOutputs
+                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                assertNull("Root project must not have a JarOutputsModel.", jarOutputs);
             }
         });
     }
