@@ -115,16 +115,23 @@ public class MultiLevelJavaProjectTest {
     }
 
     private void runTestForSubProject(String projectName, ProjectConnectionTask task) {
-        File subDir;
-        if (projectName.length() > 0) {
-            String relName = projectName.replace(":", File.separator);
-            subDir = new File(testedProjectDir, relName);
-        }
-        else {
-            subDir = testedProjectDir;
-        }
+        try {
+            File subDir;
+            if (projectName.length() > 0) {
+                String relName = projectName.replace(":", File.separator);
+                subDir = new File(testedProjectDir, relName);
+            }
+            else {
+                subDir = testedProjectDir;
+            }
 
-        runTestsForProject(subDir, task);
+            runTestsForProject(subDir, task);
+        } catch (Throwable ex) {
+            AssertionError error = new AssertionError("Failure for project \":" + projectName + "\": "
+                    + ex.getMessage());
+            error.initCause(ex);
+            throw error;
+        }
     }
 
     private static <T> T fetchSingleProjectInfo(
@@ -159,15 +166,17 @@ public class MultiLevelJavaProjectTest {
     }
 
     private static Set<String> mustHaveTasks(
-            String projectPath,
+            String relativeProjectPath,
             Collection<GradleTaskID> tasks,
             String... expectedNames) {
+        String taskPrefix = ":" + relativeProjectPath + ":";
+
         Set<String> otherTasks = new LinkedHashSet<String>();
 
         Set<String> expectedSet = new LinkedHashSet<String>(Arrays.asList(expectedNames));
         for (GradleTaskID task: tasks) {
             String name = task.getName();
-            assertEquals(projectPath + ":" + name, task.getFullName());
+            assertEquals(taskPrefix + name, task.getFullName());
 
             if (!expectedSet.remove(name)) {
                 otherTasks.add(name);
@@ -182,34 +191,98 @@ public class MultiLevelJavaProjectTest {
         return otherTasks;
     }
 
-    @Test
-    public void testBasicInfo() {
-        final String projectName = "app1";
-        final String relativeProjectName = "apps:app1";
-        final String[] projectPathParts = relativeProjectName.split(Pattern.quote(":"));
-        final String projectPath = ":" + relativeProjectName;
+    private static void testBasicInfoForProject(
+            String relativeProjectName,
+            GradleMultiProjectDef projectDef) throws IOException {
+        assertNotNull("Must have a GradleMultiProjectDef.", projectDef);
+
+        String[] projectPathParts = relativeProjectName.length() > 0
+                ? relativeProjectName.split(Pattern.quote(":"))
+                : new String[0];
+
+        String projectPath = ":" + relativeProjectName;
+        String projectName = projectPathParts.length > 0
+                ? projectPathParts[projectPathParts.length - 1]
+                : "gradle-multi-level";
+
+        GradleProjectTree projectTree = projectDef.getMainProject();
+        GenericProjectProperties genericProperties = projectTree.getGenericProperties();
+
+        String fullName = genericProperties.getProjectFullName();
+        assertEquals(projectPath, fullName);
+
+        String simpleName = genericProperties.getProjectName();
+        assertEquals(projectName, simpleName);
+
+        File projectDir = genericProperties.getProjectDir();
+        assertEquals(getProjectDir(projectPathParts), projectDir.getCanonicalFile());
+    }
+
+    private void testBasicInfoForProjectWithTasks(
+            final String relativeProjectName,
+            final String[] expectedTasks,
+            final String[] unexpectedTasks) {
 
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 GradleMultiProjectDef projectDef = fetchProjectDef(connection);
-                assertNotNull("Must have a GradleMultiProjectDef.", projectDef);
+                testBasicInfoForProject(relativeProjectName, projectDef);
 
-                GradleProjectTree projectTree = projectDef.getMainProject();
-                GenericProjectProperties genericProperties = projectTree.getGenericProperties();
+                Collection<GradleTaskID> tasks = projectDef.getMainProject().getTasks();
+                Set<String> remainingTasks = mustHaveTasks(relativeProjectName, tasks, expectedTasks);
 
-                String fullName = genericProperties.getProjectFullName();
-                assertEquals(projectPath, fullName);
-
-                String simpleName = genericProperties.getProjectName();
-                assertEquals(projectName, simpleName);
-
-                File projectDir = genericProperties.getProjectDir();
-                assertEquals(getProjectDir(projectPathParts), projectDir.getCanonicalFile());
-
-                Collection<GradleTaskID> tasks = projectTree.getTasks();
-                mustHaveTasks(projectPath, tasks, "clean", "build", "compileJava", "compileGroovy");
+                for (String task: unexpectedTasks) {
+                    if (remainingTasks.contains(task)) {
+                        fail("The project must not have the following task: " + task);
+                    }
+                }
             }
         });
+    }
+
+    private static String[] groovyProjects() {
+        return new String[] {
+            "apps:app1",
+        };
+    }
+
+    private static String[] javaProjects() {
+        return new String[] {
+            "libs:lib3:lib1",
+            "apps:app2",
+            "libs:lib1",
+            "libs:lib2",
+            "libs:lib3",
+            "libs:lib3:lib2",
+        };
+    }
+
+    @Test
+    public void testBasicInfoForJavaProjects() {
+        String[] expectedTasks = {"clean", "build", "compileJava"};
+        String[] unexpectedTasks = {"wrapper"};
+
+        for (String relativeProjectName: javaProjects()) {
+            testBasicInfoForProjectWithTasks(relativeProjectName, expectedTasks, unexpectedTasks);
+        }
+    }
+
+    @Test
+    public void testBasicInfoForGroovyProjects() {
+        String[] expectedTasks = {"clean", "build", "compileJava", "compileGroovy"};
+        String[] unexpectedTasks = {"wrapper"};
+
+        for (String relativeProjectName: groovyProjects()) {
+            testBasicInfoForProjectWithTasks(relativeProjectName, expectedTasks, unexpectedTasks);
+        }
+    }
+
+    @Test
+    public void testBasicInfoForRootProject() {
+        String[] expectedTasks = {};
+        String[] unexpectedTasks = {"compileJava"};
+
+        testBasicInfoForProjectWithTasks("", expectedTasks, unexpectedTasks);
     }
 
     @Test
