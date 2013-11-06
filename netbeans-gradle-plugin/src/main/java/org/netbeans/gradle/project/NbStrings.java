@@ -325,11 +325,11 @@ public final class NbStrings {
     }
 
     public static String getRootProjectDescription(String projectName, String projectPath) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectMarker", projectName, projectPath);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectDescription", projectName, projectPath);
     }
 
     public static String getSubProjectDescription(String projectName, String projectPath) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.SubProjectMarker", projectName, projectPath);
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SubProjectDescription", projectName, projectPath);
     }
 
     public static String getGradleProjectCategoryName() {
