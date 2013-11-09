@@ -509,21 +509,17 @@ public final class NbGradleProject implements Project {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 67 * hash + (this.projectDir != null ? this.projectDir.hashCode() : 0);
-        return hash;
+        return 201 + projectDir.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (getClass() != obj.getClass()) return false;
+
         final NbGradleProject other = (NbGradleProject)obj;
-        if (this.projectDir != other.projectDir && (this.projectDir == null || !this.projectDir.equals(other.projectDir)))
-            return false;
-        return true;
+        return this.projectDir.equals(other.projectDir);
     }
 
     // SwingUtilities.invokeLater is used only to guarantee the order of events.
