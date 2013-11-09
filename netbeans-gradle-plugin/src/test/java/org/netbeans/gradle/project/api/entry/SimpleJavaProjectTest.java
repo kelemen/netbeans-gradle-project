@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -162,6 +163,37 @@ public class SimpleJavaProjectTest {
 
                 assertNotNull("Must have a dependencies node", dependenciesNode);
                 assertNotNull("Must have a build scripts node", buildScriptsNode);
+            }
+        });
+    }
+
+    private static void verifyJavaDocActionIsAdded(Action[] actions) {
+        for (Action action: actions) {
+            if (action == null) continue;
+
+            Object name = action.getValue("Name");
+            if (name == null) continue;
+
+            if ("projectCommand:javadoc".equals(name.toString())) {
+                return;
+            }
+        }
+
+        fail("Could not find javadoc command.");
+    }
+
+    @Test
+    public void testJavadocActionIsAdded() throws Exception {
+        final NbGradleProject project = rootProjectRef.getProject();
+
+        SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
+                Node root = view.createLogicalView();
+
+                verifyJavaDocActionIsAdded(root.getActions(false));
+                verifyJavaDocActionIsAdded(root.getActions(true));
             }
         });
     }
