@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.swing.SwingUtilities;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,12 +17,16 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
+import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.filesystems.FileObject;
+import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -139,5 +144,25 @@ public class SimpleJavaProjectTest {
                 }
             }));
         }
+    }
+
+    @Test
+    public void testHasProperNodes() throws Exception {
+        final NbGradleProject project = rootProjectRef.getProject();
+
+        SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
+                Node root = view.createLogicalView();
+
+                Lookup children = Lookups.fixed((Object[])root.getChildren().getNodes());
+                JavaDependenciesNode dependenciesNode = children.lookup(JavaDependenciesNode.class);
+                BuildScriptsNode buildScriptsNode = children.lookup(BuildScriptsNode.class);
+
+                assertNotNull("Must have a dependencies node", dependenciesNode);
+                assertNotNull("Must have a build scripts node", buildScriptsNode);
+            }
+        });
     }
 }
