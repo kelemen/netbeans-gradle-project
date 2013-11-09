@@ -44,7 +44,7 @@ public class SimpleJavaProjectTest {
     private static final List<Closeable> TO_CLOSE = new LinkedList<Closeable>();
     private static File tempFolder;
     private static File projectDir;
-    private Project project;
+    private NbGradleProject project;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -53,7 +53,7 @@ public class SimpleJavaProjectTest {
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
         tempFolder = ZipUtils.unzipResourceToTemp(SimpleJavaProjectTest.class, "gradle-sample.zip");
-        projectDir = FileUtil.normalizeFile(new File(tempFolder, "gradle-sample"));
+        projectDir = new File(tempFolder, "gradle-sample").getCanonicalFile();
         TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(projectDir));
     }
 
@@ -68,12 +68,17 @@ public class SimpleJavaProjectTest {
     @Before
     public void setUp() throws Exception {
         Thread.interrupted();
-        project = ProjectManager.getDefault().findProject(FileUtil.toFileObject(projectDir));
-        NbGradleProject gPrj = project.getLookup().lookup(NbGradleProject.class);
+
+        Project plainProject = ProjectManager.getDefault().findProject(FileUtil.toFileObject(projectDir));
+        assertNotNull(plainProject);
+
+        project = plainProject.getLookup().lookup(NbGradleProject.class);
         assertNotNull(project);
-        GradleTestExtension ext = gPrj.getLookup().lookup(GradleTestExtension.class);
+
+        GradleTestExtension ext = project.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
-        if (!ext.loadedSignal.await(150, TimeUnit.SECONDS)) {
+
+        if (!project.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
     }

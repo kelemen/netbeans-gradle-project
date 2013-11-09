@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -305,12 +306,24 @@ public final class NbGradleProject implements Project {
         return loadedAtLeastOnceSignal.isSignaled();
     }
 
-    public boolean tryWaitForLoadedProject() {
+    private static void checkCanWaitForProjectLoad() {
         if (GradleDaemonManager.isRunningExclusiveTask()) {
             throw new IllegalStateException("Cannot wait for loading a project"
                     + " while blocking daemon tasks from being executed."
                     + " Possible dead-lock.");
         }
+    }
+
+    public boolean tryWaitForLoadedProject(long timeout, TimeUnit unit) {
+        checkCanWaitForProjectLoad();
+
+        // Ensure that the project is started to be loaded.
+        getCurrentModel();
+        return loadedAtLeastOnceSignal.tryWaitForSignal(timeout, unit);
+    }
+
+    public boolean tryWaitForLoadedProject() {
+        checkCanWaitForProjectLoad();
 
         // Ensure that the project is started to be loaded.
         getCurrentModel();
