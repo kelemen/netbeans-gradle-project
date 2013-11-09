@@ -302,15 +302,13 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     return found;
                 }
             }
-
-            // fallback if not found by PackageView.
-            for (int i = 0; i < nodes.length; i++) {
-                for (Node node: nodes[i].getChildren().getNodes(false)) {
-                    Node result = PackageView.findPath(node, fileObject);
+            for (Node node: nodes) {
+                for (Node childNode: node.getChildren().getNodes(false)) {
+                    Node result = PackageView.findPath(childNode, fileObject);
                     if (result != null) {
                         return result;
                     }
-                    Node found = findNodeByFileDataObject(node, fileObject);
+                    Node found = findNodeByFileDataObject(childNode, fileObject);
                     if (found != null) {
                         return found;
                     }
@@ -348,10 +346,10 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     }
                     else {
                         Node[] childs = folderNode.getChildren().getNodes(false);
-                        for (int j = 0; j < childs.length; j++) {
-                            DataObject dobj = childs[j].getLookup().lookup(DataObject.class);
+                        for (Node child: childs) {
+                            DataObject dobj = child.getLookup().lookup(DataObject.class);
                             if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(fo.getNameExt())) {
-                                return childs[j];
+                                return child;
                             }
                         }
                     }
