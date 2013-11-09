@@ -2,12 +2,8 @@ package org.netbeans.gradle.project.api.entry;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import java.io.Closeable;
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,17 +15,13 @@ import org.junit.Test;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectManager;
-import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -41,10 +33,8 @@ import static org.netbeans.spi.project.ActionProvider.*;
  * @author radim
  */
 public class SimpleJavaProjectTest {
-    private static final List<Closeable> TO_CLOSE = new LinkedList<Closeable>();
-    private static File tempFolder;
-    private static File projectDir;
-    private NbGradleProject project;
+    private static SampleGradleProject sampleProject;
+    private LoadedProject rootProjectRef;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -52,28 +42,26 @@ public class SimpleJavaProjectTest {
         GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.6"));
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
-        tempFolder = ZipUtils.unzipResourceToTemp(SimpleJavaProjectTest.class, "gradle-sample.zip");
-        projectDir = new File(tempFolder, "gradle-sample").getCanonicalFile();
-        TO_CLOSE.add(NbGradleProjectFactory.safeToOpen(projectDir));
+        sampleProject = SampleGradleProject.createProject("gradle-sample.zip");
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        for (Closeable closeable : TO_CLOSE) {
-            closeable.close();
+        SampleGradleProject toClose = sampleProject;
+        sampleProject = null;
+
+        if (toClose != null) {
+            toClose.close();
         }
-        TO_CLOSE.clear();
     }
 
     @Before
     public void setUp() throws Exception {
         Thread.interrupted();
 
-        Project plainProject = ProjectManager.getDefault().findProject(FileUtil.toFileObject(projectDir));
-        assertNotNull(plainProject);
+        rootProjectRef = sampleProject.loadProject("gradle-sample");
 
-        project = plainProject.getLookup().lookup(NbGradleProject.class);
-        assertNotNull(project);
+        NbGradleProject project = rootProjectRef.getProject();
 
         GradleTestExtension ext = project.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
@@ -84,17 +72,15 @@ public class SimpleJavaProjectTest {
     }
 
     @After
-    public void tearDown() {
-        project = null;
-    }
-
-    @AfterClass
-    public static void clear() throws Exception {
-        ZipUtils.recursiveDelete(tempFolder);
+    public void tearDown() throws Exception {
+        rootProjectRef.close();
+        rootProjectRef = null;
     }
 
     @Test
     public void testClassPath() throws Exception {
+        NbGradleProject project = rootProjectRef.getProject();
+
         FileObject foProjectSrc = project.getProjectDirectory().getFileObject("src/main/java/org/netbeans/gradle/Sample.java");
 
         // get the classpath
@@ -113,7 +99,9 @@ public class SimpleJavaProjectTest {
     }
 
     @Test
-    public void testSingleCommandsEnabledForJava() {
+    public void testSingleCommandsEnabledForJava() throws Exception {
+        NbGradleProject project = rootProjectRef.getProject();
+
         ActionProvider actionProvider = project.getLookup().lookup(ActionProvider.class);
         Set<String> supportedActions = new HashSet<String>(Arrays.asList(actionProvider.getSupportedActions()));
 
