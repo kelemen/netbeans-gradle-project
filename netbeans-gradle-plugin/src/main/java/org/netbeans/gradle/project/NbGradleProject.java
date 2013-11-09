@@ -691,10 +691,7 @@ public final class NbGradleProject implements Project {
             fireModelChangeEvent();
         }
 
-        @Override
-        public void onComplete(NbGradleModel model, Throwable error) {
-            loadedAtLeastOnceSignal.signal();
-
+        private void applyModelLoadResults(NbGradleModel model, Throwable error) {
             boolean hasChanged = false;
             if (model != null) {
                 NbGradleModelRef newModel = new NbGradleModelRef(model);
@@ -721,6 +718,15 @@ public final class NbGradleProject implements Project {
                 else {
                     notifyModelChange(model);
                 }
+            }
+        }
+
+        @Override
+        public void onComplete(NbGradleModel model, Throwable error) {
+            try {
+                applyModelLoadResults(model, error);
+            } finally {
+                loadedAtLeastOnceSignal.signal();
             }
         }
     }
