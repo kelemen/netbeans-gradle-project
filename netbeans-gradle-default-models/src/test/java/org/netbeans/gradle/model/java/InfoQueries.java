@@ -15,7 +15,6 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
-import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.assertTrue;
 import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
