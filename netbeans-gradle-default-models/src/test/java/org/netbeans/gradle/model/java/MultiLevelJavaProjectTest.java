@@ -23,7 +23,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuiltInModelBuilder;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
@@ -34,7 +33,6 @@ import org.netbeans.gradle.model.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
-import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
 import org.netbeans.gradle.model.util.ZipUtils;
@@ -79,37 +77,13 @@ public class MultiLevelJavaProjectTest {
         return getSubPath(testedProjectDir, subprojectNames);
     }
 
-    private static <T> GradleProjectInfoQuery<T> toQuery(final ProjectInfoBuilder<T> builder) {
-        return new GradleProjectInfoQuery<T>() {
-            public ProjectInfoBuilder<T> getInfoBuilder() {
-                return builder;
-            }
-
-            public Set<File> getInfoClassPath() {
-                return Collections.emptySet();
-            }
-        };
-    }
-
-    private static <T> GradleBuildInfoQuery<T> toQuery(final BuildInfoBuilder<T> builder) {
-        return new GradleBuildInfoQuery<T>() {
-            public BuildInfoBuilder<T> getInfoBuilder() {
-                return builder;
-            }
-
-            public Set<File> getInfoClassPath() {
-                return Collections.singleton(ClassLoaderUtils.findClassPathOfClass(builder.getClass()));
-            }
-        };
-    }
-
     private static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder<?>... builders) {
         Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
         Map<Object, GradleProjectInfoQuery<?>> projectInfos = new HashMap<Object, GradleProjectInfoQuery<?>>();
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
-            projectInfos.put(i, toQuery(builders[i]));
+            projectInfos.put(i, InfoQueries.toBuiltInQuery(builders[i]));
         }
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
@@ -504,7 +478,7 @@ public class MultiLevelJavaProjectTest {
         Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
         Set<Class<?>> toolingModels = Collections.emptySet();
 
-        buildInfos.put(0, toQuery(new BuiltInModelBuilder(modelClasses)));
+        buildInfos.put(0, InfoQueries.toBuiltInQuery(new BuiltInModelBuilder(modelClasses)));
 
         GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         FetchedModels models = modelFetcher.getModels(connection, defaultInit());
