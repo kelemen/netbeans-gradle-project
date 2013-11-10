@@ -32,22 +32,25 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
+import org.netbeans.gradle.model.util.TestUtils;
 import org.netbeans.gradle.model.util.ZipUtils;
 
 import static org.junit.Assert.*;
+import static org.netbeans.gradle.model.java.InfoQueries.*;
 import static org.netbeans.gradle.model.util.TestUtils.*;
 
 public class MultiLevelJavaProjectTest {
+    private static final String ROOT_NAME = "gradle-multi-level";
+
     private static File tempFolder = null;
     private static File testedProjectDir = null;
 
     @BeforeClass
     public static void setUpClass() throws IOException {
         tempFolder = ZipUtils.unzipResourceToTemp(MultiLevelJavaProjectTest.class, "gradle-multi-level.zip");
-        testedProjectDir = new File(tempFolder, "gradle-multi-level");
+        testedProjectDir = new File(tempFolder, ROOT_NAME);
     }
 
     @AfterClass
@@ -65,78 +68,12 @@ public class MultiLevelJavaProjectTest {
     public void tearDown() {
     }
 
-    private static File getSubPath(File root, String... subprojectNames) throws IOException {
-        File result = root;
-        for (String subprojectName: subprojectNames) {
-            result = new File(result, subprojectName);
-        }
-        return result.getCanonicalFile();
-    }
-
     private static File getProjectDir(String... subprojectNames) throws IOException {
         return getSubPath(testedProjectDir, subprojectNames);
     }
 
-    private static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder<?>... builders) {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = new HashMap<Object, GradleProjectInfoQuery<?>>();
-        Set<Class<?>> toolingModels = Collections.emptySet();
-
-        for (int i = 0; i < builders.length; i++) {
-            projectInfos.put(i, InfoQueries.toBuiltInQuery(builders[i]));
-        }
-        return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
-    }
-
-    private static GenericModelFetcher basicInfoFetcher() {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
-        Set<Class<?>> toolingModels = Collections.emptySet();
-
-        return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
-    }
-
     private void runTestForSubProject(String projectName, ProjectConnectionTask task) {
-        try {
-            File subDir;
-            if (projectName.length() > 0) {
-                String relName = projectName.replace(":", File.separator);
-                subDir = new File(testedProjectDir, relName);
-            }
-            else {
-                subDir = testedProjectDir;
-            }
-
-            runTestsForProject(subDir, task);
-        } catch (Throwable ex) {
-            AssertionError error = new AssertionError("Failure for project \":" + projectName + "\": "
-                    + ex.getMessage());
-            error.initCause(ex);
-            throw error;
-        }
-    }
-
-    private static <T> T fetchSingleProjectInfo(
-            ProjectConnection connection,
-            ProjectInfoBuilder<T> infoBuilder) throws IOException {
-
-        GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
-
-        assertTrue(models.getBuildInfoResults().isEmpty());
-
-        @SuppressWarnings("unchecked")
-        T result = (T)models.getDefaultProjectModels().getProjectInfoResults().get(0);
-        return result;
-    }
-
-    private static GradleMultiProjectDef fetchProjectDef(
-            ProjectConnection connection) throws IOException {
-
-        GenericModelFetcher modelFetcher = basicInfoFetcher();
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
-
-        return models.getDefaultProjectModels().getProjectDef();
+        TestUtils.runTestForSubProject(testedProjectDir, projectName, task);
     }
 
     private static Set<String> toTaskNames(Collection<GradleTaskID> tasks) {
@@ -185,7 +122,7 @@ public class MultiLevelJavaProjectTest {
         String projectPath = ":" + relativeProjectName;
         String projectName = projectPathParts.length > 0
                 ? projectPathParts[projectPathParts.length - 1]
-                : "gradle-multi-level";
+                : ROOT_NAME;
 
         GradleProjectTree projectTree = projectDef.getMainProject();
         GenericProjectProperties genericProperties = projectTree.getGenericProperties();
@@ -478,7 +415,7 @@ public class MultiLevelJavaProjectTest {
         Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
         Set<Class<?>> toolingModels = Collections.emptySet();
 
-        buildInfos.put(0, InfoQueries.toBuiltInQuery(new BuiltInModelBuilder(modelClasses)));
+        buildInfos.put(0, toBuiltInQuery(new BuiltInModelBuilder(modelClasses)));
 
         GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         FetchedModels models = modelFetcher.getModels(connection, defaultInit());
@@ -570,10 +507,7 @@ public class MultiLevelJavaProjectTest {
     }
 
     private static File projectDirByRelativeName(String relativeProjectName) throws IOException {
-        String[] projectParts = relativeProjectName.length() > 0
-                ? relativeProjectName.split(Pattern.quote(":"))
-                : new String[0];
-        return getProjectDir(projectParts);
+        return getSubProjectDir(testedProjectDir, relativeProjectName);
     }
 
     private static JavaSourceSet defaultJavaSourceSet(
