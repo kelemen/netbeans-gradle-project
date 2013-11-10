@@ -5,9 +5,20 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
+import org.gradle.api.Project;
 
 public final class ClassLoaderUtils {
     private static final AtomicReference<File> JAR_OF_THIS_PROJECT = new AtomicReference<File>(null);
+
+    public static Class<?> tryGetClass(Project project, String className) {
+        ClassLoader classLoaderOfScript = project.getBuildscript().getClassLoader();
+
+        try {
+            return classLoaderOfScript.loadClass(className);
+        } catch (ClassNotFoundException ex) {
+            return null;
+        }
+    }
 
     public static File findClassPathOfClass(Class<?> cl) {
         String className = cl.getName();

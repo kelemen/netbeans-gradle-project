@@ -4,11 +4,12 @@ import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskCollection;
-import org.gradle.api.tasks.TaskContainer;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.ClassLoaderUtils;
 
 public enum JarOutputsModelBuilder
 implements
@@ -16,35 +17,19 @@ implements
 
     INSTANCE;
 
-    private static Task findTaskByName(Project project, String taskName) {
-        TaskContainer tasks = project.getTasks();
-        Task taskOfName = tasks.findByName(taskName);
-        if (taskOfName != null) {
-            return taskOfName;
-        }
-
-        String prefixedTaskName = ':' + taskName;
-        for (Task task: tasks) {
-            if (task.getPath().endsWith(prefixedTaskName)) {
-                return task;
-            }
-        }
-
-        return null;
-    }
-
-    private static Class<? extends Task> findJarClass(Project project) {
-        Task task = findTaskByName(project, "jar");
-        return task != null ? task.getClass() : null;
-    }
+    private static final Logger LOGGER = Logger.getLogger(JarOutputsModelBuilder.class.getName());
 
     public JarOutputsModel getProjectInfo(Project project) {
         if (!project.getPlugins().hasPlugin("java")) {
             return null;
         }
 
-        Class<? extends Task> jarClass = findJarClass(project);
+        @SuppressWarnings("unchecked")
+        Class<? extends Task> jarClass = (Class<? extends Task>)ClassLoaderUtils
+                .tryGetClass(project, "org.gradle.api.tasks.bundling.Jar");
+
         if (jarClass == null) {
+            LOGGER.warning("Cannot find class of Jar tasks.");
             return new JarOutputsModel(Collections.<JarOutput>emptySet());
         }
 
