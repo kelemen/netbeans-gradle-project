@@ -1,11 +1,16 @@
 package org.netbeans.gradle.project.others;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.gradle.project.Exceptions;
 
 /**
  *
@@ -43,6 +48,49 @@ public final class ReflectionHelper {
         return isTypeOfAny(obj.getClass(), requiredTypeNames);
     }
 
+    private static boolean areParamsOk(Class<?>[] paramTypes, Map<Class<?>, Object> args) {
+        for (Class<?> paramType: paramTypes) {
+            if (!args.containsKey(paramType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isPublic(Member member) {
+        int modifiers = member.getModifiers();
+        return (modifiers & Modifier.PUBLIC) != 0;
+    }
+
+    public static Object tryCreateInstance(Class<?> cl, Map<Class<?>, Object> args) {
+        for (Constructor<?> constructor: cl.getConstructors()) {
+            Class<?>[] paramTypes = constructor.getParameterTypes();
+
+            if (isPublic(constructor) && areParamsOk(paramTypes, args)) {
+                Object[] passedArgs = new Object[paramTypes.length];
+                for (int i = 0; i < passedArgs.length; i++) {
+                    passedArgs[i] = args.get(paramTypes[i]);
+                }
+
+                try {
+                    return constructor.newInstance(passedArgs);
+                } catch (InstantiationException ex) {
+                    LOGGER.log(Level.WARNING, "Unexpected InstantiationException.", ex);
+                } catch (IllegalAccessException ex) {
+                    LOGGER.log(Level.WARNING, "Unexpected IllegalAccessException.", ex);
+                } catch (IllegalArgumentException ex) {
+                    LOGGER.log(Level.WARNING, "Unexpected IllegalAccessException.", ex);
+                } catch (InvocationTargetException ex) {
+                    throw Exceptions.throwUnchecked(ex.getCause());
+                }
+
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     public static Method tryGetMethod(Class<?> cl, String methodName, Class<?>... args) {
         try {
             return cl.getMethod(methodName, args);
@@ -58,14 +106,7 @@ public final class ReflectionHelper {
         } catch (IllegalArgumentException ex) {
             LOGGER.log(Level.WARNING, "Unexpected IllegalArgumentException.", ex);
         } catch (InvocationTargetException ex) {
-            Throwable cause = ex.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException)cause;
-            }
-            if (cause instanceof Error) {
-                throw (Error)cause;
-            }
-            throw new RuntimeException(cause);
+            throw Exceptions.throwUnchecked(ex.getCause());
         }
         return null;
     }
