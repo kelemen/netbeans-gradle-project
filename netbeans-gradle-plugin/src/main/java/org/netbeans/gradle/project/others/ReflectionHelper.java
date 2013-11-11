@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.others;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,6 +13,35 @@ import java.util.logging.Logger;
  */
 public final class ReflectionHelper {
     private static final Logger LOGGER = Logger.getLogger(ReflectionHelper.class.getName());
+
+    public static boolean isInstanceOf(Object obj, String requiredTypeName) {
+        return isInstanceOfAny(obj, Collections.singleton(requiredTypeName));
+    }
+
+    private static boolean isTypeOfAny(Class<?> type, Set<String> requiredTypeNames) {
+        if (requiredTypeNames.contains(type.getName())) {
+            return true;
+        }
+
+        for (Class<?> implementedIF: type.getInterfaces()) {
+            if (requiredTypeNames.contains(implementedIF.getName())) {
+                return true;
+            }
+        }
+
+        Class<?> superclass = type.getSuperclass();
+        return superclass != null
+                ? isTypeOfAny(superclass, requiredTypeNames)
+                : false;
+    }
+
+    public static boolean isInstanceOfAny(Object obj, Set<String> requiredTypeNames) {
+        if (obj == null) {
+            return false;
+        }
+
+        return isTypeOfAny(obj.getClass(), requiredTypeNames);
+    }
 
     public static Method tryGetMethod(Class<?> cl, String methodName, Class<?>... args) {
         try {
