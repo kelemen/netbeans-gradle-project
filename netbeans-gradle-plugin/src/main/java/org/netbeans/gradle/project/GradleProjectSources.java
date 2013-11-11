@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
 import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
@@ -65,6 +66,18 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         return null;
     }
 
+    public static SourceGroup tryCreateSourceGroup(NbListedDir root) {
+        File sourceDir = root.getDirectory();
+
+        if (sourceDir.isDirectory()) {
+            FileObject groupRoot = FileUtil.toFileObject(sourceDir);
+            if (groupRoot != null) {
+                return new GradleSourceGroup(groupRoot, root.getName());
+            }
+        }
+        return null;
+    }
+
     private static <K, V> void addToMultiMap(K key, V value, Map<K, List<V>> map) {
         List<V> sourceGroupList = map.get(key);
         if (sourceGroupList == null) {
@@ -97,6 +110,13 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                 }
 
                 // TODO: Consider "SOURCES_TYPE_GROOVY" and "SOURCES_TYPE_SCALA", "SOURCES_TYPE_ANTLR"
+            }
+        }
+
+        for (NbListedDir listedDir: module.getListedDirs()) {
+            SourceGroup newGroup = tryCreateSourceGroup(listedDir);
+            if (newGroup != null) {
+                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
             }
         }
 
