@@ -14,7 +14,7 @@ public final class ChangeLFPlugin {
 
     static {
         PluginClass pluginClass = new PluginClass(
-                "com.junichi11.netbeans.changelf",
+                OtherPlugins.CHANGE_LF,
                 "com.junichi11.netbeans.changelf.api.ChangeLF");
 
         LINE_FEED_METHOD = new PluginLookupMethod(pluginClass, "getCurrentLineFeedCode", Project.class);

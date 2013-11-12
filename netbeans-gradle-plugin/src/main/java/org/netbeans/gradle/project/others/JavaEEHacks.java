@@ -6,7 +6,7 @@ import org.netbeans.api.project.Project;
 
 public final class JavaEEHacks {
     private static final ProjectLookupObject CDI_UTIL = new ProjectLookupObject(new PluginClass(
-            "org.netbeans.modules.web.beans/2",
+            OtherPlugins.WEB_BEANS,
             "org.netbeans.modules.web.beans.CdiUtil"));
 
     public static Collection<Object> getAdditionalProjectLookup(Project project) {

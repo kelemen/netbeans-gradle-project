@@ -9,34 +9,23 @@ import org.openide.util.Lookup;
  * @author Kelemen Attila
  */
 public final class PluginClass {
-    private final String pluginName;
+    private final PluginClassFactory classFactory;
     private final String className;
     private final AtomicReference<Class<?>> loadedClass;
 
-    public PluginClass(String pluginName, String className) {
-        this.pluginName = pluginName;
+    public PluginClass(PluginClassFactory classFactory, String className) {
+        if (classFactory == null) throw new NullPointerException("classFactory");
+        if (className == null) throw new NullPointerException("className");
+
+        this.classFactory = classFactory;
         this.className = className;
         this.loadedClass = new AtomicReference<Class<?>>();
-    }
-
-    private Class<?> tryFindClass() {
-        try {
-            for (ModuleInfo info: Lookup.getDefault().lookupAll(ModuleInfo.class)) {
-                String codeName = info.getCodeName();
-                if (codeName != null && codeName.startsWith(pluginName)) {
-                    return Class.forName(className, true, info.getClassLoader());
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-        }
-
-        return null;
     }
 
     public Class<?> tryGetClass() {
         Class<?> result = loadedClass.get();
         if (result == null) {
-            loadedClass.compareAndSet(null, tryFindClass());
+            loadedClass.compareAndSet(null, classFactory.tryFindClass(className));
             result = loadedClass.get();
         }
         return result;
