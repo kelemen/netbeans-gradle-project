@@ -1,13 +1,7 @@
 package org.netbeans.gradle.project.others;
 
 import java.util.concurrent.atomic.AtomicReference;
-import org.openide.modules.ModuleInfo;
-import org.openide.util.Lookup;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class PluginClass {
     private final PluginClassFactory classFactory;
     private final String className;
