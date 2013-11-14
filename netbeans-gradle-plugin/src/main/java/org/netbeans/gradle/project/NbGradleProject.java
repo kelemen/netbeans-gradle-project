@@ -28,6 +28,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
+import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;
@@ -201,6 +202,8 @@ public final class NbGradleProject implements Project {
             allLookups.add(extension.getExtensionLookup());
             newExtensionRefs.add(new ProjectExtensionRef(extension));
         }
+
+        allLookups.add(Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup"));
 
         this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
         this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
