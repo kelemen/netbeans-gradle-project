@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import javax.swing.AbstractAction;
@@ -32,6 +33,8 @@ import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
+import org.netbeans.gradle.project.api.nodes.GradleActionType;
+import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
@@ -114,32 +117,54 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 rootNode.getLookup());
     }
 
-    private static List<Action> getActionsOfExtension(GradleProjectExtension extension) {
+    private static <T> List<T> trimNulls(List<T> list) {
+        int firstNonNullIndex = 0;
+
+        for (T element: list) {
+            if (element != null) {
+                break;
+            }
+
+            firstNonNullIndex++;
+        }
+
+        int afterLastNonNullIndex = list.size();
+        ListIterator<T> backItr = list.listIterator(afterLastNonNullIndex);
+        while (backItr.hasPrevious()) {
+            T element = backItr.previous();
+            if (element != null) {
+                break;
+            }
+            afterLastNonNullIndex--;
+        }
+
+        return list.subList(firstNonNullIndex, afterLastNonNullIndex);
+    }
+
+    private static ExtensionActions getActionsOfExtension(GradleProjectExtension extension) {
         Lookup extensionLookup = extension.getExtensionLookup();
         Collection<? extends GradleProjectContextActions> actionQueries
                 = extensionLookup.lookupAll(GradleProjectContextActions.class);
 
-        List<Action> result = new LinkedList<Action>();
+        ExtensionActions result = new ExtensionActions();
         for (GradleProjectContextActions actionQuery: actionQueries) {
-            result.addAll(actionQuery.getContextActions());
+            result.addAllActions(trimNulls(actionQuery.getContextActions()));
         }
         return result;
     }
 
-    private List<Action> getExtensionActions() {
-        List<Action> extensionActions = new LinkedList<Action>();
-        for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
-            List<Action> actions = getActionsOfExtension(extensionRef.getExtension());
+    private ExtensionActions getExtensionActions() {
+        ExtensionActions result = new ExtensionActions();
 
-            if (!actions.isEmpty()) {
-                extensionActions.add(null);
-                extensionActions.addAll(actions);
-            }
+        for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
+            ExtensionActions actions = getActionsOfExtension(extensionRef.getExtension());
+            result.mergeActions(actions);
         }
-        if (!extensionActions.isEmpty()) {
-            extensionActions.add(null);
+
+        if (!result.getBuildActions().isEmpty()) {
+            result.addActionSeparator(GradleActionType.BUILD_ACTION);
         }
-        return extensionActions;
+        return result;
     }
 
     private static Action createProjectAction(String command, String label) {
@@ -183,7 +208,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                     ActionProvider.COMMAND_REBUILD,
                     NbStrings.getRebuildCommandCaption()));
 
-            projectActions.addAll(getExtensionActions());
+            ExtensionActions extActions = getExtensionActions();
+            projectActions.addAll(extActions.getBuildActions());
 
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
@@ -191,6 +217,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
+            projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
             projectActions.add(new DeleteProjectAction(project));
@@ -674,6 +701,76 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
                 });
                 menu.add(menuItem);
             }
+        }
+    }
+
+    private static final class ExtensionActions {
+        private final List<Action> buildActions;
+        private final List<Action> projectManagementActions;
+        private GradleActionType lastActionType;
+
+        public ExtensionActions() {
+            this.buildActions = new LinkedList<Action>();
+            this.projectManagementActions = new LinkedList<Action>();
+            this.lastActionType = GradleActionType.BUILD_ACTION;
+        }
+
+        public List<Action> getBuildActions() {
+            return buildActions;
+        }
+
+        public List<Action> getProjectManagementActions() {
+            return projectManagementActions;
+        }
+
+        private List<Action> getListForActionKind(GradleActionType actionType) {
+            switch (actionType) {
+                case BUILD_ACTION:
+                    return buildActions;
+                case PROJECT_MANAGEMENT_ACTION:
+                    return projectManagementActions;
+                default:
+                    throw new AssertionError(actionType.name());
+            }
+        }
+
+        private void addActionSeparator(GradleActionType actionType) {
+            getListForActionKind(actionType).add(null);
+        }
+
+        private void addAction(GradleActionType actionType, Action action) {
+            lastActionType = actionType;
+            getListForActionKind(actionType).add(action);
+        }
+
+        private GradleActionType getActionTypeForAction(Action action) {
+            if (action == null) {
+                return lastActionType;
+            }
+
+            GradleProjectAction annotation = action.getClass().getAnnotation(GradleProjectAction.class);
+            return annotation != null
+                    ? annotation.value()
+                    : GradleActionType.BUILD_ACTION;
+        }
+
+        public void addAction(Action action) {
+            addAction(getActionTypeForAction(action), action);
+        }
+
+        public void addAllActions(Collection<? extends Action> actions) {
+            for (Action action: actions) {
+                addAction(action);
+            }
+        }
+
+        public void mergeActions(ExtensionActions actions) {
+            if (!actions.buildActions.isEmpty()) {
+                buildActions.add(null);
+                buildActions.addAll(actions.buildActions);
+            }
+
+            projectManagementActions.addAll(actions.projectManagementActions);
         }
     }
 }
