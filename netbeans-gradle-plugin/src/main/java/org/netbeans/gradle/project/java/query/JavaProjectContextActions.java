@@ -8,6 +8,8 @@ import javax.swing.Action;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.GradleActionType;
+import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
@@ -38,22 +40,29 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
     }
 
     private Action createSourceDirsAction() {
-        return new AbstractAction(NbStrings.getCreateSourceDirsAction()) {
-            private static final long serialVersionUID = 1L;
+        return new CreateSourceDirsAction(NbStrings.getCreateSourceDirsAction());
+    }
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        JavaExtensionNodes nodes
-                                = javaExt.getExtensionLookup().lookup(JavaExtensionNodes.class);
-                        if (nodes != null) {
-                            nodes.createDirectories();
-                        }
+    @GradleProjectAction(GradleActionType.PROJECT_MANAGEMENT_ACTION)
+    private class CreateSourceDirsAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+
+        public CreateSourceDirsAction(String name) {
+            super(name);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    JavaExtensionNodes nodes
+                            = javaExt.getExtensionLookup().lookup(JavaExtensionNodes.class);
+                    if (nodes != null) {
+                        nodes.createDirectories();
                     }
-                });
-            }
-        };
+                }
+            });
+        }
     }
 }
