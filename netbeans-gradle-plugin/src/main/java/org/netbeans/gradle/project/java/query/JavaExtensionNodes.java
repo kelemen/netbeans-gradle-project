@@ -1,13 +1,11 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.SourceGroup;
@@ -140,41 +138,55 @@ implements
     }
 
     private void fireNodeChanges() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                nodeChanges.fireChange();
-            }
-        });
+        nodeChanges.fireChange();
     }
 
-    private void createDir(File dir) {
-        if (!dir.mkdirs()) {
+    private boolean createDir(File dir) {
+        if (dir.isDirectory()) {
+            return false;
+        }
+        boolean created = dir.mkdirs();
+        if (!created) {
             LOGGER.log(Level.INFO, "Failed to create new directory: {0}", dir);
         }
+
+        return created;
     }
 
-    private void createDirs(Collection<File> dirs) {
+    private boolean createDirs(Collection<File> dirs) {
+        boolean created = false;
+
         for (File dir: dirs ){
-            createDir(dir);
+            if (createDir(dir)) {
+                created = true;
+            }
         }
+
+        return created;
     }
 
-    public void createDirectories() throws IOException {
+    public void createDirectories() {
         NbJavaModule module = javaExt.getCurrentModel().getMainModule();
+        boolean changed = false;
 
         try {
             for (JavaSourceSet sourceSet: module.getSources()) {
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-                    createDirs(sourceGroup.getSourceRoots());
+                    if (createDirs(sourceGroup.getSourceRoots())) {
+                        changed = true;
+                    }
                 }
             }
 
             for (NbListedDir listedDir: module.getListedDirs()) {
-                createDir(listedDir.getDirectory());
+                if (createDir(listedDir.getDirectory())) {
+                    changed = true;
+                }
             }
         } finally {
-            fireNodeChanges();
+            if (changed) {
+                fireNodeChanges();
+            }
         }
     }
 

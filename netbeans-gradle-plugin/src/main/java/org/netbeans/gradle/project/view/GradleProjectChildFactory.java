@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.view;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,12 +32,14 @@ extends
 
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
+    private final AtomicReference<NodeExtensions> nodeExtensionsRef;
 
     public GradleProjectChildFactory(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
 
         this.project = project;
         this.cleanupTaskRef = new AtomicReference<Runnable>(null);
+        this.nodeExtensionsRef = new AtomicReference<NodeExtensions>(NodeExtensions.EMPTY);
     }
 
     private NbGradleModel getShownModule() {
@@ -57,12 +60,6 @@ extends
                 refresh(false);
             }
         };
-        final ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                simpleChangeListener.run();
-            }
-        };
 
         List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
 
@@ -71,12 +68,29 @@ extends
             listenerRefs.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
         }
 
+        final ChangeListener changeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                NodeExtensions newNodeExtensions
+                        = NodeExtensions.create(getExtensionNodes(), simpleChangeListener);
+
+                // FIXME: This is not trully thread safe because model change
+                //   listener might be called after removeNotify, leaving an
+                //   unclosed NodeExtensions instance.
+                NodeExtensions prevNodeExtensions = nodeExtensionsRef.getAndSet(newNodeExtensions);
+                prevNodeExtensions.close();
+
+                simpleChangeListener.run();
+            }
+        };
         project.addModelChangeListener(changeListener);
 
         Runnable prevTask = cleanupTaskRef.getAndSet(new Runnable() {
             @Override
             public void run() {
                 project.removeModelChangeListener(changeListener);
+
+                nodeExtensionsRef.getAndSet(NodeExtensions.EMPTY).close();
 
                 for (NbListenerRef ref: listenerRefs) {
                     ref.unregister();
@@ -218,5 +232,52 @@ extends
             throw new RuntimeException(ex);
         }
         return true;
+    }
+
+    private static final class NodeExtensions {
+        private static final NodeExtensions EMPTY = createEmpty();
+
+        private final List<GradleProjectExtensionNodes> nodeFactories;
+        private final List<NbListenerRef> listenerRefs;
+
+        private NodeExtensions(
+                Collection<? extends GradleProjectExtensionNodes> nodeFactories,
+                List<NbListenerRef> listenerRefs) {
+            this.nodeFactories = Collections.unmodifiableList(
+                    new ArrayList<GradleProjectExtensionNodes>(nodeFactories));
+
+            this.listenerRefs = listenerRefs;
+        }
+
+        public static NodeExtensions createEmpty() {
+            return create(Collections.<GradleProjectExtensionNodes>emptyList(), new Runnable() {
+                @Override
+                public void run() {
+                    // Do nothing.
+                }
+            });
+        }
+
+        public static NodeExtensions create(
+                Collection<? extends GradleProjectExtensionNodes> nodeFactories,
+                Runnable changeListener) {
+
+            List<NbListenerRef> listenerRefs = new ArrayList<NbListenerRef>(nodeFactories.size());
+            for (GradleProjectExtensionNodes nodeFactory: nodeFactories) {
+                listenerRefs.add(nodeFactory.addNodeChangeListener(changeListener));
+            }
+
+            return new NodeExtensions(nodeFactories, listenerRefs);
+        }
+
+        public List<GradleProjectExtensionNodes> getFactories() {
+            return nodeFactories;
+        }
+
+        public void close() {
+            for (NbListenerRef ref: listenerRefs) {
+                ref.unregister();
+            }
+        }
     }
 }

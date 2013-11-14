@@ -388,6 +388,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.IssueWithGradle18Message", gradleVersion);
     }
 
+    public static String getCreateSourceDirsAction() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateSourceDirsAction");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
