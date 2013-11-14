@@ -35,6 +35,12 @@ public interface GradleProjectContextActions {
      * You might annotate (not necessary) implementations of {@link Actions}
      * with the {@link GradleProjectAction} annotation to give a hint to the
      * Gradle plugin in which group is your action is to be displayed.
+     * <P>
+     * The entries in the list can be {@code null} which will put a separator
+     * line in the list. The {@link GradleProjectAction type} of the separator
+     * is the same as the type of the previous non-null action in the list.
+     * Separators cannot be placed in the beginning an at the end of the list,
+     * so they are ignored at those locations.
      *
      * @return the actions to be displayed in the context menu of the project.
      *   This method may never return {@code null} but may return an empty list.
