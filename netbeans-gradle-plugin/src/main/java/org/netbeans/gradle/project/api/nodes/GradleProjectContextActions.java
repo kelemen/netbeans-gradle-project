@@ -20,6 +20,7 @@ import javax.swing.Action;
  * Thread.
  *
  * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup()
+ * @see GradleProjectAction
  *
  * @author Kelemen Attila
  */
@@ -30,6 +31,10 @@ public interface GradleProjectContextActions {
      * <P>
      * This method is called every time, the context menu is requested to be
      * displayed.
+     * <P>
+     * You might annotate (not necessary) implementations of {@link Actions}
+     * with the {@link GradleProjectAction} annotation to give a hint to the
+     * Gradle plugin in which group is your action is to be displayed.
      *
      * @return the actions to be displayed in the context menu of the project.
      *   This method may never return {@code null} but may return an empty list.
