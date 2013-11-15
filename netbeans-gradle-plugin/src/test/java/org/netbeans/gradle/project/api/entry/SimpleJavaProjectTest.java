@@ -25,8 +25,6 @@ import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
-import org.netbeans.spi.project.LookupProvider;
-import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.nodes.Node;
