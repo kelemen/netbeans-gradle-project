@@ -242,9 +242,7 @@ implements
     private static void addSourcesOfModule(NbJavaModule module, List<File> sources) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-                if (sourceGroup.getGroupName() != JavaSourceGroupName.RESOURCES) {
-                    sources.addAll(sourceGroup.getSourceRoots());
-                }
+                sources.addAll(sourceGroup.getSourceRoots());
             }
         }
     }
@@ -304,9 +302,7 @@ implements
 
         List<File> sources = new LinkedList<File>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-            if (sourceGroup.getGroupName() != JavaSourceGroupName.RESOURCES) {
-                sources.addAll(sourceGroup.getSourceRoots());
-            }
+            sources.addAll(sourceGroup.getSourceRoots());
         }
 
         setClassPathResources(
