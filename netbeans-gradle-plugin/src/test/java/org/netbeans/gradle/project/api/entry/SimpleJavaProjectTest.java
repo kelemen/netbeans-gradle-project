@@ -25,6 +25,8 @@ import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.LookupProvider;
+import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.nodes.Node;
@@ -64,7 +66,6 @@ public class SimpleJavaProjectTest {
     @Before
     public void setUp() throws Exception {
         Thread.interrupted();
-
         rootProjectRef = sampleProject.loadProject("gradle-sample");
 
         NbGradleProject project = rootProjectRef.getProject();
@@ -81,6 +82,17 @@ public class SimpleJavaProjectTest {
     public void tearDown() throws Exception {
         rootProjectRef.close();
         rootProjectRef = null;
+    }
+
+    @Test
+    public void testProjectServiceProvider() throws Exception {
+        Project project = rootProjectRef.getProject();
+
+        MyCustomLookupEntry entry = project.getLookup().lookup(MyCustomLookupEntry.class);
+        assertNotNull("Lookup must contain entry: MyCustomLookupEntry", entry);
+        assertEquals("Must be registered with the currect project.",
+                project.getProjectDirectory(),
+                entry.getProject().getProjectDirectory());
     }
 
     @Test
