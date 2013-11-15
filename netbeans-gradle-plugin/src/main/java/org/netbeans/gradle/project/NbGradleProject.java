@@ -60,6 +60,7 @@ import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
+import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -203,7 +204,9 @@ public final class NbGradleProject implements Project {
             newExtensionRefs.add(new ProjectExtensionRef(extension));
         }
 
-        allLookups.add(Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup"));
+        allLookups.add(LookupProviderSupport.createCompositeLookup(
+                getDefaultLookup(),
+                "Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup"));
 
         this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
         this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
