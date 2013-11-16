@@ -13,6 +13,7 @@ import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 
@@ -20,14 +21,19 @@ import static org.junit.Assert.assertTrue;
 import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
 
 public final class InfoQueries {
+    public static ModelClassPathDef classPathFromClass(Class<?> type) {
+        File classpath = ClassLoaderUtils.findClassPathOfClass(type);
+        return ModelClassPathDef.fromJarFiles(Collections.singleton(classpath));
+    }
+
     public static <T> GradleProjectInfoQuery<T> toBuiltInQuery(final ProjectInfoBuilder<T> builder) {
         return new GradleProjectInfoQuery<T>() {
             public ProjectInfoBuilder<T> getInfoBuilder() {
                 return builder;
             }
 
-            public Set<File> getInfoClassPath() {
-                return Collections.emptySet();
+            public ModelClassPathDef getInfoClassPath() {
+                return ModelClassPathDef.EMPTY;
             }
         };
     }
@@ -38,8 +44,8 @@ public final class InfoQueries {
                 return builder;
             }
 
-            public Set<File> getInfoClassPath() {
-                return Collections.singleton(ClassLoaderUtils.findClassPathOfClass(builder.getClass()));
+            public ModelClassPathDef getInfoClassPath() {
+                return classPathFromClass(builder.getClass());
             }
         };
     }
@@ -50,8 +56,8 @@ public final class InfoQueries {
                 return builder;
             }
 
-            public Set<File> getInfoClassPath() {
-                return Collections.singleton(ClassLoaderUtils.findClassPathOfClass(builder.getClass()));
+            public ModelClassPathDef getInfoClassPath() {
+                return classPathFromClass(builder.getClass());
             }
         };
     }
@@ -62,8 +68,8 @@ public final class InfoQueries {
                 return builder;
             }
 
-            public Set<File> getInfoClassPath() {
-                return Collections.singleton(ClassLoaderUtils.findClassPathOfClass(builder.getClass()));
+            public ModelClassPathDef getInfoClassPath() {
+                return classPathFromClass(builder.getClass());
             }
         };
     }

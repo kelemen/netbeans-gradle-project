@@ -68,7 +68,7 @@ public final class GenericModelFetcher {
             Collection<? extends GradleInfoQuery> queries,
             Collection<? super File> jars) {
         for (GradleInfoQuery query: queries) {
-            Set<File> classPath = query.getInfoClassPath();
+            Set<File> classPath = query.getInfoClassPath().getJarFiles();
             jars.addAll(classPath);
         }
     }

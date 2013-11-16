@@ -1,8 +1,5 @@
 package org.netbeans.gradle.model.api;
 
-import java.io.File;
-import java.util.Set;
-
 /**
  * Defines the base interface for query definition submitted for the Gradle
  * daemon. The basic information required by queries is the class path required
@@ -20,5 +17,5 @@ public interface GradleInfoQuery {
      *   information from the Gradle build. This method may never return
      *   {@code null}.
      */
-    public Set<File> getInfoClassPath();
+    public ModelClassPathDef getInfoClassPath();
 }
