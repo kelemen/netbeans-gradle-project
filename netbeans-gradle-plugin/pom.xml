@@ -260,9 +260,12 @@
                         <publicPackage>org.gradle.tooling.model.eclipse</publicPackage>
                         <publicPackage>org.gradle.tooling.model.idea</publicPackage>
                         <publicPackage>org.gradle.tooling.provider.model</publicPackage>
+                        <publicPackage>org.netbeans.gradle.model.api</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.config</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.entry</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.event</publicPackage>
+                        <publicPackage>org.netbeans.gradle.project.api.task</publicPackage>
+                        <publicPackage>org.netbeans.gradle.project.api.modelquery</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.nodes</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.property</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.task</publicPackage>
