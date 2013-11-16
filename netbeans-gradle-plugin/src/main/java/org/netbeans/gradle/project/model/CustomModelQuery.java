@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.model;
 import java.util.Collection;
 import java.util.Map;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
-import org.netbeans.gradle.model.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 
 // TODO: This interface must be redesigned to be allowed to be used by external plugins.
 //

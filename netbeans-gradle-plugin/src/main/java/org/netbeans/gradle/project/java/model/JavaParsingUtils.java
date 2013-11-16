@@ -9,13 +9,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
-import org.netbeans.gradle.model.GradleProjectInfoQuery;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.ModelClassPathDef;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.java.JarOutput;
 import org.netbeans.gradle.model.java.JarOutputsModel;
 import org.netbeans.gradle.model.java.JarOutputsModelBuilder;
@@ -225,8 +225,8 @@ public final class JavaParsingUtils {
         }
 
         @Override
-        public Set<File> getInfoClassPath() {
-            return Collections.emptySet();
+        public ModelClassPathDef getInfoClassPath() {
+            return ModelClassPathDef.EMPTY;
         }
     }
 
