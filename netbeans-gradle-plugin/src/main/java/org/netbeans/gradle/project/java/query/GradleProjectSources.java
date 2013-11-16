@@ -281,10 +281,9 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             }
 
             URI f = file.toURI();
-            if (f != null && SharabilityQuery.getSharability(f) == SharabilityQuery.Sharability.NOT_SHARABLE) {
-                return false;
-            } // else MIXED, UNKNOWN, or SHARABLE; or not a disk file
-            return true;
+
+            // else MIXED, UNKNOWN, or SHARABLE; or not a disk file
+            return f == null || SharabilityQuery.getSharability(f) != SharabilityQuery.Sharability.NOT_SHARABLE;
         }
 
         @Override
