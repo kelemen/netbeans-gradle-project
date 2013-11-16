@@ -54,6 +54,13 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         this.currentGroups = Collections.emptyMap();
         this.hasScanned = new AtomicBoolean(false);
         this.scanRequestId = new AtomicReference<Object>(null);
+
+        javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
+            @Override
+            public void run() {
+                scanForSources();
+            }
+        });
     }
 
     public static SourceGroup tryCreateSourceGroup(NamedSourceRoot root) {
