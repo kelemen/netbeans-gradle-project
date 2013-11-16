@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.api.entry;
+package org.netbeans.gradle.project.api.modelquery;
 
 import java.util.Arrays;
 import java.util.Collection;
