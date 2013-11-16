@@ -1,4 +1,6 @@
-package org.netbeans.gradle.model;
+package org.netbeans.gradle.model.api;
+
+import org.netbeans.gradle.model.ProjectInfoBuilder;
 
 /**
  * Defines the query to be submitted for the Gradle daemon to query information

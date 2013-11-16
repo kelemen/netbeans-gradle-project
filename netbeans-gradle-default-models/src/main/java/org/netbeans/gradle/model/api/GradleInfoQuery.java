@@ -1,4 +1,4 @@
-package org.netbeans.gradle.model;
+package org.netbeans.gradle.model.api;
 
 import java.io.File;
 import java.util.Set;

@@ -31,6 +31,8 @@ import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.netbeans.gradle.model.api.GradleInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;

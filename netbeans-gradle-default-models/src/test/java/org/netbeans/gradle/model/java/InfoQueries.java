@@ -12,8 +12,8 @@ import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
-import org.netbeans.gradle.model.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 
 import static org.junit.Assert.assertTrue;
