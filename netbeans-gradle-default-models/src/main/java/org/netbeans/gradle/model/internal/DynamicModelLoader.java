@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {

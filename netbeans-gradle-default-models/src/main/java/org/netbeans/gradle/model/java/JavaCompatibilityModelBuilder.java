@@ -1,7 +1,7 @@
 package org.netbeans.gradle.model.java;
 
 import org.gradle.api.Project;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 
 /**
  * Defines a {@code ProjectInfoBuilder} which is able to extract

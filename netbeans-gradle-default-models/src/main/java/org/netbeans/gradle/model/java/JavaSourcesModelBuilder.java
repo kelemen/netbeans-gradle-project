@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 
 import static org.netbeans.gradle.model.util.ReflectionUtils.*;
 

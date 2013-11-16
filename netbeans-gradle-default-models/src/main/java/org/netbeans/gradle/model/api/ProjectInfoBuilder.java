@@ -1,4 +1,4 @@
-package org.netbeans.gradle.model;
+package org.netbeans.gradle.model.api;
 
 import java.io.Serializable;
 import org.gradle.api.Project;

@@ -2,7 +2,7 @@ package org.netbeans.gradle.model.java;
 
 import java.io.File;
 import org.gradle.api.Project;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 
 public enum WarFoldersModelBuilder
 implements

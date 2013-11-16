@@ -2,7 +2,7 @@ package org.netbeans.gradle.model.internal;
 
 import java.io.Serializable;
 import java.util.Map;
-import org.netbeans.gradle.model.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class ModelQueryInput implements Serializable {
