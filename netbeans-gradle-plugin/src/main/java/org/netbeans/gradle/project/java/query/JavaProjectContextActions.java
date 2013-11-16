@@ -56,11 +56,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
             NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    JavaExtensionNodes nodes
-                            = javaExt.getExtensionLookup().lookup(JavaExtensionNodes.class);
-                    if (nodes != null) {
-                        nodes.createDirectories();
-                    }
+                    javaExt.getSourceDirsHandler().createDirectories();
                 }
             });
         }

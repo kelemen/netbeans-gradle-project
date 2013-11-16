@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaParsingUtils;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
+import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
@@ -61,6 +62,7 @@ public final class JavaExtension implements GradleProjectExtension {
     private volatile boolean hasEverBeenLoaded;
 
     private final GradleClassPathProvider cpProvider;
+    private final AtomicReference<JavaSourceDirHandler> sourceDirsHandlerRef;
 
     private final AtomicReference<Lookup> lookupRef;
     private final AtomicReference<Lookup> permanentLookupRef;
@@ -82,6 +84,16 @@ public final class JavaExtension implements GradleProjectExtension {
         this.extensionLookup = new DynamicLookup();
         this.protectedExtensionLookup = DynamicLookup.viewLookup(extensionLookup);
         this.hasEverBeenLoaded = false;
+        this.sourceDirsHandlerRef = new AtomicReference<JavaSourceDirHandler>(null);
+    }
+
+    public JavaSourceDirHandler getSourceDirsHandler() {
+        JavaSourceDirHandler result = sourceDirsHandlerRef.get();
+        if (result == null) {
+            sourceDirsHandlerRef.compareAndSet(null, new JavaSourceDirHandler(this));
+            result = sourceDirsHandlerRef.get();
+        }
+        return result;
     }
 
     @Override
