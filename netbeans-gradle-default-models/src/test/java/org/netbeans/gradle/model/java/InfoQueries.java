@@ -26,18 +26,6 @@ public final class InfoQueries {
         return ModelClassPathDef.fromJarFiles(Collections.singleton(classpath));
     }
 
-    public static <T> GradleProjectInfoQuery<T> toBuiltInQuery(final ProjectInfoBuilder<T> builder) {
-        return new GradleProjectInfoQuery<T>() {
-            public ProjectInfoBuilder<T> getInfoBuilder() {
-                return builder;
-            }
-
-            public ModelClassPathDef getInfoClassPath() {
-                return ModelClassPathDef.EMPTY;
-            }
-        };
-    }
-
     public static <T> GradleBuildInfoQuery<T> toBuiltInQuery(final BuildInfoBuilder<T> builder) {
         return new GradleBuildInfoQuery<T>() {
             public BuildInfoBuilder<T> getInfoBuilder() {
@@ -91,7 +79,7 @@ public final class InfoQueries {
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
-            projectInfos.put(i, InfoQueries.toBuiltInQuery(builders[i]));
+            projectInfos.put(i, InfoQueries.toCustomQuery(builders[i]));
         }
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
