@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.java.query;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -21,6 +21,8 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaSourceGroupID;

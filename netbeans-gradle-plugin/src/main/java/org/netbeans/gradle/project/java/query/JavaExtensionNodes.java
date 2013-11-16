@@ -11,7 +11,6 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.GradleProjectSources;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
