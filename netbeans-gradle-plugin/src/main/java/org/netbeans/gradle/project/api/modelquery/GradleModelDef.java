@@ -25,7 +25,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  * Instances of this class are immutable and therefore are safe to be shared
  * by multiple threads concurrently.
  *
- * TODO: Reference the new queries.
+ * @see GradleModelDefQuery2
  */
 public final class GradleModelDef {
     /**
