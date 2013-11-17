@@ -7,7 +7,7 @@ import org.netbeans.api.project.Project;
 /**
  * Defines a query for extending Gradle based projects. This query must be used
  * by other plugins to integrate with the Gradle project type. That is,
- * instances if {@code GradleProjectExtensionQuery} are notified upon each
+ * instances of {@code GradleProjectExtensionQuery} are notified upon each
  * project load.
  * <P>
  * Instances of {@code GradleProjectExtensionQuery} are expected to be installed
