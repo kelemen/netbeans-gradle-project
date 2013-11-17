@@ -7,9 +7,8 @@ import org.gradle.api.Project;
  * Defines a method which extracts the required information from the Gradle
  * project object.
  * <P>
- * Note that accessing the project object usually needs dynamic access and
- * therefore this class is recommended (but not required) to be implemented
- * in a dynamic language like Groovy.
+ * <B>Warning</B>: As of currently, implementations of this interface must be
+ * within the "netbeans-gradle-default-models" project.
  * <P>
  * The serialized format of this class does not require any kind of backward
  * or forward compatibility.
