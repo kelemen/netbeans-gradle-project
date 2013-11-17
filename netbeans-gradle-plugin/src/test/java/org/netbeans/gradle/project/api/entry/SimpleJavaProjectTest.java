@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.api.entry;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -17,15 +18,32 @@ import org.junit.Test;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.ProjectInfoManager;
+import org.netbeans.gradle.project.api.property.GradleProperty;
+import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
+import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
+import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
+import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.AuxiliaryConfiguration;
+import org.netbeans.spi.project.AuxiliaryProperties;
+import org.netbeans.spi.project.ProjectConfigurationProvider;
+import org.netbeans.spi.project.ProjectState;
+import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
+import org.netbeans.spi.project.ui.PrivilegedTemplates;
+import org.netbeans.spi.project.ui.RecommendedTemplates;
+import org.netbeans.spi.queries.SharabilityQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
@@ -155,6 +173,43 @@ public class SimpleJavaProjectTest {
                 }
             }));
         }
+    }
+
+    private static void checkExactlyOnce(Lookup lookup, Class<?> type) {
+        Collection<?> objects = lookup.lookupAll(type);
+        if (objects.size() != 1) {
+            fail("Lookup must contain exactly one entry of " + type.getName() + " instead of " + objects.size() + " times.");
+        }
+    }
+
+    @Test
+    public void testQueriesNotIncludedMultipleTimes() {
+        NbGradleProject project = rootProjectRef.getProject();
+        Lookup lookup = project.getLookup();
+
+        checkExactlyOnce(lookup, LogicalViewProvider.class);
+        checkExactlyOnce(lookup, ProjectInformation.class);
+        checkExactlyOnce(lookup, ActionProvider.class);
+        checkExactlyOnce(lookup, SharabilityQueryImplementation2.class);
+        checkExactlyOnce(lookup, CustomizerProvider.class);
+        checkExactlyOnce(lookup, ProjectConfigurationProvider.class);
+        checkExactlyOnce(lookup, ProjectState.class);
+        checkExactlyOnce(lookup, AuxiliaryConfiguration.class);
+        checkExactlyOnce(lookup, AuxiliaryProperties.class);
+        checkExactlyOnce(lookup, GradleCommandExecutor.class);
+        checkExactlyOnce(lookup, GradleProperty.SourceEncoding.class);
+        checkExactlyOnce(lookup, GradleProperty.ScriptPlatform.class);
+        checkExactlyOnce(lookup, GradleProperty.SourceLevel.class);
+        checkExactlyOnce(lookup, GradleProperty.BuildPlatform.class);
+        checkExactlyOnce(lookup, ProjectInfoManager.class);
+        checkExactlyOnce(lookup, Sources.class);
+        checkExactlyOnce(lookup, GradleClassPathProvider.class);
+        checkExactlyOnce(lookup, PrivilegedTemplates.class);
+        checkExactlyOnce(lookup, RecommendedTemplates.class);
+        checkExactlyOnce(lookup, JavaExtensionNodes.class);
+        checkExactlyOnce(lookup, JavaProjectContextActions.class);
+        checkExactlyOnce(lookup, GradleJavaBuiltInCommands.class);
+        checkExactlyOnce(lookup, NbGradleProject.class);
     }
 
     @Test
