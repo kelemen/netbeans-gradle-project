@@ -59,8 +59,8 @@ import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
+import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
-import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -191,6 +191,23 @@ public final class NbGradleProject implements Project {
         return extensionRefs;
     }
 
+    private List<Lookup> extractLookupsFromProviders(Lookup providerContainer) {
+        Lookup baseContext = getDefaultLookup();
+        // baseContext must contain the Project instance.
+
+        List<Lookup> result = new LinkedList<Lookup>();
+        for (LookupProvider provider: providerContainer.lookupAll(LookupProvider.class)) {
+            result.add(provider.createAdditionalLookup(baseContext));
+        }
+
+        return result;
+    }
+
+    private List<Lookup> getLookupsFromAnnotations() {
+        Lookup lookupProviders = Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup");
+        return extractLookupsFromProviders(lookupProviders);
+    }
+
     private void setExtensions(List<GradleProjectExtension> extensions) {
         List<GradleProjectExtension> newExtensions
                 = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
@@ -204,9 +221,7 @@ public final class NbGradleProject implements Project {
             newExtensionRefs.add(new ProjectExtensionRef(extension));
         }
 
-        allLookups.add(LookupProviderSupport.createCompositeLookup(
-                getDefaultLookup(),
-                "Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup"));
+        allLookups.addAll(getLookupsFromAnnotations());
 
         this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
         this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
