@@ -5,9 +5,9 @@
  * related classes.
  * <P>
  * The main entry point for extensions is the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery}.
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef}.
  *
- * @see org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery
+ * @see org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef
  * @see org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery
  */
 package org.netbeans.gradle.project.api.entry;
