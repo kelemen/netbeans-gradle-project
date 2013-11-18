@@ -9,8 +9,9 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  * Defines the result of (re)loading the extension from models retrieved
  * from the evaluated build scripts.
  * <P>
- * The result may contain (and recommended to do) parsed models which can be
- * saved for quicker initial load of the project. These cached models are
+ * The result may contain (and recommended to do) parsed models for multiple
+ * projects (projects are identified by their project directory) which can be
+ * saved for quicker initial load of the projects. These parsed models are
  * expected to be serializable.
  * <P>
  * Instances of this class are immutable and therefore are safe to be shared
@@ -54,7 +55,8 @@ public final class ExtensionLoadResult {
     /**
      * Returns the models which can be used to quickly load the project without
      * evaluating the build scripts. The returned map maps project directories
-     * to models. All models are expected to be serializable.
+     * (identifying a project) to models. All models are expected to be
+     * serializable.
      * <P>
      * The returned models are passed to {@link GradleProjectExtension2#loadFromCache(Object)}
      * method.
