@@ -138,6 +138,11 @@ public interface GradleProjectExtension2 {
      * otherwise those objects will not be present on the lookup. Also, if an
      * extension is enabled, other extensions might be disabled depending on
      * the return value of {@link GradleProjectExtensionDef#getSuppressedExtensions()}.
+     * <P>
+     * <B>Caching</B>: This method may (and recommended to) return parsed
+     * objects which can be used to load this extension by the {@code loadFromCache}
+     * method (a single object / project). In fact this method may return the
+     * parsed models for other projects as well.
      *
      * @param models the {@code Lookup} containing the available models
      *   loaded via the Tooling API of Gradle. If a model requested by this
