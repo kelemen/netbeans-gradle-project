@@ -143,6 +143,12 @@ public interface GradleProjectExtension2 {
      * objects which can be used to load this extension by the {@code loadFromCache}
      * method (a single object / project). In fact this method may return the
      * parsed models for other projects as well.
+     * <P>
+     * The objects returned in the cache will be deserialized using the
+     * {@code ClassLoader} used to load the implementing class of this
+     * {@code GradleProjectExtension2}. In future, it might be possible to
+     * override this behaviour and deserialize the cached object using
+     * other class loader(s).
      *
      * @param models the {@code Lookup} containing the available models
      *   loaded via the Tooling API of Gradle. If a model requested by this
