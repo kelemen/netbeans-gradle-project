@@ -4,7 +4,7 @@
 
     <groupId>com.github.kelemen</groupId>
     <artifactId>netbeans-gradle-plugin</artifactId>
-    <version>1.2.7.1-SNAPSHOT</version>
+    <version>1.2.8</version>
     <packaging>nbm</packaging>
     <url>https://github.com/kelemen/netbeans-gradle-project</url>
 

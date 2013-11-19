@@ -3,4 +3,4 @@ OpenIDE-Module: org.netbeans.gradle.project
 OpenIDE-Module-Localizing-Bundle: org/netbeans/gradle/project/Bundle.properties
 OpenIDE-Module-Requires: cnb.org.netbeans.modules.groovy.kit,
   cnb.org.netbeans.modules.java.j2seproject
-OpenIDE-Module-Specification-Version: 1.2.7.1
+OpenIDE-Module-Specification-Version: 1.2.8
