@@ -5,8 +5,6 @@ The latest release can be downloaded from
 [http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support) and is also
 available via the Update Center (Tools/Plugins: Look for "Gradle Support").
 
-The latest beta release (1.2.7) can be downloaded from [BinTray](http://dl.bintray.com/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.2.7/netbeans-gradle-plugin-1.2.7.nbm). Some captions in the project navigator have been adjusted. See if you like it and report an issue in case something needs to be fixed. There is no known issue in 1.2.7.
-
 General Description
 -------------------
 
