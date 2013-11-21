@@ -1,35 +1,36 @@
 package org.netbeans.gradle.project.view;
 
-import javax.swing.JOptionPane;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
+import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.openide.awt.NotificationDisplayer;
 
 public final class GlobalErrorReporter {
-    private static boolean showingIssue = false;
+    private static final Icon ERROR_ICON = NbIcons.getUIErrorIcon();
 
     public static void showIssue(final String message, Throwable error) {
         if (message == null) throw new NullPointerException("message");
 
-        // TODO: This should be able to remember multiple issues like when
-        //   logging WARNING messages.
-        //   It would be better to use the nice bubbles and problem log of NB 7.4.
-
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (showingIssue) {
-                    return;
-                }
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+                        JLabel messageLabel = new JLabel(message);
+                        JLabel lineLabel = new JLabel(message);
 
-                showingIssue = true;
-                try {
-                    JOptionPane.showMessageDialog(null,
-                            message,
-                            NbStrings.getGlobalErrorReporterTitle(),
-                            JOptionPane.ERROR_MESSAGE);
-                } finally {
-                    showingIssue = false;
-                }
+                        displayer.notify(
+                                NbStrings.getGlobalErrorReporterTitle(),
+                                ERROR_ICON,
+                                messageLabel,
+                                lineLabel,
+                                NotificationDisplayer.Priority.HIGH);
+                    }
+                });
             }
         });
     }

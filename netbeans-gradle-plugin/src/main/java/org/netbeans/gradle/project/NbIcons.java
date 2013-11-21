@@ -5,6 +5,7 @@ import java.beans.BeanInfo;
 import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.UIManager;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
@@ -53,6 +54,21 @@ public final class NbIcons {
         return ImageUtilities.loadImage(WARNING_BADGE_ICON_PATH);
     }
 
+    public static Icon getUIInformationIcon() {
+        return UIManager.getIcon("OptionPane.informationIcon");
+    }
+
+    public static Icon getUIQuestionIcon() {
+        return UIManager.getIcon("OptionPane.questionIcon");
+    }
+
+    public static Icon getUIWarningIcon() {
+        return UIManager.getIcon("OptionPane.warningIcon");
+    }
+
+    public static Icon getUIErrorIcon() {
+        return UIManager.getIcon("OptionPane.errorIcon");
+    }
 
     private static class FolderIconHolder {
         public static final Image IMAGE = loadIcon();
