@@ -28,6 +28,7 @@ import org.netbeans.gradle.model.java.JavaSourcesModel;
 import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
 import org.netbeans.gradle.model.java.WarFoldersModel;
 import org.netbeans.gradle.model.java.WarFoldersModelBuilder;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.CustomModelQuery;
 import org.netbeans.gradle.project.model.GradleBuildInfo;
@@ -250,20 +251,25 @@ public final class JavaParsingUtils {
             return Collections.unmodifiableMap(result);
         }
 
+        private static Object fromProjectInfo(GradleProjectInfo projectInfo, Integer key) {
+            List<?> result = projectInfo.tryGetProjectInfoResult(key);
+            return CollectionUtils.getSingleElement(result);
+        }
+
         public static JavaSourcesModel extractSources(GradleProjectInfo projectInfo) {
-            return (JavaSourcesModel)projectInfo.tryGetProjectInfoResult(KEY_SOURCES);
+            return (JavaSourcesModel)fromProjectInfo(projectInfo, KEY_SOURCES);
         }
 
         public static JavaCompatibilityModel extractVersions(GradleProjectInfo projectInfo) {
-            return (JavaCompatibilityModel)projectInfo.tryGetProjectInfoResult(KEY_VERSIONS);
+            return (JavaCompatibilityModel)fromProjectInfo(projectInfo, KEY_VERSIONS);
         }
 
         public static JarOutputsModel extractJars(GradleProjectInfo projectInfo) {
-            return (JarOutputsModel)projectInfo.tryGetProjectInfoResult(KEY_JAR_OUTPUTS);
+            return (JarOutputsModel)fromProjectInfo(projectInfo, KEY_JAR_OUTPUTS);
         }
 
         public static WarFoldersModel extractWarFolders(GradleProjectInfo projectInfo) {
-            return (WarFoldersModel)projectInfo.tryGetProjectInfoResult(KEY_WAR_FOLDERS);
+            return (WarFoldersModel)fromProjectInfo(projectInfo, KEY_WAR_FOLDERS);
         }
 
         @Override

@@ -67,11 +67,14 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     }
 
     private GenericModelFetcher getModelFetcher(List<ProjectExtensionRef> extensionRefs) {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfoRequests
-                = new HashMap<Object, GradleBuildInfoQuery<?>>();
+        // TODO: Exploit the fact that keys map to list of queries.
+        //   That is, for a single extension, a single entry is required.
 
-        Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests
-                = new HashMap<Object, GradleProjectInfoQuery<?>>();
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests
+                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests
+                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
 
         List<Class<?>> models = new LinkedList<Class<?>>();
         for (ProjectExtensionRef extensionRef: extensionRefs) {
@@ -83,15 +86,21 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             models.addAll(extensionNeeds.getProjectModels());
 
             for (Map.Entry<Object, GradleBuildInfoQuery<?>> entry: extensionNeeds.getBuildInfoQueries().entrySet()) {
+                Object key = entry.getKey();
+                GradleBuildInfoQuery<?> value = entry.getValue();
+
                 buildInfoRequests.put(
-                        MultiKey.create(extensionName, entry.getKey()),
-                        entry.getValue());
+                        MultiKey.create(extensionName, key),
+                        Collections.<GradleBuildInfoQuery<?>>singletonList(value));
             }
 
             for (Map.Entry<Object, GradleProjectInfoQuery<?>> entry: extensionNeeds.getProjectInfoQueries().entrySet()) {
+                Object key = entry.getKey();
+                GradleProjectInfoQuery<?> value = entry.getValue();
+
                 projectInfoRequests.put(
-                        MultiKey.create(extensionName, entry.getKey()),
-                        entry.getValue());
+                        MultiKey.create(extensionName, key),
+                        Collections.<GradleProjectInfoQuery<?>>singletonList(value));
             }
         }
 

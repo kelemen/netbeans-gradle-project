@@ -1,27 +1,27 @@
 package org.netbeans.gradle.model.internal;
 
 import java.io.Serializable;
-import java.util.Map;
-import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class ModelQueryOutput implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String projectFullName;
-    private final Map<Object, Object> projectInfoResults;
 
-    public ModelQueryOutput(String projectFullName, Map<Object, Object> projectInfoResults) {
+    // Keys -> List of results of ProjectInfoBuilder
+    private final CustomSerializedMap projectInfoResults;
+
+    public ModelQueryOutput(String projectFullName, CustomSerializedMap projectInfoResults) {
         if (projectFullName == null) throw new NullPointerException("projectFullName");
 
         this.projectFullName = projectFullName;
-        this.projectInfoResults = CollectionUtils.copyNullSafeHashMap(projectInfoResults);
+        this.projectInfoResults = projectInfoResults;
     }
 
     public String getProjectFullName() {
         return projectFullName;
     }
 
-    public Map<Object, Object> getProjectInfoResults() {
+    public CustomSerializedMap getProjectInfoResults() {
         return projectInfoResults;
     }
 }

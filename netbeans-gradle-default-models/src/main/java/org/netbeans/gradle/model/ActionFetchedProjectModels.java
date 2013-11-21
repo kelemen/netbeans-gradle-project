@@ -1,25 +1,26 @@
 package org.netbeans.gradle.model;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
-public final class FetchedProjectModels implements Serializable {
+final class ActionFetchedProjectModels implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final GradleMultiProjectDef projectDef;
-    private final Map<Object, List<?>> projectInfoResults;
+    private final CustomSerializedMap projectInfoResults;
     private final Map<Class<?>, Object> toolingModels;
 
-    public FetchedProjectModels(
+    public ActionFetchedProjectModels(
             GradleMultiProjectDef projectDef,
-            Map<Object, List<?>> projectInfoResults,
+            CustomSerializedMap projectInfoResults,
             Map<Class<?>, Object> toolingModels) {
         if (projectDef == null) throw new NullPointerException("projectDef");
+        if (projectInfoResults == null) throw new NullPointerException("projectInfoResults");
 
         this.projectDef = projectDef;
-        this.projectInfoResults = CollectionUtils.copyNullSafeMultiHashMap(projectInfoResults);
+        this.projectInfoResults = projectInfoResults;
         this.toolingModels = CollectionUtils.copyNullSafeHashMap(toolingModels);
     }
 
@@ -27,7 +28,7 @@ public final class FetchedProjectModels implements Serializable {
         return projectDef;
     }
 
-    public Map<Object, List<?>> getProjectInfoResults() {
+    public CustomSerializedMap getProjectInfoResults() {
         return projectInfoResults;
     }
 

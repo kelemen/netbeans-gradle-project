@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -32,7 +33,7 @@ public final class FetchedModels implements Serializable {
         return buildModels;
     }
 
-    public Map<Object, Object> getBuildInfoResults() {
+    public Map<Object, List<?>> getBuildInfoResults() {
         return buildModels.getBuildInfoResults();
     }
 

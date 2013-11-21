@@ -1,9 +1,14 @@
 package org.netbeans.gradle.model.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.gradle.api.Project;
 
@@ -14,13 +19,25 @@ public final class ClassLoaderUtils {
         ClassLoader classLoaderOfScript = project.getBuildscript().getClassLoader();
 
         try {
-            return classLoaderOfScript.loadClass(className);
+            return Class.forName(className, false, classLoaderOfScript);
         } catch (ClassNotFoundException ex) {
             return null;
         }
     }
 
+    private static File safeCanonicalFile(File file) {
+        try {
+            return file.getCanonicalFile();
+        } catch (IOException ex) {
+            return file;
+        }
+    }
+
     public static File findClassPathOfClass(Class<?> cl) {
+        return safeCanonicalFile(findClassPathOfClassNonCanonical(cl));
+    }
+
+    private static File findClassPathOfClassNonCanonical(Class<?> cl) {
         String className = cl.getName();
         String classFileName = cl.getName().replace('.', '/') + ".class";
         URL urlOfClassPath = cl.getClassLoader().getResource(classFileName);
@@ -90,6 +107,19 @@ public final class ClassLoaderUtils {
             result = JAR_OF_THIS_PROJECT.get();
         }
         return result;
+    }
+
+    public static ClassLoader classLoaderFromClassPath(Collection<File> classPath, ClassLoader parent) {
+        List<URL> urls = new ArrayList<URL>(classPath.size());
+        try {
+            for (File file: classPath) {
+                urls.add(file.toURI().toURL());
+            }
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        return new URLClassLoader(urls.toArray(new URL[urls.size()]), parent);
     }
 
     private ClassLoaderUtils() {

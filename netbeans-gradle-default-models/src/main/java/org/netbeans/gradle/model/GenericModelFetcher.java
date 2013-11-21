@@ -33,7 +33,7 @@ import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.netbeans.gradle.model.api.GradleInfoQuery;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
@@ -48,17 +48,22 @@ public final class GenericModelFetcher {
 
     private static final AtomicReference<String> INIT_SCRIPT_REF = new AtomicReference<String>(null);
 
-    private final Map<Object, GradleBuildInfoQuery<?>> buildInfoRequests;
-    private final Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests;
+    // key -> list of BuildInfoBuilder
+    private final GradleInfoQueryMap buildInfoBuilders;
+
+    // key -> list of ProjectInfoBuilder
+    private final GradleInfoQueryMap projectInfoBuilders;
+
+    // TODO: These classes must be key based as well.
     private final Set<Class<?>> modelClasses;
 
     public GenericModelFetcher(
-            Map<Object, GradleBuildInfoQuery<?>> buildInfoRequests,
-            Map<Object, GradleProjectInfoQuery<?>> projectInfoRequests,
+            Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests,
+            Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests,
             Collection<Class<?>> modelClasses) {
 
-        this.buildInfoRequests = CollectionUtils.copyNullSafeHashMap(buildInfoRequests);
-        this.projectInfoRequests = CollectionUtils.copyNullSafeHashMap(projectInfoRequests);
+        this.buildInfoBuilders = GradleInfoQueryMap.fromBuildInfos(buildInfoRequests);
+        this.projectInfoBuilders = GradleInfoQueryMap.fromProjectInfos(projectInfoRequests);
         this.modelClasses = Collections.unmodifiableSet(new HashSet<Class<?>>(modelClasses));
 
         CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
@@ -73,31 +78,38 @@ public final class GenericModelFetcher {
         }
     }
 
-    private Map<Object, BuildInfoBuilder<?>> getBuildInfoBuilders() {
-        Map<Object, BuildInfoBuilder<?>> result
-                = new HashMap<Object, BuildInfoBuilder<?>>(2 * buildInfoRequests.size());
+    private FetchedProjectModels transformActionModels(ActionFetchedProjectModels actionModels) {
+        GradleMultiProjectDef projectDef = actionModels.getProjectDef();
+        Map<Class<?>, Object> toolingModels = actionModels.getToolingModels();
+        Map<Object, List<?>> projectInfoResults
+                = projectInfoBuilders.deserializeResults(actionModels.getProjectInfoResults());
 
-        for (Map.Entry<Object, GradleBuildInfoQuery<?>> entry: buildInfoRequests.entrySet()) {
-            BuildInfoBuilder<?> builder = entry.getValue().getInfoBuilder();
-            result.put(entry.getKey(), builder);
+        return new FetchedProjectModels(projectDef, projectInfoResults, toolingModels);
+    }
+
+    private Collection<FetchedProjectModels> transformActionModels(Collection<ActionFetchedProjectModels> actionModels) {
+        List<FetchedProjectModels> result = new ArrayList<FetchedProjectModels>(actionModels.size());
+        for (ActionFetchedProjectModels entry: actionModels) {
+            result.add(transformActionModels(entry));
         }
         return result;
     }
 
-    private Map<Object, ProjectInfoBuilder<?>> getProjectInfoBuilders() {
-        Map<Object, ProjectInfoBuilder<?>> result
-                = new HashMap<Object, ProjectInfoBuilder<?>>(2 * projectInfoRequests.size());
+    private FetchedModels transformActionModels(ActionFetchedModels actionModels) {
+        Map<Object, List<?>> buildModels
+                = buildInfoBuilders.deserializeResults(actionModels.getBuildModels());
+        FetchedProjectModels defaultProjectModels
+                = transformActionModels(actionModels.getDefaultProjectModels());
+        Collection<FetchedProjectModels> otherProjectModels
+                = transformActionModels(actionModels.getOtherProjectModels());
 
-        for (Map.Entry<Object, GradleProjectInfoQuery<?>> entry: projectInfoRequests.entrySet()) {
-            ProjectInfoBuilder<?> builder = entry.getValue().getInfoBuilder();
-            result.put(entry.getKey(), builder);
-        }
-        return result;
+        return new FetchedModels(new FetchedBuildModels(buildModels), defaultProjectModels, otherProjectModels);
     }
 
     public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
-        BuildActionExecuter<FetchedModels> executer
-                = connection.action(new ModelFetcherBuildAction(getBuildInfoBuilders(), modelClasses));
+        BuildActionExecuter<ActionFetchedModels> executer = connection.action(new ModelFetcherBuildAction(
+                buildInfoBuilders,
+                modelClasses));
 
         BuildOperationArgs buildOPArgs = new BuildOperationArgs();
         init.initOperation(buildOPArgs);
@@ -108,16 +120,13 @@ public final class GenericModelFetcher {
             userArgs = new String[0];
         }
 
-        List<File> classPath = new LinkedList<File>();
-        classPath.add(ClassLoaderUtils.getLocationOfClassPath());
-
-        getJars(buildInfoRequests.values(), classPath);
-        getJars(projectInfoRequests.values(), classPath);
-
         String initScript = getInitScript();
-        initScript = initScript.replace("$MODEL_JAR_FILE_PATHS", toPastableFileList(classPath));
 
-        ModelQueryInput modelInput = new ModelQueryInput(getProjectInfoBuilders());
+        initScript = initScript.replace(
+                "$NB_BOOT_CLASSPATH",
+                toPastableString(ClassLoaderUtils.getLocationOfClassPath().getPath()));
+
+        ModelQueryInput modelInput = new ModelQueryInput(projectInfoBuilders.getSerializableBuilderMap());
         File modelInputFile = serializeToFile(modelInput);
         try {
             initScript = initScript.replace("$INPUT_FILE", toPastableString(modelInputFile));
@@ -133,7 +142,7 @@ public final class GenericModelFetcher {
 
                 executer.withArguments(executerArgs);
 
-                return executer.run();
+                return transformActionModels(executer.run());
             } finally {
                 initScriptRef.close();
             }
@@ -158,8 +167,11 @@ public final class GenericModelFetcher {
     }
 
     private static File serializeToFile(Object input) throws IOException {
+        // TODO: Try to create a file name which is the same for each run
+        //   fallback to something random in the worst case.
         File tmpFile = File.createTempFile("dyn-gradle-model", ".bin");
         try {
+            tmpFile = tmpFile.getCanonicalFile();
             serializeToFile(input, tmpFile);
             return tmpFile;
         } catch (Throwable ex) {
@@ -180,25 +192,6 @@ public final class GenericModelFetcher {
             }
             throw new RuntimeException(ex);
         }
-    }
-
-    private static String toPastableFileList(List<File> files) {
-        StringBuilder result = new StringBuilder(1024);
-        result.append('[');
-
-        boolean first = true;
-        for (File file: files) {
-            if (first) {
-                first = false;
-            }
-            else {
-                result.append(", ");
-            }
-            result.append(toPastableString(file));
-        }
-        result.append(']');
-
-        return result.toString();
     }
 
     private static String toPastableString(File file) {
@@ -264,16 +257,17 @@ public final class GenericModelFetcher {
         return result;
     }
 
-    private static final class ModelFetcherBuildAction implements BuildAction<FetchedModels> {
+    private static final class ModelFetcherBuildAction implements BuildAction<ActionFetchedModels> {
         private static final long serialVersionUID = 1L;
 
-        private final Map<Object, BuildInfoBuilder<?>> buildInfoRequests;
+        // key -> list of BuildInfoBuilder
+        private final CustomSerializedMap.Deserializer serializedBuildInfoRequests;
         private final Set<Class<?>> modelClasses;
 
         public ModelFetcherBuildAction(
-                Map<Object, BuildInfoBuilder<?>> buildInfoRequests,
+                GradleInfoQueryMap buildInfoRequests,
                 Set<Class<?>> modelClasses) {
-            this.buildInfoRequests = buildInfoRequests;
+            this.serializedBuildInfoRequests = buildInfoRequests.getSerializableBuilderMap();
             this.modelClasses = modelClasses;
         }
 
@@ -296,7 +290,7 @@ public final class GenericModelFetcher {
             return result;
         }
 
-        private FetchedProjectModels getFetchedProjectModels(
+        private ActionFetchedProjectModels getFetchedProjectModels(
                 GradleProjectTree rootTree,
                 Map<String, GradleProjectTree> projects,
                 ModelGetter getter) {
@@ -327,7 +321,7 @@ public final class GenericModelFetcher {
                 }
             }
 
-            return new FetchedProjectModels(
+            return new ActionFetchedProjectModels(
                     new GradleMultiProjectDef(rootTree, projectTree),
                     modelOutput.getProjectInfoResults(),
                     toolingModels);
@@ -405,29 +399,36 @@ public final class GenericModelFetcher {
             return result;
         }
 
-        public FetchedModels execute(final BuildController controller) {
+        public ActionFetchedModels execute(final BuildController controller) {
             GradleBuild buildModel = controller.getBuildModel();
 
-            Map<Object, Object> buildInfoResults = new HashMap<Object, Object>(2 * buildInfoRequests.size());
-            for (Map.Entry<Object, BuildInfoBuilder<?>> entry: buildInfoRequests.entrySet()) {
-                Object info = entry.getValue().getInfo(controller);
-                if (info != null) {
-                    buildInfoResults.put(entry.getKey(), info);
+            ClassLoader parentClassLoader = getClass().getClassLoader();
+            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(parentClassLoader);
+
+            CustomSerializedMap.Builder buildInfoResults = new CustomSerializedMap.Builder(buildInfoRequests.size());
+            for (Map.Entry<Object, List<?>> entry: buildInfoRequests.entrySet()) {
+                Object key = entry.getKey();
+
+                for (Object builder: entry.getValue()) {
+                    Object info = ((BuildInfoBuilder<?>)builder).getInfo(controller);
+                    if (info != null) {
+                        buildInfoResults.addValue(key, info);
+                    }
                 }
             }
 
             Map<String, GradleProjectTree> projectTrees = new HashMap<String, GradleProjectTree>(64);
             GradleProjectTree rootTree = parseTree(controller, buildModel.getRootProject(), projectTrees);
 
-            FetchedProjectModels defaultProjectModels = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
+            ActionFetchedProjectModels defaultProjectModels = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
                 public <T> T findModel(Class<T> modelClass) {
                     return controller.findModel(modelClass);
                 }
             });
 
-            List<FetchedProjectModels> otherModels = new LinkedList<FetchedProjectModels>();
+            List<ActionFetchedProjectModels> otherModels = new LinkedList<ActionFetchedProjectModels>();
             for (final BasicGradleProject projectRef: buildModel.getProjects()) {
-                FetchedProjectModels otherModel = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
+                ActionFetchedProjectModels otherModel = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
                     public <T> T findModel(Class<T> modelClass) {
                         return controller.findModel(projectRef, modelClass);
                     }
@@ -436,8 +437,8 @@ public final class GenericModelFetcher {
                 otherModels.add(otherModel);
             }
 
-            FetchedBuildModels buildModels = new FetchedBuildModels(buildInfoResults);
-            return new FetchedModels(buildModels, defaultProjectModels, otherModels);
+            CustomSerializedMap buildModels = buildInfoResults.create();
+            return new ActionFetchedModels(buildModels, defaultProjectModels, otherModels);
         }
     }
 

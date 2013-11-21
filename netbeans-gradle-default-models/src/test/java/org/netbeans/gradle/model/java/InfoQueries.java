@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.ProjectConnection;
@@ -16,14 +17,17 @@ import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 import static org.junit.Assert.assertTrue;
 import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
 
 public final class InfoQueries {
+    private static final ClassLoader DEFAULT_CLASS_LOADER = InfoQueries.class.getClassLoader();
+
     public static ModelClassPathDef classPathFromClass(Class<?> type) {
         File classpath = ClassLoaderUtils.findClassPathOfClass(type);
-        return ModelClassPathDef.fromJarFiles(Collections.singleton(classpath));
+        return ModelClassPathDef.fromJarFiles(DEFAULT_CLASS_LOADER, Collections.singleton(classpath));
     }
 
     public static <T> GradleBuildInfoQuery<T> toBuiltInQuery(final BuildInfoBuilder<T> builder) {
@@ -63,33 +67,46 @@ public final class InfoQueries {
     }
 
     public static GenericModelFetcher buildInfoFetcher(BuildInfoBuilder<?>... builders) {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = new HashMap<Object, GradleBuildInfoQuery<?>>();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
+                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+                = Collections.emptyMap();
+
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
-            buildInfos.put(i, InfoQueries.toBuiltInQuery(builders[i]));
+            buildInfos.put(i, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                    InfoQueries.toBuiltInQuery(builders[i])));
         }
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
     public static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder<?>... builders) {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = new HashMap<Object, GradleProjectInfoQuery<?>>();
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
+                = Collections.emptyMap();
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
-            projectInfos.put(i, InfoQueries.toCustomQuery(builders[i]));
+            projectInfos.put(i, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                    InfoQueries.toCustomQuery(builders[i])));
         }
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
     public static GenericModelFetcher basicInfoFetcher() {
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = Collections.emptyMap();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos = Collections.emptyMap();
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos = Collections.emptyMap();
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+    }
+
+    private static Object getSingleElement(List<?> list) {
+        return CollectionUtils.getSingleElement(list);
     }
 
     public static <T> T fetchSingleProjectInfo(
@@ -102,7 +119,7 @@ public final class InfoQueries {
         assertTrue(models.getBuildInfoResults().isEmpty());
 
         @SuppressWarnings("unchecked")
-        T result = (T)models.getDefaultProjectModels().getProjectInfoResults().get(0);
+        T result = (T)getSingleElement(models.getDefaultProjectModels().getProjectInfoResults().get(0));
         return result;
     }
 
@@ -114,7 +131,7 @@ public final class InfoQueries {
         FetchedModels models = modelFetcher.getModels(connection, defaultInit());
 
         @SuppressWarnings("unchecked")
-        T result = (T)models.getBuildInfoResults().get(0);
+        T result = (T)getSingleElement(models.getBuildInfoResults().get(0));
         return result;
     }
 

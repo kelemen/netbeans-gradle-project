@@ -18,10 +18,21 @@ public final class CollectionUtils {
         }
     }
 
-    public static <K, V> Map<K, V> copyNullSafeHashMap(Map<? extends K, ? extends V> map) {
+    public static <K> Map<K, List<?>> copyNullSafeMultiHashMap(Map<? extends K, List<?>> map) {
         if (map == null) throw new NullPointerException("map");
 
-        Map<K, V> result = Collections.unmodifiableMap(new HashMap<K, V>(map));
+        Map<K, List<?>> result = copyNullSafeMutableHashMap(map);
+        for (Map.Entry<K, List<?>> entry: result.entrySet()) {
+            List<?> value = entry.getValue();
+            entry.setValue(Collections.unmodifiableList(new ArrayList<Object>(value)));
+        }
+        return result;
+    }
+
+    public static <K, V> Map<K, V> copyNullSafeMutableHashMap(Map<? extends K, ? extends V> map) {
+        if (map == null) throw new NullPointerException("map");
+
+        Map<K, V> result = new HashMap<K, V>(map);
         for (Map.Entry<K, V> entry: result.entrySet()) {
             if (entry.getKey() == null) throw new NullPointerException("entry.getKey()");
             if (entry.getValue()== null) throw new NullPointerException("entry.getValue()");
@@ -29,14 +40,12 @@ public final class CollectionUtils {
         return result;
     }
 
-    public static <E> List<E> copyNullSafeList(Collection<? extends E> list) {
-        if (list == null) throw new NullPointerException("list");
+    public static <K, V> Map<K, V> copyNullSafeHashMap(Map<? extends K, ? extends V> map) {
+        return Collections.unmodifiableMap(copyNullSafeMutableHashMap(map));
+    }
 
-        List<E> result = Collections.unmodifiableList(new ArrayList<E>(list));
-        for (E element: result) {
-            if (element == null) throw new NullPointerException("element");
-        }
-        return result;
+    public static <E> List<E> copyNullSafeList(Collection<? extends E> list) {
+        return Collections.unmodifiableList(copyNullSafeMutableList(list));
     }
 
     public static <E> ArrayList<E> copyNullSafeMutableList(Collection<? extends E> list) {
@@ -47,6 +56,19 @@ public final class CollectionUtils {
             if (element == null) throw new NullPointerException("element");
         }
         return result;
+    }
+
+    public static Object getSingleElement(List<?> list) {
+        if (list == null) {
+            return null;
+        }
+
+        int listSize = list.size();
+        if (listSize > 1) {
+            throw new IllegalArgumentException("Expected only one entry in the list.");
+        }
+
+        return listSize == 1 ? list.get(0) : null;
     }
 
     private CollectionUtils() {

@@ -1,20 +1,21 @@
 package org.netbeans.gradle.model.internal;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
-import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class ModelQueryInput implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final Map<Object, ProjectInfoBuilder<?>> projectInfoRequests;
+    // Object -> List of ProjectInfoBuilder<?>
+    private final CustomSerializedMap.Deserializer projectInfoRequests;
 
-    public ModelQueryInput(Map<Object, ProjectInfoBuilder<?>> projectInfoRequests) {
-        this.projectInfoRequests = CollectionUtils.copyNullSafeHashMap(projectInfoRequests);
+    public ModelQueryInput(CustomSerializedMap.Deserializer projectInfoRequests) {
+        if (projectInfoRequests == null) throw new NullPointerException("projectInfoRequests");
+        this.projectInfoRequests = projectInfoRequests;
     }
 
-    public Map<Object, ProjectInfoBuilder<?>> getProjectInfoRequests() {
-        return projectInfoRequests;
+    public Map<Object, List<?>> getProjectInfoRequests(ClassLoader parent) {
+        return projectInfoRequests.deserialize(parent);
     }
 }

@@ -14,17 +14,25 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  */
 public final class ModelClassPathDef {
     /**
-     * A {@code ModelClassPathDef} instance containing no classpath entry.
+     * A {@code ModelClassPathDef} instance containing no classpath entry and
+     * the class loader used to load {@code ModelClassPathDef}.
      */
-    public static final ModelClassPathDef EMPTY = new ModelClassPathDef();
+    public static final ModelClassPathDef EMPTY = new ModelClassPathDef(ModelClassPathDef.class.getClassLoader());
 
+    private final ClassLoader classLoader;
     private final Set<File> jarFiles;
 
-    private ModelClassPathDef() {
+    private ModelClassPathDef(ClassLoader classLoader) {
+        if (classLoader == null) throw new NullPointerException("classLoader");
+
+        this.classLoader = classLoader;
         this.jarFiles = Collections.emptySet();
     }
 
-    private ModelClassPathDef(Collection<? extends File> jarFiles) {
+    private ModelClassPathDef(ClassLoader classLoader, Collection<? extends File> jarFiles) {
+        if (classLoader == null) throw new NullPointerException("classLoader");
+
+        this.classLoader = classLoader;
         this.jarFiles = new LinkedHashSet<File>(jarFiles);
 
         CollectionUtils.checkNoNullElements(this.jarFiles, "jarFiles");
@@ -34,14 +42,29 @@ public final class ModelClassPathDef {
      * Creates a classpath from the given set of jar files (or other classpath
      * entries).
      *
+     * @param classLoader the {@code ClassLoader} which is to be used to
+     *   deserialize models received from the associated {@link ProjectInfoBuilder}.
+     *   This argument cannot be {@code null}.
      * @param jarFiles the jar files to be needed to serialize / deserialize
      *   the associated {@code GradleInfoQuery}. This argument cannot be
      *   {@code null} and cannot contain {@code null} elements.
      * @return the classpath from the given set of jar files. This method
      *   never returns {@code null}.
      */
-    public static ModelClassPathDef fromJarFiles(Collection<? extends File> jarFiles) {
-        return new ModelClassPathDef(jarFiles);
+    public static ModelClassPathDef fromJarFiles(ClassLoader classLoader, Collection<? extends File> jarFiles) {
+        return new ModelClassPathDef(classLoader, jarFiles);
+    }
+
+    /**
+     * Returns the {@code ClassLoader} used to deserialize models returned by
+     * the associated {@link ProjectInfoBuilder}.
+     *
+     * @return the {@code ClassLoader} used to deserialize models returned by
+     *   the associated {@link ProjectInfoBuilder}. This method never returns
+     *   {@code null}.
+     */
+    public ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     /**

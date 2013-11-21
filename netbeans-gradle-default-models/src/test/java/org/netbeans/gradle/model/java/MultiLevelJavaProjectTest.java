@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.gradle.model.BuiltInModelBuilder;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GenericProjectProperties;
@@ -32,6 +32,7 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
 import org.netbeans.gradle.model.util.TestUtils;
@@ -407,22 +408,86 @@ public class MultiLevelJavaProjectTest {
         }
     }
 
+    @Test
+    public void testCustomQuery() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                String prefix = "testCustomQuery-";
+                String result = fetchSingleBuildInfo(connection, new TestBuildInfoBuilder(prefix));
+
+                assertEquals(prefix + ROOT_NAME, result);
+            }
+        });
+    }
+
+    private static Object getSingleElement(List<?> list) {
+        return CollectionUtils.getSingleElement(list);
+    }
+
+    @Test
+    public void testManyQueries() throws IOException {
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
+                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+
+        Set<Class<?>> toolingModels = new HashSet<Class<?>>();
+
+        projectInfos.put(0, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(JarOutputsModelBuilder.INSTANCE)));
+        projectInfos.put(1, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(JavaCompatibilityModelBuilder.INSTANCE)));
+        projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(JavaSourcesModelBuilder.COMPLETE)));
+        projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(WarFoldersModelBuilder.INSTANCE)));
+
+        final String prefix = "testCustomQuery-";
+        buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(new TestBuildInfoBuilder(prefix))));
+
+        toolingModels.add(IdeaProject.class);
+
+        final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+        try {
+            runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+                public void doTask(ProjectConnection connection) throws Exception {
+                    FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
+
+                    String buildInfo = (String)getSingleElement(models.getBuildInfoResults().get(0));
+                    assertEquals(prefix + ROOT_NAME, buildInfo);
+
+                    Map<Object, List<?>> projectInfos = models.getDefaultProjectModels().getProjectInfoResults();
+
+                    JarOutputsModel model1 = (JarOutputsModel)getSingleElement(projectInfos.get(0));
+                    JavaCompatibilityModel model2 = (JavaCompatibilityModel)getSingleElement(projectInfos.get(1));
+                    JavaSourcesModel model3 = (JavaSourcesModel)getSingleElement(projectInfos.get(2));
+                    WarFoldersModel model4 = (WarFoldersModel)getSingleElement(projectInfos.get(3));
+
+                    assertNotNull(model1);
+                    assertNotNull(model2);
+                    assertNotNull(model3);
+                    assertNull(model4);
+                }
+            });
+        } finally {
+            System.out.println("Ending testCustomQuery");
+        }
+    }
+
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
             Class<?>... modelClasses) throws IOException {
 
-        Map<Object, GradleBuildInfoQuery<?>> buildInfos = new HashMap<Object, GradleBuildInfoQuery<?>>();
-        Map<Object, GradleProjectInfoQuery<?>> projectInfos = Collections.emptyMap();
-        Set<Class<?>> toolingModels = Collections.emptySet();
-
-        buildInfos.put(0, toBuiltInQuery(new BuiltInModelBuilder(modelClasses)));
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos = Collections.emptyMap();
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos = Collections.emptyMap();
+        Set<Class<?>> toolingModels = new HashSet<Class<?>>(Arrays.asList(modelClasses));
 
         GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         FetchedModels models = modelFetcher.getModels(connection, defaultInit());
 
-        @SuppressWarnings("unchecked")
-        Map<Class<?>, Object> result = (Map<Class<?>, Object>)models.getBuildInfoResults().get(0);
-        return result;
+        return models.getDefaultProjectModels().getToolingModels();
     }
 
     private void testBuiltInModels(String relativeProjectPath) throws IOException {
