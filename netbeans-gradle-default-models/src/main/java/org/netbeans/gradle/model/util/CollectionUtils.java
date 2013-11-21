@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class CollectionUtils {
     public static void checkNoNullElements(Collection<?> collection, String name) {
@@ -69,6 +72,22 @@ public final class CollectionUtils {
         }
 
         return listSize == 1 ? list.get(0) : null;
+    }
+
+    private static int expectedSizeToCapacity(int expectedSize) {
+        return 4 * expectedSize / 3 + 1;
+    }
+
+    public static <K, V> Map<K, V> newHashMap(int expectedSize) {
+        return new HashMap<K, V>(expectedSizeToCapacity(expectedSize));
+    }
+
+    public static <V> Set<V> newHashSet(int expectedSize) {
+        return new HashSet<V>(expectedSizeToCapacity(expectedSize));
+    }
+
+    public static <V> Set<V> newLinkedHashSet(int expectedSize) {
+        return new LinkedHashSet<V>(expectedSizeToCapacity(expectedSize));
     }
 
     private CollectionUtils() {

@@ -3,10 +3,10 @@ package org.netbeans.gradle.model.internal;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class CustomSerializedMap implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -19,7 +19,7 @@ public final class CustomSerializedMap implements Serializable {
         private final Map<Object, List<Object>> map;
 
         public Builder(int expectedSize) {
-            this.map = new HashMap<Object, List<Object>>(4 * expectedSize / 3 + 1);
+            this.map = CollectionUtils.newHashMap(expectedSize);
         }
 
         public void addValues(Object key, Collection<?> values) {
@@ -48,7 +48,7 @@ public final class CustomSerializedMap implements Serializable {
     private final Map<Object, SerializedEntries> map;
 
     private CustomSerializedMap(Builder builder) {
-        Map<Object, SerializedEntries> mutableMap = new HashMap<Object, SerializedEntries>(2 * builder.map.size());
+        Map<Object, SerializedEntries> mutableMap = CollectionUtils.newHashMap(builder.map.size());
         for (Map.Entry<Object, List<Object>> entry: builder.map.entrySet()) {
             List<Object> value = entry.getValue();
             mutableMap.put(entry.getKey(), new SerializedEntries(value));

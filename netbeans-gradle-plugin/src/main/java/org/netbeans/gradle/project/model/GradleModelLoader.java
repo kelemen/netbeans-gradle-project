@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -38,6 +36,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -270,7 +269,7 @@ public final class GradleModelLoader {
 
     public static List<IdeaModule> getChildModules(IdeaModule module) {
         Collection<? extends GradleProject> children = module.getGradleProject().getChildren();
-        Set<String> childrenPaths = new HashSet<String>(2 * children.size());
+        Set<String> childrenPaths = CollectionUtils.newHashSet(children.size());
         for (GradleProject child: children) {
             childrenPaths.add(child.getPath());
         }
@@ -289,7 +288,7 @@ public final class GradleModelLoader {
             List<NbGradleModel> otherModels,
             NbGradleModel mainModel) {
 
-        Map<File, NbGradleModel> projects = new HashMap<File, NbGradleModel>(2 * otherModels.size() + 1);
+        Map<File, NbGradleModel> projects = CollectionUtils.newHashMap(otherModels.size());
         for (NbGradleModel otherModel: otherModels) {
             projects.put(otherModel.getProjectDir(), otherModel);
         }
@@ -415,8 +414,7 @@ public final class GradleModelLoader {
             return Collections.singletonList(new NamedFile(file, file.getName()));
         }
 
-        Map<String, List<FileWithBase>> nameToFile
-                = new HashMap<String, List<FileWithBase>>(files.size() * 2 + 1);
+        Map<String, List<FileWithBase>> nameToFile = CollectionUtils.newHashMap(files.size());
 
         int fileIndex = 0;
         for (File file: files) {

@@ -2,7 +2,6 @@ package org.netbeans.gradle.model.util;
 
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -16,7 +15,7 @@ public final class SourceSetVerification {
     private static Map<String, JavaSourceSet> sourceSetMap(JavaSourcesModel sources) {
         Collection<JavaSourceSet> sourceSets = sources.getSourceSets();
 
-        Map<String, JavaSourceSet> result = new HashMap<String, JavaSourceSet>(2 * sourceSets.size());
+        Map<String, JavaSourceSet> result = CollectionUtils.newHashMap(sourceSets.size());
         for (JavaSourceSet sourceSet: sourceSets) {
             result.put(sourceSet.getName(), sourceSet);
         }

@@ -3,7 +3,6 @@ package org.netbeans.gradle.model.java;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +67,7 @@ public final class InfoQueries {
 
     public static GenericModelFetcher buildInfoFetcher(BuildInfoBuilder<?>... builders) {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
-                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+                = CollectionUtils.newHashMap(builders.length);
 
         Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
                 = Collections.emptyMap();
@@ -86,7 +85,7 @@ public final class InfoQueries {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = Collections.emptyMap();
         Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
-                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+                = CollectionUtils.newHashMap(builders.length);
 
         Set<Class<?>> toolingModels = Collections.emptySet();
 

@@ -21,6 +21,7 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.SharabilityQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -138,7 +139,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
 
         Map<String, List<SourceGroup>> moduleSources = findSourceGroupsOfModule(mainModule);
 
-        Map<String, SourceGroup[]> result = new HashMap<String, SourceGroup[]>(2 * moduleSources.size());
+        Map<String, SourceGroup[]> result = CollectionUtils.newHashMap(moduleSources.size());
         for (Map.Entry<String, List<SourceGroup>> entry: moduleSources.entrySet()) {
             List<SourceGroup> entryValue = entry.getValue();
             result.put(entry.getKey(), entryValue.toArray(new SourceGroup[entryValue.size()]));

@@ -239,7 +239,7 @@ public class MultiLevelJavaProjectTest {
     }
 
     private Map<File, String> parseProjectDependencies(String... projectDependencies) throws IOException {
-        Map<File, String> result = new HashMap<File, String>(2 * projectDependencies.length);
+        Map<File, String> result = CollectionUtils.newHashMap(projectDependencies.length);
         for (String dep: projectDependencies) {
             String[] nameParts = dep.split(Pattern.quote(":"));
             String name = nameParts[nameParts.length - 1];

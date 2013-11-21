@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +12,7 @@ import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class NbJavaModule {
     private final GenericProjectProperties properties;
@@ -124,7 +123,7 @@ public final class NbJavaModule {
     }
 
     private Map<String, JavaSourceSet> createNameToSourceSet() {
-        Map<String, JavaSourceSet> result = new HashMap<String, JavaSourceSet>(2 * sources.size());
+        Map<String, JavaSourceSet> result = CollectionUtils.newHashMap(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             result.put(sourceSet.getName(), sourceSet);
         }
@@ -147,7 +146,7 @@ public final class NbJavaModule {
     }
 
     private Set<File> createAllBuildOutputs() {
-        Set<File> result = new HashSet<File>(2 * sources.size());
+        Set<File> result = CollectionUtils.newHashSet(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             result.add(sourceSet.getOutputDirs().getClassesDir());
         }

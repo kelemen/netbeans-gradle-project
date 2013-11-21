@@ -84,7 +84,7 @@ public final class JavaParsingUtils {
     private static Map<File, File> getJarsToBuildDirs(GradleBuildInfo buildInfo) {
         Map<File, GradleProjectInfo> allProjects = buildInfo.getAllProjectInfos();
 
-        Map<File, File> result = new HashMap<File, File>(2 * allProjects.size());
+        Map<File, File> result = CollectionUtils.newHashMap(allProjects.size());
         for (GradleProjectInfo projectInfo: allProjects.values()) {
             JarOutputsModel jarsModel = RequiredModels.extractJars(projectInfo);
             if (jarsModel != null) {

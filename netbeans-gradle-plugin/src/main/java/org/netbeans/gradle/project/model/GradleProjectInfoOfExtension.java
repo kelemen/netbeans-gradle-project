@@ -4,7 +4,6 @@ import java.util.List;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.MultiKey;
-import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class GradleProjectInfoOfExtension implements GradleProjectInfo {
     private final String extensionName;

@@ -3,12 +3,12 @@ package org.netbeans.gradle.project.properties;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.w3c.dom.Element;
 
@@ -129,7 +129,7 @@ extends
         Set<String> known1 = mainProperties.getKnownBuiltInCommands();
         Set<String> known2 = defaultProperties.getKnownBuiltInCommands();
 
-        Set<String> result = new HashSet<String>(2 * (known1.size() + known2.size()));
+        Set<String> result = CollectionUtils.newHashSet(known1.size() + known2.size());
         result.addAll(known1);
         result.addAll(known2);
         return result;

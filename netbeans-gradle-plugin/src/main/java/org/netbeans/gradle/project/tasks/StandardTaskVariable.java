@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
@@ -115,8 +115,7 @@ public enum StandardTaskVariable {
 
     private static Map<TaskVariable, StandardTaskVariable> createStandardMap() {
         StandardTaskVariable[] variables = StandardTaskVariable.values();
-        Map<TaskVariable, StandardTaskVariable> result
-                = new HashMap<TaskVariable, StandardTaskVariable>(variables.length * 2);
+        Map<TaskVariable, StandardTaskVariable> result = CollectionUtils.newHashMap(variables.length);
         for (StandardTaskVariable variable: variables) {
             result.put(variable.getVariable(), variable);
         }

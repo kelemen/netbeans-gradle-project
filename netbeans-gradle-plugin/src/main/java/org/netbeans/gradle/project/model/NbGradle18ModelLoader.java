@@ -20,6 +20,7 @@ import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.MultiKey;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
@@ -219,7 +220,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final Map<String, ExtensionBuildInfos> infos;
 
         public AllBuildInfos(FetchedModels models, Collection<ProjectExtensionRef> extensions) {
-            this.infos = new HashMap<String, NbGradle18ModelLoader.ExtensionBuildInfos>(2 * extensions.size());
+            this.infos = CollectionUtils.newHashMap(extensions.size());
             for (ProjectExtensionRef extRef: extensions) {
                 String name = extRef.getName();
 

@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
@@ -687,10 +686,10 @@ public final class NbGradleProject implements Project {
         }
 
         private void notifyModelChange(NbGradleModel model) {
-            int setSize = 2 * extensionRefs.size();
-            Set<String> disabledExtensions = new HashSet<String>(setSize);
+            int extCount = extensionRefs.size();
+            Set<String> disabledExtensions = CollectionUtils.newHashSet(extCount);
             Map<String, GradleProjectExtension> loadedExtensions
-                    = new HashMap<String, GradleProjectExtension>(setSize);
+                    = CollectionUtils.newHashMap(extCount);
 
             for (ProjectExtensionRef extensionRef: extensionRefs) {
                 GradleProjectExtension extension = extensionRef.getExtension();

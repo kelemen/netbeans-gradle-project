@@ -12,6 +12,7 @@ import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.SerializedEntries;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 final class GradleInfoQueryMap {
     private final CustomSerializedMap builderMap;
@@ -78,7 +79,7 @@ final class GradleInfoQueryMap {
     }
 
     public Map<Object, List<?>> deserializeResults(CustomSerializedMap map) {
-        Map<Object, List<?>> result = new HashMap<Object, List<?>>(4 * map.size() / 3 + 1);
+        Map<Object, List<?>> result = CollectionUtils.newHashMap(map.size());
 
         for (Map.Entry<Object, SerializedEntries> entry: map.getMap().entrySet()) {
             KeyWrapper key = (KeyWrapper)entry.getKey();
@@ -104,7 +105,7 @@ final class GradleInfoQueryMap {
             if (builderMap == null) throw new NullPointerException("builderMap");
 
             this.builderMap = builderMap;
-            this.paths = new HashMap<KeyWrapper, Set<File>>(4 * classpath.size() / 3 + 1);
+            this.paths = CollectionUtils.newHashMap(classpath.size());
             for (Map.Entry<KeyWrapper, ModelClassPathDef> entry: classpath.entrySet()) {
                 KeyWrapper key = entry.getKey();
                 if (key == null) throw new NullPointerException("classpath[?].key");
@@ -126,7 +127,7 @@ final class GradleInfoQueryMap {
         }
 
         public Map<Object, List<?>> deserialize(ClassLoader parent) {
-            Map<Object, List<?>> result = new HashMap<Object, List<?>>(4 * builderMap.size() / 3 + 1);
+            Map<Object, List<?>> result = CollectionUtils.newHashMap(builderMap.size());
 
             for (Map.Entry<Object, SerializedEntries> entry: builderMap.getMap().entrySet()) {
                 KeyWrapper key = (KeyWrapper)entry.getKey();

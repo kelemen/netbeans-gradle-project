@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -48,7 +47,7 @@ public final class ModelClassPathDef {
     }
 
     private static Set<File> safeCanonFiles(Collection<? extends File> files) {
-        Set<File> result = new LinkedHashSet<File>(4 * files.size() / 3 + 1);
+        Set<File> result = CollectionUtils.newLinkedHashSet(files.size());
         for (File file: files) {
             result.add(safeCanonFile(file));
         }

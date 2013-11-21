@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.DynamicLookup;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
@@ -220,7 +220,7 @@ public final class JavaExtension implements GradleProjectExtension {
         File mainModuleDir = currentModel.getMainModule().getModuleDir();
         Map<File, NbJavaModel> models = IdeaJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
 
-        Map<File, Lookup> result = new HashMap<File, Lookup>(2 * models.size());
+        Map<File, Lookup> result = CollectionUtils.newHashMap(models.size());
         for (Map.Entry<File, NbJavaModel> entry: models.entrySet()) {
             result.put(entry.getKey(), Lookups.fixed(entry.getValue()));
         }
@@ -237,7 +237,7 @@ public final class JavaExtension implements GradleProjectExtension {
         Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(buildInfo);
         Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
 
-        Map<File, Lookup> result = new HashMap<File, Lookup>(2 * modules.size());
+        Map<File, Lookup> result = CollectionUtils.newHashMap(modules.size());
         for (NbJavaModule module: modules) {
             NbJavaModel model = createReliableModel(module, moduleDependencies);
             result.put(module.getModuleDir(), Lookups.singleton(model));

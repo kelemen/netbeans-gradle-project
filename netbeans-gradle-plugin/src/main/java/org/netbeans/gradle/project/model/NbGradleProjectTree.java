@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -82,7 +81,7 @@ public final class NbGradleProjectTree {
     }
 
     private Map<String, NbGradleProjectTree> createChildrenMap() {
-        Map<String, NbGradleProjectTree> result = new HashMap<String, NbGradleProjectTree>(2 * children.size());
+        Map<String, NbGradleProjectTree> result = CollectionUtils.newHashMap(children.size());
         for (NbGradleProjectTree child: children) {
             result.put(child.getProjectName(), child);
         }

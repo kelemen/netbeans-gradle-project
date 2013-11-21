@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
@@ -52,8 +52,7 @@ implements
             }
         }
 
-        Set<NbGradleConfiguration> customProfiles
-                = new HashSet<NbGradleConfiguration>(2 * customProfileDefs.size());
+        Set<NbGradleConfiguration> customProfiles = CollectionUtils.newHashSet(customProfileDefs.size());
         for (ProfileDef profileDef: customProfileDefs) {
             customProfiles.add(new NbGradleConfiguration(profileDef));
         }

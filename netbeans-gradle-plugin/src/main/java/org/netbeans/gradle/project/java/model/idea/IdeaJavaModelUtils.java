@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -33,6 +32,7 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
@@ -320,11 +320,11 @@ public final class IdeaJavaModelUtils {
         }
 
         DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
-        int mapCapacity = 2 * modules.size();
+        int modulesCount = modules.size();
 
-        Map<String, IdeaDependencyBuilder> cache = new HashMap<String, IdeaDependencyBuilder>(mapCapacity);
+        Map<String, IdeaDependencyBuilder> cache = CollectionUtils.newHashMap(modulesCount);
 
-        Map<File, NbJavaModule> parsedModules = new HashMap<File, NbJavaModule>(mapCapacity);
+        Map<File, NbJavaModule> parsedModules = CollectionUtils.newHashMap(modulesCount);
         for (IdeaModule module: modules) {
             NbJavaModule parsedModule = tryParseModule(module, cache);
             if (parsedModule != null) {
@@ -336,8 +336,8 @@ public final class IdeaJavaModelUtils {
             throw new IOException("Unable to parse the main project from the model.");
         }
 
-        Map<File, JavaProjectReference> asDependency = new HashMap<File, JavaProjectReference>(mapCapacity);
-        Map<File, JavaProjectDependency> outputDirToProject = new HashMap<File, JavaProjectDependency>(mapCapacity);
+        Map<File, JavaProjectReference> asDependency = CollectionUtils.newHashMap(modulesCount);
+        Map<File, JavaProjectDependency> outputDirToProject = CollectionUtils.newHashMap(modulesCount);
 
         for (NbJavaModule module: parsedModules.values()) {
             File moduleDir = module.getModuleDir();
@@ -352,7 +352,7 @@ public final class IdeaJavaModelUtils {
             }
         }
 
-        Map<File, NbJavaModel> result = new HashMap<File, NbJavaModel>(mapCapacity);
+        Map<File, NbJavaModel> result = CollectionUtils.newHashMap(modulesCount);
         for (NbJavaModule module: parsedModules.values()) {
             NbJavaModel model = createUnreliableModel(module, outputDirToProject);
             result.put(module.getModuleDir(), model);

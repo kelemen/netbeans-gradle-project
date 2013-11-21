@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.w3c.dom.Element;
 
@@ -222,7 +223,7 @@ public final class PropertiesSnapshot {
 
         Set<String> commands = properties.getKnownBuiltInCommands();
         this.knownBuiltInCommands = Collections.unmodifiableSet(new HashSet<String>(commands));
-        this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(2 * commands.size());
+        this.builtInTasks = CollectionUtils.newHashMap(commands.size());
         for (String command: commands) {
             MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
             if (taskProperty == null) {
@@ -247,8 +248,7 @@ public final class PropertiesSnapshot {
     }
 
     private static Map<DomElementKey, AuxConfigSource> sourcesToMap(Collection<AuxConfigSource> sources) {
-        Map<DomElementKey, AuxConfigSource> map = new HashMap<DomElementKey, AuxConfigSource>(
-                2 * sources.size() + 1);
+        Map<DomElementKey, AuxConfigSource> map = CollectionUtils.newHashMap(sources.size());
         for (AuxConfigSource auxSource: sources) {
             map.put(auxSource.getKey(), auxSource);
         }

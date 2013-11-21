@@ -2,11 +2,11 @@ package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class SourceBinaryMap {
     public static final SourceBinaryMap EMPTY = new Builder().create();
@@ -39,10 +39,10 @@ public final class SourceBinaryMap {
     private final Map<File, SourceEntry> binaryToSource;
 
     public SourceBinaryMap(Builder builder) {
-        int mapSize = 4 * builder.entries.size() / 3 + 1;
+        int entriesCount = builder.entries.size();
 
-        Map<File, File> sourceToBinaryBuilder = new HashMap<File, File>(mapSize);
-        Map<File, SourceEntry> binaryToSourceBuilder = new HashMap<File, SourceEntry>(mapSize);
+        Map<File, File> sourceToBinaryBuilder = CollectionUtils.newHashMap(entriesCount);
+        Map<File, SourceEntry> binaryToSourceBuilder = CollectionUtils.newHashMap(entriesCount);
 
         for (Entry entry: builder.entries) {
             File sourceFile = entry.sourceEntry.source;
