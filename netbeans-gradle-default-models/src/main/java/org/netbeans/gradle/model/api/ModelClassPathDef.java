@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.api;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -33,9 +34,25 @@ public final class ModelClassPathDef {
         if (classLoader == null) throw new NullPointerException("classLoader");
 
         this.classLoader = classLoader;
-        this.jarFiles = new LinkedHashSet<File>(jarFiles);
+        this.jarFiles = safeCanonFiles(jarFiles);
 
         CollectionUtils.checkNoNullElements(this.jarFiles, "jarFiles");
+    }
+
+    private static File safeCanonFile(File file) {
+        try {
+            return file.getCanonicalFile();
+        } catch (IOException ex) {
+            return file;
+        }
+    }
+
+    private static Set<File> safeCanonFiles(Collection<? extends File> files) {
+        Set<File> result = new LinkedHashSet<File>(4 * files.size() / 3 + 1);
+        for (File file: files) {
+            result.add(safeCanonFile(file));
+        }
+        return result;
     }
 
     /**
