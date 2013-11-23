@@ -7,32 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class StringAsFileRefTest {
+public class TemporaryFileManagerTest {
     private static final Charset UTF8 = Charset.forName("UTF-8");
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     private static byte[] readAll(InputStream input) throws IOException {
         byte[] buffer = new byte[8 * 1024];
@@ -57,18 +37,22 @@ public class StringAsFileRefTest {
         }
     }
 
-    private static void assertContent(StringAsFileRef fileRef, String expectedContent, Charset encoding) throws IOException {
+    private static void assertContent(TemporaryFileRef fileRef, String expectedContent, Charset encoding) throws IOException {
         String fileContent = new String(readAll(fileRef.getFile()), UTF8.name());
         assertEquals(expectedContent, fileContent);
     }
 
     private void testFileContainsText(String name, String content) throws Exception {
-        StringAsFileRef fileRef = StringAsFileRef.createRef(name, content, UTF8);
+        TemporaryFileRef fileRef = createRef(name, content);
         try {
             assertContent(fileRef, content, UTF8);
         } finally {
             fileRef.close();
         }
+    }
+
+    private TemporaryFileRef createRef(String name, String content) throws IOException {
+        return TemporaryFileManager.getDefault().createFile(name, content, UTF8);
     }
 
     @Test
@@ -86,9 +70,9 @@ public class StringAsFileRefTest {
         String content = "EXPECTED FILE content: testMultipleRefs";
 
         String name = "testMultipleRefs";
-        StringAsFileRef fileRef1 = StringAsFileRef.createRef(name, content, UTF8);
+        TemporaryFileRef fileRef1 = createRef(name, content);
         try {
-            StringAsFileRef fileRef2 = StringAsFileRef.createRef(name, content, UTF8);
+            TemporaryFileRef fileRef2 = createRef(name, content);
             try {
                 assertEquals(fileRef1.getFile(), fileRef2.getFile());
 
@@ -104,7 +88,7 @@ public class StringAsFileRefTest {
     private void testModifiedContent(String name, byte[] modContent) throws Exception {
         String content = "EXPECTED FILE content: testModifiedContent";
 
-        StringAsFileRef fileRef1 = StringAsFileRef.createRef(name, content, UTF8);
+        TemporaryFileRef fileRef1 = createRef(name, content);
         fileRef1.close();
 
         RandomAccessFile fileContent = new RandomAccessFile(fileRef1.getFile(), "rw");
@@ -115,7 +99,7 @@ public class StringAsFileRefTest {
             fileContent.close();
         }
 
-        StringAsFileRef fileRef2 = StringAsFileRef.createRef(name, content, UTF8);
+        TemporaryFileRef fileRef2 = createRef(name, content);
         try {
             assertContent(fileRef2, content, UTF8);
         } finally {

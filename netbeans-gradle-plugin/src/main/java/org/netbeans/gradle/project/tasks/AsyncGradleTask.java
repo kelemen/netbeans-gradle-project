@@ -25,7 +25,8 @@ import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.gradle.model.util.StringAsFileRef;
+import org.netbeans.gradle.model.util.TemporaryFileManager;
+import org.netbeans.gradle.model.util.TemporaryFileRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
@@ -103,7 +104,7 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static List<StringAsFileRef> getAllInitScriptFiles(NbGradleProject project) {
+    private static List<TemporaryFileRef> getAllInitScriptFiles(NbGradleProject project) {
         if (GlobalGradleSettings.getOmitInitScript().getValue()) {
             return Collections.emptyList();
         }
@@ -111,12 +112,13 @@ public final class AsyncGradleTask implements Runnable {
         Collection<? extends InitScriptQuery> scriptQueries
                 = project.getLookup().lookupAll(InitScriptQuery.class);
 
-        List<StringAsFileRef> results = new ArrayList<StringAsFileRef>(scriptQueries.size());
+        List<TemporaryFileRef> results = new ArrayList<TemporaryFileRef>(scriptQueries.size());
         try {
             for (InitScriptQuery scriptQuery: scriptQueries) {
                 try {
                     String scriptContent = scriptQuery.getInitScript();
-                    results.add(StringAsFileRef.createRef("task-init-script", scriptContent, UTF8));
+                    results.add(TemporaryFileManager.getDefault().createFile(
+                            "task-init-script", scriptContent, UTF8));
                 } catch (Throwable ex) {
                     LOGGER.log(Level.SEVERE,
                             "Failed to create initialization script provided by " + scriptQuery.getClass().getName(),
@@ -147,7 +149,7 @@ public final class AsyncGradleTask implements Runnable {
             NbGradleProject project,
             BuildLauncher buildLauncher,
             GradleTaskDef taskDef,
-            List<StringAsFileRef> initScripts,
+            List<TemporaryFileRef> initScripts,
             final ProgressHandle progress) {
 
         File javaHome = GradleModelLoader.getScriptJavaHome(project);
@@ -162,7 +164,7 @@ public final class AsyncGradleTask implements Runnable {
         List<String> arguments = new LinkedList<String>();
         arguments.addAll(taskDef.getArguments());
 
-        for (StringAsFileRef initScript: initScripts) {
+        for (TemporaryFileRef initScript: initScripts) {
             LOGGER.log(Level.INFO, "Applying init-script: {0}", initScript);
             arguments.add("--init-script");
             arguments.add(initScript.getFile().getPath());
@@ -248,7 +250,7 @@ public final class AsyncGradleTask implements Runnable {
             projectConnection = gradleConnector.connect();
 
             BuildLauncher buildLauncher = projectConnection.newBuild();
-            List<StringAsFileRef> initScripts = getAllInitScriptFiles(project);
+            List<TemporaryFileRef> initScripts = getAllInitScriptFiles(project);
             try {
                 configureBuildLauncher(project, buildLauncher, taskDef, initScripts, progress);
 
