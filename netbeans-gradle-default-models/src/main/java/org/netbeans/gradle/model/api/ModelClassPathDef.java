@@ -2,9 +2,13 @@ package org.netbeans.gradle.model.api;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+import org.gradle.tooling.BuildAction;
+import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
@@ -18,6 +22,7 @@ public final class ModelClassPathDef {
      * the class loader used to load {@code ModelClassPathDef}.
      */
     public static final ModelClassPathDef EMPTY = new ModelClassPathDef(ModelClassPathDef.class.getClassLoader());
+    private static final Set<File> EXCLUDED_PATHS = excludedPaths();
 
     private final ClassLoader classLoader;
     private final Set<File> jarFiles;
@@ -38,7 +43,18 @@ public final class ModelClassPathDef {
         CollectionUtils.checkNoNullElements(this.jarFiles, "jarFiles");
     }
 
+    private static Set<File> excludedPaths() {
+        return Collections.unmodifiableSet(new HashSet<File>(Arrays.<File>asList(
+            ClassLoaderUtils.getLocationOfClassPath(),
+            ClassLoaderUtils.findClassPathOfClass(BuildAction.class)
+        )));
+    }
+
     private static File safeCanonFile(File file) {
+        if (EXCLUDED_PATHS.contains(file)) {
+            throw new IllegalArgumentException("The given classpath is assumed implicitly and cannot be added: " + file);
+        }
+
         try {
             return file.getCanonicalFile();
         } catch (IOException ex) {
