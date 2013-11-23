@@ -66,6 +66,22 @@ public class TemporaryFileManagerTest {
     }
 
     @Test
+    public void testDeleteAfterClose() throws Exception {
+        String content = "EXPECTED FILE content: testMultipleRefs";
+
+        String name = "testMultipleRefs";
+        TemporaryFileRef fileRef1 = createRef(name, content);
+        File file;
+        try {
+            file = fileRef1.getFile();
+        } finally {
+            fileRef1.close();
+        }
+
+        assertFalse("File must be deleted after close.", file.exists());
+    }
+
+    @Test
     public void testMultipleRefs() throws Exception {
         String content = "EXPECTED FILE content: testMultipleRefs";
 
@@ -76,13 +92,17 @@ public class TemporaryFileManagerTest {
             try {
                 assertEquals(fileRef1.getFile(), fileRef2.getFile());
 
-                assertContent(fileRef1, content);
+                assertContent(fileRef2, content);
             } finally {
                 fileRef2.close();
             }
+
+            assertContent(fileRef1, content);
         } finally {
             fileRef1.close();
         }
+
+        assertFalse("File must be deleted after close.", fileRef1.getFile().exists());
     }
 
     private void testModifiedContent(String name, byte[] modContent) throws Exception {
@@ -91,19 +111,23 @@ public class TemporaryFileManagerTest {
         TemporaryFileRef fileRef1 = createRef(name, content);
         fileRef1.close();
 
-        RandomAccessFile fileContent = new RandomAccessFile(fileRef1.getFile(), "rw");
         try {
-            fileContent.setLength(0);
-            fileContent.write(modContent);
-        } finally {
-            fileContent.close();
-        }
+            RandomAccessFile fileContent = new RandomAccessFile(fileRef1.getFile(), "rw");
+            try {
+                fileContent.setLength(0);
+                fileContent.write(modContent);
+            } finally {
+                fileContent.close();
+            }
 
-        TemporaryFileRef fileRef2 = createRef(name, content);
-        try {
-            assertContent(fileRef2, content);
+            TemporaryFileRef fileRef2 = createRef(name, content);
+            try {
+                assertContent(fileRef2, content);
+            } finally {
+                fileRef2.close();
+            }
         } finally {
-            fileRef2.close();
+            fileRef1.getFile().delete();
         }
     }
 
