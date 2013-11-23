@@ -1,12 +1,9 @@
 package org.netbeans.gradle.model;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -127,12 +124,14 @@ public final class GenericModelFetcher {
                 "$NB_BOOT_CLASSPATH",
                 toPastableString(ClassLoaderUtils.getLocationOfClassPath().getPath()));
 
-        ModelQueryInput modelInput = new ModelQueryInput(projectInfoBuilders.getSerializableBuilderMap());
-        File modelInputFile = serializeToFile(modelInput);
-        try {
-            initScript = initScript.replace("$INPUT_FILE", toPastableString(modelInputFile));
+        TemporaryFileManager fileManager = TemporaryFileManager.getDefault();
 
-            TemporaryFileRef initScriptRef = TemporaryFileManager.getDefault()
+        ModelQueryInput modelInput = new ModelQueryInput(projectInfoBuilders.getSerializableBuilderMap());
+        TemporaryFileRef modelInputFile = fileManager.createFileFromSerialized("model-input", modelInput);
+        try {
+            initScript = initScript.replace("$INPUT_FILE", toPastableString(modelInputFile.getFile()));
+
+            TemporaryFileRef initScriptRef = fileManager
                     .createFile("dyn-model-gradle-init", initScript, INIT_SCRIPT_ENCODING);
             try {
                 String[] executerArgs = new String[userArgs.length + 2];
@@ -148,50 +147,7 @@ public final class GenericModelFetcher {
                 initScriptRef.close();
             }
         } finally {
-            modelInputFile.delete();
-            // TODO: Log failure
-        }
-    }
-
-    private static void serializeToFile(Object input, File outputFile) throws IOException {
-        OutputStream fileOutput = new FileOutputStream(outputFile);
-        try {
-            ObjectOutputStream output = new ObjectOutputStream(fileOutput);
-            try {
-                output.writeObject(input);
-            } finally {
-                output.close();
-            }
-        } finally {
-            fileOutput.close();
-        }
-    }
-
-    private static File serializeToFile(Object input) throws IOException {
-        // TODO: Try to create a file name which is the same for each run
-        //   fallback to something random in the worst case.
-        File tmpFile = File.createTempFile("dyn-gradle-model", ".bin");
-        try {
-            tmpFile = tmpFile.getCanonicalFile();
-            serializeToFile(input, tmpFile);
-            return tmpFile;
-        } catch (Throwable ex) {
-            if (!tmpFile.delete()) {
-                IOException deleteEx = new IOException("Failed to remove temporary file: " + tmpFile);
-                deleteEx.initCause(ex);
-                throw deleteEx;
-            }
-
-            if (ex instanceof IOException) {
-                throw (IOException)ex;
-            }
-            if (ex instanceof RuntimeException) {
-                throw (RuntimeException)ex;
-            }
-            if (ex instanceof Error) {
-                throw (Error)ex;
-            }
-            throw new RuntimeException(ex);
+            modelInputFile.close();
         }
     }
 
