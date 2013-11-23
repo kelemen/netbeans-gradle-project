@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.netbeans.gradle.project.Exceptions;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 

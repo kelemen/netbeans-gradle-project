@@ -1,7 +1,6 @@
 package org.netbeans.gradle.model.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -25,16 +24,8 @@ public final class ClassLoaderUtils {
         }
     }
 
-    private static File safeCanonicalFile(File file) {
-        try {
-            return file.getCanonicalFile();
-        } catch (IOException ex) {
-            return file;
-        }
-    }
-
     public static File findClassPathOfClass(Class<?> cl) {
-        return safeCanonicalFile(findClassPathOfClassNonCanonical(cl));
+        return BasicFileUtils.toCanonicalFile(findClassPathOfClassNonCanonical(cl));
     }
 
     private static File findClassPathOfClassNonCanonical(Class<?> cl) {

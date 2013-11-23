@@ -91,11 +91,7 @@ public final class TestUtils {
     }
 
     public static File getSubPath(File root, String... subPaths) throws IOException {
-        File result = root;
-        for (String subprojectName: subPaths) {
-            result = new File(result, subprojectName);
-        }
-        return result.getCanonicalFile();
+        return BasicFileUtils.getSubPath(root, subPaths).getCanonicalFile();
     }
 
     public static File getJDKHome() {

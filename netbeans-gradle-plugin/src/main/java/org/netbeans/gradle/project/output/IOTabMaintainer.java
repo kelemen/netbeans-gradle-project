@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.netbeans.gradle.project.Exceptions;
+import org.netbeans.gradle.model.util.Exceptions;
 
 public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
     private final Lock mainLock;
