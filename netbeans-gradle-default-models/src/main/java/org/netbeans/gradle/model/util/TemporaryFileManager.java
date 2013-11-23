@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -150,24 +149,23 @@ public final class TemporaryFileManager {
     private final class SingleFileReference implements TemporaryFileRef {
         private final BinaryContent content;
         private final FileReference fileRef;
-        private final AtomicBoolean released;
+        private final ObjectFinalizer finalizer;
 
         public SingleFileReference(BinaryContent content, FileReference fileRef) {
             this.content = content;
             this.fileRef = fileRef;
-            this.released = new AtomicBoolean();
+            this.finalizer = new ObjectFinalizer(new Runnable() {
+                public void run() {
+                    doClose();
+                }
+            }, "SingleFileReference{" + fileRef.getFile() + "}");
         }
 
         public File getFile() {
             return fileRef.getFile();
         }
 
-        // TODO: If the client code fails to call this, release in finalize.
-        public void close() throws IOException {
-            if (!released.compareAndSet(false, true)) {
-                return;
-            }
-
+        private void doClose() {
             boolean delete = false;
 
             mainLock.lock();
@@ -181,9 +179,16 @@ public final class TemporaryFileManager {
             }
 
             if (delete) {
-                closeAndDelete(fileRef.getLockedFile());
-                // TODO: Log on failure
+                try {
+                    closeAndDelete(fileRef.getLockedFile());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
+        }
+
+        public void close() throws IOException {
+            finalizer.doFinalize();
         }
 
         @Override
