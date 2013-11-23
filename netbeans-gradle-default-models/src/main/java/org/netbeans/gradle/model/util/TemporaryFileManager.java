@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,6 +88,11 @@ public final class TemporaryFileManager {
         }
 
         return result;
+    }
+
+    public TemporaryFileRef createFile(String preferredPrefix, String strContent, Charset charset) throws IOException {
+        BinaryContent content = new BinaryContent(strContent.getBytes(charset.name()), false);
+        return createFile(preferredPrefix, content);
     }
 
     public TemporaryFileRef createFile(String preferredPrefix, String strContent, String charsetName) throws IOException {

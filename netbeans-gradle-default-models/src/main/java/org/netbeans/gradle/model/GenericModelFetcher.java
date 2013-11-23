@@ -40,7 +40,8 @@ import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
-import org.netbeans.gradle.model.util.StringAsFileRef;
+import org.netbeans.gradle.model.util.TemporaryFileManager;
+import org.netbeans.gradle.model.util.TemporaryFileRef;
 
 public final class GenericModelFetcher {
     private static final Charset INIT_SCRIPT_ENCODING = Charset.forName("UTF-8");
@@ -131,8 +132,8 @@ public final class GenericModelFetcher {
         try {
             initScript = initScript.replace("$INPUT_FILE", toPastableString(modelInputFile));
 
-            StringAsFileRef initScriptRef
-                    = StringAsFileRef.createRef("dyn-model-gradle-init", initScript, INIT_SCRIPT_ENCODING);
+            TemporaryFileRef initScriptRef = TemporaryFileManager.getDefault()
+                    .createFile("dyn-model-gradle-init", initScript, INIT_SCRIPT_ENCODING);
             try {
                 String[] executerArgs = new String[userArgs.length + 2];
                 System.arraycopy(userArgs, 0, executerArgs, 0, userArgs.length);
