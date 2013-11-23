@@ -37,7 +37,7 @@ public class TemporaryFileManagerTest {
         }
     }
 
-    private static void assertContent(TemporaryFileRef fileRef, String expectedContent, Charset encoding) throws IOException {
+    private static void assertContent(TemporaryFileRef fileRef, String expectedContent) throws IOException {
         String fileContent = new String(readAll(fileRef.getFile()), UTF8.name());
         assertEquals(expectedContent, fileContent);
     }
@@ -45,7 +45,7 @@ public class TemporaryFileManagerTest {
     private void testFileContainsText(String name, String content) throws Exception {
         TemporaryFileRef fileRef = createRef(name, content);
         try {
-            assertContent(fileRef, content, UTF8);
+            assertContent(fileRef, content);
         } finally {
             fileRef.close();
         }
@@ -76,7 +76,7 @@ public class TemporaryFileManagerTest {
             try {
                 assertEquals(fileRef1.getFile(), fileRef2.getFile());
 
-                assertContent(fileRef1, content, UTF8);
+                assertContent(fileRef1, content);
             } finally {
                 fileRef2.close();
             }
@@ -101,7 +101,7 @@ public class TemporaryFileManagerTest {
 
         TemporaryFileRef fileRef2 = createRef(name, content);
         try {
-            assertContent(fileRef2, content, UTF8);
+            assertContent(fileRef2, content);
         } finally {
             fileRef2.close();
         }
