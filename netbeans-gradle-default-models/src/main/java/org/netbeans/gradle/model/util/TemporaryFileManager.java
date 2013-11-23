@@ -100,6 +100,11 @@ public final class TemporaryFileManager {
         return createFile(preferredPrefix, content);
     }
 
+    public TemporaryFileRef createFileFromSerialized(String preferredPrefix, Object contentObj) throws IOException {
+        BinaryContent content = new BinaryContent(SerializationUtils.serializeObject(contentObj), false);
+        return createFile(preferredPrefix, content);
+    }
+
     private TemporaryFileRef createFile(String preferredPrefix, BinaryContent content) throws IOException {
         TemporaryFileRef result = tryGetExisting(content);
         if (result != null) {
