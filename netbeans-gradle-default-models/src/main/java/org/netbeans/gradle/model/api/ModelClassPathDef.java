@@ -50,16 +50,38 @@ public final class ModelClassPathDef {
         )));
     }
 
+    /**
+     * Determines if the given classpath is implicitly assumed and therefore
+     * cannot be part of a {@code ModelClassPathDef} instance.
+     * <P>
+     * This method assumes that the given classpath is in a canonical form
+     * (see {@link File#getCanonicalFile()}).
+     *
+     * @param classPath the classpath entry to be checked if it is implicitly
+     *   assumed. This argument cannot be {@code null}.
+     * @return {@code true} if the given classpath entry is implicitly assumed,
+     *   and must not be explicitly specified by {@code ModelClassPathDef},
+     *   {@code false} otherwise
+     */
+    public static boolean isImplicitlyAssumed(File classPath) {
+        if (classPath == null) throw new NullPointerException("classPath");
+        return EXCLUDED_PATHS.contains(classPath);
+    }
+
     private static File safeCanonFile(File file) {
-        if (EXCLUDED_PATHS.contains(file)) {
+        File canonFile;
+
+        try {
+            canonFile = file.getCanonicalFile();
+        } catch (IOException ex) {
+            canonFile = file;
+        }
+
+        if (isImplicitlyAssumed(canonFile)) {
             throw new IllegalArgumentException("The given classpath is assumed implicitly and cannot be added: " + file);
         }
 
-        try {
-            return file.getCanonicalFile();
-        } catch (IOException ex) {
-            return file;
-        }
+        return canonFile;
     }
 
     private static Set<File> safeCanonFiles(Collection<? extends File> files) {
@@ -82,6 +104,12 @@ public final class ModelClassPathDef {
      *   {@code null} and cannot contain {@code null} elements.
      * @return the classpath from the given set of jar files. This method
      *   never returns {@code null}.
+     *
+     * @throws IllegalArgumentException thrown if the specified classpath contains
+     *   an entry which is implicitly assumed and therefore cannot be added
+     *   for performance reasons
+     *
+     * @see #isImplicitlyAssumed(File)
      */
     public static ModelClassPathDef fromJarFiles(ClassLoader classLoader, Collection<? extends File> jarFiles) {
         return new ModelClassPathDef(classLoader, jarFiles);
