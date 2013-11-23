@@ -30,6 +30,9 @@ public final class NbIcons {
     @StaticResource
     private static final String WARNING_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/warning-badge.png";
 
+    @StaticResource
+    private static final String PRIORITY_HIGH_PATH = "org/netbeans/gradle/project/resources/priority_high.png";
+
     public static Image getGradleIcon() {
         return ImageUtilities.loadImage(PROJECT_ICON_PATH);
     }
@@ -54,8 +57,11 @@ public final class NbIcons {
         return ImageUtilities.loadImage(WARNING_BADGE_ICON_PATH);
     }
 
-    public static Icon getUIInformationIcon() {
-        return UIManager.getIcon("OptionPane.informationIcon");
+    public static Icon getPriorityHighIcon() {
+        // This icon is the same as NotificationDisplayer.Priority.HIGH.getIcon()
+        // in NB 7.4.
+        // TODO: Remove this method and replace it with the above call.
+        return ImageUtilities.loadImageIcon(PRIORITY_HIGH_PATH, false);
     }
 
     public static Icon getUIQuestionIcon() {
