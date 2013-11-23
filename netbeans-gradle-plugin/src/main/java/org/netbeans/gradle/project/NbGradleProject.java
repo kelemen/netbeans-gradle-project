@@ -101,7 +101,6 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<Queue<Runnable>> delayedInitTasks;
     private volatile List<ProjectExtensionRef> extensionRefs;
-    private volatile Lookup extensionsOnLookup;
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
@@ -129,7 +128,6 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
         this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
         this.extensionRefs = Collections.emptyList();
-        this.extensionsOnLookup = Lookup.EMPTY;
         this.lookupRef = new AtomicReference<DynamicLookup>(null);
         this.protectedLookupRef = new AtomicReference<Lookup>(null);
     }
@@ -222,13 +220,8 @@ public final class NbGradleProject implements Project {
 
         allLookups.addAll(getLookupsFromAnnotations());
 
-        this.extensionsOnLookup = Lookups.fixed(newExtensions.toArray());
         this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
         getMainLookup().replaceLookups(allLookups);
-    }
-
-    public <T extends GradleProjectExtension> T lookupExtension(Class<T> extClass) {
-        return extensionsOnLookup.lookup(extClass);
     }
 
     public NbGradleConfiguration getCurrentProfile() {
