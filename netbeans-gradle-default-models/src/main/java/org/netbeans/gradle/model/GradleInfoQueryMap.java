@@ -114,25 +114,34 @@ final class GradleInfoQueryMap {
             }
         }
 
-        private ClassLoader getClassLoaderForKey(KeyWrapper key, ClassLoader parent) {
+        private ClassLoader getClassLoaderForKey(
+                KeyWrapper key,
+                ClassLoader parent,
+                Map<Set<File>, ClassLoader> cache) {
+
             Set<File> files = paths.get(key);
             if (files == null || files.isEmpty()) {
                 return parent;
             }
 
-            // TODO: Improve this by caching class loaders with the same set of
-            //   files. Use temporary cache.
+            ClassLoader result = cache.get(files);
+            if (result != null) {
+                return result;
+            }
 
-            return ClassLoaderUtils.classLoaderFromClassPath(files, parent);
+            result = ClassLoaderUtils.classLoaderFromClassPath(files, parent);
+            cache.put(files, result);
+            return result;
         }
 
         public Map<Object, List<?>> deserialize(ClassLoader parent) {
+            Map<Set<File>, ClassLoader> cache = new HashMap<Set<File>, ClassLoader>();
             Map<Object, List<?>> result = CollectionUtils.newHashMap(builderMap.size());
 
             for (Map.Entry<Object, SerializedEntries> entry: builderMap.getMap().entrySet()) {
                 KeyWrapper key = (KeyWrapper)entry.getKey();
 
-                ClassLoader classLoader = getClassLoaderForKey(key, parent);
+                ClassLoader classLoader = getClassLoaderForKey(key, parent, cache);
                 result.put(key, entry.getValue().getUnserialized(classLoader));
             }
 
