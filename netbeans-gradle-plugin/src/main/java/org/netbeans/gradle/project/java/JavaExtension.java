@@ -341,8 +341,14 @@ public final class JavaExtension implements GradleProjectExtension {
         }
 
         if (javaModel != null) {
-            currentModel = javaModel;
-            hasEverBeenLoaded = true;
+            if (javaModel.getMainModule().getSources().isEmpty()) {
+                LOGGER.info("Disabling the Java extension because there are no sources.");
+                switchToEmptyModel();
+            }
+            else {
+                currentModel = javaModel;
+                hasEverBeenLoaded = true;
+            }
         }
         updateLookup(javaModel != null);
 
