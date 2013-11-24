@@ -200,12 +200,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.kelemen</groupId>
-            <!-- We have to include the version number in the artifact name  -->
-            <!-- because the Gradle daemon caches jar files and the nbm      -->
-            <!-- plugin packages dependencies without their version number   -->
-            <!-- added to their filename. These issues would cause model     -->
-            <!-- loading failures when updating the plugin.                  -->
-            <artifactId>netbeans-gradle-default-models-${project.version}</artifactId>
+            <artifactId>netbeans-gradle-default-models</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -235,7 +230,14 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <version>3.11.1</version>
+                <!-- Using version 3.9 because we need the version numbers  -->
+                <!-- in the filename of the dependencies.                   -->
+                <!-- We have to include the version number in the artifact   -->
+                <!-- name because the Gradle daemon caches jar files and the -->
+                <!-- nbm plugin packages dependencies without their version  -->
+                <!-- number added to their filename. These issues would      -->
+                <!-- cause model loading failures when updating the plugin.  -->
+                <version>3.9</version>
                 <extensions>true</extensions>
                 <configuration>
                     <author>Attila Kelemen</author>
