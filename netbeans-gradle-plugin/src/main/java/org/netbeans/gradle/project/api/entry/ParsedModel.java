@@ -2,10 +2,10 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
  * Stores the parsed model for an extension for multiple projects.
@@ -70,13 +70,7 @@ public final class ParsedModel<ModelType> {
             @Nullable ModelType mainModel,
             @Nonnull Map<File, ? extends ModelType> otherProjectsModel) {
         this.mainModel = mainModel;
-        this.otherProjectsModel = new HashMap<File, ModelType>(otherProjectsModel);
-
-        for (File key: this.otherProjectsModel.keySet()) {
-            if (key == null) {
-                throw new NullPointerException("Null key in otherProjectsModel");
-            }
-        }
+        this.otherProjectsModel = CollectionUtils.copyNullSafeHashMapWithNullValues(otherProjectsModel);
     }
 
     /**
