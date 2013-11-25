@@ -47,6 +47,20 @@ public final class CollectionUtils {
         return Collections.unmodifiableMap(copyNullSafeMutableHashMap(map));
     }
 
+    public static <K, V> Map<K, V> copyNullSafeMutableHashMapWithNullValues(Map<? extends K, ? extends V> map) {
+        if (map == null) throw new NullPointerException("map");
+
+        Map<K, V> result = new HashMap<K, V>(map);
+        for (Map.Entry<K, V> entry: result.entrySet()) {
+            if (entry.getKey() == null) throw new NullPointerException("entry.getKey()");
+        }
+        return result;
+    }
+
+    public static <K, V> Map<K, V> copyNullSafeHashMapWithNullValues(Map<? extends K, ? extends V> map) {
+        return Collections.unmodifiableMap(copyNullSafeMutableHashMapWithNullValues(map));
+    }
+
     public static <E> List<E> copyNullSafeList(Collection<? extends E> list) {
         return Collections.unmodifiableList(copyNullSafeMutableList(list));
     }
