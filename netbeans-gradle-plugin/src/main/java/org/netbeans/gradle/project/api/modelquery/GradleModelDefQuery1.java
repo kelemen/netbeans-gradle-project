@@ -10,7 +10,8 @@ import javax.annotation.Nonnull;
  * if they want to support the earlier (1.7 or below) versions of Gradle. Also
  * note that users can configure NetBeans to rely on Gradle 1.7 API for newer
  * Gradle versions as well. This means, that if you don't provide this query,
- * your extension will effectively be disabled (i.e., loaded with an empty lookup).
+ * your extension will be loaded with an empty {@code Lookup} which usually
+ * means that it will be disabled.
  * <P>
  * If you need more detailed information provide an instance of
  * {@link GradleModelDefQuery2} as well. If {@code GradleModelDefQuery2} is
@@ -23,9 +24,10 @@ import javax.annotation.Nonnull;
 public interface GradleModelDefQuery1 {
     /**
      * Returns the models to be requested through the Tooling API of Gradle.
+     * <P>
      * The retrieved models will be passed to the
-     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#loadModels(org.openide.util.Lookup) GradleProjectExtension2.loadModels}
-     * method of {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2}.
+     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#parseModel(org.openide.util.Lookup) parseModel}
+     * method of {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef}.
      *
      * @param gradleTarget the target Gradle environment used to evaluate the
      *   build scripts. This argument cannot be {@code null}.

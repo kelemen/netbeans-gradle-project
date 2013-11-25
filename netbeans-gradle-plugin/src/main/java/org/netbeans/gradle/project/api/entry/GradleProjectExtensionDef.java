@@ -23,8 +23,11 @@ import org.openide.util.Lookup;
  * Instances of this interface must be safe to be called by multiple threads
  * concurrently but they are not required to be
  * <I>synchronization transparent</I> unless otherwise noted.
+ *
+ * @param <ModelType> the type of the parsed model storing the information
+ *   retrieved from the evaluated build script of the Gradle project
  */
-public interface GradleProjectExtensionDef {
+public interface GradleProjectExtensionDef<ModelType> {
     /**
      * Returns the unique name of this extension. The name is used to reference
      * the extension when it conflicts with another extension. That is, the
@@ -67,6 +70,48 @@ public interface GradleProjectExtensionDef {
     public Lookup getLookup();
 
     /**
+     * Returns the type of the model required to activate this extension.
+     * That is, the type of the argument passed to the
+     * {@link #activateExtension(Object) activateExtension} method.
+     *
+     * @return the type of the model required to activate this extension.
+     *   This method may never return {@code null}.
+     */
+    @Nonnull
+    public Class<ModelType> getModelType();
+
+    /**
+     * Parses models from models retrieved from an evaluated project via the
+     * Tooling API. The returned models will be passed to the
+     * {@link GradleProjectExtension2#activateExtension(Object) activateExtension}
+     * method of {@link GradleProjectExtension2} created by this
+     * {@code GradleProjectExtensionDef}.
+     * <P>
+     * Each of these models are expected to store all the required information
+     * gathered from the evaluated build script of a Gradle project.
+     * <P>
+     * The model instances are recommended to be serializable in order to
+     * persist them between NetBeans sessions.
+     * <P>
+     * Note: This method explicitly forbidden to wait for the result of
+     * Gradle commands or model retrieval requests. Doing so might result in a
+     * dead-lock.
+     *
+     * @param retrievedModels the models retrieved via the Tooling API of
+     *   Gradle. This argument cannot be {@code null}.
+     * @return the models parsed from the models retrieved from the evaluated
+     *   build scripts. This method may never return {@code null}, if it cannot
+     *   parse anything from the build script, it should return
+     *   {@link ParsedModel#noModels()}.
+     *
+     * @see org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1
+     * @see org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2
+     * @see ParsedModel#noModels()
+     */
+    @Nonnull
+    public ParsedModel<ModelType> parseModel(@Nonnull Lookup retrievedModels);
+
+    /**
      * Attaches the extension to a particular project which has just been
      * loaded. This method is called for each loaded project and is called
      * exactly once.
@@ -88,6 +133,8 @@ public interface GradleProjectExtensionDef {
      *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.SourceLevel}</li>
      *  <li>{@link org.netbeans.gradle.project.api.property.GradleProperty.BuildPlatform}</li>
      * </ul>
+     * <P>
+     * By default the returned extension is expected to be deactivated.
      *
      * @param project the project which has been loaded and to which this
      *   extension is to be attached. This argument cannot be {@code null}.
@@ -100,7 +147,7 @@ public interface GradleProjectExtensionDef {
      *   so this exception should only be thrown in the extreme cases.
      */
     @Nonnull
-    public GradleProjectExtension2 createExtension(@Nonnull Project project) throws IOException;
+    public GradleProjectExtension2<ModelType> createExtension(@Nonnull Project project) throws IOException;
 
     /**
      * Returns the {@link #getName() names} of the extensions to be disabled

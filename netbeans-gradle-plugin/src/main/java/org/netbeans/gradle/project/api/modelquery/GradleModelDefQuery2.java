@@ -22,9 +22,9 @@ public interface GradleModelDefQuery2 {
      * Returns the {@code GradleModelDef} instance defining the information
      * to be retrieved from build scripts of Gradle projects.
      * <P>
-     * The retrieved objects will be passed to the
-     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#loadModels(org.openide.util.Lookup) GradleProjectExtension2.loadModels}
-     * method of {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2}.
+     * The retrieved models will be passed to the
+     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#parseModel(org.openide.util.Lookup) parseModel}
+     * method of {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef}.
      *
      * @param gradleTarget the target Gradle environment used to evaluate the
      *   build scripts. This argument cannot be {@code null}.

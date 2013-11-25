@@ -11,9 +11,12 @@ import org.openide.util.Lookup;
  * concurrently but they are not required to be
  * <I>synchronization transparent</I> unless otherwise noted.
  *
+ * @param <ModelType> the type of the parsed model storing the information
+ *   retrieved from the evaluated build script of the Gradle project
+ *
  * @see GradleProjectExtensionDef
  */
-public interface GradleProjectExtension2 {
+public interface GradleProjectExtension2<ModelType> {
     /**
      * Returns the lookup whose content is to be added to the project's lookup
      * at all times regardless if this extension is enabled or not for the associated project.
@@ -97,73 +100,39 @@ public interface GradleProjectExtension2 {
     public Lookup getExtensionLookup();
 
     /**
-     * Attempts to activate this extension from a previously loaded state. The
-     * passed cached model is retrieved from the result of previous invocation
-     * of the #loadFromModels(Lookup) method call. An invocation of this method
-     * invalidates previous invocation of this method and the
-     * {@link #loadFromModels(Lookup) loadFromCache} method.
+     * Activates this extension from the parsed model retrieved by a previous
+     * call to {@link GradleProjectExtensionDef#parseModel(Lookup) GradleProjectExtensionDef.parseModel}.
      * <P>
-     * After this method call, this extension must be either disabled or
-     * enabled as defined by its return value.
-     * If the extension is enabled the returned lookup of the
-     * {@link #getProjectLookup()} will be included in the project's lookup
-     * otherwise those objects will not be present on the lookup. Also, if an
-     * extension is enabled, other extensions might be disabled depending on
-     * the return value of {@link GradleProjectExtensionDef#getSuppressedExtensions()}.
+     * Prior activating this extension the associated project's lookup is updated
+     * to also contain the content of {@link #getProjectLookup()}.
+     * <P>
+     * This method is never called concurrently with itself nor with the
+     * {@link #deactivateExtension() deactivateExtension} method.
+     * <P>
+     * This method might be called multiple times without a
+     * {@code deactivateExtension} between subsequent calls.
      *
-     * @param cachedModel the previously loaded model returned by a
-     *   {@link #loadFromModels(Lookup)} for this project. This argument cannot
-     *   be {@code null}.
-     * @return {@code true} if this extension is to be enabled, {@code false}
-     *   if it is to be disabled
-     *
-     * @see #loadFromModels(Lookup)
+     * @param parsedModel the model storing all the information extracted from
+     *   the build script of the associated project. This argument cannot be
+     *   {@code null}.
      */
-    public boolean loadFromCache(@Nonnull Object cachedModel);
+    public void activateExtension(@Nonnull ModelType parsedModel);
 
     /**
-     * Called whenever the associated project has been (re)loaded. An invocation
-     * of this method invalidates previous invocation of this method and the
-     * {@link #loadFromCache(Object) loadFromCache} method. Also the
-     * {@code loadFromModels} and the {@code loadFromCache} method may not be
-     * called concurrently by multiple threads for the same project. Not even
-     * the same methods are called concurrently. That is, two {@code loadFromModels}
-     * method call for the same {@code GradleProjectExtension2} will not be
-     * done concurrently.
+     * Deactivates this extension. Deactivating this extension means that this
+     * extension is not needed for the associated project. The extension is not
+     * required to take any action when being deactivated but it might stop
+     * listening for events to improve the overall performance of NetBeans.
      * <P>
-     * After this method call, this extension must be either disabled or
-     * enabled as defined by its result: {@link ExtensionLoadResult#isActive()}.
-     * If the extension is enabled the returned lookup of the
-     * {@link #getProjectLookup()} will be included in the project's lookup
-     * otherwise those objects will not be present on the lookup. Also, if an
-     * extension is enabled, other extensions might be disabled depending on
-     * the return value of {@link GradleProjectExtensionDef#getSuppressedExtensions()}.
+     * This method is never called concurrently with itself nor with the
+     * {@link #activateExtension(Object) activateExtension} method.
      * <P>
-     * <B>Caching</B>: This method may (and recommended to) return parsed
-     * objects which can be used to load this extension by the {@code loadFromCache}
-     * method (a single object / project). In fact this method may return the
-     * parsed models for other projects as well.
+     * This method might be called multiple times without an
+     * {@code activateExtension} between subsequent calls.
      * <P>
-     * The objects returned in the cache will be deserialized using the
-     * {@code ClassLoader} used to load the implementing class of this
-     * {@code GradleProjectExtension2}. In future, it might be possible to
-     * override this behaviour and deserialize the cached object using
-     * other class loader(s).
-     *
-     * @param models the {@code Lookup} containing the available models
-     *   loaded via the Tooling API of Gradle. If a model requested by this
-     *   extension is not available on the lookup then it could not be loaded
-     *   via the Tooling API. It is also possible that additional models are
-     *   available on this lookup but this method must only rely on models, this
-     *   extension explicitly requested. This argument cannot be {@code null}.
-     * @return the result of the attempt to load this extension for the
-     *   associated project. The result may (and should) contain parsed models
-     *   which can be used to quickly load this extension for a project without
-     *   evaluating the build scripts. This method may never return {@code null}.
-     *
-     * @see org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1
-     * @see org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2
+     * <B>Note</B>: This method is not necessarily called after an
+     * {@code activateExtension} method call. That is, you cannot use this
+     * method for cleaning up work of {@code activateExtension}.
      */
-    @Nonnull
-    public ExtensionLoadResult loadFromModels(@Nonnull Lookup models);
+    public void deactivateExtension();
 }
