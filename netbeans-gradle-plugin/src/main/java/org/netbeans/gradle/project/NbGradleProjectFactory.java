@@ -20,7 +20,9 @@ import org.openide.filesystems.FileUtil;
 public class NbGradleProjectFactory implements ProjectFactory2 {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
-    private static ConcurrentMap<File, RefCounter> SAFE_TO_OPEN_PROJECTS = new ConcurrentHashMap<File, RefCounter>();
+    private static final ConcurrentMap<File, RefCounter> SAFE_TO_OPEN_PROJECTS
+            = new ConcurrentHashMap<File, RefCounter>();
+
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     public static Closeable safeToOpen(FileObject projectDir) {
