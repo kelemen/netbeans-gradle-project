@@ -21,6 +21,8 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.RequestedProjectDir;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -42,7 +44,7 @@ public final class ExtensionLoader {
     }
 
     @SuppressWarnings("UseSpecificCatch")
-    private static LoadedExtension loadExtension(
+    private static NbGradleExtensionRef loadExtension(
             NbGradleProject project,
             GradleProjectExtensionQuery def) {
 
@@ -52,9 +54,10 @@ public final class ExtensionLoader {
             extension = def.loadExtensionForProject(project);
             if (extension == null) throw new NullPointerException("def.loadExtensionForProject");
 
-            GradleProjectExtensionDef<Lookup> def2 = createWrappedDef(project, def, extension);
+            File projectDir = project.getProjectDirectoryAsFile();
+            GradleProjectExtensionDef<Lookup> def2 = createWrappedDef(projectDir, def, extension);
             GradleProjectExtension2<Lookup> extension2 = createWrappedProjectExtension(extension);
-            return new LoadedExtension(def2, extension2);
+            return new NbGradleExtensionRef(def2, extension2);
         } catch (Throwable ex) {
             String name = extension != null
                     ? extension.getExtensionName()
@@ -67,13 +70,13 @@ public final class ExtensionLoader {
         }
     }
 
-    private static <ModelType> LoadedExtension loadExtension(
+    private static <ModelType> NbGradleExtensionRef loadExtension(
             NbGradleProject project,
             GradleProjectExtensionDef<ModelType> def) throws IOException {
 
         try {
             GradleProjectExtension2<ModelType> extension = def.createExtension(project);
-            return new LoadedExtension(def, extension);
+            return new NbGradleExtensionRef(def, extension);
         } catch (Throwable ex) {
             LOGGER.log(levelFromException(ex),
                     "Failed to load extension: " + def.getName() + " for project " + project.getProjectDirectory(),
@@ -84,8 +87,8 @@ public final class ExtensionLoader {
 
     private static void tryAddExtension(
             Object sourceDef,
-            LoadedExtension extension,
-            List<LoadedExtension> result,
+            NbGradleExtensionRef extension,
+            List<NbGradleExtensionRef> result,
             Set<String> alreadyLoaded) {
         if (extension == null) {
             return;
@@ -105,7 +108,7 @@ public final class ExtensionLoader {
         return (Class<GradleProjectExtensionDef<?>>)(Class<?>)GradleProjectExtensionDef.class;
     }
 
-    public static List<LoadedExtension> loadExtensions(NbGradleProject project) throws IOException {
+    public static List<NbGradleExtensionRef> loadExtensions(NbGradleProject project) throws IOException {
         Lookup defaultLookup = Lookup.getDefault();
 
         Collection<? extends GradleProjectExtensionQuery> defs1
@@ -115,16 +118,16 @@ public final class ExtensionLoader {
                 = defaultLookup.lookupAll(defClass());
 
         int expectedExtensionCount = defs1.size() + defs2.size();
-        List<LoadedExtension> result = new ArrayList<LoadedExtension>(expectedExtensionCount);
+        List<NbGradleExtensionRef> result = new ArrayList<NbGradleExtensionRef>(expectedExtensionCount);
 
         Set<String> alreadyLoaded = CollectionUtils.newHashSet(expectedExtensionCount);
         for (GradleProjectExtensionDef<?> def: defs2) {
-            LoadedExtension loadedExtension = loadExtension(project, def);
+            NbGradleExtensionRef loadedExtension = loadExtension(project, def);
             tryAddExtension(def, loadedExtension, result, alreadyLoaded);
         }
 
         for (GradleProjectExtensionQuery def: defs1) {
-            LoadedExtension loadedExtension = loadExtension(project, def);
+            NbGradleExtensionRef loadedExtension = loadExtension(project, def);
             tryAddExtension(def, loadedExtension, result, alreadyLoaded);
         }
 
@@ -185,18 +188,61 @@ public final class ExtensionLoader {
         };
     }
 
+    private static ParsedModel<Lookup> parseModelUsingExtension(
+            File projectDir,
+            GradleProjectExtension extension,
+            Lookup retrievedModels) {
+
+        Map<File, Lookup> deduced = extension.deduceModelsForProjects(retrievedModels);
+
+        Lookup mainModels = deduced.get(projectDir);
+        if (mainModels != null) {
+            deduced = new HashMap<File, Lookup>(deduced);
+            deduced.remove(projectDir);
+        }
+
+        return new ParsedModel<Lookup>(mainModels, deduced);
+    }
+
     private static GradleProjectExtensionDef<Lookup> createWrappedDef(
-            final NbGradleProject project,
+            final File projectDirOfExtension,
             final GradleProjectExtensionQuery query,
             final GradleProjectExtension extension) {
 
-        final Lookup lookup = Lookups.singleton(getModelQuery(extension));
+        return new OldExtensionQueryWrapper(extension, projectDirOfExtension, query);
+    }
 
-        return new GradleProjectExtensionDef<Lookup>() {
-            @Override
-            public String getName() {
-                return extension.getExtensionName();
+    private ExtensionLoader() {
+        throw new AssertionError();
+    }
+
+    private static class OldExtensionQueryWrapper implements GradleProjectExtensionDef<Lookup> {
+        private final String extensionName;
+        private final GradleProjectExtension extension;
+        private final Lookup lookup;
+        private final File projectDirOfExtension;
+        private final GradleProjectExtensionQuery query;
+
+        public OldExtensionQueryWrapper(
+                GradleProjectExtension extension,
+                File projectDirOfExtension,
+                GradleProjectExtensionQuery query) {
+
+            this.extensionName = extension.getExtensionName();
+            this.extension = extension;
+            this.lookup = Lookups.singleton(getModelQuery(extension));
+            this.projectDirOfExtension = projectDirOfExtension;
+            this.query = query;
+
+            if (extensionName == null) {
+                throw new NullPointerException("GradleProjectExtension.getExtensionName()");
             }
+        }
+
+        @Override
+        public String getName() {
+            return extensionName;
+        }
 
             @Override
             public String getDisplayName() {
@@ -215,16 +261,47 @@ public final class ExtensionLoader {
 
             @Override
             public ParsedModel<Lookup> parseModel(Lookup retrievedModels) {
-                Map<File, Lookup> deduced = extension.deduceModelsForProjects(retrievedModels);
-
-                File projectDir = project.getProjectDirectoryAsFile();
-                Lookup mainModels = deduced.get(projectDir);
-                if (mainModels != null) {
-                    deduced = new HashMap<File, Lookup>(deduced);
-                    deduced.remove(projectDir);
+                RequestedProjectDir reqProjectDir = retrievedModels.lookup(RequestedProjectDir.class);
+                if (reqProjectDir == null) {
+                    LOGGER.warning("Missing RequestedProjectDir in retrieved model list.");
+                    return ParsedModel.noModels();
                 }
 
-                return new ParsedModel<Lookup>(mainModels, deduced);
+                File projectDir = reqProjectDir.getProjectDir();
+                if (projectDir.equals(projectDirOfExtension)) {
+                    return parseModelUsingExtension(projectDir, extension, retrievedModels);
+                }
+
+                NbGradleProject project = GradleModelLoader.tryFindGradleProject(projectDir);
+                if (project == null) {
+                    LOGGER.log(Level.WARNING, "Could not load Gradle project: {0}", projectDir);
+                    return ParsedModel.noModels();
+                }
+
+                NbGradleExtensionRef extensionToUse = null;
+                for (NbGradleExtensionRef projectExtension: project.getExtensionRefs()) {
+                    if (extensionName.equals(projectExtension.getName())) {
+                        extensionToUse = projectExtension;
+                        break;
+                    }
+                }
+
+                if (extensionToUse == null) {
+                    LOGGER.log(Level.WARNING, "Missing extension for project: {0}", projectDir);
+                    return ParsedModel.noModels();
+                }
+
+                GradleProjectExtensionDef<?> extensionDefToUse = extensionToUse.getExtensionDef();
+                if (extensionDefToUse instanceof OldExtensionQueryWrapper) {
+                    OldExtensionQueryWrapper wrapper = (OldExtensionQueryWrapper)extensionDefToUse;
+
+                    return parseModelUsingExtension(projectDir, wrapper.extension, retrievedModels);
+                }
+
+                LOGGER.log(Level.WARNING,
+                        "Other project does not uses the old format for the same extension. Extension = {0}, Project: {1}",
+                        new Object[]{extensionName, projectDir});
+                return ParsedModel.noModels();
             }
 
             @Override
@@ -241,10 +318,5 @@ public final class ExtensionLoader {
             public Set<String> getSuppressedExtensions() {
                 return Collections.emptySet();
             }
-        };
-    }
-
-    private ExtensionLoader() {
-        throw new AssertionError();
     }
 }

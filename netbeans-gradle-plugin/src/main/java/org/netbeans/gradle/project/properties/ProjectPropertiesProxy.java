@@ -102,6 +102,10 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.builtInTasks = new ConcurrentHashMap<String, MutablePropertyProxy<PredefinedTask>>();
     }
 
+    public boolean isLoaded() {
+        return loadedSignal.isSignaled();
+    }
+
     public boolean tryWaitForLoaded() {
         // Attempting to call this method from any of the threads below could
         // cause a dead-lock.

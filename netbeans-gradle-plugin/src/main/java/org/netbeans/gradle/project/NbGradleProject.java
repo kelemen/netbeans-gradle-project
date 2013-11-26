@@ -7,9 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,10 +21,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
@@ -91,7 +86,7 @@ public final class NbGradleProject implements Project {
     private final ExceptionDisplayer exceptionDisplayer;
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
-    private final AtomicReference<NbGradleModelRef> currentModelRef;
+    private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectPropertiesProxy properties;
     private final ProjectInfoManager projectInfoManager;
 
@@ -100,7 +95,7 @@ public final class NbGradleProject implements Project {
     private final WaitableSignal loadedAtLeastOnceSignal;
 
     private final AtomicReference<Queue<Runnable>> delayedInitTasks;
-    private volatile List<ProjectExtensionRef> extensionRefs;
+    private volatile List<NbGradleExtensionRef> extensionRefs;
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
@@ -121,8 +116,8 @@ public final class NbGradleProject implements Project {
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
         this.modelChanges = new ChangeSupport(this);
-        this.currentModelRef = new AtomicReference<NbGradleModelRef>(
-                new NbGradleModelRef(GradleModelLoader.createEmptyModel(projectDirAsFile)));
+        this.currentModelRef = new AtomicReference<NbGradleModel>(
+                GradleModelLoader.createEmptyModel(projectDirAsFile));
 
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
@@ -136,33 +131,7 @@ public final class NbGradleProject implements Project {
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir, state);
         try {
-            Collection<? extends GradleProjectExtensionQuery> extensionQueries
-                    = Lookup.getDefault().lookupAll(GradleProjectExtensionQuery.class);
-
-            List<GradleProjectExtension> extensions = new LinkedList<GradleProjectExtension>();
-            for (GradleProjectExtensionQuery extension: extensionQueries) {
-                GradleProjectExtension loadedExtension = null;
-                try {
-                    loadedExtension = extension.loadExtensionForProject(project);
-                } catch (IOException ex) {
-                    String errorMessage = "Failed to load a Gradle extension ["
-                            + extension.getClass().getName()
-                            + "] for this project: "
-                            + projectDir;
-                    LOGGER.log(Level.INFO, errorMessage, ex);
-                } catch (Throwable ex) {
-                    String errorMessage = "An unexpected failure prevented loading of a Gradle extension ["
-                            + extension.getClass().getName()
-                            + "] for this project: "
-                            + projectDir;
-                    LOGGER.log(Level.SEVERE, errorMessage, ex);
-                }
-
-                if (loadedExtension != null) {
-                    extensions.add(loadedExtension);
-                }
-            }
-            project.setExtensions(extensions);
+            project.setExtensions(ExtensionLoader.loadExtensions(project));
         } finally {
             Queue<Runnable> taskList = project.delayedInitTasks.getAndSet(null);
             for (Runnable tasks: taskList) {
@@ -184,7 +153,7 @@ public final class NbGradleProject implements Project {
     }
 
     @Nonnull
-    public List<ProjectExtensionRef> getExtensionRefs() {
+    public List<NbGradleExtensionRef> getExtensionRefs() {
         return extensionRefs;
     }
 
@@ -205,22 +174,17 @@ public final class NbGradleProject implements Project {
         return extractLookupsFromProviders(lookupProviders);
     }
 
-    private void setExtensions(List<GradleProjectExtension> extensions) {
-        List<GradleProjectExtension> newExtensions
-                = Collections.unmodifiableList(new ArrayList<GradleProjectExtension>(extensions));
-        List<Lookup> allLookups = new ArrayList<Lookup>(newExtensions.size() + 1);
-        List<ProjectExtensionRef> newExtensionRefs
-                = new ArrayList<ProjectExtensionRef>(newExtensions.size());
+    private void setExtensions(List<NbGradleExtensionRef> extensions) {
+        List<Lookup> allLookups = new ArrayList<Lookup>(extensions.size() + 2);
 
         allLookups.add(getDefaultLookup());
-        for (final GradleProjectExtension extension: newExtensions) {
-            allLookups.add(extension.getExtensionLookup());
-            newExtensionRefs.add(new ProjectExtensionRef(extension));
+        for (final NbGradleExtensionRef extension: extensions) {
+            allLookups.add(extension.getProjectLookup());
         }
 
         allLookups.addAll(getLookupsFromAnnotations());
 
-        this.extensionRefs = Collections.unmodifiableList(newExtensionRefs);
+        this.extensionRefs = Collections.unmodifiableList(new ArrayList<NbGradleExtensionRef>(extensions));
         getMainLookup().replaceLookups(allLookups);
     }
 
@@ -286,25 +250,21 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleModel getAvailableModel() {
-        NbGradleModelRef resultRef = currentModelRef.get();
-        NbGradleModel result = resultRef.model;
-        // This is not a completely correct solution. The correct
-        // solution would be to listen when the model becomes dirty (based on
-        // the directory of the project). The problem is that there is no place
-        // to unregister such listener.
-        //
-        // However this should work in most practical cases since
-        // getAvailableModel() often gets called.
-        if (result.isDirty() || !resultRef.isUpdateToDate()) {
-            // Set a non-dirty to prevent many unnecessary project reload.
-            currentModelRef.set(new NbGradleModelRef(result.createNonDirtyCopy()));
-            reloadProject(true);
-        }
-        return result;
+        return currentModelRef.get();
     }
 
     public NbGradleModel getCurrentModel() {
         return getAvailableModel();
+    }
+
+    public void tryUpdateFromCache(NbGradleModel baseModel) {
+        // In this case we don't yet requested a model, so there is little
+        // reason to do anything now: Be lazy!
+        if (!isInitialized() || properties.isLoaded()) {
+            return;
+        }
+
+        GradleModelLoader.tryUpdateFromCache(this, baseModel, new ModelRetrievedListenerImpl());
     }
 
     public void reloadProject() {
@@ -657,57 +617,29 @@ public final class NbGradleProject implements Project {
             });
         }
 
-        private Set<String> safelyLoadExtensions(GradleProjectExtension extension, Lookup lookup) {
-            Set<String> conflicts = null;
+        private void safelyLoadExtensions(NbGradleExtensionRef extension, Object model) {
             try {
-                conflicts = extension.modelsLoaded(lookup);
+                extension.setModelForExtension(model);
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE,
-                        "Extension has thrown an unexpected exception: " + extension.getExtensionName(),
+                        "Extension has thrown an unexpected exception: " + extension.getName(),
                         ex);
             }
-
-            return conflicts != null ? conflicts : Collections.<String>emptySet();
         }
 
         private void notifyEmptyModelChange() {
-            for (ProjectExtensionRef extensionRef: extensionRefs) {
-                safelyLoadExtensions(extensionRef.getExtension(), Lookup.EMPTY);
+            for (NbGradleExtensionRef extensionRef: extensionRefs) {
+                safelyLoadExtensions(extensionRef, null);
             }
 
             fireModelChangeEvent();
         }
 
         private void notifyModelChange(NbGradleModel model) {
-            int extCount = extensionRefs.size();
-            Set<String> disabledExtensions = CollectionUtils.newHashSet(extCount);
-            Map<String, GradleProjectExtension> loadedExtensions
-                    = CollectionUtils.newHashMap(extCount);
-
-            for (ProjectExtensionRef extensionRef: extensionRefs) {
-                GradleProjectExtension extension = extensionRef.getExtension();
-
-                String name = extension.getExtensionName();
-                if (disabledExtensions.contains(name)) {
-                    continue;
-                }
-
-                Set<String> conflicts = safelyLoadExtensions(
-                        extension,
-                        model.getModelsForExtension(extensionRef.getName()));
-
-                disabledExtensions.addAll(conflicts);
-                loadedExtensions.put(name, extension);
-            }
-
-            // TODO: What if an extension is disabled and so extensions
-            //  conflicting with it can be enabled? Should we consider this case?
-
-            for (String disabled: disabledExtensions) {
-                GradleProjectExtension extension = loadedExtensions.get(disabled);
-                if (extension != null) {
-                    safelyLoadExtensions(extension, Lookup.EMPTY);
-                }
+            // TODO: Consider conflicts
+            //   GradleProjectExtensionDef.getSuppressedExtensions()
+            for (NbGradleExtensionRef extensionRef: extensionRefs) {
+                safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
             }
 
             fireModelChangeEvent();
@@ -716,9 +648,8 @@ public final class NbGradleProject implements Project {
         private void applyModelLoadResults(NbGradleModel model, Throwable error) {
             boolean hasChanged = false;
             if (model != null) {
-                NbGradleModelRef newModel = new NbGradleModelRef(model);
-                NbGradleModelRef lastModel = currentModelRef.getAndSet(newModel);
-                hasChanged = !lastModel.isSameModel(newModel);
+                NbGradleModel prevModel = currentModelRef.getAndSet(model);
+                hasChanged = prevModel != model;
             }
 
             if (error != null) {
@@ -788,28 +719,6 @@ public final class NbGradleProject implements Project {
                     }
                 }
             });
-        }
-    }
-
-    private static final class NbGradleModelRef {
-        public final NbGradleModel model;
-        private final Object stateID;
-
-        public NbGradleModelRef(NbGradleModel model) {
-            this.model = model;
-            this.stateID = model.getStateID();
-        }
-
-        public boolean isSameModel(NbGradleModelRef other) {
-            if (other != this) {
-                return false;
-            }
-
-            return stateID.equals(other.stateID);
-        }
-
-        public boolean isUpdateToDate() {
-            return stateID.equals(model.getStateID());
         }
     }
 }

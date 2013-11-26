@@ -26,13 +26,12 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.ProjectExtensionRef;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
@@ -141,7 +140,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
         return list.subList(firstNonNullIndex, afterLastNonNullIndex);
     }
 
-    private static ExtensionActions getActionsOfExtension(GradleProjectExtension extension) {
+    private static ExtensionActions getActionsOfExtension(NbGradleExtensionRef extension) {
         Lookup extensionLookup = extension.getExtensionLookup();
         Collection<? extends GradleProjectContextActions> actionQueries
                 = extensionLookup.lookupAll(GradleProjectContextActions.class);
@@ -156,8 +155,8 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     private ExtensionActions getExtensionActions() {
         ExtensionActions result = new ExtensionActions();
 
-        for (ProjectExtensionRef extensionRef: project.getExtensionRefs()) {
-            ExtensionActions actions = getActionsOfExtension(extensionRef.getExtension());
+        for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
+            ExtensionActions actions = getActionsOfExtension(extensionRef);
             result.mergeActions(actions);
         }
 

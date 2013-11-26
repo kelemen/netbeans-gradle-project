@@ -3,8 +3,12 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ModelBuilder;
@@ -19,22 +23,31 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.OperationInitializer;
+import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectExtensionRef;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.openide.util.Lookup;
-import org.openide.util.lookup.Lookups;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ParsedModel;
+import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.openide.util.Parameters;
 
 public final class NbCompatibleModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbCompatibleModelLoader.class.getName());
 
-    private final NbGradleModel proposedModel;
+    private final NbGradleModel baseModels;
     private final OperationInitializer setup;
+    private final GradleTarget gradleTarget;
 
-    public NbCompatibleModelLoader(NbGradleModel proposedModel, OperationInitializer setup) {
-        if (setup == null) throw new NullPointerException("setup");
+    public NbCompatibleModelLoader(
+            NbGradleModel baseModels,
+            OperationInitializer setup,
+            GradleTarget gradleTarget) {
+        Parameters.notNull("setup", setup);
+        Parameters.notNull("gradleTarget", gradleTarget);
 
-        this.proposedModel = proposedModel;
+        this.gradleTarget = gradleTarget;
+        this.baseModels = baseModels;
         this.setup = setup;
     }
 
@@ -44,16 +57,25 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException {
 
-        List<NbGradleModel> otherModels = new LinkedList<NbGradleModel>();
-        NbGradleModel mainModel = proposedModel;
+        List<NbGradleModel.Builder> otherModels = new LinkedList<NbGradleModel.Builder>();
 
-        if (mainModel == null) {
+        NbGradleModel.Builder mainModel;
+        if (baseModels == null) {
             mainModel = loadMainModel(project, connection, otherModels);
         }
+        else {
+            mainModel = new NbGradleModel.Builder(baseModels);
+        }
 
-        getExtensionModels(project, connection, mainModel);
+        Map<File, NbGradleModel.Builder> otherModelsMap = CollectionUtils.newHashMap(otherModels.size());
+        for (NbGradleModel.Builder model: otherModels) {
+            otherModelsMap.put(model.getProjectDir(), model);
+        }
+        otherModelsMap.remove(mainModel.getProjectDir());
 
-        return new Result(mainModel, otherModels);
+        getExtensionModels(project, connection, mainModel, otherModelsMap);
+
+        return new Result(mainModel.create(), NbGradleModel.createAll(otherModels));
     }
 
     private <T> T getModelWithProgress(
@@ -65,35 +87,73 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return builder.get();
     }
 
+    public static Collection<Class<?>> getBasicModels(
+            GradleProjectExtensionDef<?> extension,
+            GradleTarget gradleTarget) {
+
+        Collection<? extends GradleModelDefQuery1> queries
+                = extension.getLookup().lookupAll(GradleModelDefQuery1.class);
+
+        int count = queries.size();
+        if (count == 0) {
+            return Collections.emptyList();
+        }
+        if (count == 1) {
+            return queries.iterator().next().getToolingModels(gradleTarget);
+        }
+
+        List<Class<?>> result = new LinkedList<Class<?>>();
+        for (GradleModelDefQuery1 query: queries) {
+            result.addAll(query.getToolingModels(gradleTarget));
+        }
+
+        return result;
+    }
+
+    private Collection<Class<?>> getModels(GradleProjectExtensionDef<?> extension) {
+        return getBasicModels(extension, gradleTarget);
+    }
+
     private void getExtensionModels(
             NbGradleProject project,
             ProjectConnection projectConnection,
-            NbGradleModel result) {
+            NbGradleModel.Builder mainModel,
+            Map<File, NbGradleModel.Builder> otherModels) {
 
-        Lookup allModels = result.getAllModels();
-        for (ProjectExtensionRef extensionRef: result.getUnloadedExtensions(project)) {
-            GradleProjectExtension extension = extensionRef.getExtension();
+        Map<Class<?>, Object> found = new HashMap<Class<?>, Object>();
+
+        NbGradleModel initialMainModel = mainModel.create();
+        for (NbGradleExtensionRef extensionRef: GradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
+            GradleProjectExtensionDef<?> extension = extensionRef.getExtensionDef();
             List<Object> extensionModels = new LinkedList<Object>();
 
-            for (List<Class<?>> modelRequest: extension.getGradleModels()) {
-                for (Class<?> modelClass: modelRequest) {
-                    try {
-                        Object model = allModels.lookup(modelClass);
-                        if (model == null) {
-                            model = getModelWithProgress(projectConnection, modelClass);
-                        }
-                        extensionModels.add(model);
-                        break;
-                    } catch (UnknownModelException ex) {
-                        Throwable loggedException = LOGGER.isLoggable(Level.FINE)
-                                ? ex
-                                : null;
-                        LOGGER.log(Level.INFO, "Cannot find model " + modelClass.getName(), loggedException);
+            for (Class<?> modelClass: getModels(extension)) {
+                try {
+                    Object model = found.get(modelClass);
+                    if (model == null) {
+                        model = getModelWithProgress(projectConnection, modelClass);
                     }
+
+                    found.put(modelClass, model);
+                    extensionModels.add(model);
+                } catch (UnknownModelException ex) {
+                    Throwable loggedException = LOGGER.isLoggable(Level.FINE)
+                            ? ex
+                            : null;
+                    LOGGER.log(Level.INFO, "Cannot find model " + modelClass.getName(), loggedException);
                 }
             }
 
-            result.setModelsForExtension(extensionRef.getName(), Lookups.fixed(extensionModels.toArray()));
+            RequestedProjectDir projectDir = new RequestedProjectDir(project.getProjectDirectoryAsFile());
+            ParsedModel<?> parsedModel = extensionRef.parseModel(projectDir, extensionModels);
+            mainModel.setModelForExtension(extensionRef, parsedModel.getMainModel());
+
+            for (Map.Entry<File, ?> otherEntry: parsedModel.getOtherProjectsModel().entrySet()) {
+                NbGradleModel.Builder otherBuilder = otherModels.get(otherEntry.getKey());
+                if (otherBuilder != null) {
+                    otherBuilder.setModelForExtension(extensionRef, otherEntry.getValue());
+                }
+            }
         }
     }
 
@@ -142,52 +202,35 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
         }
 
-        NbGradleModel result = new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree));
-        result.setMainModels(Lookups.fixed(ideaModule, ideaModule.getProject()));
-        return result;
+        return new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree));
     }
 
-    public static NbGradleModel loadMainModelFromIdeaModule(IdeaModule ideaModule) throws IOException {
-        // TODO: Remove this method once it is no longer needed.
-
-        NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
-        if (projectTree == null) {
-            throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
-        }
-
-        IdeaModule rootModule = GradleModelLoader.tryFindRootModule(ideaModule.getProject());
-        if (rootModule == null) {
-            throw new IOException("Failed to find root module for project: " + ideaModule.getName());
-        }
-
-        NbGradleProjectTree root = tryCreateProjectTreeFromIdea(rootModule);
-        if (root == null) {
-            throw new IOException("Failed to find root tree for project: " + ideaModule.getName());
-        }
-
-        NbGradleModel result = new NbGradleModel(new NbGradleMultiProjectDef(root, projectTree));
-        result.setMainModels(Lookups.fixed(ideaModule, ideaModule.getProject()));
-        return result;
-    }
-
-    private NbGradleModel loadMainModel(
+    private NbGradleModel.Builder loadMainModel(
             NbGradleProject project,
             ProjectConnection projectConnection,
-            List<NbGradleModel> deduced) throws IOException {
+            List<NbGradleModel.Builder> otherModels) throws IOException {
 
         IdeaProject ideaProject
                 = getModelWithProgress(projectConnection, IdeaProject.class);
 
-        return parseMainModel(project, ideaProject, deduced);
+        return parseMainModel(project, ideaProject, otherModels);
     }
 
-    public static NbGradleModel parseMainModel(
+    private static NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef) {
+        return new NbGradleModel.Builder(new NbGenericModelInfo(projectDef));
+    }
+
+    private static NbGradleModel.Builder toBuilder(NbGradleModel model) {
+        return new NbGradleModel.Builder(model);
+    }
+
+    private static NbGradleModel.Builder parseMainModel(
             NbGradleProject project,
             IdeaProject ideaProject,
-            List<? super NbGradleModel> deduced) throws IOException {
+            List<NbGradleModel.Builder> otherModels) throws IOException {
         if (project == null) throw new NullPointerException("project");
         if (ideaProject == null) throw new NullPointerException("ideaProject");
-        if (deduced == null) throw new NullPointerException("deduced");
+        if (otherModels == null) throw new NullPointerException("otherModels");
 
         File projectDir = project.getProjectDirectoryAsFile();
         IdeaModule mainModule = GradleModelLoader.tryFindMainModule(projectDir, ideaProject);
@@ -211,10 +254,10 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             // to reparse the main project.
             if (otherModule != mainModule) {
                 if (rootPath.equals(otherModule.getGradleProject().getPath())) {
-                    deduced.add(new NbGradleModel(new NbGradleMultiProjectDef(rootTree, rootTree)));
+                    otherModels.add(toBuilder(new NbGradleMultiProjectDef(rootTree, rootTree)));
                 }
                 else {
-                    deduced.add(loadMainModelFromIdeaModule(rootTree, otherModule));
+                    otherModels.add(toBuilder(loadMainModelFromIdeaModule(rootTree, otherModule)));
                 }
             }
         }
@@ -231,6 +274,6 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find tree for project: " + mainModule.getName());
         }
 
-        return new NbGradleModel(new NbGradleMultiProjectDef(rootTree, mainTree));
+        return toBuilder(new NbGradleMultiProjectDef(rootTree, mainTree));
     }
 }

@@ -17,162 +17,130 @@ import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
-import org.netbeans.gradle.model.MultiKey;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectExtensionRef;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
-import org.openide.util.lookup.Lookups;
+import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ParsedModel;
+import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
+import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.openide.util.Lookup;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbGradle18ModelLoader.class.getName());
 
+    private final GradleTarget gradleTarget;
     private final OperationInitializer setup;
 
-    public NbGradle18ModelLoader(OperationInitializer setup) {
+    public NbGradle18ModelLoader(OperationInitializer setup, GradleTarget gradleTarget) {
         if (setup == null) throw new NullPointerException("setup");
+        if (gradleTarget == null) throw new NullPointerException("gradleTarget");
 
+        this.gradleTarget = gradleTarget;
         this.setup = setup;
     }
 
-    private CustomModelQuery getCustomModelQuery(GradleProjectExtension extension) {
-        CustomModelQuery result = extension.getExtensionLookup().lookup(CustomModelQuery.class);
-        if (result != null) {
-            return result;
-        }
-
-        Collection<Class<?>> extensionModels = new LinkedList<Class<?>>();
-        for (List<Class<?>> fallbackList: extension.getGradleModels()) {
-            extensionModels.addAll(fallbackList);
-        }
-
-        final Collection<Class<?>> resultModels = Collections.unmodifiableCollection(extensionModels);
-        return new CustomModelQuery() {
+    private static GradleModelDefQuery2 getBasicModelQuery(final GradleProjectExtensionDef<?> extension) {
+        return new GradleModelDefQuery2() {
             @Override
-            public Collection<Class<?>> getProjectModels() {
-                return resultModels;
-            }
+            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
+                Collection<Class<?>> toolinModels = NbCompatibleModelLoader.getBasicModels(extension, gradleTarget);
+                if (toolinModels.isEmpty()) {
+                    return GradleModelDef.EMPTY;
+                }
 
-            @Override
-            public Map<Object, GradleBuildInfoQuery<?>> getBuildInfoQueries() {
-                return Collections.emptyMap();
-            }
-
-            @Override
-            public Map<Object, GradleProjectInfoQuery<?>> getProjectInfoQueries() {
-                return Collections.emptyMap();
+                return new GradleModelDef(
+                        toolinModels,
+                        Collections.<GradleProjectInfoQuery<?>>emptyList());
             }
         };
     }
 
-    private GenericModelFetcher getModelFetcher(List<ProjectExtensionRef> extensionRefs) {
-        // TODO: Exploit the fact that keys map to list of queries.
-        //   That is, for a single extension, a single entry is required.
-
-        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests
-                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
-
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests
-                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
-
-        List<Class<?>> models = new LinkedList<Class<?>>();
-        for (ProjectExtensionRef extensionRef: extensionRefs) {
-            GradleProjectExtension extension = extensionRef.getExtension();
-            String extensionName = extensionRef.getName();
-
-            CustomModelQuery extensionNeeds = getCustomModelQuery(extension);
-
-            models.addAll(extensionNeeds.getProjectModels());
-
-            for (Map.Entry<Object, GradleBuildInfoQuery<?>> entry: extensionNeeds.getBuildInfoQueries().entrySet()) {
-                Object key = entry.getKey();
-                GradleBuildInfoQuery<?> value = entry.getValue();
-
-                buildInfoRequests.put(
-                        MultiKey.create(extensionName, key),
-                        Collections.<GradleBuildInfoQuery<?>>singletonList(value));
-            }
-
-            for (Map.Entry<Object, GradleProjectInfoQuery<?>> entry: extensionNeeds.getProjectInfoQueries().entrySet()) {
-                Object key = entry.getKey();
-                GradleProjectInfoQuery<?> value = entry.getValue();
-
-                projectInfoRequests.put(
-                        MultiKey.create(extensionName, key),
-                        Collections.<GradleProjectInfoQuery<?>>singletonList(value));
-            }
-        }
-
-        return new GenericModelFetcher(buildInfoRequests, projectInfoRequests, models);
-    }
-
-    private void extractNeededModels(
-            GradleProjectExtension extension,
-            FetchedProjectModels models,
-            List<Object> result) {
-
-        Map<Class<?>, Object> toolingModels = models.getToolingModels();
-
-        for (List<Class<?>> modelList: extension.getGradleModels()) {
-            for (Class<?> modelClass: modelList) {
-                Object modelValue = toolingModels.get(modelClass);
-                if (modelValue != null) {
-                    result.add(modelValue);
-                    break;
-                }
-            }
+    private static <E> void addAllNullSafe(Collection<? super E> collection, Collection<? extends E> toAdd) {
+        if (toAdd != null) {
+            collection.addAll(toAdd);
         }
     }
 
-    private static GradleBuildInfo tryGetBuildInfo(AllBuildInfos allInfos, File projectDir, String extensionName) {
-        ExtensionBuildInfos extensionInfos = allInfos.getForExtension(extensionName);
-        if (extensionInfos == null) {
+    private static GradleModelDef safelyReturn(GradleModelDef result, GradleProjectExtensionDef<?> extension) {
+        if (result == null) {
             LOGGER.log(Level.WARNING,
-                    "Cannot find ExtensionBuildInfos for ({0}, {1})",
-                    new Object[]{projectDir, extensionName});
-            return null;
+                    "GradleModelDefQuery2.getModelDef returned null for extension {0}",
+                    extension.getName());
+            return GradleModelDef.EMPTY;
         }
-
-        return extensionInfos.tryGetBuildInfo(projectDir);
+        else {
+            return result;
+        }
     }
 
-    private NbGradleModel getNBModel(
-            AllBuildInfos allInfos,
-            FetchedProjectModels models,
-            List<ProjectExtensionRef> extensionRefs) {
+    private static GradleModelDefQuery2 getModelQuery(final GradleProjectExtensionDef<?> extension) {
+        return new GradleModelDefQuery2() {
+            @Override
+            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
+                Lookup lookup = extension.getLookup();
+                Collection<? extends GradleModelDefQuery2> queries = lookup.lookupAll(GradleModelDefQuery2.class);
+                int queryCount = queries.size();
+                if (queryCount == 0) {
+                    return getBasicModelQuery(extension).getModelDef(gradleTarget);
+                }
 
-        File projectDir = models.getProjectDef().getMainProject().getGenericProperties().getProjectDir();
+                if (queryCount == 1) {
+                    return queries.iterator().next().getModelDef(gradleTarget);
+                }
 
-        NbGradleModel result = new NbGradleModel(new NbGradleMultiProjectDef(models.getProjectDef()));
-        for (ProjectExtensionRef extensionRef: extensionRefs) {
-            String name = extensionRef.getName();
+                List<GradleProjectInfoQuery<?>> projectInfoQueries = new LinkedList<GradleProjectInfoQuery<?>>();
+                List<Class<?>> toolingModels = new LinkedList<Class<?>>();
 
-            List<Object> lookupContent = new LinkedList<Object>();
-
-            extractNeededModels(extensionRef.getExtension(), models, lookupContent);
-            allInfos.getForExtension(name);
-
-            GradleBuildInfo buildInfo = tryGetBuildInfo(allInfos, projectDir, name);
-            if (buildInfo != null) {
-                lookupContent.add(buildInfo);
+                for (GradleModelDefQuery2 query: queries) {
+                    GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), extension);
+                    projectInfoQueries.addAll(modelDef.getProjectInfoQueries());
+                    toolingModels.addAll(modelDef.getToolingModels());
+                }
+                return new GradleModelDef(toolingModels, projectInfoQueries);
             }
-
-            result.setModelsForExtension(name, Lookups.fixed(lookupContent.toArray()));
-        }
-        return result;
+        };
     }
 
-    private NbGradleModel getDefaultNBModels(
-            FetchedModels fetchedModels,
-            AllBuildInfos allInfos,
-            List<ProjectExtensionRef> extensionRefs) {
+    private static <K, V> void addAllToMultiMap(K key, Collection<? extends V> newValues, Map<? super K, List<V>> map) {
+        if (newValues.isEmpty()) {
+            return;
+        }
 
-        return getNBModel(
-                allInfos,
-                fetchedModels.getDefaultProjectModels(),
-                extensionRefs);
+        List<V> values = map.get(key);
+        if (values == null) {
+            values = new LinkedList<V>();
+            map.put(key, values);
+        }
+        values.addAll(newValues);
+    }
+
+    private static NbGradleModel parseModel(
+            NbGradleProject project,
+            FetchedProjectModels projectModels,
+            ProjectModelFetcher modelFetcher) {
+
+        List<NbGradleExtensionRef> extensions = project.getExtensionRefs();
+
+        NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());
+        NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
+        NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
+
+        RequestedProjectDir projectDir = new RequestedProjectDir(genericInfo.getProjectDir());
+        for (NbGradleExtensionRef extension: extensions) {
+            List<Object> models = new ArrayList<Object>();
+            addAllNullSafe(models, projectModels.getProjectInfoResults().get(extension.getName()));
+            addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
+
+            ParsedModel<?> parsedModels = extension.parseModel(projectDir, models);
+            result.setModelForExtension(extension, parsedModels.getMainModel());
+            // TODO: Do not parse models needlessly for other projects, use the ones returned here.
+        }
+
+        return result.create();
     }
 
     @Override
@@ -181,56 +149,81 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException {
 
-        List<ProjectExtensionRef> extensionRefs = project.getExtensionRefs();
+        ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
 
-        GenericModelFetcher modelFetcher = getModelFetcher(extensionRefs);
         FetchedModels fetchedModels = modelFetcher.getModels(connection, setup);
-        AllBuildInfos allInfos = new AllBuildInfos(fetchedModels, extensionRefs);
+        NbGradleModel mainModel = parseModel(project, fetchedModels.getDefaultProjectModels(), modelFetcher);
 
-        NbGradleModel mainModel = getDefaultNBModels(fetchedModels, allInfos, extensionRefs);
+        Collection<FetchedProjectModels> otherProjectModels = fetchedModels.getOtherProjectModels();
+        List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>(otherProjectModels.size());
 
-        Collection<FetchedProjectModels> otherFetchedModels = fetchedModels.getOtherProjectModels();
-
-        List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>(otherFetchedModels.size());
-        for (FetchedProjectModels fetchedProjectModel: otherFetchedModels) {
-            NbGradleModel otherModel = getNBModel(allInfos, fetchedProjectModel, extensionRefs);
-            otherModels.add(otherModel);
+        File mainProjectDir = project.getProjectDirectoryAsFile();
+        for (FetchedProjectModels projectModel: otherProjectModels) {
+            File projectDir = projectModel.getProjectDef().getMainProject().getGenericProperties().getProjectDir();
+            if (!mainProjectDir.equals(projectDir)) {
+                otherModels.add(parseModel(project, projectModel, modelFetcher));
+            }
         }
-
         return new Result(mainModel, otherModels);
     }
 
-    private static final class ExtensionBuildInfos {
-        private final GradleBuildInfoOfExtension extBuildInfo;
+    private static final class ProjectModelFetcher {
+        private final File settingsFile;
+        private final Map<String, List<Class<?>>> toolingModelNeeds;
+        private final GenericModelFetcher modelFetcher;
 
-        public ExtensionBuildInfos(GradleBuildInfoOfExtension extBuildInfo) {
-            this.extBuildInfo = extBuildInfo;
-        }
+        public ProjectModelFetcher(NbGradleProject project, GradleTarget gradleTarget) {
+            this.settingsFile = NbGenericModelInfo.findSettingsGradle(project.getProjectDirectoryAsFile());
 
-        public GradleBuildInfoOfExtension getDefaultBuildInfo() {
-            return extBuildInfo;
-        }
+            List<NbGradleExtensionRef> extensions = project.getExtensionRefs();
+            this.toolingModelNeeds = CollectionUtils.newHashMap(extensions.size());
 
-        public GradleBuildInfo tryGetBuildInfo(File projectDir) {
-            return extBuildInfo.tryGetViewOfOtherProject(projectDir);
-        }
-    }
+            Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests = Collections.emptyMap();
 
-    private static final class AllBuildInfos {
-        private final Map<String, ExtensionBuildInfos> infos;
+            Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests
+                    = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
 
-        public AllBuildInfos(FetchedModels models, Collection<ProjectExtensionRef> extensions) {
-            this.infos = CollectionUtils.newHashMap(extensions.size());
-            for (ProjectExtensionRef extRef: extensions) {
-                String name = extRef.getName();
+            List<Class<?>> models = new LinkedList<Class<?>>();
+            for (NbGradleExtensionRef extensionRef: extensions) {
+                String extensionName = extensionRef.getName();
 
-                GradleBuildInfoOfExtension extBuildInfo = new GradleBuildInfoOfExtension(name, models);
-                infos.put(name, new ExtensionBuildInfos(extBuildInfo));
+                GradleModelDefQuery2 modelQuery = getModelQuery(extensionRef.getExtensionDef());
+                GradleModelDef modelDef = modelQuery.getModelDef(gradleTarget);
+
+                models.addAll(modelDef.getToolingModels());
+                addAllToMultiMap(extensionName, modelDef.getProjectInfoQueries(), projectInfoRequests);
+                addAllToMultiMap(extensionName, modelDef.getToolingModels(), toolingModelNeeds);
             }
+
+            modelFetcher = new GenericModelFetcher(buildInfoRequests, projectInfoRequests, models);
         }
 
-        public ExtensionBuildInfos getForExtension(String name) {
-            return infos.get(name);
+        public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
+            return modelFetcher.getModels(connection, init);
+        }
+
+        public File getSettingsFile() {
+            return settingsFile;
+        }
+
+        public List<Object> getToolingModelsForExtension(
+                NbGradleExtensionRef extension,
+                FetchedProjectModels projectModels) {
+
+            List<Class<?>> needs = toolingModelNeeds.get(extension.getName());
+            if (needs == null || needs.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            Map<Class<?>, Object> allModels = projectModels.getToolingModels();
+            List<Object> result = new ArrayList<Object>(needs.size());
+            for (Class<?> need: needs) {
+                Object model = allModels.get(need);
+                if (model != null) {
+                    result.add(model);
+                }
+            }
+            return result;
         }
     }
 }

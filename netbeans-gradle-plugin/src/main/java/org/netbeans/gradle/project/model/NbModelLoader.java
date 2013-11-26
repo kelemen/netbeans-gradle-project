@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
@@ -12,8 +13,9 @@ public interface NbModelLoader {
         private final NbGradleModel mainModel;
         private final List<NbGradleModel> otherModels;
 
-        public Result(NbGradleModel mainModel, List<NbGradleModel> otherModels) {
+        public Result(NbGradleModel mainModel, Collection<NbGradleModel> otherModels) {
             if (mainModel == null) throw new NullPointerException("mainModel");
+
             this.mainModel = mainModel;
             this.otherModels = CollectionUtils.copyNullSafeList(otherModels);
         }

@@ -1,20 +1,27 @@
 package org.netbeans.gradle.project;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ParsedModel;
+import org.netbeans.gradle.project.model.RequestedProjectDir;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.ProxyLookup;
+import org.openide.util.lookup.Lookups;
 
-public final class LoadedExtension {
+public final class NbGradleExtensionRef {
+    private static final Logger LOGGER = Logger.getLogger(NbGradleExtensionRef.class.getName());
+
     private final String name;
     private final DefWithExtension<?> defWithExtension;
 
-    private final Lookup extensionLookup;
+    private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
     private final AtomicBoolean activeState;
 
-    public <ModelType> LoadedExtension(
+    public <ModelType> NbGradleExtensionRef(
             GradleProjectExtensionDef<ModelType> extensionDef,
             GradleProjectExtension2<ModelType> extension) {
 
@@ -25,7 +32,7 @@ public final class LoadedExtension {
         this.defWithExtension = new DefWithExtension<ModelType>(extensionDef, extension);
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
-        this.extensionLookup = new ProxyLookup(extension.getExtensionLookup(), this.projectLookup);
+        this.extensionLookup = new DynamicLookup();
         this.activeState = new AtomicBoolean(false);
     }
 
@@ -49,6 +56,32 @@ public final class LoadedExtension {
         return projectLookup;
     }
 
+    private ParsedModel<?> safelyReturn(ParsedModel<?> result) {
+        if (result == null) {
+            LOGGER.log(Level.WARNING,
+                    "GradleProjectExtensionDef.parseModel returned null for extension {0}",
+                    getName());
+            return ParsedModel.noModels();
+        }
+        else {
+            return result;
+        }
+    }
+
+    public ParsedModel<?> parseModel(
+            RequestedProjectDir mainProjectDir,
+            Collection<?> retrievedModels) {
+        if (mainProjectDir == null) throw new NullPointerException("mainProjectDir");
+
+        Object[] models = retrievedModels.toArray(new Object[retrievedModels.size() + 1]);
+        models[models.length - 1] = mainProjectDir;
+        return parseModel(Lookups.fixed(models));
+    }
+
+    private ParsedModel<?> parseModel(Lookup retrievedModels) {
+        return safelyReturn(getExtensionDef().parseModel(retrievedModels));
+    }
+
     public void setModelForExtension(Object model) {
         boolean active = model != null;
 
@@ -59,10 +92,16 @@ public final class LoadedExtension {
                 projectLookup.replaceLookups(
                         extension.getPermanentProjectLookup(),
                         extension.getProjectLookup());
+                extensionLookup.replaceLookups(
+                        extension.getExtensionLookup(),
+                        extension.getPermanentProjectLookup(),
+                        extension.getProjectLookup());
+
                 defWithExtension.activate(model);
             }
             else {
                 projectLookup.replaceLookups(extension.getPermanentProjectLookup());
+                extensionLookup.replaceLookups(Lookup.EMPTY);
                 defWithExtension.deactivate();
             }
         }
