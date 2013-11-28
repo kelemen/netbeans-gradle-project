@@ -16,7 +16,7 @@ artifacts {
 uploadArchives {
     repositories {
         mavenDeployer {
-            def repoUrl = getStringProperty('publishNBGradleRepoUrl', 'https://api.bintray.com/maven/kelemen/maven/NBGradleDefaultModels');
+            def repoUrl = getStringProperty('publishNBGradleRepoUrl', 'https://api.bintray.com/maven/kelemen/maven/Gradle-NetBeans');
             def repoUser = getStringProperty('publishNBGradleUserName', 'kelemen');
             def repoPassword = getStringProperty('publishNBGradlePassword', '');
             repository(url: repoUrl) {

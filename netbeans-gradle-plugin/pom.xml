@@ -4,7 +4,7 @@
 
     <groupId>com.github.kelemen</groupId>
     <artifactId>netbeans-gradle-plugin</artifactId>
-    <version>1.2.8.1-SNAPSHOT</version>
+    <version>1.2.8.2-SNAPSHOT</version>
     <packaging>nbm</packaging>
     <url>https://github.com/kelemen/netbeans-gradle-project</url>
 
@@ -304,4 +304,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray-kelemen-maven-Gradle-NetBeans</id>
+            <name>Gradle-NetBeans in BinTray</name>
+            <url>https://api.bintray.com/maven/kelemen/maven/Gradle-NetBeans</url>
+        </repository>
+    </distributionManagement>
 </project>
