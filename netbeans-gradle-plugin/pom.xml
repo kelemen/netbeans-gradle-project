@@ -301,4 +301,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray-kelemen-maven-Gradle-NetBeans</id>
+            <name>Gradle-NetBeans in BinTray</name>
+            <url>https://api.bintray.com/maven/kelemen/maven/Gradle-NetBeans</url>
+        </repository>
+    </distributionManagement>
 </project>
