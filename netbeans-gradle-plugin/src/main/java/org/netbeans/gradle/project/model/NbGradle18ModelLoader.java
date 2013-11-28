@@ -121,7 +121,8 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     private static NbGradleModel parseModel(
             NbGradleProject project,
             FetchedProjectModels projectModels,
-            ProjectModelFetcher modelFetcher) {
+            ProjectModelFetcher modelFetcher,
+            ExtensionModelCache cache) {
 
         List<NbGradleExtensionRef> extensions = project.getExtensionRefs();
 
@@ -129,15 +130,35 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
         NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
 
-        RequestedProjectDir projectDir = new RequestedProjectDir(genericInfo.getProjectDir());
+        File projectDir = genericInfo.getProjectDir();
+        RequestedProjectDir projectDirModel = new RequestedProjectDir(projectDir);
+
+        ProjectExtensionModelCache projectCache = cache.tryGetProjectCache(projectDir);
         for (NbGradleExtensionRef extension: extensions) {
+            String extensionName = extension.getName();
+
             List<Object> models = new ArrayList<Object>();
             addAllNullSafe(models, projectModels.getProjectInfoResults().get(extension.getName()));
             addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
 
-            ParsedModel<?> parsedModels = extension.parseModel(projectDir, models);
-            result.setModelForExtension(extension, parsedModels.getMainModel());
-            // TODO: Do not parse models needlessly for other projects, use the ones returned here.
+            CachedModel cachedModel = projectCache != null
+                    ? projectCache.tryGetModel(extensionName)
+                    : null;
+
+            Object extensionModel;
+            if (cachedModel != null) {
+                extensionModel = cachedModel.model;
+            }
+            else {
+                ParsedModel<?> parsedModels = extension.parseModel(projectDirModel, models);
+                extensionModel = parsedModels.getMainModel();
+
+                for (Map.Entry<File, ?> entry: parsedModels.getOtherProjectsModel().entrySet()) {
+                    cache.getProjectCache(entry.getKey()).addModel(extensionName, entry.getValue());
+                }
+            }
+
+            result.setModelForExtension(extension, extensionModel);
         }
 
         return result.create();
@@ -152,7 +173,13 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
 
         FetchedModels fetchedModels = modelFetcher.getModels(connection, setup);
-        NbGradleModel mainModel = parseModel(project, fetchedModels.getDefaultProjectModels(), modelFetcher);
+
+        ExtensionModelCache cache = new ExtensionModelCache();
+        NbGradleModel mainModel = parseModel(
+                project,
+                fetchedModels.getDefaultProjectModels(),
+                modelFetcher,
+                cache);
 
         Collection<FetchedProjectModels> otherProjectModels = fetchedModels.getOtherProjectModels();
         List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>(otherProjectModels.size());
@@ -161,10 +188,55 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         for (FetchedProjectModels projectModel: otherProjectModels) {
             File projectDir = projectModel.getProjectDef().getMainProject().getGenericProperties().getProjectDir();
             if (!mainProjectDir.equals(projectDir)) {
-                otherModels.add(parseModel(project, projectModel, modelFetcher));
+                otherModels.add(parseModel(project, projectModel, modelFetcher, cache));
             }
         }
         return new Result(mainModel, otherModels);
+    }
+
+    private static final class CachedModel {
+        public final Object model;
+
+        public CachedModel(Object model) {
+            this.model = model;
+        }
+    }
+
+    private static final class ProjectExtensionModelCache {
+        private final Map<String, CachedModel> models;
+
+        public ProjectExtensionModelCache() {
+            this.models = new HashMap<String, CachedModel>();
+        }
+
+        public CachedModel tryGetModel(String extensionName) {
+            return models.get(extensionName);
+        }
+
+        public void addModel(String extensionName, Object model) {
+            models.put(extensionName, new CachedModel(model));
+        }
+    }
+
+    private static final class ExtensionModelCache {
+        private final Map<File, ProjectExtensionModelCache> projectCaches;
+
+        public ExtensionModelCache() {
+            this.projectCaches = new HashMap<File, ProjectExtensionModelCache>();
+        }
+
+        public ProjectExtensionModelCache tryGetProjectCache(File projectDir) {
+            return projectCaches.get(projectDir);
+        }
+
+        public ProjectExtensionModelCache getProjectCache(File projectDir) {
+            ProjectExtensionModelCache cache = projectCaches.get(projectDir);
+            if (cache == null) {
+                cache = new ProjectExtensionModelCache();
+                projectCaches.put(projectDir, cache);
+            }
+            return cache;
+        }
     }
 
     private static final class ProjectModelFetcher {
