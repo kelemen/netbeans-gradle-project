@@ -23,14 +23,10 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return modelName.equals(ModelQueryOutputRef.class.getName());
     }
 
-    public Object buildAll(String modelName, Project project) {
-        if (!canBuild(modelName)) {
-            throw new IllegalArgumentException("Unsupported model: " + modelName);
-        }
-
+    private CustomSerializedMap fetchProjectInfos(Project project) {
         Map<Object, List<?>> projectInfoRequests = input.getProjectInfoRequests(classLoader);
         int requestCount = projectInfoRequests.size();
-        CustomSerializedMap.Builder projectInfoResults = new CustomSerializedMap.Builder(requestCount);
+        CustomSerializedMap.Builder projectInfosBuilder = new CustomSerializedMap.Builder(requestCount);
 
         for (Map.Entry<?, List<?>> entry: projectInfoRequests.entrySet()) {
             // TODO: Catch exceptions for each entry and somehow report it back.
@@ -39,12 +35,29 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             for (Object projectInfoBuilder: entry.getValue()) {
                 Object info = ((ProjectInfoBuilder<?>)projectInfoBuilder).getProjectInfo(project);
                 if (info != null) {
-                    projectInfoResults.addValue(key, info);
+                    projectInfosBuilder.addValue(key, info);
                 }
             }
         }
 
-        return new DefaultModelQueryOutputRef(new ModelQueryOutput(project.getPath(), projectInfoResults.create()));
+        return projectInfosBuilder.create();
+    }
+
+    public Object buildAll(String modelName, Project project) {
+        if (!canBuild(modelName)) {
+            throw new IllegalArgumentException("Unsupported model: " + modelName);
+        }
+
+
+        ModelQueryOutput output;
+        try {
+            CustomSerializedMap projectInfos = fetchProjectInfos(project);
+            output = new ModelQueryOutput(project.getPath(), projectInfos, null);
+        } catch (Throwable ex) {
+            output = new ModelQueryOutput(project.getPath(), CustomSerializedMap.EMPTY, ex);
+        }
+
+        return new DefaultModelQueryOutputRef(output);
     }
 
     private static final class DefaultModelQueryOutputRef implements ModelQueryOutputRef, Serializable {

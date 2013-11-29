@@ -10,6 +10,8 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class CustomSerializedMap implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final CustomSerializedMap EMPTY
+            = new CustomSerializedMap.Builder(0).create();
 
     public static interface Deserializer {
         public Map<Object, List<?>> deserialize(ClassLoader parent);
