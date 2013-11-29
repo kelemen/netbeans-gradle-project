@@ -1,7 +1,9 @@
 package org.netbeans.gradle.model.util;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public final class ReflectionUtils {
     private static final Object[] EMPTY_ARR = new Object[0];
@@ -93,6 +95,37 @@ public final class ReflectionUtils {
     public static String getStringProperty(Object obj, String propertyName) {
         Object result = getNonBoolProperty(obj, propertyName);
         return result != null ? result.toString() : null;
+    }
+
+    public static boolean isPublic(Member member) {
+        int modifiers = member.getModifiers();
+        return (modifiers & Modifier.PUBLIC) != 0;
+    }
+
+    public static Method tryGetPublicMethod(
+            Class<?> type,
+            String methodName,
+            Class<?> returnType,
+            Class<?>... argTypes) {
+
+        try {
+            Method method = type.getMethod(methodName, argTypes);
+            if (!isPublic(method)) {
+                return null;
+            }
+
+            if (!returnType.isAssignableFrom(method.getReturnType())) {
+                return null;
+            }
+
+            if (Modifier.isAbstract(method.getModifiers())) {
+                return null;
+            }
+
+            return method;
+        } catch (NoSuchMethodException ex) {
+            return null;
+        }
     }
 
     private ReflectionUtils() {
