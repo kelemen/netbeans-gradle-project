@@ -58,8 +58,7 @@ public final class ReflectionHelper {
     }
 
     private static boolean isPublic(Member member) {
-        int modifiers = member.getModifiers();
-        return (modifiers & Modifier.PUBLIC) != 0;
+        return Modifier.isPublic(member.getModifiers());
     }
 
     public static Object tryCreateInstance(Class<?> cl, Map<Class<?>, Object> args) {
