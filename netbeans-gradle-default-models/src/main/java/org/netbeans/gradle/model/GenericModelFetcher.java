@@ -81,8 +81,9 @@ public final class GenericModelFetcher {
         Map<Class<?>, Object> toolingModels = actionModels.getToolingModels();
         Map<Object, List<?>> projectInfoResults
                 = projectInfoBuilders.deserializeResults(actionModels.getProjectInfoResults());
+        Throwable issue = actionModels.getIssue();
 
-        return new FetchedProjectModels(projectDef, projectInfoResults, toolingModels);
+        return new FetchedProjectModels(projectDef, projectInfoResults, toolingModels, issue);
     }
 
     private Collection<FetchedProjectModels> transformActionModels(Collection<ActionFetchedProjectModels> actionModels) {
@@ -281,7 +282,8 @@ public final class GenericModelFetcher {
             return new ActionFetchedProjectModels(
                     new GradleMultiProjectDef(rootTree, projectTree),
                     modelOutput.getProjectInfoResults(),
-                    toolingModels);
+                    toolingModels,
+                    modelOutput.getIssue());
         }
 
         private Collection<GradleTaskID> getTasksOfProjects(GradleProject project) {

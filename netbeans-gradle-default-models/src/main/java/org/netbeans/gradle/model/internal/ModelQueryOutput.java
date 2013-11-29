@@ -23,6 +23,10 @@ public final class ModelQueryOutput implements Serializable {
         this.issue = TransferableExceptionWrapper.wrap(issue);
     }
 
+    public Throwable getIssue() {
+        return issue;
+    }
+
     public String getProjectFullName() {
         return projectFullName;
     }
