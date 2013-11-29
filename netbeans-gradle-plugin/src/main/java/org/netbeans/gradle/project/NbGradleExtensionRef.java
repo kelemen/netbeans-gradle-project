@@ -15,6 +15,7 @@ public final class NbGradleExtensionRef {
     private static final Logger LOGGER = Logger.getLogger(NbGradleExtensionRef.class.getName());
 
     private final String name;
+    private final String displayName;
     private final DefWithExtension<?> defWithExtension;
 
     private final DynamicLookup extensionLookup;
@@ -29,11 +30,33 @@ public final class NbGradleExtensionRef {
         if (extension == null) throw new NullPointerException("extension");
 
         this.name = extensionDef.getName();
+        checkExtensionName(name, extensionDef);
+
+        this.displayName = useNameIfNoDisplayName(extensionDef.getDisplayName(), name);
         this.defWithExtension = new DefWithExtension<ModelType>(extensionDef, extension);
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
         this.activeState = new AtomicBoolean(false);
+    }
+
+    private static void checkExtensionName(String name, GradleProjectExtensionDef<?> def) {
+        if (name == null) {
+            throw new NullPointerException("Extension name cannot be null for " + def.getClass().getName());
+        }
+        if (name.trim().isEmpty()) {
+            throw new NullPointerException("Extension name cannot be empty for " + def.getClass().getName());
+        }
+    }
+
+    private static String useNameIfNoDisplayName(String displayName, String name) {
+        if (displayName == null) {
+            LOGGER.log(Level.WARNING,
+                    "GradleProjectExtensionDef.getDisplayName returned null for extension {0}",
+                    name);
+            return name;
+        }
+        return displayName;
     }
 
     public GradleProjectExtensionDef<?> getExtensionDef() {
@@ -42,6 +65,10 @@ public final class NbGradleExtensionRef {
 
     public GradleProjectExtension2<?> getExtension() {
         return defWithExtension.extension;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public String getName() {
