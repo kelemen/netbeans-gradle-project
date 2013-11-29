@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
@@ -118,52 +119,6 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         values.addAll(newValues);
     }
 
-    private static NbGradleModel parseModel(
-            NbGradleProject project,
-            FetchedProjectModels projectModels,
-            ProjectModelFetcher modelFetcher,
-            ExtensionModelCache cache) {
-
-        List<NbGradleExtensionRef> extensions = project.getExtensionRefs();
-
-        NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());
-        NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
-        NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
-
-        File projectDir = genericInfo.getProjectDir();
-        RequestedProjectDir projectDirModel = new RequestedProjectDir(projectDir);
-
-        ProjectExtensionModelCache projectCache = cache.tryGetProjectCache(projectDir);
-        for (NbGradleExtensionRef extension: extensions) {
-            String extensionName = extension.getName();
-
-            List<Object> models = new ArrayList<Object>();
-            addAllNullSafe(models, projectModels.getProjectInfoResults().get(extension.getName()));
-            addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
-
-            CachedModel cachedModel = projectCache != null
-                    ? projectCache.tryGetModel(extensionName)
-                    : null;
-
-            Object extensionModel;
-            if (cachedModel != null) {
-                extensionModel = cachedModel.model;
-            }
-            else {
-                ParsedModel<?> parsedModels = extension.parseModel(projectDirModel, models);
-                extensionModel = parsedModels.getMainModel();
-
-                for (Map.Entry<File, ?> entry: parsedModels.getOtherProjectsModel().entrySet()) {
-                    cache.getProjectCache(entry.getKey()).addModel(extensionName, entry.getValue());
-                }
-            }
-
-            result.setModelForExtension(extension, extensionModel);
-        }
-
-        return result.create();
-    }
-
     @Override
     public Result loadModels(
             NbGradleProject project,
@@ -171,15 +126,10 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             ProgressHandle progress) throws IOException {
 
         ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
-
         FetchedModels fetchedModels = modelFetcher.getModels(connection, setup);
 
-        ExtensionModelCache cache = new ExtensionModelCache();
-        NbGradleModel mainModel = parseModel(
-                project,
-                fetchedModels.getDefaultProjectModels(),
-                modelFetcher,
-                cache);
+        ProjectModelParser parser = new ProjectModelParser(project, modelFetcher);
+        NbGradleModel mainModel = parser.parseModel(fetchedModels.getDefaultProjectModels());
 
         Collection<FetchedProjectModels> otherProjectModels = fetchedModels.getOtherProjectModels();
         List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>(otherProjectModels.size());
@@ -188,10 +138,83 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         for (FetchedProjectModels projectModel: otherProjectModels) {
             File projectDir = projectModel.getProjectDef().getMainProject().getGenericProperties().getProjectDir();
             if (!mainProjectDir.equals(projectDir)) {
-                otherModels.add(parseModel(project, projectModel, modelFetcher, cache));
+                otherModels.add(parser.parseModel(projectModel));
             }
         }
         return new Result(mainModel, otherModels);
+    }
+
+    private static final class ProjectModelParser {
+        private final List<NbGradleExtensionRef> extensions;
+        private final ProjectModelFetcher modelFetcher;
+        private final ExtensionModelCache cache;
+
+        public ProjectModelParser(NbGradleProject mainProject, ProjectModelFetcher modelFetcher) {
+            this.extensions = mainProject.getExtensionRefs();
+            this.modelFetcher = modelFetcher;
+            this.cache = new ExtensionModelCache();
+        }
+
+        private void addProjectInfoResults(
+                FetchedProjectModels projectModels,
+                NbGradleExtensionRef extension,
+                List<Object> results) {
+
+            List<BuilderResult> builderResults
+                    = projectModels.getProjectInfoResults().get(extension.getName());
+            if (builderResults == null) {
+                return;
+            }
+
+            for (BuilderResult builderResult: builderResults) {
+                // TODO: builderResult.getIssue();
+                Object resultObject = builderResult.getResultObject();
+                if (resultObject != null) {
+                    results.add(resultObject);
+                }
+            }
+        }
+
+        public NbGradleModel parseModel(FetchedProjectModels projectModels) {
+            // TODO: projectModels.getIssue();
+
+            NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());
+            NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
+            NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
+
+            File projectDir = genericInfo.getProjectDir();
+            RequestedProjectDir projectDirModel = new RequestedProjectDir(projectDir);
+
+            ProjectExtensionModelCache projectCache = cache.tryGetProjectCache(projectDir);
+            for (NbGradleExtensionRef extension: extensions) {
+                String extensionName = extension.getName();
+
+                List<Object> models = new ArrayList<Object>();
+                addProjectInfoResults(projectModels, extension, models);
+                addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
+
+                CachedModel cachedModel = projectCache != null
+                        ? projectCache.tryGetModel(extensionName)
+                        : null;
+
+                Object extensionModel;
+                if (cachedModel != null) {
+                    extensionModel = cachedModel.model;
+                }
+                else {
+                    ParsedModel<?> parsedModels = extension.parseModel(projectDirModel, models);
+                    extensionModel = parsedModels.getMainModel();
+
+                    for (Map.Entry<File, ?> entry: parsedModels.getOtherProjectsModel().entrySet()) {
+                        cache.getProjectCache(entry.getKey()).addModel(extensionName, entry.getValue());
+                    }
+                }
+
+                result.setModelForExtension(extension, extensionModel);
+            }
+
+            return result.create();
+        }
     }
 
     private static final class CachedModel {

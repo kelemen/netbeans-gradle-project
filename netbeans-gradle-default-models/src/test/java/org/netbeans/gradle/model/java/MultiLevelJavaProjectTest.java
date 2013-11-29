@@ -24,6 +24,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GenericProjectProperties;
@@ -420,8 +421,10 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
-    private static Object getSingleElement(List<?> list) {
-        return CollectionUtils.getSingleElement(list);
+
+    private static Object getSingleBuildResult(List<BuilderResult> list) {
+        BuilderResult result = CollectionUtils.getSingleElement(list);
+        return result != null ? result.getResultIfNoIssue() : null;
     }
 
     @Test
@@ -455,15 +458,17 @@ public class MultiLevelJavaProjectTest {
                 public void doTask(ProjectConnection connection) throws Exception {
                     FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
 
-                    String buildInfo = (String)getSingleElement(models.getBuildInfoResults().get(0));
+                    String buildInfo = (String)CollectionUtils.getSingleElement(
+                            models.getBuildInfoResults().get(0));
                     assertEquals(prefix + ROOT_NAME, buildInfo);
 
-                    Map<Object, List<?>> projectInfos = models.getDefaultProjectModels().getProjectInfoResults();
+                    Map<Object, List<BuilderResult>> projectInfos
+                            = models.getDefaultProjectModels().getProjectInfoResults();
 
-                    JarOutputsModel model1 = (JarOutputsModel)getSingleElement(projectInfos.get(0));
-                    JavaCompatibilityModel model2 = (JavaCompatibilityModel)getSingleElement(projectInfos.get(1));
-                    JavaSourcesModel model3 = (JavaSourcesModel)getSingleElement(projectInfos.get(2));
-                    WarFoldersModel model4 = (WarFoldersModel)getSingleElement(projectInfos.get(3));
+                    JarOutputsModel model1 = (JarOutputsModel)getSingleBuildResult(projectInfos.get(0));
+                    JavaCompatibilityModel model2 = (JavaCompatibilityModel)getSingleBuildResult(projectInfos.get(1));
+                    JavaSourcesModel model3 = (JavaSourcesModel)getSingleBuildResult(projectInfos.get(2));
+                    WarFoldersModel model4 = (WarFoldersModel)getSingleBuildResult(projectInfos.get(3));
 
                     assertNotNull(model1);
                     assertNotNull(model2);

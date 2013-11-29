@@ -10,7 +10,7 @@ public final class FetchedProjectModels implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final GradleMultiProjectDef projectDef;
-    private final Map<Object, List<?>> projectInfoResults;
+    private final Map<Object, List<BuilderResult>> projectInfoResults;
     private final Map<Class<?>, Object> toolingModels;
     private final Throwable issue;
 
@@ -22,7 +22,9 @@ public final class FetchedProjectModels implements Serializable {
         if (projectDef == null) throw new NullPointerException("projectDef");
 
         this.projectDef = projectDef;
-        this.projectInfoResults = CollectionUtils.copyNullSafeMultiHashMap(projectInfoResults);
+        this.projectInfoResults = CollectionUtils.copyNullSafeMultiHashMapReified(
+                BuilderResult.class, projectInfoResults);
+
         this.toolingModels = CollectionUtils.copyNullSafeHashMap(toolingModels);
         this.issue = TransferableExceptionWrapper.wrap(issue);
     }
@@ -35,7 +37,7 @@ public final class FetchedProjectModels implements Serializable {
         return projectDef;
     }
 
-    public Map<Object, List<?>> getProjectInfoResults() {
+    public Map<Object, List<BuilderResult>> getProjectInfoResults() {
         return projectInfoResults;
     }
 

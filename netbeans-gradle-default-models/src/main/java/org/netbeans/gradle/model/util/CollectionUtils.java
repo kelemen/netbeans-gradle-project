@@ -21,6 +21,26 @@ public final class CollectionUtils {
         }
     }
 
+    public static <K, V> Map<K, List<V>> copyNullSafeMultiHashMapReified(
+            Class<V> valueType,
+            Map<? extends K, List<?>> map) {
+        if (valueType == null) throw new NullPointerException("valueType");
+        if (map == null) throw new NullPointerException("map");
+
+        @SuppressWarnings("unchecked")
+        Map<K, List<V>> result = (Map<K, List<V>>)(Map<?, ?>)copyNullSafeMutableHashMap(map);
+        for (Map.Entry<K, List<V>> entry: result.entrySet()) {
+            List<V> value = entry.getValue();
+            ArrayList<V> valueCopy = new ArrayList<V>(value);
+            for (V element: valueCopy) {
+                valueType.cast(element);
+            }
+
+            entry.setValue(Collections.unmodifiableList(valueCopy));
+        }
+        return result;
+    }
+
     public static <K> Map<K, List<?>> copyNullSafeMultiHashMap(Map<? extends K, List<?>> map) {
         if (map == null) throw new NullPointerException("map");
 
@@ -75,7 +95,7 @@ public final class CollectionUtils {
         return result;
     }
 
-    public static Object getSingleElement(List<?> list) {
+    public static <E> E getSingleElement(List<E> list) {
         if (list == null) {
             return null;
         }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
+import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
@@ -33,9 +34,16 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
 
             Object key = entry.getKey();
             for (Object projectInfoBuilder: entry.getValue()) {
-                Object info = ((ProjectInfoBuilder<?>)projectInfoBuilder).getProjectInfo(project);
-                if (info != null) {
-                    projectInfosBuilder.addValue(key, info);
+                Object info = null;
+                Throwable issue = null;
+                try {
+                    info = ((ProjectInfoBuilder<?>)projectInfoBuilder).getProjectInfo(project);
+                } catch (Throwable ex) {
+                    issue = ex;
+                }
+
+                if (info != null || issue != null) {
+                    projectInfosBuilder.addValue(key, new BuilderResult(info, issue));
                 }
             }
         }

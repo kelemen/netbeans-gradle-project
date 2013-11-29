@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.gradle.model.BuildInfoBuilder;
+import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
@@ -96,7 +97,7 @@ public final class InfoQueries {
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
-    private static Object getSingleElement(List<?> list) {
+    private static <E> E getSingleElement(List<E> list) {
         return CollectionUtils.getSingleElement(list);
     }
 
@@ -109,8 +110,13 @@ public final class InfoQueries {
 
         assertTrue(models.getBuildInfoResults().isEmpty());
 
+        BuilderResult builderResult
+                = getSingleElement(models.getDefaultProjectModels().getProjectInfoResults().get(0));
+
         @SuppressWarnings("unchecked")
-        T result = (T)getSingleElement(models.getDefaultProjectModels().getProjectInfoResults().get(0));
+        T result = builderResult != null
+                ? (T)builderResult.getResultIfNoIssue()
+                : null;
         return result;
     }
 
