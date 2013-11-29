@@ -28,7 +28,6 @@ import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.netbeans.gradle.model.api.GradleInfoQuery;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
@@ -65,15 +64,6 @@ public final class GenericModelFetcher {
         this.modelClasses = Collections.unmodifiableSet(new HashSet<Class<?>>(modelClasses));
 
         CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
-    }
-
-    private static void getJars(
-            Collection<? extends GradleInfoQuery> queries,
-            Collection<? super File> jars) {
-        for (GradleInfoQuery query: queries) {
-            Set<File> classPath = query.getInfoClassPath().getJarFiles();
-            jars.addAll(classPath);
-        }
     }
 
     private FetchedProjectModels transformActionModels(ActionFetchedProjectModels actionModels) {
