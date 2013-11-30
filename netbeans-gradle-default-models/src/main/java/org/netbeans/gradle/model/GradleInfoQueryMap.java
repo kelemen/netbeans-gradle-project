@@ -3,6 +3,7 @@ package org.netbeans.gradle.model;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,16 +79,30 @@ final class GradleInfoQueryMap {
         return new Deserializer(builderMap, classpath);
     }
 
+    private static void addAllToMultiMap(Object key, List<?> values, Map<Object, List<Object>> result) {
+        List<Object> container = result.get(key);
+        if (container == null) {
+            container = new LinkedList<Object>();
+            result.put(key, container);
+        }
+        container.addAll(values);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<Object, List<?>> unsafeCast(Map<Object, List<Object>> map) {
+        return (Map<Object, List<?>>)(Map<?, ?>)map;
+    }
+
     public Map<Object, List<?>> deserializeResults(CustomSerializedMap map) {
-        Map<Object, List<?>> result = CollectionUtils.newHashMap(map.size());
+        Map<Object, List<Object>> result = CollectionUtils.newHashMap(map.size());
 
         for (Map.Entry<Object, SerializedEntries> entry: map.getMap().entrySet()) {
             KeyWrapper key = (KeyWrapper)entry.getKey();
             List<?> values = entry.getValue().getUnserialized(getClassLoaderForKey(key));
-            result.put(key.wrappedKey, values);
+            addAllToMultiMap(key.wrappedKey, values, result);
         }
 
-        return result;
+        return unsafeCast(result);
     }
 
     private static final class Deserializer

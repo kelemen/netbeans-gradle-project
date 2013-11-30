@@ -501,6 +501,68 @@ public class MultiLevelJavaProjectTest {
         }
     }
 
+    private static <T> T findResultOfType(Class<T> type, Collection<BuilderResult> builders) {
+        for (BuilderResult builder: builders) {
+            Object result = builder.getResultObject();
+            if (type.isInstance(result)) {
+                return type.cast(result);
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void testManyQueriesSingleKey() throws IOException {
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
+                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+
+        Set<Class<?>> toolingModels = new HashSet<Class<?>>();
+
+        projectInfos.put(0, Arrays.<GradleProjectInfoQuery<?>>asList(
+                InfoQueries.toCustomQuery(JarOutputsModelBuilder.INSTANCE),
+                InfoQueries.toCustomQuery(JavaCompatibilityModelBuilder.INSTANCE),
+                InfoQueries.toCustomQuery(JavaSourcesModelBuilder.COMPLETE),
+                InfoQueries.toCustomQuery(WarFoldersModelBuilder.INSTANCE)));
+
+        final String prefix = "testCustomQuery-";
+        buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(new TestBuildInfoBuilder(prefix))));
+
+        toolingModels.add(IdeaProject.class);
+
+        final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
+
+                String buildInfo = (String)CollectionUtils.getSingleElement(
+                        models.getBuildInfoResults().get(0));
+                assertEquals(prefix + ROOT_NAME, buildInfo);
+
+                Map<Object, List<BuilderResult>> projectInfos
+                        = models.getDefaultProjectModels().getProjectInfoResults();
+
+                List<BuilderResult> results = projectInfos.get(0);
+                assertNotNull("Must have results of query", results);
+
+                assertEquals("Must have 3/4 queries.", 3, results.size());
+
+                JarOutputsModel model1 = findResultOfType(JarOutputsModel.class, results);
+                JavaCompatibilityModel model2 = findResultOfType(JavaCompatibilityModel.class, results);
+                JavaSourcesModel model3 = findResultOfType(JavaSourcesModel.class, results);
+                WarFoldersModel model4 = findResultOfType(WarFoldersModel.class, results);
+
+                assertNotNull(model1);
+                assertNotNull(model2);
+                assertNotNull(model3);
+                assertNull(model4);
+            }
+        });
+    }
+
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
             Class<?>... modelClasses) throws IOException {
