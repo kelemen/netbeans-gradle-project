@@ -46,6 +46,7 @@ import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.OutputWriter;
@@ -219,10 +220,9 @@ public final class AsyncGradleTask implements Runnable {
 
     private void doGradleTasksWithProgress(
             final ProgressHandle progress,
-            NbGradleProject project,
-            GradleCommandSpec commandSpec) {
+            BuildExecutionItem buildItem) {
 
-        GradleTaskDef taskDef = commandSpec.getProcessed();
+        GradleTaskDef taskDef = buildItem.commandSpec.getProcessed();
         if (taskDef == null) throw new NullPointerException("command.processed");
 
         StringBuilder commandBuilder = new StringBuilder(128);
@@ -256,11 +256,12 @@ public final class AsyncGradleTask implements Runnable {
 
                 IOTabRef<TaskIOTab> ioRef
                         = IOTabs.taskTabs().getTab(outputDef.getKey(), outputDef.getCaption());
-
+                
                 try {
                     TaskIOTab tab = ioRef.getTab();
-                    tab.setLastTask(commandSpec.getSource(), adjust(taskDef));
+                    tab.setLastTask(buildItem.commandSpec.getSource(), adjust(taskDef));
                     tab.taskStarted();
+                    BuildExecutionSupport.registerRunningItem(buildItem);
 
                     try {
                         OutputWriter buildOutput = tab.getIo().getOutRef();
@@ -304,6 +305,8 @@ public final class AsyncGradleTask implements Runnable {
                 } finally {
                     ioRef.close();
                 }
+                buildItem.markFinished();
+                BuildExecutionSupport.registerFinishedItem(buildItem);
             } finally {
                 closeAll(initScripts);
             }
@@ -442,11 +445,13 @@ public final class AsyncGradleTask implements Runnable {
                 String taskName = taskDef.getSafeCommandName();
                 String caption = NbStrings.getExecuteTasksText(taskName);
                 boolean nonBlocking = taskDef.isNonBlocking();
+                
+                final BuildExecutionItem buildItem = new BuildExecutionItem(project, processedCommand, caption, nonBlocking);
 
                 return new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
                     @Override
                     public void run(ProgressHandle progress) {
-                        doGradleTasksWithProgress(progress, project, processedCommand);
+                        doGradleTasksWithProgress(progress, buildItem);
                     }
                 });
             }
@@ -461,6 +466,55 @@ public final class AsyncGradleTask implements Runnable {
 
     private AsyncGradleTask adjust(Callable<GradleCommandSpec> newFactory) {
         return new AsyncGradleTask(project, newFactory, listener);
+    }
+
+    // TODO(netbeans7.4): change to BuildExecutionSupport.ActionItem with ref to project
+    private class BuildExecutionItem implements BuildExecutionSupport.Item {
+        private final NbGradleProject project;
+        private final GradleCommandSpec commandSpec;
+        private final String caption;
+        private final boolean nonBlocking;
+        
+        private volatile boolean running = true;
+
+        public BuildExecutionItem(NbGradleProject project, GradleCommandSpec commandSpec, String caption, boolean nonBlocking) {
+            this.project = project;
+            this.commandSpec = commandSpec;
+            this.caption = caption;
+            this.nonBlocking = nonBlocking;
+        }
+        
+        @Override
+        public String getDisplayName() {
+            return caption;
+        }
+
+        @Override
+        public void repeatExecution() {
+            GradleDaemonManager.submitGradleTask(
+                    TASK_EXECUTOR, 
+                    new DaemonTaskDef(caption, nonBlocking, new DaemonTask() {
+                        @Override
+                        public void run(ProgressHandle progress) {
+                            doGradleTasksWithProgress(progress, BuildExecutionItem.this);
+                        }
+                    }), 
+                    listener);
+        }
+
+        public void markFinished() {
+          running = false;
+        }
+
+        @Override
+        public boolean isRunning() {
+          return running;
+        }
+
+        @Override
+        public void stopRunning() {
+          // no-op
+        }
     }
 
     private static final class CommandAdjusterFactory implements Callable<GradleCommandSpec> {
