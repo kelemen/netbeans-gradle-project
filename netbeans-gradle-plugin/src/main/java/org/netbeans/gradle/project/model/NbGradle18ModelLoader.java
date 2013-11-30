@@ -25,6 +25,7 @@ import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2;
@@ -32,6 +33,7 @@ import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbGradle18ModelLoader.class.getName());
@@ -134,19 +136,15 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         progress.progress(NbStrings.getParsingModel());
 
         ProjectModelParser parser = new ProjectModelParser(project, modelFetcher);
-        NbGradleModel mainModel = parser.parseModel(fetchedModels.getDefaultProjectModels());
+        return parser.parseModel(fetchedModels);
+    }
 
-        Collection<FetchedProjectModels> otherProjectModels = fetchedModels.getOtherProjectModels();
-        List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>(otherProjectModels.size());
-
-        File mainProjectDir = project.getProjectDirectoryAsFile();
-        for (FetchedProjectModels projectModel: otherProjectModels) {
-            File projectDir = projectModel.getProjectDef().getMainProject().getGenericProperties().getProjectDir();
-            if (!mainProjectDir.equals(projectDir)) {
-                otherModels.add(parser.parseModel(projectModel));
-            }
-        }
-        return new Result(mainModel, otherModels, parser.getIssuesUnsafe());
+    private static File getProjectDirFromModels(FetchedProjectModels projectModels) {
+        return projectModels
+                .getProjectDef()
+                .getMainProject()
+                .getGenericProperties()
+                .getProjectDir();
     }
 
     private static final class ProjectModelParser {
@@ -154,12 +152,14 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final ProjectModelFetcher modelFetcher;
         private final ExtensionModelCache cache;
         private final List<ModelLoadIssue> issues;
+        private final Map<String, ModelLoadResult> modelLoadResultCache;
 
         public ProjectModelParser(NbGradleProject mainProject, ProjectModelFetcher modelFetcher) {
             this.extensions = mainProject.getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
             this.issues = new LinkedList<ModelLoadIssue>();
+            this.modelLoadResultCache = CollectionUtils.newHashMap(extensions.size());
         }
 
         private void addProjectInfoResults(
@@ -186,7 +186,81 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             }
         }
 
-        public NbGradleModel parseModel(FetchedProjectModels projectModels) {
+        private Map<String, Lookup> createLookups(FetchedProjectModels projectModels) {
+            Map<String, Lookup> result = CollectionUtils.newHashMap(extensions.size());
+            for (NbGradleExtensionRef extension: extensions) {
+                String extensionName = extension.getName();
+
+                List<Object> models = new ArrayList<Object>();
+                addProjectInfoResults(projectModels, extension, models);
+                addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
+
+                result.put(extensionName, Lookups.fixed(models.toArray()));
+            }
+
+            return result;
+        }
+
+        private ModelLoadResult getModelLoadResult(
+                NbGradleExtensionRef extension,
+                File defaultProjectDir,
+                Map<File, ProjectModelsOfExtensions> extensionModels) {
+
+            Map<File, Lookup> lookups = CollectionUtils.newHashMap(extensionModels.size());
+
+            String extensionName = extension.getName();
+            for (Map.Entry<File, ProjectModelsOfExtensions> entry: extensionModels.entrySet()) {
+                Lookup lookup = entry.getValue().getExtensionLookups().get(extensionName);
+                if (lookup == null) {
+                    lookup = Lookup.EMPTY;
+                }
+                lookups.put(entry.getKey(), lookup);
+            }
+
+            return new ModelLoadResult(defaultProjectDir, lookups);
+        }
+
+        public Result parseModel(FetchedModels fetchedModels) {
+            ProjectModelsOfExtensions extensionsForDefault = new ProjectModelsOfExtensions(
+                    this,
+                    fetchedModels.getDefaultProjectModels());
+
+            File defaultProjectDir = extensionsForDefault.getProjectDir();
+
+            Collection<FetchedProjectModels> otherProjectModels = fetchedModels.getOtherProjectModels();
+
+            Map<File, ProjectModelsOfExtensions> extensionModels
+                    = CollectionUtils.newHashMap(otherProjectModels.size());
+            for (FetchedProjectModels models: otherProjectModels) {
+                File projectDir = getProjectDirFromModels(models);
+                if (defaultProjectDir.equals(projectDir)) {
+                    continue;
+                }
+
+                extensionModels.put(projectDir, new ProjectModelsOfExtensions(this, models));
+            }
+
+            extensionModels.put(defaultProjectDir, extensionsForDefault);
+
+            NbGradleModel mainModel = parseModel(
+                    fetchedModels.getDefaultProjectModels(),
+                    extensionModels);
+
+            List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>();
+            for (FetchedProjectModels models: otherProjectModels) {
+                File projectDir = getProjectDirFromModels(models);
+                if (defaultProjectDir.equals(projectDir)) {
+                    continue;
+                }
+                otherModels.add(parseModel(models, extensionModels));
+            }
+
+            return new Result(mainModel, otherModels, issues);
+        }
+
+        private NbGradleModel parseModel(
+                FetchedProjectModels projectModels,
+                Map<File, ProjectModelsOfExtensions> extensionModels) {
             Throwable issue = projectModels.getIssue();
             if (issue != null) {
                 issues.add(ModelLoadIssues.projectModelLoadError(projectModels, issue));
@@ -197,15 +271,11 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
 
             File projectDir = genericInfo.getProjectDir();
-            RequestedProjectDir projectDirModel = new RequestedProjectDir(projectDir);
 
             ProjectExtensionModelCache projectCache = cache.tryGetProjectCache(projectDir);
+
             for (NbGradleExtensionRef extension: extensions) {
                 String extensionName = extension.getName();
-
-                List<Object> models = new ArrayList<Object>();
-                addProjectInfoResults(projectModels, extension, models);
-                addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
 
                 CachedModel cachedModel = projectCache != null
                         ? projectCache.tryGetModel(extensionName)
@@ -216,7 +286,16 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                     extensionModel = cachedModel.model;
                 }
                 else {
-                    ParsedModel<?> parsedModels = extension.parseModel(projectDirModel, models);
+                    ModelLoadResult modelLoadResult = modelLoadResultCache.get(extensionName);
+                    if (modelLoadResult == null) {
+                        modelLoadResult = getModelLoadResult(extension, projectDir, extensionModels);
+                        modelLoadResultCache.put(extensionName, modelLoadResult);
+                    }
+                    else {
+                        modelLoadResult = modelLoadResult.withMainProject(projectDir);
+                    }
+
+                    ParsedModel<?> parsedModels = extension.parseModel(modelLoadResult);
                     extensionModel = parsedModels.getMainModel();
 
                     for (Map.Entry<File, ?> entry: parsedModels.getOtherProjectsModel().entrySet()) {
@@ -229,9 +308,23 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
             return result.create();
         }
+    }
 
-        public List<ModelLoadIssue> getIssuesUnsafe() {
-            return issues;
+    private static final class ProjectModelsOfExtensions {
+        private final File projectDir;
+        private final Map<String, Lookup> extensionLookups;
+
+        public ProjectModelsOfExtensions(ProjectModelParser parser, FetchedProjectModels projectModels) {
+            extensionLookups = parser.createLookups(projectModels);
+            projectDir = getProjectDirFromModels(projectModels);
+        }
+
+        public File getProjectDir() {
+            return projectDir;
+        }
+
+        public Map<String, Lookup> getExtensionLookups() {
+            return extensionLookups;
         }
     }
 

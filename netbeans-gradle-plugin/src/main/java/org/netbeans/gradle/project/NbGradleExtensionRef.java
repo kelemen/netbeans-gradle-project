@@ -1,15 +1,13 @@
 package org.netbeans.gradle.project;
 
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
-import org.netbeans.gradle.project.model.RequestedProjectDir;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.Lookups;
 
 public final class NbGradleExtensionRef {
     private static final Logger LOGGER = Logger.getLogger(NbGradleExtensionRef.class.getName());
@@ -95,17 +93,9 @@ public final class NbGradleExtensionRef {
         }
     }
 
-    public ParsedModel<?> parseModel(
-            RequestedProjectDir mainProjectDir,
-            Collection<?> retrievedModels) {
-        if (mainProjectDir == null) throw new NullPointerException("mainProjectDir");
+    public ParsedModel<?> parseModel(ModelLoadResult retrievedModels) {
+        if (retrievedModels == null) throw new NullPointerException("retrievedModels");
 
-        Object[] models = retrievedModels.toArray(new Object[retrievedModels.size() + 1]);
-        models[models.length - 1] = mainProjectDir;
-        return parseModel(Lookups.fixed(models));
-    }
-
-    private ParsedModel<?> parseModel(Lookup retrievedModels) {
         return safelyReturn(getExtensionDef().parseModel(retrievedModels));
     }
 

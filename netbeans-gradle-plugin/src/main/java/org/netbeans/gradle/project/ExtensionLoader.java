@@ -18,11 +18,11 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtension;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery;
+import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.GradleModelLoader;
-import org.netbeans.gradle.project.model.RequestedProjectDir;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -260,16 +260,12 @@ public final class ExtensionLoader {
             }
 
             @Override
-            public ParsedModel<Lookup> parseModel(Lookup retrievedModels) {
-                RequestedProjectDir reqProjectDir = retrievedModels.lookup(RequestedProjectDir.class);
-                if (reqProjectDir == null) {
-                    LOGGER.warning("Missing RequestedProjectDir in retrieved model list.");
-                    return ParsedModel.noModels();
-                }
+            public ParsedModel<Lookup> parseModel(ModelLoadResult modelLoadResult) {
+                File projectDir = modelLoadResult.getMainProjectDir();
+                Lookup models = modelLoadResult.getMainProjectModels();
 
-                File projectDir = reqProjectDir.getProjectDir();
                 if (projectDir.equals(projectDirOfExtension)) {
-                    return parseModelUsingExtension(projectDir, extension, retrievedModels);
+                    return parseModelUsingExtension(projectDir, extension, models);
                 }
 
                 NbGradleProject project = GradleModelLoader.tryFindGradleProject(projectDir);
@@ -295,7 +291,7 @@ public final class ExtensionLoader {
                 if (extensionDefToUse instanceof OldExtensionQueryWrapper) {
                     OldExtensionQueryWrapper wrapper = (OldExtensionQueryWrapper)extensionDefToUse;
 
-                    return parseModelUsingExtension(projectDir, wrapper.extension, retrievedModels);
+                    return parseModelUsingExtension(projectDir, wrapper.extension, models);
                 }
 
                 LOGGER.log(Level.WARNING,

@@ -109,7 +109,7 @@ public interface GradleProjectExtensionDef<ModelType> {
      * @see ParsedModel#noModels()
      */
     @Nonnull
-    public ParsedModel<ModelType> parseModel(@Nonnull Lookup retrievedModels);
+    public ParsedModel<ModelType> parseModel(@Nonnull ModelLoadResult retrievedModels);
 
     /**
      * Attaches the extension to a particular project which has just been

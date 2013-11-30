@@ -28,10 +28,12 @@ import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
+import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.openide.util.Parameters;
+import org.openide.util.lookup.Lookups;
 
 public final class NbCompatibleModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbCompatibleModelLoader.class.getName());
@@ -149,8 +151,11 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
             progress.progress(NbStrings.getParsingModel());
 
-            RequestedProjectDir projectDir = new RequestedProjectDir(project.getProjectDirectoryAsFile());
-            ParsedModel<?> parsedModel = extensionRef.parseModel(projectDir, extensionModels);
+            ModelLoadResult modelLoadResult = new ModelLoadResult(
+                    project.getProjectDirectoryAsFile(),
+                    Lookups.fixed(extensionModels.toArray()));
+
+            ParsedModel<?> parsedModel = extensionRef.parseModel(modelLoadResult);
             mainModel.setModelForExtension(extensionRef, parsedModel.getMainModel());
 
             for (Map.Entry<File, ?> otherEntry: parsedModel.getOtherProjectsModel().entrySet()) {
