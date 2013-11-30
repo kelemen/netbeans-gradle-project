@@ -17,24 +17,19 @@ public final class GlobalErrorReporter {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-                        JLabel messageLabel = new JLabel(
-                                message,
-                                NbIcons.getUIErrorIcon(),
-                                SwingConstants.LEADING);
-                        JLabel lineLabel = new JLabel(message);
+                NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+                JLabel messageLabel = new JLabel(
+                        message,
+                        NbIcons.getUIErrorIcon(),
+                        SwingConstants.LEADING);
+                JLabel lineLabel = new JLabel(message);
 
-                        displayer.notify(
-                                NbStrings.getGlobalErrorReporterTitle(),
-                                ERROR_ICON,
-                                messageLabel,
-                                lineLabel,
-                                NotificationDisplayer.Priority.HIGH);
-                    }
-                });
+                displayer.notify(
+                        NbStrings.getGlobalErrorReporterTitle(),
+                        ERROR_ICON,
+                        messageLabel,
+                        lineLabel,
+                        NotificationDisplayer.Priority.HIGH);
             }
         });
     }
