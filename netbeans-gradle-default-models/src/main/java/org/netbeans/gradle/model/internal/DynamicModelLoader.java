@@ -30,8 +30,6 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         CustomSerializedMap.Builder projectInfosBuilder = new CustomSerializedMap.Builder(requestCount);
 
         for (Map.Entry<?, List<?>> entry: projectInfoRequests.entrySet()) {
-            // TODO: Catch exceptions for each entry and somehow report it back.
-
             Object key = entry.getKey();
             for (Object projectInfoBuilder: entry.getValue()) {
                 Object info = null;
