@@ -46,6 +46,7 @@ import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.NamedFile;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -444,6 +445,8 @@ public final class GradleModelLoader {
         }
 
         progress.progress(NbStrings.getParsingModel());
+
+        ModelLoadIssueReporter.reportAllIssues(loadedModels.getIssues());
 
         NbGradleModel result = cachedEntry != null
                 ? cachedEntry.updateEntry(loadedModels.getMainModel())
