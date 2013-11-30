@@ -473,32 +473,28 @@ public class MultiLevelJavaProjectTest {
         toolingModels.add(IdeaProject.class);
 
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
-        try {
-            runTestForSubProject("apps:app1", new ProjectConnectionTask() {
-                public void doTask(ProjectConnection connection) throws Exception {
-                    FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
 
-                    String buildInfo = (String)CollectionUtils.getSingleElement(
-                            models.getBuildInfoResults().get(0));
-                    assertEquals(prefix + ROOT_NAME, buildInfo);
+                String buildInfo = (String)CollectionUtils.getSingleElement(
+                        models.getBuildInfoResults().get(0));
+                assertEquals(prefix + ROOT_NAME, buildInfo);
 
-                    Map<Object, List<BuilderResult>> projectInfos
-                            = models.getDefaultProjectModels().getProjectInfoResults();
+                Map<Object, List<BuilderResult>> projectInfos
+                        = models.getDefaultProjectModels().getProjectInfoResults();
 
-                    JarOutputsModel model1 = (JarOutputsModel)getSingleBuildResult(projectInfos.get(0));
-                    JavaCompatibilityModel model2 = (JavaCompatibilityModel)getSingleBuildResult(projectInfos.get(1));
-                    JavaSourcesModel model3 = (JavaSourcesModel)getSingleBuildResult(projectInfos.get(2));
-                    WarFoldersModel model4 = (WarFoldersModel)getSingleBuildResult(projectInfos.get(3));
+                JarOutputsModel model1 = (JarOutputsModel)getSingleBuildResult(projectInfos.get(0));
+                JavaCompatibilityModel model2 = (JavaCompatibilityModel)getSingleBuildResult(projectInfos.get(1));
+                JavaSourcesModel model3 = (JavaSourcesModel)getSingleBuildResult(projectInfos.get(2));
+                WarFoldersModel model4 = (WarFoldersModel)getSingleBuildResult(projectInfos.get(3));
 
-                    assertNotNull(model1);
-                    assertNotNull(model2);
-                    assertNotNull(model3);
-                    assertNull(model4);
-                }
-            });
-        } finally {
-            System.out.println("Ending testCustomQuery");
-        }
+                assertNotNull(model1);
+                assertNotNull(model2);
+                assertNotNull(model3);
+                assertNull(model4);
+            }
+        });
     }
 
     private static <T> T findResultOfType(Class<T> type, Collection<BuilderResult> builders) {
