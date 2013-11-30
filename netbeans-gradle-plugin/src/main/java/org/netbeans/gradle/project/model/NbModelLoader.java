@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +8,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 
 public interface NbModelLoader {
     public static final class Result {
