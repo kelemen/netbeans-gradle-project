@@ -17,6 +17,7 @@ import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
@@ -187,6 +188,9 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         }
 
         private Map<String, Lookup> createLookups(FetchedProjectModels projectModels) {
+            GenericProjectProperties genericProperties
+                    = projectModels.getProjectDef().getMainProject().getGenericProperties();
+
             Map<String, Lookup> result = CollectionUtils.newHashMap(extensions.size());
             for (NbGradleExtensionRef extension: extensions) {
                 String extensionName = extension.getName();
@@ -194,6 +198,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 List<Object> models = new ArrayList<Object>();
                 addProjectInfoResults(projectModels, extension, models);
                 addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
+                models.add(genericProperties);
 
                 result.put(extensionName, Lookups.fixed(models.toArray()));
             }
