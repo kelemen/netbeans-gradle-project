@@ -421,6 +421,26 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    @Test
+    public void testFailingQuery() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                String message = "testFailingQuery-message";
+                BuilderResult result = fetchSingleProjectInfoWithError(
+                        connection,
+                        new FailingProjectInfoBuilder(message));
+                assertNotNull("Required result for FailingProjectInfoBuilder.", result);
+
+                Throwable issue = result.getIssue();
+                assertNotNull("Required issue for FailingProjectInfoBuilder", issue);
+
+                String issueMessage = issue.getMessage();
+                if (!issueMessage.contains(message)) {
+                    fail("Issue message is invalid: " + issueMessage);
+                }
+            }
+        });
+    }
 
     private static Object getSingleBuildResult(List<BuilderResult> list) {
         BuilderResult result = CollectionUtils.getSingleElement(list);

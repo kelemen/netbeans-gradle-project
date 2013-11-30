@@ -101,6 +101,18 @@ public final class InfoQueries {
         return CollectionUtils.getSingleElement(list);
     }
 
+    public static BuilderResult fetchSingleProjectInfoWithError(
+            ProjectConnection connection,
+            ProjectInfoBuilder<?> infoBuilder) throws IOException {
+
+        GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
+        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+
+        assertTrue(models.getBuildInfoResults().isEmpty());
+
+        return getSingleElement(models.getDefaultProjectModels().getProjectInfoResults().get(0));
+    }
+
     public static <T> T fetchSingleProjectInfo(
             ProjectConnection connection,
             ProjectInfoBuilder<T> infoBuilder) throws IOException {
@@ -110,8 +122,7 @@ public final class InfoQueries {
 
         assertTrue(models.getBuildInfoResults().isEmpty());
 
-        BuilderResult builderResult
-                = getSingleElement(models.getDefaultProjectModels().getProjectInfoResults().get(0));
+        BuilderResult builderResult = fetchSingleProjectInfoWithError(connection, infoBuilder);
 
         @SuppressWarnings("unchecked")
         T result = builderResult != null
