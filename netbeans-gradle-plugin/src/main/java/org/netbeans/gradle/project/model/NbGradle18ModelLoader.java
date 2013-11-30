@@ -28,6 +28,8 @@ import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.openide.util.Lookup;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
@@ -141,18 +143,20 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 otherModels.add(parser.parseModel(projectModel));
             }
         }
-        return new Result(mainModel, otherModels);
+        return new Result(mainModel, otherModels, parser.getIssuesUnsafe());
     }
 
     private static final class ProjectModelParser {
         private final List<NbGradleExtensionRef> extensions;
         private final ProjectModelFetcher modelFetcher;
         private final ExtensionModelCache cache;
+        private final List<ModelLoadIssue> issues;
 
         public ProjectModelParser(NbGradleProject mainProject, ProjectModelFetcher modelFetcher) {
             this.extensions = mainProject.getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
+            this.issues = new LinkedList<ModelLoadIssue>();
         }
 
         private void addProjectInfoResults(
@@ -167,7 +171,11 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             }
 
             for (BuilderResult builderResult: builderResults) {
-                // TODO: builderResult.getIssue();
+                Throwable issue = builderResult.getIssue();
+                if (issue != null) {
+                    issues.add(ModelLoadIssues.builderError(projectModels, extension, issue));
+                }
+
                 Object resultObject = builderResult.getResultObject();
                 if (resultObject != null) {
                     results.add(resultObject);
@@ -176,7 +184,10 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         }
 
         public NbGradleModel parseModel(FetchedProjectModels projectModels) {
-            // TODO: projectModels.getIssue();
+            Throwable issue = projectModels.getIssue();
+            if (issue != null) {
+                issues.add(ModelLoadIssues.projectModelLoadError(projectModels, issue));
+            }
 
             NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());
             NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
@@ -214,6 +225,10 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             }
 
             return result.create();
+        }
+
+        public List<ModelLoadIssue> getIssuesUnsafe() {
+            return issues;
         }
     }
 
