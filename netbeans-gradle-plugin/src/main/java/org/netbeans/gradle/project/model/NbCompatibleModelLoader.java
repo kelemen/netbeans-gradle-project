@@ -26,6 +26,7 @@ import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
@@ -73,7 +74,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         }
         otherModelsMap.remove(mainModel.getProjectDir());
 
-        getExtensionModels(project, connection, mainModel, otherModelsMap);
+        getExtensionModels(project, connection, progress, mainModel, otherModelsMap);
 
         return new Result(mainModel.create(), NbGradleModel.createAll(otherModels));
     }
@@ -117,6 +118,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private void getExtensionModels(
             NbGradleProject project,
             ProjectConnection projectConnection,
+            ProgressHandle progress,
             NbGradleModel.Builder mainModel,
             Map<File, NbGradleModel.Builder> otherModels) {
 
@@ -131,6 +133,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
                 try {
                     Object model = found.get(modelClass);
                     if (model == null) {
+                        progress.progress(NbStrings.getFetchingToolingModel(modelClass));
                         model = getModelWithProgress(projectConnection, modelClass);
                     }
 
@@ -143,6 +146,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
                     LOGGER.log(Level.INFO, "Cannot find model " + modelClass.getName(), loggedException);
                 }
             }
+
+            progress.progress(NbStrings.getParsingModel());
 
             RequestedProjectDir projectDir = new RequestedProjectDir(project.getProjectDirectoryAsFile());
             ParsedModel<?> parsedModel = extensionRef.parseModel(projectDir, extensionModels);

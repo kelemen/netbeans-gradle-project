@@ -23,6 +23,7 @@ import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
@@ -129,6 +130,8 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
         ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
         FetchedModels fetchedModels = modelFetcher.getModels(connection, setup);
+
+        progress.progress(NbStrings.getParsingModel());
 
         ProjectModelParser parser = new ProjectModelParser(project, modelFetcher);
         NbGradleModel mainModel = parser.parseModel(fetchedModels.getDefaultProjectModels());

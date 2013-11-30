@@ -280,6 +280,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ParsingModel");
     }
 
+    public static String getFetchingToolingModel(Class<?> modelType) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.FetchingToolingModel", modelType.getSimpleName());
+    }
+
     public static String getProjectErrorTitle(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectErrorTitle", projectName);
     }

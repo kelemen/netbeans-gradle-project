@@ -444,8 +444,6 @@ public final class GradleModelLoader {
             }
         }
 
-        progress.progress(NbStrings.getParsingModel());
-
         ModelLoadIssueReporter.reportAllIssues(loadedModels.getIssues());
 
         NbGradleModel result = cachedEntry != null
