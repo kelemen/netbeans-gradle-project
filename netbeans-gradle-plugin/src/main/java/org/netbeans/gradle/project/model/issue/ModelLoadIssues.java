@@ -38,7 +38,7 @@ public final class ModelLoadIssues {
         if (extensionRef == null) throw new NullPointerException("extensionRef");
         if (issue == null) throw new NullPointerException("issue");
 
-        // TODO: I18N, Include the name of builder.
+        // TODO: I18N
         GenericProjectProperties projectID = project.getProjectDef().getMainProject().getGenericProperties();
         String projectName = projectID.getProjectFullName() + " in " + projectID.getProjectDir();
         String issueDescription =
