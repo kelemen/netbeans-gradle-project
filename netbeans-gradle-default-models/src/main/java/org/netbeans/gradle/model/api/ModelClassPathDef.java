@@ -116,6 +116,22 @@ public final class ModelClassPathDef {
     }
 
     /**
+     * Returns the classpath from which the given type were loaded. This is
+     * usually the jar file containing the given class.
+     *
+     * @param type the class whose classpath is to be returned. This argument
+     *   cannot be {@code null}.
+     * @return the classpath from which the given type were loaded. This method
+     *   never returns {@code null}.
+     *
+     * @throws IllegalArgumentException thrown if the given class was not loaded
+     *   from the default file system
+     */
+    public static File getClassPathOfClass(Class<?> type) {
+        return ClassLoaderUtils.findClassPathOfClass(type);
+    }
+
+    /**
      * Returns the {@code ClassLoader} used to deserialize models returned by
      * the associated {@link ProjectInfoBuilder}.
      *
