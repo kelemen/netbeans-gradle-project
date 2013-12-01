@@ -4,6 +4,40 @@
   <target-platform-name>j2se</target-platform-name>
   <target-platform>1.5</target-platform>
   <source-level>1.5</source-level>
+  <common-tasks>
+    <task>
+      <display-name>Test All</display-name>
+      <non-blocking>yes</non-blocking>
+      <task-names>
+        <name must-exist="yes">testAll</name>
+      </task-names>
+      <task-args>
+        <arg>-PexcludeDuplicatesFromTestTask=TRUE</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
+    <task>
+      <display-name>Test All &amp; Build</display-name>
+      <non-blocking>yes</non-blocking>
+      <task-names>
+        <name must-exist="yes">testAll</name>
+        <name must-exist="yes">build</name>
+      </task-names>
+      <task-args>
+        <arg>-PexcludeDuplicatesFromTestTask=TRUE</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
+    <task>
+      <display-name>Test Gradle Access</display-name>
+      <non-blocking>yes</non-blocking>
+      <task-names>
+        <name must-exist="no">testGradle${version[enum:1.8,*1.9]:Gradle Version}</name>
+      </task-names>
+      <task-args/>
+      <task-jvm-args/>
+    </task>
+  </common-tasks>
   <script-platform>
     <spec-name>j2se</spec-name>
     <spec-version>1.5</spec-version>

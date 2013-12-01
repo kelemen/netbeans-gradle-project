@@ -48,6 +48,27 @@ dependencies {
 
 sourceSets.main.compileClasspath += configurations.provided
 
+List gradleVersions = ['1.8', '1.9'];
+Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**'];
+
+task testAll {
+    dependsOn test;
+}
+
+gradleVersions.each { String gradleVersion ->
+    def currentTask = task(['type': Test], "testGradle${gradleVersion}", { testTask ->
+        testTask.systemProperty 'TESTED_GRADLE_DAEMON_VERSION', gradleVersion;
+        daemonTestPackagePatterns.each { pattern ->
+            testTask.include pattern;
+        }
+    });
+    testAll.dependsOn currentTask;
+}
+
+if (project.hasProperty('excludeDuplicatesFromTestTask')) {
+    test.systemProperty 'SKIP_GRADLE_DAEMON_TESTS', project.excludeDuplicatesFromTestTask;
+}
+
 afterEvaluate {
     System.setProperty('line.separator', '\n');
 }
