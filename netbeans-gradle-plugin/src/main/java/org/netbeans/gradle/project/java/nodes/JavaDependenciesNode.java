@@ -556,7 +556,9 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             GradleDaemonManager.submitGradleTask(SOURCES_DOWNLOADER, taskDef, new CommandCompleteListener() {
                 @Override
                 public void onComplete(Throwable error) {
-                    project.displayError(NbStrings.getDownloadSourcesFailure(), error, false);
+                    if (error != null) {
+                        project.displayError(NbStrings.getDownloadSourcesFailure(), error, false);
+                    }
                 }
             });
         }
