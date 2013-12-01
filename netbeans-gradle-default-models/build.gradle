@@ -4,6 +4,9 @@ group = 'com.github.kelemen';
 version = '1.2.8.2-SNAPSHOT';
 sourceCompatibility = '1.5';
 
+String gradleVersion = '1.9';
+List otherGradleVersions = ['1.8'];
+
 ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'common-scripts'), fileName);
 }
@@ -39,7 +42,7 @@ configurations {
 }
 
 dependencies {
-    compile group: 'org.gradle', name: 'gradle-tooling-api', version: '1.9';
+    compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
     provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6';
 
     testCompile group: 'junit', name: 'junit', version: '4.11';
@@ -48,29 +51,36 @@ dependencies {
 
 sourceSets.main.compileClasspath += configurations.provided
 
-List gradleVersions = ['1.8', '1.9'];
-Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**'];
-
+setTestedGradleVersion(test, gradleVersion);
 task testAll {
     dependsOn test;
 }
 
-gradleVersions.each { String gradleVersion ->
-    def currentTask = task(['type': Test], "testGradle${gradleVersion}", { testTask ->
-        testTask.systemProperty 'TESTED_GRADLE_DAEMON_VERSION', gradleVersion;
-        daemonTestPackagePatterns.each { pattern ->
-            testTask.include pattern;
-        }
-    });
+otherGradleVersions.each { String otherGradleVersion ->
+    def currentTask = createTestTask(otherGradleVersion);
     testAll.dependsOn currentTask;
 }
 
-if (project.hasProperty('excludeDuplicatesFromTestTask')) {
-    test.systemProperty 'SKIP_GRADLE_DAEMON_TESTS', project.excludeDuplicatesFromTestTask;
-}
+// Create the custom test task for the specific version for consistency
+createTestTask(gradleVersion);
 
 afterEvaluate {
     System.setProperty('line.separator', '\n');
 }
 
 apply from: scriptFile('maven-publish.gradle');
+
+def createTestTask(String gradleVersion) {
+    Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**'];
+
+    return task(['type': Test], "testGradle${gradleVersion}", { testTask ->
+        setTestedGradleVersion(testTask, gradleVersion);
+        daemonTestPackagePatterns.each { pattern ->
+            testTask.include pattern;
+        }
+    });
+}
+
+def setTestedGradleVersion(def testTask, String gradleVersion) {
+    testTask.systemProperty 'TESTED_GRADLE_DAEMON_VERSION', gradleVersion;
+}

@@ -11,9 +11,7 @@
       <task-names>
         <name must-exist="yes">testAll</name>
       </task-names>
-      <task-args>
-        <arg>-PexcludeDuplicatesFromTestTask=TRUE</arg>
-      </task-args>
+      <task-args/>
       <task-jvm-args/>
     </task>
     <task>
@@ -23,9 +21,7 @@
         <name must-exist="yes">testAll</name>
         <name must-exist="yes">build</name>
       </task-names>
-      <task-args>
-        <arg>-PexcludeDuplicatesFromTestTask=TRUE</arg>
-      </task-args>
+      <task-args/>
       <task-jvm-args/>
     </task>
     <task>
