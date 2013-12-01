@@ -29,39 +29,12 @@ public final class ClassLoaderUtils {
     }
 
     private static File findClassPathOfClassNonCanonical(Class<?> cl) {
-        String className = cl.getName();
-        String classFileName = cl.getName().replace('.', '/') + ".class";
-        URL urlOfClassPath = cl.getClassLoader().getResource(classFileName);
+        URL urlOfClassPath = cl.getProtectionDomain().getCodeSource().getLocation();
         if (urlOfClassPath == null) {
             throw new IllegalArgumentException("Unable to locate classpath of " + cl);
         }
 
-        File fileOfURL = extractPathFromURL(urlOfClassPath);
-
-        String protocol = urlOfClassPath.getProtocol();
-        if ("jar".equals(protocol)) {
-            return fileOfURL;
-        }
-        else if ("file".equals(protocol)) {
-            String[] pathParts = className.split("\\.");
-            pathParts[pathParts.length - 1] = pathParts[pathParts.length - 1] + ".class";
-
-            File root = fileOfURL;
-            for (int i = pathParts.length - 1; i >= 0; i--) {
-                String part = pathParts[i];
-                if (!root.getName().equalsIgnoreCase(part)) {
-                    throw new IllegalArgumentException("Unexpected path returned for class " + cl + ": " + urlOfClassPath);
-                }
-
-                root = root.getParentFile();
-                if (root == null) {
-                    throw new IllegalArgumentException("Too short path returned for class " + cl + ": " + urlOfClassPath);
-                }
-            }
-            return root;
-        }
-
-        throw new IllegalArgumentException("Unexpected protocol for URL: " + urlOfClassPath);
+        return extractPathFromURL(urlOfClassPath);
     }
 
     private static File urlToFile(URL url) {
