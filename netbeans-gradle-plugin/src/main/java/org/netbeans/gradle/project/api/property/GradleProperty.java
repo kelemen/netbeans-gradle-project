@@ -14,7 +14,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
  * Instances of these interfaces are expected to be available on the
  * {@link org.netbeans.api.project.Project#getLookup() project's lookup}. They
  * are already available when loading extensions (i.e., maybe retrieved in the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery#loadExtensionForProject(org.netbeans.api.project.Project) GradleProjectExtensionQuery.loadExtensionForProject}
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#createExtension(org.netbeans.api.project.Project) GradleProjectExtensionDef.createExtension}
  * method.
  */
 public final class GradleProperty {

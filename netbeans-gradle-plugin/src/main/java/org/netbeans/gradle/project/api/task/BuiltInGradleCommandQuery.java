@@ -12,13 +12,13 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
  * command for Gradle projects are made of a Gradle command to be executed
  * and a custom task to be executed after the command completes.
  * <P>
- * Instances of this interface are expected to be found on the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
+ * Instances of this interface are expected to be found on the lookup of the extension
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() (getExtensionLookup)}.
  * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.
  *
- * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup()
+ * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup()
  */
 public interface BuiltInGradleCommandQuery {
     /**

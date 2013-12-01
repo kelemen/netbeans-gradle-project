@@ -9,8 +9,8 @@ import javax.swing.Action;
  * project. That is, in the context menu when the user right clicks on the
  * project node.
  * <P>
- * Instances of this interface are expected to be found on the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
+ * Instances of this interface are expected to be found on the lookup of the extension
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() (getExtensionLookup)}.
  * The actions in the context menu might may have their own visualization by
  * implementing the {@code Presenter.Popup} interface (e.g., they can have
  * submenus).
@@ -19,7 +19,7 @@ import javax.swing.Action;
  * multiple threads concurrently and might be called from the AWT Event Dispatch
  * Thread.
  *
- * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup()
+ * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup()
  * @see GradleProjectAction
  *
  * @author Kelemen Attila

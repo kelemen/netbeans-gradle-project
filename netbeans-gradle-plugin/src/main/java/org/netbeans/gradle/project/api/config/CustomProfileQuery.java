@@ -6,8 +6,8 @@ import javax.annotation.Nonnull;
  * Defines a query which might return custom profile names always available for
  * a project.
  * <P>
- * Instances of this interface are expected to be found on the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension#getExtensionLookup() lookup of the extension}.
+ * Instances of this interface are expected to be found on the lookup of the extension
+ * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() (getExtensionLookup)}.
  * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.

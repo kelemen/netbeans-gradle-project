@@ -11,7 +11,7 @@ public final class GradleProjectIDs {
      * This string can be used for {@link org.netbeans.spi.project.ProjectServiceProvider}
      * to add entries to the lookup of Gradle projects. Note however, that the
      * preferred way to add entries to the project lookup is to return it in
-     * the {@link GradleProjectExtension#getExtensionLookup()} method.
+     * the {@link GradleProjectExtension2#getPermanentProjectLookup()} method.
      */
     public static final String MODULE_NAME = "org.netbeans.gradle.project";
 
