@@ -41,7 +41,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     private J2SEPlatformFromScriptQuery tryGetPlatformScriptQuery() {
-        return project.getLookup().lookup(J2SEPlatformFromScriptQuery.class);
+        return project.getCombinedExtensionLookup().lookup(J2SEPlatformFromScriptQuery.class);
     }
 
     private String tryGetScriptSourceLevel() {

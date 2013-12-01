@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.model;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,45 +11,21 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.GenericProjectProperties;
-import org.netbeans.gradle.model.GradleBuildInfoQuery;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
-import org.netbeans.gradle.model.api.ModelClassPathDef;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.java.JarOutput;
 import org.netbeans.gradle.model.java.JarOutputsModel;
-import org.netbeans.gradle.model.java.JarOutputsModelBuilder;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
-import org.netbeans.gradle.model.java.JavaCompatibilityModelBuilder;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaSourcesModel;
-import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
 import org.netbeans.gradle.model.java.WarFoldersModel;
-import org.netbeans.gradle.model.java.WarFoldersModelBuilder;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.model.CustomModelQuery;
-import org.netbeans.gradle.project.model.GradleBuildInfo;
-import org.netbeans.gradle.project.model.GradleProjectInfo;
+import org.netbeans.gradle.project.api.entry.ModelLoadResult;
+import org.openide.util.Lookup;
 
 public final class JavaParsingUtils {
     private static final Logger LOGGER = Logger.getLogger(JavaParsingUtils.class.getName());
-
-    private static final Integer KEY_SOURCES = 0;
-    private static final Integer KEY_VERSIONS = 1;
-    private static final Integer KEY_JAR_OUTPUTS = 2;
-    private static final Integer KEY_WAR_FOLDERS = 3;
-
-    public static CustomModelQuery requiredModels() {
-        return RequiredModels.INSTANCE;
-    }
-
-    public static boolean isJavaProject(GradleProjectInfo projectInfo) {
-        return projectInfo.tryGetProjectInfoResult(KEY_SOURCES) != null
-                && projectInfo.tryGetProjectInfoResult(KEY_VERSIONS) != null
-                && projectInfo.tryGetProjectInfoResult(KEY_JAR_OUTPUTS) != null;
-    }
 
     private static JavaSourceSet tryGetSourceSetForJar(JarOutput jar, JavaSourcesModel sources) {
         String taskName = jar.getTaskName().toLowerCase(Locale.ROOT);
@@ -81,20 +56,19 @@ public final class JavaParsingUtils {
         return result != null ? result.getOutputDirs().getClassesDir() : null;
     }
 
-    private static Map<File, File> getJarsToBuildDirs(GradleBuildInfo buildInfo) {
-        Map<File, GradleProjectInfo> allProjects = buildInfo.getAllProjectInfos();
+    private static Map<File, File> getJarsToBuildDirs(ModelLoadResult buildInfo) {
+        Map<File, Lookup> allProjects = buildInfo.getEvaluatedProjectsModel();
 
         Map<File, File> result = CollectionUtils.newHashMap(allProjects.size());
-        for (GradleProjectInfo projectInfo: allProjects.values()) {
-            JarOutputsModel jarsModel = RequiredModels.extractJars(projectInfo);
+        for (Lookup projectInfo: allProjects.values()) {
+            JarOutputsModel jarsModel = projectInfo.lookup(JarOutputsModel.class);
             if (jarsModel != null) {
-                JavaSourcesModel sources = RequiredModels.extractSources(projectInfo);
+                JavaSourcesModel sources = projectInfo.lookup(JavaSourcesModel.class);
                 if (sources == null) {
-                    String projectName = projectInfo
-                            .getProjectDef()
-                            .getMainProject()
-                            .getGenericProperties()
-                            .getProjectFullName();
+                    GenericProjectProperties properties = projectInfo.lookup(GenericProjectProperties.class);
+                    String projectName = properties != null
+                            ? properties.getProjectFullName()
+                            : "???";
                     LOGGER.log(Level.WARNING, "No sources for Java project: {0}", projectName);
                     continue;
                 }
@@ -157,10 +131,10 @@ public final class JavaParsingUtils {
         return result;
     }
 
-    private static List<NbListedDir> getListedDirs(GradleProjectInfo projectInfo) {
+    private static List<NbListedDir> getListedDirs(Lookup projectInfo) {
         List<NbListedDir> listedDirs = new LinkedList<NbListedDir>();
 
-        WarFoldersModel warFolders = RequiredModels.extractWarFolders(projectInfo);
+        WarFoldersModel warFolders = projectInfo.lookup(WarFoldersModel.class);
         if (warFolders != null) {
             listedDirs.add(new NbListedDir(NbStrings.getWebPages(), warFolders.getWebAppDir()));
         }
@@ -168,23 +142,32 @@ public final class JavaParsingUtils {
         return listedDirs;
     }
 
-    public static Collection<NbJavaModule> parseModules(GradleBuildInfo buildInfo) {
-        Map<File, File> jarsToBuildDirs = getJarsToBuildDirs(buildInfo);
+    public static Collection<NbJavaModule> parseModules(ModelLoadResult retrievedModels) {
+        Map<File, File> jarsToBuildDirs = getJarsToBuildDirs(retrievedModels);
 
-        Map<File, GradleProjectInfo> allProjects = buildInfo.getAllProjectInfos();
+        Map<File, Lookup> allProjects = retrievedModels.getEvaluatedProjectsModel();
 
         List<NbJavaModule> result = new ArrayList<NbJavaModule>(allProjects.size());
-        for (GradleProjectInfo projectInfo: allProjects.values()) {
-            JavaCompatibilityModel versions = RequiredModels.extractVersions(projectInfo);
-            JavaSourcesModel sourcesModel = RequiredModels.extractSources(projectInfo);
+        for (Lookup projectInfo: allProjects.values()) {
+            JavaCompatibilityModel versions = projectInfo.lookup(JavaCompatibilityModel.class);
+            JavaSourcesModel sourcesModel = projectInfo.lookup(JavaSourcesModel.class);
             if (versions == null || sourcesModel == null) {
                 continue;
             }
 
-            GenericProjectProperties properties = projectInfo
-                    .getProjectDef()
-                    .getMainProject()
-                    .getGenericProperties();
+            if (sourcesModel.getSourceSets().isEmpty()) {
+                LOGGER.log(Level.INFO,
+                        "Disabling the Java extension because there are no sources: {0}",
+                        retrievedModels.getMainProjectDir());
+                continue;
+            }
+
+            GenericProjectProperties properties = projectInfo.lookup(GenericProjectProperties.class);
+            if (properties == null) {
+                LOGGER.log(Level.WARNING,
+                        "Missing GenericProjectProperties for project {0}",
+                        retrievedModels.getMainProjectDir());
+            }
 
             Collection<JavaSourceSet> sourceSets = adjustedSources(sourcesModel, jarsToBuildDirs);
             List<NbListedDir> listedDirs = getListedDirs(projectInfo);
@@ -207,85 +190,6 @@ public final class JavaParsingUtils {
             }
         }
         return result;
-    }
-
-    private static <T> GradleProjectInfoQuery<T> createQuery(final ProjectInfoBuilder<T> builder) {
-        return new SingleBuilderQuery<T>(builder);
-    }
-
-    private static class SingleBuilderQuery<T> implements GradleProjectInfoQuery<T> {
-        private final ProjectInfoBuilder<T> builder;
-
-        public SingleBuilderQuery(ProjectInfoBuilder<T> builder) {
-            this.builder = builder;
-        }
-
-        @Override
-        public ProjectInfoBuilder<T> getInfoBuilder() {
-            return builder;
-        }
-
-        @Override
-        public ModelClassPathDef getInfoClassPath() {
-            return ModelClassPathDef.EMPTY;
-        }
-    }
-
-    private enum RequiredModels implements CustomModelQuery {
-        INSTANCE;
-
-        private final Map<Object, GradleProjectInfoQuery<?>> projectInfoQueries;
-
-        private RequiredModels() {
-            this.projectInfoQueries = createProjectInfoQueries();
-        }
-
-        private static Map<Object, GradleProjectInfoQuery<?>> createProjectInfoQueries() {
-            Map<Object, GradleProjectInfoQuery<?>> result = new HashMap<Object, GradleProjectInfoQuery<?>>();
-
-            result.put(KEY_SOURCES, createQuery(JavaSourcesModelBuilder.COMPLETE));
-            result.put(KEY_VERSIONS, createQuery(JavaCompatibilityModelBuilder.INSTANCE));
-            result.put(KEY_JAR_OUTPUTS, createQuery(JarOutputsModelBuilder.INSTANCE));
-            result.put(KEY_WAR_FOLDERS, createQuery(WarFoldersModelBuilder.INSTANCE));
-
-            return Collections.unmodifiableMap(result);
-        }
-
-        private static Object fromProjectInfo(GradleProjectInfo projectInfo, Integer key) {
-            List<?> result = projectInfo.tryGetProjectInfoResult(key);
-            return CollectionUtils.getSingleElement(result);
-        }
-
-        public static JavaSourcesModel extractSources(GradleProjectInfo projectInfo) {
-            return (JavaSourcesModel)fromProjectInfo(projectInfo, KEY_SOURCES);
-        }
-
-        public static JavaCompatibilityModel extractVersions(GradleProjectInfo projectInfo) {
-            return (JavaCompatibilityModel)fromProjectInfo(projectInfo, KEY_VERSIONS);
-        }
-
-        public static JarOutputsModel extractJars(GradleProjectInfo projectInfo) {
-            return (JarOutputsModel)fromProjectInfo(projectInfo, KEY_JAR_OUTPUTS);
-        }
-
-        public static WarFoldersModel extractWarFolders(GradleProjectInfo projectInfo) {
-            return (WarFoldersModel)fromProjectInfo(projectInfo, KEY_WAR_FOLDERS);
-        }
-
-        @Override
-        public Collection<Class<?>> getProjectModels() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public Map<Object, GradleBuildInfoQuery<?>> getBuildInfoQueries() {
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public Map<Object, GradleProjectInfoQuery<?>> getProjectInfoQueries() {
-            return projectInfoQueries;
-        }
     }
 
     private JavaParsingUtils() {

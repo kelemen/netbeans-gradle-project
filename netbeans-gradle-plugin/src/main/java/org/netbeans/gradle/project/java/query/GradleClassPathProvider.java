@@ -88,7 +88,7 @@ implements
     private ProjectInfoRef getInfoRef() {
         ProjectInfoRef result = infoRefRef.get();
         if (result == null) {
-            ProjectInfoManager infoManager = javaExt.getProjectLookup().lookup(ProjectInfoManager.class);
+            ProjectInfoManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectInfoManager.class);
             infoRefRef.compareAndSet(null, infoManager.createInfoRef());
             result = infoRefRef.get();
         }
@@ -146,7 +146,7 @@ implements
     }
 
     private GradleProperty.BuildPlatform getPlatformProperty() {
-        return javaExt.getProjectLookup().lookup(GradleProperty.BuildPlatform.class);
+        return javaExt.getOwnerProjectLookup().lookup(GradleProperty.BuildPlatform.class);
     }
 
     @Override

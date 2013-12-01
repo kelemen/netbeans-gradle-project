@@ -30,7 +30,7 @@ implements
 
     @Override
     public void onInitProject() {
-        javaExt.getProjectLookup().lookup(GradleProperty.SourceLevel.class).addChangeListener(new Runnable() {
+        javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class).addChangeListener(new Runnable() {
             @Override
             public void run() {
                 changes.fireChange();
@@ -46,7 +46,7 @@ implements
         }
 
         final GradleProperty.SourceLevel sourceLevel
-                = javaExt.getProjectLookup().lookup(GradleProperty.SourceLevel.class);
+                = javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class);
 
         return new Result() {
             @Override

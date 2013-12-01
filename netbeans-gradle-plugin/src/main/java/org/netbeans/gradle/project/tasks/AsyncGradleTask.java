@@ -110,7 +110,7 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         Collection<? extends InitScriptQuery> scriptQueries
-                = project.getLookup().lookupAll(InitScriptQuery.class);
+                = project.getCombinedExtensionLookup().lookupAll(InitScriptQuery.class);
 
         List<TemporaryFileRef> results = new ArrayList<TemporaryFileRef>(scriptQueries.size());
         try {

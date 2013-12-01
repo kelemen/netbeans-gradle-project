@@ -81,6 +81,7 @@ public final class NbGradleProject implements Project {
     private final AtomicReference<Lookup> defaultLookupRef;
     private final AtomicReference<DynamicLookup> lookupRef;
     private final AtomicReference<Lookup> protectedLookupRef;
+    private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
     private final ExceptionDisplayer exceptionDisplayer;
@@ -112,6 +113,7 @@ public final class NbGradleProject implements Project {
         this.defaultLookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
+        this.combinedExtensionLookup = new DynamicLookup();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
@@ -174,6 +176,14 @@ public final class NbGradleProject implements Project {
         return extractLookupsFromProviders(lookupProviders);
     }
 
+    private void updateCombinedExtensionLookup() {
+        List<Lookup> extensionLookups = new ArrayList<Lookup>(extensionRefs.size());
+        for (NbGradleExtensionRef extenion: extensionRefs) {
+            extensionLookups.add(extenion.getExtensionLookup());
+        }
+        combinedExtensionLookup.replaceLookups(extensionLookups);
+    }
+
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
         List<Lookup> allLookups = new ArrayList<Lookup>(extensions.size() + 2);
 
@@ -186,6 +196,11 @@ public final class NbGradleProject implements Project {
 
         this.extensionRefs = Collections.unmodifiableList(new ArrayList<NbGradleExtensionRef>(extensions));
         getMainLookup().replaceLookups(allLookups);
+        updateCombinedExtensionLookup();
+    }
+
+    public Lookup getCombinedExtensionLookup() {
+        return combinedExtensionLookup;
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -219,7 +234,7 @@ public final class NbGradleProject implements Project {
         maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
 
         Collection<? extends GradleTaskVariableQuery> taskVariables
-                = getLookup().lookupAll(GradleTaskVariableQuery.class);
+                = getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
         for (GradleTaskVariableQuery query: taskVariables) {
             maps.add(query.getVariableMap(actionContext));
         }

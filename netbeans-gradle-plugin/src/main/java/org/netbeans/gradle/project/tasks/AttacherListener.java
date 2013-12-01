@@ -100,7 +100,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
 
     private ClassPath getJdkSources() {
         GradleProperty.BuildPlatform platformProperty
-                = javaExt.getProjectLookup().lookup(GradleProperty.BuildPlatform.class);
+                = javaExt.getOwnerProjectLookup().lookup(GradleProperty.BuildPlatform.class);
         ProjectPlatform platform = platformProperty.getValue();
         return ClassPathSupport.createClassPath(platform.getSourcePaths().toArray(new URL[0]));
     }
