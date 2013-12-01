@@ -430,8 +430,8 @@ public final class AsyncGradleTask implements Runnable {
                     return null;
                 }
 
-                final BuildExecutionItem buildItem = new BuildExecutionItem(commandSpec);
-                return buildItem.getDaemonTaskDef();
+                ProcessedCommandSpec processedSpec = new ProcessedCommandSpec(commandSpec);
+                return processedSpec.newBuildExecutionItem().getDaemonTaskDef();
             }
         };
 
@@ -460,27 +460,19 @@ public final class AsyncGradleTask implements Runnable {
         return taskDef;
     }
 
-    // TODO: (netbeans7.4): change to BuildExecutionSupport.ActionItem with ref to project
-    private class BuildExecutionItem implements BuildExecutionSupport.Item {
+    private class ProcessedCommandSpec {
+        private final GradleTaskDef taskDef;
         private final GradleCommandSpec commandSpec;
         private final String taskName;
-        private final DaemonTaskDef daemonTaskDef;
+        private final String progressCaption;
 
-        private volatile boolean running = true;
+        public ProcessedCommandSpec(GradleCommandSpec commandSpec) {
+            assert commandSpec != null;
 
-        public BuildExecutionItem(GradleCommandSpec commandSpec) {
-            GradleTaskDef taskDef = createTaskDef(commandSpec);
+            this.taskDef = createTaskDef(commandSpec);
             this.commandSpec = new GradleCommandSpec(commandSpec.getSource(), taskDef);
             this.taskName = taskDef.getSafeCommandName();
-
-            boolean nonBlocking = taskDef.isNonBlocking();
-            String progressCaption = NbStrings.getExecuteTasksText(taskName);
-            this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
-                @Override
-                public void run(ProgressHandle progress) {
-                    doGradleTasksWithProgress(progress, BuildExecutionItem.this);
-                }
-            });
+            this.progressCaption = NbStrings.getExecuteTasksText(taskName);
         }
 
         public GradleTaskDef getSourceTaskDef() {
@@ -490,19 +482,68 @@ public final class AsyncGradleTask implements Runnable {
         public GradleTaskDef getProcessedTaskDef() {
             return commandSpec.getProcessed();
         }
-        @Override
+
         public String getDisplayName() {
             // Note that the project name may change when reloading a project.
             return taskName + " " + project.getDisplayName();
+        }
+
+        public GradleTaskDef getTaskDef() {
+            return taskDef;
+        }
+
+        public String getProgressCaption() {
+            return progressCaption;
+        }
+
+        public BuildExecutionItem newBuildExecutionItem() {
+            return new BuildExecutionItem(this);
+        }
+    }
+
+    // TODO: (netbeans7.4): change to BuildExecutionSupport.ActionItem with ref to project
+    private class BuildExecutionItem implements BuildExecutionSupport.Item {
+        private final ProcessedCommandSpec processedCommandSpec;
+        private final DaemonTaskDef daemonTaskDef;
+        private volatile boolean running;
+
+        public BuildExecutionItem(ProcessedCommandSpec processedCommandSpec) {
+            assert processedCommandSpec != null;
+
+            this.processedCommandSpec = processedCommandSpec;
+
+            String progressCaption = processedCommandSpec.getProgressCaption();
+            boolean nonBlocking = processedCommandSpec.getTaskDef().isNonBlocking();
+            this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
+                @Override
+                public void run(ProgressHandle progress) {
+                    doGradleTasksWithProgress(progress, BuildExecutionItem.this);
+                }
+            });
+            this.running = true;
         }
 
         public DaemonTaskDef getDaemonTaskDef() {
             return daemonTaskDef;
         }
 
+        public GradleTaskDef getSourceTaskDef() {
+            return processedCommandSpec.getSourceTaskDef();
+        }
+
+        public GradleTaskDef getProcessedTaskDef() {
+            return processedCommandSpec.getProcessedTaskDef();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return processedCommandSpec.getDisplayName();
+        }
+
         @Override
         public void repeatExecution() {
-            GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, getDaemonTaskDef(), listener);
+            DaemonTaskDef newTaskDef = processedCommandSpec.newBuildExecutionItem().getDaemonTaskDef();
+            GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, newTaskDef, listener);
         }
 
         public void markFinished() {
