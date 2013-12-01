@@ -2,10 +2,12 @@ package org.netbeans.gradle.model.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.util.GradleVersion;
 import org.junit.Assume;
 import org.netbeans.gradle.model.BuildOperationArgs;
@@ -57,6 +59,10 @@ public final class TestUtils {
         GradleConnector connector = GradleConnector.newConnector();
         connector.useGradleVersion(gradleVersion);
         connector.forProjectDirectory(projectDir);
+
+        if (connector instanceof DefaultGradleConnector) {
+            ((DefaultGradleConnector)connector).daemonMaxIdleTime(60, TimeUnit.SECONDS);
+        }
 
         ProjectConnection connection = connector.connect();
         try {
