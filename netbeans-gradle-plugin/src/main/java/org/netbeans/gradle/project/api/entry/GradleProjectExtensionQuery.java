@@ -5,6 +5,8 @@ import javax.annotation.Nonnull;
 import org.netbeans.api.project.Project;
 
 /**
+ * @deprecated Use {@link GradleProjectExtensionDef} instead.<P>
+ *
  * Defines a query for extending Gradle based projects. This query must be used
  * by other plugins to integrate with the Gradle project type. That is,
  * instances of {@code GradleProjectExtensionQuery} are notified upon each
@@ -22,8 +24,11 @@ import org.netbeans.api.project.Project;
  * concurrently but they are not required to be
  * <I>synchronization transparent</I> unless otherwise noted.
  */
+@Deprecated
 public interface GradleProjectExtensionQuery {
     /**
+     * @deprecated This interface is deprecated.<P>
+     *
      * Attaches the extension to a particular project which has just been
      * loaded. This method is called for each loaded project and is called
      * exactly once.
@@ -57,5 +62,6 @@ public interface GradleProjectExtensionQuery {
      *   so this exception should only be thrown in the extreme cases.
      */
     @Nonnull
+    @Deprecated
     public GradleProjectExtension loadExtensionForProject(@Nonnull Project project) throws IOException;
 }

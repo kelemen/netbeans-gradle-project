@@ -9,6 +9,9 @@ import javax.annotation.Nullable;
 import org.openide.util.Lookup;
 
 /**
+ * @deprecated Use {@link GradleProjectExtension2} with
+ *   {@link GradleProjectExtensionDef} instead.<P>
+ *
  * Defines an extension of a particular Gradle project. Instances of this class
  * are expected to be created by a {@link GradleProjectExtensionQuery}.
  * <P>
@@ -18,6 +21,7 @@ import org.openide.util.Lookup;
  *
  * @see GradleProjectExtensionQuery
  */
+@Deprecated
 public interface GradleProjectExtension {
     /**
      * Returns the unique name of this extension. The name is used to reference
