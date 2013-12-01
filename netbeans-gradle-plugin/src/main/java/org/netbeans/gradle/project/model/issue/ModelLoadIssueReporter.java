@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
+import java.awt.GridLayout;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -13,6 +14,8 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -69,8 +72,15 @@ public final class ModelLoadIssueReporter {
             index++;
         }
 
+        String detailsContent = details.toString();
+        final JTextArea textArea = new JTextArea(detailsContent);
+        textArea.setEditable(false);
+        textArea.setRows(5);
+        textArea.setColumns(10);
 
-        return new JTextArea(details.toString());
+        JPanel result = new JPanel(new GridLayout(1, 1));
+        result.add(new JScrollPane(textArea));
+        return result;
     }
 
     private static void reportAllIssuesNow(Collection<? extends ModelLoadIssue> issues) {
