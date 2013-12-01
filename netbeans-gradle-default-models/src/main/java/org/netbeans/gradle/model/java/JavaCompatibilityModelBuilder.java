@@ -2,6 +2,7 @@ package org.netbeans.gradle.model.java;
 
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BuilderUtils;
 
 /**
  * Defines a {@code ProjectInfoBuilder} which is able to extract
@@ -40,5 +41,10 @@ implements
         String targetLevel = project.property("targetCompatibility").toString();
 
         return new JavaCompatibilityModel(srcLevel, targetLevel);
+    }
+
+    /** {@inheritDoc } */
+    public String getName() {
+        return BuilderUtils.getNameForEnumBuilder(this);
     }
 }

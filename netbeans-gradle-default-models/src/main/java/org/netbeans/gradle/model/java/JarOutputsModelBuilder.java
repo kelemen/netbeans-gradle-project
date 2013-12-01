@@ -9,6 +9,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskCollection;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 
 public enum JarOutputsModelBuilder
@@ -41,5 +42,10 @@ implements
         }
 
         return new JarOutputsModel(result);
+    }
+
+    /** {@inheritDoc } */
+    public String getName() {
+        return BuilderUtils.getNameForEnumBuilder(this);
     }
 }

@@ -2,6 +2,7 @@ package org.netbeans.gradle.model.java;
 
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BuilderUtils;
 
 public final class FailingProjectInfoBuilder implements ProjectInfoBuilder<Void> {
     private static final long serialVersionUID = 1L;
@@ -15,6 +16,10 @@ public final class FailingProjectInfoBuilder implements ProjectInfoBuilder<Void>
 
     public Void getProjectInfo(Project project) {
         throw new NotSerializableException(exceptionMessage);
+    }
+
+    public String getName() {
+        return BuilderUtils.getNameForGenericBuilder(this, exceptionMessage);
     }
 
     @SuppressWarnings("serial")

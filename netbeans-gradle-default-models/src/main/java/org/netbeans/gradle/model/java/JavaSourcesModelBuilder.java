@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BuilderUtils;
 
 import static org.netbeans.gradle.model.util.ReflectionUtils.*;
 
@@ -163,5 +164,10 @@ implements
         File resourcesDir = (File)getNonBoolProperty(outputDirs, "resourcesDir");
 
         return new JavaOutputDirs(classesDir, resourcesDir, otherDirs);
+    }
+
+    /** {@inheritDoc } */
+    public String getName() {
+        return BuilderUtils.getNameForEnumBuilder(this);
     }
 }

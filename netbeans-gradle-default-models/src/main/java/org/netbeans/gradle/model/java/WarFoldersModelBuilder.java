@@ -3,6 +3,7 @@ package org.netbeans.gradle.model.java;
 import java.io.File;
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BuilderUtils;
 
 public enum WarFoldersModelBuilder
 implements
@@ -16,5 +17,10 @@ implements
         }
 
         return new WarFoldersModel((File)project.property("webAppDir"));
+    }
+
+    /** {@inheritDoc } */
+    public String getName() {
+        return BuilderUtils.getNameForEnumBuilder(this);
     }
 }

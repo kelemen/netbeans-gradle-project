@@ -32,4 +32,16 @@ public interface ProjectInfoBuilder<T> extends Serializable {
      *   information could be extracted.
      */
     public T getProjectInfo(Project project);
+
+    /**
+     * Returns a string used to identify this {@code ProjectInfoBuilder}
+     * instance if this builder fails with an unexpected exception. If the
+     * returned string has a format or not is an implementation detail but
+     * usually it is enough to give builders a name which allows easy
+     * identification.
+     *
+     * @return a string used to identify this {@code ProjectInfoBuilder}
+     *   instance. This method may never return {@code null}.
+     */
+    public String getName();
 }
