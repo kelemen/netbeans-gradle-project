@@ -24,6 +24,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
@@ -426,15 +427,15 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingQuery-message";
-                BuilderResult result = fetchSingleProjectInfoWithError(
-                        connection,
-                        new FailingProjectInfoBuilder(message));
+                FailingProjectInfoBuilder builder = new FailingProjectInfoBuilder(message);
+                BuilderResult result = fetchSingleProjectInfoWithError(connection, builder);
                 assertNotNull("Required result for FailingProjectInfoBuilder.", result);
 
-                Throwable issue = result.getIssue();
+                BuilderIssue issue = result.getIssue();
                 assertNotNull("Required issue for FailingProjectInfoBuilder", issue);
 
-                String issueMessage = issue.getMessage();
+                assertEquals("Expected approriate builder name.", builder.getName(), issue.getName());
+                String issueMessage = issue.getException().getMessage();
                 if (!issueMessage.contains(message)) {
                     fail("Issue message is invalid: " + issueMessage);
                 }

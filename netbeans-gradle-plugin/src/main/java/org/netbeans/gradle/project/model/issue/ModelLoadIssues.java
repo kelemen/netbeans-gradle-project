@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
+import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -32,7 +33,7 @@ public final class ModelLoadIssues {
     public static ModelLoadIssue builderError(
             FetchedProjectModels project,
             NbGradleExtensionRef extensionRef,
-            Throwable issue) {
+            BuilderIssue issue) {
         if (project == null) throw new NullPointerException("project");
         if (extensionRef == null) throw new NullPointerException("extensionRef");
         if (issue == null) throw new NullPointerException("issue");
@@ -43,10 +44,11 @@ public final class ModelLoadIssues {
         String issueDescription =
                 "Fetching information for "
                 + extensionRef.getDisplayName()
+                + " [" + issue.getName() + "]"
                 + " has failed for project "
                 + projectName;
 
-        return extensionError(issueDescription, issue);
+        return extensionError(issueDescription, issue.getException());
     }
 
     private static final class ModelLoadIssueImpl implements ModelLoadIssue {

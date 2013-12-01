@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.FetchedProjectModels;
@@ -175,7 +176,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             }
 
             for (BuilderResult builderResult: builderResults) {
-                Throwable issue = builderResult.getIssue();
+                BuilderIssue issue = builderResult.getIssue();
                 if (issue != null) {
                     issues.add(ModelLoadIssues.builderError(projectModels, extension, issue));
                 }
