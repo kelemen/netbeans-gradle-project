@@ -40,7 +40,6 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.java.model.SourceBinaryMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
@@ -535,32 +534,6 @@ public final class IdeaJavaModelUtils {
             this.mainRuntime = other.mainRuntime;
             this.testCompile = other.testCompile;
             this.testRuntime = other.testRuntime;
-        }
-    }
-
-    private static final class ModuleWithSources {
-        public final NbJavaModule module;
-        public final SourceBinaryMap sources;
-
-        public ModuleWithSources(NbJavaModule module, SourceBinaryMap sources) {
-            assert module != null;
-            assert sources != null;
-
-            this.module = module;
-            this.sources = sources;
-        }
-    }
-
-    private static final class ModuleSources {
-        public final List<JavaSourceSet> moduleSources;
-        public final SourceBinaryMap otherSources;
-
-        public ModuleSources(List<JavaSourceSet> moduleSources, SourceBinaryMap otherSources) {
-            assert moduleSources != null;
-            assert otherSources != null;
-
-            this.moduleSources = moduleSources;
-            this.otherSources = otherSources;
         }
     }
 
