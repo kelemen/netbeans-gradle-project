@@ -1,5 +1,6 @@
 package org.netbeans.gradle.model.internal;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -97,13 +98,14 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
         }
 
+        File buildScript = project.getBuildFile();
 
         ModelQueryOutput output;
         try {
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
-            output = new ModelQueryOutput(project.getPath(), projectInfos, null);
+            output = new ModelQueryOutput(project.getPath(), buildScript, projectInfos, null);
         } catch (Throwable ex) {
-            output = new ModelQueryOutput(project.getPath(), CustomSerializedMap.EMPTY, ex);
+            output = new ModelQueryOutput(project.getPath(), buildScript, CustomSerializedMap.EMPTY, ex);
         }
 
         return new DefaultModelQueryOutputRef(output);

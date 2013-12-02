@@ -18,6 +18,7 @@ public final class GenericProjectProperties implements Serializable {
     private final String projectName;
     private final String projectFullName;
     private final File projectDir;
+    private final File buildScript;
 
     /**
      * Creates a new {@code GenericProjectProperties} with the specified
@@ -32,11 +33,18 @@ public final class GenericProjectProperties implements Serializable {
      * @param projectDir the project directory as returned by
      *   {@link org.gradle.api.Project.getProjectDir()}. This argument cannot
      *   be {@code null}.
+     * @param buildScript the path to the build script file. Can be {@code null},
+     *   if there is no build script file to use.
      *
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
-    public GenericProjectProperties(String projectName, String projectFullName, File projectDir) {
+    public GenericProjectProperties(
+            String projectName,
+            String projectFullName,
+            File projectDir,
+            File buildScript) {
+
         if (projectName == null) throw new NullPointerException("projectName");
         if (projectFullName == null) throw new NullPointerException("projectFullName");
         if (projectDir == null) throw new NullPointerException("projectDir");
@@ -44,6 +52,7 @@ public final class GenericProjectProperties implements Serializable {
         this.projectName = projectName;
         this.projectFullName = projectFullName;
         this.projectDir = projectDir;
+        this.buildScript = buildScript;
     }
 
     /**
@@ -76,5 +85,16 @@ public final class GenericProjectProperties implements Serializable {
      */
     public File getProjectDir() {
         return projectDir;
+    }
+
+    /**
+     * The build script file of this project. This is the "build.gradle" file
+     * in the directory of the project by default.
+     *
+     * @return the build script file of this project. This method may return
+     *   {@code null} if there is no build script for this project.
+     */
+    public File getBuildScript() {
+        return buildScript;
     }
 }

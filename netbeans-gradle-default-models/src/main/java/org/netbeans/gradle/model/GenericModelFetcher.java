@@ -10,10 +10,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +23,6 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
-import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
@@ -205,6 +202,44 @@ public final class GenericModelFetcher {
         return result;
     }
 
+    private static <T> T getModel(ModelGetter getter, Class<T> modelClass) {
+        T result = getter.findModel(modelClass);
+        if (result == null) {
+            throw new RuntimeException("Required model could not be loaded: " + modelClass);
+        }
+        return result;
+    }
+
+    private static ModelGetter defaultModelGetter(final BuildController controller) {
+        return new ModelGetter() {
+            public <T> T findModel(Class<T> modelClass) {
+                return controller.getModel(modelClass);
+            }
+        };
+    }
+
+    private static ModelGetter projectModelGetter(
+            final BuildController controller,
+            final BasicGradleProject referenceProject) {
+
+        return new ModelGetter() {
+            public <T> T findModel(Class<T> modelClass) {
+                return controller.findModel(referenceProject, modelClass);
+            }
+        };
+    }
+
+    private static ModelQueryOutput getModelOutput(ModelGetter getter) {
+        byte[] serializedResult = getModel(getter, ModelQueryOutputRef.class)
+                .getSerializedModelQueryOutput();
+
+        try {
+            return (ModelQueryOutput)SerializationUtils.deserializeObject(serializedResult);
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     private static final class ModelFetcherBuildAction implements BuildAction<ActionFetchedModels> {
         private static final long serialVersionUID = 1L;
 
@@ -219,53 +254,165 @@ public final class GenericModelFetcher {
             this.modelClasses = modelClasses;
         }
 
-        private ModelQueryOutput getModelOutput(ModelGetter getter) {
-            byte[] serializedResult = getModel(getter, ModelQueryOutputRef.class)
-                    .getSerializedModelQueryOutput();
+        private CustomSerializedMap getBuildInfoResults(BuildController controller) {
+            ClassLoader parentClassLoader = getClass().getClassLoader();
+            Map<Object, List<?>> buildInfoRequests
+                    = serializedBuildInfoRequests.deserialize(parentClassLoader);
 
-            try {
-                return (ModelQueryOutput)SerializationUtils.deserializeObject(serializedResult);
-            } catch (ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
+            if (buildInfoRequests.isEmpty()) {
+                return CustomSerializedMap.EMPTY;
+            }
+
+            // TODO: Catch exceptions for individual builders: BuilderResult
+            CustomSerializedMap.Builder result = new CustomSerializedMap.Builder(buildInfoRequests.size());
+            for (Map.Entry<Object, List<?>> entry: buildInfoRequests.entrySet()) {
+                Object key = entry.getKey();
+
+                for (Object builder: entry.getValue()) {
+                    Object info = ((BuildInfoBuilder<?>)builder).getInfo(controller);
+                    if (info != null) {
+                        result.addValue(key, info);
+                    }
+                }
+            }
+            return result.create();
+        }
+
+        public ActionFetchedModels execute(final BuildController controller) {
+            // TODO: This is when build script evaluation happens. That is,
+            //   the following object creation should always succeed for correct
+            //   build scripts and the created object need the project evaluated.
+            //   Therefore we must catch exceptions here and report them back.
+            EvaluatedBuild evaluatedBuild = new EvaluatedBuild(controller);
+
+            AllProjectInfoBuilder builder = new AllProjectInfoBuilder(modelClasses, evaluatedBuild);
+
+            Map<String, ActionFetchedProjectModels> fetchedModels = builder.buildProjectModels(controller);
+            ActionFetchedProjectModels defaultModels = fetchedModels.remove(builder.getDefaultProjectPath());
+
+            CustomSerializedMap buildModels = getBuildInfoResults(controller);
+            return new ActionFetchedModels(buildModels, defaultModels, fetchedModels.values());
+        }
+    }
+
+    private static final class EvaluatedBuild {
+        public final BuildController controller;
+        public final GradleBuild buildModel;
+        public final Collection<? extends BasicGradleProject> allProjects;
+
+        public EvaluatedBuild(BuildController controller) {
+            this.controller = controller;
+            this.buildModel = controller.getBuildModel();
+            this.allProjects = buildModel.getProjects();
+        }
+    }
+
+    private static final class AllProjectInfoBuilder {
+        private final Set<Class<?>> modelClasses;
+        private final Map<String, BasicGradleProject> basicInfos;
+        private final Map<String, ModelQueryOutput> customInfos;
+        private final BasicGradleProject basicRootProject;
+        private final String defaultProjectPath;
+
+        public AllProjectInfoBuilder(Set<Class<?>> modelClasses, EvaluatedBuild evaluatedBuild) {
+            int projectCount = evaluatedBuild.allProjects.size();
+            this.modelClasses = modelClasses;
+            this.basicInfos = CollectionUtils.newHashMap(projectCount);
+            this.customInfos = CollectionUtils.newHashMap(projectCount);
+            this.basicRootProject = evaluatedBuild.buildModel.getRootProject();
+            this.defaultProjectPath = addCustomInfo(defaultModelGetter(evaluatedBuild.controller));
+
+            // TODO: If lazy project evaluation is available, review this
+            //   not to force evaluation of unnecessary projects.
+            for (BasicGradleProject project: evaluatedBuild.allProjects) {
+                addBasicInfo(project);
             }
         }
 
-        private static <T> T getModel(ModelGetter getter, Class<T> modelClass) {
-            T result = getter.findModel(modelClass);
-            if (result == null) {
-                throw new RuntimeException("Required model could not be loaded: " + modelClass);
+        private String addCustomInfo(ModelGetter modelGetter) {
+            ModelQueryOutput customInfo = getModelOutput(modelGetter);
+            String projectPath = customInfo.getProjectFullName();
+
+            customInfos.put(projectPath, customInfo);
+            return projectPath;
+        }
+
+        private void addBasicInfo(BasicGradleProject projectRef) {
+            basicInfos.put(projectRef.getPath(), projectRef);
+        }
+
+        public String getDefaultProjectPath() {
+            return defaultProjectPath;
+        }
+
+        // Note: We expect the result of this method to be mutable.
+        public Map<String, ActionFetchedProjectModels> buildProjectModels(BuildController controller) {
+            for (Map.Entry<String, BasicGradleProject> entry: basicInfos.entrySet()) {
+                String projectPath = entry.getKey();
+
+                if (!customInfos.containsKey(projectPath)) {
+                    String addedProjectPath
+                            = addCustomInfo(projectModelGetter(controller, entry.getValue()));
+
+                    if (!projectPath.equals(addedProjectPath)) {
+                        throw new IllegalStateException("The path fetched from"
+                                + " the build script is different than provided"
+                                + " by BasicGradleProject. BasicGradleProject.path = " + projectPath
+                                + ". ModelQueryOutput.projectFullName = " + addedProjectPath);
+                    }
+                }
+            }
+
+            Map<String, GradleProjectTree> projectTrees = CollectionUtils.newHashMap(basicInfos.size());
+            GradleProjectTree rootTree = parseTrees(controller, basicRootProject, projectTrees);
+
+            // This should be a NO-OP because all projects should be reachable
+            // from the root project. Do it anyway.
+            for (BasicGradleProject project: basicInfos.values()) {
+                parseTrees(controller, project, projectTrees);
+            }
+
+            Map<String, ActionFetchedProjectModels> result = CollectionUtils.newHashMap(basicInfos.size());
+            for (Map.Entry<String, BasicGradleProject> entry: basicInfos.entrySet()) {
+                ActionFetchedProjectModels fetchedModels
+                        = getFetchedProjectModels(controller, entry, rootTree, projectTrees);
+                result.put(entry.getKey(), fetchedModels);
             }
             return result;
         }
 
         private ActionFetchedProjectModels getFetchedProjectModels(
+                BuildController controller,
+                Map.Entry<String, BasicGradleProject> entry,
                 GradleProjectTree rootTree,
-                Map<String, GradleProjectTree> projects,
-                ModelGetter getter) {
+                Map<String, GradleProjectTree> projects) {
 
-            ModelQueryOutput modelOutput = getModelOutput(getter);
-            GradleProjectTree projectTree = projects.get(modelOutput.getProjectFullName());
-            if (projectTree == null) {
-                // Shouldn't happen but try not to fail.
-                EclipseProject eclipseProject = getModel(getter, EclipseProject.class);
-                GradleProject gradleProject = eclipseProject.getGradleProject();
+            String projectPath = entry.getKey();
 
-                GenericProjectProperties properties = new GenericProjectProperties(
-                        gradleProject.getName(),
-                        gradleProject.getPath(),
-                        eclipseProject.getProjectDirectory());
-
-                projectTree = new GradleProjectTree(
-                        properties,
-                        getTasksOfProjects(gradleProject),
-                        Collections.<GradleProjectTree>emptyList());
+            ModelQueryOutput modelOutput = customInfos.get(projectPath);
+            if (modelOutput == null) {
+                throw new IllegalStateException("Missing ModelQueryOutput for project " + projectPath);
             }
 
-            Map<Class<?>, Object> toolingModels = new IdentityHashMap<Class<?>, Object>(2 * modelClasses.size());
-            for (Class<?> modelClass: modelClasses) {
-                Object modelValue = getter.findModel(modelClass);
-                if (modelValue != null) {
-                    toolingModels.put(modelClass, modelValue);
+            GradleProjectTree projectTree = projects.get(projectPath);
+            if (projectTree == null) {
+                throw new IllegalStateException("Missing GradleProjectTree for project " + projectPath);
+            }
+
+            Map<Class<?>, Object> toolingModels;
+
+            if (modelClasses.isEmpty()) {
+                toolingModels = Collections.emptyMap();
+            }
+            else {
+                ModelGetter modelGetter = projectModelGetter(controller, entry.getValue());
+
+                toolingModels = new IdentityHashMap<Class<?>, Object>(2 * modelClasses.size());
+                for (Class<?> modelClass: modelClasses) {
+                    Object modelValue = modelGetter.findModel(modelClass);
+                    if (modelValue != null) {
+                        toolingModels.put(modelClass, modelValue);
+                    }
                 }
             }
 
@@ -274,6 +421,54 @@ public final class GenericModelFetcher {
                     modelOutput.getProjectInfoResults(),
                     toolingModels,
                     modelOutput.getIssue());
+        }
+
+        private GradleProjectTree parseTrees(
+                BuildController controller,
+                BasicGradleProject project,
+                Map<String, GradleProjectTree> trees) {
+
+            String projectPath = project.getPath();
+            GradleProjectTree cached = trees.get(projectPath);
+            if (cached != null) {
+                return cached;
+            }
+
+            DomainObjectSet<? extends BasicGradleProject> basicChildren = project.getChildren();
+            List<GradleProjectTree> children = new ArrayList<GradleProjectTree>(basicChildren.size());
+            for (BasicGradleProject child: basicChildren) {
+                children.add(parseTrees(controller, child, trees));
+            }
+
+            ModelQueryOutput customInfo = customInfos.get(projectPath);
+            if (customInfo == null) {
+                throw new IllegalStateException("Missing ModelQueryOutput for project " + projectPath);
+            }
+
+            GenericProjectProperties genericProperties = new GenericProjectProperties(
+                    project.getName(),
+                    projectPath,
+                    project.getProjectDirectory(),
+                    customInfo.getBuildScript());
+
+            GradleProjectTree result = new GradleProjectTree(
+                    genericProperties,
+                    getTasksOfProjects(controller, project),
+                    children);
+
+            trees.put(projectPath, result);
+            return result;
+        }
+
+        private Collection<GradleTaskID> getTasksOfProjects(
+                BuildController controller, BasicGradleProject project) {
+
+            GradleProject gradleProject = getGradleProjectForBasicProject(controller, project);
+            if (gradleProject == null) {
+                return Collections.emptyList();
+            }
+
+            return getTasksOfProjects(gradleProject);
         }
 
         private Collection<GradleTaskID> getTasksOfProjects(GradleProject project) {
@@ -308,86 +503,6 @@ public final class GenericModelFetcher {
             }
 
             return findAssociatedGradleProject(project, gradleProject);
-        }
-
-        private Collection<GradleTaskID> getTasksOfProjects(
-                BuildController controller, BasicGradleProject project) {
-
-            // TODO: Do not load tasks in later versions if the project is not
-            //   evaluated.
-
-            GradleProject gradleProject = getGradleProjectForBasicProject(controller, project);
-            if (gradleProject == null) {
-                return Collections.emptyList();
-            }
-
-            return getTasksOfProjects(gradleProject);
-        }
-
-        private GradleProjectTree parseTree(
-                BuildController controller,
-                BasicGradleProject basicProject,
-                Map<String, GradleProjectTree> projects) {
-
-            DomainObjectSet<? extends BasicGradleProject> modelChildren = basicProject.getChildren();
-            List<GradleProjectTree> children = new ArrayList<GradleProjectTree>(modelChildren.size());
-
-            for (BasicGradleProject modelChild: modelChildren) {
-                children.add(parseTree(controller, modelChild, projects));
-            }
-
-            GenericProjectProperties properties = new GenericProjectProperties(
-                    basicProject.getName(),
-                    basicProject.getPath(),
-                    basicProject.getProjectDirectory());
-
-            Collection<GradleTaskID> tasks = getTasksOfProjects(controller, basicProject);
-
-            GradleProjectTree result = new GradleProjectTree(properties, tasks, children);
-            projects.put(properties.getProjectFullName(), result);
-            return result;
-        }
-
-        public ActionFetchedModels execute(final BuildController controller) {
-            GradleBuild buildModel = controller.getBuildModel();
-
-            ClassLoader parentClassLoader = getClass().getClassLoader();
-            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(parentClassLoader);
-
-            CustomSerializedMap.Builder buildInfoResults = new CustomSerializedMap.Builder(buildInfoRequests.size());
-            for (Map.Entry<Object, List<?>> entry: buildInfoRequests.entrySet()) {
-                Object key = entry.getKey();
-
-                for (Object builder: entry.getValue()) {
-                    Object info = ((BuildInfoBuilder<?>)builder).getInfo(controller);
-                    if (info != null) {
-                        buildInfoResults.addValue(key, info);
-                    }
-                }
-            }
-
-            Map<String, GradleProjectTree> projectTrees = new HashMap<String, GradleProjectTree>(64);
-            GradleProjectTree rootTree = parseTree(controller, buildModel.getRootProject(), projectTrees);
-
-            ActionFetchedProjectModels defaultProjectModels = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
-                public <T> T findModel(Class<T> modelClass) {
-                    return controller.findModel(modelClass);
-                }
-            });
-
-            List<ActionFetchedProjectModels> otherModels = new LinkedList<ActionFetchedProjectModels>();
-            for (final BasicGradleProject projectRef: buildModel.getProjects()) {
-                ActionFetchedProjectModels otherModel = getFetchedProjectModels(rootTree, projectTrees, new ModelGetter() {
-                    public <T> T findModel(Class<T> modelClass) {
-                        return controller.findModel(projectRef, modelClass);
-                    }
-                });
-
-                otherModels.add(otherModel);
-            }
-
-            CustomSerializedMap buildModels = buildInfoResults.create();
-            return new ActionFetchedModels(buildModels, defaultProjectModels, otherModels);
         }
     }
 
