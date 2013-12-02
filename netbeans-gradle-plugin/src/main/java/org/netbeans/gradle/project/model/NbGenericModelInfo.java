@@ -11,7 +11,6 @@ import org.openide.filesystems.FileUtil;
 public final class NbGenericModelInfo {
     private final NbGradleMultiProjectDef projectDef;
     private final File settingsFile;
-    private final File buildFile;
 
     // Derived properties
     private final String displayName;
@@ -22,13 +21,8 @@ public final class NbGenericModelInfo {
     }
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, File settingsFile) {
-        this(projectDef, settingsFile, getBuildFile(projectDef.getProjectDir()));
-    }
-
-    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, File settingsFile, File buildFile) {
         if (projectDef == null) throw new NullPointerException("projectTree");
 
-        this.buildFile = buildFile;
         this.settingsFile = settingsFile;
         this.projectDef = projectDef;
 
@@ -53,7 +47,7 @@ public final class NbGenericModelInfo {
     }
 
     public File getBuildFile() {
-        return buildFile;
+        return projectDef.getMainProject().getGenericProperties().getBuildScript();
     }
 
     public File getSettingsFile() {
@@ -83,7 +77,7 @@ public final class NbGenericModelInfo {
     }
 
     public FileObject tryGetBuildFileObj() {
-        return GradleFileUtils.asFileObject(buildFile);
+        return GradleFileUtils.asFileObject(getBuildFile());
     }
 
     public FileObject tryGetSettingsFileObj() {
