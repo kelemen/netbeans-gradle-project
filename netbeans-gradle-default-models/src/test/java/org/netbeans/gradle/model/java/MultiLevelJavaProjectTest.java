@@ -150,7 +150,14 @@ public class MultiLevelJavaProjectTest {
                 GradleMultiProjectDef projectDef = fetchProjectDef(connection);
                 testBasicInfoForProject(relativeProjectName, projectDef);
 
-                Collection<GradleTaskID> tasks = projectDef.getMainProject().getTasks();
+                GradleProjectTree mainProject = projectDef.getMainProject();
+                GenericProjectProperties genericProperties = mainProject.getGenericProperties();
+
+                assertEquals("Build script for the project must be build.gradle.",
+                        new File(genericProperties.getProjectDir(), "build.gradle"),
+                        genericProperties.getBuildScript());
+
+                Collection<GradleTaskID> tasks = mainProject.getTasks();
                 Set<String> remainingTasks = mustHaveTasks(relativeProjectName, tasks, expectedTasks);
 
                 for (String task: unexpectedTasks) {
