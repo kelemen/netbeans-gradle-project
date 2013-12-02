@@ -9,6 +9,7 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {
@@ -98,7 +99,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
         }
 
-        File buildScript = project.getBuildFile();
+        File buildScript = BasicFileUtils.toCanonicalFile(project.getBuildFile());
 
         ModelQueryOutput output;
         try {
