@@ -1,9 +1,13 @@
 package org.netbeans.gradle.model.util;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,34 +15,145 @@ public final class BasicFileUtils {
     private static final Logger LOGGER = Logger.getLogger(BasicFileUtils.class.getName());
 
     private static final String HEX_TABLE = "0123456789abcdef";
-    private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"));
-    private static final File NB_GRADLE_TEMP_DIR = toCanonicalFile(getSubPath(TEMP_DIR, "nb-gradle-plugin"));
+    private static final AtomicReference<File> NB_GRADLE_TEMP_DIR_REF = new AtomicReference<File>(null);
     private static final int MAX_TMP_FILE_WITH_SAME_NAME = 5;
 
-    public static File getPluginTmpDir() {
-        return NB_GRADLE_TEMP_DIR;
-    }
+    private static File findAvailableTempFileDir() {
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
 
-    public static File createTmpFile(String preferredName, String suffix) throws IOException {
-        if (!NB_GRADLE_TEMP_DIR.isDirectory()) {
-            if (!NB_GRADLE_TEMP_DIR.mkdirs()) {
-                LOGGER.log(Level.WARNING, "Could not create directory: {0}", NB_GRADLE_TEMP_DIR);
+        String userName = makeSafeForFileNames(System.getProperty("user.name"));
+        String defaultDirName = "nb-gradle-plugin-" + userName;
+
+        for (int i = 0; i < MAX_TMP_FILE_WITH_SAME_NAME; i++) {
+            String dirName = i > 0
+                    ? defaultDirName + "-" + i
+                    : defaultDirName;
+
+            File result = getSubPath(tempDir, dirName);
+            result.mkdirs();
+            if (isWriteable(result)) {
+                return result;
             }
         }
 
-        File result = getSubPath(NB_GRADLE_TEMP_DIR, preferredName + suffix);
+        SecureRandom rand = new SecureRandom();
+        String part1 = Long.toHexString(rand.nextLong());
+        String part2 = Long.toHexString(rand.nextLong());
+
+        File result = getSubPath(tempDir, defaultDirName + "-" + part1 + "-" + part2);
+        result.mkdirs();
+        if (isWriteable(result)) {
+            LOGGER.log(Level.WARNING,
+                    "Create a directory with random name for temporary storage: {0}",
+                    result);
+            return result;
+        }
+
+        LOGGER.log(Level.WARNING,
+                "Couldn't create any directory for test files. Using the temp directory: {0}",
+                tempDir);
+        return tempDir;
+    }
+
+    private static boolean isWriteable(File dir) {
+        if (!dir.isDirectory()) {
+            return false;
+        }
+
+        File testTempFile = null;
+        try {
+            testTempFile = File.createTempFile("write-test", ".tmp", dir);
+            if (!testTempFile.isFile()) {
+                return false;
+            }
+
+            int testByte = 0xAC;
+
+            FileOutputStream output = new FileOutputStream(testTempFile);
+            try {
+                output.write(testByte);
+                output.flush();
+            } finally {
+                output.close();
+            }
+
+            FileInputStream input = new FileInputStream(testTempFile);
+            try {
+                if (input.read() != testByte) {
+                    return false;
+                }
+            } finally {
+                input.close();
+            }
+
+            return true;
+        } catch (IOException ex) {
+            return false;
+        } finally {
+            if (testTempFile != null) {
+                testTempFile.delete();
+            }
+        }
+    }
+
+    private static boolean isCharOkForFileName(char ch) {
+        if (ch >= 'A' && ch <= 'Z') return true;
+        if (ch >= 'a' && ch <= 'z') return true;
+        if (ch >= '0' && ch <= '9') return true;
+
+        return ch == '-' || ch == '_';
+    }
+
+    private static String makeSafeForFileNames(String unsafeName) {
+        if (unsafeName == null) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder(unsafeName.length());
+        for (int i = 0; i < unsafeName.length(); i++) {
+            char ch = unsafeName.charAt(i);
+            if (isCharOkForFileName(ch)) {
+                result.append(ch);
+            }
+            else {
+                result.append('_');
+            }
+        }
+        return result.toString();
+    }
+
+    public static File getPluginTmpDir() {
+        File result = NB_GRADLE_TEMP_DIR_REF.get();
+        if (result == null) {
+            result = toCanonicalFile(findAvailableTempFileDir());
+            NB_GRADLE_TEMP_DIR_REF.compareAndSet(null, result);
+            result = NB_GRADLE_TEMP_DIR_REF.get();
+        }
+        return result;
+    }
+
+    public static File createTmpFile(String preferredName, String suffix) throws IOException {
+        File tmpDir = getPluginTmpDir();
+
+        if (!tmpDir.isDirectory()) {
+            if (!tmpDir.mkdirs()) {
+                LOGGER.log(Level.WARNING, "Could not create directory: {0}", tmpDir);
+            }
+        }
+
+        File result = getSubPath(tmpDir, preferredName + suffix);
         if (result.createNewFile()) {
             return result;
         }
 
         for (int i = 1; i <= MAX_TMP_FILE_WITH_SAME_NAME; i++) {
-            result = getSubPath(NB_GRADLE_TEMP_DIR, preferredName + i + suffix);
+            result = getSubPath(tmpDir, preferredName + i + suffix);
             if (result.createNewFile()) {
                 return result;
             }
         }
 
-        return File.createTempFile(preferredName, suffix, NB_GRADLE_TEMP_DIR);
+        return File.createTempFile(preferredName, suffix, tmpDir);
     }
 
     public static File getSubPath(File root, String... subPaths) {
