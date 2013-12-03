@@ -2,12 +2,17 @@ package org.netbeans.gradle.model.internal;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
+import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
@@ -94,19 +99,43 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return projectInfosBuilder.create();
     }
 
+    private Collection<GradleTaskID> findTasks(Project project) {
+        Collection<Task> tasks = project.getTasks();
+
+        List<GradleTaskID> result = new ArrayList<GradleTaskID>(tasks.size());
+        for (Task task: tasks) {
+            String name = task.getName();
+            String fullName = task.getPath();
+            result.add(new GradleTaskID(name, fullName));
+        }
+        return result;
+    }
+
     public Object buildAll(String modelName, Project project) {
         if (!canBuild(modelName)) {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
         }
 
-        File buildScript = BasicFileUtils.toCanonicalFile(project.getBuildFile());
+        Collection<GradleTaskID> tasks = Collections.emptySet();
+        File buildFile = null;
+        ModelQueryOutput.BasicInfo basicInfo = null;
+
+        String projectFullName = project.getPath();
 
         ModelQueryOutput output;
         try {
+            buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
+            tasks = findTasks(project);
+            basicInfo = new ModelQueryOutput.BasicInfo(projectFullName, buildFile, tasks);
+
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
-            output = new ModelQueryOutput(project.getPath(), buildScript, projectInfos, null);
+            output = new ModelQueryOutput(basicInfo, projectInfos, null);
         } catch (Throwable ex) {
-            output = new ModelQueryOutput(project.getPath(), buildScript, CustomSerializedMap.EMPTY, ex);
+            if (basicInfo == null) {
+                basicInfo = new ModelQueryOutput.BasicInfo(projectFullName, buildFile, tasks);
+            }
+
+            output = new ModelQueryOutput(basicInfo, CustomSerializedMap.EMPTY, ex);
         }
 
         return new DefaultModelQueryOutputRef(output);

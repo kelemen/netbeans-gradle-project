@@ -21,8 +21,6 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
@@ -331,7 +329,7 @@ public final class GenericModelFetcher {
 
         private String addCustomInfo(ModelGetter modelGetter) {
             ModelQueryOutput customInfo = getModelOutput(modelGetter);
-            String projectPath = customInfo.getProjectFullName();
+            String projectPath = customInfo.getBasicInfo().getProjectFullName();
 
             customInfos.put(projectPath, customInfo);
             return projectPath;
@@ -449,60 +447,15 @@ public final class GenericModelFetcher {
                     project.getName(),
                     projectPath,
                     project.getProjectDirectory(),
-                    customInfo.getBuildScript());
+                    customInfo.getBasicInfo().getBuildScript());
 
             GradleProjectTree result = new GradleProjectTree(
                     genericProperties,
-                    getTasksOfProjects(controller, project),
+                    customInfo.getBasicInfo().getTasks(),
                     children);
 
             trees.put(projectPath, result);
             return result;
-        }
-
-        private Collection<GradleTaskID> getTasksOfProjects(
-                BuildController controller, BasicGradleProject project) {
-
-            GradleProject gradleProject = getGradleProjectForBasicProject(controller, project);
-            if (gradleProject == null) {
-                return Collections.emptyList();
-            }
-
-            return getTasksOfProjects(gradleProject);
-        }
-
-        private Collection<GradleTaskID> getTasksOfProjects(GradleProject project) {
-            DomainObjectSet<? extends GradleTask> modelTasks = project.getTasks();
-            List<GradleTaskID> result = new ArrayList<GradleTaskID>(modelTasks.size());
-            for (GradleTask modelTask: modelTasks) {
-                result.add(new GradleTaskID(modelTask.getName(), modelTask.getPath()));
-            }
-            return result;
-        }
-
-        private static GradleProject findAssociatedGradleProject(
-                BasicGradleProject requiredProject,
-                GradleProject projectTree) {
-            String requiredPath = requiredProject.getPath();
-            if (requiredPath.equals(projectTree.getPath())) {
-                return projectTree;
-            }
-
-            return projectTree.findByPath(requiredPath);
-        }
-
-        // The reason why this method exists is because requesting
-        // GradleProject for a particular BasicGradleProject returns the
-        // root GradleProject instance (tested with 1.8 and 1.9).
-        private GradleProject getGradleProjectForBasicProject(
-                BuildController controller,
-                BasicGradleProject project) {
-            GradleProject gradleProject = controller.findModel(project, GradleProject.class);
-            if (gradleProject == null) {
-                return null;
-            }
-
-            return findAssociatedGradleProject(project, gradleProject);
         }
     }
 
