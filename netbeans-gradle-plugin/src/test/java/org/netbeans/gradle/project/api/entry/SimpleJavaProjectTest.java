@@ -175,6 +175,13 @@ public class SimpleJavaProjectTest {
         }
     }
 
+    private static void checkNotOnLookup(Lookup lookup, Class<?> type) {
+        Collection<?> objects = lookup.lookupAll(type);
+        if (!objects.isEmpty()) {
+            fail("Lookup must not contain an instance of " + type.getName());
+        }
+    }
+
     private static void checkExactlyOnce(Lookup lookup, Class<?> type) {
         Collection<?> objects = lookup.lookupAll(type);
         if (objects.size() != 1) {
@@ -206,10 +213,17 @@ public class SimpleJavaProjectTest {
         checkExactlyOnce(lookup, GradleClassPathProvider.class);
         checkExactlyOnce(lookup, PrivilegedTemplates.class);
         checkExactlyOnce(lookup, RecommendedTemplates.class);
-        checkExactlyOnce(lookup, JavaExtensionNodes.class);
-        checkExactlyOnce(lookup, JavaProjectContextActions.class);
-        checkExactlyOnce(lookup, GradleJavaBuiltInCommands.class);
         checkExactlyOnce(lookup, NbGradleProject.class);
+    }
+
+    @Test
+    public void testExtensionQueriesAreNotOnLookup() {
+        NbGradleProject project = rootProjectRef.getProject();
+        Lookup lookup = project.getLookup();
+
+        checkNotOnLookup(lookup, JavaExtensionNodes.class);
+        checkNotOnLookup(lookup, JavaProjectContextActions.class);
+        checkNotOnLookup(lookup, GradleJavaBuiltInCommands.class);
     }
 
     @Test
