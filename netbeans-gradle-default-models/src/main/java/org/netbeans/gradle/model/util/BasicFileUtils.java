@@ -44,7 +44,7 @@ public final class BasicFileUtils {
         result.mkdirs();
         if (isWriteable(result)) {
             LOGGER.log(Level.WARNING,
-                    "Create a directory with random name for temporary storage: {0}",
+                    "Using a directory with random name for temporary storage: {0}",
                     result);
             return result;
         }
