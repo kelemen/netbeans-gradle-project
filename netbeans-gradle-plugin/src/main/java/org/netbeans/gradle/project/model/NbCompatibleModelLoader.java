@@ -3,8 +3,6 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +25,6 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
@@ -90,33 +87,6 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return builder.get();
     }
 
-    public static Collection<Class<?>> getBasicModels(
-            GradleProjectExtensionDef<?> extension,
-            GradleTarget gradleTarget) {
-
-        Collection<? extends GradleModelDefQuery1> queries
-                = extension.getLookup().lookupAll(GradleModelDefQuery1.class);
-
-        int count = queries.size();
-        if (count == 0) {
-            return Collections.emptyList();
-        }
-        if (count == 1) {
-            return queries.iterator().next().getToolingModels(gradleTarget);
-        }
-
-        List<Class<?>> result = new LinkedList<Class<?>>();
-        for (GradleModelDefQuery1 query: queries) {
-            result.addAll(query.getToolingModels(gradleTarget));
-        }
-
-        return result;
-    }
-
-    private Collection<Class<?>> getModels(GradleProjectExtensionDef<?> extension) {
-        return getBasicModels(extension, gradleTarget);
-    }
-
     private void getExtensionModels(
             NbGradleProject project,
             ProjectConnection projectConnection,
@@ -128,10 +98,10 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
         NbGradleModel initialMainModel = mainModel.create();
         for (NbGradleExtensionRef extensionRef: GradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
-            GradleProjectExtensionDef<?> extension = extensionRef.getExtensionDef();
             List<Object> extensionModels = new LinkedList<Object>();
 
-            for (Class<?> modelClass: getModels(extension)) {
+            GradleModelDefQuery1 query1 = extensionRef.getModelNeeds().getQuery1();
+            for (Class<?> modelClass: query1.getToolingModels(gradleTarget)) {
                 try {
                     Object model = found.get(modelClass);
                     if (model == null) {

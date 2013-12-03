@@ -15,6 +15,7 @@ public final class NbGradleExtensionRef {
     private final String name;
     private final String displayName;
     private final DefWithExtension<?> defWithExtension;
+    private final ModelNeeds modelNeed;
 
     private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
@@ -32,6 +33,7 @@ public final class NbGradleExtensionRef {
 
         this.displayName = useNameIfNoDisplayName(extensionDef.getDisplayName(), name);
         this.defWithExtension = new DefWithExtension<ModelType>(extensionDef, extension);
+        this.modelNeed = new ModelNeeds(extensionDef);
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
@@ -55,6 +57,10 @@ public final class NbGradleExtensionRef {
             return name;
         }
         return displayName;
+    }
+
+    public ModelNeeds getModelNeeds() {
+        return modelNeed;
     }
 
     public GradleProjectExtensionDef<?> getExtensionDef() {

@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ProjectConnection;
 import org.netbeans.api.progress.ProgressHandle;
@@ -26,7 +25,6 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
@@ -51,66 +49,10 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         this.setup = setup;
     }
 
-    private static GradleModelDefQuery2 getBasicModelQuery(final GradleProjectExtensionDef<?> extension) {
-        return new GradleModelDefQuery2() {
-            @Override
-            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                Collection<Class<?>> toolinModels = NbCompatibleModelLoader.getBasicModels(extension, gradleTarget);
-                if (toolinModels.isEmpty()) {
-                    return GradleModelDef.EMPTY;
-                }
-
-                return new GradleModelDef(
-                        toolinModels,
-                        Collections.<GradleProjectInfoQuery<?>>emptyList());
-            }
-        };
-    }
-
     private static <E> void addAllNullSafe(Collection<? super E> collection, Collection<? extends E> toAdd) {
         if (toAdd != null) {
             collection.addAll(toAdd);
         }
-    }
-
-    private static GradleModelDef safelyReturn(GradleModelDef result, GradleProjectExtensionDef<?> extension) {
-        if (result == null) {
-            LOGGER.log(Level.WARNING,
-                    "GradleModelDefQuery2.getModelDef returned null for extension {0}",
-                    extension.getName());
-            return GradleModelDef.EMPTY;
-        }
-        else {
-            return result;
-        }
-    }
-
-    private static GradleModelDefQuery2 getModelQuery(final GradleProjectExtensionDef<?> extension) {
-        return new GradleModelDefQuery2() {
-            @Override
-            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                Lookup lookup = extension.getLookup();
-                Collection<? extends GradleModelDefQuery2> queries = lookup.lookupAll(GradleModelDefQuery2.class);
-                int queryCount = queries.size();
-                if (queryCount == 0) {
-                    return getBasicModelQuery(extension).getModelDef(gradleTarget);
-                }
-
-                if (queryCount == 1) {
-                    return queries.iterator().next().getModelDef(gradleTarget);
-                }
-
-                List<GradleProjectInfoQuery<?>> projectInfoQueries = new LinkedList<GradleProjectInfoQuery<?>>();
-                List<Class<?>> toolingModels = new LinkedList<Class<?>>();
-
-                for (GradleModelDefQuery2 query: queries) {
-                    GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), extension);
-                    projectInfoQueries.addAll(modelDef.getProjectInfoQueries());
-                    toolingModels.addAll(modelDef.getToolingModels());
-                }
-                return new GradleModelDef(toolingModels, projectInfoQueries);
-            }
-        };
     }
 
     private static <K, V> void addAllToMultiMap(K key, Collection<? extends V> newValues, Map<? super K, List<V>> map) {
@@ -399,7 +341,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             for (NbGradleExtensionRef extensionRef: extensions) {
                 String extensionName = extensionRef.getName();
 
-                GradleModelDefQuery2 modelQuery = getModelQuery(extensionRef.getExtensionDef());
+                GradleModelDefQuery2 modelQuery = extensionRef.getModelNeeds().getQuery2();
                 GradleModelDef modelDef = modelQuery.getModelDef(gradleTarget);
 
                 models.addAll(modelDef.getToolingModels());
