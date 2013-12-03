@@ -30,13 +30,13 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
-    private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
-            Arrays.asList("run"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.RUN);
     private static final CommandWithActions DEFAULT_REBUILD_TASK = nonBlockingCommand(
             Arrays.asList("clean", "build"),
+            Collections.<String>emptyList(),
+            Collections.<String>emptyList(),
+            CustomCommandActions.BUILD);
+    private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
+            Arrays.asList("cleanTest", "test"),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
@@ -48,8 +48,8 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         DEFAULT_TASKS = new HashMap<String, CommandWithActions>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_CLEAN, DEFAULT_CLEAN_TASK);
-        addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
+        addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
 
         // We have to provide names for the following commands because of the
         // contract of BuiltInGradleCommandQuery.tryGetDisplayNameOfCommand.
