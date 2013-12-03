@@ -165,16 +165,28 @@ public final class IdeaJavaModelUtils {
                 = new JavaSourceSet.Builder(JavaSourceSet.NAME_TEST, testOutputs);
         test.setClasspaths(classPaths.test);
 
+        int mainSourceRootCount = 0;
+        int testSourceRootCount = 0;
+
         for (IdeaContentRoot contentRoot: module.getContentRoots()) {
             for (JavaSourceGroup group: fromIdeaSourceRoots(contentRoot.getSourceDirectories())) {
                 main.addSourceGroup(group);
+                mainSourceRootCount += group.getSourceRoots().size();
             }
             for (JavaSourceGroup group: fromIdeaSourceRoots(contentRoot.getTestDirectories())) {
                 test.addSourceGroup(group);
+                testSourceRootCount += group.getSourceRoots().size();
             }
         }
 
-        return Arrays.asList(main.create(), test.create());
+        List<JavaSourceSet> result = new ArrayList<JavaSourceSet>(2);
+        if (mainSourceRootCount > 0) {
+            result.add(main.create());
+        }
+        if (testSourceRootCount > 0) {
+            result.add(test.create());
+        }
+        return result;
     }
 
     private static ProjectClassPaths fetchAllDependencies(
@@ -353,8 +365,15 @@ public final class IdeaJavaModelUtils {
 
         Map<File, NbJavaModel> result = CollectionUtils.newHashMap(modulesCount);
         for (NbJavaModule module: parsedModules.values()) {
-            NbJavaModel model = createUnreliableModel(module, outputDirToProject);
-            result.put(module.getModuleDir(), model);
+            if (module.getSources().isEmpty()) {
+                LOGGER.log(Level.INFO,
+                        "Disabling the Java extension because there are no sources: {0}",
+                        module.getProperties().getProjectDir());
+            }
+            else {
+                NbJavaModel model = createUnreliableModel(module, outputDirToProject);
+                result.put(module.getModuleDir(), model);
+            }
         }
         return result;
     }
