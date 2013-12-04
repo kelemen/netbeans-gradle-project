@@ -7,15 +7,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.DebugTextListener;
@@ -74,12 +77,12 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
             Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
+            needsGradle(TaskKind.BUILD, "1.10-rc-2"));
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), "-Dtest.debug"),
             Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
+            needsGradle(TaskKind.DEBUG, "1.10-rc-2"));
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             Arrays.asList(projectTask("run")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
@@ -160,14 +163,37 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command) {
         CommandWithActions task = DEFAULT_TASKS.get(command);
         if (task != null && task.getCustomActions().getTaskKind() == TaskKind.DEBUG) {
-            return debugActions();
+            return debugActions(task.getCustomActions().getGradleTargetVerifier());
         }
         return task != null ? task.getCustomActions() : null;
     }
 
-    private CustomCommandActions debugActions() {
+    public static CustomCommandActions needsGradle(TaskKind taskKind, final String minGradleVersionStr) {
+        final GradleVersion minGradleVersion = GradleVersion.version(minGradleVersionStr);
+
+        CustomCommandActions.Builder result = new CustomCommandActions.Builder(taskKind);
+        result.setGradleTargetVerifier(new GradleTargetVerifier() {
+            @Override
+            public boolean checkTaskExecutable(
+                    GradleTarget gradleTarget,
+                    OutputWriter output,
+                    OutputWriter errOutput) {
+                if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
+                    // TODO: I18N
+                    errOutput.println("This task needs at least Gradle version " + minGradleVersionStr);
+                    return false;
+                }
+
+                return true;
+            }
+        });
+        return result.create();
+    }
+
+    private CustomCommandActions debugActions(GradleTargetVerifier targetVerifier) {
         CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.DEBUG);
         result.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt)));
+        result.setGradleTargetVerifier(targetVerifier);
         return result.create();
     }
 
