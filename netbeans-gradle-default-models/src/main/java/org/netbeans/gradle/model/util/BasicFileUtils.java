@@ -165,6 +165,10 @@ public final class BasicFileUtils {
     }
 
     public static File toCanonicalFile(File file) {
+        if (file == null) {
+            return null;
+        }
+
         try {
             return file.getCanonicalFile();
         } catch (IOException ex) {
