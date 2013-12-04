@@ -364,7 +364,12 @@ public final class GradleModelLoader {
     }
 
     private static void introduceLoadedModel(NbGradleModel model, boolean replaced) {
-        getCache().replaceEntry(model);
+        if (replaced) {
+            getCache().replaceEntry(model);
+        }
+        else {
+            getCache().updateEntry(model);
+        }
         LISTENERS.fireEvent(model);
     }
 
