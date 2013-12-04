@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
@@ -19,7 +18,6 @@ public final class NbGradleExtensionRef {
 
     private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
-    private final AtomicBoolean activeState;
 
     public <ModelType> NbGradleExtensionRef(
             GradleProjectExtensionDef<ModelType> extensionDef,
@@ -37,7 +35,6 @@ public final class NbGradleExtensionRef {
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
-        this.activeState = new AtomicBoolean(false);
     }
 
     private static void checkExtensionName(String name, GradleProjectExtensionDef<?> def) {
@@ -108,25 +105,23 @@ public final class NbGradleExtensionRef {
     public void setModelForExtension(Object model) {
         boolean active = model != null;
 
-        if (activeState.compareAndSet(!active, active)) {
-            GradleProjectExtension2<?> extension = getExtension();
+        GradleProjectExtension2<?> extension = getExtension();
 
-            if (active) {
-                projectLookup.replaceLookups(
-                        extension.getPermanentProjectLookup(),
-                        extension.getProjectLookup());
-                extensionLookup.replaceLookups(
-                        extension.getExtensionLookup(),
-                        extension.getPermanentProjectLookup(),
-                        extension.getProjectLookup());
+        if (active) {
+            projectLookup.replaceLookups(
+                    extension.getPermanentProjectLookup(),
+                    extension.getProjectLookup());
+            extensionLookup.replaceLookups(
+                    extension.getExtensionLookup(),
+                    extension.getPermanentProjectLookup(),
+                    extension.getProjectLookup());
 
-                defWithExtension.activate(model);
-            }
-            else {
-                projectLookup.replaceLookups(extension.getPermanentProjectLookup());
-                extensionLookup.replaceLookups(Lookup.EMPTY);
-                defWithExtension.deactivate();
-            }
+            defWithExtension.activate(model);
+        }
+        else {
+            projectLookup.replaceLookups(extension.getPermanentProjectLookup());
+            extensionLookup.replaceLookups(Lookup.EMPTY);
+            defWithExtension.deactivate();
         }
     }
 
