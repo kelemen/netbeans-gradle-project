@@ -430,8 +430,10 @@ public final class AsyncGradleTask implements Runnable {
                     return null;
                 }
 
-                ProcessedCommandSpec processedSpec = new ProcessedCommandSpec(commandSpec);
-                return processedSpec.newBuildExecutionItem().getDaemonTaskDef();
+                ProcessedCommandSpec processedSpec = tryCreateCommandSpec(commandSpec);
+                return processedSpec != null
+                        ? processedSpec.newBuildExecutionItem().getDaemonTaskDef()
+                        : null;
             }
         };
 
@@ -460,16 +462,24 @@ public final class AsyncGradleTask implements Runnable {
         return taskDef;
     }
 
+    private ProcessedCommandSpec tryCreateCommandSpec(GradleCommandSpec commandSpec) {
+        GradleTaskDef taskDef = createTaskDef(commandSpec);
+        return taskDef != null
+                ? new ProcessedCommandSpec(commandSpec, taskDef)
+                : null;
+    }
+
     private class ProcessedCommandSpec {
         private final GradleTaskDef taskDef;
         private final GradleCommandSpec commandSpec;
         private final String taskName;
         private final String progressCaption;
 
-        public ProcessedCommandSpec(GradleCommandSpec commandSpec) {
+        public ProcessedCommandSpec(GradleCommandSpec commandSpec, GradleTaskDef taskDef) {
             assert commandSpec != null;
+            assert taskDef != null;
 
-            this.taskDef = createTaskDef(commandSpec);
+            this.taskDef = taskDef;
             this.commandSpec = new GradleCommandSpec(commandSpec.getSource(), taskDef);
             this.taskName = taskDef.getSafeCommandName();
             this.progressCaption = NbStrings.getExecuteTasksText(taskName);
