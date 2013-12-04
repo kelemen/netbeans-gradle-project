@@ -67,6 +67,7 @@ public final class CustomCommandActions {
         private TaskOutputProcessor stdOutProcessor;
         private TaskOutputProcessor stdErrProcessor;
         private ContextAwareCommandAction contextAwareAction;
+        private GradleTargetVerifier gradleTargetVerifier;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -149,7 +150,7 @@ public final class CustomCommandActions {
          * used to start the associated Gradle command and also the
          * {@link org.netbeans.api.project.Project Project} instance.
          * <P>
-         * You may set this property to {@code null}, if there is no such action
+         * You may set this property to {@code null}, if no such action
          * is needed. The default value for this property is {@code null}.
          *
          * @param contextAwareAction the custom code to be executed before and
@@ -158,6 +159,25 @@ public final class CustomCommandActions {
          */
         public void setContextAwareAction(@Nullable ContextAwareCommandAction contextAwareAction) {
             this.contextAwareAction = contextAwareAction;
+        }
+
+        /**
+         * Sets a custom code to verify if the associated task can be executed
+         * by the given Gradle process. The properties of Gradle available to check
+         * is defined in {@link org.netbeans.gradle.project.api.modelquery.GradleTarget GradleTarget}.
+         * <P>
+         * You may set this property to {@code null}, if no such action
+         * is needed (i.e., the task is to be executed for any version of Gradle).
+         * The default value for this property is {@code null}.
+         *
+         * @param gradleTargetVerifier the custom code to be used to verify
+         *   if the associated task can be executed or not. This argument
+         *   can be {@code null} if no such action is needed.
+         *
+         * @see org.netbeans.gradle.project.api.modelquery.GradleTarget
+         */
+        public void setGradleTargetVerifier(@Nullable GradleTargetVerifier gradleTargetVerifier) {
+            this.gradleTargetVerifier = gradleTargetVerifier;
         }
 
         /**
@@ -180,6 +200,7 @@ public final class CustomCommandActions {
     private final TaskOutputProcessor stdOutProcessor;
     private final TaskOutputProcessor stdErrProcessor;
     private final ContextAwareCommandAction contextAwareAction;
+    private final GradleTargetVerifier gradleTargetVerifier;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -187,6 +208,7 @@ public final class CustomCommandActions {
         this.stdOutProcessor = builder.stdOutProcessor;
         this.stdErrProcessor = builder.stdErrProcessor;
         this.contextAwareAction = builder.contextAwareAction;
+        this.gradleTargetVerifier = builder.gradleTargetVerifier;
     }
 
     /**
@@ -264,5 +286,23 @@ public final class CustomCommandActions {
     @CheckForNull
     public ContextAwareCommandAction getContextAwareAction() {
         return contextAwareAction;
+    }
+
+    /**
+     * Returns the custom code to verify if the associated task can be executed
+     * by the given Gradle process. The properties of Gradle available to check
+     * is defined in {@link org.netbeans.gradle.project.api.modelquery.GradleTarget GradleTarget}.
+     * <P>
+     * If this property is {@code null}, the task is to be executed for any
+     * version of Gradle.
+     *
+     * @return the custom code to verify if the associated task can be executed
+     *   by the given Gradle process.  This method may return {@code null}, if
+     *   no such action needs to be executed.
+     */
+    @Nullable
+    @CheckForNull
+    public GradleTargetVerifier getGradleTargetVerifier() {
+        return gradleTargetVerifier;
     }
 }

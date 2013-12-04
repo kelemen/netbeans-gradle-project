@@ -10,6 +10,7 @@ import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -28,6 +29,7 @@ public final class GradleTaskDef {
         private SmartOutputHandler.Visitor stdOutListener;
         private SmartOutputHandler.Visitor stdErrListener;
         private ContextAwareCommandFinalizer commandFinalizer;
+        private GradleTargetVerifier gradleTargetVerifier;
 
         private boolean cleanOutput;
         private boolean nonBlocking;
@@ -43,6 +45,7 @@ public final class GradleTaskDef {
             this.nonBlocking = taskDef.isNonBlocking();
             this.cleanOutput = taskDef.isCleanOutput();
             this.commandFinalizer = taskDef.getCommandFinalizer();
+            this.gradleTargetVerifier = taskDef.getGradleTargetVerifier();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -66,6 +69,7 @@ public final class GradleTaskDef {
             this.nonBlocking = false;
             this.cleanOutput = false;
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
+            this.gradleTargetVerifier = null;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
@@ -181,6 +185,14 @@ public final class GradleTaskDef {
             this.commandFinalizer = commandFinalizer;
         }
 
+        public GradleTargetVerifier getGradleTargetVerifier() {
+            return gradleTargetVerifier;
+        }
+
+        public void setGradleTargetVerifier(GradleTargetVerifier gradleTargetVerifier) {
+            this.gradleTargetVerifier = gradleTargetVerifier;
+        }
+
         public GradleTaskDef create() {
             return new GradleTaskDef(this);
         }
@@ -194,6 +206,7 @@ public final class GradleTaskDef {
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
     private final ContextAwareCommandFinalizer commandFinalizer;
+    private final GradleTargetVerifier gradleTargetVerifier;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
 
@@ -208,10 +221,15 @@ public final class GradleTaskDef {
         this.nonBlocking = builder.isNonBlocking();
         this.cleanOutput = builder.isCleanOutput();
         this.commandFinalizer = builder.getCommandFinalizer();
+        this.gradleTargetVerifier = builder.getGradleTargetVerifier();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
+    }
+
+    public GradleTargetVerifier getGradleTargetVerifier() {
+        return gradleTargetVerifier;
     }
 
     public boolean isCleanOutput() {
@@ -370,6 +388,8 @@ public final class GradleTaskDef {
             ContextAwareCommandFinalizer finalizer = contextAwareAction.startCommand(project, actionContext);
             builder.setCommandFinalizer(finalizer);
         }
+
+        builder.setGradleTargetVerifier(customActions.getGradleTargetVerifier());
 
         return builder;
     }

@@ -21,16 +21,20 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProgressEvent;
-import org.gradle.tooling.ProgressListener;
+import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.util.GradleVersion;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.TemporaryFileManager;
 import org.netbeans.gradle.model.util.TemporaryFileRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
@@ -38,6 +42,7 @@ import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.IOTabRef;
 import org.netbeans.gradle.project.output.IOTabs;
+import org.netbeans.gradle.project.output.InputOutputWrapper;
 import org.netbeans.gradle.project.output.LineOutputWriter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
@@ -147,20 +152,12 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static void configureBuildLauncher(
-            NbGradleProject project,
+            OperationInitializer targetSetup,
             BuildLauncher buildLauncher,
             GradleTaskDef taskDef,
-            List<TemporaryFileRef> initScripts,
-            final ProgressHandle progress) {
+            List<TemporaryFileRef> initScripts) {
 
-        File javaHome = GradleModelLoader.getScriptJavaHome(project);
-        if (javaHome != null) {
-            buildLauncher.setJavaHome(javaHome);
-        }
-
-        if (!taskDef.getJvmArguments().isEmpty()) {
-            buildLauncher.setJvmArguments(taskDef.getJvmArgumentsArray());
-        }
+        GradleModelLoader.setupLongRunningOP(targetSetup, buildLauncher);
 
         List<String> arguments = new LinkedList<String>();
         arguments.addAll(taskDef.getArguments());
@@ -174,13 +171,6 @@ public final class AsyncGradleTask implements Runnable {
         if (!arguments.isEmpty()) {
             buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
         }
-
-        buildLauncher.addProgressListener(new ProgressListener() {
-            @Override
-            public void statusChanged(ProgressEvent pe) {
-                progress.progress(pe.getDescription());
-            }
-        });
 
         buildLauncher.forTasks(taskDef.getTaskNamesArray());
     }
@@ -220,6 +210,36 @@ public final class AsyncGradleTask implements Runnable {
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
 
+    private boolean checkTaskExecutable(
+            ProjectConnection projectConnection,
+            GradleTaskDef taskDef,
+            GradleModelLoader.ModelBuilderSetup targetSetup,
+            InputOutputWrapper io) {
+
+        GradleTargetVerifier targetVerifier = taskDef.getGradleTargetVerifier();
+        if (targetVerifier == null) {
+            return true;
+        }
+
+        ModelBuilder<BuildEnvironment> envGetter = projectConnection.model(BuildEnvironment.class);
+        GradleModelLoader.setupLongRunningOP(targetSetup, envGetter);
+
+        BuildEnvironment buildEnv = envGetter.get();
+
+        GradleTarget gradleTarget = new GradleTarget(
+                    targetSetup.getJDKVersion(),
+                    GradleVersion.version(buildEnv.getGradle().getGradleVersion()));
+
+        return targetVerifier.checkTaskExecutable(gradleTarget, io.getOutRef(), io.getErrRef());
+    }
+
+    private GradleModelLoader.ModelBuilderSetup createTargetSetup(
+            GradleTaskDef taskDef,
+            ProgressHandle progress) {
+
+        return new GradleModelLoader.ModelBuilderSetup(project, taskDef.getJvmArguments(), progress);
+    }
+
     private void doGradleTasksWithProgress(
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
@@ -243,6 +263,8 @@ public final class AsyncGradleTask implements Runnable {
 
         File projectDir = project.getProjectDirectoryAsFile();
 
+        GradleModelLoader.ModelBuilderSetup targetSetup = createTargetSetup(taskDef, progress);
+
         GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
@@ -252,7 +274,7 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher = projectConnection.newBuild();
             List<TemporaryFileRef> initScripts = getAllInitScriptFiles(project);
             try {
-                configureBuildLauncher(project, buildLauncher, taskDef, initScripts, progress);
+                configureBuildLauncher(targetSetup, buildLauncher, taskDef, initScripts);
 
                 TaskOutputDef outputDef = taskDef.getOutputDef();
 
@@ -278,12 +300,16 @@ public final class AsyncGradleTask implements Runnable {
 
                         OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab);
                         try {
-                            tab.getIo().getIo().select();
-                            buildLauncher.run();
+                            InputOutputWrapper io = tab.getIo();
+                            io.getIo().select();
 
-                            taskDef.getCommandFinalizer().finalizeSuccessfulCommand(
-                                    buildOutput,
-                                    tab.getIo().getErrRef());
+                            if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
+                                buildLauncher.run();
+
+                                taskDef.getCommandFinalizer().finalizeSuccessfulCommand(
+                                        buildOutput,
+                                        io.getErrRef());
+                            }
                         } finally {
                             // This close method will only forward the last lines
                             // if they were not terminated with a line separator.

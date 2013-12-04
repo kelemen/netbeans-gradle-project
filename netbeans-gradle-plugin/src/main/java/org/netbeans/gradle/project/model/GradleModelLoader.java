@@ -405,12 +405,8 @@ public final class GradleModelLoader {
         args.setupLongRunningOP(op);
     }
 
-    private static ModelBuilderSetup modelBuilderSetupImpl(Project project, ProgressHandle progress) {
+    public static ModelBuilderSetup modelBuilderSetup(Project project, ProgressHandle progress) {
         return new ModelBuilderSetup(project, progress);
-    }
-
-    public static OperationInitializer modelBuilderSetup(Project project, ProgressHandle progress) {
-        return modelBuilderSetupImpl(project, progress);
     }
 
     private static NbGradleModel loadModelWithProgress(
@@ -429,7 +425,7 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            ModelBuilderSetup setup = modelBuilderSetupImpl(project, progress);
+            ModelBuilderSetup setup = modelBuilderSetup(project, progress);
 
             ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
             setupLongRunningOP(setup, modelBuilder);
@@ -581,16 +577,20 @@ public final class GradleModelLoader {
         throw new AssertionError();
     }
 
-    private static class ModelBuilderSetup implements OperationInitializer {
+    public static class ModelBuilderSetup implements OperationInitializer {
         private static final SpecificationVersion DEFAULT_JDK_VERSION = new SpecificationVersion("1.5");
 
         private final ProgressHandle progress;
 
         private final JavaPlatform jdkPlatform;
         private final File jdkHome;
-        private final List<String> globalJvmArgs;
+        private final List<String> jvmArgs;
 
         public ModelBuilderSetup(Project project, ProgressHandle progress) {
+            this(project, GlobalGradleSettings.getGradleJvmArgs().getValue(), progress);
+        }
+
+        public ModelBuilderSetup(Project project, List<String> jvmArgs, ProgressHandle progress) {
             this.progress = progress;
 
             JavaPlatform selectedPlatform = GradleModelLoader.tryGetScriptJavaPlatform(project);
@@ -599,9 +599,8 @@ public final class GradleModelLoader {
                     ? selectedPlatform
                     : JavaPlatform.getDefault();
 
-            List<String> currentJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
-            this.globalJvmArgs = currentJvmArgs != null
-                    ? new ArrayList<String>(currentJvmArgs)
+            this.jvmArgs = jvmArgs != null
+                    ? new ArrayList<String>(jvmArgs)
                     : Collections.<String>emptyList();
         }
 
@@ -625,18 +624,20 @@ public final class GradleModelLoader {
                 args.setJavaHome(jdkHome);
             }
 
-            if (!globalJvmArgs.isEmpty()) {
-                args.setJvmArguments(globalJvmArgs.toArray(new String[0]));
+            if (!jvmArgs.isEmpty()) {
+                args.setJvmArguments(jvmArgs.toArray(new String[0]));
             }
 
-            args.setProgressListeners(new ProgressListener[]{
-                new ProgressListener() {
-                    @Override
-                    public void statusChanged(ProgressEvent pe) {
-                        progress.progress(pe.getDescription());
+            if (progress != null) {
+                args.setProgressListeners(new ProgressListener[]{
+                    new ProgressListener() {
+                        @Override
+                        public void statusChanged(ProgressEvent pe) {
+                            progress.progress(pe.getDescription());
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 }
