@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
@@ -13,6 +15,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.spi.project.SingleMethod;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -37,22 +40,7 @@ public enum StandardTaskVariable {
                 return VariableValue.NULL_VALUE;
             }
 
-            SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
-                    .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-
-            String relFileName = null;
-            for (SourceGroup group: sourceGroups) {
-                FileObject sourceRoot = group.getRootFolder();
-                String relPath = FileUtil.getRelativePath(sourceRoot, file);
-                if (relPath != null) {
-                    // Remove the ".java" or ".groovy" from the end of
-                    // the file name
-                    relFileName = removeExtension(relPath);
-                    break;
-                }
-            }
-
-            return new VariableValue(relFileName != null ? relFileName.replace('/', '.') : null);
+            return getClassNameForFile(project, file);
         }
     }),
     TEST_FILE_PATH("test-file-path", new ValueGetter() {
@@ -68,6 +56,12 @@ public enum StandardTaskVariable {
                     : null;
         }
     }),
+    TEST_METHOD("test-method", new ValueGetter() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            return getMethodReplaceVariable(variables, project, actionContext);
+        }
+    }),
     PLATFORM_DIR("platform-dir", new ValueGetter() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
@@ -78,8 +72,50 @@ public enum StandardTaskVariable {
         }
     });
 
+    private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
+        SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
+                .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+
+        String relFileName = null;
+        for (SourceGroup group: sourceGroups) {
+            FileObject sourceRoot = group.getRootFolder();
+            String relPath = FileUtil.getRelativePath(sourceRoot, file);
+            if (relPath != null) {
+                // Remove the ".java" or ".groovy" from the end of
+                // the file name
+                relFileName = removeExtension(relPath);
+                break;
+            }
+        }
+
+        return new VariableValue(relFileName != null ? relFileName.replace('/', '.') : null);
+    }
+
+    private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
     private static final Map<TaskVariable, StandardTaskVariable> TASK_VARIABLE_MAP
             = createStandardMap();
+
+    private static VariableValue getMethodReplaceVariable(
+            TaskVariableMap variables,
+            NbGradleProject project,
+            Lookup actionContext) {
+
+        SingleMethod method = actionContext.lookup(SingleMethod.class);
+        if (method == null) {
+            return VariableValue.NULL_VALUE;
+        }
+
+        String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
+        if (selectedClass == null) {
+            selectedClass = getClassNameForFile(project, method.getFile()).value;
+            if (selectedClass == null) {
+                LOGGER.log(Level.INFO, "Could not find class file name for file {0}", method.getFile());
+                return VariableValue.NULL_VALUE;
+            }
+        }
+
+        return new VariableValue(selectedClass + "." + method.getMethodName());
+    }
 
     private static String removeExtension(String filePath) {
         int extSeparatorIndex = filePath.lastIndexOf('.');

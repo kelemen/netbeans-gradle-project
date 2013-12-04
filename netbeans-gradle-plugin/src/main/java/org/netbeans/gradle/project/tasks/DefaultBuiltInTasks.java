@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.SingleMethod;
 
 public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     private static final Logger LOGGER = Logger.getLogger(DefaultBuiltInTasks.class.getName());
@@ -66,6 +67,8 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_RUN_SINGLE, NbStrings.getRunSingleCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_DEBUG_SINGLE, NbStrings.getDebugSingleCommandCaption());
         DISPLAY_NAME_MAP.put(JavaProjectConstants.COMMAND_DEBUG_FIX, NbStrings.getApplyCodeChangesCommandCaption());
+        DISPLAY_NAME_MAP.put(SingleMethod.COMMAND_RUN_SINGLE_METHOD, NbStrings.getTestSingleMethodCommandCaption());
+        DISPLAY_NAME_MAP.put(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, NbStrings.getDebugTestSingleMethodCommandCaption());
     }
 
     private static void addToDefaults(String command, CommandWithActions task) {

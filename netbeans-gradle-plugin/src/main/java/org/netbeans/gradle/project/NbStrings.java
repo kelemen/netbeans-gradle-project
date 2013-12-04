@@ -119,6 +119,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DebugTestSingle");
     }
 
+    public static String getTestSingleMethodCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TestSingleMethod");
+    }
+
+    public static String getDebugTestSingleMethodCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DebugTestSingleMethod");
+    }
+
     public static String getRunSingleCommandCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.RunSingle");
     }
