@@ -38,6 +38,11 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
+    private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
+            Arrays.asList("run"),
+            Collections.<String>emptyList(),
+            Collections.<String>emptyList(),
+            CustomCommandActions.RUN);
     private static final CommandWithActions DEFAULT_DEBUG_TASK = blockingCommand(
             Arrays.asList("debug"),
             Collections.<String>emptyList(),
@@ -88,6 +93,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         DEFAULT_TASKS = new HashMap<String, CommandWithActions>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
+        addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
         addToDefaults(ActionProvider.COMMAND_DEBUG, DEFAULT_DEBUG_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
