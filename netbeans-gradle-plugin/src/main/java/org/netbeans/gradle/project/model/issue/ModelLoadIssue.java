@@ -6,7 +6,8 @@ import javax.annotation.Nonnull;
 public interface ModelLoadIssue {
     public enum Severity {
         INTERNAL_ERROR(100),
-        EXTENSION_ERROR(50);
+        EXTENSION_ERROR(50),
+        BUILD_SCRIPT_ERROR(30);
 
         private final int value;
 

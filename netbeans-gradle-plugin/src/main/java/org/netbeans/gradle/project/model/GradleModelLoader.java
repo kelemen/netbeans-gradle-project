@@ -46,7 +46,9 @@ import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.NamedFile;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -246,6 +248,25 @@ public final class GradleModelLoader {
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
+    private static void reportModelLoadError(NbGradleProject project, GradleModelLoadError error) {
+        // TODO: I18N
+        Throwable unexpectedError = error.getUnexpectedError();
+        if (unexpectedError != null) {
+            ModelLoadIssue unexpectedIssue = ModelLoadIssues.internalError(
+                    "An unexpected error while evaluating the build scripts of " + project.getDisplayName(),
+                    unexpectedError);
+            ModelLoadIssueReporter.reportAllIssues(Collections.singleton(unexpectedIssue));
+        }
+
+        Throwable buildScriptEvaluationError = error.getBuildScriptEvaluationError();
+        if (buildScriptEvaluationError != null) {
+            ModelLoadIssue buildScriptIssue = ModelLoadIssues.buildScriptError(
+                    "There was an error in the build scripts of " + project.getDisplayName(),
+                    buildScriptEvaluationError);
+            ModelLoadIssueReporter.reportAllIssues(Collections.singleton(buildScriptIssue));
+        }
+    }
+
     public static void fetchModel(
             final NbGradleProject project,
             final boolean mayFetchFromCache,
@@ -273,8 +294,12 @@ public final class GradleModelLoader {
                     error = ex;
                 } catch (GradleConnectionException ex) {
                     error = ex;
+                } catch (GradleModelLoadError ex) {
+                    reportModelLoadError(project, ex);
                 } finally {
-                    listener.onComplete(model, error);
+                    if (model != null || error != null) {
+                        listener.onComplete(model, error);
+                    }
                     if (error != null) {
                         GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
                     }
@@ -412,7 +437,7 @@ public final class GradleModelLoader {
     private static NbGradleModel loadModelWithProgress(
             final NbGradleProject project,
             final ProgressHandle progress,
-            final NbGradleModel cachedEntry) throws IOException {
+            final NbGradleModel cachedEntry) throws IOException, GradleModelLoadError {
         File projectDir = project.getProjectDirectoryAsFile();
 
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);

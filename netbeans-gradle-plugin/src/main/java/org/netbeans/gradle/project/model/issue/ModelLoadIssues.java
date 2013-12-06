@@ -14,6 +14,10 @@ public final class ModelLoadIssues {
         return new ModelLoadIssueImpl(ModelLoadIssue.Severity.EXTENSION_ERROR, issueDescription, stackTrace);
     }
 
+    public static ModelLoadIssue buildScriptError(String issueDescription, Throwable stackTrace) {
+        return new ModelLoadIssueImpl(ModelLoadIssue.Severity.BUILD_SCRIPT_ERROR, issueDescription, stackTrace);
+    }
+
     public static ModelLoadIssue projectModelLoadError(
             FetchedProjectModels project,
             Throwable issue) {

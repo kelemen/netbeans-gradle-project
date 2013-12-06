@@ -46,5 +46,8 @@ public interface NbModelLoader {
         }
     }
 
-    public Result loadModels(NbGradleProject project, ProjectConnection connection, ProgressHandle progress) throws IOException;
+    public Result loadModels(
+            NbGradleProject project,
+            ProjectConnection connection,
+            ProgressHandle progress) throws IOException, GradleModelLoadError;
 }

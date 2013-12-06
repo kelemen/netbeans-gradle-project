@@ -62,6 +62,13 @@ public final class GenericModelFetcher {
         CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
     }
 
+    private FetchedModelsOrError transformActionModels(ActionFetchedModelsOrError actionModels) {
+        return new FetchedModelsOrError(
+                transformActionModels(actionModels.getModels()),
+                actionModels.getBuildScriptEvaluationError(),
+                actionModels.getUnexpectedError());
+    }
+
     private FetchedProjectModels transformActionModels(ActionFetchedProjectModels actionModels) {
         GradleMultiProjectDef projectDef = actionModels.getProjectDef();
         Map<Class<?>, Object> toolingModels = actionModels.getToolingModels();
@@ -81,6 +88,10 @@ public final class GenericModelFetcher {
     }
 
     private FetchedModels transformActionModels(ActionFetchedModels actionModels) {
+        if (actionModels == null) {
+            return null;
+        }
+
         Map<Object, List<?>> buildModels
                 = buildInfoBuilders.deserializeResults(actionModels.getBuildModels());
         FetchedProjectModels defaultProjectModels
@@ -91,10 +102,9 @@ public final class GenericModelFetcher {
         return new FetchedModels(new FetchedBuildModels(buildModels), defaultProjectModels, otherProjectModels);
     }
 
-    public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
-        BuildActionExecuter<ActionFetchedModels> executer = connection.action(new ModelFetcherBuildAction(
-                buildInfoBuilders,
-                modelClasses));
+    public FetchedModelsOrError getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
+        BuildActionExecuter<ActionFetchedModelsOrError> executer = connection.action(
+                new ModelFetcherBuildAction(buildInfoBuilders, modelClasses));
 
         BuildOperationArgs buildOPArgs = new BuildOperationArgs();
         init.initOperation(buildOPArgs);
@@ -239,7 +249,7 @@ public final class GenericModelFetcher {
         }
     }
 
-    private static final class ModelFetcherBuildAction implements BuildAction<ActionFetchedModels> {
+    private static final class ModelFetcherBuildAction implements BuildAction<ActionFetchedModelsOrError> {
         private static final long serialVersionUID = 1L;
 
         // key -> list of BuildInfoBuilder
@@ -290,13 +300,7 @@ public final class GenericModelFetcher {
             return result.create();
         }
 
-        public ActionFetchedModels execute(final BuildController controller) {
-            // TODO: This is when build script evaluation happens. That is,
-            //   the following object creation should always succeed for correct
-            //   build scripts and the created object need the project evaluated.
-            //   Therefore we must catch exceptions here and report them back.
-            EvaluatedBuild evaluatedBuild = new EvaluatedBuild(controller);
-
+        public ActionFetchedModels executeUnsafe(EvaluatedBuild evaluatedBuild, BuildController controller) {
             AllProjectInfoBuilder builder = new AllProjectInfoBuilder(modelClasses, evaluatedBuild);
 
             Map<String, ActionFetchedProjectModels> fetchedModels = builder.buildProjectModels(controller);
@@ -304,6 +308,28 @@ public final class GenericModelFetcher {
 
             CustomSerializedMap buildModels = getBuildInfoResults(controller);
             return new ActionFetchedModels(buildModels, defaultModels, fetchedModels.values());
+        }
+
+        public ActionFetchedModelsOrError execute(final BuildController controller) {
+            EvaluatedBuild evaluatedBuild;
+            try {
+                // Note: Currently Gradle throws an exception before actually
+                // executing the build action. However, if this behaviour is
+                // ever changed, I expect them to be thrown here.
+                evaluatedBuild = new EvaluatedBuild(controller);
+            } catch (Throwable buildScriptEvaluationError) {
+                return new ActionFetchedModelsOrError(null, buildScriptEvaluationError, null);
+            }
+
+            Throwable unexpected = null;
+            ActionFetchedModels result = null;
+            try {
+                result = executeUnsafe(evaluatedBuild, controller);
+            } catch (Throwable ex) {
+                unexpected = ex;
+            }
+
+            return new ActionFetchedModelsOrError(result, null, unexpected);
         }
     }
 

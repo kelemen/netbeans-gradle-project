@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
+import org.netbeans.gradle.model.FetchedModelsOrError;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
@@ -477,6 +478,10 @@ public class MultiLevelJavaProjectTest {
         return result != null ? result.getResultIfNoIssue() : null;
     }
 
+    private static FetchedModels verifyNoError(FetchedModelsOrError modelsOrError) {
+        return InfoQueries.verifyNoError(modelsOrError);
+    }
+
     @Test
     public void testManyQueries() throws IOException {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
@@ -505,7 +510,7 @@ public class MultiLevelJavaProjectTest {
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
-                FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
+                FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
 
                 String buildInfo = (String)getSingleBuildResult(
                         models.getBuildInfoResults().get(0));
@@ -562,7 +567,7 @@ public class MultiLevelJavaProjectTest {
         final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
-                FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
+                FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
 
                 String buildInfo = (String)getSingleBuildResult(
                         models.getBuildInfoResults().get(0));
@@ -598,7 +603,7 @@ public class MultiLevelJavaProjectTest {
         Set<Class<?>> toolingModels = new HashSet<Class<?>>(Arrays.asList(modelClasses));
 
         GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+        FetchedModels models = verifyNoError(modelFetcher.getModels(connection, defaultInit()));
 
         return models.getDefaultProjectModels().getToolingModels();
     }

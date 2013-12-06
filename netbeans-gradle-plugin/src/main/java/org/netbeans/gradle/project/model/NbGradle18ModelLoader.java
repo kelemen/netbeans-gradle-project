@@ -15,6 +15,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
+import org.netbeans.gradle.model.FetchedModelsOrError;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GenericProjectProperties;
@@ -72,10 +73,16 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     public Result loadModels(
             NbGradleProject project,
             ProjectConnection connection,
-            ProgressHandle progress) throws IOException {
+            ProgressHandle progress) throws IOException, GradleModelLoadError {
 
         ProjectModelFetcher modelFetcher = new ProjectModelFetcher(project, gradleTarget);
-        FetchedModels fetchedModels = modelFetcher.getModels(connection, setup);
+        FetchedModelsOrError fetchedModelsOrError = modelFetcher.getModels(connection, setup);
+        FetchedModels fetchedModels = fetchedModelsOrError.getModels();
+        if (fetchedModels == null) {
+            throw new GradleModelLoadError(
+                    fetchedModelsOrError.getBuildScriptEvaluationError(),
+                    fetchedModelsOrError.getUnexpectedError());
+        }
 
         progress.progress(NbStrings.getParsingModel());
 
@@ -352,7 +359,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             modelFetcher = new GenericModelFetcher(buildInfoRequests, projectInfoRequests, models);
         }
 
-        public FetchedModels getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
+        public FetchedModelsOrError getModels(ProjectConnection connection, OperationInitializer init) throws IOException {
             return modelFetcher.getModels(connection, init);
         }
 

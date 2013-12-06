@@ -100,6 +100,9 @@ public final class ModelLoadIssueReporter {
             case EXTENSION_ERROR:
                 subProblem = "This is most likely a bug in an extension.";
                 break;
+            case BUILD_SCRIPT_ERROR:
+                subProblem = "There was an error in the build scripts of the evaluated project.";
+                break;
             default:
                 subProblem = worstProblem.getSeverity().name();
                 break;

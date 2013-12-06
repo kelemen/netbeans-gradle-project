@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.ProjectConnection;
+
+import static org.junit.Assert.*;
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
+import org.netbeans.gradle.model.FetchedModelsOrError;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
@@ -19,7 +22,6 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
-import static org.junit.Assert.assertTrue;
 import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
 
 public final class InfoQueries {
@@ -101,12 +103,21 @@ public final class InfoQueries {
         return CollectionUtils.getSingleElement(list);
     }
 
+    public static FetchedModels verifyNoError(FetchedModelsOrError modelsOrError) {
+        assertNull(modelsOrError.getBuildScriptEvaluationError());
+        assertNull(modelsOrError.getUnexpectedError());
+
+        FetchedModels result = modelsOrError.getModels();
+        assertNotNull(result);
+        return result;
+    }
+
     public static BuilderResult fetchSingleBuildInfoWithError(
             ProjectConnection connection,
             BuildInfoBuilder<?> infoBuilder) throws IOException {
 
         GenericModelFetcher modelFetcher = buildInfoFetcher(infoBuilder);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+        FetchedModels models = verifyNoError(modelFetcher.getModels(connection, defaultInit()));
 
         assertTrue(models.getDefaultProjectModels().getProjectInfoResults().isEmpty());
 
@@ -118,7 +129,7 @@ public final class InfoQueries {
             ProjectInfoBuilder<?> infoBuilder) throws IOException {
 
         GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+        FetchedModels models = verifyNoError(modelFetcher.getModels(connection, defaultInit()));
 
         assertTrue(models.getBuildInfoResults().isEmpty());
 
@@ -155,7 +166,7 @@ public final class InfoQueries {
             ProjectConnection connection) throws IOException {
 
         GenericModelFetcher modelFetcher = basicInfoFetcher();
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+        FetchedModels models = verifyNoError(modelFetcher.getModels(connection, defaultInit()));
 
         return models.getDefaultProjectModels().getProjectDef();
     }
