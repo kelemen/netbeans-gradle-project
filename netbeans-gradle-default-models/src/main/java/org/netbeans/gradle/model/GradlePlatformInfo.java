@@ -4,6 +4,7 @@ import java.io.Serializable;
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.netbeans.gradle.model.util.BuilderUtils;
 
 /**
  * Defines the Gradle version and the JVM evaluating the build scripts.
@@ -88,6 +89,10 @@ public final class GradlePlatformInfo implements Serializable {
             JavaVersion javaVersion = JavaVersion.current();
 
             return new GradlePlatformInfo(buildEnv, javaVersion);
+        }
+
+        public String getName() {
+            return BuilderUtils.getNameForEnumBuilder(this);
         }
     }
 }

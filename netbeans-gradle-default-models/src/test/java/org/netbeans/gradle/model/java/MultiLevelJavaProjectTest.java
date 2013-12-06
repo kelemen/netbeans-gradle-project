@@ -430,16 +430,38 @@ public class MultiLevelJavaProjectTest {
     }
 
     @Test
-    public void testFailingQuery() throws IOException {
+    public void testFailingProjectQuery() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
-                String message = "testFailingQuery-message";
+                String message = "testFailingProjectQuery-message";
                 FailingProjectInfoBuilder builder = new FailingProjectInfoBuilder(message);
                 BuilderResult result = fetchSingleProjectInfoWithError(connection, builder);
                 assertNotNull("Required result for FailingProjectInfoBuilder.", result);
 
                 BuilderIssue issue = result.getIssue();
                 assertNotNull("Required issue for FailingProjectInfoBuilder", issue);
+
+                assertEquals("Expected approriate builder name.", builder.getName(), issue.getName());
+                String issueMessage = issue.getException().getMessage();
+                if (!issueMessage.contains(message)) {
+                    fail("Issue message is invalid: " + issueMessage);
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testFailingBuildQuery() throws IOException {
+        runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                String message = "testFailingBuildQuery-message";
+                FailingBuildInfoBuilder builder = new FailingBuildInfoBuilder(message);
+
+                BuilderResult result = fetchSingleBuildInfoWithError(connection, builder);
+                assertNotNull("Required result for FailingBuildInfoBuilder.", result);
+
+                BuilderIssue issue = result.getIssue();
+                assertNotNull("Required issue for FailingBuildInfoBuilder", issue);
 
                 assertEquals("Expected approriate builder name.", builder.getName(), issue.getName());
                 String issueMessage = issue.getException().getMessage();
@@ -485,7 +507,7 @@ public class MultiLevelJavaProjectTest {
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
 
-                String buildInfo = (String)CollectionUtils.getSingleElement(
+                String buildInfo = (String)getSingleBuildResult(
                         models.getBuildInfoResults().get(0));
                 assertEquals(prefix + ROOT_NAME, buildInfo);
 
@@ -542,7 +564,7 @@ public class MultiLevelJavaProjectTest {
             public void doTask(ProjectConnection connection) throws Exception {
                 FetchedModels models = fetcher.getModels(connection, TestUtils.defaultInit());
 
-                String buildInfo = (String)CollectionUtils.getSingleElement(
+                String buildInfo = (String)getSingleBuildResult(
                         models.getBuildInfoResults().get(0));
                 assertEquals(prefix + ROOT_NAME, buildInfo);
 

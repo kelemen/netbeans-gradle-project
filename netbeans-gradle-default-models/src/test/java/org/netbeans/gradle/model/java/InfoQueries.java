@@ -101,6 +101,18 @@ public final class InfoQueries {
         return CollectionUtils.getSingleElement(list);
     }
 
+    public static BuilderResult fetchSingleBuildInfoWithError(
+            ProjectConnection connection,
+            BuildInfoBuilder<?> infoBuilder) throws IOException {
+
+        GenericModelFetcher modelFetcher = buildInfoFetcher(infoBuilder);
+        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+
+        assertTrue(models.getDefaultProjectModels().getProjectInfoResults().isEmpty());
+
+        return getSingleElement(models.getBuildInfoResults().get(0));
+    }
+
     public static BuilderResult fetchSingleProjectInfoWithError(
             ProjectConnection connection,
             ProjectInfoBuilder<?> infoBuilder) throws IOException {
@@ -135,11 +147,12 @@ public final class InfoQueries {
             ProjectConnection connection,
             BuildInfoBuilder<T> infoBuilder) throws IOException {
 
-        GenericModelFetcher modelFetcher = buildInfoFetcher(infoBuilder);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
+        BuilderResult builderResult = fetchSingleBuildInfoWithError(connection, infoBuilder);
 
         @SuppressWarnings("unchecked")
-        T result = (T)getSingleElement(models.getBuildInfoResults().get(0));
+        T result = builderResult != null
+                ? (T)builderResult.getResultIfNoIssue()
+                : null;
         return result;
     }
 

@@ -28,6 +28,7 @@ import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
+import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
@@ -266,10 +267,23 @@ public final class GenericModelFetcher {
             for (Map.Entry<Object, List<?>> entry: buildInfoRequests.entrySet()) {
                 Object key = entry.getKey();
 
-                for (Object builder: entry.getValue()) {
-                    Object info = ((BuildInfoBuilder<?>)builder).getInfo(controller);
-                    if (info != null) {
-                        result.addValue(key, info);
+                for (Object buildBuilder: entry.getValue()) {
+                    Object info = null;
+                    Throwable issue = null;
+                    BuildInfoBuilder<?> builder = null;
+
+                    try {
+                        builder = (BuildInfoBuilder<?>)buildBuilder;
+                        info = builder.getInfo(controller);
+                    } catch (Throwable ex) {
+                        issue = ex;
+                    }
+
+                    if (info != null || issue != null) {
+                        BuilderResult builderResult = new BuilderResult(
+                                info,
+                                BuilderUtils.createIssue(builder, issue));
+                        result.addValue(key, builderResult);
                     }
                 }
             }

@@ -33,7 +33,7 @@ public final class FetchedModels implements Serializable {
         return buildModels;
     }
 
-    public Map<Object, List<?>> getBuildInfoResults() {
+    public Map<Object, List<BuilderResult>> getBuildInfoResults() {
         return buildModels.getBuildInfoResults();
     }
 
