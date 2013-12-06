@@ -129,11 +129,6 @@ public final class InfoQueries {
             ProjectConnection connection,
             ProjectInfoBuilder<T> infoBuilder) throws IOException {
 
-        GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
-        FetchedModels models = modelFetcher.getModels(connection, defaultInit());
-
-        assertTrue(models.getBuildInfoResults().isEmpty());
-
         BuilderResult builderResult = fetchSingleProjectInfoWithError(connection, infoBuilder);
 
         @SuppressWarnings("unchecked")
