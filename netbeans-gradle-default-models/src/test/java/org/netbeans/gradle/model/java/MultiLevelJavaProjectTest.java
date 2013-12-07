@@ -425,7 +425,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 String prefix = "testCustomQuery-";
-                String result = fetchSingleBuildInfo(connection, new TestBuildInfoBuilder(prefix));
+                String result = fetchSingleBuildInfo(connection, TestBuilders.testBuildInfoBuilder(prefix));
 
                 assertEquals(prefix + ROOT_NAME, result);
             }
@@ -505,7 +505,7 @@ public class MultiLevelJavaProjectTest {
 
         final String prefix = "testCustomQuery-";
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(new TestBuildInfoBuilder(prefix))));
+                InfoQueries.toCustomQuery(TestBuilders.testBuildInfoBuilder(prefix))));
 
         toolingModels.add(IdeaProject.class);
 
@@ -562,7 +562,7 @@ public class MultiLevelJavaProjectTest {
 
         final String prefix = "testCustomQuery-";
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(new TestBuildInfoBuilder(prefix))));
+                InfoQueries.toCustomQuery(TestBuilders.testBuildInfoBuilder(prefix))));
 
         toolingModels.add(IdeaProject.class);
 

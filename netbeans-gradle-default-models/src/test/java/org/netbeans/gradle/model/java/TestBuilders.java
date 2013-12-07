@@ -7,12 +7,36 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
 public final class TestBuilders {
+    public static BuildInfoBuilder<String> testBuildInfoBuilder(String prefix) {
+        return new TestBuildInfoBuilder(prefix);
+    }
+
     public static BuildInfoBuilder<Void> failingBuildInfoBuilder(String exceptionMessage) {
         return new FailingBuildInfoBuilder(exceptionMessage);
     }
 
     public static ProjectInfoBuilder<Void> failingProjectInfoBuilder(String exceptionMessage) {
         return new FailingProjectInfoBuilder(exceptionMessage);
+    }
+
+    private static final class TestBuildInfoBuilder implements BuildInfoBuilder<String> {
+        private static final long serialVersionUID = 1L;
+
+        private final String prefix;
+
+        public TestBuildInfoBuilder(String prefix) {
+            if (prefix == null) throw new NullPointerException("prefix");
+            this.prefix = prefix;
+        }
+
+        public String getInfo(BuildController controller) {
+            String rootName = controller.getBuildModel().getRootProject().getName();
+            return prefix + rootName;
+        }
+
+        public String getName() {
+            return BuilderUtils.getNameForGenericBuilder(this, prefix);
+        }
     }
 
     private static final class FailingBuildInfoBuilder implements BuildInfoBuilder<Void> {
