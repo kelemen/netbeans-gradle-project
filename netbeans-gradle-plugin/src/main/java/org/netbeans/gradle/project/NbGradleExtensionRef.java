@@ -99,7 +99,12 @@ public final class NbGradleExtensionRef {
     public ParsedModel<?> parseModel(ModelLoadResult retrievedModels) {
         if (retrievedModels == null) throw new NullPointerException("retrievedModels");
 
-        return safelyReturn(getExtensionDef().parseModel(retrievedModels));
+        try {
+            return safelyReturn(getExtensionDef().parseModel(retrievedModels));
+        } catch (Throwable ex) {
+            LOGGER.log(Level.SEVERE, "Extension failed to parse models: " + getName(), ex);
+            return ParsedModel.noModels();
+        }
     }
 
     public void setModelForExtension(Object model) {
