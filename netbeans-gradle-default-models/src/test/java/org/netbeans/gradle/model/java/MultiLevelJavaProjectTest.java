@@ -37,6 +37,7 @@ import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.internal.ConstBuilders;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
@@ -637,6 +638,8 @@ public class MultiLevelJavaProjectTest {
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableResultProjectInfoBuilder())));
         projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
                 InfoQueries.toQueryWithKnownClassPath(TestBuilders.testProjectInfoBuilder(""))));
+        projectInfos.put(4, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toQueryWithKnownClassPath(ConstBuilders.constProjectInfoBuilder(new SerializableObject()))));
 
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.testBuildInfoBuilder(buildInfoPrefix))));
@@ -646,6 +649,8 @@ public class MultiLevelJavaProjectTest {
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableResultBuildInfoBuilder())));
         buildInfos.put(3, Collections.<GradleBuildInfoQuery<?>>singletonList(
                 InfoQueries.toQueryWithKnownClassPath(TestBuilders.testBuildInfoBuilder(""))));
+        buildInfos.put(4, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toQueryWithKnownClassPath(ConstBuilders.constBuildInfoBuilder(new SerializableObject()))));
 
         toolingModels.add(IdeaProject.class);
 
@@ -660,10 +665,13 @@ public class MultiLevelJavaProjectTest {
                         .getSingleElement(models.getBuildInfoResults().get(2));
                 BuilderResult buildInfo3 = CollectionUtils
                         .getSingleElement(models.getBuildInfoResults().get(3));
+                BuilderResult buildInfo4 = CollectionUtils
+                        .getSingleElement(models.getBuildInfoResults().get(4));
 
                 verifySerializationError(buildInfo1);
                 verifySerializationError(buildInfo2);
                 verifyDeserializationError(buildInfo3);
+                verifyDeserializationError(buildInfo4);
 
                 BuilderResult projectInfo1 = CollectionUtils.getSingleElement(
                         models.getDefaultProjectModels().getProjectInfoResults().get(1));
@@ -671,10 +679,13 @@ public class MultiLevelJavaProjectTest {
                         models.getDefaultProjectModels().getProjectInfoResults().get(2));
                 BuilderResult projectInfo3 = CollectionUtils.getSingleElement(
                         models.getDefaultProjectModels().getProjectInfoResults().get(3));
+                BuilderResult projectInfo4 = CollectionUtils.getSingleElement(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(4));
 
                 verifySerializationError(projectInfo1);
                 verifySerializationError(projectInfo2);
                 verifyDeserializationError(projectInfo3);
+                verifyDeserializationError(projectInfo4);
 
                 Object buildInfoOk = getSingleBuildResult(
                         models.getBuildInfoResults().get(0));
