@@ -267,8 +267,9 @@ public final class GenericModelFetcher {
 
         private CustomSerializedMap getBuildInfoResults(BuildController controller) {
             ClassLoader parentClassLoader = getClass().getClassLoader();
-            Map<Object, List<?>> buildInfoRequests
-                    = serializedBuildInfoRequests.deserialize(parentClassLoader);
+            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(
+                    parentClassLoader,
+                    GradleInfoQueryMap.buildInfoBuilderIssueTransformer());
 
             if (buildInfoRequests.isEmpty()) {
                 return CustomSerializedMap.EMPTY;

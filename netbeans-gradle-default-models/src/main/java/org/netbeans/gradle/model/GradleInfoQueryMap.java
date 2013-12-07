@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.gradle.tooling.BuildController;
 import org.netbeans.gradle.model.api.GradleInfoQuery;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
@@ -16,6 +17,7 @@ import org.netbeans.gradle.model.internal.IssueTransformer;
 import org.netbeans.gradle.model.internal.SerializedEntries;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 final class GradleInfoQueryMap {
     private final CustomSerializedMap builderMap;
@@ -155,6 +157,36 @@ final class GradleInfoQueryMap {
         return BuilderIssueTransformer.INSTANCE;
     }
 
+    public static IssueTransformer buildInfoBuilderIssueTransformer() {
+        return BuildInfoBuilderIssueTransformer.INSTANCE;
+    }
+
+    private static enum BuildInfoBuilderIssueTransformer implements IssueTransformer {
+        INSTANCE;
+
+        public Object transformIssue(Throwable issue) {
+            return new FailingBuildInfoBuilder(issue);
+        }
+    }
+
+    private static final class FailingBuildInfoBuilder implements BuildInfoBuilder<Void> {
+        private static final long serialVersionUID = 1L;
+
+        private final RuntimeException issue;
+
+        public FailingBuildInfoBuilder(Throwable issue) {
+            this.issue = TransferableExceptionWrapper.wrap(issue);
+        }
+
+        public Void getInfo(BuildController controller) {
+            throw issue;
+        }
+
+        public String getName() {
+            return "";
+        }
+    }
+
     private static enum BuilderIssueTransformer implements IssueTransformer {
         INSTANCE;
 
@@ -207,7 +239,9 @@ final class GradleInfoQueryMap {
             return result;
         }
 
-        public Map<Object, List<?>> deserialize(ClassLoader parent) {
+        public Map<Object, List<?>> deserialize(
+                ClassLoader parent,
+                IssueTransformer deserializationIssueTransformer) {
             Map<Set<File>, ClassLoader> cache = new HashMap<Set<File>, ClassLoader>();
             Map<Object, List<?>> result = CollectionUtils.newHashMap(builderMap.size());
 
@@ -215,7 +249,14 @@ final class GradleInfoQueryMap {
                 KeyWrapper key = (KeyWrapper)entry.getKey();
 
                 ClassLoader classLoader = getClassLoaderForKey(key, parent, cache);
-                result.put(key, entry.getValue().getUnserialized(classLoader));
+                List<?> deserializedValues;
+                try {
+                    deserializedValues = entry.getValue().getUnserialized(classLoader);
+                } catch (Throwable deserializeEx) {
+                    Object issue = deserializationIssueTransformer.transformIssue(deserializeEx);
+                    deserializedValues = Collections.singletonList(issue);
+                }
+                result.put(key, deserializedValues);
             }
 
             return result;

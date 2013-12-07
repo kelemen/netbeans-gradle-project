@@ -16,7 +16,9 @@ public final class CustomSerializedMap implements Serializable {
             = new CustomSerializedMap.Builder(0).create();
 
     public static interface Deserializer {
-        public Map<Object, List<?>> deserialize(ClassLoader parent);
+        public Map<Object, List<?>> deserialize(
+                ClassLoader parent,
+                IssueTransformer deserializationIssueTransformer);
     }
 
     public static final class Builder {

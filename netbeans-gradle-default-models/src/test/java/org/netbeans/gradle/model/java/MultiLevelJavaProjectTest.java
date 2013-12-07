@@ -606,6 +606,16 @@ public class MultiLevelJavaProjectTest {
                 issue.getException().getMessage().contains("NotSerializableException"));
     }
 
+    private static void verifyDeserializationError(BuilderResult result) {
+        assertNotNull("Must have a result with a deserialization issue.", result);
+
+        BuilderIssue issue = result.getIssue();
+        assertNotNull("Must have a deserialization issue.", issue);
+
+        assertTrue("Cause must be a ClassNotFoundException error.",
+                issue.getException().getMessage().contains("ClassNotFoundException"));
+    }
+
     @Test
     public void testSerializationFailures() throws IOException {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
@@ -625,6 +635,8 @@ public class MultiLevelJavaProjectTest {
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableProjectInfoBuilder())));
         projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableResultProjectInfoBuilder())));
+        projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toQueryWithKnownClassPath(TestBuilders.testProjectInfoBuilder(""))));
 
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.testBuildInfoBuilder(buildInfoPrefix))));
@@ -632,6 +644,8 @@ public class MultiLevelJavaProjectTest {
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableBuildInfoBuilder())));
         buildInfos.put(2, Collections.<GradleBuildInfoQuery<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableResultBuildInfoBuilder())));
+        buildInfos.put(3, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toQueryWithKnownClassPath(TestBuilders.testBuildInfoBuilder(""))));
 
         toolingModels.add(IdeaProject.class);
 
@@ -644,17 +658,23 @@ public class MultiLevelJavaProjectTest {
                         .getSingleElement(models.getBuildInfoResults().get(1));
                 BuilderResult buildInfo2 = CollectionUtils
                         .getSingleElement(models.getBuildInfoResults().get(2));
+                BuilderResult buildInfo3 = CollectionUtils
+                        .getSingleElement(models.getBuildInfoResults().get(3));
 
                 verifySerializationError(buildInfo1);
                 verifySerializationError(buildInfo2);
+                verifyDeserializationError(buildInfo3);
 
                 BuilderResult projectInfo1 = CollectionUtils.getSingleElement(
                         models.getDefaultProjectModels().getProjectInfoResults().get(1));
                 BuilderResult projectInfo2 = CollectionUtils.getSingleElement(
                         models.getDefaultProjectModels().getProjectInfoResults().get(2));
+                BuilderResult projectInfo3 = CollectionUtils.getSingleElement(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(3));
 
                 verifySerializationError(projectInfo1);
                 verifySerializationError(projectInfo2);
+                verifyDeserializationError(projectInfo3);
 
                 Object buildInfoOk = getSingleBuildResult(
                         models.getBuildInfoResults().get(0));

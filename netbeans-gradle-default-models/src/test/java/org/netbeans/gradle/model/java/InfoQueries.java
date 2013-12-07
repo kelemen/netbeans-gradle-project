@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.ProjectConnection;
-
-import static org.junit.Assert.*;
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
@@ -22,6 +20,7 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
+import static org.junit.Assert.*;
 import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
 
 public final class InfoQueries {
@@ -35,6 +34,31 @@ public final class InfoQueries {
 
         return ModelClassPathDef.fromJarFiles(DEFAULT_CLASS_LOADER, Collections.singleton(classpath));
     }
+
+    public static <T> GradleProjectInfoQuery<T> toQueryWithKnownClassPath(final ProjectInfoBuilder<T> builder) {
+        return new GradleProjectInfoQuery<T>() {
+            public ProjectInfoBuilder<T> getInfoBuilder() {
+                return builder;
+            }
+
+            public ModelClassPathDef getInfoClassPath() {
+                return ModelClassPathDef.EMPTY;
+            }
+        };
+    }
+
+    public static <T> GradleBuildInfoQuery<T> toQueryWithKnownClassPath(final BuildInfoBuilder<T> builder) {
+        return new GradleBuildInfoQuery<T>() {
+            public BuildInfoBuilder<T> getInfoBuilder() {
+                return builder;
+            }
+
+            public ModelClassPathDef getInfoClassPath() {
+                return ModelClassPathDef.EMPTY;
+            }
+        };
+    }
+
 
     public static <T> GradleProjectInfoQuery<T> toCustomQuery(final ProjectInfoBuilder<T> builder) {
         return new GradleProjectInfoQuery<T>() {
