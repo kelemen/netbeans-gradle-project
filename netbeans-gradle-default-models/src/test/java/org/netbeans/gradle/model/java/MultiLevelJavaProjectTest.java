@@ -24,6 +24,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
@@ -35,6 +36,7 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
@@ -435,7 +437,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingProjectQuery-message";
-                FailingProjectInfoBuilder builder = new FailingProjectInfoBuilder(message);
+                ProjectInfoBuilder<?> builder = TestBuilders.failingProjectInfoBuilder(message);
                 BuilderResult result = fetchSingleProjectInfoWithError(connection, builder);
                 assertNotNull("Required result for FailingProjectInfoBuilder.", result);
 
@@ -456,7 +458,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingBuildQuery-message";
-                FailingBuildInfoBuilder builder = new FailingBuildInfoBuilder(message);
+                BuildInfoBuilder<?> builder = TestBuilders.failingBuildInfoBuilder(message);
 
                 BuilderResult result = fetchSingleBuildInfoWithError(connection, builder);
                 assertNotNull("Required result for FailingBuildInfoBuilder.", result);
