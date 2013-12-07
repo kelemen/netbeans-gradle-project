@@ -274,7 +274,6 @@ public final class GenericModelFetcher {
                 return CustomSerializedMap.EMPTY;
             }
 
-            // TODO: Catch exceptions for individual builders: BuilderResult
             CustomSerializedMap.Builder result = new CustomSerializedMap.Builder(buildInfoRequests.size());
             for (Map.Entry<Object, List<?>> entry: buildInfoRequests.entrySet()) {
                 Object key = entry.getKey();
