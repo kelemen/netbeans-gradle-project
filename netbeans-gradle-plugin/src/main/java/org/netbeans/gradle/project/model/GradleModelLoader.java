@@ -248,6 +248,13 @@ public final class GradleModelLoader {
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
+    private static void reportBuildScriptError(NbGradleProject project, Throwable error) {
+        ModelLoadIssue buildScriptIssue = ModelLoadIssues.buildScriptError(
+                "There was an error in the build scripts of " + project.getDisplayName(),
+                error);
+        ModelLoadIssueReporter.reportAllIssues(Collections.singleton(buildScriptIssue));
+    }
+
     private static void reportModelLoadError(NbGradleProject project, GradleModelLoadError error) {
         // TODO: I18N
         Throwable unexpectedError = error.getUnexpectedError();
@@ -260,11 +267,20 @@ public final class GradleModelLoader {
 
         Throwable buildScriptEvaluationError = error.getBuildScriptEvaluationError();
         if (buildScriptEvaluationError != null) {
-            ModelLoadIssue buildScriptIssue = ModelLoadIssues.buildScriptError(
-                    "There was an error in the build scripts of " + project.getDisplayName(),
-                    buildScriptEvaluationError);
-            ModelLoadIssueReporter.reportAllIssues(Collections.singleton(buildScriptIssue));
+            reportBuildScriptError(project, unexpectedError);
         }
+    }
+
+    private static boolean reportIfBuildScriptError(NbGradleProject project, Throwable error) {
+        Throwable currentError = error;
+        while (currentError != null) {
+            if (currentError.getClass().getName().equals("org.gradle.api.GradleScriptException")) {
+                reportBuildScriptError(project, error);
+                return true;
+            }
+            currentError = currentError.getCause();
+        }
+        return false;
     }
 
     public static void fetchModel(
@@ -295,12 +311,18 @@ public final class GradleModelLoader {
                 } catch (GradleConnectionException ex) {
                     error = ex;
                 } catch (GradleModelLoadError ex) {
+                    error = ex;
                     reportModelLoadError(project, ex);
                 } finally {
+                    // TODO: Report balloons here instead of relying on the
+                    // listener. The listener should only mark the projects with
+                    // a warning sign.
                     if (model != null || error != null) {
                         listener.onComplete(model, error);
                     }
+
                     if (error != null) {
+                        reportIfBuildScriptError(project, error);
                         GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
                     }
                 }
