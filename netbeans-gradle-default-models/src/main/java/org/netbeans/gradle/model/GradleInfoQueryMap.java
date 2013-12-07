@@ -2,6 +2,7 @@ package org.netbeans.gradle.model;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.netbeans.gradle.model.api.GradleInfoQuery;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.internal.CustomSerializedMap;
+import org.netbeans.gradle.model.internal.IssueTransformer;
 import org.netbeans.gradle.model.internal.SerializedEntries;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -18,10 +20,26 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 final class GradleInfoQueryMap {
     private final CustomSerializedMap builderMap;
     private final Map<KeyWrapper, ModelClassPathDef> classpath;
+    private final Map<KeyWrapper, Throwable> serializationIssues;
 
-    private GradleInfoQueryMap(CustomSerializedMap builderMap, Map<KeyWrapper, ModelClassPathDef> classpath) {
+    private GradleInfoQueryMap(
+            CustomSerializedMap builderMap,
+            Map<KeyWrapper, ModelClassPathDef> classpath,
+            Map<Object, Throwable> serializationIssues) {
         this.builderMap = builderMap;
         this.classpath = classpath;
+
+        if (serializationIssues.isEmpty()) {
+            this.serializationIssues = Collections.emptyMap();
+        }
+        else {
+            Map<KeyWrapper, Throwable> issues = CollectionUtils.newHashMap(serializationIssues.size());
+            for (Map.Entry<Object, Throwable> entry: serializationIssues.entrySet()) {
+                issues.put((KeyWrapper)entry.getKey(), entry.getValue());
+            }
+
+            this.serializationIssues = issues;
+        }
     }
 
     private static <QueryType extends GradleInfoQuery> GradleInfoQueryMap fromQueries(
@@ -45,7 +63,13 @@ final class GradleInfoQueryMap {
             }
         }
 
-        return new GradleInfoQueryMap(builders.create(), classpath);
+        Map<Object, Throwable> serializationIssues = new HashMap<Object, Throwable>();
+        CustomSerializedMap serializedBuilders = builders.create(serializationIssues);
+
+        return new GradleInfoQueryMap(
+                serializedBuilders,
+                classpath,
+                serializationIssues);
     }
 
     public static GradleInfoQueryMap fromBuildInfos(Map<Object, List<GradleBuildInfoQuery<?>>> map) {
@@ -79,6 +103,10 @@ final class GradleInfoQueryMap {
         return new Deserializer(builderMap, classpath);
     }
 
+    private static void addToMultiMap(Object key, Object value, Map<Object, List<Object>> result) {
+        addAllToMultiMap(key, Collections.singletonList(value), result);
+    }
+
     private static void addAllToMultiMap(Object key, List<?> values, Map<Object, List<Object>> result) {
         List<Object> container = result.get(key);
         if (container == null) {
@@ -93,7 +121,13 @@ final class GradleInfoQueryMap {
         return (Map<Object, List<?>>)(Map<?, ?>)map;
     }
 
-    public Map<Object, List<?>> deserializeResults(CustomSerializedMap map) {
+    public Map<Object, List<?>> deserializeResults(
+            CustomSerializedMap map,
+            IssueTransformer issueTransformer) {
+
+        if (map == null) throw new NullPointerException("map");
+        if (issueTransformer == null) throw new NullPointerException("issueTransformer");
+
         Map<Object, List<Object>> result = CollectionUtils.newHashMap(map.size());
 
         for (Map.Entry<Object, SerializedEntries> entry: map.getMap().entrySet()) {
@@ -102,7 +136,31 @@ final class GradleInfoQueryMap {
             addAllToMultiMap(key.wrappedKey, values, result);
         }
 
+        for (Map.Entry<Object, Throwable> entry: map.getSerializationProblems().entrySet()) {
+            KeyWrapper key = (KeyWrapper)entry.getKey();
+            Object issue = issueTransformer.transformIssue(entry.getValue());
+            addToMultiMap(key.wrappedKey, issue, result);
+        }
+
+        for (Map.Entry<KeyWrapper, Throwable> entry: serializationIssues.entrySet()) {
+            Object key = entry.getKey().wrappedKey;
+            Object issue = issueTransformer.transformIssue(entry.getValue());
+            addToMultiMap(key, issue, result);
+        }
+
         return unsafeCast(result);
+    }
+
+    public static IssueTransformer builderIssueTransformer() {
+        return BuilderIssueTransformer.INSTANCE;
+    }
+
+    private static enum BuilderIssueTransformer implements IssueTransformer {
+        INSTANCE;
+
+        public Object transformIssue(Throwable issue) {
+            return new BuilderResult(null, new BuilderIssue("", issue));
+        }
     }
 
     private static final class Deserializer

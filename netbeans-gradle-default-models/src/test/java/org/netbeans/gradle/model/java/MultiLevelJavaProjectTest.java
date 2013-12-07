@@ -596,6 +596,79 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    private static void verifySerializationError(BuilderResult result) {
+        assertNotNull("Must have a result with a serialization issue.", result);
+
+        BuilderIssue issue = result.getIssue();
+        assertNotNull("Must have a serialization issue.", issue);
+
+        assertTrue("Cause must be a serialization error.",
+                issue.getException().getMessage().contains("NotSerializableException"));
+    }
+
+    @Test
+    public void testSerializationFailures() throws IOException {
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
+                = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
+
+        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+
+        Set<Class<?>> toolingModels = new HashSet<Class<?>>();
+
+        final String projectInfoPrefix = "testSerializationFailures-project-";
+        final String buildInfoPrefix = "testSerializationFailures-build-";
+
+        projectInfos.put(0, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.testProjectInfoBuilder(projectInfoPrefix))));
+        projectInfos.put(1, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.notSerializableProjectInfoBuilder())));
+        projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.notSerializableResultProjectInfoBuilder())));
+
+        buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.testBuildInfoBuilder(buildInfoPrefix))));
+        buildInfos.put(1, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.notSerializableBuildInfoBuilder())));
+        buildInfos.put(2, Collections.<GradleBuildInfoQuery<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.notSerializableResultBuildInfoBuilder())));
+
+        toolingModels.add(IdeaProject.class);
+
+        final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
+
+                BuilderResult buildInfo1 = CollectionUtils
+                        .getSingleElement(models.getBuildInfoResults().get(1));
+                BuilderResult buildInfo2 = CollectionUtils
+                        .getSingleElement(models.getBuildInfoResults().get(2));
+
+                verifySerializationError(buildInfo1);
+                verifySerializationError(buildInfo2);
+
+                BuilderResult projectInfo1 = CollectionUtils.getSingleElement(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(1));
+                BuilderResult projectInfo2 = CollectionUtils.getSingleElement(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(2));
+
+                verifySerializationError(projectInfo1);
+                verifySerializationError(projectInfo2);
+
+                Object buildInfoOk = getSingleBuildResult(
+                        models.getBuildInfoResults().get(0));
+                assertTrue("The valid builder must succeed",
+                        buildInfoOk.toString().startsWith(buildInfoPrefix));
+
+                Object projectInfoOk = getSingleBuildResult(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(0));
+                assertTrue("The valid builder must succeed",
+                        projectInfoOk.toString().startsWith(projectInfoPrefix));
+            }
+        });
+    }
+
     private static Map<Class<?>, Object> fetchBuiltInModels(
             ProjectConnection connection,
             Class<?>... modelClasses) throws IOException {
