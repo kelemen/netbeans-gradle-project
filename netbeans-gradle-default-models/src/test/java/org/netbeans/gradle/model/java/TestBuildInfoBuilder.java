@@ -4,8 +4,6 @@ import org.gradle.tooling.BuildController;
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-// This BuildInfoBuilder can no longer be used for some reason.
-// Gradle's Tooling API will not be able serialize it.
 public final class TestBuildInfoBuilder implements BuildInfoBuilder<String> {
     private static final long serialVersionUID = 1L;
 
