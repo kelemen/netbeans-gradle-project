@@ -247,20 +247,29 @@
                     <publicPackages>
                         <publicPackage>org.gradle.api</publicPackage>
                         <publicPackage>org.gradle.api.artifacts</publicPackage>
-                        <publicPackage>org.gradle.api.artifacts.cache</publicPackage>
                         <publicPackage>org.gradle.api.artifacts.dsl</publicPackage>
                         <publicPackage>org.gradle.api.artifacts.repositories</publicPackage>
                         <publicPackage>org.gradle.api.artifacts.result</publicPackage>
                         <publicPackage>org.gradle.api.component</publicPackage>
-                        <publicPackage>org.gradle.api.dsl</publicPackage>
                         <publicPackage>org.gradle.api.execution</publicPackage>
                         <publicPackage>org.gradle.api.file</publicPackage>
                         <publicPackage>org.gradle.api.initialization</publicPackage>
                         <publicPackage>org.gradle.api.initialization.dsl</publicPackage>
+                        <publicPackage>org.gradle.api.invocation</publicPackage>
+                        <publicPackage>org.gradle.api.logging</publicPackage>
+                        <publicPackage>org.gradle.api.plugins</publicPackage>
+                        <publicPackage>org.gradle.api.resources</publicPackage>
+                        <publicPackage>org.gradle.api.specs</publicPackage>
+                        <publicPackage>org.gradle.api.tasks</publicPackage>
+                        <publicPackage>org.gradle.api.tasks.util</publicPackage>
+                        <publicPackage>org.gradle.tooling</publicPackage>
+                        <publicPackage>org.gradle.tooling.exceptions</publicPackage>
                         <publicPackage>org.gradle.tooling.model</publicPackage>
                         <publicPackage>org.gradle.tooling.model.build</publicPackage>
                         <publicPackage>org.gradle.tooling.model.eclipse</publicPackage>
+                        <publicPackage>org.gradle.tooling.model.gradle</publicPackage>
                         <publicPackage>org.gradle.tooling.model.idea</publicPackage>
+                        <publicPackage>org.gradle.tooling.provider</publicPackage>
                         <publicPackage>org.gradle.tooling.provider.model</publicPackage>
                         <publicPackage>org.netbeans.gradle.model.api</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.config</publicPackage>
