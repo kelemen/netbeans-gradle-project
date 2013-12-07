@@ -34,6 +34,10 @@ public final class ModelLoadIssues {
         return internalError(issueDescription, issue);
     }
 
+    private static String safeName(String name) {
+        return name.isEmpty() ? "?" : name;
+    }
+
     public static ModelLoadIssue builderError(
             FetchedProjectModels project,
             NbGradleExtensionRef extensionRef,
@@ -48,7 +52,7 @@ public final class ModelLoadIssues {
         String issueDescription =
                 "Fetching information for "
                 + extensionRef.getDisplayName()
-                + " [" + issue.getName() + "]"
+                + " [" + safeName(issue.getName()) + "]"
                 + " has failed for project "
                 + projectName;
 
