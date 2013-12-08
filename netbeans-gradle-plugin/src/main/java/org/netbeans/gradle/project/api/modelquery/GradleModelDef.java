@@ -1,10 +1,15 @@
 package org.netbeans.gradle.project.api.modelquery;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.ModelClassPathDef;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
@@ -17,10 +22,8 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  *  <li>Queries which can extract any information given a {@link org.gradle.api.Project} instance.</li>
  * </ul>
  * <P>
- * <B>Warning</B>: There are some known problems in requesting custom information
- * via a {@link GradleProjectInfoQuery}. The limitation is that implementations
- * of {@link org.netbeans.gradle.model.api.ProjectInfoBuilder} must be provided
- * by the Gradle plugin itself.
+ * Note: In almost all cases, it is recommended to use one of the convenience factory
+ * method: {@link #fromProjectInfoBuilders(ProjectInfoBuilder[]) fromProjectInfoBuilders}.
  * <P>
  * Instances of this class are immutable and therefore are safe to be shared
  * by multiple threads concurrently.
@@ -85,6 +88,87 @@ public final class GradleModelDef {
     @Nonnull
     public static GradleModelDef fromProjectQueries(GradleProjectInfoQuery<?>... queries) {
         return new GradleModelDef(Collections.<Class<?>>emptyList(), Arrays.asList(queries));
+    }
+
+    /**
+     * Creates a new {@code GradleModelDef} with the given custom
+     * {@link ProjectInfoBuilder} instances and
+     * {@link #getToolingModels() Tooling API models}.
+     * <P>
+     * <B>Warning</B>: This method assumes that for each builder, the builder
+     * and its result are found in the same classpath entry (usually jar) and
+     * can be deserialized using the {@code ClassLoader} used to load the class
+     * of the builder.
+     *
+     * @param modelTypes the Tooling API models to request from Gradle. For
+     *   example: {@code IdeaProject}. This argument cannot be {@code null} and
+     *   cannot contain {@code null} elements.
+     * @param builders custom builders able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given custom builders.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
+    public static GradleModelDef fromProjectInfoBuilders(
+            Collection<? extends Class<?>> modelTypes,
+            ProjectInfoBuilder<?>... builders) {
+
+        List<GradleProjectInfoQuery<?>> queries = new ArrayList<GradleProjectInfoQuery<?>>(builders.length);
+        for (ProjectInfoBuilder<?> builder: builders) {
+            queries.add(createDefaultQuery(builder));
+        }
+
+        return new GradleModelDef(modelTypes, queries);
+    }
+
+    /**
+     * Creates a new {@code GradleModelDef} with the given custom
+     * {@link ProjectInfoBuilder} instances and with no
+     * {@link #getToolingModels() Tooling API models}.
+     * <P>
+     * <B>Warning</B>: This method assumes that for each builder, the builder
+     * and its result are found in the same classpath entry (usually jar) and
+     * can be deserialized using the {@code ClassLoader} used to load the class
+     * of the builder.
+     *
+     * @param builders custom builders able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given custom builders.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
+    public static GradleModelDef fromProjectInfoBuilders(ProjectInfoBuilder<?>... builders) {
+        List<GradleProjectInfoQuery<?>> queries = new ArrayList<GradleProjectInfoQuery<?>>(builders.length);
+        for (ProjectInfoBuilder<?> builder: builders) {
+            queries.add(createDefaultQuery(builder));
+        }
+
+        return new GradleModelDef(Collections.<Class<?>>emptyList(), queries);
+    }
+
+    private static <T> GradleProjectInfoQuery<T> createDefaultQuery(final ProjectInfoBuilder<T> builder) {
+        if (builder == null) throw new NullPointerException("builder");
+
+        ClassLoader classLoader = builder.getClass().getClassLoader();
+        File classPath = ModelClassPathDef.getClassPathOfClass(builder.getClass());
+
+        final ModelClassPathDef classPathDef = ModelClassPathDef.isImplicitlyAssumed(classPath)
+                ? ModelClassPathDef.EMPTY
+                : ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPath));
+
+        return new GradleProjectInfoQuery<T>() {
+            @Override
+            public ProjectInfoBuilder<T> getInfoBuilder() {
+                return builder;
+            }
+
+            @Override
+            public ModelClassPathDef getInfoClassPath() {
+                return classPathDef;
+            }
+        };
     }
 
     /**

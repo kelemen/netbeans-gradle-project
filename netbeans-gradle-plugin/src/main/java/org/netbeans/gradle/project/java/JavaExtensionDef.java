@@ -8,9 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
-import org.netbeans.gradle.model.api.ModelClassPathDef;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.java.JarOutputsModelBuilder;
 import org.netbeans.gradle.model.java.JavaCompatibilityModelBuilder;
 import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
@@ -135,27 +132,13 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         }
     }
 
-    private static <T> GradleProjectInfoQuery<T> toQuery(final ProjectInfoBuilder<T> builder) {
-        return new GradleProjectInfoQuery<T>() {
-            @Override
-            public ProjectInfoBuilder<T> getInfoBuilder() {
-                return builder;
-            }
-
-            @Override
-            public ModelClassPathDef getInfoClassPath() {
-                return ModelClassPathDef.EMPTY;
-            }
-        };
-    }
-
     private static final class Query2 implements GradleModelDefQuery2 {
         // TODO: Do not request WarFoldersModelBuilder if the EE extension is available.
-        private static final GradleModelDef RESULT = GradleModelDef.fromProjectQueries(
-                toQuery(JarOutputsModelBuilder.INSTANCE),
-                toQuery(JavaSourcesModelBuilder.COMPLETE),
-                toQuery(JavaCompatibilityModelBuilder.INSTANCE),
-                toQuery(WarFoldersModelBuilder.INSTANCE));
+        private static final GradleModelDef RESULT = GradleModelDef.fromProjectInfoBuilders(
+                JarOutputsModelBuilder.INSTANCE,
+                JavaSourcesModelBuilder.COMPLETE,
+                JavaCompatibilityModelBuilder.INSTANCE,
+                WarFoldersModelBuilder.INSTANCE);
 
         @Override
         public GradleModelDef getModelDef(GradleTarget gradleTarget) {
