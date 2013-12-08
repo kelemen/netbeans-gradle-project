@@ -2,6 +2,7 @@ package org.netbeans.gradle.model.java;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -123,24 +124,44 @@ implements
 
         result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.OTHER, others));
 
-        result.setClasspaths(parseClassPaths(sourceSet));
+        parseClassPaths(sourceSet, result);
 
         return result.create();
     }
 
     @SuppressWarnings("unchecked")
-    private JavaClassPaths parseClassPaths(Object sourceSet) {
-        Collection<? extends File> compile = (Collection<? extends File>)getNonBoolProperty(
-                getNonBoolProperty(sourceSet, "compileClasspath"), "files");
+    private Collection<? extends File> resolveDependencies(Object sourceSet, String dependencyName) {
+        return (Collection<? extends File>)getNonBoolProperty(
+                getNonBoolProperty(sourceSet, dependencyName),
+                "files");
+    }
 
-        if (!needRuntime) {
-            return new JavaClassPaths(compile);
+    private void parseClassPaths(Object sourceSet, JavaSourceSet.Builder result) {
+        Collection<? extends File> compile = Collections.emptySet();
+        boolean compileResolved = false;
+        try {
+            compile = resolveDependencies(sourceSet, "compileClasspath");
+            compileResolved = true;
+        } catch (Throwable ex) {
+            result.setCompileClassPathProblem(ex);
         }
 
-        Collection<? extends File> runtime = (Collection<? extends File>)getNonBoolProperty(
-                getNonBoolProperty(sourceSet, "runtimeClasspath"), "files");
+        if (!needRuntime) {
+            result.setClasspaths(new JavaClassPaths(compile));
+            return;
+        }
 
-        return new JavaClassPaths(compile, runtime);
+        Collection<? extends File> runtime = compile;
+        try {
+            runtime = resolveDependencies(sourceSet, "runtimeClasspath");
+            if (!compileResolved) {
+                compile = runtime;
+            }
+        } catch (Throwable ex) {
+            result.setRuntimeClassPathProblem(ex);
+        }
+
+        result.setClasspaths(new JavaClassPaths(compile, runtime));
     }
 
     private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) {

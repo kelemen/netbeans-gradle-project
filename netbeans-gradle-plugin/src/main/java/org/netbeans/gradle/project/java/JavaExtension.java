@@ -12,10 +12,12 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
@@ -30,6 +32,9 @@ import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaInitScriptQuery;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -216,12 +221,44 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
     }
 
+    private void checkDependencyResolveProblems(NbJavaModule module) {
+        String projectName = module.getProperties().getProjectName();
+
+        // TODO: I18N
+
+        List<ModelLoadIssue> issues = new LinkedList<ModelLoadIssue>();
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            String sourceSetName = sourceSet.getName();
+
+            Throwable compileProblems = sourceSet.getCompileClassPathProblem();
+            if (compileProblems != null) {
+                issues.add(ModelLoadIssues.buildScriptError(
+                        "Compile time dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.",
+                        compileProblems));
+            }
+
+            Throwable runtimeProblems = sourceSet.getRuntimeClassPathProblem();
+            if (runtimeProblems != null) {
+                issues.add(ModelLoadIssues.buildScriptError(
+                        "Runtime dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.",
+                        runtimeProblems));
+            }
+        }
+
+        // TODO: Add warning sign to the project as well.
+        ModelLoadIssueReporter.reportAllIssues(
+                "Dependency resolution failure for project " + projectName,
+                issues);
+    }
+
     @Override
     public void activateExtension(NbJavaModel parsedModel) {
         if (parsedModel == null) throw new NullPointerException("parsedModel");
 
         currentModel = parsedModel;
         hasEverBeenLoaded = true;
+
+        checkDependencyResolveProblems(parsedModel.getMainModule());
 
         fireModelChange();
     }

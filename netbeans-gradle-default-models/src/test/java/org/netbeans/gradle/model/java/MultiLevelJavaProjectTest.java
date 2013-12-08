@@ -39,6 +39,7 @@ import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.internal.ConstBuilders;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.SourceSetVerification;
 import org.netbeans.gradle.model.util.TestUtils;
@@ -241,9 +242,17 @@ public class MultiLevelJavaProjectTest {
         testBasicInfoForProjectWithTasks("", expectedTasks, unexpectedTasks);
     }
 
+    private static void assertNoProblem(Throwable issue) {
+        if (issue != null) {
+            Exceptions.throwUnchecked(issue);
+        }
+    }
+
     private static JavaClassPaths classPathsOfSourceSet(JavaSourcesModel model, String sourceSetName) {
         for (JavaSourceSet sourceSet: model.getSourceSets()) {
             if (sourceSetName.equals(sourceSet.getName())) {
+                assertNoProblem(sourceSet.getCompileClassPathProblem());
+                assertNoProblem(sourceSet.getRuntimeClassPathProblem());
                 return sourceSet.getClasspaths();
             }
         }

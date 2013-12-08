@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 /**
  * Defines the source set of a Gradle Java project. A source set is set of
@@ -66,6 +67,8 @@ public final class JavaSourceSet implements Serializable {
         private final JavaOutputDirs outputDirs;
         private final Collection<JavaSourceGroup> sourceGroups;
         private JavaClassPaths classpaths;
+        private Throwable compileClassPathProblem;
+        private Throwable runtimeClassPathProblem;
 
         /**
          * Creates a builder initialized with the specified properties and some
@@ -93,6 +96,8 @@ public final class JavaSourceSet implements Serializable {
             this.outputDirs = outputDirs;
             this.sourceGroups = new LinkedList<JavaSourceGroup>();
             this.classpaths = JavaClassPaths.EMPTY;
+            this.compileClassPathProblem = null;
+            this.runtimeClassPathProblem = null;
         }
 
         /**
@@ -127,6 +132,30 @@ public final class JavaSourceSet implements Serializable {
         }
 
         /**
+         * Sets the exception occurred while trying to resolve the compile time
+         * dependencies.
+         *
+         * @param issue the exception occurred while trying to resolve the
+         *   compile time dependencies. This argument can be {@code null} which
+         *   means that dependency resolution was successful.
+         */
+        public void setCompileClassPathProblem(Throwable issue) {
+            this.compileClassPathProblem = TransferableExceptionWrapper.wrap(issue);
+        }
+
+        /**
+         * Sets the exception occurred while trying to resolve the runtime time
+         * dependencies.
+         *
+         * @param issue the exception occurred while trying to resolve the
+         *   runtime time dependencies. This argument can be {@code null} which
+         *   means that dependency resolution was successful.
+         */
+        public void setRuntimeClassPathProblem(Throwable issue) {
+            this.runtimeClassPathProblem = TransferableExceptionWrapper.wrap(issue);
+        }
+
+        /**
          * Creates a new instance of {@code JavaSourceSet} initialized with the
          * properties currently set for this builder. Adjusting the properties
          * of this builder has no effect on the {@code JavaSourceSet} created.
@@ -144,12 +173,16 @@ public final class JavaSourceSet implements Serializable {
     private final JavaOutputDirs outputDirs;
     private final Collection<JavaSourceGroup> sourceGroups;
     private final JavaClassPaths classpaths;
+    private final Throwable compileClassPathProblem;
+    private final Throwable runtimeClassPathProblem;
 
     private JavaSourceSet(Builder builder) {
         this.name = builder.name;
         this.outputDirs = builder.outputDirs;
         this.sourceGroups = new ArrayList<JavaSourceGroup>(builder.sourceGroups);
         this.classpaths = builder.classpaths;
+        this.compileClassPathProblem = builder.compileClassPathProblem;
+        this.runtimeClassPathProblem = builder.runtimeClassPathProblem;
     }
 
     /**
@@ -202,5 +235,27 @@ public final class JavaSourceSet implements Serializable {
      */
     public JavaClassPaths getClasspaths() {
         return classpaths;
+    }
+
+    /**
+     * Returns the exception thrown when trying to resolve the compile time
+     * dependencies or {@code null} if dependency resolution was successful.
+     *
+     * @return the exception thrown when trying to resolve the compile time
+     *   dependencies or {@code null} if dependency resolution was successful
+     */
+    public Throwable getCompileClassPathProblem() {
+        return compileClassPathProblem;
+    }
+
+    /**
+     * Returns the exception thrown when trying to resolve the runtime
+     * dependencies or {@code null} if dependency resolution was successful.
+     *
+     * @return the exception thrown when trying to resolve the runtime
+     *   dependencies or {@code null} if dependency resolution was successful
+     */
+    public Throwable getRuntimeClassPathProblem() {
+        return runtimeClassPathProblem;
     }
 }

@@ -83,12 +83,74 @@ public final class ModelLoadIssueReporter {
         return result;
     }
 
-    private static void reportAllIssuesNow(Collection<? extends ModelLoadIssue> issues) {
+    private static void reportAllIssuesNow(String message, Collection<? extends ModelLoadIssue> issues) {
         assert SwingUtilities.isEventDispatchThread();
 
         if (issues.isEmpty()) {
             return;
         }
+
+        String htmlMessage = "<html>" + message + "</html>";
+
+        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+        JLabel messageLabel = new JLabel(
+                htmlMessage,
+                NbIcons.getUIErrorIcon(),
+                SwingConstants.LEADING);
+
+        JComponent detailsComponent = createDetailsComponent(issues);
+
+        displayer.notify(
+                NbStrings.getGlobalErrorReporterTitle(),
+                ERROR_ICON,
+                messageLabel,
+                detailsComponent,
+                NotificationDisplayer.Priority.HIGH);
+    }
+
+    private static List<ModelLoadIssue> getSortedCopy(Collection<? extends ModelLoadIssue> issues) {
+        List<ModelLoadIssue> sorted = new ArrayList<ModelLoadIssue>(issues);
+        Collections.sort(sorted, new Comparator<ModelLoadIssue>() {
+            @Override
+            public int compare(ModelLoadIssue o1, ModelLoadIssue o2) {
+                return o2.getSeverity().getValue() - o1.getSeverity().getValue();
+            }
+        });
+        CollectionUtils.checkNoNullElements(sorted, "issues[sorted]");
+        return sorted;
+    }
+
+    private static void logIssues(Collection<? extends ModelLoadIssue> issues) {
+        for (ModelLoadIssue issue: issues) {
+            if (issue != null) {
+                LOGGER.log(Level.INFO,
+                        "Model load issue: " + issue.getIssueDescription(),
+                        issue.getStackTrace());
+            }
+        }
+    }
+
+    public static void reportAllIssues(
+            final String message,
+            Collection<? extends ModelLoadIssue> issues) {
+
+        logIssues(issues);
+        if (message == null) throw new NullPointerException("message");
+
+        final List<ModelLoadIssue> sortedIssues = getSortedCopy(issues);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                reportAllIssuesNow(message, sortedIssues);
+            }
+        });
+    }
+
+    private static String getDefaultMessage(Collection<? extends ModelLoadIssue> issues) {
+        if (issues.isEmpty()) {
+            return "";
+        }
+
         ModelLoadIssue worstProblem = issues.iterator().next();
 
         // TODO: I18N
@@ -108,47 +170,23 @@ public final class ModelLoadIssueReporter {
                 break;
         }
 
-        String message = "Failed to properly evaluate build scripts. " + subProblem;
-        String htmlMessage = "<html>" + message + "</html>";
-
-        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-        JLabel messageLabel = new JLabel(
-                htmlMessage,
-                NbIcons.getUIErrorIcon(),
-                SwingConstants.LEADING);
-
-        JComponent detailsComponent = createDetailsComponent(issues);
-
-        displayer.notify(
-                NbStrings.getGlobalErrorReporterTitle(),
-                ERROR_ICON,
-                messageLabel,
-                detailsComponent,
-                NotificationDisplayer.Priority.HIGH);
+        return "Failed to properly evaluate build scripts. " + subProblem;
     }
 
     public static void reportAllIssues(Collection<? extends ModelLoadIssue> issues) {
-        for (ModelLoadIssue issue: issues) {
-            if (issue != null) {
-                LOGGER.log(Level.INFO,
-                        "Model load issue: " + issue.getIssueDescription(),
-                        issue.getStackTrace());
-            }
+        if (issues.isEmpty()) {
+            return;
         }
 
-        final List<ModelLoadIssue> issuesCopy = new ArrayList<ModelLoadIssue>(issues);
-        Collections.sort(issuesCopy, new Comparator<ModelLoadIssue>() {
-            @Override
-            public int compare(ModelLoadIssue o1, ModelLoadIssue o2) {
-                return o2.getSeverity().getValue() - o1.getSeverity().getValue();
-            }
-        });
+        logIssues(issues);
 
-        CollectionUtils.checkNoNullElements(issuesCopy, "issuesCopy");
+        final List<ModelLoadIssue> sortedIssues = getSortedCopy(issues);
+        final String message = getDefaultMessage(sortedIssues);
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                reportAllIssuesNow(issuesCopy);
+                reportAllIssuesNow(message, sortedIssues);
             }
         });
     }

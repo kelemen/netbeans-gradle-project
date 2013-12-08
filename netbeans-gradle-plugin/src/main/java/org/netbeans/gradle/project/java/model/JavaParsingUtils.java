@@ -112,6 +112,8 @@ public final class JavaParsingUtils {
 
         JavaSourceSet.Builder result = new JavaSourceSet.Builder(sourceSet.getName(), sourceSet.getOutputDirs());
         result.setClasspaths(classPaths);
+        result.setCompileClassPathProblem(sourceSet.getCompileClassPathProblem());
+        result.setRuntimeClassPathProblem(sourceSet.getRuntimeClassPathProblem());
 
         for (JavaSourceGroup group: sourceSet.getSourceGroups()) {
             result.addSourceGroup(group);
