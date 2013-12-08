@@ -52,7 +52,9 @@ public final class JavaClassPaths implements Serializable {
         if (runtimeClasspaths == null) throw new NullPointerException("runtimeClasspaths");
 
         this.compileClasspaths = Collections.unmodifiableSet(new LinkedHashSet<File>(compileClasspaths));
-        this.runtimeClasspaths = Collections.unmodifiableSet(new LinkedHashSet<File>(runtimeClasspaths));
+        this.runtimeClasspaths = compileClasspaths != runtimeClasspaths
+                ? Collections.unmodifiableSet(new LinkedHashSet<File>(runtimeClasspaths))
+                : this.compileClasspaths;
 
         CollectionUtils.checkNoNullElements(this.compileClasspaths, "compileClasspaths");
         CollectionUtils.checkNoNullElements(this.runtimeClasspaths, "runtimeClasspaths");
