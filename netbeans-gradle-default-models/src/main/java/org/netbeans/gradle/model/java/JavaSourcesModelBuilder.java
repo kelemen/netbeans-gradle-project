@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.java;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -8,8 +9,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.gradleclasses.GradleClass;
+import org.netbeans.gradle.model.gradleclasses.GradleClasses;
 import org.netbeans.gradle.model.util.BuilderUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 
 import static org.netbeans.gradle.model.util.ReflectionUtils.*;
 
@@ -57,8 +62,11 @@ implements
         if (!project.getPlugins().hasPlugin("java")) {
             return null;
         }
-
-        return new Builder(project, needRuntime).getProjectInfo();
+        try {
+            return new Builder(project, needRuntime).getProjectInfo();
+        } catch (Exception ex) {
+            throw Exceptions.throwUnchecked(ex);
+        }
     }
 
     /** {@inheritDoc } */
@@ -66,16 +74,156 @@ implements
         return BuilderUtils.getNameForEnumBuilder(this);
     }
 
+    private static final class SourceDirectorySetMethods {
+        private static volatile SourceDirectorySetMethods CACHE = null;
+
+        private final GradleClass type;
+        private final Method getSrcDirs;
+
+        public SourceDirectorySetMethods(GradleClass type) throws Exception {
+            this.type = type;
+            this.getSrcDirs = type.getMethod("getSrcDirs");
+        }
+
+        public static SourceDirectorySetMethods getInstance(Project project) throws Exception {
+            SourceDirectorySetMethods result = CACHE;
+            GradleClass type = GradleClasses.getGradleClass(project, "org.gradle.api.file.SourceDirectorySet");
+            if (result != null && type.equals(result.type)) {
+                return result;
+            }
+            result = new SourceDirectorySetMethods(type);
+            CACHE = result;
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        public Set<File> getSrcDirs(Object sourceDirectorySet) throws Exception {
+            return (Set<File>)getSrcDirs.invoke(sourceDirectorySet);
+        }
+    }
+
+    private static final class SourceSetOutputMethods {
+        private static volatile SourceSetOutputMethods CACHE = null;
+
+        private final GradleClass type;
+        private final Method getDirs;
+        private final Method getClassesDir;
+        private final Method getResourcesDir;
+
+        public SourceSetOutputMethods(GradleClass type) throws NoSuchMethodException {
+            this.type = type;
+            this.getDirs = type.getMethod("getDirs");
+            this.getClassesDir = type.getMethod("getClassesDir");
+            this.getResourcesDir = type.getMethod("getResourcesDir");
+        }
+
+        public static SourceSetOutputMethods getInstance(Project project) throws Exception {
+            SourceSetOutputMethods result = CACHE;
+            GradleClass type = GradleClasses.getGradleClass(project, "org.gradle.api.tasks.SourceSetOutput");
+            if (result != null && type.equals(result.type)) {
+                return result;
+            }
+            result = new SourceSetOutputMethods(type);
+            CACHE = result;
+            return result;
+        }
+
+        public FileCollection getDirs(Object sourceSetOutput) throws Exception {
+            return (FileCollection)getDirs.invoke(sourceSetOutput);
+        }
+
+        public File getClassesDir(Object sourceSetOutput) throws Exception {
+            return (File)getClassesDir.invoke(sourceSetOutput);
+        }
+
+        public File getResourcesDir(Object sourceSetOutput) throws Exception {
+            return (File)getResourcesDir.invoke(sourceSetOutput);
+        }
+    }
+
+    private static final class SourceSetMethods {
+        private static volatile SourceSetMethods CACHE = null;
+
+        private final GradleClass type;
+        private final Method getOutput;
+        private final Method getName;
+        private final Method getJava;
+        private final Method getResources;
+        private final Method getAllSource;
+        private final Method getCompileClasspath;
+        private final Method getRuntimeClasspath;
+
+        private SourceSetMethods(GradleClass type) throws Exception {
+            this.type = type;
+            this.getOutput = type.getMethod("getOutput");
+            this.getName = type.getMethod("getName");
+            this.getJava = type.getMethod("getJava");
+            this.getResources = type.getMethod("getResources");
+            this.getAllSource = type.getMethod("getAllSource");
+            this.getCompileClasspath = type.getMethod("getCompileClasspath");
+            this.getRuntimeClasspath = type.getMethod("getRuntimeClasspath");
+        }
+
+        public static SourceSetMethods getInstance(Project project) throws Exception {
+            SourceSetMethods result = CACHE;
+            GradleClass type = GradleClasses.getGradleClass(project, "org.gradle.api.tasks.SourceSet");
+            if (result != null && type.equals(result.type)) {
+                return result;
+            }
+            result = new SourceSetMethods(type);
+            CACHE = result;
+            return result;
+        }
+
+        public Object getOutput(Object sourceSet) throws Exception {
+            return getOutput.invoke(sourceSet);
+        }
+
+        public String getName(Object sourceSet) throws Exception {
+            Object result = getName.invoke(sourceSet);
+            return result != null ? result.toString() : null;
+        }
+
+        public Object getJava(Object sourceSet) throws Exception {
+            return getJava.invoke(sourceSet);
+        }
+
+        public Object getResources(Object sourceSet) throws Exception {
+            return getResources.invoke(sourceSet);
+        }
+
+        public Object getAllSource(Object sourceSet) throws Exception {
+            return getAllSource.invoke(sourceSet);
+        }
+
+        public FileCollection getCompileClasspath(Object sourceSet) throws Exception {
+            return (FileCollection)getCompileClasspath.invoke(sourceSet);
+        }
+
+        public FileCollection getRuntimeClasspath(Object sourceSet) throws Exception {
+            return (FileCollection)getRuntimeClasspath.invoke(sourceSet);
+        }
+    }
+
     private static final class Builder {
         private final Project project;
         private final boolean needRuntime;
 
-        public Builder(Project project, boolean needRuntime) {
+        private final SourceSetMethods sourceSetMethods;
+        private final SourceDirectorySetMethods sourceDirectorySetMethods;
+        private final SourceSetOutputMethods sourceSetOutputMethods;
+
+        public Builder(Project project, boolean needRuntime)
+                throws Exception {
+
             this.project = project;
             this.needRuntime = needRuntime;
+            this.sourceSetMethods = SourceSetMethods.getInstance(project);
+            this.sourceDirectorySetMethods = SourceDirectorySetMethods.getInstance(project);
+            this.sourceSetOutputMethods = SourceSetOutputMethods.getInstance(project);
         }
 
-        public JavaSourcesModel getProjectInfo() {
+        public JavaSourcesModel getProjectInfo() throws Exception {
             List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
 
             Iterable<?> sourceSets = (Iterable<?>)project.property("sourceSets");
@@ -86,20 +234,11 @@ implements
             return new JavaSourcesModel(result);
         }
 
-        private Collection<File> addSourceGroupNonDyn(
-                JavaSourceGroupName name,
-                Object sourceSet,
-                String groupName,
-                JavaSourceSet.Builder result) {
-            Object sourceGroup = getNonBoolProperty(sourceSet, groupName);
-            return addSourceGroup(name, sourceGroup, result);
-        }
-
         private Collection<File> addSourceGroup(
                 JavaSourceGroupName name,
                 Object sourceSet,
                 String groupName,
-                JavaSourceSet.Builder result) {
+                JavaSourceSet.Builder result) throws Exception {
             Object sourceGroup = getNonBoolPropertyDyn(sourceSet, groupName);
             return addSourceGroup(name, sourceGroup, result);
         }
@@ -107,28 +246,27 @@ implements
         private Collection<File> addSourceGroup(
                 JavaSourceGroupName name,
                 Object sourceGroup,
-                JavaSourceSet.Builder result) {
+                JavaSourceSet.Builder result) throws Exception {
 
             JavaSourceGroup parsedGroup = parseSourceGroup(name, sourceGroup);
             result.addSourceGroup(parsedGroup);
             return parsedGroup.getSourceRoots();
         }
 
-        private JavaSourceSet parseSourceSet(Object sourceSet) {
-            JavaOutputDirs outputDirs = parseOutputDirs(getNonBoolProperty(sourceSet, "output"));
+        private JavaSourceSet parseSourceSet(Object sourceSet) throws Exception {
+            JavaOutputDirs outputDirs = parseOutputDirs(sourceSetMethods.getOutput(sourceSet));
             JavaSourceSet.Builder result = new JavaSourceSet.Builder(
-                    getStringProperty(sourceSet, "name"),
+                    sourceSetMethods.getName(sourceSet),
                     outputDirs);
 
-            Object allSourceGroup = getNonBoolProperty(sourceSet, "allSource");
+            Object allSourceGroup = sourceSetMethods.getAllSource(sourceSet);
 
-            @SuppressWarnings("unchecked")
-            Collection<? extends File> allSourceGroupFiles =
-                    (Collection<? extends File>)getNonBoolProperty(allSourceGroup, "srcDirs");
+            Collection<? extends File> allSourceGroupFiles
+                    = sourceDirectorySetMethods.getSrcDirs(allSourceGroup);
 
             Set<File> others = new HashSet<File>(allSourceGroupFiles);
 
-            others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.JAVA, sourceSet, "java", result));
+            others.removeAll(addSourceGroup(JavaSourceGroupName.JAVA, sourceSetMethods.getJava(sourceSet), result));
 
             if (project.getPlugins().hasPlugin("groovy")) {
                 others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet, "groovy", result));
@@ -138,7 +276,7 @@ implements
                 others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet, "scala", result));
             }
 
-            others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.RESOURCES, sourceSet, "resources", result));
+            others.removeAll(addSourceGroup(JavaSourceGroupName.RESOURCES, sourceSetMethods.getResources(sourceSet), result));
 
             result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.OTHER, others));
 
@@ -147,18 +285,11 @@ implements
             return result.create();
         }
 
-        @SuppressWarnings("unchecked")
-        private Collection<? extends File> resolveDependencies(Object sourceSet, String dependencyName) {
-            return (Collection<? extends File>)getNonBoolProperty(
-                    getNonBoolProperty(sourceSet, dependencyName),
-                    "files");
-        }
-
         private void parseClassPaths(Object sourceSet, JavaSourceSet.Builder result) {
             Collection<? extends File> compile = Collections.emptySet();
             boolean compileResolved = false;
             try {
-                compile = resolveDependencies(sourceSet, "compileClasspath");
+                compile = sourceSetMethods.getCompileClasspath(sourceSet).getFiles();
                 compileResolved = true;
             } catch (Throwable ex) {
                 result.setCompileClassPathProblem(ex);
@@ -171,7 +302,7 @@ implements
 
             Collection<? extends File> runtime = compile;
             try {
-                runtime = resolveDependencies(sourceSet, "runtimeClasspath");
+                runtime = sourceSetMethods.getRuntimeClasspath(sourceSet).getFiles();
                 if (!compileResolved) {
                     compile = runtime;
                 }
@@ -182,25 +313,23 @@ implements
             result.setClasspaths(new JavaClassPaths(compile, runtime));
         }
 
-        private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) {
-            @SuppressWarnings("unchecked")
-            Collection<? extends File> srcDirs = (Collection<? extends File>)getNonBoolProperty(sourceGroup, "srcDirs");
+        private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) throws Exception {
+            Collection<? extends File> srcDirs = sourceDirectorySetMethods.getSrcDirs(sourceGroup);
             return new JavaSourceGroup(name, srcDirs);
         }
 
-        private JavaOutputDirs parseOutputDirs(Object outputDirs) {
+        private JavaOutputDirs parseOutputDirs(Object outputDirs) throws Exception {
             List<File> otherDirs = new LinkedList<File>();
 
-            @SuppressWarnings("unchecked")
-            Iterable<? extends File> files = (Iterable<? extends File>)getNonBoolProperty(
-                    getNonBoolProperty(outputDirs, "dirs"), "files");
+            Iterable<? extends File> files =
+                    sourceSetOutputMethods.getDirs(outputDirs).getFiles();
 
             for (File file: files) {
                 otherDirs.add(file);
             }
 
-            File classesDir = (File)getNonBoolProperty(outputDirs, "classesDir");
-            File resourcesDir = (File)getNonBoolProperty(outputDirs, "resourcesDir");
+            File classesDir = sourceSetOutputMethods.getClassesDir(outputDirs);
+            File resourcesDir = sourceSetOutputMethods.getResourcesDir(outputDirs);
 
             return new JavaOutputDirs(classesDir, resourcesDir, otherDirs);
         }

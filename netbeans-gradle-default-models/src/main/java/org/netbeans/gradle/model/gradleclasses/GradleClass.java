@@ -28,6 +28,10 @@ public final class GradleClass {
         return new GradleClass(type);
     }
 
+    public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException {
+        return getMethod(new MethodDef(name, parameterTypes));
+    }
+
     public Method getMethod(MethodDef methodDef) throws NoSuchMethodException {
         Method result = methods.get(methodDef);
         if (result == null) {

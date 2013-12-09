@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.gradleclasses;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import org.netbeans.gradle.model.util.ReflectionUtils;
 
 public final class MethodDef {
@@ -26,5 +27,23 @@ public final class MethodDef {
 
     public Class<?>[] getParameterTypes() {
         return parameterTypes.clone();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 61 * hash + name.hashCode();
+        hash = 61 * hash + Arrays.hashCode(parameterTypes);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (getClass() != obj.getClass()) return false;
+
+        final MethodDef other = (MethodDef)obj;
+        return this.name.equals(other.name) && Arrays.equals(this.parameterTypes, other.parameterTypes);
     }
 }
