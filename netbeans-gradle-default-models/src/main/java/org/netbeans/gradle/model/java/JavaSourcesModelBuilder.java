@@ -58,137 +58,151 @@ implements
             return null;
         }
 
-        List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
-
-        Iterable<?> sourceSets = (Iterable<?>)project.property("sourceSets");
-        for (Object sourceSet: sourceSets) {
-            result.add(parseSourceSet(project, sourceSet));
-        }
-
-        return new JavaSourcesModel(result);
-    }
-
-    private Collection<File> addSourceGroupNonDyn(
-            JavaSourceGroupName name,
-            Object sourceSet,
-            String groupName,
-            JavaSourceSet.Builder result) {
-        Object sourceGroup = getNonBoolProperty(sourceSet, groupName);
-        return addSourceGroup(name, sourceGroup, result);
-    }
-
-    private Collection<File> addSourceGroup(
-            JavaSourceGroupName name,
-            Object sourceSet,
-            String groupName,
-            JavaSourceSet.Builder result) {
-        Object sourceGroup = getNonBoolPropertyDyn(sourceSet, groupName);
-        return addSourceGroup(name, sourceGroup, result);
-    }
-
-    private Collection<File> addSourceGroup(
-            JavaSourceGroupName name,
-            Object sourceGroup,
-            JavaSourceSet.Builder result) {
-
-        JavaSourceGroup parsedGroup = parseSourceGroup(name, sourceGroup);
-        result.addSourceGroup(parsedGroup);
-        return parsedGroup.getSourceRoots();
-    }
-
-    private JavaSourceSet parseSourceSet(Project project, Object sourceSet) {
-        JavaOutputDirs outputDirs = parseOutputDirs(getNonBoolProperty(sourceSet, "output"));
-        JavaSourceSet.Builder result = new JavaSourceSet.Builder(
-                getStringProperty(sourceSet, "name"),
-                outputDirs);
-
-        Object allSourceGroup = getNonBoolProperty(sourceSet, "allSource");
-
-        @SuppressWarnings("unchecked")
-        Collection<? extends File> allSourceGroupFiles =
-                (Collection<? extends File>)getNonBoolProperty(allSourceGroup, "srcDirs");
-
-        Set<File> others = new HashSet<File>(allSourceGroupFiles);
-
-        others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.JAVA, sourceSet, "java", result));
-
-        if (project.getPlugins().hasPlugin("groovy")) {
-            others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet, "groovy", result));
-        }
-
-        if (project.getPlugins().hasPlugin("scala")) {
-            others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet, "scala", result));
-        }
-
-        others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.RESOURCES, sourceSet, "resources", result));
-
-        result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.OTHER, others));
-
-        parseClassPaths(sourceSet, result);
-
-        return result.create();
-    }
-
-    @SuppressWarnings("unchecked")
-    private Collection<? extends File> resolveDependencies(Object sourceSet, String dependencyName) {
-        return (Collection<? extends File>)getNonBoolProperty(
-                getNonBoolProperty(sourceSet, dependencyName),
-                "files");
-    }
-
-    private void parseClassPaths(Object sourceSet, JavaSourceSet.Builder result) {
-        Collection<? extends File> compile = Collections.emptySet();
-        boolean compileResolved = false;
-        try {
-            compile = resolveDependencies(sourceSet, "compileClasspath");
-            compileResolved = true;
-        } catch (Throwable ex) {
-            result.setCompileClassPathProblem(ex);
-        }
-
-        if (!needRuntime) {
-            result.setClasspaths(new JavaClassPaths(compile));
-            return;
-        }
-
-        Collection<? extends File> runtime = compile;
-        try {
-            runtime = resolveDependencies(sourceSet, "runtimeClasspath");
-            if (!compileResolved) {
-                compile = runtime;
-            }
-        } catch (Throwable ex) {
-            result.setRuntimeClassPathProblem(ex);
-        }
-
-        result.setClasspaths(new JavaClassPaths(compile, runtime));
-    }
-
-    private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) {
-        @SuppressWarnings("unchecked")
-        Collection<? extends File> srcDirs = (Collection<? extends File>)getNonBoolProperty(sourceGroup, "srcDirs");
-        return new JavaSourceGroup(name, srcDirs);
-    }
-
-    private JavaOutputDirs parseOutputDirs(Object outputDirs) {
-        List<File> otherDirs = new LinkedList<File>();
-
-        @SuppressWarnings("unchecked")
-        Iterable<? extends File> files = (Iterable<? extends File>)getNonBoolProperty(
-                getNonBoolProperty(outputDirs, "dirs"), "files");
-
-        for (File file: files) {
-            otherDirs.add(file);
-        }
-
-        File classesDir = (File)getNonBoolProperty(outputDirs, "classesDir");
-        File resourcesDir = (File)getNonBoolProperty(outputDirs, "resourcesDir");
-
-        return new JavaOutputDirs(classesDir, resourcesDir, otherDirs);
+        return new Builder(project, needRuntime).getProjectInfo();
     }
 
     /** {@inheritDoc } */
     public String getName() {
         return BuilderUtils.getNameForEnumBuilder(this);
+    }
+
+    private static final class Builder {
+        private final Project project;
+        private final boolean needRuntime;
+
+        public Builder(Project project, boolean needRuntime) {
+            this.project = project;
+            this.needRuntime = needRuntime;
+        }
+
+        public JavaSourcesModel getProjectInfo() {
+            List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
+
+            Iterable<?> sourceSets = (Iterable<?>)project.property("sourceSets");
+            for (Object sourceSet: sourceSets) {
+                result.add(parseSourceSet(sourceSet));
+            }
+
+            return new JavaSourcesModel(result);
+        }
+
+        private Collection<File> addSourceGroupNonDyn(
+                JavaSourceGroupName name,
+                Object sourceSet,
+                String groupName,
+                JavaSourceSet.Builder result) {
+            Object sourceGroup = getNonBoolProperty(sourceSet, groupName);
+            return addSourceGroup(name, sourceGroup, result);
+        }
+
+        private Collection<File> addSourceGroup(
+                JavaSourceGroupName name,
+                Object sourceSet,
+                String groupName,
+                JavaSourceSet.Builder result) {
+            Object sourceGroup = getNonBoolPropertyDyn(sourceSet, groupName);
+            return addSourceGroup(name, sourceGroup, result);
+        }
+
+        private Collection<File> addSourceGroup(
+                JavaSourceGroupName name,
+                Object sourceGroup,
+                JavaSourceSet.Builder result) {
+
+            JavaSourceGroup parsedGroup = parseSourceGroup(name, sourceGroup);
+            result.addSourceGroup(parsedGroup);
+            return parsedGroup.getSourceRoots();
+        }
+
+        private JavaSourceSet parseSourceSet(Object sourceSet) {
+            JavaOutputDirs outputDirs = parseOutputDirs(getNonBoolProperty(sourceSet, "output"));
+            JavaSourceSet.Builder result = new JavaSourceSet.Builder(
+                    getStringProperty(sourceSet, "name"),
+                    outputDirs);
+
+            Object allSourceGroup = getNonBoolProperty(sourceSet, "allSource");
+
+            @SuppressWarnings("unchecked")
+            Collection<? extends File> allSourceGroupFiles =
+                    (Collection<? extends File>)getNonBoolProperty(allSourceGroup, "srcDirs");
+
+            Set<File> others = new HashSet<File>(allSourceGroupFiles);
+
+            others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.JAVA, sourceSet, "java", result));
+
+            if (project.getPlugins().hasPlugin("groovy")) {
+                others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet, "groovy", result));
+            }
+
+            if (project.getPlugins().hasPlugin("scala")) {
+                others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet, "scala", result));
+            }
+
+            others.removeAll(addSourceGroupNonDyn(JavaSourceGroupName.RESOURCES, sourceSet, "resources", result));
+
+            result.addSourceGroup(new JavaSourceGroup(JavaSourceGroupName.OTHER, others));
+
+            parseClassPaths(sourceSet, result);
+
+            return result.create();
+        }
+
+        @SuppressWarnings("unchecked")
+        private Collection<? extends File> resolveDependencies(Object sourceSet, String dependencyName) {
+            return (Collection<? extends File>)getNonBoolProperty(
+                    getNonBoolProperty(sourceSet, dependencyName),
+                    "files");
+        }
+
+        private void parseClassPaths(Object sourceSet, JavaSourceSet.Builder result) {
+            Collection<? extends File> compile = Collections.emptySet();
+            boolean compileResolved = false;
+            try {
+                compile = resolveDependencies(sourceSet, "compileClasspath");
+                compileResolved = true;
+            } catch (Throwable ex) {
+                result.setCompileClassPathProblem(ex);
+            }
+
+            if (!needRuntime) {
+                result.setClasspaths(new JavaClassPaths(compile));
+                return;
+            }
+
+            Collection<? extends File> runtime = compile;
+            try {
+                runtime = resolveDependencies(sourceSet, "runtimeClasspath");
+                if (!compileResolved) {
+                    compile = runtime;
+                }
+            } catch (Throwable ex) {
+                result.setRuntimeClassPathProblem(ex);
+            }
+
+            result.setClasspaths(new JavaClassPaths(compile, runtime));
+        }
+
+        private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) {
+            @SuppressWarnings("unchecked")
+            Collection<? extends File> srcDirs = (Collection<? extends File>)getNonBoolProperty(sourceGroup, "srcDirs");
+            return new JavaSourceGroup(name, srcDirs);
+        }
+
+        private JavaOutputDirs parseOutputDirs(Object outputDirs) {
+            List<File> otherDirs = new LinkedList<File>();
+
+            @SuppressWarnings("unchecked")
+            Iterable<? extends File> files = (Iterable<? extends File>)getNonBoolProperty(
+                    getNonBoolProperty(outputDirs, "dirs"), "files");
+
+            for (File file: files) {
+                otherDirs.add(file);
+            }
+
+            File classesDir = (File)getNonBoolProperty(outputDirs, "classesDir");
+            File resourcesDir = (File)getNonBoolProperty(outputDirs, "resourcesDir");
+
+            return new JavaOutputDirs(classesDir, resourcesDir, otherDirs);
+        }
     }
 }
