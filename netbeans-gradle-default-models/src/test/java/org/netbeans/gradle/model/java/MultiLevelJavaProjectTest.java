@@ -315,6 +315,8 @@ public class MultiLevelJavaProjectTest {
                 JavaClassPaths testClassPaths = classPathsOfSourceSet(sourcesModel, "test");
                 verifyTestClassPath(testClassPaths.getCompileClasspaths());
                 verifyTestClassPath(testClassPaths.getRuntimeClasspaths());
+
+                JavaModelTests.checkNoDependencyResolultionError(sourcesModel);
             }
         });
     }

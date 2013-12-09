@@ -4,13 +4,37 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 
 public final class ReflectionUtils {
     private static final Object[] EMPTY_ARR = new Object[0];
 
+    public static Method getAccessibleMethod(Class<?> type, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
+        for (Method method: type.getMethods()) {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                continue;
+            }
+            if (!Modifier.isPublic(method.getDeclaringClass().getModifiers())) {
+                continue;
+            }
+            if (!methodName.equals(method.getName())) {
+                continue;
+            }
+            if (!Arrays.equals(parameterTypes, method.getParameterTypes())) {
+                continue;
+            }
+
+            return method;
+        }
+
+        Method method = type.getMethod(methodName, parameterTypes);
+        method.setAccessible(true);
+        return method;
+    }
+
     private static Object callParameterLessMethodSimple(Object obj, String methodName) throws NoSuchMethodException {
         try {
-            Method method = obj.getClass().getMethod(methodName);
+            Method method = getAccessibleMethod(obj.getClass(), methodName);
             return method.invoke(obj);
         } catch (IllegalAccessException ex) {
             throw new RuntimeException(ex);
@@ -22,7 +46,7 @@ public final class ReflectionUtils {
     private static Object callParameterLessMethodDyn(Object obj, String methodName) throws NoSuchMethodException {
         try {
             Object dynObj = callParameterLessMethodSimple(obj, "getAsDynamicObject");
-            Method invokeMethod = dynObj.getClass().getMethod("invokeMethod", String.class, Object[].class);
+            Method invokeMethod = getAccessibleMethod(dynObj.getClass(), "invokeMethod", String.class, Object[].class);
             Object result = invokeMethod.invoke(dynObj, methodName, EMPTY_ARR);
 
             return result;
@@ -109,7 +133,7 @@ public final class ReflectionUtils {
             Class<?>... argTypes) {
 
         try {
-            Method method = type.getMethod(methodName, argTypes);
+            Method method = getAccessibleMethod(type, methodName, argTypes);
             if (!isPublic(method)) {
                 return null;
             }
