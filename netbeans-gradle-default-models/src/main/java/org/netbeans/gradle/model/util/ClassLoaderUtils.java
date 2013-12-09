@@ -14,11 +14,14 @@ import org.gradle.api.Project;
 public final class ClassLoaderUtils {
     private static final AtomicReference<File> JAR_OF_THIS_PROJECT = new AtomicReference<File>(null);
 
-    public static Class<?> tryGetClass(Project project, String className) {
+    public static Class<?> getClass(Project project, String className) throws ClassNotFoundException {
         ClassLoader classLoaderOfScript = project.getBuildscript().getClassLoader();
+        return Class.forName(className, false, classLoaderOfScript);
+    }
 
+    public static Class<?> tryGetClass(Project project, String className) {
         try {
-            return Class.forName(className, false, classLoaderOfScript);
+            return getClass(project, className);
         } catch (ClassNotFoundException ex) {
             return null;
         }
