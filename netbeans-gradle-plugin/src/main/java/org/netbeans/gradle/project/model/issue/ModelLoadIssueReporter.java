@@ -266,6 +266,7 @@ public final class ModelLoadIssueReporter {
         // TODO: Try to extract useful parts of the stack trace.
         StringBuilder detailsContent = new StringBuilder(1024);
         for (DependencyResolutionIssue issue: issues) {
+            detailsContent.append("- ");
             detailsContent.append(issue.getMessage());
             detailsContent.append('\n');
         }
