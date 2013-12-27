@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.model.issue;
 
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -92,8 +94,21 @@ public final class ModelLoadIssueReporter {
         return detailsComponent;
     }
 
-    private static JComponent createDetailsComponent(String caption, Collection<? extends ModelLoadIssue> issues) {
-        return createDetailsComponent(caption, createDetails(issues));
+    private static JLabel errorBalloonLabel(String message, final String detailsCaption, final String details) {
+        String htmlMessage = "<html>" + message + "</html>";
+        JLabel label = new JLabel(
+                htmlMessage,
+                NbIcons.getUIErrorIcon(),
+                SwingConstants.LEADING);
+
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                IssueDetailsPanel.showModalDialog(detailsCaption, details);
+            }
+        });
+
+        return label;
     }
 
     private static void reportAllIssuesNow(String message, Collection<? extends ModelLoadIssue> issues) {
@@ -103,17 +118,12 @@ public final class ModelLoadIssueReporter {
             return;
         }
 
-        String htmlMessage = "<html>" + message + "</html>";
+        String details = createDetails(issues);
 
-        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-        JLabel messageLabel = new JLabel(
-                htmlMessage,
-                NbIcons.getUIErrorIcon(),
-                SwingConstants.LEADING);
+        JLabel messageLabel = errorBalloonLabel(message, message, details);
+        JComponent detailsComponent = createDetailsComponent(message, details);
 
-        JComponent detailsComponent = createDetailsComponent(message, issues);
-
-        displayer.notify(
+        NotificationDisplayer.getDefault().notify(
                 message,
                 ERROR_ICON,
                 messageLabel,
@@ -200,17 +210,13 @@ public final class ModelLoadIssueReporter {
         assert SwingUtilities.isEventDispatchThread();
 
         String message = NbStrings.getBuildScriptErrorInProject(project.getDisplayName());
-        String htmlMessage = "<html>" + message + "</html>";
+        String detailsCaption = project.getDisplayName();
+        String details = getStackTrace(error);
 
-        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-        JLabel messageLabel = new JLabel(
-                htmlMessage,
-                NbIcons.getUIErrorIcon(),
-                SwingConstants.LEADING);
+        JLabel messageLabel = errorBalloonLabel(message, detailsCaption, details);
+        JComponent detailsComponent = createDetailsComponent(detailsCaption, details);
 
-        JComponent detailsComponent = createDetailsComponent(project.getDisplayName(), getStackTrace(error));
-
-        displayer.notify(
+        NotificationDisplayer.getDefault().notify(
                 message,
                 ERROR_ICON,
                 messageLabel,
@@ -243,13 +249,6 @@ public final class ModelLoadIssueReporter {
 
         String projectName = setToString(getFailedDependencyProjectNames(issues));
         String message = NbStrings.getDependencyResolutionFailure(projectName);
-        String htmlMessage = "<html>" + message + "</html>";
-
-        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-        JLabel messageLabel = new JLabel(
-                htmlMessage,
-                NbIcons.getUIErrorIcon(),
-                SwingConstants.LEADING);
 
         // TODO: Try to extract useful parts of the stack trace.
         StringBuilder detailsContent = new StringBuilder(1024);
@@ -271,11 +270,15 @@ public final class ModelLoadIssueReporter {
 
             issueIndex++;
         }
-        JComponent detailsComponent = new JPanel(new FlowLayout());
-        detailsComponent.add(IssueDetailsPanel
-                .createShowStackTraceButton(message, detailsContent.toString()));
 
-        displayer.notify(
+        String details = detailsContent.toString();
+        String detailsCaption = message;
+
+        JLabel messageLabel = errorBalloonLabel(message, detailsCaption, details);
+        JComponent detailsComponent = new JPanel(new FlowLayout());
+        detailsComponent.add(IssueDetailsPanel.createShowStackTraceButton(message, details));
+
+        NotificationDisplayer.getDefault().notify(
                 message,
                 ERROR_ICON,
                 messageLabel,
