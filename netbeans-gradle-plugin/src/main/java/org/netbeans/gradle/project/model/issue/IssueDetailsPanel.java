@@ -2,6 +2,8 @@
 package org.netbeans.gradle.project.model.issue;
 
 import java.awt.Dialog;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
@@ -58,6 +60,7 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         jInfoTextArea = new javax.swing.JTextArea();
         jHintCaption = new javax.swing.JLabel();
+        jCopyToClipboardButton = new javax.swing.JButton();
 
         jInfoTextArea.setEditable(false);
         jInfoTextArea.setColumns(20);
@@ -67,6 +70,13 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
         jHintCaption.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         org.openide.awt.Mnemonics.setLocalizedText(jHintCaption, org.openide.util.NbBundle.getMessage(IssueDetailsPanel.class, "IssueDetailsPanel.jHintCaption.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jCopyToClipboardButton, org.openide.util.NbBundle.getMessage(IssueDetailsPanel.class, "IssueDetailsPanel.jCopyToClipboardButton.text")); // NOI18N
+        jCopyToClipboardButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCopyToClipboardButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -75,7 +85,10 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE)
-                    .addComponent(jHintCaption))
+                    .addComponent(jHintCaption)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jCopyToClipboardButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -83,12 +96,20 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jHintCaption, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCopyToClipboardButton))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jCopyToClipboardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCopyToClipboardButtonActionPerformed
+        String text = jInfoTextArea.getText();
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
+    }//GEN-LAST:event_jCopyToClipboardButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jCopyToClipboardButton;
     private javax.swing.JLabel jHintCaption;
     private javax.swing.JTextArea jInfoTextArea;
     private javax.swing.JScrollPane jScrollPane1;
