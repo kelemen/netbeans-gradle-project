@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -262,25 +263,28 @@ public final class ModelLoadIssueReporter {
                 NbIcons.getUIErrorIcon(),
                 SwingConstants.LEADING);
 
-
-        // TODO: Use something more appropriate, also try to extract useful parts
-        //       of the stack trace.
+        // TODO: Try to extract useful parts of the stack trace.
         StringBuilder detailsContent = new StringBuilder(1024);
         for (DependencyResolutionIssue issue: issues) {
             detailsContent.append(issue.getMessage());
             detailsContent.append('\n');
         }
 
-        detailsContent.append("\nDetails: ");
+        detailsContent.append("\nDetails: \n");
 
         int issueIndex = 1;
         for (DependencyResolutionIssue issue: issues) {
+            detailsContent.append("\n");
             detailsContent.append("Exception ");
             detailsContent.append(issueIndex);
             detailsContent.append("\n---------------\n\n");
             detailsContent.append(getStackTrace(issue.getStackTrace()));
+
+            issueIndex++;
         }
-        JComponent detailsComponent = createDetailsComponent(detailsContent.toString());
+        JComponent detailsComponent = new JPanel(new FlowLayout());
+        detailsComponent.add(IssueDetailsPanel
+                .createShowStackTraceButton(message, detailsContent.toString()));
 
         displayer.notify(
                 message,
