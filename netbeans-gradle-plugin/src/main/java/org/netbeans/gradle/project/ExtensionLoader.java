@@ -132,8 +132,6 @@ public final class ExtensionLoader {
             tryAddExtension(def, loadedExtension, result, alreadyLoaded);
         }
 
-        // TODO: Display balloon if there were duplicate extensions.
-
         return result;
     }
 
