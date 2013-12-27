@@ -1,16 +1,38 @@
 package org.netbeans.gradle.project.model;
 
-public final class GradleModelLoadError extends Exception {
-    private static final long serialVersionUID = 1L;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.openide.util.Parameters;
 
+@SuppressWarnings("serial") // Not serializable
+public final class GradleModelLoadError extends Exception {
+    private final NbGradleProject project;
     private final Throwable buildScriptEvaluationError;
     private final Throwable unexpectedError;
 
-    public GradleModelLoadError(Throwable buildScriptEvaluationError, Throwable unexpectedError) {
+    public GradleModelLoadError(
+            NbGradleProject project,
+            Throwable buildScriptEvaluationError,
+            Throwable unexpectedError) {
+
         super(pickNonNull(unexpectedError, buildScriptEvaluationError));
 
+        Parameters.notNull("project", project);
+
+        this.project = project;
         this.buildScriptEvaluationError = buildScriptEvaluationError;
         this.unexpectedError = unexpectedError;
+    }
+
+    public static GradleModelLoadError fromBuildScriptError(
+            NbGradleProject project,
+            Throwable buildScriptEvaluationError) {
+        return new GradleModelLoadError(project, buildScriptEvaluationError, null);
+    }
+
+    public static GradleModelLoadError fromUnexpectedError(
+            NbGradleProject project,
+            Throwable unexpectedError) {
+        return new GradleModelLoadError(project, null, unexpectedError);
     }
 
     public Throwable getBuildScriptEvaluationError() {
@@ -21,6 +43,10 @@ public final class GradleModelLoadError extends Exception {
         return unexpectedError;
     }
 
+    public NbGradleProject getProject() {
+        return project;
+    }
+
     private static Throwable pickNonNull(Throwable... errors) {
         for (Throwable error: errors) {
             if (error != null) {
@@ -28,6 +54,6 @@ public final class GradleModelLoadError extends Exception {
             }
         }
 
-        throw new IllegalArgumentException("One of exceptions must be null.");
+        throw new IllegalArgumentException("One of exceptions must be non-null.");
     }
 }

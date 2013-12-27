@@ -80,6 +80,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         FetchedModels fetchedModels = fetchedModelsOrError.getModels();
         if (fetchedModels == null) {
             throw new GradleModelLoadError(
+                    project,
                     fetchedModelsOrError.getBuildScriptEvaluationError(),
                     fetchedModelsOrError.getUnexpectedError());
         }
@@ -99,6 +100,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     }
 
     private static final class ProjectModelParser {
+        private final NbGradleProject mainProject;
         private final List<NbGradleExtensionRef> extensions;
         private final ProjectModelFetcher modelFetcher;
         private final ExtensionModelCache cache;
@@ -106,6 +108,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final Map<String, ModelLoadResult> modelLoadResultCache;
 
         public ProjectModelParser(NbGradleProject mainProject, ProjectModelFetcher modelFetcher) {
+            this.mainProject = mainProject;
             this.extensions = mainProject.getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
@@ -127,7 +130,11 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             for (BuilderResult builderResult: builderResults) {
                 BuilderIssue issue = builderResult.getIssue();
                 if (issue != null) {
-                    issues.add(ModelLoadIssues.builderError(projectModels, extension, issue));
+                    issues.add(ModelLoadIssues.builderError(
+                            mainProject,
+                            projectModels,
+                            extension,
+                            issue));
                 }
 
                 Object resultObject = builderResult.getResultObject();
@@ -218,7 +225,11 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 Map<File, ProjectModelsOfExtensions> extensionModels) {
             Throwable issue = projectModels.getIssue();
             if (issue != null) {
-                issues.add(ModelLoadIssues.projectModelLoadError(projectModels, issue));
+                issues.add(ModelLoadIssues.projectModelLoadError(
+                        mainProject,
+                        projectModels,
+                        null,
+                        issue));
             }
 
             NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());

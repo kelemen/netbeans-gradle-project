@@ -4,11 +4,10 @@ import java.awt.GridLayout;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
@@ -20,9 +19,11 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.NotificationDisplayer;
+import org.openide.util.Parameters;
 
 public final class ModelLoadIssueReporter {
     private static final Logger LOGGER = Logger.getLogger(ModelLoadIssueReporter.class.getName());
@@ -47,9 +48,7 @@ public final class ModelLoadIssueReporter {
         return str.replace("\n", "\n    ");
     }
 
-    private static JComponent createDetailsComponent(Collection<? extends ModelLoadIssue> issues) {
-        // TODO: Create something better: The stack trace must be hidden by default.
-        // TODO: I18N
+    private static String createDetails(Collection<? extends ModelLoadIssue> issues) {
         StringBuilder details = new StringBuilder();
         int index = 1;
         for (ModelLoadIssue issue: issues) {
@@ -63,8 +62,20 @@ public final class ModelLoadIssueReporter {
 
             details.append("--------\n\n");
 
-            details.append("  Description: ");
-            details.append(indentExceptFirstLine(issue.getIssueDescription()));
+            details.append("  Requested project: ");
+            details.append(issue.getRequestedProject().getProjectDirectoryAsFile());
+            if (issue.getActualProjectPath() != null) {
+                details.append("\n  Actual project: ");
+                details.append(issue.getActualProjectPath());
+            }
+            if (issue.getExtensionName() != null) {
+                details.append("\n  Extension: ");
+                details.append(issue.getExtensionName());
+            }
+            if (issue.getBuilderName()!= null) {
+                details.append("\n  Model builder: ");
+                details.append(issue.getBuilderName());
+            }
 
             details.append("\n\n  Stack trace:\n    ");
             details.append(indentExceptFirstLine(getStackTrace(issue.getStackTrace())));
@@ -72,7 +83,12 @@ public final class ModelLoadIssueReporter {
             index++;
         }
 
-        String detailsContent = details.toString();
+        return details.toString();
+    }
+
+    private static JComponent createDetailsComponent(String detailsContent) {
+        // TODO: This component should pop-up a dialog displaying further info
+
         final JTextArea textArea = new JTextArea(detailsContent);
         textArea.setEditable(false);
         textArea.setRows(5);
@@ -81,6 +97,10 @@ public final class ModelLoadIssueReporter {
         JPanel result = new JPanel(new GridLayout(1, 1));
         result.add(new JScrollPane(textArea));
         return result;
+    }
+
+    private static JComponent createDetailsComponent(Collection<? extends ModelLoadIssue> issues) {
+        return createDetailsComponent(createDetails(issues));
     }
 
     private static void reportAllIssuesNow(String message, Collection<? extends ModelLoadIssue> issues) {
@@ -101,30 +121,18 @@ public final class ModelLoadIssueReporter {
         JComponent detailsComponent = createDetailsComponent(issues);
 
         displayer.notify(
-                NbStrings.getGlobalErrorReporterTitle(),
+                message,
                 ERROR_ICON,
                 messageLabel,
                 detailsComponent,
                 NotificationDisplayer.Priority.HIGH);
     }
 
-    private static List<ModelLoadIssue> getSortedCopy(Collection<? extends ModelLoadIssue> issues) {
-        List<ModelLoadIssue> sorted = new ArrayList<ModelLoadIssue>(issues);
-        Collections.sort(sorted, new Comparator<ModelLoadIssue>() {
-            @Override
-            public int compare(ModelLoadIssue o1, ModelLoadIssue o2) {
-                return o2.getSeverity().getValue() - o1.getSeverity().getValue();
-            }
-        });
-        CollectionUtils.checkNoNullElements(sorted, "issues[sorted]");
-        return sorted;
-    }
-
     private static void logIssues(Collection<? extends ModelLoadIssue> issues) {
         for (ModelLoadIssue issue: issues) {
             if (issue != null) {
                 LOGGER.log(Level.INFO,
-                        "Model load issue: " + issue.getIssueDescription(),
+                        "Model load issue: " + issue,
                         issue.getStackTrace());
             }
         }
@@ -137,40 +145,42 @@ public final class ModelLoadIssueReporter {
         logIssues(issues);
         if (message == null) throw new NullPointerException("message");
 
-        final List<ModelLoadIssue> sortedIssues = getSortedCopy(issues);
+        final List<ModelLoadIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                reportAllIssuesNow(message, sortedIssues);
+                reportAllIssuesNow(message, issuesCopy);
             }
         });
     }
 
-    private static String getDefaultMessage(Collection<? extends ModelLoadIssue> issues) {
-        if (issues.isEmpty()) {
-            return "";
+    private static String setToString(Set<String> strings) {
+        return strings.size() == 1
+                ? strings.iterator().next()
+                : strings.toString();
+    }
+
+    private static Set<String> getProjectNames(List<ModelLoadIssue> issues) {
+        Set<String> names = new LinkedHashSet<String>();
+        for (ModelLoadIssue issue: issues) {
+            names.add(issue.getRequestedProject().getDisplayName());
         }
+        return names;
+    }
 
-        ModelLoadIssue worstProblem = issues.iterator().next();
+    private static Set<String> getExtensionNames(List<ModelLoadIssue> issues) {
+        Set<String> names = new LinkedHashSet<String>();
+        for (ModelLoadIssue issue: issues) {
+            NbGradleExtensionRef extensionRef = issue.getExtensionRef();
 
-        // TODO: I18N
-        String subProblem;
-        switch (worstProblem.getSeverity()) {
-            case INTERNAL_ERROR:
-                subProblem = "This is most likely a bug in the Gradle Support plugin.";
-                break;
-            case EXTENSION_ERROR:
-                subProblem = "This is most likely a bug in an extension.";
-                break;
-            case BUILD_SCRIPT_ERROR:
-                subProblem = "There was an error in the build scripts of the evaluated project.";
-                break;
-            default:
-                subProblem = worstProblem.getSeverity().name();
-                break;
+            // TODO: I18N
+            String name = extensionRef != null
+                    ? extensionRef.getDisplayName()
+                    : "Core Gradle plugin";
+
+            names.add(name);
         }
-
-        return "Failed to properly evaluate build scripts. " + subProblem;
+        return names;
     }
 
     public static void reportAllIssues(Collection<? extends ModelLoadIssue> issues) {
@@ -180,13 +190,112 @@ public final class ModelLoadIssueReporter {
 
         logIssues(issues);
 
-        final List<ModelLoadIssue> sortedIssues = getSortedCopy(issues);
-        final String message = getDefaultMessage(sortedIssues);
+        final List<ModelLoadIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
+
+        String projectName = setToString(getProjectNames(issuesCopy));
+        String extensionName = setToString(getExtensionNames(issuesCopy));
+
+        // TODO: I18N
+        final String message = "Internal error in " + extensionName + " for project " + projectName;
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                reportAllIssuesNow(message, issuesCopy);
+            }
+        });
+    }
+
+    private static void reportBuildScriptErrorNow(NbGradleProject project, Throwable error) {
+        assert SwingUtilities.isEventDispatchThread();
+
+        // TODO: I18N
+        String message = "The build script of " + project.getDisplayName() + " contains an error.";
+        String htmlMessage = "<html>" + message + "</html>";
+
+        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+        JLabel messageLabel = new JLabel(
+                htmlMessage,
+                NbIcons.getUIErrorIcon(),
+                SwingConstants.LEADING);
+
+        JComponent detailsComponent = createDetailsComponent(getStackTrace(error));
+
+        displayer.notify(
+                message,
+                ERROR_ICON,
+                messageLabel,
+                detailsComponent,
+                NotificationDisplayer.Priority.HIGH);
+    }
+
+    public static void reportBuildScriptError(final NbGradleProject project, final Throwable error) {
+        Parameters.notNull("project", project);
+        Parameters.notNull("error", error);
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                reportAllIssuesNow(message, sortedIssues);
+                reportBuildScriptErrorNow(project, error);
+            }
+        });
+    }
+
+    private static Set<String> getFailedDependencyProjectNames(List<DependencyResolutionIssue> issues) {
+        Set<String> names = new LinkedHashSet<String>();
+        for (DependencyResolutionIssue issue: issues) {
+            names.add(issue.getProjectName());
+        }
+        return names;
+    }
+
+    private static void reportDependencyResolutionFailures(List<DependencyResolutionIssue> issues) {
+        assert SwingUtilities.isEventDispatchThread();
+
+        // TODO: I18N
+        String projectName = setToString(getFailedDependencyProjectNames(issues));
+        String message = "Dependency resolution failure in " + projectName;
+        String htmlMessage = "<html>" + message + "</html>";
+
+        NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+        JLabel messageLabel = new JLabel(
+                htmlMessage,
+                NbIcons.getUIErrorIcon(),
+                SwingConstants.LEADING);
+
+
+        // TODO: Use something more appropriate, also try to extract useful parts
+        //       of the stack trace.
+        StringBuilder detailsContent = new StringBuilder(1024);
+        for (DependencyResolutionIssue issue: issues) {
+            detailsContent.append(issue.getMessage());
+            detailsContent.append('\n');
+        }
+
+        detailsContent.append("\nDetails: ");
+
+        int issueIndex = 1;
+        for (DependencyResolutionIssue issue: issues) {
+            detailsContent.append("Exception ");
+            detailsContent.append(issueIndex);
+            detailsContent.append("\n---------------\n\n");
+            detailsContent.append(getStackTrace(issue.getStackTrace()));
+        }
+        JComponent detailsComponent = createDetailsComponent(detailsContent.toString());
+
+        displayer.notify(
+                message,
+                ERROR_ICON,
+                messageLabel,
+                detailsComponent,
+                NotificationDisplayer.Priority.HIGH);
+    }
+
+    public static void reportDependencyResolutionFailures(Collection<? extends DependencyResolutionIssue> issues) {
+        final List<DependencyResolutionIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                reportDependencyResolutionFailures(issuesCopy);
             }
         });
     }

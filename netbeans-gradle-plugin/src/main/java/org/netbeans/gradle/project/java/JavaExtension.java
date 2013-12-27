@@ -32,9 +32,8 @@ import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaInitScriptQuery;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
-import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
+import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
-import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -224,31 +223,25 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private void checkDependencyResolveProblems(NbJavaModule module) {
         String projectName = module.getProperties().getProjectName();
 
-        // TODO: I18N
-
-        List<ModelLoadIssue> issues = new LinkedList<ModelLoadIssue>();
+        List<DependencyResolutionIssue> issues = new LinkedList<DependencyResolutionIssue>();
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
 
             Throwable compileProblems = sourceSet.getCompileClassPathProblem();
             if (compileProblems != null) {
-                issues.add(ModelLoadIssues.buildScriptError(
-                        "Compile time dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.",
-                        compileProblems));
+                issues.add(DependencyResolutionIssue.compileIssue(projectName, sourceSetName, compileProblems));
             }
 
             Throwable runtimeProblems = sourceSet.getRuntimeClassPathProblem();
             if (runtimeProblems != null) {
-                issues.add(ModelLoadIssues.buildScriptError(
-                        "Runtime dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.",
-                        runtimeProblems));
+                issues.add(DependencyResolutionIssue.runtimeIssue(projectName, sourceSetName, runtimeProblems));
             }
         }
 
-        // TODO: Add warning sign to the project as well.
-        ModelLoadIssueReporter.reportAllIssues(
-                "Dependency resolution failure for project " + projectName,
-                issues);
+        // TODO: Add/remove warning sign to the project as well.
+        if (!issues.isEmpty()) {
+            ModelLoadIssueReporter.reportDependencyResolutionFailures(issues);
+        }
     }
 
     @Override

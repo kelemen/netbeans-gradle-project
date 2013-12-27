@@ -248,34 +248,27 @@ public final class GradleModelLoader {
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
-    private static void reportBuildScriptError(NbGradleProject project, Throwable error) {
-        ModelLoadIssue buildScriptIssue = ModelLoadIssues.buildScriptError(
-                "There was an error in the build scripts of " + project.getDisplayName(),
-                error);
-        ModelLoadIssueReporter.reportAllIssues(Collections.singleton(buildScriptIssue));
-    }
-
     private static void reportModelLoadError(NbGradleProject project, GradleModelLoadError error) {
-        // TODO: I18N
         Throwable unexpectedError = error.getUnexpectedError();
         if (unexpectedError != null) {
-            ModelLoadIssue unexpectedIssue = ModelLoadIssues.internalError(
-                    "An unexpected error while evaluating the build scripts of " + project.getDisplayName(),
-                    unexpectedError);
+            ModelLoadIssues.projectModelLoadError(project, null, null, unexpectedError);
+            ModelLoadIssue unexpectedIssue = ModelLoadIssues
+                    .projectModelLoadError(project, null, null, unexpectedError);
             ModelLoadIssueReporter.reportAllIssues(Collections.singleton(unexpectedIssue));
         }
 
         Throwable buildScriptEvaluationError = error.getBuildScriptEvaluationError();
         if (buildScriptEvaluationError != null) {
-            reportBuildScriptError(project, unexpectedError);
+            ModelLoadIssueReporter.reportBuildScriptError(project, unexpectedError);
         }
     }
 
     private static boolean reportIfBuildScriptError(NbGradleProject project, Throwable error) {
+        // TODO: Move this check from here.
         Throwable currentError = error;
         while (currentError != null) {
             if (currentError.getClass().getName().equals("org.gradle.api.GradleScriptException")) {
-                reportBuildScriptError(project, error);
+                ModelLoadIssueReporter.reportBuildScriptError(project, error);
                 return true;
             }
             currentError = currentError.getCause();

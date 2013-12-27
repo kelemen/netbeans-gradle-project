@@ -1,31 +1,66 @@
 package org.netbeans.gradle.project.model.issue;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.openide.util.Parameters;
 
-public interface ModelLoadIssue {
-    public enum Severity {
-        INTERNAL_ERROR(100),
-        EXTENSION_ERROR(50),
-        BUILD_SCRIPT_ERROR(30);
+public final class ModelLoadIssue {
+    private final NbGradleProject requestedProject;
+    private final String actualProjectPath;
+    private final NbGradleExtensionRef extensionRef;
+    private final String builderName;
+    private final Throwable stackTrace;
 
-        private final int value;
+    public ModelLoadIssue(
+            NbGradleProject requestedProject,
+            String actualProjectPath,
+            NbGradleExtensionRef extensionRef,
+            String builderName,
+            Throwable stackTrace) {
+        Parameters.notNull("requestedProject", requestedProject);
+        Parameters.notNull("stackTrace", stackTrace);
 
-        private Severity(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
+        this.requestedProject = requestedProject;
+        this.actualProjectPath = actualProjectPath;
+        this.extensionRef = extensionRef;
+        this.builderName = builderName;
+        this.stackTrace = stackTrace;
     }
 
-    @Nonnull
-    public Severity getSeverity();
+    public NbGradleProject getRequestedProject() {
+        return requestedProject;
+    }
 
-    @Nonnull
-    public String getIssueDescription();
+    @Nullable
+    public String getActualProjectPath() {
+        return actualProjectPath;
+    }
 
-    @CheckForNull
-    public Throwable getStackTrace();
+    @Nullable
+    public NbGradleExtensionRef getExtensionRef() {
+        return extensionRef;
+    }
+
+    @Nullable
+    public String getExtensionName() {
+        return extensionRef != null ? extensionRef.getName() : null;
+    }
+
+    @Nullable
+    public String getBuilderName() {
+        return builderName;
+    }
+
+    public Throwable getStackTrace() {
+        return stackTrace;
+    }
+
+    @Override
+    public String toString() {
+        return "ModelLoadIssue{"
+                + "requestedProject=" + requestedProject
+                + ", actualProjectPath=" + actualProjectPath
+                + ", extensionName=" + getExtensionName() + '}';
+    }
 }
