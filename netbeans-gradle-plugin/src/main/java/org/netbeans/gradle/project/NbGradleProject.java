@@ -12,8 +12,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -31,6 +29,8 @@ import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
@@ -62,9 +62,6 @@ import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.util.lookup.Lookups;
-import org.openide.windows.IOProvider;
-import org.openide.windows.InputOutput;
-import org.openide.windows.OutputWriter;
 
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
@@ -84,7 +81,6 @@ public final class NbGradleProject implements Project {
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
-    private final ExceptionDisplayer exceptionDisplayer;
     private final ChangeSupport modelChanges;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
@@ -123,7 +119,6 @@ public final class NbGradleProject implements Project {
 
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
-        this.exceptionDisplayer = new ExceptionDisplayer(NbStrings.getProjectErrorTitle(name));
         this.extensionRefs = Collections.emptyList();
         this.lookupRef = new AtomicReference<DynamicLookup>(null);
         this.protectedLookupRef = new AtomicReference<Lookup>(null);
@@ -216,7 +211,10 @@ public final class NbGradleProject implements Project {
     }
 
     public void displayError(String errorText, Throwable exception, boolean setFocus) {
-        exceptionDisplayer.displayError(errorText, exception, setFocus);
+        if (!ModelLoadIssueReporter.reportIfBuildScriptError(this, exception)) {
+            ModelLoadIssueReporter.reportAllIssues(errorText, Collections.singleton(
+                    new ModelLoadIssue(this, null, null, null, exception)));
+        }
     }
 
     private ProjectInfoRef getLoadErrorRef() {
@@ -696,44 +694,6 @@ public final class NbGradleProject implements Project {
             } finally {
                 loadedAtLeastOnceSignal.signal();
             }
-        }
-    }
-
-    private static class ExceptionDisplayer {
-        private final String outputCaption;
-        private final Lock outputLock;
-
-        public ExceptionDisplayer(String outputCaption) {
-            if (outputCaption == null) throw new NullPointerException("outputCaption");
-            this.outputCaption = outputCaption;
-            this.outputLock = new ReentrantLock();
-        }
-
-        public void displayError(final String errorText, final Throwable exception, final boolean setFocus) {
-            if (errorText == null) throw new NullPointerException("errorText");
-
-            PROJECT_PROCESSOR.execute(new Runnable() {
-                @Override
-                public void run() {
-                    InputOutput io = IOProvider.getDefault().getIO(outputCaption, false);
-                    if (setFocus) {
-                        io.select();
-                    }
-
-                    OutputWriter err = io.getErr();
-                    outputLock.lock();
-                    try {
-                        err.println();
-                        err.println(errorText);
-                        if (exception != null) {
-                            exception.printStackTrace(err);
-                        }
-                    } finally {
-                        outputLock.unlock();
-                        err.close();
-                    }
-                }
-            });
         }
     }
 }

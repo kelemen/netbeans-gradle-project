@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -293,6 +294,18 @@ public final class ModelLoadIssueReporter {
                 reportDependencyResolutionFailures(issuesCopy);
             }
         });
+    }
+
+    public static boolean reportIfBuildScriptError(NbGradleProject project, Throwable error) {
+        Throwable currentError = error;
+        while (currentError != null) {
+            if (Exceptions.isExceptionOfType(currentError, "org.gradle.api.GradleScriptException")) {
+                ModelLoadIssueReporter.reportBuildScriptError(project, error);
+                return true;
+            }
+            currentError = currentError.getCause();
+        }
+        return false;
     }
 
     private ModelLoadIssueReporter() {

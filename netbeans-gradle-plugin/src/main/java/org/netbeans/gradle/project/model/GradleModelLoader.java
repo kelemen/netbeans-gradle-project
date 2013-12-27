@@ -39,7 +39,6 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -264,19 +263,6 @@ public final class GradleModelLoader {
         }
     }
 
-    private static boolean reportIfBuildScriptError(NbGradleProject project, Throwable error) {
-        // TODO: Move this check from here.
-        Throwable currentError = error;
-        while (currentError != null) {
-            if (Exceptions.isExceptionOfType(currentError, "org.gradle.api.GradleScriptException")) {
-                ModelLoadIssueReporter.reportBuildScriptError(project, error);
-                return true;
-            }
-            currentError = currentError.getCause();
-        }
-        return false;
-    }
-
     public static void fetchModel(
             final NbGradleProject project,
             final boolean mayFetchFromCache,
@@ -308,15 +294,11 @@ public final class GradleModelLoader {
                     error = ex;
                     reportModelLoadError(project, ex);
                 } finally {
-                    // TODO: Report balloons here instead of relying on the
-                    // listener. The listener should only mark the projects with
-                    // a warning sign.
                     if (model != null || error != null) {
                         listener.onComplete(model, error);
                     }
 
                     if (error != null) {
-                        reportIfBuildScriptError(project, error);
                         GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
                     }
                 }
