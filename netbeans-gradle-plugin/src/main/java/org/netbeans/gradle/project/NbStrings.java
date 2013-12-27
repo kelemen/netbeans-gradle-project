@@ -404,6 +404,22 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateSourceDirsAction");
     }
 
+    public static String getDependencyResolutionFailure(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DependencyResolutionFailure", projectName);
+    }
+
+    public static String getRuntimeDependencyResolutionFailure(String projectName, String sourceSet) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RuntimeDependencyResolutionFailure", projectName, sourceSet);
+    }
+
+    public static String getCompileDependencyResolutionFailure(String projectName, String sourceSet) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CompileDependencyResolutionFailure", projectName, sourceSet);
+    }
+
+    public static String getShowStackTrace() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ShowStackTrace");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

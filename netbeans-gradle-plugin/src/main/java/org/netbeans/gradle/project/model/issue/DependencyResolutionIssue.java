@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.util.Parameters;
 
 public final class DependencyResolutionIssue {
@@ -55,12 +56,11 @@ public final class DependencyResolutionIssue {
     }
 
     public String getMessage() {
-        // TODO: I18N
         switch (dependencyKind) {
             case RUNTIME:
-                return "Compile time dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.";
+                return NbStrings.getRuntimeDependencyResolutionFailure(projectName, sourceSetName);
             case COMPILE:
-                return "Runtime dependencies of " + projectName + " [" + sourceSetName + "] could not be resolved.";
+                return NbStrings.getCompileDependencyResolutionFailure(projectName, sourceSetName);
             default:
                 throw new AssertionError(dependencyKind.name());
         }

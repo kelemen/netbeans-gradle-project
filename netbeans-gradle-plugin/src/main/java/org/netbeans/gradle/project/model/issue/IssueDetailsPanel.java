@@ -5,6 +5,7 @@ import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
@@ -18,8 +19,7 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
     }
 
     public static JButton createShowStackTraceButton(final String caption, final String detailsContent) {
-        // TODO: I18N
-        JButton button = new JButton("Show stacktrace");
+        JButton button = new JButton(NbStrings.getShowStackTrace());
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

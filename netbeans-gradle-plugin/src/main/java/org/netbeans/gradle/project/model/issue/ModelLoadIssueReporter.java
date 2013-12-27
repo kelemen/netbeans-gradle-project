@@ -23,6 +23,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.NotificationDisplayer;
 import org.openide.util.Parameters;
 
@@ -252,9 +253,8 @@ public final class ModelLoadIssueReporter {
     private static void reportDependencyResolutionFailures(List<DependencyResolutionIssue> issues) {
         assert SwingUtilities.isEventDispatchThread();
 
-        // TODO: I18N
         String projectName = setToString(getFailedDependencyProjectNames(issues));
-        String message = "Dependency resolution failure in " + projectName;
+        String message = NbStrings.getDependencyResolutionFailure(projectName);
         String htmlMessage = "<html>" + message + "</html>";
 
         NotificationDisplayer displayer = NotificationDisplayer.getDefault();
