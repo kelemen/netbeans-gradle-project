@@ -22,6 +22,30 @@ public final class Exceptions {
         }
     }
 
+    public static boolean isExceptionOfType(Throwable ex, String type) {
+        Class<?> exType = ex.getClass();
+        while (exType != null) {
+            if (type.equals(exType.getName())) {
+                return true;
+            }
+
+            exType = exType.getSuperclass();
+        }
+        return false;
+    }
+
+    public static boolean isExceptionOfSimpleType(Throwable ex, String type) {
+        Class<?> exType = ex.getClass();
+        while (exType != null) {
+            if (type.equals(exType.getSimpleName())) {
+                return true;
+            }
+
+            exType = exType.getSuperclass();
+        }
+        return false;
+    }
+
     private Exceptions() {
         throw new AssertionError();
     }

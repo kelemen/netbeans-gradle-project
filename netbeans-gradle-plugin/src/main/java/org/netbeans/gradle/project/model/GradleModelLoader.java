@@ -39,6 +39,7 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -267,7 +268,7 @@ public final class GradleModelLoader {
         // TODO: Move this check from here.
         Throwable currentError = error;
         while (currentError != null) {
-            if (currentError.getClass().getName().equals("org.gradle.api.GradleScriptException")) {
+            if (Exceptions.isExceptionOfType(currentError, "org.gradle.api.GradleScriptException")) {
                 ModelLoadIssueReporter.reportBuildScriptError(project, error);
                 return true;
             }
