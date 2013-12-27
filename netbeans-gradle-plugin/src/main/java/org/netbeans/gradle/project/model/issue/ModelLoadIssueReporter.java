@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -15,8 +14,6 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -88,21 +85,14 @@ public final class ModelLoadIssueReporter {
         return details.toString();
     }
 
-    private static JComponent createDetailsComponent(String detailsContent) {
-        // TODO: This component should pop-up a dialog displaying further info
-
-        final JTextArea textArea = new JTextArea(detailsContent);
-        textArea.setEditable(false);
-        textArea.setRows(5);
-        textArea.setColumns(10);
-
-        JPanel result = new JPanel(new GridLayout(1, 1));
-        result.add(new JScrollPane(textArea));
-        return result;
+    private static JComponent createDetailsComponent(String caption, String detailsContent) {
+        JComponent detailsComponent = new JPanel(new FlowLayout());
+        detailsComponent.add(IssueDetailsPanel.createShowStackTraceButton(caption, detailsContent));
+        return detailsComponent;
     }
 
-    private static JComponent createDetailsComponent(Collection<? extends ModelLoadIssue> issues) {
-        return createDetailsComponent(createDetails(issues));
+    private static JComponent createDetailsComponent(String caption, Collection<? extends ModelLoadIssue> issues) {
+        return createDetailsComponent(caption, createDetails(issues));
     }
 
     private static void reportAllIssuesNow(String message, Collection<? extends ModelLoadIssue> issues) {
@@ -120,7 +110,7 @@ public final class ModelLoadIssueReporter {
                 NbIcons.getUIErrorIcon(),
                 SwingConstants.LEADING);
 
-        JComponent detailsComponent = createDetailsComponent(issues);
+        JComponent detailsComponent = createDetailsComponent(message, issues);
 
         displayer.notify(
                 message,
@@ -220,7 +210,7 @@ public final class ModelLoadIssueReporter {
                 NbIcons.getUIErrorIcon(),
                 SwingConstants.LEADING);
 
-        JComponent detailsComponent = createDetailsComponent(getStackTrace(error));
+        JComponent detailsComponent = createDetailsComponent(project.getDisplayName(), getStackTrace(error));
 
         displayer.notify(
                 message,
