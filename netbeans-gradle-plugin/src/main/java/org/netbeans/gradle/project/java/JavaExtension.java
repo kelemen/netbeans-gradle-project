@@ -4,6 +4,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,6 +14,10 @@ import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.ProjectInfo;
+import org.netbeans.gradle.project.ProjectInfoManager;
+import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
@@ -49,6 +54,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private final GradleClassPathProvider cpProvider;
     private final AtomicReference<JavaSourceDirHandler> sourceDirsHandlerRef;
+    private final ProjectInfoRef dependencyResolutionFailureRef;
 
     private final AtomicReference<Lookup> projectLookupRef;
     private final AtomicReference<Lookup> permanentLookupRef;
@@ -70,6 +76,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.combinedLookupRef = new AtomicReference<Lookup>(null);
         this.hasEverBeenLoaded = false;
         this.sourceDirsHandlerRef = new AtomicReference<JavaSourceDirHandler>(null);
+        this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
     }
 
     public JavaSourceDirHandler getSourceDirsHandler() {
@@ -220,6 +227,16 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
     }
 
+    private static ProjectInfoManager getProjectInfoManager(Project project) {
+        // TODO: In the future this should be a public API.
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            throw new IllegalStateException("project is not an " + NbGradleProject.class.getSimpleName() + ": " + project.getProjectDirectory());
+        }
+
+        return gradleProject.getProjectInfoManager();
+    }
+
     private void checkDependencyResolveProblems(NbJavaModule module) {
         String projectName = module.getProperties().getProjectName();
 
@@ -238,9 +255,17 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
             }
         }
 
-        // TODO: Add/remove warning sign to the project as well.
         if (!issues.isEmpty()) {
+            List<ProjectInfo.Entry> entries = new ArrayList<ProjectInfo.Entry>(issues.size());
+            for (DependencyResolutionIssue issue: issues) {
+                entries.add(new ProjectInfo.Entry(ProjectInfo.Kind.ERROR, issue.getMessage()));
+            }
+
+            dependencyResolutionFailureRef.setInfo(new ProjectInfo(entries));
             ModelLoadIssueReporter.reportDependencyResolutionFailures(issues);
+        }
+        else {
+            dependencyResolutionFailureRef.setInfo(null);
         }
     }
 
