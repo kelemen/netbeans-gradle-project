@@ -279,8 +279,7 @@ public final class ModelLoadIssueReporter {
         String detailsCaption = message;
 
         JLabel messageLabel = errorBalloonLabel(message, detailsCaption, details);
-        JComponent detailsComponent = new JPanel(new FlowLayout());
-        detailsComponent.add(IssueDetailsPanel.createShowStackTraceButton(message, details));
+        JComponent detailsComponent = createDetailsComponent(detailsCaption, details);
 
         NotificationDisplayer.getDefault().notify(
                 message,
