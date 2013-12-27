@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model.issue;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,6 +31,7 @@ import org.openide.util.Parameters;
 public final class ModelLoadIssueReporter {
     private static final Logger LOGGER = Logger.getLogger(ModelLoadIssueReporter.class.getName());
     private static final Icon ERROR_ICON = NbIcons.getPriorityHighIcon();
+    private static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
     private static void printStackTrace(Throwable error, Writer output) {
         PrintWriter writer = new PrintWriter(output);
@@ -89,7 +91,9 @@ public final class ModelLoadIssueReporter {
     }
 
     private static JComponent createDetailsComponent(String caption, String detailsContent) {
-        JComponent detailsComponent = new JPanel(new FlowLayout());
+        JPanel detailsComponent = new JPanel(new FlowLayout());
+        detailsComponent.setOpaque(false);
+        detailsComponent.setBackground(TRANSPARENT_COLOR);
         detailsComponent.add(IssueDetailsPanel.createShowStackTraceButton(caption, detailsContent));
         return detailsComponent;
     }
