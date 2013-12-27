@@ -10,6 +10,7 @@ import java.util.Set;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
@@ -167,7 +168,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return task != null ? task.getCustomActions() : null;
     }
 
-    public static CustomCommandActions needsGradle(TaskKind taskKind, final String minGradleVersionStr) {
+    public static CustomCommandActions needsGradle(TaskKind taskKind, String minGradleVersionStr) {
         final GradleVersion minGradleVersion = GradleVersion.version(minGradleVersionStr);
 
         CustomCommandActions.Builder result = new CustomCommandActions.Builder(taskKind);
@@ -178,8 +179,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
                     OutputWriter output,
                     OutputWriter errOutput) {
                 if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
-                    // TODO: I18N
-                    errOutput.println("This task needs at least Gradle version " + minGradleVersionStr);
+                    errOutput.println(NbStrings.getNeedsMinGradleVersion(minGradleVersion));
                     return false;
                 }
 

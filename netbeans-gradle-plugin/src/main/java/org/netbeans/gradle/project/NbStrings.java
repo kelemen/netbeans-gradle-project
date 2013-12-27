@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.util.Collection;
 import java.util.List;
+import org.gradle.util.GradleVersion;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.openide.util.NbBundle;
@@ -418,6 +419,25 @@ public final class NbStrings {
 
     public static String getShowStackTrace() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ShowStackTrace");
+    }
+
+    public static String getNeedsMinGradleVersion(GradleVersion version) {
+        GradleVersion baseVersion = version.getBaseVersion();
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.NeedsMinGradleVersion", baseVersion.getVersion());
+    }
+
+    public static String getCoreGradlePlugin() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CoreGradlePlugin");
+    }
+
+    public static String getInternalExtensionErrorInProject(String extensionName, String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.InternalExtensionErrorInProject",
+                extensionName, projectName);
+    }
+
+    public static String getBuildScriptErrorInProject(String projectName) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildScriptErrorInProject",
+                projectName);
     }
 
     private NbStrings() {

@@ -166,10 +166,9 @@ public final class ModelLoadIssueReporter {
         for (ModelLoadIssue issue: issues) {
             NbGradleExtensionRef extensionRef = issue.getExtensionRef();
 
-            // TODO: I18N
             String name = extensionRef != null
                     ? extensionRef.getDisplayName()
-                    : "Core Gradle plugin";
+                    : NbStrings.getCoreGradlePlugin();
 
             names.add(name);
         }
@@ -188,8 +187,7 @@ public final class ModelLoadIssueReporter {
         String projectName = setToString(getProjectNames(issuesCopy));
         String extensionName = setToString(getExtensionNames(issuesCopy));
 
-        // TODO: I18N
-        final String message = "Internal error in " + extensionName + " for project " + projectName;
+        final String message = NbStrings.getInternalExtensionErrorInProject(extensionName, projectName);
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -201,8 +199,7 @@ public final class ModelLoadIssueReporter {
     private static void reportBuildScriptErrorNow(NbGradleProject project, Throwable error) {
         assert SwingUtilities.isEventDispatchThread();
 
-        // TODO: I18N
-        String message = "The build script of " + project.getDisplayName() + " contains an error.";
+        String message = NbStrings.getBuildScriptErrorInProject(project.getDisplayName());
         String htmlMessage = "<html>" + message + "</html>";
 
         NotificationDisplayer displayer = NotificationDisplayer.getDefault();
