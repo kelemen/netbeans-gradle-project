@@ -248,18 +248,40 @@ public final class ModelLoadIssueReporter {
         return names;
     }
 
+    private static String getImportantCause(DependencyResolutionIssue issue) {
+        Throwable cause = issue.getStackTrace();
+        Throwable rootCause = cause;
+        while (cause != null) {
+            rootCause = cause;
+            if (Exceptions.isExceptionOfSimpleType(cause, "ModuleVersionNotFoundException")) {
+                break;
+            }
+
+            cause = cause.getCause();
+        }
+
+        return Exceptions.getActualMessage(rootCause)
+                .replace("\r\n", " ")
+                .replace('\r', ' ')
+                .replace('\n', ' ');
+    }
+
     private static void reportDependencyResolutionFailures(List<DependencyResolutionIssue> issues) {
         assert SwingUtilities.isEventDispatchThread();
 
         String projectName = setToString(getFailedDependencyProjectNames(issues));
         String message = NbStrings.getDependencyResolutionFailure(projectName);
 
-        // TODO: Try to extract useful parts of the stack trace.
         StringBuilder detailsContent = new StringBuilder(1024);
         for (DependencyResolutionIssue issue: issues) {
+            String issueMessage = issue.getMessage();
+            LOGGER.log(Level.INFO, issueMessage, issue.getStackTrace());
+
             detailsContent.append("- ");
-            detailsContent.append(issue.getMessage());
-            detailsContent.append('\n');
+            detailsContent.append(issueMessage);
+            detailsContent.append(" (");
+            detailsContent.append(getImportantCause(issue));
+            detailsContent.append(")\n");
         }
 
         detailsContent.append("\nDetails: \n");
