@@ -20,8 +20,11 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaSourcesModel;
 import org.netbeans.gradle.model.java.WarFoldersModel;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
+import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.others.OtherPlugins;
 import org.openide.util.Lookup;
 
 public final class JavaParsingUtils {
@@ -133,12 +136,19 @@ public final class JavaParsingUtils {
         return result;
     }
 
-    private static List<NbListedDir> getListedDirs(Lookup projectInfo) {
+    private static NbGradleProject getProject(File projectDir) {
+        return GradleModelLoader.tryFindGradleProject(projectDir);
+    }
+
+    private static List<NbListedDir> getListedDirs(ModelLoadResult retrievedModels, Lookup projectInfo) {
         List<NbListedDir> listedDirs = new LinkedList<NbListedDir>();
 
-        WarFoldersModel warFolders = projectInfo.lookup(WarFoldersModel.class);
-        if (warFolders != null) {
-            listedDirs.add(new NbListedDir(NbStrings.getWebPages(), warFolders.getWebAppDir()));
+        NbGradleProject project = getProject(retrievedModels.getMainProjectDir());
+        if (project == null || !OtherPlugins.hasJavaEEExtension(project)) {
+            WarFoldersModel warFolders = projectInfo.lookup(WarFoldersModel.class);
+            if (warFolders != null) {
+                listedDirs.add(new NbListedDir(NbStrings.getWebPages(), warFolders.getWebAppDir()));
+            }
         }
 
         return listedDirs;
@@ -172,7 +182,7 @@ public final class JavaParsingUtils {
             }
 
             Collection<JavaSourceSet> sourceSets = adjustedSources(sourcesModel, jarsToBuildDirs);
-            List<NbListedDir> listedDirs = getListedDirs(projectInfo);
+            List<NbListedDir> listedDirs = getListedDirs(retrievedModels, projectInfo);
 
             NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs);
             result.add(module);

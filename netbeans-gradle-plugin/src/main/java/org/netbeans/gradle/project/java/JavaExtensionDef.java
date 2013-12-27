@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
+import org.netbeans.gradle.project.others.OtherPlugins;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ServiceProvider;
@@ -133,8 +134,13 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
     }
 
     private static final class Query2 implements GradleModelDefQuery2 {
-        // TODO: Do not request WarFoldersModelBuilder if the EE extension is available.
         private static final GradleModelDef RESULT = GradleModelDef.fromProjectInfoBuilders(
+                JarOutputsModelBuilder.INSTANCE,
+                JavaSourcesModelBuilder.COMPLETE,
+                JavaCompatibilityModelBuilder.INSTANCE,
+                WarFoldersModelBuilder.INSTANCE);
+
+        private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders(
                 JarOutputsModelBuilder.INSTANCE,
                 JavaSourcesModelBuilder.COMPLETE,
                 JavaCompatibilityModelBuilder.INSTANCE,
@@ -142,7 +148,9 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
 
         @Override
         public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-            return RESULT;
+            return OtherPlugins.hasJavaEEExtension()
+                    ? RESULT_WITHOUT_WAR
+                    : RESULT;
         }
     }
 }

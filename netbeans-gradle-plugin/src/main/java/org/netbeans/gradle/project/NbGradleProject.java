@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,6 +20,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
@@ -93,6 +95,7 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<Queue<Runnable>> delayedInitTasks;
     private volatile List<NbGradleExtensionRef> extensionRefs;
+    private volatile Set<String> extensionNames;
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
@@ -120,6 +123,7 @@ public final class NbGradleProject implements Project {
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
+        this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<DynamicLookup>(null);
         this.protectedLookupRef = new AtomicReference<Lookup>(null);
     }
@@ -182,16 +186,24 @@ public final class NbGradleProject implements Project {
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
         List<Lookup> allLookups = new ArrayList<Lookup>(extensions.size() + 2);
 
+        Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
+
         allLookups.add(getDefaultLookup());
         for (final NbGradleExtensionRef extension: extensions) {
+            newExtensionNames.add(extension.getName());
             allLookups.add(extension.getProjectLookup());
         }
 
         allLookups.addAll(getLookupsFromAnnotations());
 
+        this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
         this.extensionRefs = Collections.unmodifiableList(new ArrayList<NbGradleExtensionRef>(extensions));
         getMainLookup().replaceLookups(allLookups);
         updateCombinedExtensionLookup();
+    }
+
+    public boolean hasExtension(String extensionName) {
+        return extensionNames.contains(extensionName);
     }
 
     public Lookup getCombinedExtensionLookup() {
