@@ -210,7 +210,7 @@ public final class NbGradleProject implements Project {
         getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeActiveConfigChangeListener(listener);
     }
 
-    public void displayError(String errorText, Throwable exception, boolean setFocus) {
+    public void displayError(String errorText, Throwable exception) {
         if (!ModelLoadIssueReporter.reportIfBuildScriptError(this, exception)) {
             ModelLoadIssueReporter.reportAllIssues(errorText, Collections.singleton(
                     new ModelLoadIssue(this, null, null, null, exception)));
@@ -671,7 +671,7 @@ public final class NbGradleProject implements Project {
                         NbStrings.getErrorLoadingProject(error));
                 getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
                 LOGGER.log(Level.INFO, "Error while loading the project model.", error);
-                displayError(NbStrings.getProjectLoadFailure(name), error, true);
+                displayError(NbStrings.getProjectLoadFailure(name), error);
             }
             else {
                 getLoadErrorRef().setInfo(null);

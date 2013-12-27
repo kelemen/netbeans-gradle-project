@@ -557,7 +557,7 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
                 @Override
                 public void onComplete(Throwable error) {
                     if (error != null) {
-                        project.displayError(NbStrings.getDownloadSourcesFailure(), error, false);
+                        project.displayError(NbStrings.getDownloadSourcesFailure(), error);
                     }
                 }
             });

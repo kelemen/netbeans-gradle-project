@@ -326,7 +326,7 @@ public final class AsyncGradleTask implements Runnable {
                         OutputWriter buildErrOutput = tab.getIo().getErrRef();
                         buildErrOutput.println();
                         buildErrOutput.println(buildFailureMessage);
-                        project.displayError(buildFailureMessage, ex, false);
+                        project.displayError(buildFailureMessage, ex);
                     }
 
                     tab.taskCompleted();

@@ -146,7 +146,7 @@ public final class DebugUtils {
             } catch (IOException ex) {
                 NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
                 if (gradleProject != null) {
-                    gradleProject.displayError("Unexpected error.", ex, true);
+                    gradleProject.displayError("Unexpected error.", ex);
                 }
                 else {
                     throw new IllegalStateException("Unexpected error in an unexpected project type.", ex);

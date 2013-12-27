@@ -62,7 +62,7 @@ public final class GradleTasks {
                             error);
 
                     String buildFailureMessage = NbStrings.getGradleTaskFailure();
-                    project.displayError(buildFailureMessage, error, false);
+                    project.displayError(buildFailureMessage, error);
                 }
             }
         };
