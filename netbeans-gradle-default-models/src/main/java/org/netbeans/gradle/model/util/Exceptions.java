@@ -46,6 +46,15 @@ public final class Exceptions {
         return false;
     }
 
+    public static String getActualMessage(Throwable ex) {
+        if (ex instanceof TransferableExceptionWrapper) {
+            return ((TransferableExceptionWrapper)ex).getOriginalMessage();
+        }
+        else {
+            return ex.getMessage();
+        }
+    }
+
     private Exceptions() {
         throw new AssertionError();
     }
