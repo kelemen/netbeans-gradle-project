@@ -23,6 +23,11 @@ public final class Exceptions {
     }
 
     public static boolean isExceptionOfType(Throwable ex, String type) {
+        String wrappedName = tryGetWrappedClassName(ex);
+        if (type.equals(wrappedName)) {
+            return true;
+        }
+
         Class<?> exType = ex.getClass();
         while (exType != null) {
             if (type.equals(exType.getName())) {
@@ -35,6 +40,11 @@ public final class Exceptions {
     }
 
     public static boolean isExceptionOfSimpleType(Throwable ex, String type) {
+        String wrappedName = tryGetWrappedClassName(ex);
+        if (type.equals(wrappedName)) {
+            return true;
+        }
+
         Class<?> exType = ex.getClass();
         while (exType != null) {
             if (type.equals(exType.getSimpleName())) {
@@ -44,6 +54,15 @@ public final class Exceptions {
             exType = exType.getSuperclass();
         }
         return false;
+    }
+
+    private static String tryGetWrappedClassName(Throwable ex) {
+        if (ex instanceof TransferableExceptionWrapper) {
+            return ((TransferableExceptionWrapper)ex).getOriginalClassName();
+        }
+        else {
+            return null;
+        }
     }
 
     public static String getActualMessage(Throwable ex) {
