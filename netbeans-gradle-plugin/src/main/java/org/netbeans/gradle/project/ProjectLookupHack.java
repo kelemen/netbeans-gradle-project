@@ -6,16 +6,21 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.SubprojectProvider;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
 import org.openide.util.Parameters;
+import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class ProjectLookupHack extends ProxyLookup {
     private static final Logger LOGGER = Logger.getLogger(ProjectLookupHack.class.getName());
 
     public interface LookupContainer {
+        public NbGradleProject getProject();
         public Lookup getLookup();
         public Lookup getLookupAndActivate();
     }
@@ -45,6 +50,7 @@ public final class ProjectLookupHack extends ProxyLookup {
         public AccessPreventerLookup() {
             this.typeActions = new HashMap<Class<?>, Lookup>();
             typeActions.put(SubprojectProvider.class, Lookup.EMPTY);
+            typeActions.put(ClassPathProvider.class, Lookups.singleton(new UnimportantRootClassPathProvider()));
 
             Lookup wrappedLookup = lookupContainer.getLookup();
             typeActions.put(ProjectInformation.class, wrappedLookup);
@@ -85,6 +91,27 @@ public final class ProjectLookupHack extends ProxyLookup {
         @Override
         public <T> Item<T> lookupItem(Template<T> template) {
             return lookupForType(template.getType()).lookupItem(template);
+        }
+    }
+
+    private class UnimportantRootClassPathProvider implements ClassPathProvider {
+        @Override
+        public ClassPath findClassPath(FileObject file, String type) {
+            Lookup lookup;
+            if (lookupContainer.getProject().getProjectDirectory().equals(file)) {
+                lookup = lookupContainer.getLookup();
+            }
+            else {
+                lookup = activate();
+            }
+
+            for (ClassPathProvider otherProvider: lookup.lookupAll(ClassPathProvider.class)) {
+                ClassPath result = otherProvider.findClassPath(file, type);
+                if (result != null) {
+                    return result;
+                }
+            }
+            return null;
         }
     }
 }

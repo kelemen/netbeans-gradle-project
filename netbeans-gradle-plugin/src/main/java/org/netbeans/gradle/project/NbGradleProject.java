@@ -190,6 +190,11 @@ public final class NbGradleProject implements Project {
         final Lookup combinedAllLookups = new ProxyLookup(allLookups.toArray(new Lookup[allLookups.size()]));
         getMainLookup().replaceLookups(new ProjectLookupHack(new ProjectLookupHack.LookupContainer() {
             @Override
+            public NbGradleProject getProject() {
+                return NbGradleProject.this;
+            }
+
+            @Override
             public Lookup getLookup() {
                 return combinedAllLookups;
             }
