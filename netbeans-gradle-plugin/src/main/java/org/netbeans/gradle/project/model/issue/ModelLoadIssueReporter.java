@@ -210,11 +210,9 @@ public final class ModelLoadIssueReporter {
         });
     }
 
-    private static void reportBuildScriptErrorNow(NbGradleProject project, Throwable error) {
+    private static void reportErrorNow(String message, String detailsCaption, Throwable error) {
         assert SwingUtilities.isEventDispatchThread();
 
-        String message = NbStrings.getBuildScriptErrorInProject(project.getDisplayName());
-        String detailsCaption = project.getDisplayName();
         String details = getStackTrace(error);
 
         JLabel messageLabel = errorBalloonLabel(message, detailsCaption, details);
@@ -226,6 +224,12 @@ public final class ModelLoadIssueReporter {
                 messageLabel,
                 detailsComponent,
                 NotificationDisplayer.Priority.HIGH);
+    }
+
+    private static void reportBuildScriptErrorNow(NbGradleProject project, Throwable error) {
+        String message = NbStrings.getBuildScriptErrorInProject(project.getDisplayName());
+        String detailsCaption = project.getDisplayName();
+        reportErrorNow(message, detailsCaption, error);
     }
 
     public static void reportBuildScriptError(final NbGradleProject project, final Throwable error) {
@@ -324,7 +328,8 @@ public final class ModelLoadIssueReporter {
     public static boolean reportIfBuildScriptError(NbGradleProject project, Throwable error) {
         Throwable currentError = error;
         while (currentError != null) {
-            if (Exceptions.isExceptionOfType(currentError, "org.gradle.api.GradleScriptException")) {
+            if (Exceptions.isExceptionOfType(currentError, "org.gradle.api.GradleScriptException")
+                    || Exceptions.isExceptionOfType(currentError, "org.gradle.api.ProjectConfigurationException")) {
                 ModelLoadIssueReporter.reportBuildScriptError(project, error);
                 return true;
             }
