@@ -33,10 +33,6 @@ public interface GradleProjectExtensionQuery {
      * loaded. This method is called for each loaded project and is called
      * exactly once.
      * <P>
-     * <B>Note</B>: When this method is called, the lookup of the project is
-     * incomplete and callers of the lookup must not expect to be notified
-     * when the lookup of the project changes (via {@code Lookup.Result}).
-     * <P>
      * You can expect the following queries to be on the project's lookup even
      * when this method is being called:
      * <ul>
