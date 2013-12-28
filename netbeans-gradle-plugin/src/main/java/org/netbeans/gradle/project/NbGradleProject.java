@@ -7,9 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,6 +62,7 @@ import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.RequestProcessor;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.ProxyLookup;
 
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
@@ -79,7 +78,6 @@ public final class NbGradleProject implements Project {
     private final ProjectState state;
     private final AtomicReference<Lookup> defaultLookupRef;
     private final AtomicReference<DynamicLookup> lookupRef;
-    private final AtomicReference<Lookup> protectedLookupRef;
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
@@ -93,7 +91,6 @@ public final class NbGradleProject implements Project {
 
     private final WaitableSignal loadedAtLeastOnceSignal;
 
-    private final AtomicReference<Queue<Runnable>> delayedInitTasks;
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
 
@@ -107,7 +104,6 @@ public final class NbGradleProject implements Project {
         }
 
         this.mergedCommandQueryRef = new AtomicReference<BuiltInGradleCommandQuery>(null);
-        this.delayedInitTasks = new AtomicReference<Queue<Runnable>>(new LinkedBlockingQueue<Runnable>());
         this.state = state;
         this.defaultLookupRef = new AtomicReference<Lookup>(null);
         this.properties = new ProjectPropertiesProxy(this);
@@ -125,20 +121,12 @@ public final class NbGradleProject implements Project {
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<DynamicLookup>(null);
-        this.protectedLookupRef = new AtomicReference<Lookup>(null);
     }
 
     @Nonnull
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir, state);
-        try {
-            project.setExtensions(ExtensionLoader.loadExtensions(project));
-        } finally {
-            Queue<Runnable> taskList = project.delayedInitTasks.getAndSet(null);
-            for (Runnable tasks: taskList) {
-                tasks.run();
-            }
-        }
+        project.setExtensions(ExtensionLoader.loadExtensions(project));
         return project;
     }
 
@@ -198,7 +186,20 @@ public final class NbGradleProject implements Project {
 
         this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
         this.extensionRefs = Collections.unmodifiableList(new ArrayList<NbGradleExtensionRef>(extensions));
-        getMainLookup().replaceLookups(allLookups);
+
+        final Lookup combinedAllLookups = new ProxyLookup(allLookups.toArray(new Lookup[allLookups.size()]));
+        getMainLookup().replaceLookups(new ProjectLookupHack(new ProjectLookupHack.LookupContainer() {
+            @Override
+            public Lookup getLookup() {
+                return combinedAllLookups;
+            }
+
+            @Override
+            public Lookup getLookupAndActivate() {
+                loadProject(true, true);
+                return combinedAllLookups;
+            }
+        }));
         updateCombinedExtensionLookup();
     }
 
@@ -285,7 +286,7 @@ public final class NbGradleProject implements Project {
     public void tryUpdateFromCache(NbGradleModel baseModel) {
         // In this case we don't yet requested a model, so there is little
         // reason to do anything now: Be lazy!
-        if (!isInitialized() || properties.isLoaded()) {
+        if (!hasModelBeenLoaded.get() || properties.isLoaded()) {
             return;
         }
 
@@ -339,50 +340,11 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private boolean isInitialized() {
-        return delayedInitTasks.get() == null;
-    }
-
-    private void runDelayedInitTask(final Runnable task) {
-        assert task != null;
-
-        Queue<Runnable> taskList = delayedInitTasks.get();
-        if (taskList == null) {
-            task.run();
-            return;
-        }
-
-        final AtomicBoolean executed = new AtomicBoolean(false);
-        Runnable delayedTask = new Runnable() {
-            @Override
-            public void run() {
-                if (executed.compareAndSet(false, true)) {
-                    task.run();
-                }
-            }
-        };
-
-        taskList.add(delayedTask);
-        if (delayedInitTasks.get() == null) {
-            delayedTask.run();
-        }
-    }
-
     private void loadProject(final boolean onlyIfNotLoaded, final boolean mayUseCache) {
         if (!hasModelBeenLoaded.compareAndSet(false, true)) {
             if (onlyIfNotLoaded) {
                 return;
             }
-        }
-
-        if (!isInitialized()) {
-            runDelayedInitTask(new Runnable() {
-                @Override
-                public void run() {
-                    loadProject(false, mayUseCache);
-                }
-            });
-            return;
         }
 
         getPropertiesForProfile(getCurrentProfile().getProfileDef(), true, new PropertiesLoadListener() {
@@ -488,8 +450,6 @@ public final class NbGradleProject implements Project {
                 for (ProjectInitListener listener: newLookup.lookupAll(ProjectInitListener.class)) {
                     listener.onInitProject();
                 }
-
-                loadProject(true, true);
             }
             result = defaultLookupRef.get();
         }
@@ -502,17 +462,13 @@ public final class NbGradleProject implements Project {
             lookupRef.compareAndSet(null, new DynamicLookup(getDefaultLookup()));
             lookup = lookupRef.get();
         }
+
         return lookup;
     }
 
     @Override
     public Lookup getLookup() {
-        Lookup lookup = protectedLookupRef.get();
-        if (lookup == null) {
-            protectedLookupRef.compareAndSet(null, DynamicLookup.viewLookup(getMainLookup()));
-            lookup = protectedLookupRef.get();
-        }
-        return lookup;
+        return getMainLookup();
     }
 
     // equals and hashCode is provided, so that NetBeans doesn't load the
