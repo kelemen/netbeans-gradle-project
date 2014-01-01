@@ -201,6 +201,20 @@ public final class ExtensionLoader {
             Lookup retrievedModels) {
 
         Map<File, Lookup> deduced = extension.deduceModelsForProjects(retrievedModels);
+        if (!deduced.containsKey(projectDir)) {
+            List<Object> lookupContent = new LinkedList<Object>();
+            for (List<Class<?>> models: extension.getGradleModels()) {
+                for (Class<?> neededModel: models) {
+                    Object model = retrievedModels.lookup(neededModel);
+                    if (model != null) {
+                        lookupContent.add(model);
+                        break;
+                    }
+                }
+            }
+
+            return new ParsedModel<Lookup>(Lookups.fixed(lookupContent.toArray()), deduced);
+        }
 
         Lookup mainModels = deduced.get(projectDir);
         if (mainModels != null) {

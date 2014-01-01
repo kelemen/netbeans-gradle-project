@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -27,7 +28,7 @@ public final class EmptyProjectTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        MockServices.setServices();
+        MockServices.setServices(SingleModelExtensionQuery.class);
         GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.9"));
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
@@ -64,6 +65,17 @@ public final class EmptyProjectTest {
     public void tearDown() throws Exception {
         rootProjectRef.close();
         rootProjectRef = null;
+    }
+
+    @Test
+    public void testOldAPIFetchedModel() throws Exception {
+        NbGradleProject project = rootProjectRef.getProject();
+
+        SingleModelExtension extension = project.getLookup().lookup(SingleModelExtension.class);
+        assertNotNull(extension);
+
+        Object model = extension.getModel(60, TimeUnit.SECONDS);
+        assertTrue("Must have retrieved the eclipse project model.", model instanceof EclipseProject);
     }
 
     @Test
