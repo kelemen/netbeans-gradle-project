@@ -39,6 +39,7 @@ import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -148,6 +149,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         Lookup lookup = projectLookupRef.get();
         if (lookup == null) {
             lookup = Lookups.fixed(
+                    LookupProviderSupport.createSourcesMerger(),
                     new GradleProjectSources(this),
                     cpProvider,
                     new GradleSourceLevelQueryImplementation(this),
