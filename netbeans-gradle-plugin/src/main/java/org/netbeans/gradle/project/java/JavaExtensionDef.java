@@ -143,8 +143,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders(
                 JarOutputsModelBuilder.INSTANCE,
                 JavaSourcesModelBuilder.COMPLETE,
-                JavaCompatibilityModelBuilder.INSTANCE,
-                WarFoldersModelBuilder.INSTANCE);
+                JavaCompatibilityModelBuilder.INSTANCE);
 
         @Override
         public GradleModelDef getModelDef(GradleTarget gradleTarget) {
