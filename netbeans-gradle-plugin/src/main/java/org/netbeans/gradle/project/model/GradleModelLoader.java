@@ -607,13 +607,21 @@ public final class GradleModelLoader {
 
         private final JavaPlatform jdkPlatform;
         private final File jdkHome;
+        private final List<String> arguments;
         private final List<String> jvmArgs;
 
         public ModelBuilderSetup(Project project, ProgressHandle progress) {
-            this(project, GlobalGradleSettings.getGradleJvmArgs().getValue(), progress);
+            this(project,
+                    Collections.singletonList("-PevaluatingIDE=NetBeans"),
+                    GlobalGradleSettings.getGradleJvmArgs().getValue(),
+                    progress);
         }
 
-        public ModelBuilderSetup(Project project, List<String> jvmArgs, ProgressHandle progress) {
+        public ModelBuilderSetup(
+                Project project,
+                List<String> arguments,
+                List<String> jvmArgs,
+                ProgressHandle progress) {
             this.progress = progress;
 
             JavaPlatform selectedPlatform = GradleModelLoader.tryGetScriptJavaPlatform(project);
@@ -622,6 +630,9 @@ public final class GradleModelLoader {
                     ? selectedPlatform
                     : JavaPlatform.getDefault();
 
+            this.arguments = arguments != null
+                    ? new ArrayList<String>(arguments)
+                    : Collections.<String>emptyList();
             this.jvmArgs = jvmArgs != null
                     ? new ArrayList<String>(jvmArgs)
                     : Collections.<String>emptyList();
@@ -647,8 +658,12 @@ public final class GradleModelLoader {
                 args.setJavaHome(jdkHome);
             }
 
+            if (!arguments.isEmpty()) {
+                args.setArguments(arguments.toArray(new String[arguments.size()]));
+            }
+
             if (!jvmArgs.isEmpty()) {
-                args.setJvmArguments(jvmArgs.toArray(new String[0]));
+                args.setJvmArguments(jvmArgs.toArray(new String[jvmArgs.size()]));
             }
 
             if (progress != null) {

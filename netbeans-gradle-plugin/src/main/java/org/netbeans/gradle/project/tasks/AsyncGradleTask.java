@@ -237,7 +237,10 @@ public final class AsyncGradleTask implements Runnable {
             GradleTaskDef taskDef,
             ProgressHandle progress) {
 
-        return new GradleModelLoader.ModelBuilderSetup(project, taskDef.getJvmArguments(), progress);
+        return new GradleModelLoader.ModelBuilderSetup(project,
+                Collections.<String>emptyList(),
+                taskDef.getJvmArguments(),
+                progress);
     }
 
     private void doGradleTasksWithProgress(
