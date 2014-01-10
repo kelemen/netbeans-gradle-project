@@ -15,7 +15,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
-import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.nodes.Node;
@@ -29,7 +28,7 @@ public final class EmptyProjectTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices(SingleModelExtensionQuery.class);
-        GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.9"));
+        GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
         sampleProject = SampleGradleProject.createProject("empty-project.zip");

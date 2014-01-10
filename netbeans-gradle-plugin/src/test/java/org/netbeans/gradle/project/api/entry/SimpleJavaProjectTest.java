@@ -63,7 +63,7 @@ public class SimpleJavaProjectTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices();
-        GlobalGradleSettings.getGradleHome().setValue(new GradleLocationVersion("1.9"));
+        GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
         sampleProject = SampleGradleProject.createProject("gradle-sample.zip");

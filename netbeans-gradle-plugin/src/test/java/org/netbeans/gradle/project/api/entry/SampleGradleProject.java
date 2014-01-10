@@ -6,16 +6,21 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.gradle.util.GradleVersion;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
+import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.openide.filesystems.FileUtil;
 
 public final class SampleGradleProject implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(SampleGradleProject.class.getName());
+    public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
+    public static final GradleLocation DEFAULT_GRADLE_TARGET = new GradleLocationVersion(DEFAULT_GRADLE_VERSION);
 
     private final File tempFolder;
 

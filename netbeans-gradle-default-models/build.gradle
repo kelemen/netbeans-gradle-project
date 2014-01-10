@@ -4,8 +4,8 @@ group = 'com.github.kelemen';
 version = '1.2.8.2-SNAPSHOT';
 sourceCompatibility = '1.5';
 
-String gradleVersion = '1.9';
-List otherGradleVersions = ['1.8'];
+String gradleVersion = '1.10';
+List otherGradleVersions = ['1.8', '1.9'];
 
 ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'common-scripts'), fileName);
