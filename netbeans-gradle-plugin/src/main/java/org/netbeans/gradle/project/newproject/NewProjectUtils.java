@@ -58,7 +58,10 @@ public final class NewProjectUtils {
     }
 
     public static void setDefaultProjectDir(String newValue) {
-        ProjectChooser.setProjectsFolder(new File(newValue.trim()));
+        File dir = new File(newValue.trim());
+        if (dir.isDirectory()) {
+            ProjectChooser.setProjectsFolder(dir);
+        }
     }
 
     public static void createDefaultSourceDirs(FileObject projectDir) throws IOException {
