@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.net.URI;
+import org.netbeans.gradle.project.NbGradleProject;
 
 public final class GradleLocationDistribution implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "DIST";
@@ -17,7 +18,7 @@ public final class GradleLocationDistribution implements GradleLocation {
     }
 
     @Override
-    public void applyLocation(Applier applier) {
+    public void applyLocation(NbGradleProject project, Applier applier) {
         applier.applyDistribution(location);
     }
 

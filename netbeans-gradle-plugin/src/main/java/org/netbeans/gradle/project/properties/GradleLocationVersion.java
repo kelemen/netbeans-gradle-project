@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.NbGradleProject;
+
 public final class GradleLocationVersion implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "VER";
 
@@ -15,7 +17,7 @@ public final class GradleLocationVersion implements GradleLocation {
     }
 
     @Override
-    public void applyLocation(Applier applier) {
+    public void applyLocation(NbGradleProject project, Applier applier) {
         applier.applyVersion(versionStr);
     }
 

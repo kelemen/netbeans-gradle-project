@@ -159,7 +159,7 @@ public final class GradleModelLoader {
             gradleLocation = projectProperties.getGradleLocation().getValue();
         }
 
-        gradleLocation.applyLocation(new GradleLocation.Applier() {
+        gradleLocation.applyLocation(gradleProject, new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 result.useGradleVersion(versionStr);

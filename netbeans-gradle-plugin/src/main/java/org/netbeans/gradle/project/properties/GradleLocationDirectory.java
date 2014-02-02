@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleLocationDirectory implements GradleLocation {
@@ -18,7 +19,7 @@ public final class GradleLocationDirectory implements GradleLocation {
     }
 
     @Override
-    public void applyLocation(Applier applier) {
+    public void applyLocation(NbGradleProject project, Applier applier) {
         applier.applyDirectory(gradleHome);
     }
 
