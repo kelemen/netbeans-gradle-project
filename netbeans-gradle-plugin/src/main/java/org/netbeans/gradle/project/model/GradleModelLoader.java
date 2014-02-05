@@ -225,6 +225,18 @@ public final class GradleModelLoader {
         return false;
     }
 
+    private static void onModelLoaded(
+            NbGradleModel model,
+            Throwable error,
+            ModelRetrievedListener listener) {
+
+        if (model == null && error == null) {
+            return;
+        }
+
+        listener.onComplete(model, error);
+    }
+
     public static void tryUpdateFromCache(
             final NbGradleProject project,
             final NbGradleModel baseModel,
@@ -241,9 +253,8 @@ public final class GradleModelLoader {
                 if (model == null) {
                     model = baseModel;
                 }
-                if (model != null) {
-                    listener.onComplete(model, null);
-                }
+
+                onModelLoaded(model, null, listener);
             }
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
@@ -294,9 +305,7 @@ public final class GradleModelLoader {
                     error = ex;
                     reportModelLoadError(project, ex);
                 } finally {
-                    if (model != null || error != null) {
-                        listener.onComplete(model, error);
-                    }
+                    onModelLoaded(model, error, listener);
 
                     if (error != null) {
                         GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
