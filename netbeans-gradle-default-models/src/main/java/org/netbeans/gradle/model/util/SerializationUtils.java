@@ -2,6 +2,9 @@ package org.netbeans.gradle.model.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -21,6 +24,28 @@ public final class SerializationUtils {
         }
 
         return output.toByteArray();
+    }
+
+    public static void serializeToFile(File file, Object object) throws IOException {
+        ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file));
+        try {
+            output.writeObject(object);
+        } finally {
+            output.close();
+        }
+    }
+
+    public static Object deserializeFile(File file) throws IOException {
+        ObjectInputStream input = new ObjectInputStream(new FileInputStream(file));
+        try {
+            return input.readObject();
+        } catch (ClassNotFoundException ex) {
+            IOException toThrow = new IOException();
+            toThrow.initCause(ex);
+            throw toThrow;
+        } finally {
+            input.close();
+        }
     }
 
     public static Object deserializeObject(byte[] serializedObject) throws ClassNotFoundException {
