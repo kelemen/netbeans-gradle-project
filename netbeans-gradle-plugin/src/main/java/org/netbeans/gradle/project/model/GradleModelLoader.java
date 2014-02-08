@@ -305,24 +305,31 @@ public final class GradleModelLoader {
         return result;
     }
 
+    private static String getCacheKey(NbGradleModel model) throws IOException {
+        File rootDir = model.getRootProjectDir().getCanonicalFile();
+
+        String rootDirStr = rootDir.getPath();
+        String projectDirStr = model.getProjectDir().getCanonicalFile().getPath();
+        if (projectDirStr.startsWith(rootDirStr)) {
+            projectDirStr = projectDirStr.substring(rootDirStr.length());
+        }
+        return projectDirStr;
+    }
+
     private static NbGradleModel tryGetFromPersistentCacheUnsafe(NbGradleProject project) throws IOException {
         // TODO: The cache should not be kept in a single file (for the complete multi-project build).
         //       This is simply inefficient because we read all the data for
         //       each projects.
-        File rootDir = project.getAvailableModel().getRootProjectDir().getCanonicalFile();
+        NbGradleModel model = project.getAvailableModel();
+        File rootDir = model.getRootProjectDir();
 
         Map<String, SerializedNbGradleModels> allModels = tryReadFromCache(rootDir);
         if (allModels == null) {
             return null;
         }
 
-        String rootDirStr = rootDir.getPath();
-        String projectDirStr = project.getProjectDirectoryAsFile().getCanonicalFile().getPath();
-        if (projectDirStr.startsWith(rootDirStr)) {
-            projectDirStr = projectDirStr.substring(rootDirStr.length());
-        }
-
-        SerializedNbGradleModels serializedModels = allModels.get(projectDirStr);
+        String cacheKey = getCacheKey(model);
+        SerializedNbGradleModels serializedModels = allModels.get(cacheKey);
         return serializedModels != null
                 ? serializedModels.deserializeModel(project)
                 : null;
@@ -495,10 +502,43 @@ public final class GradleModelLoader {
         return null;
     }
 
+    private static void saveToPersistentCacheUnsafe(NbGradleModel model) throws IOException {
+        // TODO: We can only add to the project cache, this isn't good if
+        //       the user removes sub-projects because that sub-project will remain
+        //       in the cache and will make the cache load slower. This problem
+        //       could be mitigated by using separate file for each subproject.
+
+        File rootDir = model.getRootProjectDir();
+
+        Map<String, SerializedNbGradleModels> models = tryReadFromCache(rootDir);
+        Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(models.size() + 1);
+        updatedModels.putAll(models);
+        updatedModels.put(getCacheKey(model), new SerializedNbGradleModels(model));
+
+        File cacheFile = getCacheFile(model.getRootProjectDir());
+        File cacheDir = cacheFile.getParentFile();
+        if (cacheDir != null) {
+            cacheDir.mkdirs();
+        }
+
+        SerializationUtils.serializeToFile(cacheFile, updatedModels);
+    }
+
+    private static void saveToPersistentCache(NbGradleModel model) {
+        try {
+            saveToPersistentCacheUnsafe(model);
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO, "Failed to save into the persistent cache: " + model.getProjectDir(), ex);
+        } catch (Throwable ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected error while saving to the persistent cache: " + model.getProjectDir(), ex);
+        }
+    }
+
     private static void introduceLoadedModel(NbGradleModel model, boolean replaced) {
         // TODO: Add to persistent cache.
 
         if (replaced) {
+            saveToPersistentCache(model);
             getCache().replaceEntry(model);
         }
         else {

@@ -17,9 +17,14 @@ public final class SettingsFiles {
     private static final String SETTINGS_DIR_NAME = ".nb-gradle";
     private static final String PROFILE_DIRECTORY = "profiles";
     private static final String PRIVATE_SETTINGS_DIR = "private";
+    private static final String CACHE_DIR = "private";
 
     public static File getPrivateSettingsDir(File rootDir) {
         return new File(getSettingsDir(rootDir), PRIVATE_SETTINGS_DIR);
+    }
+
+    public static File getCacheDir(File rootDir) {
+        return new File(getPrivateSettingsDir(rootDir), CACHE_DIR);
     }
 
     public static Collection<ProfileDef> getAvailableProfiles(File rootDir) {
