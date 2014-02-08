@@ -39,6 +39,7 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -52,6 +53,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
@@ -67,6 +69,9 @@ public final class GradleModelLoader {
 
     private static final RequestProcessor PROJECT_LOADER
             = new RequestProcessor("Gradle-Project-Loader", 1, true);
+
+    private static final RequestProcessor MODEL_LOAD_NOTIFIER
+            = new RequestProcessor("Gradle-Project-Load-Notifier", 1, true);
 
     private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
@@ -226,15 +231,25 @@ public final class GradleModelLoader {
     }
 
     private static void onModelLoaded(
-            NbGradleModel model,
-            Throwable error,
-            ModelRetrievedListener listener) {
+            final NbGradleModel model,
+            final Throwable error,
+            final ModelRetrievedListener listener) {
 
         if (model == null && error == null) {
             return;
         }
 
-        listener.onComplete(model, error);
+        if (MODEL_LOAD_NOTIFIER.isRequestProcessorThread()) {
+            listener.onComplete(model, error);
+        }
+        else {
+            MODEL_LOAD_NOTIFIER.execute(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onComplete(model, error);
+                }
+            });
+        }
     }
 
     public static void tryUpdateFromCache(
@@ -274,14 +289,98 @@ public final class GradleModelLoader {
         }
     }
 
+    private static File getCacheFile(File rootDir) {
+        return new File(SettingsFiles.getCacheDir(rootDir), "project-cache");
+    }
+
+    private static Map<String, SerializedNbGradleModels> tryReadFromCache(File rootDir) throws IOException {
+        File cacheFile = getCacheFile(rootDir);
+        if (!cacheFile.isFile()) {
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, SerializedNbGradleModels> result
+                = (Map<String, SerializedNbGradleModels>)SerializationUtils.deserializeFile(cacheFile);
+        return result;
+    }
+
+    private static NbGradleModel tryGetFromPersistentCacheUnsafe(NbGradleProject project) throws IOException {
+        // TODO: The cache should not be kept in a single file (for the complete multi-project build).
+        //       This is simply inefficient because we read all the data for
+        //       each projects.
+        File rootDir = project.getAvailableModel().getRootProjectDir().getCanonicalFile();
+
+        Map<String, SerializedNbGradleModels> allModels = tryReadFromCache(rootDir);
+        if (allModels == null) {
+            return null;
+        }
+
+        String rootDirStr = rootDir.getPath();
+        String projectDirStr = project.getProjectDirectoryAsFile().getCanonicalFile().getPath();
+        if (projectDirStr.startsWith(rootDirStr)) {
+            projectDirStr = projectDirStr.substring(rootDirStr.length());
+        }
+
+        SerializedNbGradleModels serializedModels = allModels.get(projectDirStr);
+        return serializedModels != null
+                ? serializedModels.deserializeModel(project)
+                : null;
+    }
+
+    private static NbGradleModel tryGetFromPersistentCache(NbGradleProject project) {
+        try {
+            return tryGetFromPersistentCacheUnsafe(project);
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO,
+                    "Failed to read persistent cache for project " + project.getProjectDirectoryAsFile(),
+                    ex);
+        } catch (Throwable ex) {
+            LOGGER.log(Level.SEVERE,
+                    "Unexpected error while trying to read the persistent cache for project " + project.getProjectDirectoryAsFile(),
+                    ex);
+        }
+        return null;
+    }
+
     public static void fetchModel(
+            final NbGradleProject project,
+            final boolean mayFetchFromCache,
+            final ModelRetrievedListener listener) {
+
+        // TODO: If we already loaded model from the persistent cache for this
+        //       project, skip loading from persistent cache.
+        if (!mayFetchFromCache) {
+            fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+            return;
+        }
+
+        MODEL_LOAD_NOTIFIER.execute(new Runnable() {
+            @Override
+            public void run() {
+                NbGradleModel model = null;
+
+                try {
+                    File projectDir = project.getProjectDirectoryAsFile();
+                    model = tryGetFromCache(projectDir);
+                    if (model == null || hasUnloadedExtension(project, model)) {
+                        model = tryGetFromPersistentCache(project);
+                    }
+                } finally {
+                    onModelLoaded(model, null, listener);
+                    fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+                }
+            }
+        });
+    }
+
+    private static void fetchModelWithoutPersistentCache(
             final NbGradleProject project,
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
         if (project == null) throw new NullPointerException("project");
         if (listener == null) throw new NullPointerException("listener");
 
-        final File projectDir = project.getProjectDirectoryAsFile();
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
@@ -290,6 +389,7 @@ public final class GradleModelLoader {
                 Throwable error = null;
                 try {
                     if (mayFetchFromCache) {
+                        File projectDir = project.getProjectDirectoryAsFile();
                         model = tryGetFromCache(projectDir);
                     }
                     if (model == null || hasUnloadedExtension(project, model)) {
@@ -396,6 +496,8 @@ public final class GradleModelLoader {
     }
 
     private static void introduceLoadedModel(NbGradleModel model, boolean replaced) {
+        // TODO: Add to persistent cache.
+
         if (replaced) {
             getCache().replaceEntry(model);
         }
