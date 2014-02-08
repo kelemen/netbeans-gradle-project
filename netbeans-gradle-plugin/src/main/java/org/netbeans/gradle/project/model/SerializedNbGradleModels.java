@@ -10,6 +10,6 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
-        throw new UnsupportedOperationException("Not implemeted yet");
+        return null;
     }
 }
