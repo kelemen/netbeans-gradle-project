@@ -5,13 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -45,7 +43,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
-import org.netbeans.gradle.project.java.model.NamedFile;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
@@ -608,95 +605,6 @@ public final class GradleModelLoader {
         return new NbGradleModel(NbGradleMultiProjectDef.createEmpty(projectDir));
     }
 
-    private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {
-        List<V> valueList = map.get(key);
-        if (valueList == null) {
-            valueList = new LinkedList<V>();
-            map.put(key, valueList);
-        }
-        valueList.add(value);
-    }
-
-    public static List<NamedFile> nameSourceRoots(Collection<File> files) {
-        // The common case
-        if (files.size() == 1) {
-            File file = files.iterator().next();
-            return Collections.singletonList(new NamedFile(file, file.getName()));
-        }
-
-        Map<String, List<FileWithBase>> nameToFile = CollectionUtils.newHashMap(files.size());
-
-        int fileIndex = 0;
-        for (File file: files) {
-            String name = file.getName();
-            File parent = file.getParentFile();
-            addToMap(nameToFile, name, new FileWithBase(fileIndex, parent, file));
-            fileIndex++;
-        }
-
-        boolean didSomething;
-        do {
-            didSomething = false;
-
-            List<Map.Entry<String, List<FileWithBase>>> currentEntries
-                    = new ArrayList<Map.Entry<String, List<FileWithBase>>>(nameToFile.entrySet());
-            for (Map.Entry<String, List<FileWithBase>> entry: currentEntries) {
-                String entryName = entry.getKey();
-                List<FileWithBase> entryFiles = entry.getValue();
-
-                int renameableCount = 0;
-                for (FileWithBase file: entryFiles) {
-                    if (file.base != null) renameableCount++;
-                }
-
-                if (renameableCount > 1) {
-                    nameToFile.remove(entryName);
-                    for (FileWithBase file: entryFiles) {
-                        if (file.base != null) {
-                            String newName = file.base.getName() + '/' + entryName;
-                            File newParent = file.base.getParentFile();
-                            addToMap(nameToFile,
-                                    newName,
-                                    new FileWithBase(file.index, newParent, file.file));
-                        }
-                        else {
-                            addToMap(nameToFile, entryName, file);
-                        }
-                    }
-                    didSomething = true;
-                }
-            }
-        } while (didSomething);
-
-        NamedFile[] result = new NamedFile[fileIndex];
-        for (Map.Entry<String, List<FileWithBase>> entry: nameToFile.entrySet()) {
-            String entryName = entry.getKey();
-            for (FileWithBase file: entry.getValue()) {
-                result[file.index] = new NamedFile(file.file, entryName);
-            }
-        }
-
-        return Arrays.asList(result);
-    }
-
-    private static final class FileWithBase {
-        public final int index;
-        public final File base;
-        public final File file;
-
-        public FileWithBase(int index, File base, File file) {
-            assert file != null;
-
-            this.index = index;
-            this.base = base;
-            this.file = file;
-        }
-    }
-
-    private GradleModelLoader() {
-        throw new AssertionError();
-    }
-
     public static class ModelBuilderSetup implements OperationInitializer {
         private static final SpecificationVersion DEFAULT_JDK_VERSION = new SpecificationVersion("1.5");
 
@@ -774,5 +682,9 @@ public final class GradleModelLoader {
                 });
             }
         }
+    }
+
+    private GradleModelLoader() {
+        throw new AssertionError();
     }
 }
