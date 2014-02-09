@@ -14,20 +14,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
@@ -45,7 +48,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.RequestProcessor;
 
-public final class JavaDependenciesNode extends AbstractNode implements JavaModelChangeListener {
+public final class JavaDependenciesNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
@@ -53,7 +56,6 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
             = new RequestProcessor("Sources-downloader", 1, true);
 
     private final JavaExtension javaExt;
-    private final DependenciesChildFactory childFactory;
 
     public JavaDependenciesNode(JavaExtension javaExt) {
         this(new DependenciesChildFactory(javaExt), javaExt);
@@ -62,17 +64,11 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
     private JavaDependenciesNode(DependenciesChildFactory childFactory, JavaExtension javaExt) {
         super(createChildren(childFactory));
 
-        this.childFactory = childFactory;
         this.javaExt = javaExt;
     }
 
     private static Children createChildren(DependenciesChildFactory childFactory) {
         return Children.create(childFactory, true);
-    }
-
-    @Override
-    public void onModelChange() {
-        childFactory.stateChanged();
     }
 
     @Override
@@ -100,17 +96,81 @@ public final class JavaDependenciesNode extends AbstractNode implements JavaMode
 
     private static class DependenciesChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            ChangeListener {
 
         private final JavaExtension javaExt;
+        private final AtomicReference<NbJavaModule> lastModule;
 
         public DependenciesChildFactory(JavaExtension javaExt) {
             if (javaExt == null) throw new NullPointerException("javaExt");
+
             this.javaExt = javaExt;
+            this.lastModule = new AtomicReference<NbJavaModule>(null);
         }
 
-        public void stateChanged() {
-            refresh(false);
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            // TODO: Only refresh if needed.
+            NbJavaModule newModule = javaExt.getCurrentModel().getMainModule();
+            NbJavaModule prevModule = lastModule.getAndSet(newModule);
+
+            if (hasRelevantDifferences(newModule, prevModule)) {
+                refresh(false);
+            }
+        }
+
+        private static boolean hasRelevantDifferences(NbJavaModule module1, NbJavaModule module2) {
+            if (module1 == module2) {
+                // In practice this happens only when they are nulls.
+                return false;
+            }
+            if (module1 == null || module2 == null) {
+                return true;
+            }
+
+            Map<String, JavaSourceSet> sources2 = getSourceSetMap(module2);
+            for (JavaSourceSet sourceSet1: module1.getSources()) {
+                JavaSourceSet sourceSet2 = sources2.get(sourceSet1.getName());
+                if (sourceSet2 == null) {
+                    return true;
+                }
+
+                if (!isClassPathSame(sourceSet1, sourceSet2)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean isClassPathSame(JavaSourceSet sourceSet1, JavaSourceSet sourceSet2) {
+            JavaClassPaths classpaths1 = sourceSet1.getClasspaths();
+            JavaClassPaths classpaths2 = sourceSet2.getClasspaths();
+
+            if (!classpaths1.getCompileClasspaths().equals(classpaths2.getCompileClasspaths())) {
+                return false;
+            }
+
+            return classpaths1.getRuntimeClasspaths().equals(classpaths2.getRuntimeClasspaths());
+        }
+
+        private static Map<String, JavaSourceSet> getSourceSetMap(NbJavaModule module) {
+            Map<String, JavaSourceSet> result = CollectionUtils.newHashMap(module.getSources().size());
+            for (JavaSourceSet sourceSet: module.getSources()) {
+                result.put(sourceSet.getName(), sourceSet);
+            }
+            return result;
+        }
+
+        @Override
+        protected void addNotify() {
+            javaExt.addModelChangeListener(this);
+        }
+
+        @Override
+        protected void removeNotify() {
+            javaExt.removeModelChangeListener(this);
         }
 
         private void addDependencyGroup(

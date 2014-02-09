@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -43,6 +44,7 @@ import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
@@ -62,6 +64,8 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final AtomicReference<Lookup> extensionLookupRef;
     private final AtomicReference<Lookup> combinedLookupRef;
 
+    private final ChangeSupport modelChanges;
+
     private JavaExtension(Project project) throws IOException {
         if (project == null) throw new NullPointerException("project");
 
@@ -78,6 +82,15 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.hasEverBeenLoaded = false;
         this.sourceDirsHandlerRef = new AtomicReference<JavaSourceDirHandler>(null);
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
+        this.modelChanges = new ChangeSupport(this);
+    }
+
+    public void addModelChangeListener(ChangeListener listener) {
+        modelChanges.addChangeListener(listener);
+    }
+
+    public void removeModelChangeListener(ChangeListener listener) {
+        modelChanges.removeChangeListener(listener);
     }
 
     public JavaSourceDirHandler getSourceDirsHandler() {
@@ -227,6 +240,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         for (JavaModelChangeListener listener: getCombinedLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();
         }
+        modelChanges.fireChange();
     }
 
     private static ProjectInfoManager getProjectInfoManager(Project project) {
