@@ -61,10 +61,7 @@ public final class NbGradleMultiProjectDef implements Serializable {
         if (parsed.getTasks().size() != model.getTasks().size()) {
             return false;
         }
-        if (parsed.getChildren().size() != model.getChildren().size()) {
-            return false;
-        }
-        return true;
+        return parsed.getChildren().size() == model.getChildren().size();
     }
 
     private static boolean cmpTrees(GenericProjectProperties prop1, GenericProjectProperties prop2) {
@@ -74,10 +71,7 @@ public final class NbGradleMultiProjectDef implements Serializable {
         if (!prop1.getProjectFullName().equals(prop2.getProjectFullName())) {
             return false;
         }
-        if (!prop1.getProjectName().equals(prop2.getProjectName())) {
-            return false;
-        }
-        return true;
+        return prop1.getProjectName().equals(prop2.getProjectName());
     }
 
     public static NbGradleMultiProjectDef createEmpty(File projectDir) {
