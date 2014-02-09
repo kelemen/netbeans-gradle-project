@@ -3,6 +3,10 @@ package org.netbeans.gradle.project.java.model;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,7 +17,9 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-public final class JavaProjectReference {
+public final class JavaProjectReference implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logger.getLogger(JavaProjectReference.class.getName());
 
     private final File projectDir;
@@ -94,5 +100,29 @@ public final class JavaProjectReference {
         // This reference is no longer needed, allow it to be garbage collected.
         initialModule = null;
         return javaExt.getCurrentModel().getMainModule();
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final File projectDir;
+        private final NbJavaModule initialModule;
+
+        public SerializedFormat(JavaProjectReference source) {
+            this.projectDir = source.projectDir;
+            this.initialModule = source.tryGetModule();
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new JavaProjectReference(projectDir, initialModule);
+        }
     }
 }
