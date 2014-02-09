@@ -59,8 +59,13 @@ extends
         refresh(false);
     }
 
+    private boolean hasSubProjects() {
+        return !getShownModule().getMainProject().getChildren().isEmpty();
+    }
+
     @Override
     protected void addNotify() {
+        lastHasSubprojects.set(hasSubProjects());
         final Runnable simpleChangeListener = new Runnable() {
             @Override
             public void run() {
@@ -87,7 +92,7 @@ extends
                 NodeExtensions prevNodeExtensions = nodeExtensionsRef.getAndSet(newNodeExtensions);
                 prevNodeExtensions.close();
 
-                boolean newHasSubProjects = !getShownModule().getMainProject().getChildren().isEmpty();
+                boolean newHasSubProjects = hasSubProjects();
                 boolean prevHasSubProjects = lastHasSubprojects.getAndSet(newHasSubProjects);
                 if (newHasSubProjects != prevHasSubProjects) {
                     refreshProjectNode();

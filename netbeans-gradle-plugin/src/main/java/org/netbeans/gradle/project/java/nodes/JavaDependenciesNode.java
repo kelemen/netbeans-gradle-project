@@ -168,6 +168,7 @@ public final class JavaDependenciesNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
+            lastModule.set(javaExt.getCurrentModel().getMainModule());
             javaExt.addModelChangeListener(this);
         }
 
