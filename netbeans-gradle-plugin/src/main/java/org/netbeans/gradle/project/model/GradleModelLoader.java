@@ -305,7 +305,7 @@ public final class GradleModelLoader {
 
         // TODO: If we already loaded model from the persistent cache for this
         //       project, skip loading from persistent cache.
-        if (!mayFetchFromCache) {
+        if (!mayFetchFromCache || project.hasLoadedProject()) {
             fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
             return;
         }
@@ -320,7 +320,12 @@ public final class GradleModelLoader {
                     File projectDir = project.getProjectDirectoryAsFile();
                     model = tryGetFromCache(projectDir);
                     if (model == null || hasUnloadedExtension(project, model)) {
-                        model = tryGetFromPersistentCache(project);
+                        if (project.hasLoadedProject()) {
+                            model = null;
+                        }
+                        else {
+                            model = tryGetFromPersistentCache(project);
+                        }
                     }
                     else {
                         needLoadFromScripts = false;
