@@ -508,12 +508,20 @@ public final class GradleModelLoader {
         //       in the cache and will make the cache load slower. This problem
         //       could be mitigated by using separate file for each subproject.
 
+        SerializedNbGradleModels serializedModel = SerializedNbGradleModels.tryCreateSerialized(model);
+        if (serializedModel == null) {
+            LOGGER.log(Level.WARNING,
+                    "The model of a Gradle project cannot be serialized {0}",
+                    model.getProjectDir());
+            return;
+        }
+
         File rootDir = model.getRootProjectDir();
 
         Map<String, SerializedNbGradleModels> models = tryReadFromCache(rootDir);
         Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(models.size() + 1);
         updatedModels.putAll(models);
-        updatedModels.put(getCacheKey(model), new SerializedNbGradleModels(model));
+        updatedModels.put(getCacheKey(model), serializedModel);
 
         File cacheFile = getCacheFile(model.getRootProjectDir());
         File cacheDir = cacheFile.getParentFile();
