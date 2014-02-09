@@ -12,7 +12,6 @@ import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.openide.filesystems.FileObject;
 
-// TODO: Make this class serializable
 public final class NbGradleModel {
     public static final class Builder {
         private final NbGenericModelInfo genericInfo;
