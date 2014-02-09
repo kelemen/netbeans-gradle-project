@@ -22,12 +22,9 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -415,52 +412,6 @@ public final class GradleModelLoader {
     public static File getScriptJavaHome(Project project) {
         JavaPlatform platform = tryGetScriptJavaPlatform(project);
         return getScriptJavaHome(platform);
-    }
-
-    public static File tryGetModuleDir(IdeaModule module) {
-        DomainObjectSet<? extends IdeaContentRoot> contentRoots = module.getContentRoots();
-        return contentRoots.isEmpty() ? null : contentRoots.getAt(0).getRootDirectory();
-    }
-
-    public static IdeaModule tryFindMainModule(File projectDir, IdeaProject ideaModel) {
-        for (IdeaModule module: ideaModel.getModules()) {
-            File moduleDir = tryGetModuleDir(module);
-            if (moduleDir != null && moduleDir.equals(projectDir)) {
-                return module;
-            }
-        }
-        return null;
-    }
-
-    private static GradleProject getRoot(GradleProject project) {
-        GradleProject prev = null;
-        GradleProject current = project;
-        do {
-            prev = current;
-            current = current.getParent();
-        } while (current != null);
-        return prev;
-    }
-
-    public static IdeaModule tryFindRootModule(IdeaProject ideaModel) {
-        DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
-        if (modules.isEmpty()) {
-            return null;
-        }
-
-        GradleProject rootProject = getRoot(modules.iterator().next().getGradleProject());
-        if (rootProject == null) {
-            return null;
-        }
-
-        String rootName = rootProject.getPath();
-
-        for (IdeaModule module: ideaModel.getModules()) {
-            if (rootName.equals(module.getGradleProject().getPath())) {
-                return module;
-            }
-        }
-        return null;
     }
 
     private static void saveToPersistentCache(Collection<NbGradleModel> models) {

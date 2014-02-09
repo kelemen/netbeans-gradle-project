@@ -29,6 +29,7 @@ import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.openide.util.Parameters;
 import org.openide.util.lookup.Lookups;
 
@@ -148,7 +149,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     }
 
     private static NbGradleProjectTree tryCreateProjectTreeFromIdea(IdeaModule module) {
-        File moduleDir = GradleModelLoader.tryGetModuleDir(module);
+        File moduleDir = IdeaJavaModelUtils.tryGetModuleDir(module);
         if (moduleDir == null) {
             return null;
         }
@@ -213,12 +214,12 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         if (otherModels == null) throw new NullPointerException("otherModels");
 
         File projectDir = project.getProjectDirectoryAsFile();
-        IdeaModule mainModule = GradleModelLoader.tryFindMainModule(projectDir, ideaProject);
+        IdeaModule mainModule = IdeaJavaModelUtils.tryFindMainModule(projectDir, ideaProject);
         if (mainModule == null) {
             throw new IOException("Failed to find idea module for project: " + project.getDisplayName());
         }
 
-        IdeaModule rootModule = GradleModelLoader.tryFindRootModule(ideaProject);
+        IdeaModule rootModule = tryFindRootModule(ideaProject);
         if (rootModule == null) {
             throw new IOException("Failed to find root module for project: " + project.getDisplayName());
         }
@@ -255,5 +256,36 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         }
 
         return toBuilder(new NbGradleMultiProjectDef(rootTree, mainTree));
+    }
+
+    private static IdeaModule tryFindRootModule(IdeaProject ideaModel) {
+        DomainObjectSet<? extends IdeaModule> modules = ideaModel.getModules();
+        if (modules.isEmpty()) {
+            return null;
+        }
+
+        GradleProject rootProject = getRoot(modules.iterator().next().getGradleProject());
+        if (rootProject == null) {
+            return null;
+        }
+
+        String rootName = rootProject.getPath();
+
+        for (IdeaModule module: ideaModel.getModules()) {
+            if (rootName.equals(module.getGradleProject().getPath())) {
+                return module;
+            }
+        }
+        return null;
+    }
+
+    private static GradleProject getRoot(GradleProject project) {
+        GradleProject prev = null;
+        GradleProject current = project;
+        do {
+            prev = current;
+            current = current.getParent();
+        } while (current != null);
+        return prev;
     }
 }

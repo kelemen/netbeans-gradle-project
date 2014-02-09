@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.model.idea;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -40,7 +39,6 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.properties.AbstractProjectProperties;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -73,8 +71,23 @@ public final class IdeaJavaModelUtils {
     }
 
     private static File getDefaultMainClasses(IdeaModule module) {
-        File moduleDir = GradleModelLoader.tryGetModuleDir(module);
+        File moduleDir = tryGetModuleDir(module);
         return moduleDir != null ? getDefaultMainClasses(moduleDir) : null;
+    }
+
+    public static File tryGetModuleDir(IdeaModule module) {
+        DomainObjectSet<? extends IdeaContentRoot> contentRoots = module.getContentRoots();
+        return contentRoots.isEmpty() ? null : contentRoots.getAt(0).getRootDirectory();
+    }
+
+    public static IdeaModule tryFindMainModule(File projectDir, IdeaProject ideaModel) {
+        for (IdeaModule module: ideaModel.getModules()) {
+            File moduleDir = tryGetModuleDir(module);
+            if (moduleDir != null && moduleDir.equals(projectDir)) {
+                return module;
+            }
+        }
+        return null;
     }
 
     private static NbJavaModel createUnreliableModel(
@@ -292,7 +305,7 @@ public final class IdeaJavaModelUtils {
             Map<String, IdeaDependencyBuilder> cache) {
         String uniqueName = module.getGradleProject().getPath();
 
-        File moduleDir = GradleModelLoader.tryGetModuleDir(module);
+        File moduleDir = tryGetModuleDir(module);
         if (moduleDir == null) {
             LOGGER.log(Level.WARNING, "Unable to find the project directory: {0}", uniqueName);
             return null;
@@ -325,7 +338,7 @@ public final class IdeaJavaModelUtils {
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
-        IdeaModule mainModule = GradleModelLoader.tryFindMainModule(projectDir, ideaModel);
+        IdeaModule mainModule = tryFindMainModule(projectDir, ideaModel);
         if (mainModule == null) {
             throw new IOException("Unable to find the main project in the model.");
         }
