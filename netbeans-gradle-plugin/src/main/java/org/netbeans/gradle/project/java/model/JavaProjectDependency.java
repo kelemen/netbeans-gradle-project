@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.java.model;
 
-public final class JavaProjectDependency {
+import java.io.Serializable;
+
+public final class JavaProjectDependency implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final String sourceSetName;
     private final JavaProjectReference projectReference;
 
