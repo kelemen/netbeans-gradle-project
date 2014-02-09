@@ -371,6 +371,7 @@ public final class GradleModelLoader {
             @Override
             public void run() {
                 NbGradleModel model = null;
+                boolean needLoadFromScripts = true;
 
                 try {
                     File projectDir = project.getProjectDirectoryAsFile();
@@ -378,9 +379,14 @@ public final class GradleModelLoader {
                     if (model == null || hasUnloadedExtension(project, model)) {
                         model = tryGetFromPersistentCache(project);
                     }
+                    else {
+                        needLoadFromScripts = false;
+                    }
                 } finally {
                     onModelLoaded(model, null, listener);
-                    fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+                    if (needLoadFromScripts) {
+                        fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+                    }
                 }
             }
         });
