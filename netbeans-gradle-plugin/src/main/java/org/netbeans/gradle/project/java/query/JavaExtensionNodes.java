@@ -72,7 +72,7 @@ implements
         }
 
         if (!module1.getListedDirs().equals(module2.getListedDirs())) {
-            return false;
+            return true;
         }
 
         Set<SourceRootID> ids1 = getSourceRootIDs(module1.getSources());
