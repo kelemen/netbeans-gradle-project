@@ -548,15 +548,19 @@ public final class GradleModelLoader {
     }
 
     private static void introduceLoadedModel(NbGradleModel model, boolean replaced) {
-        // TODO: Add to persistent cache.
-
+        NbGradleModel modelToSave;
         if (replaced) {
-            saveToPersistentCache(model);
+            modelToSave = model;
             getCache().replaceEntry(model);
         }
         else {
-            getCache().updateEntry(model);
+            modelToSave = getCache().updateEntry(model);
         }
+
+        if (modelToSave != null) {
+            saveToPersistentCache(modelToSave);
+        }
+
         LISTENERS.fireEvent(model);
     }
 
