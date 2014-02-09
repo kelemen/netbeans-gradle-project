@@ -11,13 +11,17 @@ import org.netbeans.gradle.model.util.SerializationUtils;
 import static org.junit.Assert.*;
 
 public class NbGradleProjectTreeTest {
-    public static NbGradleProjectTree createTree(String name, NbGradleProjectTree... children) {
-        String fullName = ":app:" + name;
-        GenericProjectProperties properties = new GenericProjectProperties(
+    public static GenericProjectProperties createProperties(String name, String fullName) {
+        return new GenericProjectProperties(
                 name,
                 fullName,
                 new File(name),
                 new File("build.gradle"));
+    }
+
+    public static NbGradleProjectTree createTree(String name, NbGradleProjectTree... children) {
+        String fullName = ":app:" + name;
+        GenericProjectProperties properties = createProperties(name, fullName);
 
         List<GradleTaskID> tasks = Arrays.asList(new GradleTaskID("run", fullName + ":run"));
         return new NbGradleProjectTree(properties, tasks, Arrays.asList(children));

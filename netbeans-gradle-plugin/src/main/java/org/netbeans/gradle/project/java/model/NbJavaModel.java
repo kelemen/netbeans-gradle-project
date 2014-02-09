@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,7 +15,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 
-public final class NbJavaModel {
+public final class NbJavaModel implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final JavaModelSource modelSource;
     private final NbJavaModule mainModule;
     private final Map<File, JavaProjectDependency> projectDependencies;
@@ -89,5 +95,31 @@ public final class NbJavaModel {
             result = allDependenciesRef.get();
         }
         return result;
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final JavaModelSource modelSource;
+        private final NbJavaModule mainModule;
+        private final Map<File, JavaProjectDependency> projectDependencies;
+
+        public SerializedFormat(NbJavaModel source) {
+            this.modelSource = source.modelSource;
+            this.mainModule = source.mainModule;
+            this.projectDependencies = source.projectDependencies;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new NbJavaModel(modelSource, mainModule, projectDependencies);
+        }
     }
 }
