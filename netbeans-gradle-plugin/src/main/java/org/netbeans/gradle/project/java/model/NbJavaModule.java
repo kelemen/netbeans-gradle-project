@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +18,9 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
-public final class NbJavaModule {
+public final class NbJavaModule implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final GenericProjectProperties properties;
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
@@ -160,5 +166,33 @@ public final class NbJavaModule {
             result = allBuildOutputRefs.get();
         }
         return result;
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final GenericProjectProperties properties;
+        private final JavaCompatibilityModel compatibilityModel;
+        private final List<JavaSourceSet> sources;
+        private final List<NbListedDir> listedDirs;
+
+        public SerializedFormat(NbJavaModule source) {
+            this.properties = source.properties;
+            this.compatibilityModel = source.compatibilityModel;
+            this.sources = source.sources;
+            this.listedDirs = source.listedDirs;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new NbJavaModule(properties, compatibilityModel, sources, listedDirs);
+        }
     }
 }
