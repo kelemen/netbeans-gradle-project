@@ -34,6 +34,10 @@ public final class SerializedNbGradleModels implements Serializable {
         for (Map.Entry<String, Object> entry: extensionModels.entrySet()) {
             String extensionName = entry.getKey();
             Object extensionModel = entry.getValue();
+            if (extensionModel == null) {
+                serializedModels.put(extensionName, null);
+                continue;
+            }
 
             if (!(extensionModel instanceof Serializable)) {
                 return null;
@@ -53,6 +57,7 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
+        ownerProject.getExtensionRefs();
         return null;
     }
 }
