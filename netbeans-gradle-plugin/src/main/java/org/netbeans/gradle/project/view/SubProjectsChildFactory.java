@@ -8,9 +8,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -25,22 +30,44 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
-public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactory> {
+public final class SubProjectsChildFactory
+extends
+        ChildFactory.Detachable<SingleNodeFactory>
+implements
+        ChangeListener {
+
     private static final Logger LOGGER = Logger.getLogger(SubProjectsChildFactory.class.getName());
     private static final Collator STR_SMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final List<NbGradleProjectTree> subProjects;
+    private final AtomicReference<NbGradleProjectTree> lastTree;
+    private final boolean root;
 
-    public SubProjectsChildFactory(NbGradleProject project, Collection<? extends NbGradleProjectTree> subProjects) {
+    public SubProjectsChildFactory(NbGradleProject project) {
+        this(project, null, true);
+    }
+
+    private SubProjectsChildFactory(
+            NbGradleProject project,
+            Collection<? extends NbGradleProjectTree> subProjects,
+            boolean root) {
+
         if (project == null) throw new NullPointerException("project");
 
+        this.root = root;
         this.project = project;
-        this.subProjects = new ArrayList<NbGradleProjectTree>(subProjects);
-        sortModules(this.subProjects);
+        this.lastTree = new AtomicReference<NbGradleProjectTree>(null);
+        if (subProjects != null) {
+            this.subProjects = new ArrayList<NbGradleProjectTree>(subProjects);
+            sortModules(this.subProjects);
 
-        for (NbGradleProjectTree subProject: this.subProjects) {
-            if (subProject == null) throw new NullPointerException("project");
+            for (NbGradleProjectTree subProject: this.subProjects) {
+                if (subProject == null) throw new NullPointerException("project");
+            }
+        }
+        else {
+            this.subProjects = null;
         }
     }
 
@@ -54,13 +81,93 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
     }
 
     @Override
+    public void stateChanged(ChangeEvent e) {
+        NbGradleProjectTree newTree = project.getAvailableModel().getMainProject();
+        NbGradleProjectTree prevTree = lastTree.getAndSet(newTree);
+        if (hasRelevantDifferences(prevTree, newTree)) {
+            refresh(false);
+        }
+    }
+
+    private static boolean hasRelevantDifferences(NbGradleProjectTree tree1, NbGradleProjectTree tree2) {
+        if (tree1 == tree2) {
+            // In practice this happens only when they are nulls.
+            return false;
+        }
+        if (tree1 == null || tree2 == null) {
+            return true;
+        }
+
+        return !equalsTree(tree1, tree2);
+    }
+
+    private static boolean equalsTree(NbGradleProjectTree tree1, NbGradleProjectTree tree2) {
+        Collection<NbGradleProjectTree> children1 = tree1.getChildren();
+        Collection<NbGradleProjectTree> children2 = tree2.getChildren();
+        if (children1.size() != children2.size()) {
+            return false;
+        }
+        if (children1.isEmpty()) {
+            return true;
+        }
+
+        Map<String, NbGradleProjectTree> children2Map = getChildrenMap2(tree2);
+        for (NbGradleProjectTree subTree1: children1) {
+            NbGradleProjectTree subTree2 = children2Map.get(subTree1.getProjectName());
+            if (subTree2 == null) {
+                return false;
+            }
+
+            if (!equalsTree(subTree1, subTree2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Map<String, NbGradleProjectTree> getChildrenMap2(NbGradleProjectTree tree) {
+        Collection<NbGradleProjectTree> children = tree.getChildren();
+        Map<String, NbGradleProjectTree> result = CollectionUtils.newHashMap(children.size());
+
+        for (NbGradleProjectTree child: children) {
+            result.put(child.getProjectName(), child);
+        }
+        return result;
+    }
+
+    @Override
+    protected void addNotify() {
+        if (root) {
+            project.addModelChangeListener(this);
+        }
+    }
+
+    @Override
+    protected void removeNotify() {
+        if (root) {
+            project.removeModelChangeListener(this);
+        }
+    }
+
+    @Override
     protected Node createNodeForKey(SingleNodeFactory key) {
         return key.createNode();
     }
 
+    private List<NbGradleProjectTree> getSubProjects() {
+        if (subProjects != null) {
+            return subProjects;
+        }
+
+        List<NbGradleProjectTree> result = new ArrayList<NbGradleProjectTree>(
+                project.getAvailableModel().getMainProject().getChildren());
+        sortModules(result);
+        return result;
+    }
+
     @Override
     protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-        for (final NbGradleProjectTree subProject: subProjects) {
+        for (final NbGradleProjectTree subProject: getSubProjects()) {
             toPopulate.add(new SingleNodeFactory() {
                 @Override
                 public Node createNode() {
@@ -80,7 +187,7 @@ public final class SubProjectsChildFactory extends ChildFactory<SingleNodeFactor
             NbGradleProject project,
             Collection<? extends NbGradleProjectTree> children) {
 
-        return Children.create(new SubProjectsChildFactory(project, children), true);
+        return Children.create(new SubProjectsChildFactory(project, children, false), true);
     }
 
     private static Node createSimpleNode(NbGradleProject project) {

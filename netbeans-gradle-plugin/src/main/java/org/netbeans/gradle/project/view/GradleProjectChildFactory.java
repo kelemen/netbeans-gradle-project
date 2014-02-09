@@ -24,6 +24,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
@@ -130,8 +131,8 @@ extends
         return projectFolder.getNodeDelegate().cloneNode();
     }
 
-    private Children createSubprojectsChild(Collection<? extends NbGradleProjectTree> children) {
-        return Children.create(new SubProjectsChildFactory(project, children), true);
+    private Children createSubprojectsChild() {
+        return Children.create(new SubProjectsChildFactory(project), true);
     }
 
     private static Action createOpenAction(String caption,
@@ -160,7 +161,7 @@ extends
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
-        NbGradleModel shownModule = getShownModule();
+        final NbGradleModel shownModule = getShownModule();
         final Collection<NbGradleProjectTree> immediateChildren
                 = shownModule.getMainProject().getChildren();
 
@@ -174,8 +175,8 @@ extends
             public Node createNode() {
                 return new FilterNode(
                         createSimpleNode(),
-                        createSubprojectsChild(immediateChildren),
-                        Lookups.fixed(immediateChildren.toArray())) {
+                        createSubprojectsChild(),
+                        Lookups.singleton(shownModule.getMainProject())) {
                     @Override
                     public String getName() {
                         return "SubProjectsNode_" + getShownModule().getMainProject().getProjectFullName().replace(':', '_');
