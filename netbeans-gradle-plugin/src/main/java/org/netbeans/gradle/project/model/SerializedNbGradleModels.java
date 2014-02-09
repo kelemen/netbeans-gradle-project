@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
+import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public final class SerializedNbGradleModels implements Serializable {
@@ -57,7 +58,22 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
-        ownerProject.getExtensionRefs();
-        return null;
+        Map<String, Object> deserializedModels = CollectionUtils.newHashMap(extensionModels.size());
+
+        for (NbGradleExtensionRef extensionRef: ownerProject.getExtensionRefs()) {
+            byte[] serializedModel = extensionModels.get(extensionRef.getName());
+
+            try {
+                ClassLoader modelClassLoader = extensionRef.getExtensionDef().getClass().getClassLoader();
+                Object model = SerializationUtils.deserializeObject(serializedModel, modelClassLoader);
+                deserializedModels.put(extensionRef.getName(), model);
+            } catch (Throwable ex) {
+                LOGGER.log(Level.INFO,
+                        "There was a problem when deserializing model for " + extensionRef.getName(),
+                        ex);
+            }
+        }
+
+        return new NbGradleModel(genericInfo, deserializedModels);
     }
 }
