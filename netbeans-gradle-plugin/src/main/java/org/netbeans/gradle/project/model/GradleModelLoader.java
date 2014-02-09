@@ -305,6 +305,11 @@ public final class GradleModelLoader {
         return result;
     }
 
+    private static Map<String, SerializedNbGradleModels> readFromCache(File rootDir) throws IOException {
+        Map<String, SerializedNbGradleModels> result = tryReadFromCache(rootDir);
+        return result != null ? result : Collections.<String, SerializedNbGradleModels>emptyMap();
+    }
+
     private static String getCacheKey(NbGradleModel model) throws IOException {
         File rootDir = model.getRootProjectDir().getCanonicalFile();
 
@@ -518,7 +523,7 @@ public final class GradleModelLoader {
 
         File rootDir = model.getRootProjectDir();
 
-        Map<String, SerializedNbGradleModels> models = tryReadFromCache(rootDir);
+        Map<String, SerializedNbGradleModels> models = readFromCache(rootDir);
         Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(models.size() + 1);
         updatedModels.putAll(models);
         updatedModels.put(getCacheKey(model), serializedModel);
