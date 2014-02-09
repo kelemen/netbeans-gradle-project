@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +16,9 @@ import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
-public final class NbGradleProjectTree {
+public final class NbGradleProjectTree implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final GenericProjectProperties genericProperties;
     private final Collection<GradleTaskID> tasks;
     private final Collection<NbGradleProjectTree> children;
@@ -108,5 +114,32 @@ public final class NbGradleProjectTree {
             }
         }
         return result;
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final GenericProjectProperties genericProperties;
+        private final Collection<GradleTaskID> tasks;
+        private final Collection<NbGradleProjectTree> children;
+
+        public SerializedFormat(NbGradleProjectTree source) {
+            this.genericProperties = source.genericProperties;
+            this.tasks = source.tasks;
+            this.children = source.children;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new NbGradleProjectTree(genericProperties, tasks, children);
+        }
     }
 }
