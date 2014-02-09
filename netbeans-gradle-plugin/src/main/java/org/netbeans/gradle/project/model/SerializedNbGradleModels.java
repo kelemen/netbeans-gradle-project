@@ -35,20 +35,17 @@ public final class SerializedNbGradleModels implements Serializable {
         for (Map.Entry<String, Object> entry: extensionModels.entrySet()) {
             String extensionName = entry.getKey();
             Object extensionModel = entry.getValue();
-            if (extensionModel == null) {
-                serializedModels.put(extensionName, null);
+
+            if (!(extensionModel instanceof Serializable)) {
                 continue;
             }
 
-            if (!(extensionModel instanceof Serializable)) {
-                return null;
-            }
             byte[] serializedModel;
             try {
                 serializedModel = SerializationUtils.serializeObject(extensionModel);
             } catch (Exception ex) {
                 LOGGER.log(Level.INFO, "There was a problem serializing " + extensionModel, ex);
-                return null;
+                continue;
             }
 
             serializedModels.put(extensionName, serializedModel);
@@ -63,14 +60,16 @@ public final class SerializedNbGradleModels implements Serializable {
         for (NbGradleExtensionRef extensionRef: ownerProject.getExtensionRefs()) {
             byte[] serializedModel = extensionModels.get(extensionRef.getName());
 
-            try {
-                ClassLoader modelClassLoader = extensionRef.getExtensionDef().getClass().getClassLoader();
-                Object model = SerializationUtils.deserializeObject(serializedModel, modelClassLoader);
-                deserializedModels.put(extensionRef.getName(), model);
-            } catch (Throwable ex) {
-                LOGGER.log(Level.INFO,
-                        "There was a problem when deserializing model for " + extensionRef.getName(),
-                        ex);
+            if (serializedModel != null) {
+                try {
+                    ClassLoader modelClassLoader = extensionRef.getExtensionDef().getClass().getClassLoader();
+                    Object model = SerializationUtils.deserializeObject(serializedModel, modelClassLoader);
+                    deserializedModels.put(extensionRef.getName(), model);
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.INFO,
+                            "There was a problem when deserializing model for " + extensionRef.getName(),
+                            ex);
+                }
             }
         }
 
