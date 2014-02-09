@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
@@ -24,7 +25,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
@@ -34,6 +34,7 @@ extends
     private final NbGradleProject project;
     private final AtomicReference<Runnable> cleanupTaskRef;
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
+    private final AtomicBoolean lastHasSubprojects;
 
     public GradleProjectChildFactory(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
@@ -41,6 +42,7 @@ extends
         this.project = project;
         this.cleanupTaskRef = new AtomicReference<Runnable>(null);
         this.nodeExtensionsRef = new AtomicReference<NodeExtensions>(NodeExtensions.EMPTY);
+        this.lastHasSubprojects = new AtomicBoolean(false);
     }
 
     private NbGradleModel getShownModule() {
@@ -53,12 +55,16 @@ extends
         return result;
     }
 
+    private void refreshProjectNode() {
+        refresh(false);
+    }
+
     @Override
     protected void addNotify() {
         final Runnable simpleChangeListener = new Runnable() {
             @Override
             public void run() {
-                refresh(false);
+                refreshProjectNode();
             }
         };
 
@@ -81,6 +87,11 @@ extends
                 NodeExtensions prevNodeExtensions = nodeExtensionsRef.getAndSet(newNodeExtensions);
                 prevNodeExtensions.close();
 
+                boolean newHasSubProjects = !getShownModule().getMainProject().getChildren().isEmpty();
+                boolean prevHasSubProjects = lastHasSubprojects.getAndSet(newHasSubProjects);
+                if (newHasSubProjects != prevHasSubProjects) {
+                    refreshProjectNode();
+                }
                 // FIXME: Commenting the following line breaks NBAndroid.
                 //simpleChangeListener.run();
             }
