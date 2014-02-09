@@ -129,6 +129,10 @@ public final class JavaDependenciesNode extends AbstractNode {
                 return true;
             }
 
+            if (module1.getSources().size() != module2.getSources().size()) {
+                return true;
+            }
+
             Map<String, JavaSourceSet> sources2 = getSourceSetMap(module2);
             for (JavaSourceSet sourceSet1: module1.getSources()) {
                 JavaSourceSet sourceSet2 = sources2.get(sourceSet1.getName());
