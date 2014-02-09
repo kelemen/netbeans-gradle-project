@@ -513,47 +513,61 @@ public final class GradleModelLoader {
         return null;
     }
 
-    private static void saveToPersistentCacheUnsafe(NbGradleModel model) throws IOException {
+    private static void saveToPersistentCacheUnsafe(Collection<NbGradleModel> models) throws IOException {
         // TODO: We can only add to the project cache, this isn't good if
         //       the user removes sub-projects because that sub-project will remain
         //       in the cache and will make the cache load slower. This problem
         //       could be mitigated by using separate file for each subproject.
 
-        SerializedNbGradleModels serializedModel = SerializedNbGradleModels.tryCreateSerialized(model);
-        if (serializedModel == null) {
-            LOGGER.log(Level.WARNING,
-                    "The model of a Gradle project cannot be serialized {0}",
-                    model.getProjectDir());
+        if (models.isEmpty()) {
             return;
         }
 
-        File rootDir = model.getRootProjectDir();
+        File rootDir = models.iterator().next().getRootProjectDir();
 
-        Map<String, SerializedNbGradleModels> models = readFromCache(rootDir);
-        Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(models.size() + 1);
-        updatedModels.putAll(models);
-        updatedModels.put(getCacheKey(model), serializedModel);
+        Map<String, SerializedNbGradleModels> cachedModels = readFromCache(rootDir);
+        Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(cachedModels.size() + models.size());
+        updatedModels.putAll(cachedModels);
 
-        File cacheFile = getCacheFile(model.getRootProjectDir());
+        List<NbGradleModel> remainingModels = new LinkedList<NbGradleModel>();
+        for (NbGradleModel model: models) {
+            if (!rootDir.equals(model.getRootProjectDir())) {
+                remainingModels.add(model);
+                continue;
+            }
+
+            SerializedNbGradleModels serializedModel = SerializedNbGradleModels.tryCreateSerialized(model);
+            if (serializedModel != null) {
+                updatedModels.put(getCacheKey(model), serializedModel);
+            }
+            else {
+                LOGGER.log(Level.WARNING,
+                        "The model of a Gradle project cannot be serialized {0}",
+                        model.getProjectDir());
+            }
+        }
+
+        File cacheFile = getCacheFile(rootDir);
         File cacheDir = cacheFile.getParentFile();
         if (cacheDir != null) {
             cacheDir.mkdirs();
         }
-
         SerializationUtils.serializeToFile(cacheFile, updatedModels);
+
+        saveToPersistentCacheUnsafe(remainingModels);
     }
 
-    private static void saveToPersistentCache(NbGradleModel model) {
+    private static void saveToPersistentCache(Collection<NbGradleModel> models) {
         try {
-            saveToPersistentCacheUnsafe(model);
+            saveToPersistentCacheUnsafe(models);
         } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Failed to save into the persistent cache: " + model.getProjectDir(), ex);
+            LOGGER.log(Level.INFO, "Failed to save into the persistent cache.", ex);
         } catch (Throwable ex) {
-            LOGGER.log(Level.SEVERE, "Unexpected error while saving to the persistent cache: " + model.getProjectDir(), ex);
+            LOGGER.log(Level.SEVERE, "Unexpected error while saving to the persistent cache.", ex);
         }
     }
 
-    private static void introduceLoadedModel(NbGradleModel model, boolean replaced) {
+    private static NbGradleModel introduceLoadedModel(NbGradleModel model, boolean replaced) {
         NbGradleModel modelToSave;
         if (replaced) {
             modelToSave = model;
@@ -563,11 +577,9 @@ public final class GradleModelLoader {
             modelToSave = getCache().updateEntry(model);
         }
 
-        if (modelToSave != null) {
-            saveToPersistentCache(modelToSave);
-        }
-
         LISTENERS.fireEvent(model);
+
+        return modelToSave;
     }
 
     public static List<IdeaModule> getChildModules(IdeaModule module) {
@@ -590,10 +602,12 @@ public final class GradleModelLoader {
             List<NbGradleModel> otherModels,
             NbGradleModel mainModel) {
 
+        List<NbGradleModel> toSave = new ArrayList<NbGradleModel>(otherModels.size() + 1);
         for (NbGradleModel model: otherModels) {
-            introduceLoadedModel(model, false);
+            toSave.add(introduceLoadedModel(model, false));
         }
-        introduceLoadedModel(mainModel, true);
+        toSave.add(introduceLoadedModel(mainModel, true));
+        saveToPersistentCache(toSave);
     }
 
     public static void setupLongRunningOP(OperationInitializer setup, LongRunningOperation op) {
