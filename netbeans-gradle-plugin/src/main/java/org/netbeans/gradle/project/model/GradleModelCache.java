@@ -145,10 +145,10 @@ public final class GradleModelCache {
         updateListeners.firePropertyChange("newModel", null, newModel);
     }
 
-    public void updateEntry(NbGradleModel model) {
+    public NbGradleModel updateEntry(NbGradleModel model) {
         CacheKey key = tryCreateKey(model);
         if (key == null) {
-            return;
+            return null;
         }
 
         NbGradleModel newModel = model;
@@ -171,6 +171,7 @@ public final class GradleModelCache {
         if (prevModel != null) {
             notifyUpdate(model);
         }
+        return newModel;
     }
 
     public void replaceEntry(NbGradleModel model) {
