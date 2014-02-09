@@ -1,14 +1,19 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.query.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-// TODO: Make this class serializable (consider derived properties).
-public final class NbGenericModelInfo {
+public final class NbGenericModelInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final NbGradleMultiProjectDef projectDef;
     private final File settingsFile;
 
@@ -173,6 +178,30 @@ public final class NbGenericModelInfo {
             else {
                 return NbStrings.getSubProjectDescription(scriptName, path);
             }
+        }
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final NbGradleMultiProjectDef projectDef;
+        private final File settingsFile;
+
+        public SerializedFormat(NbGenericModelInfo source) {
+            this.projectDef = source.projectDef;
+            this.settingsFile = source.settingsFile;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new NbGenericModelInfo(projectDef, settingsFile);
         }
     }
 }
