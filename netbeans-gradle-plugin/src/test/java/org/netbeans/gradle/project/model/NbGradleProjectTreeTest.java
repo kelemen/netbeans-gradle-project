@@ -11,7 +11,7 @@ import org.netbeans.gradle.model.util.SerializationUtils;
 import static org.junit.Assert.*;
 
 public class NbGradleProjectTreeTest {
-    private static NbGradleProjectTree createTree(String name, NbGradleProjectTree... children) {
+    public static NbGradleProjectTree createTree(String name, NbGradleProjectTree... children) {
         String fullName = ":app:" + name;
         GenericProjectProperties properties = new GenericProjectProperties(
                 name,

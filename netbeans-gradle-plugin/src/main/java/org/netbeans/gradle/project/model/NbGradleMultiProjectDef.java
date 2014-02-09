@@ -1,13 +1,19 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 
-public final class NbGradleMultiProjectDef {
+public final class NbGradleMultiProjectDef implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logger.getLogger(NbGradleMultiProjectDef.class.getName());
 
     private final NbGradleProjectTree rootProject;
@@ -90,5 +96,29 @@ public final class NbGradleMultiProjectDef {
 
     public File getProjectDir() {
         return mainProject.getProjectDir();
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final NbGradleProjectTree rootProject;
+        private final NbGradleProjectTree mainProject;
+
+        public SerializedFormat(NbGradleMultiProjectDef source) {
+            this.rootProject = source.rootProject;
+            this.mainProject = source.mainProject;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new NbGradleMultiProjectDef(rootProject, mainProject);
+        }
     }
 }
