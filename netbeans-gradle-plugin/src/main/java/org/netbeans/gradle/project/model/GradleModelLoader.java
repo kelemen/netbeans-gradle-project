@@ -39,7 +39,6 @@ import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -53,7 +52,6 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.ProjectProperties;
-import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
@@ -75,6 +73,12 @@ public final class GradleModelLoader {
 
     private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
+
+    // TODO: The cache should not be kept in a single file (for the complete multi-project build).
+    //       This is simply inefficient because we read all the data for
+    //       each projects. Also, removed projects will remain in the cache
+    //       and the cache file will grow without limits.
+    private static final PersistentModelCache PERSISTENT_CACHE = new SingleFileModelCache();
 
     public static void addModelLoadedListener(ModelLoadListener listener) {
         LISTENERS.addListener(listener);
@@ -289,60 +293,9 @@ public final class GradleModelLoader {
         }
     }
 
-    private static File getCacheFile(File rootDir) {
-        return new File(SettingsFiles.getCacheDir(rootDir), "project-cache");
-    }
-
-    private static Map<String, SerializedNbGradleModels> tryReadFromCache(File rootDir) throws IOException {
-        File cacheFile = getCacheFile(rootDir);
-        if (!cacheFile.isFile()) {
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        Map<String, SerializedNbGradleModels> result
-                = (Map<String, SerializedNbGradleModels>)SerializationUtils.deserializeFile(cacheFile);
-        return result;
-    }
-
-    private static Map<String, SerializedNbGradleModels> readFromCache(File rootDir) throws IOException {
-        Map<String, SerializedNbGradleModels> result = tryReadFromCache(rootDir);
-        return result != null ? result : Collections.<String, SerializedNbGradleModels>emptyMap();
-    }
-
-    private static String getCacheKey(NbGradleModel model) throws IOException {
-        File rootDir = model.getRootProjectDir().getCanonicalFile();
-
-        String rootDirStr = rootDir.getPath();
-        String projectDirStr = model.getProjectDir().getCanonicalFile().getPath();
-        if (projectDirStr.startsWith(rootDirStr)) {
-            projectDirStr = projectDirStr.substring(rootDirStr.length());
-        }
-        return projectDirStr;
-    }
-
-    private static NbGradleModel tryGetFromPersistentCacheUnsafe(NbGradleProject project) throws IOException {
-        // TODO: The cache should not be kept in a single file (for the complete multi-project build).
-        //       This is simply inefficient because we read all the data for
-        //       each projects.
-        NbGradleModel model = project.getAvailableModel();
-        File rootDir = model.getRootProjectDir();
-
-        Map<String, SerializedNbGradleModels> allModels = tryReadFromCache(rootDir);
-        if (allModels == null) {
-            return null;
-        }
-
-        String cacheKey = getCacheKey(model);
-        SerializedNbGradleModels serializedModels = allModels.get(cacheKey);
-        return serializedModels != null
-                ? serializedModels.deserializeModel(project)
-                : null;
-    }
-
     private static NbGradleModel tryGetFromPersistentCache(NbGradleProject project) {
         try {
-            return tryGetFromPersistentCacheUnsafe(project);
+            return PERSISTENT_CACHE.tryGetModel(project);
         } catch (IOException ex) {
             LOGGER.log(Level.INFO,
                     "Failed to read persistent cache for project " + project.getProjectDirectoryAsFile(),
@@ -513,53 +466,9 @@ public final class GradleModelLoader {
         return null;
     }
 
-    private static void saveToPersistentCacheUnsafe(Collection<NbGradleModel> models) throws IOException {
-        // TODO: We can only add to the project cache, this isn't good if
-        //       the user removes sub-projects because that sub-project will remain
-        //       in the cache and will make the cache load slower. This problem
-        //       could be mitigated by using separate file for each subproject.
-
-        if (models.isEmpty()) {
-            return;
-        }
-
-        File rootDir = models.iterator().next().getRootProjectDir();
-
-        Map<String, SerializedNbGradleModels> cachedModels = readFromCache(rootDir);
-        Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(cachedModels.size() + models.size());
-        updatedModels.putAll(cachedModels);
-
-        List<NbGradleModel> remainingModels = new LinkedList<NbGradleModel>();
-        for (NbGradleModel model: models) {
-            if (!rootDir.equals(model.getRootProjectDir())) {
-                remainingModels.add(model);
-                continue;
-            }
-
-            SerializedNbGradleModels serializedModel = SerializedNbGradleModels.tryCreateSerialized(model);
-            if (serializedModel != null) {
-                updatedModels.put(getCacheKey(model), serializedModel);
-            }
-            else {
-                LOGGER.log(Level.WARNING,
-                        "The model of a Gradle project cannot be serialized {0}",
-                        model.getProjectDir());
-            }
-        }
-
-        File cacheFile = getCacheFile(rootDir);
-        File cacheDir = cacheFile.getParentFile();
-        if (cacheDir != null) {
-            cacheDir.mkdirs();
-        }
-        SerializationUtils.serializeToFile(cacheFile, updatedModels);
-
-        saveToPersistentCacheUnsafe(remainingModels);
-    }
-
     private static void saveToPersistentCache(Collection<NbGradleModel> models) {
         try {
-            saveToPersistentCacheUnsafe(models);
+            PERSISTENT_CACHE.saveGradleModels(models);
         } catch (IOException ex) {
             LOGGER.log(Level.INFO, "Failed to save into the persistent cache.", ex);
         } catch (Throwable ex) {
