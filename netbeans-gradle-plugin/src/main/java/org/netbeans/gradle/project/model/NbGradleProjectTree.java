@@ -120,7 +120,6 @@ public final class NbGradleProjectTree implements Serializable {
         return new SerializedFormat(this);
     }
 
-
     private void readObject(ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Use proxy.");
     }
