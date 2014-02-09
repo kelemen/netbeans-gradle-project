@@ -80,7 +80,8 @@ extends
                 NodeExtensions prevNodeExtensions = nodeExtensionsRef.getAndSet(newNodeExtensions);
                 prevNodeExtensions.close();
 
-                simpleChangeListener.run();
+                // FIXME: Commenting the following line breaks NBAndroid.
+                //simpleChangeListener.run();
             }
         };
         project.addModelChangeListener(changeListener);
