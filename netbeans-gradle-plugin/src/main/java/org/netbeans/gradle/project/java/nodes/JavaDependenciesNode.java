@@ -112,7 +112,6 @@ public final class JavaDependenciesNode extends AbstractNode {
 
         @Override
         public void stateChanged(ChangeEvent e) {
-            // TODO: Only refresh if needed.
             NbJavaModule newModule = javaExt.getCurrentModel().getMainModule();
             NbJavaModule prevModule = lastModule.getAndSet(newModule);
 
