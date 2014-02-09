@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,9 +21,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -33,7 +30,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -437,22 +433,6 @@ public final class GradleModelLoader {
         LISTENERS.fireEvent(model);
 
         return modelToSave;
-    }
-
-    public static List<IdeaModule> getChildModules(IdeaModule module) {
-        Collection<? extends GradleProject> children = module.getGradleProject().getChildren();
-        Set<String> childrenPaths = CollectionUtils.newHashSet(children.size());
-        for (GradleProject child: children) {
-            childrenPaths.add(child.getPath());
-        }
-
-        List<IdeaModule> result = new LinkedList<IdeaModule>();
-        for (IdeaModule candidateChild: module.getProject().getModules()) {
-            if (childrenPaths.contains(candidateChild.getGradleProject().getPath())) {
-                result.add(candidateChild);
-            }
-        }
-        return result;
     }
 
     private static void introduceProjects(

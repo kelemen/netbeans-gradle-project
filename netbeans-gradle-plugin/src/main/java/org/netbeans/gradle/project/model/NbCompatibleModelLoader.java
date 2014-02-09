@@ -3,10 +3,12 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.ModelBuilder;
@@ -156,7 +158,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
         int expectedChildCount = module.getGradleProject().getChildren().size();
         List<NbGradleProjectTree> children = new ArrayList<NbGradleProjectTree>(expectedChildCount);
-        for (IdeaModule child: GradleModelLoader.getChildModules(module)) {
+        for (IdeaModule child: getChildModules(module)) {
             NbGradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child);
             if (childInfo != null) {
                 children.add(childInfo);
@@ -170,6 +172,22 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
                 = new GenericProjectProperties(projectName, projectFullName, moduleDir);
 
         return new NbGradleProjectTree(properties, getTasksOfModule(module), children);
+    }
+
+    private static List<IdeaModule> getChildModules(IdeaModule module) {
+        Collection<? extends GradleProject> children = module.getGradleProject().getChildren();
+        Set<String> childrenPaths = CollectionUtils.newHashSet(children.size());
+        for (GradleProject child: children) {
+            childrenPaths.add(child.getPath());
+        }
+
+        List<IdeaModule> result = new LinkedList<IdeaModule>();
+        for (IdeaModule candidateChild: module.getProject().getModules()) {
+            if (childrenPaths.contains(candidateChild.getGradleProject().getPath())) {
+                result.add(candidateChild);
+            }
+        }
+        return result;
     }
 
     private static NbGradleModel loadMainModelFromIdeaModule(
