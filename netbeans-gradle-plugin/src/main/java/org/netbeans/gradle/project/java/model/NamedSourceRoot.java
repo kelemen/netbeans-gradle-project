@@ -265,6 +265,31 @@ public final class NamedSourceRoot {
         return Arrays.asList(result);
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + groupID.hashCode();
+        hash = 23 * hash + displayName.hashCode();
+        hash = 23 * hash + root.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (getClass() != obj.getClass()) return false;
+
+        final NamedSourceRoot other = (NamedSourceRoot)obj;
+        if (!groupID.equals(other.groupID)) {
+            return false;
+        }
+        if (!displayName.equals(other.displayName)) {
+            return false;
+        }
+        return root.equals(other.root);
+    }
+
     private static final class FileWithBase {
         public final int index;
         public final File base;
@@ -278,5 +303,4 @@ public final class NamedSourceRoot {
             this.file = file;
         }
     }
-
 }
