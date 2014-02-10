@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,11 +13,13 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
 import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
@@ -36,13 +39,13 @@ implements
 
     private final JavaExtension javaExt;
     private final ChangeSupport nodeChanges;
-    private final AtomicReference<NbJavaModule> lastModule;
+    private final AtomicReference<NodesDescription> lastDisplayed;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
         if (javaExt == null) throw new NullPointerException("javaExt");
         this.javaExt = javaExt;
         this.nodeChanges = new ChangeSupport(this);
-        this.lastModule = new AtomicReference<NbJavaModule>(null);
+        this.lastDisplayed = new AtomicReference<NodesDescription>(null);
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
             @Override
@@ -55,46 +58,50 @@ implements
     @Override
     public void onModelChange() {
         NbJavaModule newModule = javaExt.getCurrentModel().getMainModule();
-        NbJavaModule prevModule = lastModule.getAndSet(newModule);
 
-        if (hasRelevantDifferences(newModule, prevModule)) {
+        boolean hasChanged;
+        NodesDescription currentNodes;
+        do {
+            currentNodes = lastDisplayed.get();
+
+            hasChanged = currentNodes == null
+                    || !currentNodes.listedDirs.equals(getAvailableListedDirs(newModule))
+                    || !currentNodes.sourceRoots.equals(getAvailableSourceRootIDs(newModule));
+        } while (currentNodes != lastDisplayed.get());
+
+        if (hasChanged) {
             nodeChanges.fireChange();
         }
     }
 
-    private static boolean hasRelevantDifferences(NbJavaModule module1, NbJavaModule module2) {
-        if (module1 == module2) {
-            // In practice this happens only when they are nulls.
-            return false;
-        }
-        if (module1 == null || module2 == null) {
-            return true;
-        }
-
-        if (!module1.getListedDirs().equals(module2.getListedDirs())) {
-            return true;
-        }
-
-        Set<SourceRootID> ids1 = getSourceRootIDs(module1.getSources());
-        Set<SourceRootID> ids2 = getSourceRootIDs(module2.getSources());
-
-        return !ids1.equals(ids2);
-    }
-
-    private static Set<SourceRootID> getSourceRootIDs(List<JavaSourceSet> sourceSets) {
-        Set<SourceRootID> result = new HashSet<SourceRootID>();
-        for (JavaSourceSet sourceSet: sourceSets) {
-            getSourceRootIDs(sourceSet, result);
+    private static Set<NbListedDir> getAvailableListedDirs(NbJavaModule newModule) {
+        Set<NbListedDir> result = CollectionUtils.newHashSet(newModule.getListedDirs().size());
+        for (NbListedDir listedDir: newModule.getListedDirs()) {
+            result.add(listedDir);
         }
         return result;
     }
 
-    private static void getSourceRootIDs(JavaSourceSet sourceSet, Set<SourceRootID> ids) {
+    private static Set<SourceRootID> getAvailableSourceRootIDs(NbJavaModule newModule) {
+        return getAvailableSourceRootIDs(newModule.getSources());
+    }
+
+    private static Set<SourceRootID> getAvailableSourceRootIDs(List<JavaSourceSet> sourceSets) {
+        Set<SourceRootID> result = new HashSet<SourceRootID>();
+        for (JavaSourceSet sourceSet: sourceSets) {
+            getAvailableSourceRootIDs(sourceSet, result);
+        }
+        return result;
+    }
+
+    private static void getAvailableSourceRootIDs(JavaSourceSet sourceSet, Set<SourceRootID> ids) {
         String sourceSetName = sourceSet.getName();
         for (JavaSourceGroup group: sourceSet.getSourceGroups()) {
             JavaSourceGroupName groupName = group.getGroupName();
             for (File root: group.getSourceRoots()) {
-                ids.add(new SourceRootID(sourceSetName, groupName, root));
+                if (root.exists()) {
+                    ids.add(new SourceRootID(sourceSetName, groupName, root));
+                }
             }
         }
     }
@@ -127,12 +134,21 @@ implements
         };
     }
 
-    private void addListedDirs(List<SingleNodeFactory> toPopulate) {
-        for (NbListedDir listedDir: javaExt.getCurrentModel().getMainModule().getListedDirs()) {
+    private Set<NbListedDir> addListedDirs(List<SingleNodeFactory> toPopulate) {
+        List<NbListedDir> allListedDirs = javaExt.getCurrentModel().getMainModule().getListedDirs();
+        if (allListedDirs.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Set<NbListedDir> result = CollectionUtils.newHashSet(allListedDirs.size());
+
+        for (NbListedDir listedDir: allListedDirs) {
             FileObject listedDirObj = FileUtil.toFileObject(listedDir.getDirectory());
             if (listedDirObj != null) {
                 final String dirName = listedDir.getName();
                 final DataFolder listedFolder = DataFolder.findFolder(listedDirObj);
+
+                result.add(listedDir);
 
                 toPopulate.add(new SingleNodeFactory() {
                     @Override
@@ -147,6 +163,8 @@ implements
                 });
             }
         }
+
+        return result;
     }
 
     private void addDependencies(List<SingleNodeFactory> toPopulate) {
@@ -158,14 +176,18 @@ implements
         });
     }
 
-    private void addSourceRoots(List<SingleNodeFactory> toPopulate) {
+    private Set<SourceRootID> addSourceRoots(List<SingleNodeFactory> toPopulate) {
         List<NamedSourceRoot> namedRoots = javaExt.getCurrentModel().getMainModule().getNamedSourceRoots();
+        Set<SourceRootID> result = CollectionUtils.newHashSet(namedRoots.size());
 
         for (final NamedSourceRoot root: namedRoots) {
             final SourceGroup group = GradleProjectSources.tryCreateSourceGroup(root);
             if (group == null) {
                 continue;
             }
+
+            JavaSourceGroupID groupID = root.getGroupID();
+            result.add(new SourceRootID(groupID.getSourceSetName(), groupID.getGroupName(), root.getRoot()));
 
             toPopulate.add(new SingleNodeFactory() {
                 @Override
@@ -174,17 +196,31 @@ implements
                 }
             });
         }
+
+        return result;
     }
 
     @Override
     public List<SingleNodeFactory> getNodeFactories() {
         List<SingleNodeFactory> result = new LinkedList<SingleNodeFactory>();
 
-        addSourceRoots(result);
-        addListedDirs(result);
+        Set<SourceRootID> sourceRoots = addSourceRoots(result);
+        Set<NbListedDir> listedDirs = addListedDirs(result);
         addDependencies(result);
 
+        lastDisplayed.set(new NodesDescription(listedDirs, sourceRoots));
+
         return result;
+    }
+
+    private static final class NodesDescription {
+        public final Set<NbListedDir> listedDirs;
+        public final Set<SourceRootID> sourceRoots;
+
+        public NodesDescription(Set<NbListedDir> listedDirs, Set<SourceRootID> sourceRoots) {
+            this.listedDirs = listedDirs;
+            this.sourceRoots = sourceRoots;
+        }
     }
 
     private static final class SourceRootID {
