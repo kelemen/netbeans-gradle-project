@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
@@ -15,6 +16,7 @@ public final class NbGradleExtensionRef {
     private final String displayName;
     private final DefWithExtension<?> defWithExtension;
     private final ModelNeeds modelNeed;
+    private final AtomicBoolean lastActive;
 
     private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
@@ -35,6 +37,7 @@ public final class NbGradleExtensionRef {
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
+        this.lastActive = new AtomicBoolean(false);
     }
 
     private static void checkExtensionName(String name, GradleProjectExtensionDef<?> def) {
@@ -107,8 +110,9 @@ public final class NbGradleExtensionRef {
         }
     }
 
-    public void setModelForExtension(Object model) {
+    public boolean setModelForExtension(Object model) {
         boolean active = model != null;
+        boolean prevActive = lastActive.getAndSet(active);
 
         GradleProjectExtension2<?> extension = getExtension();
 
@@ -128,6 +132,8 @@ public final class NbGradleExtensionRef {
             extensionLookup.replaceLookups(Lookup.EMPTY);
             defWithExtension.deactivate();
         }
+
+        return prevActive != active;
     }
 
     private static final class DefWithExtension<ModelType> {

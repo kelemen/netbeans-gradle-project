@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
+import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
@@ -603,32 +604,83 @@ public final class NbGradleProject implements Project {
             });
         }
 
-        private void safelyLoadExtensions(NbGradleExtensionRef extension, Object model) {
+        private boolean safelyLoadExtensions(NbGradleExtensionRef extension, Object model) {
             try {
-                extension.setModelForExtension(model);
+                return extension.setModelForExtension(model);
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE,
                         "Extension has thrown an unexpected exception: " + extension.getName(),
                         ex);
+                return false;
             }
         }
 
-        private void notifyEmptyModelChange() {
+        private boolean notifyEmptyModelChange() {
+            boolean changedAny = false;
             for (NbGradleExtensionRef extensionRef: extensionRefs) {
-                safelyLoadExtensions(extensionRef, null);
+                boolean changed = safelyLoadExtensions(extensionRef, null);
+                changedAny = changedAny || changed;
             }
 
             fireModelChangeEvent();
+            return changedAny;
         }
 
-        private void notifyModelChange(NbGradleModel model) {
+        private boolean notifyModelChange(NbGradleModel model) {
             // TODO: Consider conflicts
             //   GradleProjectExtensionDef.getSuppressedExtensions()
+
+            boolean changedAny = false;
             for (NbGradleExtensionRef extensionRef: extensionRefs) {
-                safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
+                boolean changed = safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
+                changedAny = changedAny || changed;
             }
 
             fireModelChangeEvent();
+            return changedAny;
+        }
+
+        private void startRefresh(Collection<ModelRefreshListener> listeners) {
+            for (ModelRefreshListener listener: listeners) {
+                try {
+                    listener.startRefresh();
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.SEVERE,
+                            "Failed to call " + listener.getClass().getName() + ".startRefresh()",
+                            ex);
+                }
+            }
+        }
+
+        private void endRefresh(Collection<ModelRefreshListener> listeners, boolean extensionsChanged) {
+            for (ModelRefreshListener listener: listeners) {
+                try {
+                    listener.endRefresh(extensionsChanged);
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.SEVERE,
+                            "Failed to call " + listener.getClass().getName() + ".endRefresh(" + extensionsChanged + ")",
+                            ex);
+                }
+            }
+        }
+
+        private void updateExtensionActivation(NbGradleModel model) {
+            Collection<ModelRefreshListener> refreshListeners
+                    = new ArrayList<ModelRefreshListener>(getLookup().lookupAll(ModelRefreshListener.class));
+
+            boolean extensionsChanged = false;
+
+            startRefresh(refreshListeners);
+            try {
+                if (model == null) {
+                    extensionsChanged = notifyEmptyModelChange();
+                }
+                else {
+                    extensionsChanged = notifyModelChange(model);
+                }
+            } finally {
+                endRefresh(refreshListeners, extensionsChanged);
+            }
         }
 
         private void applyModelLoadResults(NbGradleModel model, Throwable error) {
@@ -651,12 +703,7 @@ public final class NbGradleProject implements Project {
             }
 
             if (hasChanged) {
-                if (model == null) {
-                    notifyEmptyModelChange();
-                }
-                else {
-                    notifyModelChange(model);
-                }
+                updateExtensionActivation(model);
             }
         }
 
