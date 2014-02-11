@@ -20,6 +20,8 @@ package org.netbeans.gradle.project.api.event;
  * <h4>Synchronization transparency</h4>
  * Methods of this interface are required to be
  * <I>synchronization transparent</I>.
+ *
+ * @see NbListenerRefs
  */
 public interface NbListenerRef {
     /**
