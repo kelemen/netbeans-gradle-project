@@ -15,8 +15,10 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.openide.loaders.DataFolder;
@@ -32,17 +34,25 @@ extends
         ChildFactory.Detachable<SingleNodeFactory> {
 
     private final NbGradleProject project;
-    private final AtomicReference<Runnable> cleanupTaskRef;
+    private final GradleProjectLogicalViewProvider parent;
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
     private final AtomicBoolean lastHasSubprojects;
+    private final List<NbListenerRef> listenerRegistrations;
+    private volatile boolean enableRefresh;
+    private final AtomicBoolean hasPreventedRefresh;
 
-    public GradleProjectChildFactory(NbGradleProject project) {
+    public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
         if (project == null) throw new NullPointerException("project");
+        if (parent == null) throw new NullPointerException("parent");
 
         this.project = project;
-        this.cleanupTaskRef = new AtomicReference<Runnable>(null);
+        this.parent = parent;
         this.nodeExtensionsRef = new AtomicReference<NodeExtensions>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
+        this.listenerRegistrations = new LinkedList<NbListenerRef>();
+
+        this.enableRefresh = true;
+        this.hasPreventedRefresh = new AtomicBoolean(false);
     }
 
     private NbGradleModel getShownModule() {
@@ -56,15 +66,41 @@ extends
     }
 
     private void refreshProjectNode() {
-        refresh(false);
+        if (enableRefresh) {
+            refresh(false);
+        }
+        else {
+            hasPreventedRefresh.set(true);
+        }
     }
 
     private boolean hasSubProjects() {
         return !getShownModule().getMainProject().getChildren().isEmpty();
     }
 
+    private NbListenerRef registerModelRefreshListener() {
+        return parent.addChildModelRefreshListener(new ModelRefreshListener() {
+            @Override
+            public void startRefresh() {
+                enableRefresh = false;
+            }
+
+            @Override
+            public void endRefresh(boolean extensionsChanged) {
+                enableRefresh = true;
+
+                boolean needRefresh = hasPreventedRefresh.getAndSet(false);
+                if (extensionsChanged || needRefresh) {
+                    refreshProjectNode();
+                }
+            }
+        });
+    }
+
     @Override
     protected void addNotify() {
+        listenerRegistrations.add(registerModelRefreshListener());
+
         lastHasSubprojects.set(hasSubProjects());
         final Runnable simpleChangeListener = new Runnable() {
             @Override
@@ -75,9 +111,8 @@ extends
 
         List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
 
-        final List<NbListenerRef> listenerRefs = new LinkedList<NbListenerRef>();
         for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
-            listenerRefs.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
+            listenerRegistrations.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
         }
 
         final ChangeListener changeListener = new ChangeListener() {
@@ -97,34 +132,33 @@ extends
                 if (newHasSubProjects != prevHasSubProjects) {
                     refreshProjectNode();
                 }
+
                 // FIXME: Commenting the following line breaks NBAndroid.
+                //        Detect here that an extension relies on the fact the previous
+                //        versions of this plugin did refresh on project reload.
+                //        (use newNodeExtensions)
                 //simpleChangeListener.run();
             }
         };
         project.addModelChangeListener(changeListener);
 
-        Runnable prevTask = cleanupTaskRef.getAndSet(new Runnable() {
+        listenerRegistrations.add(0, NbListenerRefs.fromRunnable(new Runnable() {
             @Override
             public void run() {
                 project.removeModelChangeListener(changeListener);
 
                 nodeExtensionsRef.getAndSet(NodeExtensions.EMPTY).close();
-
-                for (NbListenerRef ref: listenerRefs) {
-                    ref.unregister();
-                }
             }
-        });
-        if (prevTask != null) {
-            throw new IllegalStateException("addNotify has been called multiple times.");
-        }
+        }));
     }
 
     @Override
     protected void removeNotify() {
-        Runnable cleanupTask = cleanupTaskRef.getAndSet(null);
-        if (cleanupTask != null) {
-            cleanupTask.run();
+        Collection<NbListenerRef> toUnregister = new ArrayList<NbListenerRef>(listenerRegistrations);
+        listenerRegistrations.clear();
+
+        for (NbListenerRef listenerRef: toUnregister) {
+            listenerRef.unregister();
         }
     }
 

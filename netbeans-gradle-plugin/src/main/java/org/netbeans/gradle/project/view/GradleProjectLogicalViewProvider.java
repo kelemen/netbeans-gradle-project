@@ -15,7 +15,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -32,6 +36,8 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
@@ -39,6 +45,7 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.MutableProperty;
@@ -67,12 +74,74 @@ import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ProxyLookup;
 
-public final class GradleProjectLogicalViewProvider implements LogicalViewProvider {
+public final class GradleProjectLogicalViewProvider
+implements
+        LogicalViewProvider, ModelRefreshListener {
+    private static final Logger LOGGER = Logger.getLogger(GradleProjectLogicalViewProvider.class.getName());
+
     private final NbGradleProject project;
+
+    // TODO: When using JTrim replace this with proper event handling code.
+    private final Set<ModelRefreshListener> childRefreshListeners;
+    private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
+        this.childRefreshListeners = Collections.newSetFromMap(
+                new ConcurrentHashMap<ModelRefreshListener, Boolean>());
+        this.listenersToFinalize = new AtomicReference<Collection<ModelRefreshListener>>(null);
+    }
+
+    public NbListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
+        if (listener == null) throw new NullPointerException("listener");
+
+        // To handle multiple registration of the same listener, etc.
+        final ModelRefreshListener wrapperListener = new ModelRefreshListener() {
+            @Override
+            public void startRefresh() {
+                listener.startRefresh();
+            }
+
+            @Override
+            public void endRefresh(boolean extensionsChanged) {
+                listener.endRefresh(extensionsChanged);
+            }
+        };
+
+        childRefreshListeners.add(wrapperListener);
+        return NbListenerRefs.fromRunnable(new Runnable() {
+            @Override
+            public void run() {
+                childRefreshListeners.remove(wrapperListener);
+            }
+        });
+    }
+
+    @Override
+    public void startRefresh() {
+        Collection<ModelRefreshListener> listeners
+                = new ArrayList<ModelRefreshListener>(childRefreshListeners);
+        Collection<ModelRefreshListener> prevListeners = listenersToFinalize.getAndSet(listeners);
+        if (prevListeners != null) {
+            LOGGER.warning("startRefresh/endRefresh mismatch.");
+        }
+
+        for (ModelRefreshListener listener: listeners) {
+            listener.startRefresh();
+        }
+    }
+
+    @Override
+    public void endRefresh(boolean extensionsChanged) {
+        Collection<ModelRefreshListener> listeners = listenersToFinalize.getAndSet(null);
+        if (listeners == null) {
+            return;
+        }
+
+        for (ModelRefreshListener listener: listeners) {
+            listener.endRefresh(extensionsChanged);
+        }
     }
 
     @Override
@@ -107,7 +176,7 @@ public final class GradleProjectLogicalViewProvider implements LogicalViewProvid
     }
 
     private Children createChildren() {
-        return Children.create(new GradleProjectChildFactory(project), false);
+        return Children.create(new GradleProjectChildFactory(project, this), false);
     }
 
     private Lookup createLookup(Node rootNode) {
