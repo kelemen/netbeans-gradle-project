@@ -73,6 +73,9 @@ public interface GradleProjectExtensionDef<ModelType> {
      * Returns the type of the model required to activate this extension.
      * That is, the type of the argument passed to the
      * {@link #activateExtension(Object) activateExtension} method.
+     * <P>
+     * Also the class loader of the returned class will be used to deserialize
+     * parsed models when read from a persistent cache.
      *
      * @return the type of the model required to activate this extension.
      *   This method may never return {@code null}.

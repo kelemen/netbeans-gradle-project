@@ -62,7 +62,7 @@ public final class SerializedNbGradleModels implements Serializable {
 
             if (serializedModel != null) {
                 try {
-                    ClassLoader modelClassLoader = extensionRef.getExtensionDef().getClass().getClassLoader();
+                    ClassLoader modelClassLoader = extensionRef.getExtensionDef().getModelType().getClassLoader();
                     Object model = SerializationUtils.deserializeObject(serializedModel, modelClassLoader);
                     deserializedModels.put(extensionRef.getName(), model);
                 } catch (Throwable ex) {
