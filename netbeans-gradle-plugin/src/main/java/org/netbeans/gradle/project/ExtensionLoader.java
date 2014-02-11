@@ -2,6 +2,10 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,8 +59,10 @@ public final class ExtensionLoader {
             if (extension == null) throw new NullPointerException("def.loadExtensionForProject");
 
             File projectDir = project.getProjectDirectoryAsFile();
-            GradleProjectExtensionDef<Lookup> def2 = createWrappedDef(projectDir, def, extension);
-            GradleProjectExtension2<Lookup> extension2 = createWrappedProjectExtension(extension);
+            GradleProjectExtensionDef<SerializableLookup> def2
+                    = createWrappedDef(projectDir, def, extension);
+            GradleProjectExtension2<SerializableLookup> extension2
+                    = createWrappedProjectExtension(extension);
             return new NbGradleExtensionRef(def2, extension2);
         } catch (Throwable ex) {
             String name = extension != null
@@ -160,12 +166,12 @@ public final class ExtensionLoader {
 
     /** @deprecated */
     @Deprecated
-    private static GradleProjectExtension2<Lookup> createWrappedProjectExtension(
+    private static GradleProjectExtension2<SerializableLookup> createWrappedProjectExtension(
             final org.netbeans.gradle.project.api.entry.GradleProjectExtension extension) {
 
         final Lookup permanentLookup = extension.getExtensionLookup();
 
-        return new GradleProjectExtension2<Lookup>() {
+        return new GradleProjectExtension2<SerializableLookup>() {
             @Override
             public Lookup getPermanentProjectLookup() {
                 return permanentLookup;
@@ -182,8 +188,8 @@ public final class ExtensionLoader {
             }
 
             @Override
-            public void activateExtension(Lookup parsedModel) {
-                extension.modelsLoaded(parsedModel);
+            public void activateExtension(SerializableLookup parsedModel) {
+                extension.modelsLoaded(parsedModel.lookup);
             }
 
             @Override
@@ -193,14 +199,32 @@ public final class ExtensionLoader {
         };
     }
 
+    private static SerializableLookup serializableLookup(Object... content) {
+        return new SerializableLookup(Lookups.fixed(content));
+    }
+
+    private static SerializableLookup serializableLookup(Collection<?> content) {
+        return serializableLookup(content.toArray());
+    }
+
+    private static Map<File, SerializableLookup> serializableLookupMap(Map<File, Lookup> map) {
+        Map<File, SerializableLookup> result = CollectionUtils.newHashMap(map.size());
+        for (Map.Entry<File, Lookup> entry: map.entrySet()) {
+            result.put(entry.getKey(), new SerializableLookup(entry.getValue()));
+        }
+        return result;
+    }
+
     /** @deprecated */
     @Deprecated
-    private static ParsedModel<Lookup> parseModelUsingExtension(
+    private static ParsedModel<SerializableLookup> parseModelUsingExtension(
             File projectDir,
             org.netbeans.gradle.project.api.entry.GradleProjectExtension extension,
             Lookup retrievedModels) {
 
-        Map<File, Lookup> deduced = extension.deduceModelsForProjects(retrievedModels);
+        Map<File, SerializableLookup> deduced = serializableLookupMap(
+                extension.deduceModelsForProjects(retrievedModels));
+
         if (!deduced.containsKey(projectDir)) {
             List<Object> lookupContent = new LinkedList<Object>();
             for (List<Class<?>> models: extension.getGradleModels()) {
@@ -213,21 +237,21 @@ public final class ExtensionLoader {
                 }
             }
 
-            return new ParsedModel<Lookup>(Lookups.fixed(lookupContent.toArray()), deduced);
+            return new ParsedModel<SerializableLookup>(serializableLookup(lookupContent), deduced);
         }
 
-        Lookup mainModels = deduced.get(projectDir);
+        SerializableLookup mainModels = deduced.get(projectDir);
         if (mainModels != null) {
-            deduced = new HashMap<File, Lookup>(deduced);
+            deduced = new HashMap<File, SerializableLookup>(deduced);
             deduced.remove(projectDir);
         }
 
-        return new ParsedModel<Lookup>(mainModels, deduced);
+        return new ParsedModel<SerializableLookup>(mainModels, deduced);
     }
 
     /** @deprecated  */
     @Deprecated
-    private static GradleProjectExtensionDef<Lookup> createWrappedDef(
+    private static GradleProjectExtensionDef<SerializableLookup> createWrappedDef(
             final File projectDirOfExtension,
             final org.netbeans.gradle.project.api.entry.GradleProjectExtensionQuery query,
             final org.netbeans.gradle.project.api.entry.GradleProjectExtension extension) {
@@ -242,7 +266,7 @@ public final class ExtensionLoader {
     /** @deprecated */
     @Deprecated
     @SuppressWarnings("deprecation")
-    private static class OldExtensionQueryWrapper implements GradleProjectExtensionDef<Lookup> {
+    private static class OldExtensionQueryWrapper implements GradleProjectExtensionDef<SerializableLookup> {
         private final String extensionName;
         private final org.netbeans.gradle.project.api.entry.GradleProjectExtension extension;
         private final Lookup lookup;
@@ -283,12 +307,12 @@ public final class ExtensionLoader {
         }
 
         @Override
-        public Class<Lookup> getModelType() {
-            return Lookup.class;
+        public Class<SerializableLookup> getModelType() {
+            return SerializableLookup.class;
         }
 
         @Override
-        public ParsedModel<Lookup> parseModel(ModelLoadResult modelLoadResult) {
+        public ParsedModel<SerializableLookup> parseModel(ModelLoadResult modelLoadResult) {
             File projectDir = modelLoadResult.getMainProjectDir();
             Lookup models = modelLoadResult.getMainProjectModels();
 
@@ -329,7 +353,7 @@ public final class ExtensionLoader {
         }
 
         @Override
-        public GradleProjectExtension2<Lookup> createExtension(Project project) throws IOException {
+        public GradleProjectExtension2<SerializableLookup> createExtension(Project project) throws IOException {
             // This won't really be called, only implemented for completness sake.
             org.netbeans.gradle.project.api.entry.GradleProjectExtension newExtension
                     = query.loadExtensionForProject(project);
@@ -343,6 +367,58 @@ public final class ExtensionLoader {
         @Override
         public Set<String> getSuppressedExtensions() {
             return Collections.emptySet();
+        }
+    }
+
+    private static final class SerializableLookup implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final Lookup lookup;
+
+        public SerializableLookup(Lookup lookup) {
+            if (lookup == null) throw new NullPointerException("lookup");
+
+            this.lookup = lookup;
+        }
+
+        public <T> T lookup(Class<T> clazz) {
+            return lookup.lookup(clazz);
+        }
+
+        public <T> Collection<? extends T> lookupAll(Class<T> clazz) {
+            return lookup.lookupAll(clazz);
+        }
+
+        private Object writeReplace() {
+            return new SerializedFormat(this);
+        }
+
+        private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+            throw new InvalidObjectException("Use proxy.");
+        }
+
+        private static final class SerializedFormat implements Serializable {
+            private static final long serialVersionUID = 1L;
+
+            private final Object[] lookupContent;
+
+            public SerializedFormat(SerializableLookup source) {
+                this.lookupContent = filterSerializable(source.lookup.lookupAll(Object.class));
+            }
+
+            private static Object[] filterSerializable(Collection<?> objects) {
+                List<Object> result = new ArrayList<Object>(objects.size());
+                for (Object obj: objects) {
+                    if (obj instanceof Serializable) {
+                        result.add(obj);
+                    }
+                }
+                return result.toArray();
+            }
+
+            private Object readResolve() throws ObjectStreamException {
+                return new SerializableLookup(Lookups.fixed(lookupContent));
+            }
         }
     }
 }
