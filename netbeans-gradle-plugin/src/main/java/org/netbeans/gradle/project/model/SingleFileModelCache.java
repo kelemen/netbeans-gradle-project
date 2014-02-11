@@ -95,7 +95,7 @@ public final class SingleFileModelCache implements PersistentModelCache {
         return new File(SettingsFiles.getCacheDir(rootDir), "project-cache");
     }
 
-    private static String getCacheKey(NbGradleModel model) throws IOException {
+    public static String getCacheKey(NbGradleModel model) throws IOException {
         File rootDir = model.getRootProjectDir().getCanonicalFile();
 
         String rootDirStr = rootDir.getPath();

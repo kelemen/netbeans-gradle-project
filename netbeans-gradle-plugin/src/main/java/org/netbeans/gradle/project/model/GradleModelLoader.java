@@ -64,11 +64,7 @@ public final class GradleModelLoader {
     private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
 
-    // TODO: The cache should not be kept in a single file (for the complete multi-project build).
-    //       This is simply inefficient because we read all the data for
-    //       each projects. Also, removed projects will remain in the cache
-    //       and the cache file will grow without limits.
-    private static final PersistentModelCache PERSISTENT_CACHE = new SingleFileModelCache();
+    private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
 
     public static void addModelLoadedListener(ModelLoadListener listener) {
         LISTENERS.addListener(listener);
