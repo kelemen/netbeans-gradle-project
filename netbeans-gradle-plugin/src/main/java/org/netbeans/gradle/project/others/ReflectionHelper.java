@@ -12,10 +12,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.Exceptions;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class ReflectionHelper {
     private static final Logger LOGGER = Logger.getLogger(ReflectionHelper.class.getName());
 
@@ -108,5 +104,22 @@ public final class ReflectionHelper {
             throw Exceptions.throwUnchecked(ex.getCause());
         }
         return null;
+    }
+
+    public static ClassFinder constClassFinder(final Class<?> type) {
+        return new ClassFinder() {
+            @Override
+            public Class<?> tryGetClass() {
+                return type;
+            }
+        };
+    }
+
+    public static ClassFinder[] constClassFinders(Class<?>... types) {
+        ClassFinder[] result = new ClassFinder[types.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = constClassFinder(types[i]);
+        }
+        return result;
     }
 }
