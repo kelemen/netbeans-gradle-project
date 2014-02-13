@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassMethod {
+    private static final Class<?>[] EMPTY_CLASS_ARR = new Class<?>[0];
+
     private final ClassFinder pluginClass;
     private final String methodName;
     private final ClassFinder[] argTypeFinders;
@@ -30,6 +32,10 @@ public final class PluginClassMethod {
         this.argTypesCache = null;
 
         CollectionUtils.checkNoNullElements(Arrays.asList(this.argTypeFinders), "argTypeFinders");
+    }
+
+    public static PluginClassMethod noArgMethod(ClassFinder pluginClass, String methodName) {
+        return new PluginClassMethod(pluginClass, methodName, EMPTY_CLASS_ARR);
     }
 
     private Class<?>[] findArgTypes() {
