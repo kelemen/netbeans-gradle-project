@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.others;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class PluginClass {
+public final class PluginClass implements ClassFinder {
     private final PluginClassFactory classFactory;
     private final String className;
     private final AtomicReference<Class<?>> loadedClass;
@@ -16,6 +16,7 @@ public final class PluginClass {
         this.loadedClass = new AtomicReference<Class<?>>();
     }
 
+    @Override
     public Class<?> tryGetClass() {
         Class<?> result = loadedClass.get();
         if (result == null) {
