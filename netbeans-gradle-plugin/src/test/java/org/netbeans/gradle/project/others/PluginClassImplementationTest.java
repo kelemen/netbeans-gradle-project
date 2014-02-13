@@ -7,12 +7,7 @@ import static org.mockito.Mockito.*;
 
 public class PluginClassImplementationTest {
     private static ClassFinder classFinder(final Class<?> type) {
-        return new ClassFinder() {
-            @Override
-            public Class<?> tryGetClass() {
-                return type;
-            }
-        };
+        return ReflectionHelper.constClassFinder(type);
     }
 
     @Test
