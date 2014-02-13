@@ -19,6 +19,8 @@ public final class PluginClassConstructor {
     }
 
     public PluginClassConstructor(ClassFinder pluginClass, ClassFinder... argTypeFinders) {
+        if (pluginClass == null) throw new NullPointerException("pluginClass");
+
         this.pluginClass = pluginClass;
         this.argTypeFinders = argTypeFinders.clone();
         this.constructorRef = new AtomicReference<Constructor<?>>(null);
