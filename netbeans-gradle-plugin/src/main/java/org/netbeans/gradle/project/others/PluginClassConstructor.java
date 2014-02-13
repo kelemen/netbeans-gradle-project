@@ -2,19 +2,53 @@ package org.netbeans.gradle.project.others;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassConstructor {
     private final ClassFinder pluginClass;
-    private final Class<?>[] argTypes;
+    private final ClassFinder[] argTypeFinders;
     private final AtomicReference<Constructor<?>> constructorRef;
 
-    public PluginClassConstructor(ClassFinder pluginClass, Class<?>[] argTypes) {
-        if (pluginClass == null) throw new NullPointerException("pluginClass");
+    @SuppressWarnings("VolatileArrayField")
+    private volatile Class<?>[] argTypesCache;
 
+    public PluginClassConstructor(ClassFinder pluginClass, Class<?>... argTypes) {
+        this(pluginClass, ReflectionHelper.constClassFinders(argTypes));
+    }
+
+    public PluginClassConstructor(ClassFinder pluginClass, ClassFinder... argTypeFinders) {
         this.pluginClass = pluginClass;
-        this.argTypes = argTypes.clone();
+        this.argTypeFinders = argTypeFinders.clone();
         this.constructorRef = new AtomicReference<Constructor<?>>(null);
+        this.argTypesCache = null;
+
+        CollectionUtils.checkNoNullElements(Arrays.asList(this.argTypeFinders), "argTypeFinders");
+    }
+
+    private Class<?>[] findArgTypes() {
+        Class<?>[] result = new Class<?>[argTypeFinders.length];
+        for (int i = 0; i < result.length; i++) {
+            Class<?> argType = argTypeFinders[i].tryGetClass();
+            if (argType == null) {
+                return null;
+            }
+
+            result[i] = argTypeFinders[i].tryGetClass();
+        }
+        return result;
+    }
+
+    private Class<?>[] getArgTypes() {
+        Class<?>[] result = argTypesCache;
+        if (result == null) {
+            result = findArgTypes();
+            if (result != null) {
+                argTypesCache = result;
+            }
+        }
+        return result;
     }
 
     public Constructor<?> tryGetConstructor() {
@@ -33,7 +67,7 @@ public final class PluginClassConstructor {
         }
 
         try {
-            return type.getConstructor(argTypes);
+            return type.getConstructor(getArgTypes());
         } catch (NoSuchMethodException ex) {
             return null;
         }
