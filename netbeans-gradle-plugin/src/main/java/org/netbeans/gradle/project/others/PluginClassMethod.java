@@ -4,9 +4,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassMethod {
+    private static final Logger LOGGER = Logger.getLogger(PluginClassMethod.class.getName());
     private static final Class<?>[] EMPTY_CLASS_ARR = new Class<?>[0];
 
     private final ClassFinder pluginClass;
@@ -84,12 +87,23 @@ public final class PluginClassMethod {
         }
     }
 
+    private String getClassName() {
+        Class<?> type = pluginClass.tryGetClass();
+        return type != null ? type.getName() : "?";
+    }
+
     public Object tryInvoke(Object instance, Object... arguments) {
         Method method = tryGetMethod();
         try {
-            return method != null
-                    ? method.invoke(instance, arguments)
-                    : null;
+            if (method != null) {
+                return method.invoke(instance, arguments);
+            }
+            else {
+                LOGGER.log(Level.WARNING,
+                        "Missing method: {0} for class {1}",
+                        new Object[]{methodName, getClassName()});
+                return null;
+            }
         } catch (IllegalAccessException ex) {
             throw new RuntimeException(ex);
         } catch (InvocationTargetException ex) {
