@@ -53,6 +53,8 @@ public interface BuiltInGradleCommandQuery {
      *  <li>{@code ActionProvider.COMMAND_DEBUG_SINGLE}</li>
      *  <li>{@code JavaProjectConstants.COMMAND_JAVADOC}</li>
      *  <li>{@code JavaProjectConstants.COMMAND_DEBUG_FIX}</li>
+     *  <li>{@code SingleMethod.COMMAND_RUN_SINGLE_METHOD}</li>
+     *  <li>{@code SingleMethod.COMMAND_DEBUG_SINGLE_METHOD}</li>
      * </ul>
      *
      * @param command the command whose display name is to be returned. This
