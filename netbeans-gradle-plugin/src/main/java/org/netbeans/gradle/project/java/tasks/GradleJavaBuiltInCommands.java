@@ -263,6 +263,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static CustomCommandActions createCustomActions(
             TaskKind taskKind, CustomCommandAdjuster... adjusters) {
+        if (adjusters.length == 0) {
+            return CustomCommandActions.simpleAction(taskKind);
+        }
+
         CustomCommandActions.Builder result = new CustomCommandActions.Builder(taskKind);
         for (CustomCommandAdjuster adjuster: adjusters) {
             adjuster.adjust(result);
