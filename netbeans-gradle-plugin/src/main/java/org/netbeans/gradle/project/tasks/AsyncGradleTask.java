@@ -250,6 +250,7 @@ public final class AsyncGradleTask implements Runnable {
                 progress);
     }
 
+    // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgress(
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
@@ -274,6 +275,8 @@ public final class AsyncGradleTask implements Runnable {
         File projectDir = project.getProjectDirectoryAsFile();
 
         GradleModelLoader.ModelBuilderSetup targetSetup = createTargetSetup(taskDef, progress);
+
+        Throwable commandError = null;
 
         GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(project);
         gradleConnector.forProjectDirectory(projectDir);
@@ -316,7 +319,7 @@ public final class AsyncGradleTask implements Runnable {
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
                                 buildLauncher.run();
 
-                                taskDef.getCommandFinalizer().finalizeSuccessfulCommand(
+                                taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,
                                         io.getErrRef());
                             }
@@ -326,6 +329,7 @@ public final class AsyncGradleTask implements Runnable {
                             outputRef.close();
                         }
                     } catch (Throwable ex) {
+                        commandError = ex;
                         LOGGER.log(
                                 ex instanceof Exception ? Level.INFO : Level.SEVERE,
                                 "Gradle build failure: " + command,
@@ -349,8 +353,12 @@ public final class AsyncGradleTask implements Runnable {
                 closeAll(initScripts);
             }
         } finally {
-            if (projectConnection != null) {
-                projectConnection.close();
+            try {
+                if (projectConnection != null) {
+                    projectConnection.close();
+                }
+            } finally {
+                taskDef.getCommandFinalizer().onComplete(commandError);
             }
         }
     }

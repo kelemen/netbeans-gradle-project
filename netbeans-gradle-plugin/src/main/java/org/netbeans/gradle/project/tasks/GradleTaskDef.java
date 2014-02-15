@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -28,7 +30,8 @@ public final class GradleTaskDef {
 
         private SmartOutputHandler.Visitor stdOutListener;
         private SmartOutputHandler.Visitor stdErrListener;
-        private ContextAwareCommandFinalizer commandFinalizer;
+        private ContextAwareCommandFinalizer successfulCommandFinalizer;
+        private CommandCompleteListener commandFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
 
         private boolean cleanOutput;
@@ -44,6 +47,7 @@ public final class GradleTaskDef {
             this.stdErrListener = taskDef.getStdErrListener();
             this.nonBlocking = taskDef.isNonBlocking();
             this.cleanOutput = taskDef.isCleanOutput();
+            this.successfulCommandFinalizer = taskDef.getSuccessfulCommandFinalizer();
             this.commandFinalizer = taskDef.getCommandFinalizer();
             this.gradleTargetVerifier = taskDef.getGradleTargetVerifier();
         }
@@ -68,6 +72,7 @@ public final class GradleTaskDef {
             this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
             this.nonBlocking = false;
             this.cleanOutput = false;
+            this.successfulCommandFinalizer = NoOpSuccessfulFinalizer.INSTANCE;
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
             this.gradleTargetVerifier = null;
 
@@ -176,11 +181,20 @@ public final class GradleTaskDef {
             this.stdErrListener = stdErrListener;
         }
 
-        public ContextAwareCommandFinalizer getCommandFinalizer() {
+        public ContextAwareCommandFinalizer getSuccessfulCommandFinalizer() {
+            return successfulCommandFinalizer;
+        }
+
+        public void setSuccessfulCommandFinalizer(ContextAwareCommandFinalizer successfulCommandFinalizer) {
+            if (successfulCommandFinalizer == null) throw new NullPointerException("successfulCommandFinalizer");
+            this.successfulCommandFinalizer = successfulCommandFinalizer;
+        }
+
+        public CommandCompleteListener getCommandFinalizer() {
             return commandFinalizer;
         }
 
-        public void setCommandFinalizer(ContextAwareCommandFinalizer commandFinalizer) {
+        public void setCommandFinalizer(CommandCompleteListener commandFinalizer) {
             if (commandFinalizer == null) throw new NullPointerException("commandFinalizer");
             this.commandFinalizer = commandFinalizer;
         }
@@ -205,7 +219,8 @@ public final class GradleTaskDef {
     private final List<String> jvmArguments;
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
-    private final ContextAwareCommandFinalizer commandFinalizer;
+    private final ContextAwareCommandFinalizer successfulCommandFinalizer;
+    private final CommandCompleteListener commandFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
@@ -220,6 +235,7 @@ public final class GradleTaskDef {
         this.stdErrListener = builder.getStdErrListener();
         this.nonBlocking = builder.isNonBlocking();
         this.cleanOutput = builder.isCleanOutput();
+        this.successfulCommandFinalizer = builder.getSuccessfulCommandFinalizer();
         this.commandFinalizer = builder.getCommandFinalizer();
         this.gradleTargetVerifier = builder.getGradleTargetVerifier();
     }
@@ -284,7 +300,11 @@ public final class GradleTaskDef {
         return stdErrListener;
     }
 
-    public ContextAwareCommandFinalizer getCommandFinalizer() {
+    public ContextAwareCommandFinalizer getSuccessfulCommandFinalizer() {
+        return successfulCommandFinalizer;
+    }
+
+    public CommandCompleteListener getCommandFinalizer() {
         return commandFinalizer;
     }
 
@@ -386,6 +406,12 @@ public final class GradleTaskDef {
         ContextAwareCommandAction contextAwareAction = customActions.getContextAwareAction();
         if (contextAwareAction != null) {
             ContextAwareCommandFinalizer finalizer = contextAwareAction.startCommand(project, actionContext);
+            builder.setSuccessfulCommandFinalizer(finalizer);
+        }
+
+        ContextAwareCommandCompleteAction contextAwareFinalizer = customActions.getContextAwareFinalizer();
+        if (contextAwareFinalizer != null) {
+            CommandCompleteListener finalizer = contextAwareFinalizer.startCommand(project, actionContext);
             builder.setCommandFinalizer(finalizer);
         }
 
@@ -402,11 +428,20 @@ public final class GradleTaskDef {
         }
     }
 
-    private enum NoOpFinalizer implements ContextAwareCommandFinalizer {
+    private enum NoOpSuccessfulFinalizer implements ContextAwareCommandFinalizer {
         INSTANCE;
 
         @Override
         public void finalizeSuccessfulCommand(OutputWriter output, OutputWriter errOutput) {
+        }
+    }
+
+    private enum NoOpFinalizer implements CommandCompleteListener {
+        INSTANCE;
+
+        @Override
+        public void onComplete(Throwable error) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

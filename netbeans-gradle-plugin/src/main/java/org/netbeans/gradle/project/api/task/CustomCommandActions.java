@@ -67,6 +67,7 @@ public final class CustomCommandActions {
         private TaskOutputProcessor stdOutProcessor;
         private TaskOutputProcessor stdErrProcessor;
         private ContextAwareCommandAction contextAwareAction;
+        private ContextAwareCommandCompleteAction contextAwareFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
 
         /**
@@ -89,6 +90,7 @@ public final class CustomCommandActions {
             this.stdOutProcessor = null;
             this.stdErrProcessor = null;
             this.contextAwareAction = null;
+            this.contextAwareFinalizer = null;
         }
 
         /**
@@ -146,19 +148,36 @@ public final class CustomCommandActions {
 
         /**
          * Sets the custom code to be executed before and after the Gradle
-         * command has. The custom code may use the {@code Lookup} context
-         * used to start the associated Gradle command and also the
-         * {@link org.netbeans.api.project.Project Project} instance.
+         * command has been executed successfully. The custom code may use the
+         * {@code Lookup} context used to start the associated Gradle command
+         * and also the {@link org.netbeans.api.project.Project Project} instance.
          * <P>
          * You may set this property to {@code null}, if no such action
          * is needed. The default value for this property is {@code null}.
          *
          * @param contextAwareAction the custom code to be executed before and
-         *   after the Gradle command has. This argument can be {@code null}, if
-         *   no code needs to be executed.
+         *   after the Gradle command has been executed successfully. This
+         *   argument can be {@code null}, if no code needs to be executed.
          */
         public void setContextAwareAction(@Nullable ContextAwareCommandAction contextAwareAction) {
             this.contextAwareAction = contextAwareAction;
+        }
+
+        /**
+         * Sets the custom code to be executed before and after the Gradle
+         * command has been executed. The custom code may use the {@code Lookup}
+         * context used to start the associated Gradle command and also the
+         * {@link org.netbeans.api.project.Project Project} instance.
+         * <P>
+         * You may set this property to {@code null}, if no such action
+         * is needed. The default value for this property is {@code null}.
+         *
+         * @param contextAwareFinalizer the custom code to be executed before and
+         *   after the Gradle command has been executed. This argument can be
+         *   {@code null}, if no code needs to be executed.
+         */
+        public void setContextAwareFinalizer(@Nullable ContextAwareCommandCompleteAction contextAwareFinalizer) {
+            this.contextAwareFinalizer = contextAwareFinalizer;
         }
 
         /**
@@ -200,6 +219,7 @@ public final class CustomCommandActions {
     private final TaskOutputProcessor stdOutProcessor;
     private final TaskOutputProcessor stdErrProcessor;
     private final ContextAwareCommandAction contextAwareAction;
+    private final ContextAwareCommandCompleteAction contextAwareFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
 
     private CustomCommandActions(Builder builder) {
@@ -208,6 +228,7 @@ public final class CustomCommandActions {
         this.stdOutProcessor = builder.stdOutProcessor;
         this.stdErrProcessor = builder.stdErrProcessor;
         this.contextAwareAction = builder.contextAwareAction;
+        this.contextAwareFinalizer = builder.contextAwareFinalizer;
         this.gradleTargetVerifier = builder.gradleTargetVerifier;
     }
 
@@ -274,18 +295,34 @@ public final class CustomCommandActions {
 
     /**
      * Returns the custom code to be executed before and after the Gradle
-     * command has. The custom code may use the {@code Lookup} context
-     * used to start the associated Gradle command and also the
-     * {@link org.netbeans.api.project.Project Project} instance.
+     * command has been executed successfully. The custom code may use the
+     * {@code Lookup} context used to start the associated Gradle command and
+     * also the {@link org.netbeans.api.project.Project Project} instance.
      *
      * @return the custom code to be executed before and after the Gradle
-     *   command has. This method may return {@code null}, if no such action
-     *   needs to be executed.
+     *   command has been executed successfully. This method may return
+     *   {@code null}, if no such action needs to be executed.
      */
     @Nullable
     @CheckForNull
     public ContextAwareCommandAction getContextAwareAction() {
         return contextAwareAction;
+    }
+
+    /**
+     * Returns the custom code to be executed before and after the Gradle
+     * command has been executed. The custom code may use the {@code Lookup}
+     * context used to start the associated Gradle command and
+     * also the {@link org.netbeans.api.project.Project Project} instance.
+     *
+     * @return the custom code to be executed before and after the Gradle
+     *   command has been executed. This method may return {@code null}, if no
+     *   such action needs to be executed.
+     */
+    @Nullable
+    @CheckForNull
+    public ContextAwareCommandCompleteAction getContextAwareFinalizer() {
+        return contextAwareFinalizer;
     }
 
     /**
