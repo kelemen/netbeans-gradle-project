@@ -33,72 +33,62 @@ import org.openide.windows.OutputWriter;
 
 public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuery {
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList("build"),
             Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD,
             true);
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList("cleanTest", "test"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
+            Collections.<String>emptyList());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
+            TaskKind.RUN,
             Arrays.asList("run"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.RUN);
+            Collections.<String>emptyList());
     private static final CommandWithActions DEFAULT_DEBUG_TASK = blockingCommand(
+            TaskKind.DEBUG,
             Arrays.asList("debug"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
+            Collections.<String>emptyList());
     private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList("javadoc"),
-            Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
+            Collections.<String>emptyList());
     private static final CommandWithActions DEFAULT_REBUILD_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList("clean", "build"),
             Collections.<String>emptyList(),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD,
             true);
     private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=${test-file-path}"),
-            Collections.<String>emptyList(),
-            CustomCommandActions.BUILD);
+            Arrays.asList("-Dtest.single=${test-file-path}"));
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
+            TaskKind.DEBUG,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG);
+            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"));
     private static final CommandWithActions DEFAULT_TEST_SINGLE_METHOD_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
-            Collections.<String>emptyList(),
-            needsGradle(TaskKind.BUILD, "1.10"));
+            needsGradle("1.10"));
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
+            TaskKind.DEBUG,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), "-Dtest.debug"),
-            Collections.<String>emptyList(),
-            needsGradle(TaskKind.DEBUG, "1.10"));
+            needsGradle("1.10"));
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
+            TaskKind.RUN,
             Arrays.asList(projectTask("run")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
-            Collections.<String>emptyList(),
-            CustomCommandActions.RUN,
             true);
     private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK = blockingCommand(
+            TaskKind.DEBUG,
             Arrays.asList(projectTask("debug")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
-            Collections.<String>emptyList(),
-            CustomCommandActions.DEBUG,
             true);
     private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = blockingCommand(
+            TaskKind.BUILD,
             Arrays.asList(projectTask("classes")),
-            Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             applyClassesActions());
 
@@ -169,25 +159,28 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return task != null ? task.getCustomActions() : null;
     }
 
-    public static CustomCommandActions needsGradle(TaskKind taskKind, String minGradleVersionStr) {
+    private static CustomCommandAdjuster needsGradle(String minGradleVersionStr) {
         final GradleVersion minGradleVersion = GradleVersion.version(minGradleVersionStr);
 
-        CustomCommandActions.Builder result = new CustomCommandActions.Builder(taskKind);
-        result.setGradleTargetVerifier(new GradleTargetVerifier() {
+        return new CustomCommandAdjuster() {
             @Override
-            public boolean checkTaskExecutable(
-                    GradleTarget gradleTarget,
-                    OutputWriter output,
-                    OutputWriter errOutput) {
-                if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
-                    errOutput.println(NbStrings.getNeedsMinGradleVersion(minGradleVersion));
-                    return false;
-                }
+            public void adjust(CustomCommandActions.Builder customActions) {
+                customActions.setGradleTargetVerifier(new GradleTargetVerifier() {
+                    @Override
+                    public boolean checkTaskExecutable(
+                            GradleTarget gradleTarget,
+                            OutputWriter output,
+                            OutputWriter errOutput) {
+                        if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
+                            errOutput.println(NbStrings.getNeedsMinGradleVersion(minGradleVersion));
+                            return false;
+                        }
 
-                return true;
+                        return true;
+                    }
+                });
             }
-        });
-        return result.create();
+        };
     }
 
     private CustomCommandActions debugActions(GradleTargetVerifier targetVerifier) {
@@ -206,63 +199,75 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
-    private static CustomCommandActions applyClassesActions() {
-        CustomCommandActions.Builder result = new CustomCommandActions.Builder(TaskKind.BUILD);
-        result.setContextAwareAction(new ContextAwareCommandAction() {
+    private static CustomCommandAdjuster applyClassesActions() {
+        return new CustomCommandAdjuster() {
             @Override
-            public ContextAwareCommandFinalizer startCommand(Project project, Lookup commandContext) {
-                String className = DebugUtils.getActiveClassName(project, commandContext);
-                return applyClassesFinalizer(project, className);
+            public void adjust(CustomCommandActions.Builder customActions) {
+                customActions.setContextAwareAction(new ContextAwareCommandAction() {
+                    @Override
+                    public ContextAwareCommandFinalizer startCommand(Project project, Lookup commandContext) {
+                        String className = DebugUtils.getActiveClassName(project, commandContext);
+                        return applyClassesFinalizer(project, className);
+                    }
+                });
             }
-        });
-        return result.create();
+        };
     }
 
     private static CommandWithActions blockingCommand(
+            TaskKind taskKind,
             List<String> taskNames,
             List<String> arguments,
-            List<String> jvmArguments,
-            CustomCommandActions customActions) {
+            CustomCommandAdjuster... adjusters) {
 
-        return blockingCommand(taskNames, arguments, jvmArguments, customActions, false);
+        return blockingCommand(taskKind, taskNames, arguments, false, adjusters);
     }
 
     private static CommandWithActions blockingCommand(
+            TaskKind taskKind,
             List<String> taskNames,
             List<String> arguments,
-            List<String> jvmArguments,
-            CustomCommandActions customActions,
-            boolean skipTestsIfNeeded) {
+            boolean skipTestsIfNeeded,
+            CustomCommandAdjuster... adjusters) {
 
         GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
-        commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(true);
 
+        CustomCommandActions customActions = createCustomActions(taskKind, adjusters);
         return new CommandWithActions(commandBuilder.create(), customActions, skipTestsIfNeeded);
     }
 
     private static CommandWithActions nonBlockingCommand(
+            TaskKind taskKind,
             List<String> taskNames,
             List<String> arguments,
-            List<String> jvmArguments,
-            CustomCommandActions customActions) {
-        return nonBlockingCommand(taskNames, arguments, jvmArguments, customActions, false);
+            CustomCommandAdjuster... adjusters) {
+        return nonBlockingCommand(taskKind, taskNames, arguments, false, adjusters);
     }
 
     private static CommandWithActions nonBlockingCommand(
+            TaskKind taskKind,
             List<String> taskNames,
             List<String> arguments,
-            List<String> jvmArguments,
-            CustomCommandActions customActions,
-            boolean skipTestsIfNeeded) {
+            boolean skipTestsIfNeeded,
+            CustomCommandAdjuster... adjusters) {
 
         GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
-        commandBuilder.setJvmArguments(jvmArguments);
         commandBuilder.setBlocking(false);
 
+        CustomCommandActions customActions = createCustomActions(taskKind, adjusters);
         return new CommandWithActions(commandBuilder.create(), customActions, skipTestsIfNeeded);
+    }
+
+    private static CustomCommandActions createCustomActions(
+            TaskKind taskKind, CustomCommandAdjuster... adjusters) {
+        CustomCommandActions.Builder result = new CustomCommandActions.Builder(taskKind);
+        for (CustomCommandAdjuster adjuster: adjusters) {
+            adjuster.adjust(result);
+        }
+        return result.create();
     }
 
     private static final class CommandWithActions {
@@ -296,5 +301,9 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         public CustomCommandActions getCustomActions() {
             return customActions;
         }
+    }
+
+    private interface CustomCommandAdjuster {
+        public void adjust(CustomCommandActions.Builder customActions);
     }
 }
