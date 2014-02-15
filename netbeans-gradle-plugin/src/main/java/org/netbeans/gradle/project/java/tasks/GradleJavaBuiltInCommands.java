@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.SingleMethod;
 import org.openide.util.Lookup;
 import org.openide.windows.OutputWriter;
 
@@ -77,12 +78,12 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
             Collections.<String>emptyList(),
-            needsGradle(TaskKind.BUILD, "1.11"));
+            needsGradle(TaskKind.BUILD, "1.10"));
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), "-Dtest.debug"),
             Collections.<String>emptyList(),
-            needsGradle(TaskKind.DEBUG, "1.11"));
+            needsGradle(TaskKind.DEBUG, "1.10"));
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             Arrays.asList(projectTask("run")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
@@ -113,8 +114,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, DEFAULT_TEST_SINGLE_TASK);
         addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, DEFAULT_DEBUG_TEST_SINGLE_TASK);
-        //addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
-        //addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK);
+        addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
+        addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
         addToDefaults(ActionProvider.COMMAND_DEBUG_SINGLE, DEFAULT_DEBUG_SINGLE_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
