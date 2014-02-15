@@ -168,11 +168,18 @@ public final class AsyncGradleTask implements Runnable {
             arguments.add(initScript.getFile().getPath());
         }
 
-        if (!arguments.isEmpty()) {
+        // HACK: GRADLE-2972
+        if (arguments.contains("--tests")) {
+            arguments.addAll(0, taskDef.getTaskNames());
             buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
         }
+        else {
+            if (!arguments.isEmpty()) {
+                buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
+            }
 
-        buildLauncher.forTasks(taskDef.getTaskNamesArray());
+            buildLauncher.forTasks(taskDef.getTaskNamesArray());
+        }
     }
 
     private static OutputRef configureOutput(
