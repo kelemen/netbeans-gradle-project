@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -19,6 +21,8 @@ import org.openide.util.Parameters;
  * @see GradleCommandExecutor
  */
 public final class CustomCommandActions {
+    private static final Logger LOGGER = Logger.getLogger(CustomCommandActions.class.getName());
+
     /**
      * Defines an immutable {@code CustomCommandActions} with the
      * {@link #getTaskKind() task kind} of {@link TaskKind#BUILD}.
@@ -230,6 +234,37 @@ public final class CustomCommandActions {
         this.contextAwareAction = builder.contextAwareAction;
         this.contextAwareFinalizer = builder.contextAwareFinalizer;
         this.gradleTargetVerifier = builder.gradleTargetVerifier;
+    }
+
+    /**
+     * Returns a {@code CustomCommandActions} instance with the given
+     * {@code TaskKind} and other properties set to their default values.
+     * <P>
+     * This is similar to {@code new Builder(taskKind).create()} but may return
+     * cached instances which is more efficient.
+     *
+     * @param taskKind the kind of task affecting the output window handling of
+     *   the executed task. This argument cannot be {@code null}.
+     * @return a {@code CustomCommandActions} instance with the given
+     *   {@code TaskKind} and other properties set to their default values. This
+     *   method never returns {@code null}.
+     */
+    @Nonnull
+    public static CustomCommandActions simpleAction(@Nonnull TaskKind taskKind) {
+        if (taskKind == null) throw new NullPointerException("taskKind");
+        switch (taskKind) {
+            case BUILD:
+                return BUILD;
+            case RUN:
+                return RUN;
+            case DEBUG:
+                return DEBUG;
+            case OTHER:
+                return OTHER;
+            default:
+                LOGGER.log(Level.WARNING, "Missing case for {0}", taskKind);
+                return new Builder(taskKind).create();
+        }
     }
 
     /**
