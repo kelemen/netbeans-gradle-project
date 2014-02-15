@@ -9,21 +9,21 @@ import org.openide.util.Lookup;
  * which needs the {@link Lookup} context and the {@link Project} instance
  * associated with the currently started task.
  * <P>
- * If you need to be notified even on failure, you may use the
- * {@link ContextAwareCommandCompleteAction}.
+ * If you need to write something to the output window, you may use the
+ * {@link ContextAwareCommandAction}.
  * <P>
  * The method of this interface is called from a background thread (not the Event Dispatch Thread).
  *
  * @see BuiltInGradleCommandQuery
- * @see ContextAwareCommandCompleteAction
+ * @see ContextAwareCommandAction
  * @see CustomCommandActions
  * @see GradleCommandExecutor
  */
-public interface ContextAwareCommandAction {
+public interface ContextAwareCommandCompleteAction {
     /**
      * Called before a Gradle command is executed and returns the
-     * {@link ContextAwareCommandFinalizer} which is to be notified if the
-     * Gradle command completes successfully.
+     * {@link CommandCompleteListener} which is to be notified if the
+     * Gradle command completes successfully or with an error.
      * <P>
      * If the command to be executed is a built-in task, then the
      * {@code commandContext} is the {@code Lookup}, NetBeans passes to the
@@ -41,5 +41,5 @@ public interface ContextAwareCommandAction {
      *   return {@code null}.
      */
     @Nonnull
-    public ContextAwareCommandFinalizer startCommand(@Nonnull Project project, @Nonnull Lookup commandContext);
+    public CommandCompleteListener startCommand(@Nonnull Project project, @Nonnull Lookup commandContext);
 }

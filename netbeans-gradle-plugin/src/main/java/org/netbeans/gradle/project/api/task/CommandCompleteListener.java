@@ -7,10 +7,14 @@ import javax.annotation.Nullable;
  * executed. The listener is guaranteed to be notified only if the command has
  * been attempted to be actually started.
  * <P>
+ * If you need the context ({@code Project} and {@code Lookup}) for the listener,
+ * you may use the {@link ContextAwareCommandAction} instead.
+ * <P>
  * This listener is not notified more than once but might be notified on any
  * thread.
  *
  * @see GradleCommandExecutor
+ * @see ContextAwareCommandCompleteAction
  */
 public interface CommandCompleteListener {
     /**
