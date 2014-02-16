@@ -20,6 +20,27 @@ public final class GradleClasses {
         return result;
     }
 
+    public static <T> Class<? extends T> tryGetGradleClass(Project project, String className, Class<T> subType) {
+        Class<?> result = tryGetGradleClass(project, className);
+        if (subType.isAssignableFrom(result)) {
+            @SuppressWarnings("unchecked")
+            Class<? extends T> typeSafeResult = (Class<? extends T>)result;
+            return typeSafeResult;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public static Class<?> tryGetGradleClass(Project project, String className) {
+        try {
+            GradleClass gradleClass = getGradleClass(project, className);
+            return gradleClass.getType();
+        } catch (ClassNotFoundException ex) {
+            return null;
+        }
+    }
+
     private GradleClasses() {
         throw new AssertionError();
     }

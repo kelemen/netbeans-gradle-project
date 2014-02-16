@@ -9,8 +9,8 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskCollection;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.gradleclasses.GradleClasses;
 import org.netbeans.gradle.model.util.BuilderUtils;
-import org.netbeans.gradle.model.util.ClassLoaderUtils;
 
 public enum JarOutputsModelBuilder
 implements
@@ -25,9 +25,8 @@ implements
             return null;
         }
 
-        @SuppressWarnings("unchecked")
-        Class<? extends Task> jarClass = (Class<? extends Task>)ClassLoaderUtils
-                .tryGetClass(project, "org.gradle.api.tasks.bundling.Jar");
+        Class<? extends Task> jarClass = GradleClasses.tryGetGradleClass(
+                project, "org.gradle.api.tasks.bundling.Jar", Task.class);
 
         if (jarClass == null) {
             LOGGER.warning("Cannot find class of Jar tasks.");
