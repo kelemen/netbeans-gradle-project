@@ -19,6 +19,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public final class TestXmlDisplayer {
     private static final Logger LOGGER = Logger.getLogger(TestXmlDisplayer.class.getName());
+    private static final File[] NO_FILES = new File[0];
     private static final String NEW_LINE_PATTERN = Pattern.quote("\n");
     private static final String[] STACKTRACE_PREFIXES = {"at "};
 
@@ -44,16 +45,18 @@ public final class TestXmlDisplayer {
     private File[] getTestReportFiles() {
         File reportDir = tryGetReportDirectory();
         if (reportDir == null) {
-            return new File[0];
+            return NO_FILES;
         }
 
-        return reportDir.listFiles(new FilenameFilter() {
+        File[] result = reportDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 String normName = name.toLowerCase(Locale.ROOT);
                 return normName.startsWith("test-") && normName.endsWith(".xml");
             }
         });
+        
+        return result != null ? result : NO_FILES;
     }
 
     private static long tryReadTimeMillis(String timeStr, long defaultValue) {
