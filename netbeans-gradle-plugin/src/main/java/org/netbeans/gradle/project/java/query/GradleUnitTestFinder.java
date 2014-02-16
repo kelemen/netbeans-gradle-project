@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -47,13 +49,15 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
         return false;
     }
 
-    private static URL[] urlsFromSourceSet(JavaSourceSet sourceSet) {
+    private static URL[] urlsFromSourceSets(Collection<JavaSourceSet> sourceSets) {
         List<URL> result = new LinkedList<URL>();
-        for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-            for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                URL url = FileUtil.urlForArchiveOrDir(sourceRoot);
-                if (url != null) {
-                    result.add(url);
+        for (JavaSourceSet sourceSet: sourceSets) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File sourceRoot: sourceGroup.getSourceRoots()) {
+                    URL url = FileUtil.urlForArchiveOrDir(sourceRoot);
+                    if (url != null) {
+                        result.add(url);
+                    }
                 }
             }
         }
@@ -62,11 +66,11 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static URL[] getSourceRoots(NbJavaModule module) {
-        return urlsFromSourceSet(module.getMainSourceSet());
+        return urlsFromSourceSets(Collections.singleton(module.getMainSourceSet()));
     }
 
     private static URL[] getTestRoots(NbJavaModule module) {
-        return urlsFromSourceSet(module.getTestSourceSet());
+        return urlsFromSourceSets(module.getTestSourceSets());
     }
 
     @Override

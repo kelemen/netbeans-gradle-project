@@ -33,6 +33,7 @@ public final class NbJavaModule implements Serializable {
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
+    private final AtomicReference<List<JavaSourceSet>> testSourceSets;
     private final AtomicReference<List<NamedSourceRoot>> namedSourceRootsRef;
     private final AtomicReference<Map<String, JavaSourceSet>> nameToSourceSetRef;
     private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
@@ -53,12 +54,13 @@ public final class NbJavaModule implements Serializable {
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
-        this.sources = Collections.unmodifiableList(new ArrayList<JavaSourceSet>(sources));
-        this.listedDirs = Collections.unmodifiableList(listedDirs);
+        this.sources = CollectionUtils.copyNullSafeList(sources);
+        this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
         this.testTasks = testTasks;
 
         this.mainSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.testSourceSetRef = new AtomicReference<JavaSourceSet>(null);
+        this.testSourceSets = new AtomicReference<List<JavaSourceSet>>(null);
         this.namedSourceRootsRef = new AtomicReference<List<NamedSourceRoot>>(null);
         this.nameToSourceSetRef = new AtomicReference<Map<String, JavaSourceSet>>(null);
         this.testNameToModelRef = new AtomicReference<Map<String, JavaTestTask>>(null);
@@ -129,6 +131,32 @@ public final class NbJavaModule implements Serializable {
         if (result == null) {
             testSourceSetRef.set(findByNameOrEmpty(JavaSourceSet.NAME_TEST));
             result = testSourceSetRef.get();
+        }
+        return result;
+    }
+
+    private List<JavaSourceSet> findTestSourceSets() {
+        List<JavaSourceSet> result = new ArrayList<JavaSourceSet>(Math.max(sources.size() - 1, 0));
+        for (JavaSourceSet sourceSet: sources) {
+            if (!JavaSourceGroupID.isTestSourceSet(sourceSet.getName())) {
+                continue;
+            }
+
+            if (JavaSourceSet.NAME_TEST.equals(sourceSet.getName())) {
+                result.add(0, sourceSet);
+            }
+            else {
+                result.add(sourceSet);
+            }
+        }
+        return result;
+    }
+
+    public List<JavaSourceSet> getTestSourceSets() {
+        List<JavaSourceSet> result = testSourceSets.get();
+        if (result == null) {
+            testSourceSets.set(findTestSourceSets());
+            result = testSourceSets.get();
         }
         return result;
     }

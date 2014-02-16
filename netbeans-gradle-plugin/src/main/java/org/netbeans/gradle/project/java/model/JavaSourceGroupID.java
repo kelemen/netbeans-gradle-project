@@ -24,6 +24,10 @@ public final class JavaSourceGroupID {
     }
 
     public boolean isTest() {
+        return isTestSourceSet(sourceSetName);
+    }
+
+    public static boolean isTestSourceSet(String sourceSetName) {
         return sourceSetName.toLowerCase(Locale.US).contains("test");
     }
 
