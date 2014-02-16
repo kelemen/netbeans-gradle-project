@@ -408,6 +408,44 @@ public class MultiLevelJavaProjectTest {
         }
     }
 
+    private void testJavaTestModel(String relativeProjectPath) throws IOException {
+        String[] projectPathParts = relativeProjectPath.split(Pattern.quote(":"));
+        File projectDir = getProjectDir(projectPathParts);
+        final File expectedXmlPath = getSubPath(projectDir, "build", "test-results");
+
+        runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JavaTestModel testModel
+                        = fetchSingleProjectInfo(connection, JavaTestModelBuilder.INSTANCE);
+                assertNotNull("Must have a JavaTestModel.", testModel);
+
+                assertEquals("Must have a single test task.", 1, testModel.getTestTasks().size());
+
+                JavaTestTask testTask = testModel.getTestTasks().iterator().next();
+                assertEquals("test", testTask.getName());
+                assertEquals(expectedXmlPath, testTask.getXmlOutputDir());
+            }
+        });
+    }
+
+    @Test
+    public void testJavaTestModel() throws IOException {
+        for (String project: subprojects()) {
+            testJavaTestModel(project);
+        }
+    }
+
+    @Test
+    public void testJavaTestModelForRoot() throws IOException {
+         runTestForSubProject("", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JavaTestModel testModel
+                        = fetchSingleProjectInfo(connection, JavaTestModelBuilder.INSTANCE);
+                assertNull("Root project must not have a JavaTestModel.", testModel);
+            }
+        });
+    }
+
     @Test
     public void testJarOutputsModelForRoot() throws IOException {
         runTestForSubProject("", new ProjectConnectionTask() {
