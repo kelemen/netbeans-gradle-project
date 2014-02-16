@@ -10,6 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.others.GradleTestSession;
@@ -33,7 +34,9 @@ public final class TestXmlDisplayer {
     }
 
     private String getProjectName() {
-        return javaExt.getCurrentModel().getMainModule().getProperties().getProjectFullName();
+        GenericProjectProperties properties = javaExt.getCurrentModel().getMainModule().getProperties();
+        String name = properties.getProjectName();
+        return name.isEmpty() ? properties.getProjectDir().getName() : name;
     }
 
     private File tryGetReportDirectory() {
@@ -55,7 +58,7 @@ public final class TestXmlDisplayer {
                 return normName.startsWith("test-") && normName.endsWith(".xml");
             }
         });
-        
+
         return result != null ? result : NO_FILES;
     }
 
