@@ -11,6 +11,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JavaTestModel;
+import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.others.GradleTestSession;
@@ -26,10 +28,14 @@ public final class TestXmlDisplayer {
 
     private final Project project;
     private final JavaExtension javaExt;
+    private final String testName;
 
-    public TestXmlDisplayer(Project project) {
+    public TestXmlDisplayer(Project project, String testName) {
         if (project == null) throw new NullPointerException("project");
+        if (testName == null) throw new NullPointerException("testName");
+
         this.project = project;
+        this.testName = testName;
         this.javaExt = JavaExtension.getJavaExtensionOfProject(project);
     }
 
@@ -40,9 +46,12 @@ public final class TestXmlDisplayer {
     }
 
     private File tryGetReportDirectory() {
-        // TODO: Fetch these values from the script.
-        File projectDir = javaExt.getProjectDirectoryAsFile();
-        return BasicFileUtils.getSubPath(projectDir, "build", "test-results");
+        JavaTestTask testTask = javaExt.getCurrentModel().getMainModule().tryGetTestModelByName(testName);
+        if (testTask == null) {
+            testTask = JavaTestTask.getDefaulTestModel(javaExt.getProjectDirectoryAsFile());
+        }
+
+        return testTask.getXmlOutputDir();
     }
 
     private File[] getTestReportFiles() {

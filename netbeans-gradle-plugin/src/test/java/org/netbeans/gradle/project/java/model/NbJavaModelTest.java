@@ -11,6 +11,7 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.model.NbGradleProjectTreeTest;
 
@@ -36,8 +37,9 @@ public class NbJavaModelTest {
         List<JavaSourceSet> sources = Arrays.asList(createSources("main"), createSources("test"));
         List<NbListedDir> listedDirs = Arrays.asList(
                 new NbListedDir("my-listed-dir", new File("listed-dir")));
+        JavaTestModel testModel = JavaTestModel.getDefaulTestModel(properties.getProjectDir());
 
-        return new NbJavaModule(properties, compatibility, sources, listedDirs);
+        return new NbJavaModule(properties, compatibility, sources, listedDirs, testModel);
     }
 
     @Test

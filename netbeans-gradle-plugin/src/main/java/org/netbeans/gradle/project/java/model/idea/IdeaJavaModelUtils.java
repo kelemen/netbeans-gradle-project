@@ -31,6 +31,7 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
@@ -107,7 +108,9 @@ public final class IdeaJavaModelUtils {
                 properties,
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
-                Collections.<NbListedDir>emptyList());
+                Collections.<NbListedDir>emptyList(),
+                JavaTestModel.getDefaulTestModel(projectDir)
+        );
 
         return createUnreliableModel(result,
                 Collections.<File, JavaProjectDependency>emptyMap());
@@ -333,8 +336,9 @@ public final class IdeaJavaModelUtils {
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
 
         List<NbListedDir> listedDirs = lookupListedDirs(sourceSets);
+        JavaTestModel testModel = JavaTestModel.getDefaulTestModel(moduleDir);
 
-        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs);
+        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs, testModel);
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {

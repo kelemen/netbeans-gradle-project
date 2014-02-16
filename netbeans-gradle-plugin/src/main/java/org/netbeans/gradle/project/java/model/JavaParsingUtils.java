@@ -18,6 +18,7 @@ import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaSourcesModel;
+import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.WarFoldersModel;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -179,12 +180,21 @@ public final class JavaParsingUtils {
                 LOGGER.log(Level.WARNING,
                         "Missing GenericProjectProperties for project {0}",
                         retrievedModels.getMainProjectDir());
+                continue;
             }
 
             Collection<JavaSourceSet> sourceSets = adjustedSources(sourcesModel, jarsToBuildDirs);
             List<NbListedDir> listedDirs = getListedDirs(retrievedModels, projectInfo);
 
-            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs);
+            JavaTestModel testModel = projectInfo.lookup(JavaTestModel.class);
+            if (testModel == null) {
+                LOGGER.log(Level.WARNING,
+                        "Missing JavaTestModel for project {0}",
+                        retrievedModels.getMainProjectDir());
+                testModel = JavaTestModel.getDefaulTestModel(retrievedModels.getMainProjectDir());
+            }
+
+            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs, testModel);
             result.add(module);
         }
 

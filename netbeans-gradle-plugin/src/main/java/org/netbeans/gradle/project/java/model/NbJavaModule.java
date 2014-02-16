@@ -16,6 +16,8 @@ import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.model.java.JavaTestModel;
+import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class NbJavaModule implements Serializable {
@@ -25,38 +27,48 @@ public final class NbJavaModule implements Serializable {
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
     private final List<NbListedDir> listedDirs;
+    private final JavaTestModel testTasks;
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
     private final AtomicReference<List<NamedSourceRoot>> namedSourceRootsRef;
     private final AtomicReference<Map<String, JavaSourceSet>> nameToSourceSetRef;
+    private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
     private final AtomicReference<Set<File>> allBuildOutputRefs;
 
     public NbJavaModule(
             GenericProjectProperties properties,
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
-            List<NbListedDir> listedDirs) {
+            List<NbListedDir> listedDirs,
+            JavaTestModel testTasks) {
 
         if (properties == null) throw new NullPointerException("properties");
         if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
         if (sources == null) throw new NullPointerException("sources");
         if (listedDirs == null) throw new NullPointerException("listedDirs");
+        if (testTasks == null) throw new NullPointerException("testTasks");
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
         this.sources = Collections.unmodifiableList(new ArrayList<JavaSourceSet>(sources));
         this.listedDirs = Collections.unmodifiableList(listedDirs);
+        this.testTasks = testTasks;
 
         this.mainSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.testSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.namedSourceRootsRef = new AtomicReference<List<NamedSourceRoot>>(null);
         this.nameToSourceSetRef = new AtomicReference<Map<String, JavaSourceSet>>(null);
+        this.testNameToModelRef = new AtomicReference<Map<String, JavaTestTask>>(null);
         this.allBuildOutputRefs = new AtomicReference<Set<File>>(null);
     }
 
     public GenericProjectProperties getProperties() {
         return properties;
+    }
+
+    public JavaTestModel getTestTasks() {
+        return testTasks;
     }
 
     public JavaCompatibilityModel getCompatibilityModel() {
@@ -151,6 +163,29 @@ public final class NbJavaModule implements Serializable {
         return getNameToSourceSet().get(name);
     }
 
+    private Map<String, JavaTestTask> createTestNameToModel() {
+        Map<String, JavaTestTask> result = CollectionUtils.newHashMap(sources.size());
+        for (JavaTestTask testTask: testTasks.getTestTasks()) {
+            result.put(testTask.getName(), testTask);
+        }
+        return result;
+    }
+
+    private Map<String, JavaTestTask> getTestNameToModel() {
+        Map<String, JavaTestTask> result = testNameToModelRef.get();
+        if (result == null) {
+            testNameToModelRef.set(createTestNameToModel());
+            result = testNameToModelRef.get();
+        }
+        return result;
+    }
+
+    public JavaTestTask tryGetTestModelByName(String name) {
+        if (name == null) throw new NullPointerException("name");
+
+        return getTestNameToModel().get(name);
+    }
+
     private Set<File> createAllBuildOutputs() {
         Set<File> result = CollectionUtils.newHashSet(sources.size());
         for (JavaSourceSet sourceSet: sources) {
@@ -183,16 +218,18 @@ public final class NbJavaModule implements Serializable {
         private final JavaCompatibilityModel compatibilityModel;
         private final List<JavaSourceSet> sources;
         private final List<NbListedDir> listedDirs;
+        private final JavaTestModel testTasks;
 
         public SerializedFormat(NbJavaModule source) {
             this.properties = source.properties;
             this.compatibilityModel = source.compatibilityModel;
             this.sources = source.sources;
             this.listedDirs = source.listedDirs;
+            this.testTasks = source.testTasks;
         }
 
         private Object readResolve() throws ObjectStreamException {
-            return new NbJavaModule(properties, compatibilityModel, sources, listedDirs);
+            return new NbJavaModule(properties, compatibilityModel, sources, listedDirs, testTasks);
         }
     }
 }

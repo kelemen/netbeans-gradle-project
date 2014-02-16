@@ -167,11 +167,13 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return task != null ? task.getCustomActions() : null;
     }
 
-    private static CommandCompleteListener displayTestResults(Project project) {
-        final TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project);
+    private static CommandCompleteListener displayTestResults(final Project project) {
         return new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
+                // TODO: Find this name
+                String testName = "test";
+                TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
                 xmlDisplayer.displayReport();
             }
         };
