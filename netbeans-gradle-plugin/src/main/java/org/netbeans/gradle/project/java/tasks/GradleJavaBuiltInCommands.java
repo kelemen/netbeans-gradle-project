@@ -15,7 +15,9 @@ import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -26,6 +28,7 @@ import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TestXmlDisplayer;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.SingleMethod;
 import org.openide.util.Lookup;
@@ -40,7 +43,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList("cleanTest", "test"),
-            Collections.<String>emptyList());
+            Collections.<String>emptyList(),
+            displayTestResults());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList("run"),
@@ -65,17 +69,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"));
+            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"),
+            displayTestResults());
     private static final CommandWithActions DEFAULT_TEST_SINGLE_METHOD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
-            needsGradle("1.10"));
+            needsGradle("1.10"),
+            displayTestResults());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), "-Dtest.debug"),
-            needsGradle("1.10"));
+            needsGradle("1.10"),
+            displayTestResults());
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
@@ -157,6 +164,30 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             return debugActions(task.getCustomActions().getGradleTargetVerifier());
         }
         return task != null ? task.getCustomActions() : null;
+    }
+
+    private static CommandCompleteListener displayTestResults(Project project) {
+        final TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project);
+        return new CommandCompleteListener() {
+            @Override
+            public void onComplete(Throwable error) {
+                xmlDisplayer.displayReport();
+            }
+        };
+    }
+
+    private static CustomCommandAdjuster displayTestResults() {
+        return new CustomCommandAdjuster() {
+            @Override
+            public void adjust(CustomCommandActions.Builder customActions) {
+                customActions.setContextAwareFinalizer(new ContextAwareCommandCompleteAction() {
+                    @Override
+                    public CommandCompleteListener startCommand(Project project, Lookup commandContext) {
+                        return displayTestResults(project);
+                    }
+                });
+            }
+        };
     }
 
     private static CustomCommandAdjuster needsGradle(String minGradleVersionStr) {

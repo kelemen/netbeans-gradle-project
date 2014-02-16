@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -50,6 +52,8 @@ import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class JavaExtension implements GradleProjectExtension2<NbJavaModel> {
+    private static final Logger LOGGER = Logger.getLogger(JavaExtension.class.getName());
+
     private final Project project;
     private final File projectDirectoryAsFile;
     private volatile NbJavaModel currentModel;
@@ -83,6 +87,23 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.sourceDirsHandlerRef = new AtomicReference<JavaSourceDirHandler>(null);
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
         this.modelChanges = new ChangeSupport(this);
+    }
+
+    public static JavaExtension getJavaExtensionOfProject(Project project) {
+        JavaExtension result = project.getLookup().lookup(JavaExtension.class);
+        if (result != null) {
+            return result;
+        }
+        else {
+            LOGGER.log(Level.WARNING,
+                    "JavaExtension cannot be found the project''s lookup: {0}",
+                    project.getProjectDirectory());
+            try {
+                return create(project);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
     }
 
     public void addModelChangeListener(ChangeListener listener) {
