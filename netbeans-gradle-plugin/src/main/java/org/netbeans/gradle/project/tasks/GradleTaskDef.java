@@ -441,7 +441,6 @@ public final class GradleTaskDef {
 
         @Override
         public void onComplete(Throwable error) {
-            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }
