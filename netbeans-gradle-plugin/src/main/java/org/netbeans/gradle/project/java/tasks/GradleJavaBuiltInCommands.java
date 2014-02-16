@@ -65,7 +65,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=${test-file-path}"));
+            Arrays.asList("-Dtest.single=${test-file-path}"),
+            displayTestResults());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("cleanTest"), projectTask("test")),
