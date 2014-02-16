@@ -28,6 +28,7 @@ import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TestTaskName;
 import org.netbeans.gradle.project.tasks.TestXmlDisplayer;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.SingleMethod;
@@ -42,7 +43,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             true);
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
             TaskKind.BUILD,
-            Arrays.asList("cleanTest", "test"),
+            Arrays.asList(cleanAndTestTasks()),
             Collections.<String>emptyList(),
             displayTestResults());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
@@ -64,24 +65,24 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             true);
     private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
             TaskKind.BUILD,
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant()),
+            Arrays.asList(cleanAndTestTasks()),
+            Arrays.asList(testSingleArgument()),
             displayTestResults());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
             TaskKind.DEBUG,
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("-Dtest.single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant(), "-Dtest.debug"),
+            Arrays.asList(cleanAndTestTasks()),
+            Arrays.asList(testSingleArgument(), debugTestArgument()),
             displayTestResults());
     private static final CommandWithActions DEFAULT_TEST_SINGLE_METHOD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
+            Arrays.asList(cleanAndTestTasks()),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
             needsGradle("1.10"),
             displayTestResults());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
             TaskKind.DEBUG,
-            Arrays.asList(projectTask("cleanTest"), projectTask("test")),
-            Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), "-Dtest.debug"),
+            Arrays.asList(cleanAndTestTasks()),
+            Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), debugTestArgument()),
             needsGradle("1.10"),
             displayTestResults());
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
@@ -125,6 +126,27 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static void addToMap(String command, CommandWithActions task, Map<String, CommandWithActions> map) {
         map.put(command, task);
+    }
+
+    private static String debugTestArgument() {
+        return "-D" + JavaGradleTaskVariableQuery.TEST_TASK_NAME.getScriptReplaceConstant() + ".debug";
+    }
+
+    private static String testSingleArgument() {
+        return "-D" + JavaGradleTaskVariableQuery.TEST_TASK_NAME.getScriptReplaceConstant()
+                + ".single=" + StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant();
+    }
+
+    private static String cleanTestTask() {
+        return projectTask("clean" + JavaGradleTaskVariableQuery.TEST_TASK_NAME_CAPITAL.getScriptReplaceConstant());
+    }
+
+    private static String testTask() {
+        return projectTask(JavaGradleTaskVariableQuery.TEST_TASK_NAME.getScriptReplaceConstant());
+    }
+
+    private static String[] cleanAndTestTasks() {
+        return new String[]{cleanTestTask(), testTask()};
     }
 
     private static String projectTask(String task) {
@@ -329,7 +351,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
                 List<String> newArguments = new ArrayList<String>(prevArguments.size() + 2);
                 newArguments.addAll(prevArguments);
                 newArguments.add("-x");
-                newArguments.add("test");
+                newArguments.add(TestTaskName.DEFAULT_TEST_TASK_NAME);
                 builder.setArguments(newArguments);
                 return builder.create();
             }

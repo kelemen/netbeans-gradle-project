@@ -37,7 +37,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
-            Arrays.asList("cleanTest", "test"),
+            Arrays.asList(TestTaskName.DEFAULT_CLEAN_TEST_TASK_NAME, TestTaskName.DEFAULT_TEST_TASK_NAME),
             Collections.<String>emptyList(),
             Collections.<String>emptyList(),
             CustomCommandActions.BUILD);

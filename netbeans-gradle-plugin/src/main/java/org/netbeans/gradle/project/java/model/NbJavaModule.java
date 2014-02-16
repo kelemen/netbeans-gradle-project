@@ -20,6 +20,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.tasks.TestTaskName;
 
 public final class NbJavaModule implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -204,23 +205,43 @@ public final class NbJavaModule implements Serializable {
         return result;
     }
 
+    private static String getExpectedTestName(String sourceSetName) {
+        String result;
+        if (JavaSourceSet.NAME_MAIN.equals(sourceSetName)) {
+            result = TestTaskName.DEFAULT_TEST_TASK_NAME;
+        }
+        else {
+            result = sourceSetName;
+        }
+
+        return result.toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isFirstCloserInLength(String name1, String name2, String expected) {
+        int diff1 = name1.length() - expected.length();
+        int diff2 = name2.length() - expected.length();
+
+        return Math.abs(diff1) < Math.abs(diff2);
+    }
+
     public String findTestTaskForSourceSet(String sourceSetName) {
         if (sourceSetName == null) throw new NullPointerException("sourceSetName");
 
-        String normSourceSetName = sourceSetName.toLowerCase(Locale.ROOT);
+        String expectedName = getExpectedTestName(sourceSetName);
+
         String bestName = null;
         for (JavaTestTask task: testTasks.getTestTasks()) {
             String taskName = task.getName();
             String normTaskName = taskName.toLowerCase(Locale.ROOT);
-            if (normTaskName.startsWith(normSourceSetName)
-                    || normSourceSetName.startsWith(normTaskName)) {
-                if (bestName == null || bestName.length() > taskName.length()) {
+            if (normTaskName.startsWith(expectedName)
+                    || expectedName.startsWith(normTaskName)) {
+                if (bestName == null || isFirstCloserInLength(taskName, bestName, expectedName)) {
                     bestName = taskName;
                 }
             }
         }
 
-        return bestName != null ? bestName : "test";
+        return bestName != null ? bestName : TestTaskName.DEFAULT_TEST_TASK_NAME;
     }
 
     private Object writeReplace() {

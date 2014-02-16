@@ -72,6 +72,21 @@ public enum StandardTaskVariable {
                     ? FileUtil.getFileDisplayName(rootFolder)
                     : null);
         }
+    }),
+    TEST_TASK_NAME("test-task-name", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            return new VariableValue(TestTaskName.getTaskName(actionContext));
+        }
+    }),
+    TEST_TASK_NAME_CAPITAL("test-task-name-capital", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            String value = variables.tryGetValueForVariable(TEST_TASK_NAME.getVariable());
+            return new VariableValue(value != null
+                    ? StringUtils.capitalizeFirstCharacter(value)
+                    : null);
+        }
     });
 
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {

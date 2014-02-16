@@ -40,6 +40,7 @@ import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaInitScriptQuery;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
+import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.spi.project.support.LookupProviderSupport;
@@ -192,6 +193,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new GradleSourceForBinaryQuery(this),
                     new GradleBinaryForSourceQuery(this),
                     new GradleProjectTemplates(),
+                    new JavaGradleTaskVariableQuery(this),
                     new J2SEPlatformFromScriptQueryImpl(this) // internal use only
                     );
 

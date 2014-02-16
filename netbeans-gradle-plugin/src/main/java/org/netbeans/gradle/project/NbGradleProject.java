@@ -248,13 +248,16 @@ public final class NbGradleProject implements Project {
     @Nonnull
     public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
         final List<TaskVariableMap> maps = new LinkedList<TaskVariableMap>();
-        maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
 
         Collection<? extends GradleTaskVariableQuery> taskVariables
                 = getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
         for (GradleTaskVariableQuery query: taskVariables) {
             maps.add(query.getVariableMap(actionContext));
         }
+
+        // Allow extensions to redefine variables.
+        maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
+
         return new TaskVariableMap() {
             @Override
             public String tryGetValueForVariable(TaskVariable variable) {
