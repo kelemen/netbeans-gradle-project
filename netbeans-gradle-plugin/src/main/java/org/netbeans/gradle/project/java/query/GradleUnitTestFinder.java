@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.query;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -24,24 +23,13 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static boolean hasSource(NbJavaModule module, FileObject source) {
-        for (JavaSourceGroup sourceGroup: module.getMainSourceSet().getSourceGroups()) {
-            for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
-                if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, source) != null) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean hasTest(NbJavaModule module, FileObject source) {
-        for (JavaSourceGroup sourceGroup: module.getTestSourceSet().getSourceGroups()) {
-            for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
-                if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, source) != null) {
-                    return true;
+        for (JavaSourceSet sourceSet: module.getNonTestSourceSets()) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File sourceRoot: sourceGroup.getSourceRoots()) {
+                    FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
+                    if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, source) != null) {
+                        return true;
+                    }
                 }
             }
         }
@@ -66,7 +54,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static URL[] getSourceRoots(NbJavaModule module) {
-        return urlsFromSourceSets(Collections.singleton(module.getMainSourceSet()));
+        return urlsFromSourceSets(module.getNonTestSourceSets());
     }
 
     private static URL[] getTestRoots(NbJavaModule module) {
@@ -90,7 +78,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
         NbJavaModel projectModel = javaExt.getCurrentModel();
 
         NbJavaModule mainModule = projectModel.getMainModule();
-        if (hasTest(mainModule, unitTest)) {
+        if (!hasSource(mainModule, unitTest)) {
             return getSourceRoots(mainModule);
         }
 

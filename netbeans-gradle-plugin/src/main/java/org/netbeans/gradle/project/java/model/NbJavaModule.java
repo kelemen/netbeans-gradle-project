@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,7 +34,8 @@ public final class NbJavaModule implements Serializable {
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
-    private final AtomicReference<List<JavaSourceSet>> testSourceSets;
+    private final AtomicReference<List<JavaSourceSet>> testSourceSetsRef;
+    private final AtomicReference<List<JavaSourceSet>> nonTestSourceSetsRef;
     private final AtomicReference<List<NamedSourceRoot>> namedSourceRootsRef;
     private final AtomicReference<Map<String, JavaSourceSet>> nameToSourceSetRef;
     private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
@@ -60,7 +62,8 @@ public final class NbJavaModule implements Serializable {
 
         this.mainSourceSetRef = new AtomicReference<JavaSourceSet>(null);
         this.testSourceSetRef = new AtomicReference<JavaSourceSet>(null);
-        this.testSourceSets = new AtomicReference<List<JavaSourceSet>>(null);
+        this.testSourceSetsRef = new AtomicReference<List<JavaSourceSet>>(null);
+        this.nonTestSourceSetsRef = new AtomicReference<List<JavaSourceSet>>(null);
         this.namedSourceRootsRef = new AtomicReference<List<NamedSourceRoot>>(null);
         this.nameToSourceSetRef = new AtomicReference<Map<String, JavaSourceSet>>(null);
         this.testNameToModelRef = new AtomicReference<Map<String, JavaTestTask>>(null);
@@ -135,28 +138,65 @@ public final class NbJavaModule implements Serializable {
         return result;
     }
 
-    private List<JavaSourceSet> findTestSourceSets() {
-        List<JavaSourceSet> result = new ArrayList<JavaSourceSet>(Math.max(sources.size() - 1, 0));
+    private List<JavaSourceSet> findSourceSets(SourceSetFilter filter) {
+        List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
         for (JavaSourceSet sourceSet: sources) {
-            if (!JavaSourceGroupID.isTestSourceSet(sourceSet.getName())) {
+            if (!filter.needSourceSet(sourceSet)) {
                 continue;
             }
 
-            if (JavaSourceSet.NAME_TEST.equals(sourceSet.getName())) {
+            if (filter.isPriority(sourceSet)) {
                 result.add(0, sourceSet);
             }
             else {
                 result.add(sourceSet);
             }
         }
-        return result;
+        return CollectionUtils.copyNullSafeList(result);
+    }
+
+    private List<JavaSourceSet> findTestSourceSets() {
+        return findSourceSets(new SourceSetFilter() {
+            @Override
+            public boolean needSourceSet(JavaSourceSet sourceSet) {
+                return JavaSourceGroupID.isTestSourceSet(sourceSet.getName());
+            }
+
+            @Override
+            public boolean isPriority(JavaSourceSet sourceSet) {
+                return JavaSourceSet.NAME_TEST.equals(sourceSet.getName());
+            }
+        });
     }
 
     public List<JavaSourceSet> getTestSourceSets() {
-        List<JavaSourceSet> result = testSourceSets.get();
+        List<JavaSourceSet> result = testSourceSetsRef.get();
         if (result == null) {
-            testSourceSets.set(findTestSourceSets());
-            result = testSourceSets.get();
+            testSourceSetsRef.set(findTestSourceSets());
+            result = testSourceSetsRef.get();
+        }
+        return result;
+    }
+
+    private List<JavaSourceSet> findNonTestSourceSets() {
+        return findSourceSets(new SourceSetFilter() {
+            @Override
+            public boolean needSourceSet(JavaSourceSet sourceSet) {
+                return !JavaSourceGroupID.isTestSourceSet(sourceSet.getName());
+            }
+
+            @Override
+            public boolean isPriority(JavaSourceSet sourceSet) {
+                return JavaSourceSet.NAME_MAIN.equals(sourceSet.getName());
+            }
+        });
+    }
+
+    public List<JavaSourceSet> getNonTestSourceSets() {
+        List<JavaSourceSet> result = nonTestSourceSetsRef.get();
+        if (result == null) {
+            nonTestSourceSetsRef.set(findNonTestSourceSets());
+            result = nonTestSourceSetsRef.get();
         }
         return result;
     }
@@ -300,5 +340,10 @@ public final class NbJavaModule implements Serializable {
         private Object readResolve() throws ObjectStreamException {
             return new NbJavaModule(properties, compatibilityModel, sources, listedDirs, testTasks);
         }
+    }
+
+    private interface SourceSetFilter {
+        public boolean needSourceSet(JavaSourceSet sourceSet);
+        public boolean isPriority(JavaSourceSet sourceSet);
     }
 }
