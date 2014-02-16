@@ -30,7 +30,6 @@ import org.netbeans.gradle.project.java.query.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.query.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
-import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
