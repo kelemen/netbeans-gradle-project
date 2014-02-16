@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class JavaTestModel implements Serializable {
@@ -21,10 +20,7 @@ public final class JavaTestModel implements Serializable {
     }
 
     public static JavaTestModel getDefaulTestModel(File projectDir) {
-        JavaTestTask testTask = new JavaTestTask(
-                "test",
-                BasicFileUtils.getSubPath(projectDir, "build", "test-results"));
-
+        JavaTestTask testTask = JavaTestTask.getDefaulTestModel(projectDir);
         return new JavaTestModel(Collections.singleton(testTask));
     }
 }
