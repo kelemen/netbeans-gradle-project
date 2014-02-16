@@ -3,8 +3,6 @@ package org.netbeans.gradle.project.tasks;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -15,6 +13,10 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
+import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
+import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDefMap;
+import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableValue;
 import org.netbeans.spi.project.SingleMethod;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -22,7 +24,7 @@ import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
 
 public enum StandardTaskVariable {
-    PROJECT_NAME("project", new ValueGetter() {
+    PROJECT_NAME("project", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             String uniqueName = project.getAvailableModel().getMainProject().getProjectFullName();
@@ -32,7 +34,7 @@ public enum StandardTaskVariable {
             return new VariableValue(uniqueName);
         }
     }),
-    SELECTED_CLASS("selected-class", new ValueGetter() {
+    SELECTED_CLASS("selected-class", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject file = getFileOfContext(actionContext);
@@ -43,7 +45,7 @@ public enum StandardTaskVariable {
             return getClassNameForFile(project, file);
         }
     }),
-    TEST_FILE_PATH("test-file-path", new ValueGetter() {
+    TEST_FILE_PATH("test-file-path", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
@@ -56,13 +58,13 @@ public enum StandardTaskVariable {
                     : null;
         }
     }),
-    TEST_METHOD("test-method", new ValueGetter() {
+    TEST_METHOD("test-method", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             return getMethodReplaceVariable(variables, project, actionContext);
         }
     }),
-    PLATFORM_DIR("platform-dir", new ValueGetter() {
+    PLATFORM_DIR("platform-dir", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             FileObject rootFolder = project.getProperties().getPlatform().getValue().getRootFolder();
@@ -92,7 +94,7 @@ public enum StandardTaskVariable {
     }
 
     private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
-    private static final Map<TaskVariable, StandardTaskVariable> TASK_VARIABLE_MAP
+    private static final VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
             = createStandardMap();
 
     private static VariableValue getMethodReplaceVariable(
@@ -149,43 +151,27 @@ public enum StandardTaskVariable {
         return file.isFolder() ? null : file;
     }
 
-    private static Map<TaskVariable, StandardTaskVariable> createStandardMap() {
+    private static VariableDefMap<NbGradleProject> createStandardMap() {
         StandardTaskVariable[] variables = StandardTaskVariable.values();
-        Map<TaskVariable, StandardTaskVariable> result = CollectionUtils.newHashMap(variables.length);
+
+        final Map<TaskVariable, VariableDef<NbGradleProject>> result
+                = CollectionUtils.newHashMap(variables.length);
+
         for (StandardTaskVariable variable: variables) {
-            result.put(variable.getVariable(), variable);
+            result.put(variable.getVariable(), variable.asVariableDef());
         }
-        return result;
+
+        return new VariableDefMap<NbGradleProject>() {
+            @Override
+            public VariableDef<NbGradleProject> tryGetDef(TaskVariable variable) {
+                return result.get(variable);
+            }
+        };
     }
 
     public static TaskVariableMap createVarReplaceMap(
-            final NbGradleProject project, final Lookup actionContext) {
-        if (project == null) throw new NullPointerException("project");
-        if (actionContext == null) throw new NullPointerException("actionContext");
-
-        final ConcurrentMap<TaskVariable, VariableValue> cache
-                = new ConcurrentHashMap<TaskVariable, VariableValue>();
-
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                StandardTaskVariable stdVar = TASK_VARIABLE_MAP.get(variable);
-                if (stdVar == null) {
-                    return null;
-                }
-
-                VariableValue result = cache.get(variable);
-                if (result == null) {
-                    result = stdVar.tryGetValue(this, project, actionContext);
-
-                    VariableValue prevResult = cache.putIfAbsent(variable, result);
-                    if (prevResult != null) {
-                        result = prevResult;
-                    }
-                }
-                return result.value;
-            }
-        };
+            NbGradleProject project, Lookup actionContext) {
+        return new CachingVariableMap<NbGradleProject>(TASK_VARIABLE_MAP, project, actionContext);
     }
 
     public static String replaceVars(String str, TaskVariableMap varReplaceMap) {
@@ -233,11 +219,15 @@ public enum StandardTaskVariable {
     }
 
     private final TaskVariable variable;
-    private final ValueGetter valueGetter;
+    private final ValueGetter<NbGradleProject> valueGetter;
 
-    private StandardTaskVariable(String variableName, ValueGetter valueGetter) {
+    private StandardTaskVariable(String variableName, ValueGetter<NbGradleProject> valueGetter) {
         this.variable = new TaskVariable(variableName);
         this.valueGetter = valueGetter;
+    }
+
+    private CachingVariableMap.VariableDef<NbGradleProject> asVariableDef() {
+        return new CachingVariableMap.VariableDef<NbGradleProject>(variable, valueGetter);
     }
 
     public TaskVariable getVariable() {
@@ -254,22 +244,5 @@ public enum StandardTaskVariable {
 
     private VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
         return valueGetter.getValue(variables, project, actionContext);
-    }
-
-    private static abstract class ValueGetter {
-        public abstract VariableValue getValue(
-                TaskVariableMap variables,
-                NbGradleProject project,
-                Lookup actionContext);
-    }
-
-    private static final class VariableValue {
-        private static final VariableValue NULL_VALUE = new VariableValue(null);
-
-        public final String value;
-
-        public VariableValue(String value) {
-            this.value = value;
-        }
     }
 }
