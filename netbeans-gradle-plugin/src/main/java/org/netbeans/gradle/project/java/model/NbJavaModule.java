@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -201,6 +202,25 @@ public final class NbJavaModule implements Serializable {
             result = allBuildOutputRefs.get();
         }
         return result;
+    }
+
+    public String findTestTaskForSourceSet(String sourceSetName) {
+        if (sourceSetName == null) throw new NullPointerException("sourceSetName");
+
+        String normSourceSetName = sourceSetName.toLowerCase(Locale.ROOT);
+        String bestName = null;
+        for (JavaTestTask task: testTasks.getTestTasks()) {
+            String taskName = task.getName();
+            String normTaskName = taskName.toLowerCase(Locale.ROOT);
+            if (normTaskName.startsWith(normSourceSetName)
+                    || normSourceSetName.startsWith(normTaskName)) {
+                if (bestName == null || bestName.length() > taskName.length()) {
+                    bestName = taskName;
+                }
+            }
+        }
+
+        return bestName != null ? bestName : "test";
     }
 
     private Object writeReplace() {
