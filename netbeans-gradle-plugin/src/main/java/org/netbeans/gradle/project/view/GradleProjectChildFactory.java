@@ -99,6 +99,38 @@ extends
         });
     }
 
+    private boolean tryReplaceNodeExtensionAndClose(NodeExtensions newExtensions) {
+        NodeExtensions prevValue;
+        do {
+            prevValue = nodeExtensionsRef.get();
+            if (prevValue == null) {
+                if (newExtensions != null) {
+                    newExtensions.close();
+                }
+                return false;
+            }
+        } while (!nodeExtensionsRef.compareAndSet(prevValue, newExtensions));
+
+        prevValue.close();
+        return true;
+    }
+
+    private void updateNodesIfNeeded(NodeExtensions newNodeExtensions) {
+        if (!tryReplaceNodeExtensionAndClose(newNodeExtensions)) {
+            return;
+        }
+
+        boolean newHasSubProjects = hasSubProjects();
+        boolean prevHasSubProjects = lastHasSubprojects.getAndSet(newHasSubProjects);
+        if (newHasSubProjects != prevHasSubProjects) {
+            refreshProjectNode();
+        }
+
+        if (newNodeExtensions.isNeedRefreshOnProjectReload()) {
+            refreshProjectNode();
+        }
+    }
+
     @Override
     protected void addNotify() {
         listenerRegistrations.add(registerModelRefreshListener());
@@ -123,21 +155,7 @@ extends
                 NodeExtensions newNodeExtensions
                         = NodeExtensions.create(getExtensionNodes(), simpleChangeListener);
 
-                // FIXME: This is not trully thread safe because model change
-                //   listener might be called after removeNotify, leaving an
-                //   unclosed NodeExtensions instance.
-                NodeExtensions prevNodeExtensions = nodeExtensionsRef.getAndSet(newNodeExtensions);
-                prevNodeExtensions.close();
-
-                boolean newHasSubProjects = hasSubProjects();
-                boolean prevHasSubProjects = lastHasSubprojects.getAndSet(newHasSubProjects);
-                if (newHasSubProjects != prevHasSubProjects) {
-                    refreshProjectNode();
-                }
-
-                if (newNodeExtensions.isNeedRefreshOnProjectReload()) {
-                    simpleChangeListener.run();
-                }
+                updateNodesIfNeeded(newNodeExtensions);
             }
         };
         project.addModelChangeListener(changeListener);
@@ -147,7 +165,7 @@ extends
             public void run() {
                 project.removeModelChangeListener(changeListener);
 
-                nodeExtensionsRef.getAndSet(NodeExtensions.EMPTY).close();
+                tryReplaceNodeExtensionAndClose(null);
             }
         }));
     }
