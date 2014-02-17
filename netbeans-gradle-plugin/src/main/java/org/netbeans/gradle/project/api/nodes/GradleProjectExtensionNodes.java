@@ -10,10 +10,18 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  * Instances of this interface are expected to be found on the lookup of the extension
  * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() (getExtensionLookup)}.
  * <P>
+ * <B>Important note</B>: Implementations of this interface should be annotated
+ * with the {@link ManualRefreshedNodes} annotation if they implement
+ * {@link #addNodeChangeListener(Runnable) addNodeChangeListener} properly
+ * (and they are highly recommended to do so). This annotation is required for
+ * backward compatibility and if you don't use this annotation project nodes
+ * will be reloaded upon all project reload.
+ * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.
  *
  * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup()
+ * @see ManualRefreshedNodes
  *
  * @author Kelemen Attila
  */
@@ -21,6 +29,10 @@ public interface GradleProjectExtensionNodes {
     /**
      * Registers a listener to be notified when the result of the
      * {@link #getNodeFactories()} method changes.
+     * <P>
+     * Note: See the <I>{@link GradleProjectExtensionNodes Important note}</I>
+     * section of the documentation of this interface about
+     * {@link ManualRefreshedNodes}.
      * <P>
      * The listeners might be notified on any thread.
      *

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
+import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -133,11 +135,9 @@ extends
                     refreshProjectNode();
                 }
 
-                // FIXME: Commenting the following line breaks NBAndroid.
-                //        Detect here that an extension relies on the fact the previous
-                //        versions of this plugin did refresh on project reload.
-                //        (use newNodeExtensions)
-                //simpleChangeListener.run();
+                if (newNodeExtensions.isNeedRefreshOnProjectReload()) {
+                    simpleChangeListener.run();
+                }
             }
         };
         project.addModelChangeListener(changeListener);
@@ -286,11 +286,23 @@ extends
         return true;
     }
 
+    private static boolean isAllAnnotatedWith(
+            Collection<?> objects,
+            Class<? extends Annotation> annotation) {
+        for (Object obj: objects) {
+            if (!obj.getClass().isAnnotationPresent(annotation)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static final class NodeExtensions {
         private static final NodeExtensions EMPTY = createEmpty();
 
         private final List<GradleProjectExtensionNodes> nodeFactories;
         private final List<NbListenerRef> listenerRefs;
+        private final boolean needRefreshOnProjectReload;
 
         private NodeExtensions(
                 Collection<? extends GradleProjectExtensionNodes> nodeFactories,
@@ -299,6 +311,11 @@ extends
                     new ArrayList<GradleProjectExtensionNodes>(nodeFactories));
 
             this.listenerRefs = listenerRefs;
+            this.needRefreshOnProjectReload = !isAllAnnotatedWith(nodeFactories, ManualRefreshedNodes.class);
+        }
+
+        public boolean isNeedRefreshOnProjectReload() {
+            return needRefreshOnProjectReload;
         }
 
         public static NodeExtensions createEmpty() {
