@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -34,6 +36,7 @@ import org.openide.util.lookup.Lookups;
 public final class GradleProjectChildFactory
 extends
         ChildFactory.Detachable<SingleNodeFactory> {
+    private static final Logger LOGGER = Logger.getLogger(GradleProjectChildFactory.class.getName());
 
     private final NbGradleProject project;
     private final GradleProjectLogicalViewProvider parent;
@@ -354,7 +357,19 @@ extends
                 listenerRefs.add(nodeFactory.addNodeChangeListener(changeListener));
             }
 
-            return new NodeExtensions(nodeFactories, listenerRefs);
+            NodeExtensions result = new NodeExtensions(nodeFactories, listenerRefs);
+            if (result.isNeedRefreshOnProjectReload()) {
+                for (GradleProjectExtensionNodes nodeFactory: nodeFactories) {
+                    Class<?> nodeFactoryClass = nodeFactory.getClass();
+                    if (!nodeFactoryClass.isAnnotationPresent(ManualRefreshedNodes.class)) {
+                        LOGGER.log(Level.WARNING,
+                                "{0} is not annotated with ManualRefreshedNodes and this will cause project node refresh on all model loads.",
+                                nodeFactoryClass.getName());
+                    }
+                }
+            }
+
+            return result;
         }
 
         public List<GradleProjectExtensionNodes> getFactories() {
