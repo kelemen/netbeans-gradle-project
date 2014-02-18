@@ -87,12 +87,11 @@ implements
             File result = tryGetXmlOutputDir(task);
             return result != null
                     ? result
-                    : getDefaultXmlOutput(project, task);
+                    : getDefaultXmlOutput(project);
         }
 
-        private static File getDefaultXmlOutput(Project project, Task task) {
-            String name = task.getName();
-            return new File(project.getBuildDir(), name + "-results");
+        private static File getDefaultXmlOutput(Project project) {
+            return new File(project.getBuildDir(), "test-results");
         }
 
         private static GradleClass tryGetJUnitXmlReportClass(Project project) {
