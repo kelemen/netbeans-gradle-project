@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
@@ -15,14 +16,16 @@ import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
-import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
+import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
@@ -36,6 +39,8 @@ import org.openide.util.Lookup;
 import org.openide.windows.OutputWriter;
 
 public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuery {
+    private static final Logger LOGGER = Logger.getLogger(GradleJavaBuiltInCommands.class.getName());
+
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList("build"),
@@ -189,14 +194,33 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return task != null ? task.getCustomActions() : null;
     }
 
-    private static CommandCompleteListener displayTestResults(final Project project) {
-        return new CommandCompleteListener() {
+    private static String getTestName(ExecutedCommandContext executedCommandContext) {
+        TaskVariableMap variables = executedCommandContext.getTaskVariables();
+        String value = variables.tryGetValueForVariable(JavaGradleTaskVariableQuery.TEST_TASK_NAME);
+        if (value == null) {
+            LOGGER.warning("Could not find test task name variable.");
+            value = TestTaskName.DEFAULT_TEST_TASK_NAME;
+        }
+        return value;
+    }
+
+    private static ContextAwareCommandCompleteListener displayTestResults(final Project project) {
+        return new ContextAwareCommandCompleteListener() {
             @Override
-            public void onComplete(Throwable error) {
-                // TODO: Find this name
-                String testName = "test";
+            public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
+                String testName = getTestName(executedCommandContext);
+
                 TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
                 xmlDisplayer.displayReport();
+            }
+        };
+    }
+
+    private static ContextAwareCommandCompleteAction displayTestAction() {
+        return new ContextAwareCommandCompleteAction() {
+            @Override
+            public ContextAwareCommandCompleteListener startCommand(Project project, Lookup commandContext) {
+                return displayTestResults(project);
             }
         };
     }
@@ -205,12 +229,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new CustomCommandAdjuster() {
             @Override
             public void adjust(CustomCommandActions.Builder customActions) {
-                customActions.setContextAwareFinalizer(new ContextAwareCommandCompleteAction() {
-                    @Override
-                    public CommandCompleteListener startCommand(Project project, Lookup commandContext) {
-                        return displayTestResults(project);
-                    }
-                });
+                customActions.setContextAwareFinalizer(displayTestAction());
             }
         };
     }

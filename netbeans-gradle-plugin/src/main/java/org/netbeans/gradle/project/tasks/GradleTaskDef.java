@@ -6,15 +6,17 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
+import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
+import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.openide.util.Lookup;
@@ -31,8 +33,9 @@ public final class GradleTaskDef {
         private SmartOutputHandler.Visitor stdOutListener;
         private SmartOutputHandler.Visitor stdErrListener;
         private ContextAwareCommandFinalizer successfulCommandFinalizer;
-        private CommandCompleteListener commandFinalizer;
+        private ContextAwareCommandCompleteListener commandFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
+        private TaskVariableMap nonUserTaskVariables;
 
         private boolean cleanOutput;
         private boolean nonBlocking;
@@ -50,6 +53,7 @@ public final class GradleTaskDef {
             this.successfulCommandFinalizer = taskDef.getSuccessfulCommandFinalizer();
             this.commandFinalizer = taskDef.getCommandFinalizer();
             this.gradleTargetVerifier = taskDef.getGradleTargetVerifier();
+            this.nonUserTaskVariables = taskDef.getNonUserTaskVariables();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -75,10 +79,42 @@ public final class GradleTaskDef {
             this.successfulCommandFinalizer = NoOpSuccessfulFinalizer.INSTANCE;
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
             this.gradleTargetVerifier = null;
+            this.nonUserTaskVariables = EmptyTaskVarMap.INSTANCE;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
+        }
+
+        public TaskVariableMap getNonUserTaskVariables() {
+            return nonUserTaskVariables;
+        }
+
+        public void addNonUserTaskVariables(final TaskVariableMap nonUserTaskVariables) {
+            if (nonUserTaskVariables == null) throw new NullPointerException("nonUserTaskVariables");
+
+            final TaskVariableMap currentTaskVariables = this.nonUserTaskVariables;
+            if (currentTaskVariables == EmptyTaskVarMap.INSTANCE) {
+                setNonUserTaskVariables(nonUserTaskVariables);
+            }
+            else {
+                // TODO: Factor out this class.
+                this.nonUserTaskVariables = new TaskVariableMap() {
+                    @Override
+                    public String tryGetValueForVariable(TaskVariable variable) {
+                        String value = nonUserTaskVariables.tryGetValueForVariable(variable);
+                        if (value == null) {
+                            value = currentTaskVariables.tryGetValueForVariable(variable);
+                        }
+                        return value;
+                    }
+                };
+            }
+        }
+
+        public void setNonUserTaskVariables(TaskVariableMap nonUserTaskVariables) {
+            if (nonUserTaskVariables == null) throw new NullPointerException("nonUserTaskVariables");
+            this.nonUserTaskVariables = nonUserTaskVariables;
         }
 
         public boolean isCleanOutput() {
@@ -190,11 +226,11 @@ public final class GradleTaskDef {
             this.successfulCommandFinalizer = successfulCommandFinalizer;
         }
 
-        public CommandCompleteListener getCommandFinalizer() {
+        public ContextAwareCommandCompleteListener getCommandFinalizer() {
             return commandFinalizer;
         }
 
-        public void setCommandFinalizer(CommandCompleteListener commandFinalizer) {
+        public void setCommandFinalizer(ContextAwareCommandCompleteListener commandFinalizer) {
             if (commandFinalizer == null) throw new NullPointerException("commandFinalizer");
             this.commandFinalizer = commandFinalizer;
         }
@@ -220,8 +256,9 @@ public final class GradleTaskDef {
     private final SmartOutputHandler.Visitor stdOutListener;
     private final SmartOutputHandler.Visitor stdErrListener;
     private final ContextAwareCommandFinalizer successfulCommandFinalizer;
-    private final CommandCompleteListener commandFinalizer;
+    private final ContextAwareCommandCompleteListener commandFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
+    private final TaskVariableMap nonUserTaskVariables;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
 
@@ -238,10 +275,15 @@ public final class GradleTaskDef {
         this.successfulCommandFinalizer = builder.getSuccessfulCommandFinalizer();
         this.commandFinalizer = builder.getCommandFinalizer();
         this.gradleTargetVerifier = builder.getGradleTargetVerifier();
+        this.nonUserTaskVariables = builder.getNonUserTaskVariables();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
+    }
+
+    public TaskVariableMap getNonUserTaskVariables() {
+        return nonUserTaskVariables;
     }
 
     public GradleTargetVerifier getGradleTargetVerifier() {
@@ -304,7 +346,7 @@ public final class GradleTaskDef {
         return successfulCommandFinalizer;
     }
 
-    public CommandCompleteListener getCommandFinalizer() {
+    public ContextAwareCommandCompleteListener getCommandFinalizer() {
         return commandFinalizer;
     }
 
@@ -397,6 +439,8 @@ public final class GradleTaskDef {
         TaskOutputDef caption = getOutputDef(project, customActions.getTaskKind(), command);
         GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
 
+        builder.setNonUserTaskVariables(varReplaceMap);
+
         TaskOutputProcessor stdOutProcessor = customActions.getStdOutProcessor();
         builder.setStdOutListener(outputProcessorToLineVisitor(stdOutProcessor));
 
@@ -411,7 +455,8 @@ public final class GradleTaskDef {
 
         ContextAwareCommandCompleteAction contextAwareFinalizer = customActions.getContextAwareFinalizer();
         if (contextAwareFinalizer != null) {
-            CommandCompleteListener finalizer = contextAwareFinalizer.startCommand(project, actionContext);
+            ContextAwareCommandCompleteListener finalizer
+                    = contextAwareFinalizer.startCommand(project, actionContext);
             builder.setCommandFinalizer(finalizer);
         }
 
@@ -436,11 +481,11 @@ public final class GradleTaskDef {
         }
     }
 
-    private enum NoOpFinalizer implements CommandCompleteListener {
+    private enum NoOpFinalizer implements ContextAwareCommandCompleteListener {
         INSTANCE;
 
         @Override
-        public void onComplete(Throwable error) {
+        public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
         }
     }
 }

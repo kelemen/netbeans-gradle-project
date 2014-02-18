@@ -34,6 +34,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -358,7 +359,8 @@ public final class AsyncGradleTask implements Runnable {
                     projectConnection.close();
                 }
             } finally {
-                taskDef.getCommandFinalizer().onComplete(commandError);
+                ExecutedCommandContext commandContext = buildItem.getCommandContext();
+                taskDef.getCommandFinalizer().onComplete(commandContext, commandError);
             }
         }
     }
@@ -436,6 +438,7 @@ public final class AsyncGradleTask implements Runnable {
         result.setTaskNames(Arrays.asList(taskNames));
         result.setArguments(Arrays.asList(arguments));
         result.setJvmArguments(Arrays.asList(jvmArguments));
+        result.addNonUserTaskVariables(varMap);
         return result.create();
     }
 
@@ -514,7 +517,6 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private class ProcessedCommandSpec {
-        private final GradleTaskDef taskDef;
         private final GradleCommandSpec commandSpec;
         private final String taskName;
         private final String progressCaption;
@@ -523,7 +525,6 @@ public final class AsyncGradleTask implements Runnable {
             assert commandSpec != null;
             assert taskDef != null;
 
-            this.taskDef = taskDef;
             this.commandSpec = new GradleCommandSpec(commandSpec.getSource(), taskDef);
             this.taskName = taskDef.getSafeCommandName();
             this.progressCaption = NbStrings.getExecuteTasksText(taskName);
@@ -540,10 +541,6 @@ public final class AsyncGradleTask implements Runnable {
         public String getDisplayName() {
             // Note that the project name may change when reloading a project.
             return taskName + " " + project.getDisplayName();
-        }
-
-        public GradleTaskDef getTaskDef() {
-            return taskDef;
         }
 
         public String getProgressCaption() {
@@ -567,7 +564,7 @@ public final class AsyncGradleTask implements Runnable {
             this.processedCommandSpec = processedCommandSpec;
 
             String progressCaption = processedCommandSpec.getProgressCaption();
-            boolean nonBlocking = processedCommandSpec.getTaskDef().isNonBlocking();
+            boolean nonBlocking = processedCommandSpec.getProcessedTaskDef().isNonBlocking();
             this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
                 @Override
                 public void run(ProgressHandle progress) {
@@ -587,6 +584,13 @@ public final class AsyncGradleTask implements Runnable {
 
         public GradleTaskDef getProcessedTaskDef() {
             return processedCommandSpec.getProcessedTaskDef();
+        }
+
+        public ExecutedCommandContext getCommandContext() {
+            TaskVariableMap taskVariables = processedCommandSpec
+                    .getProcessedTaskDef()
+                    .getNonUserTaskVariables();
+            return new ExecutedCommandContext(taskVariables);
         }
 
         @Override

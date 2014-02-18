@@ -12,6 +12,10 @@ import javax.annotation.Nullable;
  * <P>
  * This listener is not notified more than once but might be notified on any
  * thread.
+ * <B>Warning</B>: This listener is not going to be notified when executing a
+ * task again (e.g.: "Repeat build" action). So the usefulness of this listener
+ * is limited. Instead, {@link ContextAwareCommandCompleteAction} should be
+ * preferred.
  *
  * @see GradleCommandExecutor
  * @see ContextAwareCommandCompleteAction

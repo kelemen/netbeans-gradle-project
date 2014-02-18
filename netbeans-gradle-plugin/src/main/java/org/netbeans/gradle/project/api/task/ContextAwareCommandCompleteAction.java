@@ -41,5 +41,7 @@ public interface ContextAwareCommandCompleteAction {
      *   return {@code null}.
      */
     @Nonnull
-    public CommandCompleteListener startCommand(@Nonnull Project project, @Nonnull Lookup commandContext);
+    public ContextAwareCommandCompleteListener startCommand(
+            @Nonnull Project project,
+            @Nonnull Lookup commandContext);
 }
