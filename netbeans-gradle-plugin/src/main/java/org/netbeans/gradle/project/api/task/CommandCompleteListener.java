@@ -5,13 +5,14 @@ import javax.annotation.Nullable;
 /**
  * Defines a listener to be notified whenever a Gradle command has been
  * executed. The listener is guaranteed to be notified only if the command has
- * been attempted to be actually started.
+ * been attempted to be actually started. But after that, this listener
+ * might be notified multiple times if the task is executed again and the
+ * context did not change. This is typical for repeat build and similar actions.
  * <P>
  * If you need the context ({@code Project} and {@code Lookup}) for the listener,
  * you may use the {@link ContextAwareCommandAction} instead.
  * <P>
- * This listener is not notified more than once but might be notified on any
- * thread.
+ * This listener might be notified on any thread.
  *
  * @see GradleCommandExecutor
  * @see ContextAwareCommandCompleteAction
