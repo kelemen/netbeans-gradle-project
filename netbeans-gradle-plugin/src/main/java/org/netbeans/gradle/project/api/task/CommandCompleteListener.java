@@ -10,12 +10,9 @@ import javax.annotation.Nullable;
  * If you need the context ({@code Project} and {@code Lookup}) for the listener,
  * you may use the {@link ContextAwareCommandAction} instead.
  * <P>
- * This listener is not notified more than once but might be notified on any
- * thread.
- * <B>Warning</B>: This listener is not going to be notified when executing a
- * task again (e.g.: "Repeat build" action). So the usefulness of this listener
- * is limited. Instead, {@link ContextAwareCommandCompleteAction} should be
- * preferred.
+ * This listener may be notified on any thread and is notified after each
+ * task run. Note that a submitted task might be run again by the user when
+ * he/she selects actions like "Repeat Build".
  *
  * @see GradleCommandExecutor
  * @see ContextAwareCommandCompleteAction
