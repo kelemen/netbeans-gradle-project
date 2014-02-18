@@ -27,12 +27,14 @@ import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.tasks.TestTaskName;
 import org.netbeans.gradle.project.tasks.TestXmlDisplayer;
+import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.SingleMethod;
 import org.openide.util.Lookup;
@@ -208,12 +210,32 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new ContextAwareCommandCompleteListener() {
             @Override
             public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
-                String testName = getTestName(executedCommandContext);
-
-                TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
-                xmlDisplayer.displayReport();
+                displayTestReports(project, executedCommandContext, error);
             }
         };
+    }
+
+    private static void displayErrorDueToNoTestReportsFound(TestXmlDisplayer xmlDisplayer) {
+        String message = NbStrings.getErrorDueToNoTestReportsFound(
+                xmlDisplayer.getTestName(),
+                xmlDisplayer.tryGetReportDirectory());
+
+        GlobalErrorReporter.showIssue(message, null);
+    }
+
+    private static void displayTestReports(
+            Project project,
+            ExecutedCommandContext executedCommandContext,
+            Throwable error) {
+
+        String testName = getTestName(executedCommandContext);
+
+        TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
+        if (!xmlDisplayer.displayReport()) {
+            if (error == null) {
+                displayErrorDueToNoTestReportsFound(xmlDisplayer);
+            }
+        }
     }
 
     private static ContextAwareCommandCompleteAction displayTestAction() {

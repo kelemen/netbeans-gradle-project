@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import org.gradle.util.GradleVersion;
@@ -438,6 +439,12 @@ public final class NbStrings {
     public static String getBuildScriptErrorInProject(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildScriptErrorInProject",
                 projectName);
+    }
+
+    public static String getErrorDueToNoTestReportsFound(String testTaskName, File testReportDir) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ErrorDueToNoTestReportsFound",
+                testTaskName,
+                testReportDir);
     }
 
     private NbStrings() {
