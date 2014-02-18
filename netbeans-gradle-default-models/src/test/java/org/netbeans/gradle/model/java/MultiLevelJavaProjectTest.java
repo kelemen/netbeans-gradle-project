@@ -408,10 +408,29 @@ public class MultiLevelJavaProjectTest {
         }
     }
 
+    private Map<String, JavaTestTask> nameToTestTask(JavaTestModel testModel) {
+        Collection<JavaTestTask> testTasks = testModel.getTestTasks();
+        Map<String, JavaTestTask> result = CollectionUtils.newHashMap(testTasks.size());
+        for (JavaTestTask testTask: testTasks) {
+            if (result.put(testTask.getName(), testTask) != null) {
+                fail("Test task has been retrieved multiple times: " + testTask.getName());
+            }
+        }
+        return result;
+    }
+
+    private void verifyTestTask(Map<String, JavaTestTask> testTasks, String name, File expectedOutputDir) {
+        JavaTestTask testTask = testTasks.get(name);
+        assertNotNull("Expected test task with name " + name, testTask);
+        assertEquals(name, testTask.getName());
+        assertEquals(expectedOutputDir, testTask.getXmlOutputDir());
+    }
+
     private void testJavaTestModel(String relativeProjectPath) throws IOException {
         String[] projectPathParts = relativeProjectPath.split(Pattern.quote(":"));
         File projectDir = getProjectDir(projectPathParts);
-        final File expectedXmlPath = getSubPath(projectDir, "build", "test-results");
+        final File expectedXmlPathTest = getSubPath(projectDir, "build", "test-results");
+        final File expectedXmlPathMyTest = getSubPath(projectDir, "build", "my-test-custom-results");
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
@@ -419,11 +438,11 @@ public class MultiLevelJavaProjectTest {
                         = fetchSingleProjectInfo(connection, JavaTestModelBuilder.INSTANCE);
                 assertNotNull("Must have a JavaTestModel.", testModel);
 
-                assertEquals("Must have a single test task.", 1, testModel.getTestTasks().size());
+                Map<String, JavaTestTask> testTasks = nameToTestTask(testModel);
+                assertEquals("Must have a 2 test tasks.", 2, testTasks.size());
 
-                JavaTestTask testTask = testModel.getTestTasks().iterator().next();
-                assertEquals("test", testTask.getName());
-                assertEquals(expectedXmlPath, testTask.getXmlOutputDir());
+                verifyTestTask(testTasks, "test", expectedXmlPathTest);
+                verifyTestTask(testTasks, "myTest", expectedXmlPathMyTest);
             }
         });
     }
