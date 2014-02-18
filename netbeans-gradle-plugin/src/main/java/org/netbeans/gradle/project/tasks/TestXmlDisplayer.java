@@ -120,6 +120,9 @@ public final class TestXmlDisplayer {
     public void displayReport() {
         File[] reportFiles = getTestReportFiles();
         if (reportFiles.length == 0) {
+            LOGGER.log(Level.WARNING,
+                    "Could not find output for test task \"{0}\" in {1}",
+                    new Object[]{testName, tryGetReportDirectory()});
             return;
         }
 
