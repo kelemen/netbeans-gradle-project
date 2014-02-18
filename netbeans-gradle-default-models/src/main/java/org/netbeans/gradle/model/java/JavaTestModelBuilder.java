@@ -54,33 +54,51 @@ implements
     private static final class XmlOutputDirGetter {
         private final Project project;
         private final GradleClass junitXmlReportClass;
+        private final GradleClass testTaskReportsClass;
 
         private XmlOutputDirGetter(Project project) {
             this.project = project;
             this.junitXmlReportClass = tryGetJUnitXmlReportClass(project);
+            this.testTaskReportsClass = tryGetTestTaskReportsClass(project);
         }
 
         @SuppressWarnings("UseSpecificCatch")
+        private static <T> T tryCallGetter(
+                Object instance,
+                GradleClass type,
+                String methodName,
+                Class<T> resultType) {
+
+            try {
+                Method method = type.getMethod(methodName);
+                Object result = method.invoke(instance);
+                return resultType.isInstance(result)
+                        ? resultType.cast(result)
+                        : null;
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING,
+                        "Cannot call the " + methodName + " method of " + type.getType().getName(),
+                        ex);
+                return null;
+            }
+        }
+
         private File tryGetXmlOutputDir(Task task) {
-            if (junitXmlReportClass == null) {
+            if (junitXmlReportClass == null || testTaskReportsClass == null) {
                 return null;
             }
 
             Object reports = task.property("reports");
-            if (!junitXmlReportClass.getType().isInstance(reports)) {
+            if (!testTaskReportsClass.getType().isInstance(reports)) {
                 return null;
             }
 
-            try {
-                Method getDestination = junitXmlReportClass.getMethod("getDestination");
-                Object destination = getDestination.invoke(reports);
-                return destination instanceof File
-                        ? (File)destination
-                        : null;
-            } catch (Exception ex) {
-                LOGGER.log(Level.WARNING, "Cannot call the getDestination() method of JUnitXmlReport.", ex);
-                return null;
-            }
+            Object junitXml = tryCallGetter(
+                    reports,
+                    testTaskReportsClass,
+                    "getJunitXml",
+                    junitXmlReportClass.getType());
+            return tryCallGetter(junitXml, junitXmlReportClass, "getDestination", File.class);
         }
 
         public File getXmlOutputDir(Task task) {
@@ -94,13 +112,21 @@ implements
             return new File(project.getBuildDir(), "test-results");
         }
 
-        private static GradleClass tryGetJUnitXmlReportClass(Project project) {
+        private static GradleClass tryGetClass(Project project, String className) {
             try {
-                return GradleClasses.getGradleClass(project, "org.gradle.api.tasks.testing.JUnitXmlReport");
+                return GradleClasses.getGradleClass(project, className);
             } catch (ClassNotFoundException ex) {
-                LOGGER.warning("Missing class: JUnitXmlReport.");
+                LOGGER.log(Level.WARNING, "Missing class: {0}", className);
                 return null;
             }
+        }
+
+        private static GradleClass tryGetJUnitXmlReportClass(Project project) {
+            return tryGetClass(project, "org.gradle.api.tasks.testing.JUnitXmlReport");
+        }
+
+        private static GradleClass tryGetTestTaskReportsClass(Project project) {
+            return tryGetClass(project, "org.gradle.api.tasks.testing.TestTaskReports");
         }
     }
 }
