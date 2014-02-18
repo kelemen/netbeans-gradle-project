@@ -234,7 +234,6 @@ implements
             return new SourceSetClassPathType(name, ClassPathType.COMPILE);
         }
 
-        LOGGER.log(Level.WARNING, "Unexpected classpath type: {0}", type);
         return null;
     }
 
