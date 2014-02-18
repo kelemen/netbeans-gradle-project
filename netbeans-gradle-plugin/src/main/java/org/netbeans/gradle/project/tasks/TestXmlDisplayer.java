@@ -117,13 +117,13 @@ public final class TestXmlDisplayer {
         }
     }
 
-    public void displayReport() {
+    public boolean displayReport() {
         File[] reportFiles = getTestReportFiles();
         if (reportFiles.length == 0) {
             LOGGER.log(Level.WARNING,
                     "Could not find output for test task \"{0}\" in {1}",
                     new Object[]{testName, tryGetReportDirectory()});
-            return;
+            return false;
         }
 
         GradleTestSession session = new GradleTestSession();
@@ -135,10 +135,10 @@ public final class TestXmlDisplayer {
             parser = parserFactory.newSAXParser();
         } catch (ParserConfigurationException ex) {
             LOGGER.log(Level.WARNING, "Unexpected parser configuration error.", ex);
-            return;
+            return false;
         } catch (SAXException ex) {
             LOGGER.log(Level.WARNING, "Unexpected SAXException.", ex);
-            return;
+            return false;
         }
 
         for (File reportFile: reportFiles) {
@@ -150,6 +150,7 @@ public final class TestXmlDisplayer {
         }
 
         session.endSession();
+        return true;
     }
 
     private class TestXmlContentHandler extends DefaultHandler {
