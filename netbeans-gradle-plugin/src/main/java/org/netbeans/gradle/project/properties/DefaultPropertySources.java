@@ -131,7 +131,7 @@ public final class DefaultPropertySources {
 
         SpecificationVersion bestMatchVersion = bestMatch.getSpecification().getVersion();
 
-        String higherOrLower = version.compareTo(bestMatchVersion) > 0
+        String higherOrLower = version.compareTo(bestMatchVersion) < 0
                 ? "higher"
                 : "lower";
 
