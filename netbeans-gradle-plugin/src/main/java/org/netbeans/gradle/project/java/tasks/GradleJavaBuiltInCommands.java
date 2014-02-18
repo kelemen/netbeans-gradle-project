@@ -220,7 +220,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
                 xmlDisplayer.getTestName(),
                 xmlDisplayer.tryGetReportDirectory());
 
-        GlobalErrorReporter.showIssue(message, null);
+        GlobalErrorReporter.showIssue(message);
     }
 
     private static void displayTestReports(

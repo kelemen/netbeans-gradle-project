@@ -11,7 +11,7 @@ import org.openide.awt.NotificationDisplayer;
 public final class GlobalErrorReporter {
     private static final Icon ERROR_ICON = NbIcons.getPriorityHighIcon();
 
-    public static void showIssue(final String message, Throwable error) {
+    public static void showIssue(final String message) {
         if (message == null) throw new NullPointerException("message");
 
         SwingUtilities.invokeLater(new Runnable() {

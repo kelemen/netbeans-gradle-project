@@ -510,9 +510,8 @@ public final class GradleModelLoader {
         if (GradleVersions.VERSION_1_7.compareTo(version) < 0
                 && GradleVersions.VERSION_1_8.compareTo(version) >= 0) {
 
-            GlobalErrorReporter.showIssue(
-                    NbStrings.getIssueWithGradle18Message(env.getGradle().getGradleVersion()),
-                    null);
+            String gradleVersion = env.getGradle().getGradleVersion();
+            GlobalErrorReporter.showIssue(NbStrings.getIssueWithGradle18Message(gradleVersion));
         }
     }
 

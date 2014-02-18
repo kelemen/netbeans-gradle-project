@@ -29,7 +29,7 @@ public final class GradleDaemonFailures {
         return new RootCauseMessagePatternHandler(pattern, new DaemonFailureHandler() {
             @Override
             public boolean tryHandleFailure(Throwable failure) {
-                GlobalErrorReporter.showIssue(NbStrings.getCachedJarIssueMessage(), failure);
+                GlobalErrorReporter.showIssue(NbStrings.getCachedJarIssueMessage());
                 return true;
             }
         });
