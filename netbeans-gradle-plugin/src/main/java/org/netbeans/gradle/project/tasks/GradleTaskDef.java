@@ -479,6 +479,11 @@ public final class GradleTaskDef {
             builder.setCommandFinalizer(finalizer);
         }
 
+        CommandExceptionHider exceptionHider = customActions.getCommandExceptionHider();
+        if (exceptionHider != null) {
+            builder.setCommandExceptionHider(exceptionHider);
+        }
+
         builder.setGradleTargetVerifier(customActions.getGradleTargetVerifier());
 
         return builder;
