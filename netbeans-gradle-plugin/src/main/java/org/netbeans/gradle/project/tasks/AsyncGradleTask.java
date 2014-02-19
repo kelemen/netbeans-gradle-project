@@ -330,18 +330,26 @@ public final class AsyncGradleTask implements Runnable {
                             outputRef.close();
                         }
                     } catch (Throwable ex) {
-                        commandError = ex;
-                        LOGGER.log(
-                                ex instanceof Exception ? Level.INFO : Level.SEVERE,
-                                "Gradle build failure: " + command,
-                                ex);
+                        Level logLevel;
+
+                        if (taskDef.getCommandExceptionHider().hideException(ex)) {
+                            logLevel = Level.INFO;
+                        }
+                        else {
+                            commandError = ex;
+                            logLevel = ex instanceof Exception ? Level.INFO : Level.SEVERE;
+                        }
+
+                        LOGGER.log(logLevel, "Gradle build failure: " + command, ex);
 
                         String buildFailureMessage = NbStrings.getBuildFailure(command);
 
                         OutputWriter buildErrOutput = tab.getIo().getErrRef();
                         buildErrOutput.println();
                         buildErrOutput.println(buildFailureMessage);
-                        project.displayError(buildFailureMessage, ex);
+                        if (commandError != null) {
+                            project.displayError(buildFailureMessage, commandError);
+                        }
                     }
 
                     tab.taskCompleted();

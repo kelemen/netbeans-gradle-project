@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.task.CommandExceptionHider;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
@@ -36,6 +37,7 @@ public final class GradleTaskDef {
         private ContextAwareCommandCompleteListener commandFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
         private TaskVariableMap nonUserTaskVariables;
+        private CommandExceptionHider commandExceptionHider;
 
         private boolean cleanOutput;
         private boolean nonBlocking;
@@ -54,6 +56,7 @@ public final class GradleTaskDef {
             this.commandFinalizer = taskDef.getCommandFinalizer();
             this.gradleTargetVerifier = taskDef.getGradleTargetVerifier();
             this.nonUserTaskVariables = taskDef.getNonUserTaskVariables();
+            this.commandExceptionHider = taskDef.getCommandExceptionHider();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -80,6 +83,7 @@ public final class GradleTaskDef {
             this.commandFinalizer = NoOpFinalizer.INSTANCE;
             this.gradleTargetVerifier = null;
             this.nonUserTaskVariables = EmptyTaskVarMap.INSTANCE;
+            this.commandExceptionHider = NoOpExceptionHider.INSTANCE;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
@@ -110,6 +114,15 @@ public final class GradleTaskDef {
                     }
                 };
             }
+        }
+
+        public CommandExceptionHider getCommandExceptionHider() {
+            return commandExceptionHider;
+        }
+
+        public void setCommandExceptionHider(CommandExceptionHider commandExceptionHider) {
+            if (commandExceptionHider == null) throw new NullPointerException("commandExceptionHider");
+            this.commandExceptionHider = commandExceptionHider;
         }
 
         public void setNonUserTaskVariables(TaskVariableMap nonUserTaskVariables) {
@@ -259,6 +272,7 @@ public final class GradleTaskDef {
     private final ContextAwareCommandCompleteListener commandFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
     private final TaskVariableMap nonUserTaskVariables;
+    private final CommandExceptionHider commandExceptionHider;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
 
@@ -276,10 +290,15 @@ public final class GradleTaskDef {
         this.commandFinalizer = builder.getCommandFinalizer();
         this.gradleTargetVerifier = builder.getGradleTargetVerifier();
         this.nonUserTaskVariables = builder.getNonUserTaskVariables();
+        this.commandExceptionHider = builder.getCommandExceptionHider();
     }
 
     private static String[] stringListToArray(List<String> list) {
         return list.toArray(new String[list.size()]);
+    }
+
+    public CommandExceptionHider getCommandExceptionHider() {
+        return commandExceptionHider;
     }
 
     public TaskVariableMap getNonUserTaskVariables() {
@@ -486,6 +505,15 @@ public final class GradleTaskDef {
 
         @Override
         public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
+        }
+    }
+
+    private enum NoOpExceptionHider implements CommandExceptionHider {
+        INSTANCE;
+
+        @Override
+        public boolean hideException(Throwable taskError) {
+            return false;
         }
     }
 }

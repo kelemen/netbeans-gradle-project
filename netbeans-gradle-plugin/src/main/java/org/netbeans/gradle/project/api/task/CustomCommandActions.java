@@ -73,6 +73,7 @@ public final class CustomCommandActions {
         private ContextAwareCommandAction contextAwareAction;
         private ContextAwareCommandCompleteAction contextAwareFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
+        private CommandExceptionHider commandExceptionHider;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -95,6 +96,31 @@ public final class CustomCommandActions {
             this.stdErrProcessor = null;
             this.contextAwareAction = null;
             this.contextAwareFinalizer = null;
+            this.commandExceptionHider = null;
+        }
+
+        /**
+         * Sets a check to be used if an exception thrown by the associated
+         * Gradle command should be hidden or not. That is, if the specified
+         * exception hider returns {@code true} (meaning that the exception
+         * must be hidden), then the exception will not be displayed to the user
+         * (it will still be logged on {@code INFO} level).
+         * <P>
+         * Note that this check may also display the error to the user in other
+         * forms (better describing what happened to the user).
+         * <P>
+         * You may set this property to {@code null}, if no such check
+         * is needed. That is, exceptions should be displayed to the user
+         * according to the best judgment of Gradle Supper. The default value
+         * for this property is {@code null}.
+         *
+         * @param commandExceptionHider a check to be used if an exception
+         *   thrown by the associated Gradle command should be hidden or not.
+         *   This argument can be {@code null}, if no exception is needed to be
+         *   hidden.
+         */
+        public void setCommandExceptionHider(@Nullable CommandExceptionHider commandExceptionHider) {
+            this.commandExceptionHider = commandExceptionHider;
         }
 
         /**
@@ -225,6 +251,7 @@ public final class CustomCommandActions {
     private final ContextAwareCommandAction contextAwareAction;
     private final ContextAwareCommandCompleteAction contextAwareFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
+    private final CommandExceptionHider commandExceptionHider;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -234,6 +261,26 @@ public final class CustomCommandActions {
         this.contextAwareAction = builder.contextAwareAction;
         this.contextAwareFinalizer = builder.contextAwareFinalizer;
         this.gradleTargetVerifier = builder.gradleTargetVerifier;
+        this.commandExceptionHider = builder.commandExceptionHider;
+    }
+
+    /**
+     * Returns the check to be used if an exception thrown by the associated
+     * Gradle command should be hidden or not (or {@code null} if no check is
+     * needed). That is, if the specified exception hider returns {@code true}
+     * (meaning that the exception must be hidden), then the exception will not
+     * be displayed to the user (it will still be logged on {@code INFO} level).
+     * <P>
+     * Note that this check may also display the error to the user in other
+     * forms (better describing what happened to the user).
+     *
+     * @return the check to be used if an exception thrown by the associated
+     *   Gradle command should be hidden or not. This method may return
+     *   {@code null}, if no exception is needed to be hidden.
+     */
+    @Nullable
+    public CommandExceptionHider getCommandExceptionHider() {
+        return commandExceptionHider;
     }
 
     /**
