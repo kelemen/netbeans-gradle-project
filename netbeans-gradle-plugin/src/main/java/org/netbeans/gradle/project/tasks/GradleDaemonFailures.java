@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 
@@ -14,14 +15,6 @@ public final class GradleDaemonFailures {
 
     public static DaemonFailureHandler getDefaultHandler() {
         return DEFAULT_HANDLER;
-    }
-
-    private static Throwable getRootCause(Throwable error) {
-        Throwable result = error;
-        while (result.getCause() != null) {
-            result = result.getCause();
-        }
-        return result;
     }
 
     private static DaemonFailureHandler failureDueToJarCachingHandler() {
@@ -53,7 +46,7 @@ public final class GradleDaemonFailures {
 
         @Override
         public boolean tryHandleFailure(Throwable failure) {
-            Throwable rootCause = getRootCause(failure);
+            Throwable rootCause = Exceptions.getRootCause(failure);
             if (rootCause instanceof FileNotFoundException) {
                 String message = rootCause.getMessage();
                 if (message != null) {
