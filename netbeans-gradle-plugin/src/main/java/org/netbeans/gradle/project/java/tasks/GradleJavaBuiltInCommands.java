@@ -5,17 +5,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
+import org.netbeans.gradle.project.api.task.CommandExceptionHider;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
@@ -27,7 +30,6 @@ import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
@@ -52,7 +54,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks()),
             Collections.<String>emptyList(),
-            displayTestResults());
+            displayTestResults(),
+            hideTestFailures());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList("run"),
@@ -74,24 +77,28 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList(testSingleArgument()),
-            displayTestResults());
+            displayTestResults(),
+            hideTestFailures());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList(testSingleArgument(), debugTestArgument()),
-            displayTestResults());
+            displayTestResults(),
+            hideTestFailures());
     private static final CommandWithActions DEFAULT_TEST_SINGLE_METHOD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant()),
             needsGradle("1.10"),
-            displayTestResults());
+            displayTestResults(),
+            hideTestFailures());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList("--tests", StandardTaskVariable.TEST_METHOD.getScriptReplaceConstant(), debugTestArgument()),
             needsGradle("1.10"),
-            displayTestResults());
+            displayTestResults(),
+            hideTestFailures());
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
@@ -194,6 +201,40 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             return debugActions(task.getCustomActions().getGradleTargetVerifier());
         }
         return task != null ? task.getCustomActions() : null;
+    }
+
+    private static boolean isTestFailureException(Throwable taskError) {
+        if (!(taskError instanceof Exception)) {
+            return false;
+        }
+
+        Throwable rootCause = Exceptions.getRootCause(taskError);
+
+        String message = rootCause.getMessage();
+        if (message == null) {
+            return false;
+        }
+
+        message = message.toLowerCase(Locale.ROOT);
+        return message.contains("there were failing tests");
+    }
+
+    private static CommandExceptionHider testFailureHider() {
+        return new CommandExceptionHider() {
+            @Override
+            public boolean hideException(Throwable taskError) {
+                return isTestFailureException(taskError);
+            }
+        };
+    }
+
+    private static CustomCommandAdjuster hideTestFailures() {
+        return new CustomCommandAdjuster() {
+            @Override
+            public void adjust(CustomCommandActions.Builder customActions) {
+                customActions.setCommandExceptionHider(testFailureHider());
+            }
+        };
     }
 
     private static String getTestName(ExecutedCommandContext executedCommandContext) {
