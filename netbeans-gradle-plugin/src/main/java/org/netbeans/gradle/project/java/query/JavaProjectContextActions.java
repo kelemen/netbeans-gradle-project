@@ -164,6 +164,12 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
                     javaExt.getSourceDirsHandler().createDirectories();
                 }
             }));
+            menu.add(backgroundTaskMenuItem(NbStrings.getDeleteEmptySourceDirsAction(), new Runnable() {
+                @Override
+                public void run() {
+                    javaExt.getSourceDirsHandler().deleteEmptyDirectories();
+                }
+            }));
             return menu;
         }
 

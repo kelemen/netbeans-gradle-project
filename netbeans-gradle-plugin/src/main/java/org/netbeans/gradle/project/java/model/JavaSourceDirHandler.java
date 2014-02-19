@@ -50,7 +50,7 @@ public final class JavaSourceDirHandler {
         };
     }
 
-    private boolean createDir(File dir) {
+    private static boolean createDir(File dir) {
         if (dir.isDirectory()) {
             return false;
         }
@@ -62,16 +62,70 @@ public final class JavaSourceDirHandler {
         return created;
     }
 
-    private boolean createDirs(Collection<File> dirs) {
+    private static boolean createDirs(Collection<File> dirs) {
         boolean created = false;
 
-        for (File dir: dirs ){
+        for (File dir: dirs){
             if (createDir(dir)) {
                 created = true;
             }
         }
 
         return created;
+    }
+
+    private static boolean isEmptyAndExist(File dir) {
+        if (!dir.isDirectory()) {
+            return false;
+        }
+
+        // FIXME: Use a more efficient solution in Java 7.
+        File[] files = dir.listFiles();
+        return files != null && files.length == 0;
+    }
+
+    private static boolean deleteDirIfEmpty(File dir) {
+        if (!isEmptyAndExist(dir)) {
+            return false;
+        }
+
+        boolean deleted = dir.delete();
+        if (!deleted) {
+            LOGGER.log(Level.INFO, "Failed to delete an empty directory: {0}", dir);
+        }
+
+        return deleted;
+    }
+
+
+    private static boolean deleteDirsIfEmpty(Collection<File> dirs) {
+        boolean deleted = false;
+
+        for (File dir: dirs){
+            if (deleteDirIfEmpty(dir)) {
+                deleted = true;
+            }
+        }
+
+        return deleted;
+    }
+
+    public void deleteEmptyDirectories() {
+        NbJavaModule module = javaExt.getCurrentModel().getMainModule();
+        boolean changed = false;
+        try {
+            for (JavaSourceSet sourceSet: module.getSources()) {
+                for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                    if (deleteDirsIfEmpty(sourceGroup.getSourceRoots())) {
+                        changed = true;
+                    }
+                }
+            }
+        } finally {
+            if (changed) {
+                dirsCreated.fireChange();
+            }
+        }
     }
 
     public void createDirectories() {

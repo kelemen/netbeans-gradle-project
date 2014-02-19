@@ -410,6 +410,11 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateSourceDirsAction");
     }
 
+    public static String getDeleteEmptySourceDirsAction() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.DeleteEmptySourceDirsAction");
+    }
+
+
     public static String getSourceDirsActionGroup() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SourceDirsActionGroup");
     }
