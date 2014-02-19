@@ -68,6 +68,7 @@ import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.ChangeSupport;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
@@ -84,6 +85,7 @@ implements
     // TODO: When using JTrim replace this with proper event handling code.
     private final Set<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
+    private final ChangeSupport refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
@@ -91,6 +93,30 @@ implements
         this.childRefreshListeners = Collections.newSetFromMap(
                 new ConcurrentHashMap<ModelRefreshListener, Boolean>());
         this.listenersToFinalize = new AtomicReference<Collection<ModelRefreshListener>>(null);
+        this.refreshRequestListeners = new ChangeSupport(this);
+    }
+
+    public void refreshProjectNode() {
+        refreshRequestListeners.fireChange();
+    }
+
+    public NbListenerRef addRefreshRequestListeners(final Runnable listener) {
+        if (listener == null) throw new NullPointerException("listener");
+
+        final ChangeListener wrapperListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                listener.run();
+            }
+        };
+
+        refreshRequestListeners.addChangeListener(wrapperListener);
+        return NbListenerRefs.fromRunnable(new Runnable() {
+            @Override
+            public void run() {
+                refreshRequestListeners.removeChangeListener(wrapperListener);
+            }
+        });
     }
 
     public NbListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
@@ -285,6 +311,7 @@ implements
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
+            projectActions.add(new RefreshNodesAction());
             projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
@@ -576,6 +603,18 @@ implements
                     executeCommandTemplate(project, commandTemplate);
                 }
             }
+        }
+    }
+
+    @SuppressWarnings("serial") // don't care about serialization
+    private class RefreshNodesAction extends AbstractAction {
+        public RefreshNodesAction() {
+            super(NbStrings.getRefreshNodeCommandCaption());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            refreshProjectNode();
         }
     }
 

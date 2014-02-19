@@ -153,6 +153,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ReloadProject");
     }
 
+    public static String getRefreshNodeCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RefreshNodeCommandCaption");
+    }
+
     public static String getOpenImmediateSubProjectsCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenImmediateSubProjects");
     }

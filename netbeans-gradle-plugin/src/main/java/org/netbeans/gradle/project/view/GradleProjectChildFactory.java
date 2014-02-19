@@ -83,6 +83,15 @@ extends
         return !getShownModule().getMainProject().getChildren().isEmpty();
     }
 
+    private NbListenerRef registerParentRefreshRequest() {
+        return parent.addRefreshRequestListeners(new Runnable() {
+            @Override
+            public void run() {
+                refreshProjectNode();
+            }
+        });
+    }
+
     private NbListenerRef registerModelRefreshListener() {
         return parent.addChildModelRefreshListener(new ModelRefreshListener() {
             @Override
@@ -136,6 +145,7 @@ extends
 
     @Override
     protected void addNotify() {
+        listenerRegistrations.add(registerParentRefreshRequest());
         listenerRegistrations.add(registerModelRefreshListener());
 
         lastHasSubprojects.set(hasSubProjects());
