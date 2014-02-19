@@ -7,11 +7,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
@@ -22,6 +23,7 @@ import org.netbeans.gradle.project.tasks.TestTaskName;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.util.Lookup;
+import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 
 public final class JavaProjectContextActions implements GradleProjectContextActions {
@@ -53,7 +55,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
 
         addCustomTestTasks(result);
         result.add(createJavaDocAction());
-        result.add(createSourceDirsAction());
+        result.add(sourcesDirsAction());
 
         return result;
     }
@@ -64,13 +66,27 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
                 NbStrings.getJavadocCommandCaption());
     }
 
-    private Action createSourceDirsAction() {
-        return new CreateSourceDirsAction(NbStrings.getCreateSourceDirsAction());
+    private Action sourcesDirsAction() {
+        return new SourceDirsAction();
     }
 
     private String getCustomTestTaskName(JavaTestTask testTask) {
         String capitalizedName = StringUtils.capitalizeFirstCharacter(testTask.getName());
         return NbStrings.getCustomTestCommandCaption(capitalizedName);
+    }
+
+    private static Action backgroundTaskAction(String name, final Runnable action) {
+        return new AbstractAction(name) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
+        };
+    }
+
+    private static JMenuItem backgroundTaskMenuItem(String name, Runnable action) {
+        return new JMenuItem(backgroundTaskAction(name, action));
     }
 
     private static String[] safeGetSupportedActions(ActionProvider provider) {
@@ -123,22 +139,36 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         }
     }
 
+    @SuppressWarnings("serial") // don't care about serialization
     @GradleProjectAction(GradleActionType.PROJECT_MANAGEMENT_ACTION)
-    private class CreateSourceDirsAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+    private class SourceDirsAction extends AbstractAction implements Presenter.Popup {
+        private JMenu cachedMenu;
 
-        public CreateSourceDirsAction(String name) {
-            super(name);
+        public SourceDirsAction() {
+            this.cachedMenu = null;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        public JMenuItem getPopupPresenter() {
+            if (cachedMenu == null) {
+                cachedMenu = createMenu();
+            }
+            return cachedMenu;
+        }
+
+        private JMenu createMenu() {
+            JMenu menu = new JMenu(NbStrings.getSourceDirsActionGroup());
+            menu.add(backgroundTaskMenuItem(NbStrings.getCreateSourceDirsAction(), new Runnable() {
                 @Override
                 public void run() {
                     javaExt.getSourceDirsHandler().createDirectories();
                 }
-            });
+            }));
+            return menu;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
         }
     }
 }

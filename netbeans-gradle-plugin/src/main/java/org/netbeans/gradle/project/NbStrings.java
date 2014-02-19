@@ -410,6 +410,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateSourceDirsAction");
     }
 
+    public static String getSourceDirsActionGroup() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SourceDirsActionGroup");
+    }
+
     public static String getDependencyResolutionFailure(String projectName) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DependencyResolutionFailure", projectName);
     }
