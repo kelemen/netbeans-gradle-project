@@ -74,6 +74,20 @@ public final class Exceptions {
         }
     }
 
+    public static Throwable getRootCause(Throwable error) {
+        if (error == null) throw new NullPointerException("error");
+
+        Throwable parent;
+        Throwable cause = error;
+
+        do {
+            parent = cause;
+            cause = parent.getCause();
+        } while (cause != null);
+
+        return parent;
+    }
+
     private Exceptions() {
         throw new AssertionError();
     }
