@@ -102,17 +102,8 @@ public final class GradleTaskDef {
                 setNonUserTaskVariables(nonUserTaskVariables);
             }
             else {
-                // TODO: Factor out this class.
-                this.nonUserTaskVariables = new TaskVariableMap() {
-                    @Override
-                    public String tryGetValueForVariable(TaskVariable variable) {
-                        String value = nonUserTaskVariables.tryGetValueForVariable(variable);
-                        if (value == null) {
-                            value = currentTaskVariables.tryGetValueForVariable(variable);
-                        }
-                        return value;
-                    }
-                };
+                this.nonUserTaskVariables = new CombinedTaskVariableMap(
+                        nonUserTaskVariables, currentTaskVariables);
             }
         }
 
