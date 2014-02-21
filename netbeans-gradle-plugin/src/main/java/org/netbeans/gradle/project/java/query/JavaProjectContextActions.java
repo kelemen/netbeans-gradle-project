@@ -139,24 +139,34 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         }
     }
 
-    @SuppressWarnings("serial") // don't care about serialization
-    @GradleProjectAction(GradleActionType.PROJECT_MANAGEMENT_ACTION)
-    private class SourceDirsAction extends AbstractAction implements Presenter.Popup {
+    @SuppressWarnings("serial")
+    private abstract class SubmenuParentAction extends AbstractAction implements Presenter.Popup {
         private JMenu cachedMenu;
 
-        public SourceDirsAction() {
+        public SubmenuParentAction() {
             this.cachedMenu = null;
         }
 
         @Override
-        public JMenuItem getPopupPresenter() {
+        public final JMenuItem getPopupPresenter() {
             if (cachedMenu == null) {
                 cachedMenu = createMenu();
             }
             return cachedMenu;
         }
 
-        private JMenu createMenu() {
+        protected abstract JMenu createMenu();
+
+        @Override
+        public final void actionPerformed(ActionEvent e) {
+        }
+    }
+
+    @SuppressWarnings("serial") // don't care about serialization
+    @GradleProjectAction(GradleActionType.PROJECT_MANAGEMENT_ACTION)
+    private class SourceDirsAction extends SubmenuParentAction {
+        @Override
+        protected JMenu createMenu() {
             JMenu menu = new JMenu(NbStrings.getSourceDirsActionGroup());
             menu.add(backgroundTaskMenuItem(NbStrings.getCreateSourceDirsAction(), new Runnable() {
                 @Override
@@ -171,10 +181,6 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
                 }
             }));
             return menu;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
         }
     }
 }
