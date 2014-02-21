@@ -1,6 +1,11 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.awt.event.ActionEvent;
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -28,6 +33,7 @@ import org.openide.util.lookup.Lookups;
 
 public final class JavaProjectContextActions implements GradleProjectContextActions {
     private static final Logger LOGGER = Logger.getLogger(JavaProjectContextActions.class.getName());
+    private static final Collator STR_CMP = Collator.getInstance();
 
     private final JavaExtension javaExt;
 
@@ -40,20 +46,14 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         return ProjectSensitiveActions.projectCommandAction(command, label, null);
     }
 
-    private void addCustomTestTasks(List<Action> result) {
-        JavaTestModel testTasks = javaExt.getCurrentModel().getMainModule().getTestTasks();
-        for (JavaTestTask testTask: testTasks.getTestTasks()) {
-            if (!TestTaskName.DEFAULT_TEST_TASK_NAME.equals(testTask.getName())) {
-                result.add(new CustomTestAction(testTask));
-            }
-        }
-    }
-
     @Override
     public List<Action> getContextActions() {
         List<Action> result = new LinkedList<Action>();
 
-        addCustomTestTasks(result);
+        CustomTestsAction customTestsAction = new CustomTestsAction();
+        if (customTestsAction.hasCustomTestActions()) {
+            result.add(customTestsAction);
+        }
         result.add(createJavaDocAction());
         result.add(sourcesDirsAction());
 
@@ -71,8 +71,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
     }
 
     private String getCustomTestTaskName(JavaTestTask testTask) {
-        String capitalizedName = StringUtils.capitalizeFirstCharacter(testTask.getName());
-        return NbStrings.getCustomTestCommandCaption(capitalizedName);
+        return StringUtils.capitalizeFirstCharacter(testTask.getName());
     }
 
     private static Action backgroundTaskAction(String name, final Runnable action) {
@@ -125,12 +124,22 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
     private final class CustomTestAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
 
+        private final String displayName;
         private final Lookup context;
 
         public CustomTestAction(JavaTestTask testTask) {
-            super(getCustomTestTaskName(testTask));
+            this(testTask, getCustomTestTaskName(testTask));
+        }
+
+        private CustomTestAction(JavaTestTask testTask, String name) {
+            super(name);
 
             this.context = Lookups.singleton(new TestTaskName(testTask.getName()));
+            this.displayName = name;
+        }
+
+        public String getDisplayName() {
+            return displayName;
         }
 
         @Override
@@ -180,6 +189,49 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
                     javaExt.getSourceDirsHandler().deleteEmptyDirectories();
                 }
             }));
+            return menu;
+        }
+    }
+
+    private static void sortTestActions(List<CustomTestAction> actions) {
+        Collections.sort(actions, new Comparator<CustomTestAction>() {
+            @Override
+            public int compare(CustomTestAction o1, CustomTestAction o2) {
+                return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+            }
+        });
+    }
+
+    @SuppressWarnings("serial") // don't care about serialization
+    private class CustomTestsAction extends SubmenuParentAction {
+        private final List<CustomTestAction> customTestTasks;
+
+        public CustomTestsAction() {
+            JavaTestModel testTasksModel = javaExt.getCurrentModel().getMainModule().getTestTasks();
+            Collection<JavaTestTask> testTasks = testTasksModel.getTestTasks();
+            this.customTestTasks = new ArrayList<CustomTestAction>(testTasks.size());
+
+            for (JavaTestTask testTask: testTasks) {
+                if (!TestTaskName.DEFAULT_TEST_TASK_NAME.equals(testTask.getName())) {
+                    customTestTasks.add(new CustomTestAction(testTask));
+                }
+            }
+
+            sortTestActions(customTestTasks);
+        }
+
+        public boolean hasCustomTestActions() {
+            return !customTestTasks.isEmpty();
+        }
+
+        @Override
+        protected JMenu createMenu() {
+            JMenu menu = new JMenu(NbStrings.getCustomTestsAction());
+
+            for (CustomTestAction action: customTestTasks) {
+                menu.add(action);
+            }
+
             return menu;
         }
     }

@@ -97,8 +97,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.Test");
     }
 
-    public static String getCustomTestCommandCaption(String testName) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTestJava", testName);
+    public static String getCustomTestsAction() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTestsAction");
     }
 
     public static String getCleanCommandCaption() {
