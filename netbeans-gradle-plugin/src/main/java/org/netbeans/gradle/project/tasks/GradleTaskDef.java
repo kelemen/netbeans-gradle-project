@@ -6,11 +6,13 @@ import java.util.Collections;
 import java.util.List;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandExceptionHider;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
+import org.netbeans.gradle.project.api.task.ContextAwareGradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -438,6 +440,34 @@ public final class GradleTaskDef {
         return new TaskOutputDef(outputKey, caption);
     }
 
+    private static GradleTargetVerifier getGradleTargetVerifier(
+            NbGradleProject project,
+            Lookup actionContext,
+            CustomCommandActions customActions) {
+
+        ContextAwareGradleTargetVerifier contextAwareVerifier
+                = customActions.getContextAwareGradleTargetVerifier();
+
+        final GradleTargetVerifier verifier1 = contextAwareVerifier != null
+                ? contextAwareVerifier.startCommand(project, actionContext)
+                : null;
+        final GradleTargetVerifier verifier2 = customActions.getGradleTargetVerifier();
+
+        if (verifier1 == null) return verifier2;
+        if (verifier2 == null) return verifier1;
+
+        return new GradleTargetVerifier() {
+            @Override
+            public boolean checkTaskExecutable(
+                    GradleTarget gradleTarget,
+                    OutputWriter output,
+                    OutputWriter errOutput) {
+                return verifier1.checkTaskExecutable(gradleTarget, output, errOutput)
+                        && verifier2.checkTaskExecutable(gradleTarget, output, errOutput);
+            }
+        };
+    }
+
     public static GradleTaskDef.Builder createFromTemplate(
             NbGradleProject project,
             GradleCommandTemplate command,
@@ -474,7 +504,7 @@ public final class GradleTaskDef {
             builder.setCommandExceptionHider(exceptionHider);
         }
 
-        builder.setGradleTargetVerifier(customActions.getGradleTargetVerifier());
+        builder.setGradleTargetVerifier(getGradleTargetVerifier(project, actionContext, customActions));
 
         return builder;
     }
