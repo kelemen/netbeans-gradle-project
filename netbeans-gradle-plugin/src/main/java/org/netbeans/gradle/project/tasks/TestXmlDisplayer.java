@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.tasks;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
@@ -16,7 +18,9 @@ import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.others.ClassFinder;
 import org.netbeans.gradle.project.others.GradleTestSession;
+import org.netbeans.gradle.project.others.PluginClassMethod;
 import org.netbeans.gradle.project.others.RerunHandler;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.spi.project.ActionProvider;
@@ -31,6 +35,11 @@ public final class TestXmlDisplayer {
     private static final File[] NO_FILES = new File[0];
     private static final String NEW_LINE_PATTERN = Pattern.quote("\n");
     private static final String[] STACKTRACE_PREFIXES = {"at "};
+
+    private static final PluginClassMethod TESTCASE_GET_CLASS_NAME
+            = new PluginClassMethod(GradleTestSession.TESTCASE, "getClassName", new ClassFinder[0]);
+    private static final PluginClassMethod TESTCASE_GET_NAME
+            = new PluginClassMethod(GradleTestSession.TESTCASE, "getName", new ClassFinder[0]);
 
     private final Project project;
     private final JavaExtension javaExt;
@@ -176,18 +185,34 @@ public final class TestXmlDisplayer {
             GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST, rerunContext);
         }
 
+        private List<SpecificTestcase> getSpecificTestcases(Set<?> tests) {
+            List<SpecificTestcase> result = new ArrayList<SpecificTestcase>(tests.size());
+            for (Object test: tests) {
+                Object testName = TESTCASE_GET_NAME.tryInvoke(test);
+                Object testClassName = TESTCASE_GET_CLASS_NAME.tryInvoke(test);
+
+                if (test != null && testClassName != null) {
+                    result.add(new SpecificTestcase(testClassName.toString(), testName.toString()));
+                }
+            }
+            return result;
+        }
+
         @Override
         public void rerun(Set<?> tests) {
-            LOGGER.warning("Rerun specific test is not currently supported.");
-            rerun();
+            if (tests.isEmpty()) {
+                LOGGER.warning("Rerun test requested with an empty test set.");
+                return;
+            }
+
+            SpecificTestcases testcases = new SpecificTestcases(getSpecificTestcases(tests));
+            Lookup context = Lookups.fixed(new TestTaskName(testName), testcases);
+            GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST, context);
         }
 
         @Override
         public boolean enabled(Object type) {
-            if (type instanceof Enum) {
-                return "ALL".equals(((Enum<?>)type).name());
-            }
-            return false;
+            return true;
         }
 
         @Override
