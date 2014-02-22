@@ -52,7 +52,7 @@ public final class PluginClassImplementation {
             return null;
         }
 
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = pluginClass.getClassLoader();
 
         return Proxy.newProxyInstance(classLoader,
                 new Class<?>[]{pluginClass},
