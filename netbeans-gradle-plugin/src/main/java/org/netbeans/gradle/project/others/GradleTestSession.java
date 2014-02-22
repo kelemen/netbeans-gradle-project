@@ -107,29 +107,26 @@ public final class GradleTestSession {
     }
 
     public void newSession(String name, Project project) {
+        newSession(name, project, null);
+    }
+
+    public void newSession(String name, Project project, RerunHandler rerunHandler) {
         if (!hasManager()) {
             return;
         }
 
         session = tryCreateNewSession(name, project);
-
         if (hasSession()) {
+            // RerunHandler must be added right after creating the session
+            // otherwise it will be ignore by the rerun buttons.
+            if (rerunHandler != null) {
+                Object actualHandler = RerunHandlers.tryCreateRerunHandler(rerunHandler);
+                if (actualHandler != null) {
+                    TEST_SESSION_SET_RERUN_HANDLER.tryInvoke(session, actualHandler);
+                }
+            }
             MANAGER_TEST_STARTED.tryInvoke(manager, session);
         }
-    }
-
-    public void setRerunHandler(RerunHandler handler) {
-        if (handler == null) throw new NullPointerException("handler");
-        if (!hasSession()) {
-            return;
-        }
-
-        Object actualHandler = RerunHandlers.tryCreateRerunHandler(handler);
-        if (actualHandler == null) {
-            return;
-        }
-
-        TEST_SESSION_SET_RERUN_HANDLER.tryInvoke(session, actualHandler);
     }
 
     public void endSession() {

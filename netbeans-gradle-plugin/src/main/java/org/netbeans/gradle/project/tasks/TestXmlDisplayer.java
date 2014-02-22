@@ -3,9 +3,11 @@ package org.netbeans.gradle.project.tasks;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -15,6 +17,11 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.others.GradleTestSession;
+import org.netbeans.gradle.project.others.RerunHandler;
+import org.netbeans.gradle.project.view.GradleActionProvider;
+import org.netbeans.spi.project.ActionProvider;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -131,7 +138,7 @@ public final class TestXmlDisplayer {
         }
 
         GradleTestSession session = new GradleTestSession();
-        session.newSession(getProjectName(), project);
+        session.newSession(getProjectName(), project, new JavaRerunHandler());
 
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         SAXParser parser;
@@ -155,6 +162,41 @@ public final class TestXmlDisplayer {
 
         session.endSession();
         return true;
+    }
+
+    public class JavaRerunHandler implements RerunHandler {
+        private final Lookup rerunContext;
+
+        private JavaRerunHandler() {
+            this.rerunContext = Lookups.singleton(new TestTaskName(testName));
+        }
+
+        @Override
+        public void rerun() {
+            GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST, rerunContext);
+        }
+
+        @Override
+        public void rerun(Set<?> tests) {
+            LOGGER.warning("Rerun specific test is not currently supported.");
+            rerun();
+        }
+
+        @Override
+        public boolean enabled(Object type) {
+            if (type instanceof Enum) {
+                return "ALL".equals(((Enum<?>)type).name());
+            }
+            return false;
+        }
+
+        @Override
+        public void addChangeListener(ChangeListener listener) {
+        }
+
+        @Override
+        public void removeChangeListener(ChangeListener listener) {
+        }
     }
 
     private class TestXmlContentHandler extends DefaultHandler {
