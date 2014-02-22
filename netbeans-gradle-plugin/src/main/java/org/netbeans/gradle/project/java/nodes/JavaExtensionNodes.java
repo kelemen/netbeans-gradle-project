@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.java.query;
+package org.netbeans.gradle.project.java.nodes;
 
 import java.io.File;
 import java.util.Collections;
@@ -24,7 +24,7 @@ import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
 import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
+import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

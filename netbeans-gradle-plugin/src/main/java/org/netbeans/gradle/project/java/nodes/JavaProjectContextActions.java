@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.java.query;
+package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.event.ActionEvent;
 import java.text.Collator;
