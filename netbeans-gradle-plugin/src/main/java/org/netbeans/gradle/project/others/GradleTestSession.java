@@ -24,6 +24,8 @@ public final class GradleTestSession {
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Trouble");
     private static final PluginClass REPORT
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Report");
+    private static final PluginClass RERUN_HANDLER
+            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.RerunHandler");
 
     private static final PluginClassMethod MANAGER_GET_INSTANCE
             = PluginClassMethod.noArgMethod(MANAGER, "getInstance");
