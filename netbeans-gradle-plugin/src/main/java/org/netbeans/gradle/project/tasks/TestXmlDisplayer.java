@@ -212,7 +212,12 @@ public final class TestXmlDisplayer {
 
         @Override
         public boolean enabled(Object type) {
-            return true;
+            if (type instanceof Enum) {
+                return "ALL".equals(((Enum<?>)type).name());
+            }
+            else {
+                return false;
+            }
         }
 
         @Override
