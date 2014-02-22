@@ -8,23 +8,23 @@ public final class GradleTestSession {
     private static final PluginClassFactory CLASS_FACTORY
             = new PluginClassFactory("org.netbeans.modules.gsf.testrunner");
 
-    private static final PluginClass MANAGER
+    public static final PluginClass MANAGER
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Manager");
-    private static final PluginClass TEST_SESSION
+    public static final PluginClass TEST_SESSION
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSession");
-    private static final PluginEnum SESSION_TYPE
+    public static final PluginEnum SESSION_TYPE
             = new PluginEnum(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSession$SessionType");
-    private static final PluginClass TEST_SUITE
+    public static final PluginClass TEST_SUITE
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSuite");
-    private static final PluginClass TESTCASE
+    public static final PluginClass TESTCASE
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Testcase");
-    private static final PluginEnum STATUS
+    public static final PluginEnum STATUS
             = new PluginEnum(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Status");
-    private static final PluginClass TROUBLE
+    public static final PluginClass TROUBLE
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Trouble");
-    private static final PluginClass REPORT
+    public static final PluginClass REPORT
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Report");
-    private static final PluginClass RERUN_HANDLER
+    public static final PluginClass RERUN_HANDLER
             = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.RerunHandler");
 
     private static final PluginClassMethod MANAGER_GET_INSTANCE
