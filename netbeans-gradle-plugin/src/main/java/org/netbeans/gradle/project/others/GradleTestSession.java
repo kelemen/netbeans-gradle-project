@@ -43,6 +43,8 @@ public final class GradleTestSession {
             = new PluginClassMethod(TEST_SESSION, "getReport", long.class);
     private static final PluginClassMethod TEST_SESSION_ADD_TESTCASE
             = new PluginClassMethod(TEST_SESSION, "addTestCase", TESTCASE);
+    private static final PluginClassMethod TEST_SESSION_SET_RERUN_HANDLER
+            = new PluginClassMethod(TEST_SESSION, "setRerunHandler", RERUN_HANDLER);
     private static final PluginClassMethod TESTCASE_SET_STATUS
             = new PluginClassMethod(TESTCASE, "setStatus", STATUS);
     private static final PluginClassMethod TESTCASE_SET_CLASSNAME
@@ -114,6 +116,20 @@ public final class GradleTestSession {
         if (hasSession()) {
             MANAGER_TEST_STARTED.tryInvoke(manager, session);
         }
+    }
+
+    public void setRerunHandler(RerunHandler handler) {
+        if (handler == null) throw new NullPointerException("handler");
+        if (!hasSession()) {
+            return;
+        }
+
+        Object actualHandler = RerunHandlers.tryCreateRerunHandler(handler);
+        if (actualHandler == null) {
+            return;
+        }
+
+        TEST_SESSION_SET_RERUN_HANDLER.tryInvoke(session, actualHandler);
     }
 
     public void endSession() {
