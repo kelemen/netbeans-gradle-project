@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -101,6 +102,39 @@ public final class GradleActionProvider implements ActionProvider {
     private CustomCommandActions getCommandActions(NbGradleConfiguration config, String command) {
         ProfileDef profileDef = config.getProfileDef();
         return project.getMergedCommandQuery().tryGetCommandDefs(profileDef, command);
+    }
+
+    private static String[] safeGetSupportedActions(ActionProvider provider) {
+        String[] result = provider.getSupportedActions();
+        return result != null ? result : new String[0];
+    }
+
+    private static boolean supportsAction(ActionProvider provider, String command) {
+        for (String action: safeGetSupportedActions(provider)) {
+            if (command.equals(action)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean tryInvokeAction(Project project, String command, Lookup context) {
+        Lookup projectLookup = project.getLookup();
+        for (ActionProvider actionProvider: projectLookup.lookupAll(ActionProvider.class)) {
+            if (supportsAction(actionProvider, command)) {
+                actionProvider.invokeAction(command, context);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void invokeAction(Project project, String command, Lookup context) {
+        if (!tryInvokeAction(project, command, context)) {
+            LOGGER.log(Level.WARNING,
+                    "Could not invoke command {0} for project {1}",
+                    new Object[]{command, project.getProjectDirectory()});
+        }
     }
 
     private Runnable createAction(final String command, Lookup context) {

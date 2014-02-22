@@ -8,14 +8,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.NbStrings;
@@ -25,6 +22,7 @@ import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.tasks.TestTaskName;
+import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.util.Lookup;
@@ -32,7 +30,6 @@ import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 
 public final class JavaProjectContextActions implements GradleProjectContextActions {
-    private static final Logger LOGGER = Logger.getLogger(JavaProjectContextActions.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
     private final JavaExtension javaExt;
@@ -88,39 +85,6 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         return new JMenuItem(backgroundTaskAction(name, action));
     }
 
-    private static String[] safeGetSupportedActions(ActionProvider provider) {
-        String[] result = provider.getSupportedActions();
-        return result != null ? result : new String[0];
-    }
-
-    private static boolean supportsAction(ActionProvider provider, String command) {
-        for (String action: safeGetSupportedActions(provider)) {
-            if (command.equals(action)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean tryInvokeAction(Project project, String command, Lookup context) {
-        Lookup projectLookup = project.getLookup();
-        for (ActionProvider actionProvider: projectLookup.lookupAll(ActionProvider.class)) {
-            if (supportsAction(actionProvider, command)) {
-                actionProvider.invokeAction(command, context);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void invokeAction(Project project, String command, Lookup context) {
-        if (!tryInvokeAction(project, command, context)) {
-            LOGGER.log(Level.WARNING,
-                    "Could not invoke command {0} for project {1}",
-                    new Object[]{command, project.getProjectDirectory()});
-        }
-    }
-
     private final class CustomTestAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
 
@@ -144,7 +108,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            invokeAction(javaExt.getProject(), ActionProvider.COMMAND_TEST, context);
+            GradleActionProvider.invokeAction(javaExt.getProject(), ActionProvider.COMMAND_TEST, context);
         }
     }
 
