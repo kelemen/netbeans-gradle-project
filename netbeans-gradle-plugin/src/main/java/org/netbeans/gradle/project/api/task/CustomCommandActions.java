@@ -67,6 +67,7 @@ public final class CustomCommandActions {
      */
     public static final class Builder {
         private final TaskKind taskKind;
+        private ContextAwareCommandArguments contextAwareCommandArguments;
         private CommandCompleteListener commandCompleteListener;
         private TaskOutputProcessor stdOutProcessor;
         private TaskOutputProcessor stdErrProcessor;
@@ -100,6 +101,26 @@ public final class CustomCommandActions {
             this.commandExceptionHider = null;
             this.gradleTargetVerifier = null;
             this.contextAwareGradleTargetVerifier = null;
+            this.contextAwareCommandArguments = null;
+        }
+
+        /**
+         * Specified the {@code ContextAwareCommandArguments} which is used
+         * to provide additional {@link GradleCommandTemplate#getArguments() arguments}
+         * for the Gradle command to be executed. The arguments will be appended
+         * to the argument list after what is specified by
+         * {@link GradleCommandTemplate}.
+         * <P>
+         * The additional arguments are processed the same way as if they were
+         * specified in the associated {@code GradleCommandTemplate}.
+         *
+         * @param contextAwareCommandArguments the {@code ContextAwareCommandArguments}
+         *   which is used to provide additional arguments for the Gradle
+         *   command to be executed. This argument can be {@code null}, if no
+         *   additional arguments are needed.
+         */
+        public void setContextAwareCommandArguments(@Nonnull ContextAwareCommandArguments contextAwareCommandArguments) {
+            this.contextAwareCommandArguments = contextAwareCommandArguments;
         }
 
         /**
@@ -289,6 +310,7 @@ public final class CustomCommandActions {
     private final GradleTargetVerifier gradleTargetVerifier;
     private final ContextAwareGradleTargetVerifier contextAwareGradleTargetVerifier;
     private final CommandExceptionHider commandExceptionHider;
+    private final ContextAwareCommandArguments contextAwareCommandArguments;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -300,6 +322,25 @@ public final class CustomCommandActions {
         this.gradleTargetVerifier = builder.gradleTargetVerifier;
         this.contextAwareGradleTargetVerifier = builder.contextAwareGradleTargetVerifier;
         this.commandExceptionHider = builder.commandExceptionHider;
+        this.contextAwareCommandArguments = builder.contextAwareCommandArguments;
+    }
+
+    /**
+     * Returns the {@code ContextAwareCommandArguments} which is used
+     * to provide additional {@link GradleCommandTemplate#getArguments() arguments}
+     * for the Gradle command to be executed. The arguments will be appended
+     * to the argument list after what is specified by
+     * {@link GradleCommandTemplate}.
+     * <P>
+     * The additional arguments are processed the same way as if they were
+     * specified in the associated {@code GradleCommandTemplate}.
+     *
+     * @return the {@code ContextAwareCommandArguments} which is used to provide
+     *   additional arguments for the Gradle command to be executed. This method
+     *   may return {@code null} if no additional arguments are needed.
+     */
+    public ContextAwareCommandArguments getContextAwareCommandArguments() {
+        return contextAwareCommandArguments;
     }
 
     /**

@@ -9,6 +9,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandExceptionHider;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
+import org.netbeans.gradle.project.api.task.ContextAwareCommandArguments;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
@@ -468,6 +469,21 @@ public final class GradleTaskDef {
         };
     }
 
+    private static void addAdditionalArguments(
+            NbGradleProject project,
+            Lookup actionContext,
+            CustomCommandActions customActions,
+            TaskVariableMap varReplaceMap,
+            GradleTaskDef.Builder builder) {
+
+        ContextAwareCommandArguments additional = customActions.getContextAwareCommandArguments();
+        if (additional == null) {
+            return;
+        }
+        List<String> argumentList = additional.getCommandArguments(project, actionContext);
+        builder.addArguments(processList(argumentList, varReplaceMap));
+    }
+
     public static GradleTaskDef.Builder createFromTemplate(
             NbGradleProject project,
             GradleCommandTemplate command,
@@ -477,6 +493,7 @@ public final class GradleTaskDef {
         TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
         TaskOutputDef caption = getOutputDef(project, customActions.getTaskKind(), command);
         GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
+        addAdditionalArguments(project, actionContext, customActions, varReplaceMap, builder);
 
         builder.setNonUserTaskVariables(varReplaceMap);
 
