@@ -13,6 +13,7 @@ import org.netbeans.gradle.project.WaitableSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
+import org.netbeans.gradle.project.api.task.NbCommandString;
 import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -24,6 +25,8 @@ import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.ProxyLookup;
 
 
 public final class GradleActionProvider implements ActionProvider {
@@ -137,6 +140,27 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
+    private static Lookup commandStringLookup(String command) {
+        return Lookups.singleton(new NbCommandString(command));
+    }
+
+    private Lookup getAppliedContext(String command, Lookup context) {
+        if (context == null) {
+            return commandStringLookup(command);
+        }
+
+        NbCommandString currentNbCommandStr = context.lookup(NbCommandString.class);
+        if (currentNbCommandStr == null) {
+            return new ProxyLookup(commandStringLookup(command), context);
+        }
+
+        NbCommandString nbCommandString = new NbCommandString(command);
+        if (nbCommandString.equals(currentNbCommandStr)) {
+            return context;
+        }
+        return new ProxyLookup(Lookups.singleton(nbCommandString), context);
+    }
+
     private Runnable createAction(final String command, Lookup context) {
         if (command == null) {
             return null;
@@ -151,7 +175,7 @@ public final class GradleActionProvider implements ActionProvider {
             };
         }
 
-        final Lookup appliedContext = context != null ? context : Lookup.EMPTY;
+        final Lookup appliedContext = getAppliedContext(command, context);
 
         NbGradleConfiguration config = appliedContext.lookup(NbGradleConfiguration.class);
         final NbGradleConfiguration appliedConfig = config != null
