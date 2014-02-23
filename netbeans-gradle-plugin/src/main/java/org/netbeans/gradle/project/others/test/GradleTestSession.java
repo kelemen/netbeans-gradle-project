@@ -1,102 +1,22 @@
 package org.netbeans.gradle.project.others.test;
 
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.others.PluginClass;
-import org.netbeans.gradle.project.others.PluginClassConstructor;
-import org.netbeans.gradle.project.others.PluginClassFactory;
-import org.netbeans.gradle.project.others.PluginClassMethod;
-import org.netbeans.gradle.project.others.PluginEnum;
-
-import static org.netbeans.gradle.project.others.ReflectionHelper.*;
+import org.netbeans.modules.gsf.testrunner.api.Manager;
+import org.netbeans.modules.gsf.testrunner.api.Report;
+import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
+import org.netbeans.modules.gsf.testrunner.api.TestSession;
+import org.netbeans.modules.gsf.testrunner.api.TestSuite;
+import org.netbeans.modules.gsf.testrunner.api.Testcase;
 
 public final class GradleTestSession {
-    private static final PluginClassFactory CLASS_FACTORY
-            = new PluginClassFactory("org.netbeans.modules.gsf.testrunner");
-
-    public static final PluginClass MANAGER
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Manager");
-    public static final PluginClass TEST_SESSION
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSession");
-    public static final PluginEnum SESSION_TYPE
-            = new PluginEnum(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSession$SessionType");
-    public static final PluginClass TEST_SUITE
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.TestSuite");
-    public static final PluginClass TESTCASE
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Testcase");
-    public static final PluginEnum STATUS
-            = new PluginEnum(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Status");
-    public static final PluginClass TROUBLE
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Trouble");
-    public static final PluginClass REPORT
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.Report");
-    public static final PluginClass RERUN_HANDLER
-            = new PluginClass(CLASS_FACTORY, "org.netbeans.modules.gsf.testrunner.api.RerunHandler");
-
-    private static final PluginClassMethod MANAGER_GET_INSTANCE
-            = PluginClassMethod.noArgMethod(MANAGER, "getInstance");
-    private static final PluginClassMethod MANAGER_TEST_STARTED
-            = new PluginClassMethod(MANAGER, "testStarted", TEST_SESSION);
-    private static final PluginClassMethod MANAGER_DISPLAY_SUITE_RUNNING
-            = new PluginClassMethod(MANAGER, "displaySuiteRunning", TEST_SESSION, TEST_SUITE);
-    private static final PluginClassMethod MANAGER_DISPLAY_REPORT
-            = new PluginClassMethod(MANAGER, "displayReport", TEST_SESSION, REPORT, constClassFinder(boolean.class));
-    private static final PluginClassMethod MANAGER_SESSION_FINISHED
-            = new PluginClassMethod(MANAGER, "sessionFinished", TEST_SESSION);
-    private static final PluginClassMethod TEST_SESSION_ADD_SUITE
-            = new PluginClassMethod(TEST_SESSION, "addSuite", TEST_SUITE);
-    private static final PluginClassMethod TEST_SESSION_GET_REPORT
-            = new PluginClassMethod(TEST_SESSION, "getReport", long.class);
-    private static final PluginClassMethod TEST_SESSION_ADD_TESTCASE
-            = new PluginClassMethod(TEST_SESSION, "addTestCase", TESTCASE);
-    private static final PluginClassMethod TEST_SESSION_SET_RERUN_HANDLER
-            = new PluginClassMethod(TEST_SESSION, "setRerunHandler", RERUN_HANDLER);
-    private static final PluginClassMethod TESTCASE_SET_STATUS
-            = new PluginClassMethod(TESTCASE, "setStatus", STATUS);
-    private static final PluginClassMethod TESTCASE_SET_CLASSNAME
-            = new PluginClassMethod(TESTCASE, "setClassName", String.class);
-    private static final PluginClassMethod TESTCASE_SET_TIMEMILLIS
-            = new PluginClassMethod(TESTCASE, "setTimeMillis", long.class);
-    private static final PluginClassMethod TESTCASE_SET_TROUBLE
-            = new PluginClassMethod(TESTCASE, "setTrouble", TROUBLE);
-    private static final PluginClassMethod TROUBLE_SET_STACKTRACE
-            = new PluginClassMethod(TROUBLE, "setStackTrace", String[].class);
-
-    private static final PluginClassConstructor CONSTR_TEST_SESSION = new PluginClassConstructor(
-            TEST_SESSION,
-            constClassFinder(String.class),
-            constClassFinder(Project.class),
-            SESSION_TYPE);
-
-    private static final PluginClassConstructor CONSTR_TEST_SUITE = new PluginClassConstructor(
-            TEST_SUITE,
-            String.class);
-
-    private static final PluginClassConstructor CONSTR_TESTCASE = new PluginClassConstructor(
-            TESTCASE,
-            constClassFinder(String.class),
-            constClassFinder(String.class),
-            TEST_SESSION);
-
-    private static final PluginClassConstructor CONSTR_TROUBLE = new PluginClassConstructor(
-            TROUBLE,
-            boolean.class);
-
-    private final Object manager;
-    private Object session;
-    private Object suite;
+    private final Manager manager;
+    private TestSession session;
+    private TestSuite suite;
 
     public GradleTestSession() {
-        this.manager = MANAGER_GET_INSTANCE.tryInvoke(null);
+        this.manager = Manager.getInstance();
         this.session = null;
-    }
-
-    private static Object tryCreateNewSession(String name, Project project) {
-        Object sessionType = SESSION_TYPE.tryGetEnumConst("TEST");
-        if (sessionType == null) {
-            return null;
-        }
-
-        return CONSTR_TEST_SESSION.tryCreateInstance(name, project, sessionType);
+        this.suite = null;
     }
 
     private boolean hasManager() {
@@ -120,23 +40,18 @@ public final class GradleTestSession {
             return;
         }
 
-        session = tryCreateNewSession(name, project);
-        if (hasSession()) {
-            // RerunHandler must be added right after creating the session
-            // otherwise it will be ignore by the rerun buttons.
-            if (rerunHandler != null) {
-                Object actualHandler = RerunHandlers.tryCreateRerunHandler(rerunHandler);
-                if (actualHandler != null) {
-                    TEST_SESSION_SET_RERUN_HANDLER.tryInvoke(session, actualHandler);
-                }
-            }
-            MANAGER_TEST_STARTED.tryInvoke(manager, session);
+        session = new TestSession(name, project, TestSession.SessionType.TEST);
+        // RerunHandler must be added right after creating the session
+        // otherwise it will be ignore by the rerun buttons.
+        if (rerunHandler != null) {
+            session.setRerunHandler(rerunHandler);
         }
+        manager.testStarted(session);
     }
 
     public void endSession() {
         if (hasSession()) {
-            MANAGER_SESSION_FINISHED.tryInvoke(manager, session);
+            manager.sessionFinished(session);
         }
     }
 
@@ -145,88 +60,27 @@ public final class GradleTestSession {
             return;
         }
 
-        suite = CONSTR_TEST_SUITE.tryCreateInstance(suiteName);
-        TEST_SESSION_ADD_SUITE.tryInvoke(session, suite);
-        MANAGER_DISPLAY_SUITE_RUNNING.tryInvoke(manager, session, suite);
+        suite = new TestSuite(suiteName);
+        session.addSuite(suite);
+        manager.displaySuiteRunning(session, suite);
     }
 
     public void endSuite(long timeInMillis) {
         if (hasSuite()) {
-            TEST_SESSION_GET_REPORT.tryInvoke(session, timeInMillis);
-            Object report = TEST_SESSION_GET_REPORT.tryInvoke(session, timeInMillis);
+            Report report = session.getReport(timeInMillis);
             if (report != null) {
-                MANAGER_DISPLAY_REPORT.tryInvoke(manager, session, report, true);
+                manager.displayReport(session, report, true);
             }
         }
     }
 
     public Testcase newTestcase(String name) {
         if (!hasSuite()) {
-            return new Testcase(null);
+            throw new IllegalStateException("Must call newSession before this method.");
         }
 
-        return Testcase.create(session, name);
-    }
-
-    public enum Status {
-        PASSED,
-        PENDING,
-        FAILED,
-        ERROR,
-        ABORTED,
-        SKIPPED,
-        PASSEDWITHERRORS,
-        IGNORED;
-    }
-
-    public static final class Testcase {
-        private final Object testcase;
-
-        private Testcase(Object testcase) {
-            this.testcase = testcase;
-        }
-
-        private static Testcase create(Object session, String name) {
-            Object testcase = CONSTR_TESTCASE.tryCreateInstance(name, null, session);
-            Testcase result = new Testcase(testcase);
-
-            if (testcase != null && session != null) {
-                TEST_SESSION_ADD_TESTCASE.tryInvoke(session, testcase);
-            }
-
-            return result;
-        }
-
-        public void setClassName(String name) {
-            if (testcase != null) {
-                TESTCASE_SET_CLASSNAME.tryInvoke(testcase, name);
-            }
-        }
-
-        public void setStatus(Status status) {
-            if (testcase != null) {
-                Object statusValue = STATUS.tryGetEnumConst(status.name());
-                if (statusValue != null) {
-                    TESTCASE_SET_STATUS.tryInvoke(testcase, statusValue);
-                }
-            }
-        }
-
-        public void setTimeMillis(long timeMillis) {
-            if (testcase != null) {
-                TESTCASE_SET_TIMEMILLIS.tryInvoke(testcase, timeMillis);
-            }
-        }
-
-        public void setTrouble(boolean error, String[] stackTrace) {
-            if (testcase != null) {
-                Object trouble = CONSTR_TROUBLE.tryCreateInstance(error);
-                if (trouble != null) {
-                    Object stackTraceCopy = stackTrace != null ? stackTrace.clone() : null;
-                    TROUBLE_SET_STACKTRACE.tryInvoke(trouble, stackTraceCopy);
-                    TESTCASE_SET_TROUBLE.tryInvoke(testcase, trouble);
-                }
-            }
-        }
+        Testcase testcase = new Testcase(name, null, session);
+        session.addTestCase(testcase);
+        return testcase;
     }
 }

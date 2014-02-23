@@ -18,11 +18,13 @@ import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.others.ClassFinder;
-import org.netbeans.gradle.project.others.PluginClassMethod;
 import org.netbeans.gradle.project.others.test.GradleTestSession;
-import org.netbeans.gradle.project.others.test.RerunHandler;
 import org.netbeans.gradle.project.view.GradleActionProvider;
+import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
+import org.netbeans.modules.gsf.testrunner.api.RerunType;
+import org.netbeans.modules.gsf.testrunner.api.Status;
+import org.netbeans.modules.gsf.testrunner.api.Testcase;
+import org.netbeans.modules.gsf.testrunner.api.Trouble;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -35,11 +37,6 @@ public final class TestXmlDisplayer {
     private static final File[] NO_FILES = new File[0];
     private static final String NEW_LINE_PATTERN = Pattern.quote("\n");
     private static final String[] STACKTRACE_PREFIXES = {"at "};
-
-    private static final PluginClassMethod TESTCASE_GET_CLASS_NAME
-            = new PluginClassMethod(GradleTestSession.TESTCASE, "getClassName", new ClassFinder[0]);
-    private static final PluginClassMethod TESTCASE_GET_NAME
-            = new PluginClassMethod(GradleTestSession.TESTCASE, "getName", new ClassFinder[0]);
 
     private final Project project;
     private final JavaExtension javaExt;
@@ -188,21 +185,21 @@ public final class TestXmlDisplayer {
             GradleActionProvider.invokeAction(project, commandStr, rerunContext);
         }
 
-        private List<SpecificTestcase> getSpecificTestcases(Set<?> tests) {
+        private List<SpecificTestcase> getSpecificTestcases(Set<Testcase> tests) {
             List<SpecificTestcase> result = new ArrayList<SpecificTestcase>(tests.size());
-            for (Object test: tests) {
-                Object testName = TESTCASE_GET_NAME.tryInvoke(test);
-                Object testClassName = TESTCASE_GET_CLASS_NAME.tryInvoke(test);
+            for (Testcase test: tests) {
+                String name = test.getName();
+                String testClassName = test.getClassName();
 
-                if (test != null && testClassName != null) {
-                    result.add(new SpecificTestcase(testClassName.toString(), testName.toString()));
+                if (name != null && testClassName != null) {
+                    result.add(new SpecificTestcase(testClassName, testName));
                 }
             }
             return result;
         }
 
         @Override
-        public void rerun(Set<?> tests) {
+        public void rerun(Set<Testcase> tests) {
             if (tests.isEmpty()) {
                 LOGGER.warning("Rerun test requested with an empty test set.");
                 return;
@@ -214,7 +211,7 @@ public final class TestXmlDisplayer {
         }
 
         @Override
-        public boolean enabled(Object type) {
+        public boolean enabled(RerunType type) {
             if (type instanceof Enum) {
                 return "ALL".equals(((Enum<?>)type).name());
             }
@@ -240,7 +237,7 @@ public final class TestXmlDisplayer {
         private boolean startedSuite;
         private long suiteTime;
         private boolean error;
-        private GradleTestSession.Testcase testcase;
+        private Testcase testcase;
         private StringBuilder failureContent;
 
         public TestXmlContentHandler(GradleTestSession session, File reportFile) {
@@ -263,13 +260,13 @@ public final class TestXmlDisplayer {
             startedSuite = true;
         }
 
-        private GradleTestSession.Testcase tryGetTestCase(Attributes attributes) {
+        private Testcase tryGetTestCase(Attributes attributes) {
             String name = attributes.getValue("", "name");
             if (name == null) {
                 return null;
             }
 
-            GradleTestSession.Testcase result = session.newTestcase(name);
+            Testcase result = session.newTestcase(name);
 
             String className = attributes.getValue("", "classname");
             if (className != null) {
@@ -285,12 +282,12 @@ public final class TestXmlDisplayer {
         private void tryAddTestCase(String uri, String localName, String qName, Attributes attributes) {
             if ("testcase".equals(qName)) {
                 testcase = tryGetTestCase(attributes);
-                testcase.setStatus(GradleTestSession.Status.PASSED);
+                testcase.setStatus(Status.PASSED);
 
             }
             else if ("ignored-testcase".equals(qName)) {
                 testcase = tryGetTestCase(attributes);
-                testcase.setStatus(GradleTestSession.Status.IGNORED);
+                testcase.setStatus(Status.IGNORED);
             }
         }
 
@@ -298,16 +295,16 @@ public final class TestXmlDisplayer {
             if (testcase != null) {
                 if ("failure".equals(qName)) {
                     error = false;
-                    testcase.setStatus(GradleTestSession.Status.FAILED);
+                    testcase.setStatus(Status.FAILED);
                 }
                 else if ("error".equals(qName)) {
                     error = true;
-                    testcase.setStatus(GradleTestSession.Status.ERROR);
+                    testcase.setStatus(Status.ERROR);
                 }
                 else {
                     LOGGER.log(Level.WARNING, "Unexpected element in testcase: {0}", qName);
                     error = true;
-                    testcase.setStatus(GradleTestSession.Status.ERROR);
+                    testcase.setStatus(Status.ERROR);
                 }
                 failureContent = new StringBuilder(1024);
             }
@@ -340,7 +337,9 @@ public final class TestXmlDisplayer {
                         break;
                     case 2:
                         if (failureContent != null && testcase != null) {
-                            testcase.setTrouble(error, extractStackTrace(failureContent.toString()));
+                            Trouble trouble = new Trouble(error);
+                            trouble.setStackTrace(extractStackTrace(failureContent.toString()));
+                            testcase.setTrouble(trouble);
                         }
                         failureContent = null;
                         break;

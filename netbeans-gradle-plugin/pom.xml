@@ -183,11 +183,6 @@
             <version>${netbeans.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.netbeans.contrib.yenta</groupId>
-            <artifactId>api</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-modules-gsf-testrunner</artifactId>
             <version>${netbeans.version}</version>
