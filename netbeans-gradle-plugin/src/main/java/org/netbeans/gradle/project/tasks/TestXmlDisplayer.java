@@ -18,7 +18,9 @@ import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.others.test.GradleTestSession;
+import org.netbeans.gradle.project.others.test.NbGradleTestManager;
+import org.netbeans.gradle.project.others.test.NbGradleTestSession;
+import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
 import org.netbeans.modules.gsf.testrunner.api.RerunType;
@@ -123,14 +125,62 @@ public final class TestXmlDisplayer {
         return lines;
     }
 
-    private void displayTestSuite(final File reportFile, SAXParser parser, final GradleTestSession session) throws Exception {
+    private void displayTestSuite(final File reportFile, SAXParser parser, final NbGradleTestSession testSession) throws Exception {
         parser.reset();
 
-        TestXmlContentHandler testXmlContentHandler = new TestXmlContentHandler(session, reportFile);
+        TestXmlContentHandler testXmlContentHandler = new TestXmlContentHandler(testSession, reportFile);
         parser.parse(reportFile, testXmlContentHandler);
 
-        if (testXmlContentHandler.startedSuite) {
-            session.endSuite(testXmlContentHandler.suiteTime);
+        NbGradleTestSuite testSuite = testXmlContentHandler.testSuite;
+        if (testSuite != null) {
+            testSuite.endSuite(testXmlContentHandler.suiteTime);
+        }
+    }
+
+    private SAXParser tryGetSaxParser() {
+        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+        try {
+            return parserFactory.newSAXParser();
+        } catch (ParserConfigurationException ex) {
+            LOGGER.log(Level.WARNING, "Unexpected parser configuration error.", ex);
+            return null;
+        } catch (SAXException ex) {
+            LOGGER.log(Level.WARNING, "Unexpected SAXException.", ex);
+            return null;
+        }
+    }
+
+    private boolean displayTestSession(NbGradleTestSession testSession, File[] reportFiles) {
+        SAXParser parser = tryGetSaxParser();
+        if (parser == null) {
+            return false;
+        }
+
+        for (File reportFile: reportFiles) {
+            try {
+                displayTestSuite(reportFile, parser, testSession);
+            } catch (Exception ex) {
+                LOGGER.log(Level.INFO, "Error while parsing " + reportFile, ex);
+            }
+        }
+
+        return true;
+    }
+
+    private boolean displayReport(
+            Lookup runContext,
+            NbGradleTestManager testManager,
+            File[] reportFiles) {
+
+        NbGradleTestSession testSession = testManager.startSession(
+                getProjectName(),
+                project,
+                new JavaRerunHandler(runContext));
+
+        try {
+            return displayTestSession(testSession, reportFiles);
+        } finally {
+            testSession.endSession();
         }
     }
 
@@ -145,31 +195,8 @@ public final class TestXmlDisplayer {
             return false;
         }
 
-        GradleTestSession session = new GradleTestSession();
-        session.newSession(getProjectName(), project, new JavaRerunHandler(runContext));
-
-        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-        SAXParser parser;
-        try {
-            parser = parserFactory.newSAXParser();
-        } catch (ParserConfigurationException ex) {
-            LOGGER.log(Level.WARNING, "Unexpected parser configuration error.", ex);
-            return false;
-        } catch (SAXException ex) {
-            LOGGER.log(Level.WARNING, "Unexpected SAXException.", ex);
-            return false;
-        }
-
-        for (File reportFile: reportFiles) {
-            try {
-                displayTestSuite(reportFile, parser, session);
-            } catch (Exception ex) {
-                LOGGER.log(Level.INFO, "Error while parsing " + reportFile, ex);
-            }
-        }
-
-        session.endSession();
-        return true;
+        NbGradleTestManager testManager = new NbGradleTestManager();
+        return displayReport(runContext, testManager, reportFiles);
     }
 
     public class JavaRerunHandler implements RerunHandler {
@@ -225,22 +252,22 @@ public final class TestXmlDisplayer {
     }
 
     private class TestXmlContentHandler extends DefaultHandler {
-        private final GradleTestSession session;
+        private final NbGradleTestSession session;
         private final File reportFile;
 
         private int level;
-        private boolean startedSuite;
+        private NbGradleTestSuite testSuite;
         private long suiteTime;
         private boolean error;
         private Testcase testcase;
         private StringBuilder failureContent;
 
-        public TestXmlContentHandler(GradleTestSession session, File reportFile) {
+        public TestXmlContentHandler(NbGradleTestSession session, File reportFile) {
             this.session = session;
             this.reportFile = reportFile;
 
             this.level = 0;
-            this.startedSuite = false;
+            this.testSuite = null;
             this.suiteTime = 0;
             this.error = false;
             this.testcase = null;
@@ -251,17 +278,22 @@ public final class TestXmlDisplayer {
             String name = attributes.getValue("", "name");
             suiteTime = tryReadTimeMillis(attributes.getValue("", "time"), 0);
 
-            session.newSuite(name != null ? name : reportFile.getName());
-            startedSuite = true;
+            String suiteName = name != null ? name : reportFile.getName();
+            testSuite = session.startTestSuite(suiteName);
         }
 
         private Testcase tryGetTestCase(Attributes attributes) {
+            if (testSuite == null) {
+                LOGGER.warning("test suite has not been started but there is a test case to add.");
+                return null;
+            }
+
             String name = attributes.getValue("", "name");
             if (name == null) {
                 return null;
             }
 
-            Testcase result = session.newTestcase(name);
+            Testcase result = testSuite.addTestcase(name);
 
             String className = attributes.getValue("", "classname");
             if (className != null) {
