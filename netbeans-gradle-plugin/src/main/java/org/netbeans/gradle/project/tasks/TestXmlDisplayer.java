@@ -19,6 +19,7 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.others.test.NbGradleTestManager;
+import org.netbeans.gradle.project.others.test.NbGradleTestManagers;
 import org.netbeans.gradle.project.others.test.NbGradleTestSession;
 import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
 import org.netbeans.gradle.project.view.GradleActionProvider;
@@ -196,7 +197,7 @@ public final class TestXmlDisplayer {
             return false;
         }
 
-        NbGradleTestManager testManager = new NbGradleTestManager();
+        NbGradleTestManager testManager = NbGradleTestManagers.getTestManager();
         return displayReport(runContext, testManager, reportFiles);
     }
 
