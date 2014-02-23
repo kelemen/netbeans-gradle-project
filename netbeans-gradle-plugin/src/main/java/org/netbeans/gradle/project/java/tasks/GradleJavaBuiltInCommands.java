@@ -247,11 +247,13 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return value;
     }
 
-    private static ContextAwareCommandCompleteListener displayTestResults(final Project project) {
+    private static ContextAwareCommandCompleteListener displayTestResults(
+            final Project project,
+            final Lookup startContext) {
         return new ContextAwareCommandCompleteListener() {
             @Override
             public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
-                displayTestReports(project, executedCommandContext, error);
+                displayTestReports(project, executedCommandContext, startContext, error);
             }
         };
     }
@@ -267,12 +269,13 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static void displayTestReports(
             Project project,
             ExecutedCommandContext executedCommandContext,
+            Lookup startContext,
             Throwable error) {
 
         String testName = getTestName(executedCommandContext);
 
         TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
-        if (!xmlDisplayer.displayReport()) {
+        if (!xmlDisplayer.displayReport(startContext)) {
             if (error == null) {
                 displayErrorDueToNoTestReportsFound(xmlDisplayer);
             }
@@ -283,7 +286,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new ContextAwareCommandCompleteAction() {
             @Override
             public ContextAwareCommandCompleteListener startCommand(Project project, Lookup commandContext) {
-                return displayTestResults(project);
+                return displayTestResults(project, commandContext);
             }
         };
     }

@@ -137,7 +137,9 @@ public final class TestXmlDisplayer {
         }
     }
 
-    public boolean displayReport() {
+    public boolean displayReport(Lookup runContext) {
+        if (runContext == null) throw new NullPointerException("runContext");
+
         File[] reportFiles = getTestReportFiles();
         if (reportFiles.length == 0) {
             LOGGER.log(Level.WARNING,
@@ -147,7 +149,7 @@ public final class TestXmlDisplayer {
         }
 
         GradleTestSession session = new GradleTestSession();
-        session.newSession(getProjectName(), project, new JavaRerunHandler());
+        session.newSession(getProjectName(), project, new JavaRerunHandler(runContext));
 
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         SAXParser parser;
@@ -176,13 +178,14 @@ public final class TestXmlDisplayer {
     public class JavaRerunHandler implements RerunHandler {
         private final Lookup rerunContext;
 
-        private JavaRerunHandler() {
-            this.rerunContext = Lookups.singleton(new TestTaskName(testName));
+        private JavaRerunHandler(Lookup rerunContext) {
+            this.rerunContext = rerunContext;
         }
 
         @Override
         public void rerun() {
-            GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST, rerunContext);
+            String commandStr = GradleActionProvider.getCommandStr(rerunContext, ActionProvider.COMMAND_TEST);
+            GradleActionProvider.invokeAction(project, commandStr, rerunContext);
         }
 
         private List<SpecificTestcase> getSpecificTestcases(Set<?> tests) {

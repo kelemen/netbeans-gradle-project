@@ -40,6 +40,11 @@ public final class GradleActionProvider implements ActionProvider {
         this.project = project;
     }
 
+    public static String getCommandStr(Lookup context, String defaultCommandStr) {
+        NbCommandString commandStr = context.lookup(NbCommandString.class);
+        return commandStr != null ? commandStr.getCommandString() : defaultCommandStr;
+    }
+
     @Override
     public String[] getSupportedActions() {
         String[] actions = project.getMergedCommandQuery().getSupportedCommands().toArray(new String[0]);
