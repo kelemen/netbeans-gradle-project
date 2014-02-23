@@ -1,7 +1,9 @@
-package org.netbeans.gradle.project.others;
+package org.netbeans.gradle.project.others.test;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import org.netbeans.gradle.project.others.InvocationHandlerFactory;
+import org.netbeans.gradle.project.others.PluginClassImplementation;
 
 public final class RerunHandlers {
     public static Object tryCreateRerunHandler(RerunHandler instance) {

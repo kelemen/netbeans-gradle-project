@@ -1,6 +1,11 @@
-package org.netbeans.gradle.project.others;
+package org.netbeans.gradle.project.others.test;
 
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.others.PluginClass;
+import org.netbeans.gradle.project.others.PluginClassConstructor;
+import org.netbeans.gradle.project.others.PluginClassFactory;
+import org.netbeans.gradle.project.others.PluginClassMethod;
+import org.netbeans.gradle.project.others.PluginEnum;
 
 import static org.netbeans.gradle.project.others.ReflectionHelper.*;
 

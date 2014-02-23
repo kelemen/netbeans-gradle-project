@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.others;
+package org.netbeans.gradle.project.others.test;
 
 import java.util.Set;
 import javax.swing.event.ChangeListener;
