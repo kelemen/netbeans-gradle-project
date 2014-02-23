@@ -13,6 +13,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.java.test.SpecificTestcase;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
@@ -116,12 +117,7 @@ public enum StandardTaskVariable {
     private static VariableValue getMethodReplaceVariable(
             TaskVariableMap variables,
             NbGradleProject project,
-            Lookup actionContext) {
-
-        SingleMethod method = actionContext.lookup(SingleMethod.class);
-        if (method == null) {
-            return VariableValue.NULL_VALUE;
-        }
+            SingleMethod method) {
 
         String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
         if (selectedClass == null) {
@@ -133,6 +129,24 @@ public enum StandardTaskVariable {
         }
 
         return new VariableValue(selectedClass + "." + method.getMethodName());
+    }
+
+    private static VariableValue getMethodReplaceVariable(
+            TaskVariableMap variables,
+            NbGradleProject project,
+            Lookup actionContext) {
+
+        SingleMethod method = actionContext.lookup(SingleMethod.class);
+        if (method != null) {
+            return getMethodReplaceVariable(variables, project, method);
+        }
+
+        SpecificTestcase specificTestcase = actionContext.lookup(SpecificTestcase.class);
+        if (specificTestcase != null) {
+            return new VariableValue(specificTestcase.getTestIncludePattern());
+        }
+
+        return VariableValue.NULL_VALUE;
     }
 
     private static String removeExtension(String filePath) {
