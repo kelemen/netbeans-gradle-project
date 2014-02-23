@@ -21,7 +21,7 @@ import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.tasks.TestTaskName;
+import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;

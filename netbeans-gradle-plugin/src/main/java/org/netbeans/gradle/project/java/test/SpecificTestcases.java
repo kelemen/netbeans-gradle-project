@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.java.test;
 
 import java.util.Collection;
 import java.util.List;

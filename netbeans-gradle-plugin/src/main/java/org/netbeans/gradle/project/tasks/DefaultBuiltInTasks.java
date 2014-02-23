@@ -15,6 +15,7 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.SingleMethod;
 

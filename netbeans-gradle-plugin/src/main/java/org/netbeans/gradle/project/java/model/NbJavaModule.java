@@ -20,7 +20,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.tasks.TestTaskName;
+import org.netbeans.gradle.project.java.test.TestTaskName;
 
 public final class NbJavaModule implements Serializable {
     private static final long serialVersionUID = 1L;

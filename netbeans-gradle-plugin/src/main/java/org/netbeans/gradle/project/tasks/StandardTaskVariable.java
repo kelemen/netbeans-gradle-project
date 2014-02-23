@@ -13,6 +13,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDefMap;
