@@ -212,12 +212,7 @@ public final class TestXmlDisplayer {
 
         @Override
         public boolean enabled(RerunType type) {
-            if (type instanceof Enum) {
-                return "ALL".equals(((Enum<?>)type).name());
-            }
-            else {
-                return false;
-            }
+            return type == RerunType.ALL;
         }
 
         @Override
