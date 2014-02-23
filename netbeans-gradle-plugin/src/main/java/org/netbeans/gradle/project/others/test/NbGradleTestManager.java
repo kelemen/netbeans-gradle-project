@@ -4,6 +4,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.modules.gsf.testrunner.api.Manager;
 import org.netbeans.modules.gsf.testrunner.api.Report;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
+import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
 import org.netbeans.modules.gsf.testrunner.api.TestSession;
 import org.netbeans.modules.gsf.testrunner.api.TestSuite;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
@@ -15,11 +16,18 @@ public final class NbGradleTestManager {
         this.manager = Manager.getInstance();
     }
 
-    public NbGradleTestSession startSession(String name, Project project, RerunHandler rerunHandler) {
+    public NbGradleTestSession startSession(
+            String name,
+            Project project,
+            TestRunnerNodeFactory nodeFactory,
+            RerunHandler rerunHandler) {
+
         if (name == null) throw new NullPointerException("name");
         if (project == null) throw new NullPointerException("project");
 
-        TestSession session = new TestSession(name, project, TestSession.SessionType.TEST);
+        TestSession session = nodeFactory != null
+                ? new TestSession(name, project, TestSession.SessionType.TEST, nodeFactory)
+                : new TestSession(name, project, TestSession.SessionType.TEST);
         // RerunHandler must be added right after creating the session
         // otherwise it will be ignore by the rerun buttons.
         if (rerunHandler != null) {

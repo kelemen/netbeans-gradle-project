@@ -175,6 +175,7 @@ public final class TestXmlDisplayer {
         NbGradleTestSession testSession = testManager.startSession(
                 getProjectName(),
                 project,
+                null,
                 new JavaRerunHandler(runContext));
 
         try {
