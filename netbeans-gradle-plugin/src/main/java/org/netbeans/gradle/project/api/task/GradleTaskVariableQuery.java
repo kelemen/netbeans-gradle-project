@@ -31,6 +31,10 @@ public interface GradleTaskVariableQuery {
      * however, that this method should return relatively quickly, otherwise
      * each Gradle command execution will suffer a performance penalty (due to
      * this method is executed prior the Gradle command).
+     * <P>
+     * Note that {@code Lookup} will always contain an instance of
+     * {@link NbCommandString} which specifies the command string passed to the
+     * {@link org.netbeans.spi.project.ActionProvider ActionProvider} implementation.
      *
      * @param actionContext the lookup provided by NetBeans for this task
      *   execution. If the command being executed is a built-in command, then
@@ -40,6 +44,8 @@ public interface GradleTaskVariableQuery {
      * @return the map mapping the names of variables to their values. The
      *   returned map can be (and recommended to be) lazily constructed. This
      *   method may never return {@code null}.
+     *
+     * @see NbCommandString
      */
     @Nonnull
     public TaskVariableMap getVariableMap(@Nonnull Lookup actionContext);

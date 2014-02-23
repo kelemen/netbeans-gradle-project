@@ -29,6 +29,10 @@ public interface ContextAwareGradleTargetVerifier {
      * is able to execute the associated command, it is recommended to return
      * {@code null}, because in this case the command executor will not need to
      * fetch the version of Gradle.
+     * <P>
+     * Note that {@code Lookup} will always contain an instance of
+     * {@link NbCommandString} which specifies the command string passed to the
+     * {@link org.netbeans.spi.project.ActionProvider ActionProvider} implementation.
      *
      * @param project the Gradle project in which context the command is
      *   executed. This is similar to executing a command from the command line
@@ -38,6 +42,8 @@ public interface ContextAwareGradleTargetVerifier {
      * @return the {@code GradleTargetVerifier} used to check if the given
      *   Gradle target is able to execute the command. May return {@code null}
      *   if any version of Gradle will be able to run the associated command.
+     *
+     * @see NbCommandString
      */
     @Nullable
     public GradleTargetVerifier startCommand(

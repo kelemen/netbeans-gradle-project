@@ -29,6 +29,10 @@ public interface ContextAwareCommandCompleteAction {
      * {@code commandContext} is the {@code Lookup}, NetBeans passes to the
      * {@link org.netbeans.spi.project.ActionProvider}. Otherwise it is an empty
      * {@code Lookup}.
+     * <P>
+     * Note that {@code Lookup} will always contain an instance of
+     * {@link NbCommandString} which specifies the command string passed to the
+     * {@link org.netbeans.spi.project.ActionProvider ActionProvider} implementation.
      *
      * @param project the Gradle project in which context the command is
      *   executed. This is similar to executing a command from the command line
@@ -39,6 +43,8 @@ public interface ContextAwareCommandCompleteAction {
      * @return the {@link ContextAwareCommandFinalizer} which is to be notified
      *   if the Gradle command completes successfully. This method may never
      *   return {@code null}.
+     *
+     * @see NbCommandString
      */
     @Nonnull
     public ContextAwareCommandCompleteListener startCommand(
