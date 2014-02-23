@@ -152,6 +152,15 @@ public final class AsyncGradleTask implements Runnable {
         buildOutput.println();
     }
 
+    private static boolean hasArgumentInTaskNames(List<String> taskNames) {
+        for (String taskName: taskNames) {
+            if (taskName.startsWith("--")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void configureBuildLauncher(
             OperationInitializer targetSetup,
             BuildLauncher buildLauncher,
@@ -170,7 +179,7 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         // HACK: GRADLE-2972
-        if (arguments.contains("--tests")) {
+        if (hasArgumentInTaskNames(taskDef.getTaskNames()) || arguments.contains("--tests")) {
             arguments.addAll(0, taskDef.getTaskNames());
             buildLauncher.withArguments(arguments.toArray(new String[arguments.size()]));
         }
