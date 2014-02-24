@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.output;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,7 +14,7 @@ import org.openide.text.Line;
 import org.openide.windows.OutputEvent;
 import org.openide.windows.OutputListener;
 
-public final class OpenEditorOutputListener implements OutputListener {
+public final class OpenEditorOutputListener implements OutputListener, ActionListener {
     private static final Logger LOGGER = Logger.getLogger(OpenEditorOutputListener.class.getName());
 
     private final EditorCookie editor;
@@ -95,5 +97,10 @@ public final class OpenEditorOutputListener implements OutputListener {
 
         listener.openInEditor();
         return true;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        openInEditor();
     }
 }

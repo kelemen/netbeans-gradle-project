@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.output;
 
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
@@ -46,7 +47,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
         return classPath;
     }
 
-    private OutputListener tryCreateLinkListener(
+    private OpenEditorOutputListener tryCreateLinkListener(
             SourceForBinaryQuery.Result sourceForBinary,
             String path,
             String lineNum) {
@@ -68,7 +69,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
 
     // This method is based on
     // org.netbeans.modules.maven.api.output.OutputUtils.matchStackTraceLine
-    private OutputListener matchStackTraceLine(String line) {
+    private OpenEditorOutputListener matchStackTraceLine(String line) {
         Matcher match = LINE_PATTERN.matcher(line);
         if (!match.matches()) {
             return null;
@@ -98,7 +99,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
         for (SourceForBinaryQueryImplementation query: project.getLookup().lookupAll(SourceForBinaryQueryImplementation.class)) {
             SourceForBinaryQuery.Result sourceForBinary = query.findSourceRoots(url);
             if (sourceForBinary != null) {
-                OutputListener result = tryCreateLinkListener(sourceForBinary, path, lineNum);
+                OpenEditorOutputListener result = tryCreateLinkListener(sourceForBinary, path, lineNum);
                 if (result != null) {
                     return result;
                 }
@@ -110,6 +111,10 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
             return null;
         }
         return tryCreateLinkListener(sourceForBinary, path, lineNum);
+    }
+
+    public ActionListener tryGetOpenEditorAction(String line) {
+        return matchStackTraceLine(line);
     }
 
     @Override
