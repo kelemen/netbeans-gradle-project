@@ -32,6 +32,6 @@ public final class JavaTestRunnerNodeFactory extends TestRunnerNodeFactory {
 
     @Override
     public TestsuiteNode createTestSuiteNode(String suiteName, boolean filtered) {
-        return new TestsuiteNode(suiteName, filtered);
+        return new JavaTestsuiteNode(suiteName, filtered, javaExt);
     }
 }

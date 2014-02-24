@@ -472,6 +472,10 @@ public final class NbStrings {
                 testReportDir);
     }
 
+    public static String getJumpToSource() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.JumpToSource");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
