@@ -316,7 +316,7 @@ public final class TestXmlDisplayer {
             }
             else if ("ignored-testcase".equals(qName)) {
                 testcase = tryGetTestCase(attributes);
-                testcase.setStatus(Status.IGNORED);
+                testcase.setStatus(Status.SKIPPED);
             }
         }
 
