@@ -4,33 +4,47 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
+import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.modules.gsf.testrunner.api.TestsuiteNode;
+import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 public final class JavaTestsuiteNode extends TestsuiteNode {
     private static final String[] EXTENSIONS = {".java", ".groovy", ".scala"};
 
     private final JavaExtension javaExt;
+    private final TestTaskName testTaskName;
 
-    public JavaTestsuiteNode(String suiteName, boolean filtered, JavaExtension javaExt) {
+    public JavaTestsuiteNode(
+            String suiteName,
+            boolean filtered,
+            JavaExtension javaExt,
+            TestTaskName testTaskName) {
+
         super(suiteName, filtered);
 
         if (javaExt == null) throw new NullPointerException("javaExt");
+        if (testTaskName == null) throw new NullPointerException("testTaskName");
 
         this.javaExt = javaExt;
+        this.testTaskName = testTaskName;
     }
 
     @Override
     public Action[] getActions(boolean context) {
         return new Action[] {
             getJumpToSourcesAction(),
+            getRerunTestAction(),
         };
     }
 
@@ -99,6 +113,10 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
         return new JumpToSourcesAction();
     }
 
+    private Action getRerunTestAction() {
+        return new RerunTestAction();
+    }
+
     private void jumpToSourcesNow() {
         FileObject testFile = tryGetTestFile();
         if (testFile == null) {
@@ -122,6 +140,21 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
                     jumpToSourcesNow();
                 }
             });
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private class RerunTestAction extends AbstractAction {
+        public RerunTestAction() {
+            super(NbStrings.getTestClassAgain());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Project project = javaExt.getProject();
+            Lookup context = Lookups.fixed(testTaskName, new SpecificTestClass(suiteName));
+
+            GradleActionProvider.invokeAction(project, ActionProvider.COMMAND_TEST_SINGLE, context);
         }
     }
 }
