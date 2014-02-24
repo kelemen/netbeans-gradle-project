@@ -51,9 +51,9 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
             String path,
             String lineNum) {
 
-        FileObject[] rootz = sourceForBinary.getRoots();
-        for (int i = 0; i < rootz.length; i++) {
-            FileObject javaFo = rootz[i].getFileObject(path);
+        FileObject[] roots = sourceForBinary.getRoots();
+        for (FileObject root: roots) {
+            FileObject javaFo = root.getFileObject(path);
             if (javaFo != null) {
                 int lineInt = -1;
                 try {
