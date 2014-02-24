@@ -61,6 +61,14 @@ public final class StringUtils {
         return splitText(text, " \t\n\r\f");
     }
 
+    public static String getTopMostClassName(String className) {
+        if (className == null) throw new NullPointerException("className");
+        int nestedClassSeparator = className.indexOf('$');
+        return nestedClassSeparator >= 0
+                ? className.substring(0, nestedClassSeparator)
+                : className;
+    }
+
     public static String getResourceAsString(String resourcePath, Charset encoding) throws IOException {
         ClassLoader classLoader = StringUtils.class.getClassLoader();
         if (classLoader == null) {

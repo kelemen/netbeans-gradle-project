@@ -9,6 +9,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.view.GradleActionProvider;
@@ -54,10 +55,7 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
     }
 
     private String getTestClassName() {
-        int nestedClassSeparator = suiteName.indexOf('$');
-        return nestedClassSeparator >= 0
-                ? suiteName.substring(0, nestedClassSeparator)
-                : suiteName;
+        return StringUtils.getTopMostClassName(suiteName);
     }
 
     private static FileObject tryGetTestFile(File root, String relPath) {
