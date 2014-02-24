@@ -13,6 +13,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.java.test.SpecificTestClass;
 import org.netbeans.gradle.project.java.test.SpecificTestcase;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
@@ -39,6 +40,11 @@ public enum StandardTaskVariable {
     SELECTED_CLASS("selected-class", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            SpecificTestClass testClass = actionContext.lookup(SpecificTestClass.class);
+            if (testClass != null) {
+                return new VariableValue(testClass.getTestClassName());
+            }
+
             FileObject file = getFileOfContext(actionContext);
             if (file == null) {
                 return VariableValue.NULL_VALUE;
