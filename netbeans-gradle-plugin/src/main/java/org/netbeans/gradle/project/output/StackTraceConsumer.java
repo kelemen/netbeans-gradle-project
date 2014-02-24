@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.openide.filesystems.FileObject;
@@ -21,26 +21,26 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
 
     private static final Pattern LINE_PATTERN = Pattern.compile("(?:\\[catch\\])?\\sat (.*)\\((.*)\\.java\\:(\\d+)\\)");
 
-    private final NbGradleProject project;
+    private final Project project;
     private final ClassPath classPath;
 
-    public StackTraceConsumer(NbGradleProject project) {
+    public StackTraceConsumer(Project project) {
         if (project == null) throw new NullPointerException("project");
 
         this.project = project;
         this.classPath = getClassPathFromProject(project);
     }
 
-    private static ClassPath getClassPathFromProject(NbGradleProject project) {
+    private static ClassPath getClassPathFromProject(Project project) {
         GradleClassPathProvider classPaths = project.getLookup().lookup(GradleClassPathProvider.class);
         if (classPaths == null) {
-            LOGGER.log(Level.WARNING, "No class path provider for project: {0}", project.getName());
+            LOGGER.log(Level.WARNING, "No class path provider for project: {0}", project.getProjectDirectory());
             return ClassPath.EMPTY;
         }
 
         ClassPath classPath = classPaths.getAllRuntimeClassPaths();
         if (classPath == null) {
-            LOGGER.log(Level.WARNING, "No runtime class path for project: {0}", project.getName());
+            LOGGER.log(Level.WARNING, "No runtime class path for project: {0}", project.getProjectDirectory());
             return ClassPath.EMPTY;
         }
         return classPath;
