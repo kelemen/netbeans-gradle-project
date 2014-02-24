@@ -11,7 +11,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.modules.gsf.testrunner.api.TestMethodNode;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
@@ -101,16 +100,6 @@ public final class JavaTestMethodNode extends TestMethodNode {
         return trouble.getStackTrace();
     }
 
-    private static String getConsumableStackTrace(String line) {
-        if (line.contains(" at ")) {
-            return line;
-        }
-        if (line.startsWith("at ")) {
-            return " " + line;
-        }
-        return " at " + line;
-    }
-
     private ActionListener tryGetOpenEditorActionAtFailure() {
         String[] stackTrace = tryGetStackTrace();
         String qualifiedName = tryGetQualifiedName();
@@ -120,10 +109,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
 
         for (String location: stackTrace) {
             if (location != null && location.contains(qualifiedName)) {
-                String stackTraceLine = getConsumableStackTrace(location);
-
-                StackTraceConsumer stackTraceConsumer = new StackTraceConsumer(javaExt.getProject());
-                return stackTraceConsumer.tryGetOpenEditorAction(stackTraceLine);
+                return JavaCallstackFrameNode.tryGetOpenLocationAction(javaExt.getProject(), location);
             }
         }
 

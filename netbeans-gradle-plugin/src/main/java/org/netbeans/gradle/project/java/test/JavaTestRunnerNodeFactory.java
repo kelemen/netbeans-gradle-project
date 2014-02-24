@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.test;
 
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.modules.gsf.testrunner.api.CallstackFrameNode;
 import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
 import org.netbeans.modules.gsf.testrunner.api.TestsuiteNode;
@@ -27,7 +26,7 @@ public final class JavaTestRunnerNodeFactory extends TestRunnerNodeFactory {
 
     @Override
     public Node createCallstackFrameNode(String frameInfo, String displayName) {
-        return new CallstackFrameNode(frameInfo, displayName);
+        return new JavaCallstackFrameNode(frameInfo, displayName, javaExt);
     }
 
     @Override
