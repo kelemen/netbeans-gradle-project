@@ -8,7 +8,6 @@ import javax.swing.SwingUtilities;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -141,7 +140,7 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     jumpToSourcesNow();
