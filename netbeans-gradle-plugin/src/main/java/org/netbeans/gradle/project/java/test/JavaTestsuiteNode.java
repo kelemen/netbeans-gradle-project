@@ -95,8 +95,7 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
         return null;
     }
 
-    private FileObject tryGetTestFile() {
-        String testClassName = getTestClassName();
+    public static FileObject tryGetTestFile(JavaExtension javaExt, String testClassName) {
         // Note that we always need '/' for FileObject (no matter the file system).
         String relPath = testClassName.replace('.', '/');
 
@@ -107,6 +106,10 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
             }
         }
         return null;
+    }
+
+    private FileObject tryGetTestFile() {
+        return tryGetTestFile(javaExt, getTestClassName());
     }
 
     private Action getJumpToSourcesAction() {
