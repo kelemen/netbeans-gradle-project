@@ -2,11 +2,13 @@ package org.netbeans.gradle.project.java.test;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
@@ -15,6 +17,7 @@ import org.netbeans.modules.gsf.testrunner.api.TestMethodNode;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
 import org.netbeans.modules.gsf.testrunner.api.Trouble;
 import org.netbeans.spi.project.SingleMethod;
+import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -127,9 +130,9 @@ public final class JavaTestMethodNode extends TestMethodNode {
         return null;
     }
 
-    private boolean openTestMethod() {
+    private boolean openTestMethod(AtomicBoolean cancelToken) {
         if (specificTestcase != null) {
-            return ShowTestUtils.openTestMethod(javaExt, specificTestcase);
+            return ShowTestUtils.openTestMethod(cancelToken, javaExt, specificTestcase);
         }
         else {
             return false;
@@ -168,14 +171,16 @@ public final class JavaTestMethodNode extends TestMethodNode {
             super(NbStrings.getJumpToSource());
         }
 
-        private void doActionNow(final ActionEvent e) {
-            if (!openTestMethod()) {
+        private void doActionNow(final AtomicBoolean cancelToken, final ActionEvent e) {
+            if (!openTestMethod(cancelToken)) {
                 final ActionListener openInEditorAction = tryGetOpenEditorActionAtFailure();
                 if (openInEditorAction != null) {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            openInEditorAction.actionPerformed(e);
+                            if (!cancelToken.get()) {
+                                openInEditorAction.actionPerformed(e);
+                            }
                         }
                     });
                 }
@@ -184,10 +189,25 @@ public final class JavaTestMethodNode extends TestMethodNode {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+            // TODO: Replace with CancellationToken in the future.
+            final AtomicBoolean cancelToken = new AtomicBoolean(false);
+            final ProgressHandle progress = ProgressHandleFactory.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    cancelToken.set(true);
+                    return true;
+                }
+            });
+
+            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    doActionNow(e);
+                    progress.start();
+                    try {
+                        doActionNow(cancelToken, e);
+                    } finally {
+                        progress.finish();
+                    }
                 }
             });
         }

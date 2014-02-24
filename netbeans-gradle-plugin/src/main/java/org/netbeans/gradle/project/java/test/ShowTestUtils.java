@@ -5,6 +5,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.element.Element;
@@ -19,12 +20,21 @@ import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.openide.filesystems.FileObject;
+import org.openide.util.RequestProcessor;
 
 public final class ShowTestUtils {
     private static final Logger LOGGER = Logger.getLogger(ShowTestUtils.class.getName());
 
+    public static final RequestProcessor FILE_OPEN_PROCESSOR
+            = new RequestProcessor("Gradle-Project-Processor", 1, true);
+
     // This is mostly copied from the Maven plugin.
-    public static boolean openTestMethod(JavaExtension javaExt, final SpecificTestcase specificTestcase) {
+    public static boolean openTestMethod(
+            final AtomicBoolean cancelToken,
+            JavaExtension javaExt,
+            final SpecificTestcase specificTestcase) {
+
+        if (cancelToken == null) throw new NullPointerException("cancelToken");
         if (javaExt == null) throw new NullPointerException("javaExt");
         if (specificTestcase == null) throw new NullPointerException("specificTestcase");
 
@@ -43,6 +53,10 @@ public final class ShowTestUtils {
             return false;
         }
 
+        if (cancelToken.get()) {
+            return true;
+        }
+
         try {
             javaSource.runUserActionTask(new Task<CompilationController>() {
                 @Override
@@ -56,6 +70,10 @@ public final class ShowTestUtils {
                         if (element != null && element.getKind() == ElementKind.CLASS && element.getSimpleName().contentEquals(fo2open[0].getName())) {
                             List<? extends ExecutableElement> methodElements = ElementFilter.methodsIn(element.getEnclosedElements());
                             for (Element child: methodElements) {
+                                if (cancelToken.get()) {
+                                    return;
+                                }
+
                                 if (child.getSimpleName().contentEquals(specificTestcase.getTestMethodName())) {
                                     long pos = trees.getSourcePositions().getStartPosition(compilationUnitTree, trees.getTree(child));
                                     line[0] = compilationUnitTree.getLineMap().getLineNumber(pos);
@@ -72,10 +90,16 @@ public final class ShowTestUtils {
             return false;
         }
 
+        if (cancelToken.get()) {
+            return true;
+        }
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                OpenEditorOutputListener.tryOpenFile(fo2open[0], (int)line[0]);
+                if (!cancelToken.get()) {
+                    OpenEditorOutputListener.tryOpenFile(fo2open[0], (int)line[0]);
+                }
             }
         });
 
