@@ -65,6 +65,10 @@ public final class OpenEditorOutputListener implements OutputListener {
 
     @Override
     public void outputLineAction(OutputEvent ev) {
+        openInEditor();
+    }
+
+    private void openInEditor() {
         if (lineNumber < 0) {
             editor.open();
         }
@@ -83,4 +87,13 @@ public final class OpenEditorOutputListener implements OutputListener {
     public void outputLineCleared(OutputEvent ev) {
     }
 
+    public static boolean tryOpenFile(FileObject file, int lineNumber) {
+        OpenEditorOutputListener listener = tryCreateListener(file, lineNumber);
+        if (listener == null) {
+            return false;
+        }
+
+        listener.openInEditor();
+        return true;
+    }
 }
