@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -119,12 +120,17 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
     }
 
     private void jumpToSourcesNow() {
-        FileObject testFile = tryGetTestFile();
+        final FileObject testFile = tryGetTestFile();
         if (testFile == null) {
             return;
         }
 
-        OpenEditorOutputListener.tryOpenFile(testFile, -1);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                OpenEditorOutputListener.tryOpenFile(testFile, -1);
+            }
+        });
     }
 
     @SuppressWarnings("serial")
