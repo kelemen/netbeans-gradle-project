@@ -27,7 +27,9 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
+import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskKind;
+import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.test.TestTaskName;
@@ -333,11 +335,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
+    private static SingleExecutionOutputProcessor attachDebuggerListener(final JavaExtension javaExt) {
+        return new SingleExecutionOutputProcessor() {
+            @Override
+            public TaskOutputProcessor startExecution(Project project) {
+                return new DebugTextListener(new AttacherListener(javaExt));
+            }
+        };
+    }
+
     private static CustomCommandAdjuster attachDebugger() {
         return new CustomCommandAdjuster() {
             @Override
             public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setStdOutProcessor(new DebugTextListener(new AttacherListener(javaExt)));
+                customActions.setSingleExecutionStdOutProcessor(attachDebuggerListener(javaExt));
             }
         };
     }
