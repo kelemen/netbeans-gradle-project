@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
@@ -18,14 +21,16 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
+import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.openide.util.Lookup;
 import org.openide.windows.OutputWriter;
 
 public final class GradleTaskDef {
+    private static final Logger LOGGER = Logger.getLogger(GradleTaskDef.class.getName());
+
     public static final class Builder {
         private String commandName;
         private TaskOutputDef outputDef;
@@ -33,8 +38,8 @@ public final class GradleTaskDef {
         private List<String> arguments;
         private List<String> jvmArguments;
 
-        private SmartOutputHandler.Visitor stdOutListener;
-        private SmartOutputHandler.Visitor stdErrListener;
+        private SingleExecutionOutputProcessor stdOutListener;
+        private SingleExecutionOutputProcessor stdErrListener;
         private ContextAwareCommandFinalizer successfulCommandFinalizer;
         private ContextAwareCommandCompleteListener commandFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
@@ -77,8 +82,8 @@ public final class GradleTaskDef {
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = Collections.emptyList();
             this.jvmArguments = Collections.emptyList();
-            this.stdOutListener = NoOpTaskOutputListener.INSTANCE;
-            this.stdErrListener = NoOpTaskOutputListener.INSTANCE;
+            this.stdOutListener = NoOpSingleExecutionOutputProcessor.INSTANCE;
+            this.stdErrListener = NoOpSingleExecutionOutputProcessor.INSTANCE;
             this.nonBlocking = false;
             this.cleanOutput = false;
             this.successfulCommandFinalizer = NoOpSuccessfulFinalizer.INSTANCE;
@@ -205,20 +210,20 @@ public final class GradleTaskDef {
             this.jvmArguments = Collections.unmodifiableList(concatNullSafeLists(this.jvmArguments, toAdd));
         }
 
-        public SmartOutputHandler.Visitor getStdOutListener() {
+        public SingleExecutionOutputProcessor getStdOutListener() {
             return stdOutListener;
         }
 
-        public void setStdOutListener(SmartOutputHandler.Visitor stdOutListener) {
+        public void setStdOutListener(SingleExecutionOutputProcessor stdOutListener) {
             if (stdOutListener == null) throw new NullPointerException("stdOutListener");
             this.stdOutListener = stdOutListener;
         }
 
-        public SmartOutputHandler.Visitor getStdErrListener() {
+        public SingleExecutionOutputProcessor getStdErrListener() {
             return stdErrListener;
         }
 
-        public void setStdErrListener(SmartOutputHandler.Visitor stdErrListener) {
+        public void setStdErrListener(SingleExecutionOutputProcessor stdErrListener) {
             if (stdErrListener == null) throw new NullPointerException("stdErrListener");
             this.stdErrListener = stdErrListener;
         }
@@ -259,8 +264,8 @@ public final class GradleTaskDef {
     private final List<String> taskNames;
     private final List<String> arguments;
     private final List<String> jvmArguments;
-    private final SmartOutputHandler.Visitor stdOutListener;
-    private final SmartOutputHandler.Visitor stdErrListener;
+    private final SingleExecutionOutputProcessor stdOutListener;
+    private final SingleExecutionOutputProcessor stdErrListener;
     private final ContextAwareCommandFinalizer successfulCommandFinalizer;
     private final ContextAwareCommandCompleteListener commandFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
@@ -346,11 +351,19 @@ public final class GradleTaskDef {
         return stringListToArray(jvmArguments);
     }
 
-    public SmartOutputHandler.Visitor getStdOutListener() {
+    public TaskOutputProcessor getStdOutListener(Project project) {
+        return stdOutListener.startExecution(project);
+    }
+
+    public TaskOutputProcessor getStdErrListener(Project project) {
+        return stdErrListener.startExecution(project);
+    }
+
+    public SingleExecutionOutputProcessor getStdOutListener() {
         return stdOutListener;
     }
 
-    public SmartOutputHandler.Visitor getStdErrListener() {
+    public SingleExecutionOutputProcessor getStdErrListener() {
         return stdErrListener;
     }
 
@@ -387,17 +400,48 @@ public final class GradleTaskDef {
         return builder;
     }
 
-    private static SmartOutputHandler.Visitor outputProcessorToLineVisitor(final TaskOutputProcessor processor) {
+    private static SingleExecutionOutputProcessor outputProcessor(
+            final TaskOutputProcessor processor,
+            SingleExecutionOutputProcessor processorFactory) {
+
+        final SingleExecutionOutputProcessor nullSafeProcessorFactory = processorFactory != null
+                ? processorFactory
+                : NoOpSingleExecutionOutputProcessor.INSTANCE;
+
         if (processor == null) {
-            return NoOpTaskOutputListener.INSTANCE;
+            return nullSafeProcessorFactory;
         }
 
-        return new SmartOutputHandler.Visitor() {
+        return new SingleExecutionOutputProcessor() {
             @Override
-            public void visitLine(String line) {
-                processor.processLine(line);
+            public TaskOutputProcessor startExecution(Project project) {
+                return mergedOutputProcessor(
+                        processor,
+                        nullSafeProcessorFactory.startExecution(project));
             }
         };
+    }
+
+    private static TaskOutputProcessor mergedOutputProcessor(TaskOutputProcessor... processors) {
+        final TaskOutputProcessor[] wrappedProcessors = processors.clone();
+        return new TaskOutputProcessor() {
+            @Override
+            public void processLine(String line) {
+                processByAll(wrappedProcessors, line);
+            }
+        };
+    }
+
+    private static void processByAll(TaskOutputProcessor[] processors, String line) {
+        for (TaskOutputProcessor processor: processors) {
+            try {
+                if (processor != null) {
+                    processor.processLine(line);
+                }
+            } catch (Throwable ex) {
+                LOGGER.log(Level.SEVERE, "Unexpected failure while checking a line of the output.", ex);
+            }
+        }
     }
 
     private static Object getTabKeyForCommand(GradleCommandTemplate command) {
@@ -497,11 +541,13 @@ public final class GradleTaskDef {
 
         builder.setNonUserTaskVariables(varReplaceMap);
 
-        TaskOutputProcessor stdOutProcessor = customActions.getStdOutProcessor();
-        builder.setStdOutListener(outputProcessorToLineVisitor(stdOutProcessor));
+        builder.setStdOutListener(outputProcessor(
+                customActions.getStdOutProcessor(),
+                customActions.getSingleExecutionStdOutProcessor()));
 
-        TaskOutputProcessor stdErrProcessor = customActions.getStdErrProcessor();
-        builder.setStdErrListener(outputProcessorToLineVisitor(stdErrProcessor));
+        builder.setStdErrListener(outputProcessor(
+                customActions.getStdErrProcessor(),
+                customActions.getSingleExecutionStdErrProcessor()));
 
         ContextAwareCommandAction contextAwareAction = customActions.getContextAwareAction();
         if (contextAwareAction != null) {
@@ -526,11 +572,20 @@ public final class GradleTaskDef {
         return builder;
     }
 
-    private enum NoOpTaskOutputListener implements SmartOutputHandler.Visitor {
+    private enum NoOpTaskOutputProcessor implements TaskOutputProcessor {
         INSTANCE;
 
         @Override
-        public void visitLine(String line) {
+        public void processLine(String line) {
+        }
+    }
+
+    private enum NoOpSingleExecutionOutputProcessor implements SingleExecutionOutputProcessor {
+        INSTANCE;
+
+        @Override
+        public TaskOutputProcessor startExecution(Project project) {
+            return NoOpTaskOutputProcessor.INSTANCE;
         }
     }
 

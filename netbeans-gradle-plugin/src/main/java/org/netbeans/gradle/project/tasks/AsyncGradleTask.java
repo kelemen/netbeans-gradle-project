@@ -213,11 +213,11 @@ public final class AsyncGradleTask implements Runnable {
 
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
                 tab.getIo().getOutRef(),
-                Arrays.asList(taskDef.getStdOutListener()),
+                Arrays.asList(taskDef.getStdOutListener(project)),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
                 tab.getIo().getErrRef(),
-                Arrays.asList(taskDef.getStdErrListener()),
+                Arrays.asList(taskDef.getStdErrListener(project)),
                 errorConsumers));
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
