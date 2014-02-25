@@ -71,6 +71,8 @@ public final class CustomCommandActions {
         private CommandCompleteListener commandCompleteListener;
         private TaskOutputProcessor stdOutProcessor;
         private TaskOutputProcessor stdErrProcessor;
+        private SingleExecutionOutputProcessor singleExecutionStdOutProcessor;
+        private SingleExecutionOutputProcessor singleExecutionStdErrProcessor;
         private ContextAwareCommandAction contextAwareAction;
         private ContextAwareCommandCompleteAction contextAwareFinalizer;
         private GradleTargetVerifier gradleTargetVerifier;
@@ -102,6 +104,8 @@ public final class CustomCommandActions {
             this.gradleTargetVerifier = null;
             this.contextAwareGradleTargetVerifier = null;
             this.contextAwareCommandArguments = null;
+            this.singleExecutionStdOutProcessor = null;
+            this.singleExecutionStdErrProcessor = null;
         }
 
         /**
@@ -172,11 +176,18 @@ public final class CustomCommandActions {
          * <P>
          * You may set this property to {@code null}, if there is nothing to do
          * after lines are written to the standard output.
+         * <P>
+         * <B>Warning</B>: Note that the passed {@code TaskOutputProcessor}
+         * can be called for multiple tasks (even concurrently), therefore it
+         * should not have a state. If you need state, you might want to use
+         * {@link #setSingleExecutionStdOutProcessor(ContextAwareTaskOutputProcessor)}.
          *
          * @param stdOutProcessor the {@code TaskOutputProcessor} to be called
          *   after each line written to the standard output by the associated
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard output.
+         *
+         * @see #setSingleExecutionStdOutProcessor(ContextAwareTaskOutputProcessor)
          */
         public void setStdOutProcessor(@Nullable TaskOutputProcessor stdOutProcessor) {
             this.stdOutProcessor = stdOutProcessor;
@@ -190,14 +201,61 @@ public final class CustomCommandActions {
          * <P>
          * You may set this property to {@code null}, if there is nothing to do
          * after lines are written to the standard error.
+         * <P>
+         * <B>Warning</B>: Note that the passed {@code TaskOutputProcessor}
+         * can be called for multiple tasks (even concurrently), therefore it
+         * should not have a state. If you need state, you might want to use
+         * {@link #setSingleExecutionStdErrProcessor(ContextAwareTaskOutputProcessor)}.
          *
          * @param stdErrProcessor the {@code TaskOutputProcessor} to be called
          *   after each line written to the standard error by the associated
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard error.
+         *
+         * @see #setSingleExecutionStdErrProcessor(ContextAwareTaskOutputProcessor)
          */
         public void setStdErrProcessor(@Nullable TaskOutputProcessor stdErrProcessor) {
             this.stdErrProcessor = stdErrProcessor;
+        }
+
+        /**
+         * Sets a factory of {@link TaskOutputProcessor} processing the standard
+         * output of the associated Gradle command. The factory is asked to
+         * create a new {@code TaskOutputProcessor} for each execution of the
+         * command.
+         * An invocation of this method overwrites previous invocation of this
+         * method.
+         * <P>
+         * You may set this property to {@code null}, if there is nothing to do
+         * after lines are written to the standard output.
+         *
+         * @param stdOutProcessor the factory of {@link TaskOutputProcessor}
+         *   processing the standard output of the associated Gradle command.
+         *   This argument can be {@code null}, if there is nothing to do after
+         *   lines are written to the standard output.
+         */
+        public void setSingleExecutionStdOutProcessor(@Nullable SingleExecutionOutputProcessor stdOutProcessor) {
+            this.singleExecutionStdOutProcessor = stdOutProcessor;
+        }
+
+        /**
+         * Sets a factory of {@link TaskOutputProcessor} processing the standard
+         * error of the associated Gradle command. The factory is asked to
+         * create a new {@code TaskOutputProcessor} for each execution of the
+         * command.
+         * An invocation of this method overwrites previous invocation of this
+         * method.
+         * <P>
+         * You may set this property to {@code null}, if there is nothing to do
+         * after lines are written to the standard error.
+         *
+         * @param stdErrProcessor factory of {@link TaskOutputProcessor}
+         *   processing the standard error of the associated Gradle command.
+         *   This argument can be {@code null}, if there is nothing to do after
+         *   lines are written to the standard error.
+         */
+        public void setSingleExecutionStdErrProcessor(@Nullable SingleExecutionOutputProcessor stdErrProcessor) {
+            this.singleExecutionStdErrProcessor = stdErrProcessor;
         }
 
         /**
@@ -305,6 +363,8 @@ public final class CustomCommandActions {
     private final CommandCompleteListener commandCompleteListener;
     private final TaskOutputProcessor stdOutProcessor;
     private final TaskOutputProcessor stdErrProcessor;
+    private final SingleExecutionOutputProcessor singleExecutionStdOutProcessor;
+    private final SingleExecutionOutputProcessor singleExecutionStdErrProcessor;
     private final ContextAwareCommandAction contextAwareAction;
     private final ContextAwareCommandCompleteAction contextAwareFinalizer;
     private final GradleTargetVerifier gradleTargetVerifier;
@@ -317,6 +377,8 @@ public final class CustomCommandActions {
         this.commandCompleteListener = builder.commandCompleteListener;
         this.stdOutProcessor = builder.stdOutProcessor;
         this.stdErrProcessor = builder.stdErrProcessor;
+        this.singleExecutionStdOutProcessor = builder.singleExecutionStdOutProcessor;
+        this.singleExecutionStdErrProcessor = builder.singleExecutionStdErrProcessor;
         this.contextAwareAction = builder.contextAwareAction;
         this.contextAwareFinalizer = builder.contextAwareFinalizer;
         this.gradleTargetVerifier = builder.gradleTargetVerifier;
@@ -452,6 +514,36 @@ public final class CustomCommandActions {
     @CheckForNull
     public TaskOutputProcessor getStdErrProcessor() {
         return stdErrProcessor;
+    }
+
+    /**
+     * Returns the factory of {@link TaskOutputProcessor} processing the
+     * standard output of the associated Gradle command or {@code null} if there
+     * is nothing to do after lines are written to the standard output.
+     *
+     * @return the factory of {@link TaskOutputProcessor} processing the
+     *   standard output of the associated Gradle command or {@code null} if
+     *   there is nothing to do after lines are written to the standard output
+     */
+    @Nullable
+    @CheckForNull
+    public SingleExecutionOutputProcessor getSingleExecutionStdOutProcessor() {
+        return singleExecutionStdOutProcessor;
+    }
+
+    /**
+     * Returns the factory of {@link TaskOutputProcessor} processing the
+     * standard error of the associated Gradle command or {@code null} if there
+     * is nothing to do after lines are written to the standard error.
+     *
+     * @return the factory of {@link TaskOutputProcessor} processing the
+     *   standard error of the associated Gradle command or {@code null} if
+     *   there is nothing to do after lines are written to the standard error
+     */
+    @Nullable
+    @CheckForNull
+    public SingleExecutionOutputProcessor getSingleExecutionStdErrProcessor() {
+        return singleExecutionStdErrProcessor;
     }
 
     /**

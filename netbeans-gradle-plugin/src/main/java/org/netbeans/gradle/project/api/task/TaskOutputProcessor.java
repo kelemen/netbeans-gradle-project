@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
  * any context, so should be <I>synchronization transparent</I>.
  *
  * @see CustomCommandActions
+ * @see SingleExecutionOutputProcessor
  */
 public interface TaskOutputProcessor {
     /**
