@@ -31,8 +31,8 @@ public interface GradleProjectExtensionDef<ModelType> {
     /**
      * Returns the unique name of this extension. The name is used to reference
      * the extension when it conflicts with another extension. That is, the
-     * {@link #modelsLoaded(Lookup) modelsLoaded} method may return the name of
-     * an extension to suppress it. The recommended naming convention is to name
+     * {@link #getSuppressedExtensions()} method may return the name of an
+     * extension to suppress it. The recommended naming convention is to name
      * extensions by their fully-qualified class name.
      *
      * @return the unique name of this extension. This method never returns
@@ -72,7 +72,8 @@ public interface GradleProjectExtensionDef<ModelType> {
     /**
      * Returns the type of the model required to activate this extension.
      * That is, the type of the argument passed to the
-     * {@link #activateExtension(Object) activateExtension} method.
+     * {@link GradleProjectExtension2#activateExtension(Object) activateExtension}
+     * method.
      * <P>
      * Also the class loader of the returned class will be used to deserialize
      * parsed models when read from a persistent cache.

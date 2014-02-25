@@ -32,7 +32,7 @@ public interface GradleProjectContextActions {
      * This method is called every time, the context menu is requested to be
      * displayed.
      * <P>
-     * You might annotate (not necessary) implementations of {@link Actions}
+     * You might annotate (not necessary) implementations of {@link Action}
      * with the {@link GradleProjectAction} annotation to give a hint to the
      * Gradle plugin in which group is your action is to be displayed.
      * <P>

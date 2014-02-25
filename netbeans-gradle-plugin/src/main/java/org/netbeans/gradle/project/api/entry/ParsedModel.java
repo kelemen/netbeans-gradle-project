@@ -23,7 +23,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  * @param <ModelType> the type of the parsed model storing the information
  *   retrieved from the evaluated build script of the Gradle project
  *
- * @see GradleProjectExtensionDef#parseModel(org.openide.util.Lookup) GradleProjectExtensionDef.parseModel
+ * @see GradleProjectExtensionDef#parseModel(ModelLoadResult) GradleProjectExtensionDef.parseModel
  */
 public final class ParsedModel<ModelType> {
     private static final ParsedModel<?> EMPTY = new ParsedModel<Object>();

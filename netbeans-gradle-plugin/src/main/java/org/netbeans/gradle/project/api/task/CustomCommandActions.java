@@ -180,14 +180,14 @@ public final class CustomCommandActions {
          * <B>Warning</B>: Note that the passed {@code TaskOutputProcessor}
          * can be called for multiple tasks (even concurrently), therefore it
          * should not have a state. If you need state, you might want to use
-         * {@link #setSingleExecutionStdOutProcessor(ContextAwareTaskOutputProcessor)}.
+         * {@link #setSingleExecutionStdOutProcessor(SingleExecutionOutputProcessor)}.
          *
          * @param stdOutProcessor the {@code TaskOutputProcessor} to be called
          *   after each line written to the standard output by the associated
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard output.
          *
-         * @see #setSingleExecutionStdOutProcessor(ContextAwareTaskOutputProcessor)
+         * @see #setSingleExecutionStdOutProcessor(SingleExecutionOutputProcessor)
          */
         public void setStdOutProcessor(@Nullable TaskOutputProcessor stdOutProcessor) {
             this.stdOutProcessor = stdOutProcessor;
@@ -205,14 +205,14 @@ public final class CustomCommandActions {
          * <B>Warning</B>: Note that the passed {@code TaskOutputProcessor}
          * can be called for multiple tasks (even concurrently), therefore it
          * should not have a state. If you need state, you might want to use
-         * {@link #setSingleExecutionStdErrProcessor(ContextAwareTaskOutputProcessor)}.
+         * {@link #setSingleExecutionStdErrProcessor(SingleExecutionOutputProcessor)}.
          *
          * @param stdErrProcessor the {@code TaskOutputProcessor} to be called
          *   after each line written to the standard error by the associated
          *   Gradle command. This argument can be {@code null}, if there is
          *   nothing to do after lines are written to the standard error.
          *
-         * @see #setSingleExecutionStdErrProcessor(ContextAwareTaskOutputProcessor)
+         * @see #setSingleExecutionStdErrProcessor(SingleExecutionOutputProcessor)
          */
         public void setStdErrProcessor(@Nullable TaskOutputProcessor stdErrProcessor) {
             this.stdErrProcessor = stdErrProcessor;
@@ -329,7 +329,7 @@ public final class CustomCommandActions {
          * The default value for this property is {@code null}.
          * <P>
          * If both this property and
-         * {@link #setContextAwareGradleTargetVerifier(GradleTargetVerifier) ContextAwareGradleTargetVerifier}
+         * {@link #setContextAwareGradleTargetVerifier(ContextAwareGradleTargetVerifier) ContextAwareGradleTargetVerifier}
          * is set, then both of them must allow the command to run. The order in
          * which they are called is not defined but if the first one called
          * denies execution of the command, the second one will not be called.

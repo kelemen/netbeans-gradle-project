@@ -26,7 +26,7 @@ public interface GradleModelDefQuery1 {
      * Returns the models to be requested through the Tooling API of Gradle.
      * <P>
      * The retrieved models will be passed to the
-     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#parseModel(org.openide.util.Lookup) parseModel}
+     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#parseModel(ModelLoadResult) parseModel}
      * method of {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef}.
      *
      * @param gradleTarget the target Gradle environment used to evaluate the

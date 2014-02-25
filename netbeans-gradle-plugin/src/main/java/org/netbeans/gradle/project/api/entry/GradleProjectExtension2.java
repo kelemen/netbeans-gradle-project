@@ -101,7 +101,7 @@ public interface GradleProjectExtension2<ModelType> {
 
     /**
      * Activates this extension from the parsed model retrieved by a previous
-     * call to {@link GradleProjectExtensionDef#parseModel(Lookup) GradleProjectExtensionDef.parseModel}.
+     * call to {@link GradleProjectExtensionDef#parseModel(ModelLoadResult) GradleProjectExtensionDef.parseModel}.
      * <P>
      * Prior activating this extension the associated project's lookup is updated
      * to also contain the content of {@link #getProjectLookup()}.
