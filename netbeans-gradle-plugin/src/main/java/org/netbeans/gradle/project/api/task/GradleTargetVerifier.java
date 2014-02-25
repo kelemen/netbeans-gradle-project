@@ -11,6 +11,7 @@ import org.openide.windows.OutputWriter;
  * {@link ContextAwareCommandFinalizer} will not be executed.
  *
  * @see CustomCommandActions
+ * @see ContextAwareGradleTargetVerifier
  */
 public interface GradleTargetVerifier {
     /**
