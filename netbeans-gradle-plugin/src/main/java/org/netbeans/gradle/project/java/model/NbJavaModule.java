@@ -249,6 +249,13 @@ public final class NbJavaModule implements Serializable {
         return result;
     }
 
+    public JavaTestTask getTestModelByName(String name) {
+        JavaTestTask testTask = tryGetTestModelByName(name);
+        return testTask != null
+                ? testTask
+                : JavaTestTask.getDefaulTestModel(getModuleDir());
+    }
+
     public JavaTestTask tryGetTestModelByName(String name) {
         if (name == null) throw new NullPointerException("name");
 

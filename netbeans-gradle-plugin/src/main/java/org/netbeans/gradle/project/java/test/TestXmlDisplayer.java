@@ -71,11 +71,7 @@ public final class TestXmlDisplayer {
     }
 
     public File tryGetReportDirectory() {
-        JavaTestTask testTask = javaExt.getCurrentModel().getMainModule().tryGetTestModelByName(testName);
-        if (testTask == null) {
-            testTask = JavaTestTask.getDefaulTestModel(javaExt.getProjectDirectoryAsFile());
-        }
-
+        JavaTestTask testTask = javaExt.getCurrentModel().getMainModule().getTestModelByName(testName);
         return testTask.getXmlOutputDir();
     }
 
