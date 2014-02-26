@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.api.entry;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
@@ -25,13 +26,17 @@ public final class EmptyProjectTest {
     private static SampleGradleProject sampleProject;
     private LoadedProject rootProjectRef;
 
+    public static SampleGradleProject createEmptyProject() throws IOException {
+        return SampleGradleProject.createProject("empty-project.zip");
+    }
+
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices(SingleModelExtensionQuery.class);
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
-        sampleProject = SampleGradleProject.createProject("empty-project.zip");
+        sampleProject = createEmptyProject();
     }
 
     @AfterClass
