@@ -44,14 +44,21 @@ public final class TestXmlDisplayer {
     private final Project project;
     private final JavaExtension javaExt;
     private final String testName;
+    private final NbGradleTestManager testManager;
 
     public TestXmlDisplayer(Project project, String testName) {
+        this(project, testName, NbGradleTestManagers.getTestManager());
+    }
+
+    public TestXmlDisplayer(Project project, String testName, NbGradleTestManager testManager) {
         if (project == null) throw new NullPointerException("project");
         if (testName == null) throw new NullPointerException("testName");
+        if (testManager == null) throw new NullPointerException("testManager");
 
         this.project = project;
         this.testName = testName;
         this.javaExt = JavaExtension.getJavaExtensionOfProject(project);
+        this.testManager = testManager;
     }
 
     private String getProjectName() {
@@ -168,11 +175,7 @@ public final class TestXmlDisplayer {
         return true;
     }
 
-    private boolean displayReport(
-            Lookup runContext,
-            NbGradleTestManager testManager,
-            File[] reportFiles) {
-
+    private boolean displayReport(Lookup runContext, File[] reportFiles) {
         NbGradleTestSession testSession = testManager.startSession(
                 getProjectName(),
                 project,
@@ -197,8 +200,7 @@ public final class TestXmlDisplayer {
             return false;
         }
 
-        NbGradleTestManager testManager = NbGradleTestManagers.getTestManager();
-        return displayReport(runContext, testManager, reportFiles);
+        return displayReport(runContext, reportFiles);
     }
 
     public class JavaRerunHandler implements RerunHandler {
