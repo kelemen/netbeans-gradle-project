@@ -202,7 +202,7 @@ public final class NbGradleProject implements Project {
 
             @Override
             public Lookup getLookupAndActivate() {
-                loadProject(true, true);
+                ensureLoadRequested();
                 return combinedAllLookups;
             }
         }));
@@ -336,6 +336,10 @@ public final class NbGradleProject implements Project {
             GradleCacheSourceForBinaryQuery.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();
         }
+    }
+
+    public void ensureLoadRequested() {
+        loadProject(true, true);
     }
 
     private void loadProject(final boolean onlyIfNotLoaded, final boolean mayUseCache) {

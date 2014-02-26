@@ -57,7 +57,7 @@ import static org.netbeans.spi.project.ActionProvider.*;
  */
 public class SimpleJavaProjectTest {
     private static SampleGradleProject sampleProject;
-    private LoadedProject rootProjectRef;
+    private NbGradleProject rootProject;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -81,27 +81,23 @@ public class SimpleJavaProjectTest {
     @Before
     public void setUp() throws Exception {
         Thread.interrupted();
-        rootProjectRef = sampleProject.loadProject("gradle-sample");
+        rootProject = sampleProject.loadProject("gradle-sample");
 
-        NbGradleProject project = rootProjectRef.getProject();
-
-        GradleTestExtension ext = project.getLookup().lookup(GradleTestExtension.class);
+        GradleTestExtension ext = rootProject.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
 
-        if (!project.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
+        if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
     }
 
     @After
     public void tearDown() throws Exception {
-        rootProjectRef.close();
-        rootProjectRef = null;
     }
 
     @Test
     public void testProjectServiceProvider() throws Exception {
-        Project project = rootProjectRef.getProject();
+        Project project = rootProject;
 
         MyCustomLookupEntry entry = project.getLookup().lookup(MyCustomLookupEntry.class);
         assertNotNull("Lookup must contain entry: MyCustomLookupEntry", entry);
@@ -112,7 +108,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testClassPath() throws Exception {
-        NbGradleProject project = rootProjectRef.getProject();
+        NbGradleProject project = rootProject;
 
         FileObject foProjectSrc = project.getProjectDirectory().getFileObject("src/main/java/org/netbeans/gradle/Sample.java");
 
@@ -133,7 +129,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testSingleCommandsEnabledForJava() throws Exception {
-        NbGradleProject project = rootProjectRef.getProject();
+        NbGradleProject project = rootProject;
 
         ActionProvider actionProvider = project.getLookup().lookup(ActionProvider.class);
         Set<String> supportedActions = new HashSet<String>(Arrays.asList(actionProvider.getSupportedActions()));
@@ -190,8 +186,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testQueriesNotIncludedMultipleTimes() {
-        NbGradleProject project = rootProjectRef.getProject();
-        Lookup lookup = project.getLookup();
+        Lookup lookup = rootProject.getLookup();
 
         checkExactlyOnce(lookup, LogicalViewProvider.class);
         checkExactlyOnce(lookup, ProjectInformation.class);
@@ -217,8 +212,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testExtensionQueriesAreNotOnLookup() {
-        NbGradleProject project = rootProjectRef.getProject();
-        Lookup lookup = project.getLookup();
+        Lookup lookup = rootProject.getLookup();
 
         checkNotOnLookup(lookup, JavaExtensionNodes.class);
         checkNotOnLookup(lookup, JavaProjectContextActions.class);
@@ -227,7 +221,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testHasProperNodes() throws Exception {
-        final NbGradleProject project = rootProjectRef.getProject();
+        final NbGradleProject project = rootProject;
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
@@ -262,7 +256,7 @@ public class SimpleJavaProjectTest {
 
     @Test
     public void testJavadocActionIsAdded() throws Exception {
-        final NbGradleProject project = rootProjectRef.getProject();
+        final NbGradleProject project = rootProject;
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override

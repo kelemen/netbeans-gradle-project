@@ -64,33 +64,37 @@ public final class SampleGradleProject implements Closeable {
         return result.getCanonicalFile();
     }
 
-    @SuppressWarnings("UseSpecificCatch")
-    public LoadedProject loadProject(String... projectPath) throws IOException {
+    public Project getUnloadedProject(String... projectPath) throws IOException {
         File projectDir = subDir(tempFolder, projectPath);
-        final Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(projectDir);
 
+        Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(projectDir);
         try {
             Project project = ProjectManager.getDefault().findProject(FileUtil.toFileObject(projectDir));
             if (project == null) {
-                throw new IOException("Project does not exist: " + Arrays.toString(projectPath));
+                throw new IllegalArgumentException("Project does not exist: " + Arrays.toString(projectPath));
             }
+
+            return project;
+        } catch (IOException ex) {
+            throw Exceptions.throwUnchecked(ex);
+        } finally {
+            safeToOpenRef.close();
+        }
+    }
+
+    @SuppressWarnings("UseSpecificCatch")
+    public NbGradleProject loadProject(String... projectPath) throws IOException {
+        try {
+            Project project = getUnloadedProject(projectPath);
 
             final NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
             if (gradleProject == null) {
-                throw new IOException("Not a Gradle project: " + Arrays.toString(projectPath));
+                throw new IllegalArgumentException("Not a Gradle project: " + Arrays.toString(projectPath));
             }
 
-            return new LoadedProject() {
-                @Override
-                public NbGradleProject getProject() {
-                    return gradleProject;
-                }
+            gradleProject.ensureLoadRequested();
 
-                @Override
-                public void close() throws IOException {
-                    safeToOpenRef.close();
-                }
-            };
+            return gradleProject;
         } catch (Throwable ex) {
             throw Exceptions.throwUnchecked(ex);
         }

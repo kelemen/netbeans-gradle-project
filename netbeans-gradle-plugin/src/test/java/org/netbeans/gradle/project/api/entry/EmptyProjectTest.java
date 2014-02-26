@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
 
 public final class EmptyProjectTest {
     private static SampleGradleProject sampleProject;
-    private LoadedProject rootProjectRef;
+    private NbGradleProject rootProject;
 
     public static SampleGradleProject createEmptyProject() throws IOException {
         return SampleGradleProject.createProject("empty-project.zip");
@@ -53,29 +53,23 @@ public final class EmptyProjectTest {
     public void setUp() throws Exception {
         Thread.interrupted();
 
-        rootProjectRef = sampleProject.loadProject("empty-project");
+        rootProject = sampleProject.loadProject("empty-project");
 
-        NbGradleProject project = rootProjectRef.getProject();
-
-        JavaDisablerExtension ext = project.getLookup().lookup(JavaDisablerExtension.class);
+        JavaDisablerExtension ext = rootProject.getLookup().lookup(JavaDisablerExtension.class);
         assertNotNull(ext);
 
-        if (!project.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
+        if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
     }
 
     @After
     public void tearDown() throws Exception {
-        rootProjectRef.close();
-        rootProjectRef = null;
     }
 
     @Test
     public void testOldAPIFetchedModel() throws Exception {
-        NbGradleProject project = rootProjectRef.getProject();
-
-        SingleModelExtension extension = project.getLookup().lookup(SingleModelExtension.class);
+        SingleModelExtension extension = rootProject.getLookup().lookup(SingleModelExtension.class);
         assertNotNull(extension);
 
         Object model = extension.getModel(60, TimeUnit.SECONDS);
@@ -84,15 +78,13 @@ public final class EmptyProjectTest {
 
     @Test
     public void testDisabledJavaExtension() throws Exception {
-        NbGradleProject project = rootProjectRef.getProject();
-
-        GradleClassPathProvider cpProvider = project.getLookup().lookup(GradleClassPathProvider.class);
+        GradleClassPathProvider cpProvider = rootProject.getLookup().lookup(GradleClassPathProvider.class);
         assertNull("JavaExtension must be disabled and its lookup must not be visible.", cpProvider);
     }
 
     @Test
     public void testNoDependenciesNode() throws Exception {
-        final NbGradleProject project = rootProjectRef.getProject();
+        final NbGradleProject project = rootProject;
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
@@ -124,7 +116,7 @@ public final class EmptyProjectTest {
 
     @Test
     public void testNoJavaActionsAreAdded() throws Exception {
-        final NbGradleProject project = rootProjectRef.getProject();
+        final NbGradleProject project = rootProject;
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
