@@ -228,7 +228,7 @@ public class TestXmlDisplayerTest {
         }
 
         private void verifySession(ExpectedSession expectedSession) {
-            assertNotNull("Expected session with name " + name);
+            assertNotNull("Expected session with name " + name, expectedSession);
 
             verifyNoErrors();
 
@@ -286,7 +286,7 @@ public class TestXmlDisplayerTest {
         }
 
         private void verifySuite(ExpectedSuite expectedSuite) {
-            assertNotNull("Expected suite with name " + suiteName);
+            assertNotNull("Expected suite with name " + suiteName, expectedSuite);
 
             verifyNoErrors();
 
