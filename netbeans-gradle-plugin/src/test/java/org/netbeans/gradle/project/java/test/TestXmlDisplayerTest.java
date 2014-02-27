@@ -468,7 +468,7 @@ public class TestXmlDisplayerTest {
             assertEquals(message("Name"), name, testcase.getName());
             assertEquals(message("ClassName"), testClassName, testcase.getClassName());
             assertEquals(message("Status"), status, testcase.getStatus());
-            assertEquals(message("Status"), timeMillis, testcase.getTimeMillis());
+            assertEquals(message("TimeMillis"), timeMillis, testcase.getTimeMillis());
         }
     }
 
