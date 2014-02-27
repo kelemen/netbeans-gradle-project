@@ -2,23 +2,22 @@ package org.netbeans.gradle.project.java.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.InOrder;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.api.entry.EmptyProjectTest;
 import org.netbeans.gradle.project.api.entry.SampleGradleProject;
@@ -36,7 +35,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class TestXmlDisplayerTest {
     private static final String PROJECT_NAME = "empty-project";
@@ -112,62 +110,9 @@ public class TestXmlDisplayerTest {
         ZipUtils.unzipResource(getResourcePath(testResultsZip), testResultsDir);
     }
 
-    private NbGradleTestSuite mockSuite(final List<? super Testcase> testcases) {
-        final TestSession dummySession
-                = new TestSession("dummy-session", rootProject, TestSession.SessionType.TEST);
-
-        NbGradleTestSuite testSuite = mock(NbGradleTestSuite.class);
-        stub(testSuite.addTestcase(any(String.class))).toAnswer(new Answer<Testcase>() {
-            @Override
-            public Testcase answer(InvocationOnMock invocation) throws Throwable {
-                String name = invocation.getArguments()[0].toString();
-                Testcase result = new Testcase(name, null, dummySession);
-                testcases.add(result);
-                return result;
-            }
-        });
-        return testSuite;
-    }
-
     private static String getExpectedSessionName(Project project) {
         ProjectInformation projectInfo = ProjectUtils.getInformation(project);
         return projectInfo.getDisplayName();
-    }
-
-    private static Map<String, Testcase> toTestcaseMap(Collection<Testcase> testcases) {
-        Map<String, Testcase> result = CollectionUtils.newHashMap(testcases.size());
-        for (Testcase testcase: testcases) {
-            if (result.put(testcase.getName(), testcase) != null) {
-                fail("Test case has been added multiple times: " + testcase.getName());
-            }
-        }
-        return result;
-    }
-
-    private static boolean needsStackTrace(Status status) {
-        return status == Status.ERROR || status == Status.FAILED;
-    }
-
-    private static Testcase getTestcase(
-            Map<String, Testcase> testcases,
-            String name,
-            Status expectedStatus,
-            long expectedTime) {
-
-        Testcase result = testcases.get(name);
-        assertNotNull("Must have testcase: " + name, result);
-        Status status = result.getStatus();
-        assertEquals("Status for " + name, expectedStatus, status);
-        assertEquals(expectedTime, result.getTimeMillis());
-
-        if (needsStackTrace(status)) {
-            assertNotNull(result.getTrouble());
-        }
-        else {
-            assertNull(result.getTrouble());
-        }
-
-        return result;
     }
 
     private static boolean contains(String[] lines, String pattern) {
@@ -179,70 +124,356 @@ public class TestXmlDisplayerTest {
         return false;
     }
 
-    private static void verifyTrouble(Testcase testcase, String expectedLine) {
-        String name = testcase.getName();
-        Trouble trouble = testcase.getTrouble();
-        assertFalse(name + ".error", trouble.isError());
-        assertTrue(name + "stackTrace[" + expectedLine + "]", contains(trouble.getStackTrace(), expectedLine));
-    }
-
     @Test
     public void testSingleSessionWithAllKindsOfResults() throws IOException {
         initTestResultsDir(rootProject, "test-results1.zip");
 
-        List<Testcase> testcases = new LinkedList<Testcase>();
+        ExpectedSession session1 = new ExpectedSession(rootProject);
+        ExpectedSuite suite1 = session1.addSuite("mypackage.MyIntegTest", 109);
 
-        NbGradleTestManager testManager = mock(NbGradleTestManager.class);
-        NbGradleTestSession testSession = mock(NbGradleTestSession.class);
-        NbGradleTestSuite testSuite = mockSuite(testcases);
+        suite1.addFailed("testMyIntegrationFailure1", 3);
+        suite1.addFailed("testMyIntegrationFailure2", 0);
+        suite1.addPassed("testMyIntegrationSuccess1", 21);
+        suite1.addPassed("testMyIntegrationSuccess2", 0);
+        suite1.addSkipped("testSkipped", 84);
 
-        stub(testManager.startSession(
-                any(String.class),
-                any(Project.class),
-                any(TestRunnerNodeFactory.class),
-                any(RerunHandler.class))).toReturn(testSession);
-
-        stub(testSession.startTestSuite(any(String.class))).toReturn(testSuite);
-
-        String testClassName = "mypackage.MyIntegTest";
+        MockManager mockManager = new MockManager();
         TestXmlDisplayer testXmlDisplayer = new TestXmlDisplayer(
                 rootProject,
                 TEST_NAME,
-                testManager);
+                mockManager);
 
-        verifyZeroInteractions(testManager, testSession, testSuite);
         testXmlDisplayer.displayReport(Lookup.EMPTY);
 
-        InOrder inOrder = inOrder(testManager, testSession);
-        inOrder.verify(testManager).startSession(
-                eq(getExpectedSessionName(rootProject)),
-                same(rootProject),
-                notNull(TestRunnerNodeFactory.class),
-                notNull(RerunHandler.class));
-        inOrder.verify(testSession).startTestSuite(eq(testClassName));
-        inOrder.verify(testSession).endSession();
-        inOrder.verifyNoMoreInteractions();
+        mockManager.verifySessions(session1);
+    }
 
-        verify(testSuite).endSuite(eq(109L));
+    private static final class MockManager extends ErrorCollector implements NbGradleTestManager {
+        private final Collection<MockSession> sessions;
 
-        Map<String, Testcase> testcaseMap = toTestcaseMap(testcases);
-        assertEquals(5, testcaseMap.size());
+        public MockManager() {
+            super("MockManager");
+            this.sessions = new ConcurrentLinkedQueue<MockSession>();
+        }
 
-        Testcase case1 = getTestcase(testcaseMap, "testMyIntegrationFailure1", Status.FAILED, 3);
-        assertEquals(testClassName, case1.getClassName());
-        verifyTrouble(case1, "mypackage.MyIntegTest.testMyIntegrationFailure1");
+        @Override
+        public NbGradleTestSession startSession(
+                String name,
+                Project project,
+                TestRunnerNodeFactory nodeFactory,
+                RerunHandler rerunHandler) {
 
-        Testcase case2 = getTestcase(testcaseMap, "testMyIntegrationFailure2", Status.FAILED, 0);
-        assertEquals(testClassName, case2.getClassName());
-        verifyTrouble(case2, "mypackage.MyIntegTest.testMyIntegrationFailure2");
+            MockSession session = new MockSession(name, project);
+            sessions.add(session);
 
-        Testcase case3 = getTestcase(testcaseMap, "testMyIntegrationSuccess1", Status.PASSED, 21);
-        assertEquals(testClassName, case3.getClassName());
+            return session;
+        }
 
-        Testcase case4 = getTestcase(testcaseMap, "testMyIntegrationSuccess2", Status.PASSED, 0);
-        assertEquals(testClassName, case4.getClassName());
+        public void verifySessions(ExpectedSession... expectedSessions) {
+            verifyNoErrors();
 
-        Testcase case5 = getTestcase(testcaseMap, "testSkipped", Status.SKIPPED, 84);
-        assertEquals(testClassName, case5.getClassName());
+            MockSession[] actualSessions = sessions.toArray(new MockSession[0]);
+
+            int length = Math.min(actualSessions.length, expectedSessions.length);
+            for (int i = 0; i < length; i++) {
+                actualSessions[i].verifySession(expectedSessions[i]);
+            }
+
+            assertEquals("Session count", expectedSessions.length, actualSessions.length);
+        }
+    }
+
+    private static final class MockSession extends ErrorCollector implements NbGradleTestSession {
+        public final String name;
+        public final Project project;
+        private final TestSession gsfSession;
+
+        private final Collection<MockSuite> suites;
+        private final AtomicBoolean closed;
+
+        public MockSession(String name, Project project) {
+            super("MockSession." + name);
+
+            this.name = name;
+            this.project = project;
+            this.gsfSession = new TestSession(name, project, TestSession.SessionType.TEST);
+            this.suites = new ConcurrentLinkedQueue<MockSuite>();
+            this.closed = new AtomicBoolean(false);
+        }
+
+        @Override
+        public NbGradleTestSuite startTestSuite(String suiteName) {
+            MockSuite suite = new MockSuite(gsfSession, suiteName);
+            suites.add(suite);
+
+            return suite;
+        }
+
+        @Override
+        public void endSession() {
+            if (closed.getAndSet(true)) {
+                addStateError("endSession called multiple times.");
+            }
+            else {
+                for (MockSuite suite: suites) {
+                    suite.mustHaveBeenClosed("parent session has been closed");
+                }
+            }
+        }
+
+        public void mustHaveBeenClosed(String reason) {
+            if (!closed.get()) {
+                addStateError("This session must have been closed because "+ reason);
+            }
+        }
+
+        private void verifySession(ExpectedSession expectedSession) {
+            assertNotNull("Expected session with name " + name);
+
+            verifyNoErrors();
+
+            assertEquals(expectedSession.sessionName, name);
+            assertSame(expectedSession.project, project);
+
+            for (MockSuite suite: suites) {
+                ExpectedSuite expectedSuite = expectedSession.suites.get(suite.suiteName);
+                suite.verifySuite(expectedSuite);
+            }
+
+            assertEquals("Suite count", expectedSession.suites.size(), suites.size());
+            assertTrue("closed", closed.get());
+        }
+    }
+
+    private static final class MockSuite extends ErrorCollector implements NbGradleTestSuite {
+        private final TestSession parent;
+        private final String suiteName;
+        private final AtomicBoolean closed;
+
+        private final Collection<Testcase> testcases;
+        private volatile long elapsedTimeInMillis;
+
+        public MockSuite(TestSession parent, String suiteName) {
+            super("MockSuite." + suiteName);
+
+            this.parent = parent;
+            this.suiteName = suiteName;
+            this.closed = new AtomicBoolean(false);
+            this.testcases = new ConcurrentLinkedQueue<Testcase>();
+        }
+
+        @Override
+        public Testcase addTestcase(String name) {
+            Testcase testcase = new Testcase(name, null, parent);
+            testcases.add(testcase);
+            return testcase;
+        }
+
+        @Override
+        public void endSuite(long elapsedTimeInMillis) {
+            if (closed.getAndSet(true)) {
+                addStateError("endSuite called multiple times.");
+            }
+            else {
+                this.elapsedTimeInMillis = elapsedTimeInMillis;
+            }
+        }
+
+        public void mustHaveBeenClosed(String reason) {
+            if (!closed.get()) {
+                addStateError("This suite must have been closed because "+ reason);
+            }
+        }
+
+        private void verifySuite(ExpectedSuite expectedSuite) {
+            assertNotNull("Expected suite with name " + suiteName);
+
+            verifyNoErrors();
+
+            assertEquals(expectedSuite.suiteName, suiteName);
+
+            for (Testcase testcase: testcases) {
+                String testcaseName = testcase.getName();
+                TestcaseVerifier verifier = expectedSuite.verifiers.get(testcaseName);
+                assertNotNull("Expected test case " + testcaseName, verifier);
+                verifier.verifyTestCase(testcase);
+            }
+
+            assertEquals("suiteTimeMillis", expectedSuite.suiteTimeMillis, elapsedTimeInMillis);
+            assertEquals("Testcase count", expectedSuite.verifiers.size(), testcases.size());
+            assertTrue("closed", closed.get());
+        }
+    }
+
+    private static abstract class ErrorCollector {
+        private final String name;
+        private final Collection<Throwable> errors;
+
+        public ErrorCollector(String name) {
+            this.name = name;
+            this.errors = new ConcurrentLinkedQueue<Throwable>();
+        }
+
+        public final void addError(Throwable error) {
+            errors.add(error);
+        }
+
+        protected final String errorMessage(String message) {
+            return name + ": " + message;
+        }
+
+        public final void addArgumentError(String message) {
+            addError(new IllegalArgumentException(errorMessage(message)));
+        }
+
+        public final void addStateError(String message) {
+            addError(new IllegalStateException(errorMessage(message)));
+        }
+
+        public final void verifyNoErrors() {
+            List<Throwable> currentErrors = new ArrayList<Throwable>(errors);
+            if (currentErrors.isEmpty()) {
+                return;
+            }
+
+            Throwable toThrow = currentErrors.get(0);
+            for (Throwable ex: currentErrors) {
+                ex.printStackTrace(System.err);
+            }
+
+            throw new AssertionError(toThrow);
+        }
+    }
+
+    private static final class ExpectedSession {
+        private final String sessionName;
+        private final Project project;
+
+        private final Map<String, ExpectedSuite> suites;
+
+        public ExpectedSession(Project project) {
+            this.project = project;
+            this.sessionName = getExpectedSessionName(project);
+            this.suites = new HashMap<String, ExpectedSuite>();
+        }
+
+        public ExpectedSuite addSuite(String suiteName, long suiteTimeMillis) {
+            ExpectedSuite suite = new ExpectedSuite(suiteName, suiteTimeMillis);
+            suites.put(suite.getSuiteName(), suite);
+
+            return suite;
+        }
+    }
+
+    private static final class ExpectedSuite {
+        private final String suiteName;
+        private final long suiteTimeMillis;
+        private final Map<String, TestcaseVerifier> verifiers;
+
+        public ExpectedSuite(String suiteName, long suiteTimeMillis) {
+            this.suiteName = suiteName;
+            this.verifiers = new HashMap<String, TestcaseVerifier>();
+            this.suiteTimeMillis = suiteTimeMillis;
+        }
+
+        public String getSuiteName() {
+            return suiteName;
+        }
+
+        private <T extends AbstractTestcaseVerifier> T returnVerifier(
+                T verifier,
+                Status status,
+                long timeMillis) {
+
+            verifier.status = status;
+            verifier.timeMillis = timeMillis;
+
+            verifiers.put(verifier.getName(), verifier);
+            return verifier;
+        }
+
+        public NotFailedTestCaseVerifier addSkipped(String name, long timeMillis) {
+            NotFailedTestCaseVerifier verifier = new NotFailedTestCaseVerifier(name, suiteName);
+            return returnVerifier(verifier, Status.SKIPPED, timeMillis);
+        }
+
+        public NotFailedTestCaseVerifier addPassed(String name, long timeMillis) {
+            NotFailedTestCaseVerifier verifier = new NotFailedTestCaseVerifier(name, suiteName);
+            return returnVerifier(verifier, Status.PASSED, timeMillis);
+        }
+
+        public FailedTestCaseVerifier addFailed(String name, long timeMillis) {
+            FailedTestCaseVerifier verifier = new FailedTestCaseVerifier(name, suiteName);
+            return returnVerifier(verifier, Status.FAILED, timeMillis);
+        }
+    }
+
+    private static final class NotFailedTestCaseVerifier extends AbstractTestcaseVerifier {
+        public NotFailedTestCaseVerifier(String name, String testClassName) {
+            super(name, testClassName);
+        }
+
+        @Override
+        public void verifyTestCase(Testcase testcase) {
+            super.verifyTestCase(testcase);
+
+            assertNull(message("Trouble"), testcase.getTrouble());
+        }
+
+    }
+
+    private static final class FailedTestCaseVerifier extends AbstractTestcaseVerifier {
+        public boolean error = false;
+        public String expectedStackTraceLine = testClassName + "." + getName();
+
+        public FailedTestCaseVerifier(String name, String testClassName) {
+            super(name, testClassName);
+        }
+
+        @Override
+        public void verifyTestCase(Testcase testcase) {
+            super.verifyTestCase(testcase);
+
+            Trouble trouble = testcase.getTrouble();
+            assertNotNull(message("Trouble"), trouble);
+
+            assertTrue(message("StackTrace[" + expectedStackTraceLine + "]"),
+                    contains(trouble.getStackTrace(), expectedStackTraceLine));
+        }
+    }
+
+    private static abstract class AbstractTestcaseVerifier implements TestcaseVerifier {
+        public final String name;
+        public final String testClassName;
+
+        public Status status;
+        public long timeMillis;
+
+        public AbstractTestcaseVerifier(String name, String testClassName) {
+            this.name = name;
+            this.testClassName = testClassName;
+        }
+
+        @Override
+        public final String getName() {
+            return name;
+        }
+
+        protected final String message(String property) {
+            return property + " of " + name;
+        }
+
+        @Override
+        public void verifyTestCase(Testcase testcase) {
+            assertEquals(message("Name"), name, testcase.getName());
+            assertEquals(message("ClassName"), testClassName, testcase.getClassName());
+            assertEquals(message("Status"), status, testcase.getStatus());
+            assertEquals(message("Status"), timeMillis, testcase.getTimeMillis());
+        }
+    }
+
+    private static interface TestcaseVerifier {
+        public String getName();
+        public void verifyTestCase(Testcase testcase);
     }
 }
