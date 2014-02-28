@@ -78,6 +78,27 @@ public final class GlobalGradleSettings {
         return namespace == null ? name : namespace + "." + name;
     }
 
+    private static void setToDefault(StringBasedProperty<?>... properties) {
+        for (StringBasedProperty<?> property: properties) {
+            property.setValueFromString(null);
+        }
+    }
+
+    public void setAllToDefault() {
+        setToDefault(
+                gradleLocation,
+                gradleUserHomeDir,
+                gradleJvmArgs,
+                gradleJdk,
+                skipTests,
+                projectCacheSize,
+                alwaysClearOutput,
+                omitInitScript,
+                mayRelyOnJavaOfScript,
+                modelLoadingStrategy
+        );
+    }
+
     public StringBasedProperty<GradleLocation> gradleLocation() {
         return gradleLocation;
     }
