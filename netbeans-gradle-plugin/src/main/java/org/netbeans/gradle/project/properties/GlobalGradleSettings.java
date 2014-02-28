@@ -227,7 +227,7 @@ public final class GlobalGradleSettings {
             // valueItr.next() should succeed since the list is not empty.
             result.append(valueItr.next());
 
-            while (!valueItr.hasNext()) {
+            while (valueItr.hasNext()) {
                 result.append('\n');
                 result.append(valueItr.next());
             }
