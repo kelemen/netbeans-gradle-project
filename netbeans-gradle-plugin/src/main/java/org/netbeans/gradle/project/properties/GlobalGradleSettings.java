@@ -99,7 +99,8 @@ public final class GlobalGradleSettings {
                 alwaysClearOutput,
                 omitInitScript,
                 mayRelyOnJavaOfScript,
-                modelLoadingStrategy
+                modelLoadingStrategy,
+                gradleDaemonTimeoutSec
         );
     }
 
