@@ -26,7 +26,9 @@ public class Latin2ProjectTest {
     public static void setUpClass() throws Exception {
         // Contains all non-ascii Hungarian characters
         String floodTolerantMirrorDrill = "\u00E1rv\u00EDzt\u0171r\u0151t\u00FCk\u00F6rf\u00FAr\u00F3g\u00E9p";
-        GenericModelFetcher.setModelInputPrefix("nb-m-input-" + floodTolerantMirrorDrill);
+        // Starting with lower case "u" will expand to the unicode escape on Windows.
+        // So when this test is run on Windows, it will test this as well.
+        GenericModelFetcher.setModelInputPrefix("u-nb-m-input-" + floodTolerantMirrorDrill);
 
         MockServices.setServices();
 
