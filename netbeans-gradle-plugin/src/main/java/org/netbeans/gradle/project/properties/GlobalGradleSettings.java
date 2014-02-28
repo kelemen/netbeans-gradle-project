@@ -26,35 +26,104 @@ import org.openide.util.Utilities;
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
-    private static final StringBasedProperty<GradleLocation> GRADLE_LOCATION;
-    private static final StringBasedProperty<File> GRADLE_USER_HOME;
-    private static final StringBasedProperty<List<String>> GRADLE_JVM_ARGS;
-    private static final StringBasedProperty<JavaPlatform> GRADLE_JDK;
-    private static final StringBasedProperty<Boolean> SKIP_TESTS;
-    private static final StringBasedProperty<Integer> PROJECT_CACHE_SIZE;
-    private static final StringBasedProperty<Boolean> ALWAYS_CLEAR_OUTPUT;
-    private static final StringBasedProperty<Boolean> OMIT_INIT_SCRIPT;
-    private static final StringBasedProperty<Boolean> MAY_RELY_ON_JAVA_OF_SCRIPT;
-    private static final StringBasedProperty<ModelLoadingStrategy> MODEL_LOADING_STRATEGY;
+    private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
 
-    static {
+    private final StringBasedProperty<GradleLocation> gradleLocation;
+    private final StringBasedProperty<File> gradleUserHomeDir;
+    private final StringBasedProperty<List<String>> gradleJvmArgs;
+    private final StringBasedProperty<JavaPlatform> gradleJdk;
+    private final StringBasedProperty<Boolean> skipTests;
+    private final StringBasedProperty<Integer> projectCacheSize;
+    private final StringBasedProperty<Boolean> alwaysClearOutput;
+    private final StringBasedProperty<Boolean> omitInitScript;
+    private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
+    private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
+
+    public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
         // for backward compatibility reason.
-        GRADLE_LOCATION = new GlobalProperty<GradleLocation>("gradle-home", GradleLocationConverter.INSTANCE);
-        GRADLE_USER_HOME = new GlobalProperty<File>("gradle-user-home", FileConverter.INSTANCE);
-        GRADLE_JVM_ARGS = new GlobalProperty<List<String>>("gradle-jvm-args", StringToStringListConverter.INSTANCE);
-        GRADLE_JDK = new GlobalProperty<JavaPlatform>("gradle-jdk", JavaPlaformConverter.INSTANCE);
-        SKIP_TESTS = new GlobalProperty<Boolean>("skip-tests", new BooleanConverter(false));
-        PROJECT_CACHE_SIZE = new GlobalProperty<Integer>("project-cache-size", new IntegerConverter(1, Integer.MAX_VALUE, 100));
-        ALWAYS_CLEAR_OUTPUT = new GlobalProperty<Boolean>("always-clear-output", new BooleanConverter(false));
-        OMIT_INIT_SCRIPT = new GlobalProperty<Boolean>("omit-init-script", new BooleanConverter(false));
-        MAY_RELY_ON_JAVA_OF_SCRIPT = new GlobalProperty<Boolean>("rely-on-java-of-script", new BooleanConverter(false));
-        MODEL_LOADING_STRATEGY = new GlobalProperty<ModelLoadingStrategy>("model-load-strategy",
+        gradleLocation = new GlobalProperty<GradleLocation>(
+                withNS(namespace, "gradle-home"),
+                GradleLocationConverter.INSTANCE);
+        gradleUserHomeDir = new GlobalProperty<File>(
+                withNS(namespace, "gradle-user-home"),
+                FileConverter.INSTANCE);
+        gradleJvmArgs = new GlobalProperty<List<String>>(
+                withNS(namespace, "gradle-jvm-args"),
+                StringToStringListConverter.INSTANCE);
+        gradleJdk = new GlobalProperty<JavaPlatform>(
+                withNS(namespace, "gradle-jdk"),
+                JavaPlaformConverter.INSTANCE);
+        skipTests = new GlobalProperty<Boolean>(
+                withNS(namespace, "skip-tests"),
+                new BooleanConverter(false));
+        projectCacheSize = new GlobalProperty<Integer>(
+                withNS(namespace, "project-cache-size"),
+                new IntegerConverter(1, Integer.MAX_VALUE, 100));
+        alwaysClearOutput = new GlobalProperty<Boolean>(
+                withNS(namespace, "always-clear-output"),
+                new BooleanConverter(false));
+        omitInitScript = new GlobalProperty<Boolean>(
+                withNS(namespace, "omit-init-script"),
+                new BooleanConverter(false));
+        mayRelyOnJavaOfScript = new GlobalProperty<Boolean>(
+                withNS(namespace, "rely-on-java-of-script"),
+                new BooleanConverter(false));
+        modelLoadingStrategy = new GlobalProperty<ModelLoadingStrategy>(
+                withNS(namespace, "model-load-strategy"),
                 new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.NEWEST_POSSIBLE));
     }
 
+    private static String withNS(String namespace, String name) {
+        return namespace == null ? name : namespace + "." + name;
+    }
+
+    public StringBasedProperty<GradleLocation> gradleLocation() {
+        return gradleLocation;
+    }
+
+    public StringBasedProperty<File> gradleUserHomeDir() {
+        return gradleUserHomeDir;
+    }
+
+    public StringBasedProperty<List<String>> gradleJvmArgs() {
+        return gradleJvmArgs;
+    }
+
+    public StringBasedProperty<JavaPlatform> gradleJdk() {
+        return gradleJdk;
+    }
+
+    public StringBasedProperty<Boolean> skipTests() {
+        return skipTests;
+    }
+
+    public StringBasedProperty<Integer> projectCacheSize() {
+        return projectCacheSize;
+    }
+
+    public StringBasedProperty<Boolean> alwaysClearOutput() {
+        return alwaysClearOutput;
+    }
+
+    public StringBasedProperty<Boolean> omitInitScript() {
+        return omitInitScript;
+    }
+
+    public StringBasedProperty<Boolean> mayRelyOnJavaOfScript() {
+        return mayRelyOnJavaOfScript;
+    }
+
+    public StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy() {
+        return modelLoadingStrategy;
+    }
+
+    public static GlobalGradleSettings getDefault() {
+        return DEFAULT;
+    }
+
     public static File getGradleInstallationAsFile() {
-        GradleLocation location = GRADLE_LOCATION.getValue();
+        GradleLocation location = getDefault().gradleLocation.getValue();
         if (location instanceof GradleLocationDirectory) {
             return ((GradleLocationDirectory)location).getGradleHome();
         }
@@ -67,43 +136,43 @@ public final class GlobalGradleSettings {
     }
 
     public static StringBasedProperty<ModelLoadingStrategy> getModelLoadingStrategy() {
-        return MODEL_LOADING_STRATEGY;
+        return getDefault().modelLoadingStrategy;
     }
 
     public static StringBasedProperty<File> getGradleUserHomeDir() {
-        return GRADLE_USER_HOME;
+        return getDefault().gradleUserHomeDir;
     }
 
     public static StringBasedProperty<GradleLocation> getGradleHome() {
-        return GRADLE_LOCATION;
+        return getDefault().gradleLocation;
     }
 
     public static StringBasedProperty<List<String>> getGradleJvmArgs() {
-        return GRADLE_JVM_ARGS;
+        return getDefault().gradleJvmArgs;
     }
 
     public static StringBasedProperty<JavaPlatform> getGradleJdk() {
-        return GRADLE_JDK;
+        return getDefault().gradleJdk;
     }
 
     public static StringBasedProperty<Boolean> getSkipTests() {
-        return SKIP_TESTS;
+        return getDefault().skipTests;
     }
 
     public static StringBasedProperty<Integer> getProjectCacheSize() {
-        return PROJECT_CACHE_SIZE;
+        return getDefault().projectCacheSize;
     }
 
     public static StringBasedProperty<Boolean> getAlwaysClearOutput() {
-        return ALWAYS_CLEAR_OUTPUT;
+        return getDefault().alwaysClearOutput;
     }
 
     public static StringBasedProperty<Boolean> getOmitInitScript() {
-        return OMIT_INIT_SCRIPT;
+        return getDefault().omitInitScript;
     }
 
     public static StringBasedProperty<Boolean> getMayRelyOnJavaOfScript() {
-        return MAY_RELY_ON_JAVA_OF_SCRIPT;
+        return getDefault().mayRelyOnJavaOfScript;
     }
 
     public static FileObject getHomeFolder(JavaPlatform platform) {
@@ -122,7 +191,7 @@ public final class GlobalGradleSettings {
     }
 
     public static FileObject getCurrentGradleJdkHome() {
-        JavaPlatform platform = GRADLE_JDK.getValue();
+        JavaPlatform platform = getDefault().gradleJdk.getValue();
         if (platform == null) {
             return null;
         }
