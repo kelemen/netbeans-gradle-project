@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,26 +83,17 @@ public final class GlobalGradleSettings {
         return namespace == null ? name : namespace + "." + name;
     }
 
-    private static void setToDefault(StringBasedProperty<?>... properties) {
-        for (StringBasedProperty<?> property: properties) {
-            property.setValueFromString(null);
-        }
-    }
-
     public void setAllToDefault() {
-        setToDefault(
-                gradleLocation,
-                gradleUserHomeDir,
-                gradleJvmArgs,
-                gradleJdk,
-                skipTests,
-                projectCacheSize,
-                alwaysClearOutput,
-                omitInitScript,
-                mayRelyOnJavaOfScript,
-                modelLoadingStrategy,
-                gradleDaemonTimeoutSec
-        );
+        for (Field field: getClass().getDeclaredFields()) {
+            if (StringBasedProperty.class.isAssignableFrom(field.getType())) {
+                try {
+                    StringBasedProperty<?> property = (StringBasedProperty<?>)field.get(this);
+                    property.setValueFromString(null);
+                } catch (IllegalAccessException ex) {
+                    throw new AssertionError(ex);
+                }
+            }
+        }
     }
 
     public StringBasedProperty<Integer> gradleDaemonTimeoutSec() {
