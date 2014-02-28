@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.api.entry;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
@@ -64,14 +63,12 @@ public final class SampleGradleProject implements Closeable {
         return result.getCanonicalFile();
     }
 
-    public Project getUnloadedProject(String... projectPath) throws IOException {
-        File projectDir = subDir(tempFolder, projectPath);
-
+    private Project getUnloadedProject(File projectDir) throws IOException {
         Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(projectDir);
         try {
             Project project = ProjectManager.getDefault().findProject(FileUtil.toFileObject(projectDir));
             if (project == null) {
-                throw new IllegalArgumentException("Project does not exist: " + Arrays.toString(projectPath));
+                throw new IllegalArgumentException("Project does not exist: " + projectDir);
             }
 
             return project;
@@ -82,14 +79,16 @@ public final class SampleGradleProject implements Closeable {
         }
     }
 
-    @SuppressWarnings("UseSpecificCatch")
-    public NbGradleProject loadProject(String... projectPath) throws IOException {
-        try {
-            Project project = getUnloadedProject(projectPath);
+    public Project getUnloadedProject(String... projectPath) throws IOException {
+        File projectDir = subDir(tempFolder, projectPath);
+        return getUnloadedProject(projectDir);
+    }
 
+    private NbGradleProject toLoadedProject(Project project) throws IOException {
+        try {
             final NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
             if (gradleProject == null) {
-                throw new IllegalArgumentException("Not a Gradle project: " + Arrays.toString(projectPath));
+                throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
             }
 
             gradleProject.ensureLoadRequested();
@@ -98,6 +97,25 @@ public final class SampleGradleProject implements Closeable {
         } catch (Throwable ex) {
             throw Exceptions.throwUnchecked(ex);
         }
+    }
+
+    public Project getSingleUnloadedProject() throws IOException {
+        File[] dirs = tempFolder.listFiles();
+        if (dirs.length != 1) {
+            throw new IllegalStateException(tempFolder + " does not contain a single folder but " + dirs.length);
+        }
+
+        return getUnloadedProject(dirs[0]);
+    }
+
+    public NbGradleProject loadSingleProject() throws IOException {
+        Project project = getSingleUnloadedProject();
+        return toLoadedProject(project);
+    }
+
+    public NbGradleProject loadProject(String... projectPath) throws IOException {
+        Project project = getUnloadedProject(projectPath);
+        return toLoadedProject(project);
     }
 
     @Override
