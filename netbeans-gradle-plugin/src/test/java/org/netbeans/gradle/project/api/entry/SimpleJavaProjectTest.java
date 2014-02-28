@@ -62,6 +62,8 @@ public class SimpleJavaProjectTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices();
+
+        GlobalGradleSettings.getDefault().setAllToDefault();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 

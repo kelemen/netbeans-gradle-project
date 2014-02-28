@@ -33,6 +33,8 @@ public final class EmptyProjectTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices(SingleModelExtensionQuery.class);
+
+        GlobalGradleSettings.getDefault().setAllToDefault();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
