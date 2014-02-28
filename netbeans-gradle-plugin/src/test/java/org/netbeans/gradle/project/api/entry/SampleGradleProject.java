@@ -12,6 +12,7 @@ import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.openide.filesystems.FileUtil;
@@ -21,6 +22,8 @@ public final class SampleGradleProject implements Closeable {
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
     public static final GradleLocation DEFAULT_GRADLE_TARGET = new GradleLocationVersion(DEFAULT_GRADLE_VERSION);
 
+    private static final int DAEMON_TIMEOUT_SEC = 60;
+
     private final File tempFolder;
 
     public SampleGradleProject(File tempFolder) {
@@ -29,6 +32,7 @@ public final class SampleGradleProject implements Closeable {
     }
 
     public static SampleGradleProject createProject(String resourceRelPath) throws IOException {
+        GlobalGradleSettings.getGradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
         return createProject(SampleGradleProject.class, resourceRelPath);
     }
 
