@@ -49,9 +49,6 @@ public final class BasicFileUtils {
                 if ((lastCh == '\\' && ch == 'u') || ch > 127) {
                     appendAsEscaped(ch, result);
                 }
-                else if (ch == '\\') {
-                    result.append("\\\\");
-                }
                 else {
                     result.append(ch);
                 }

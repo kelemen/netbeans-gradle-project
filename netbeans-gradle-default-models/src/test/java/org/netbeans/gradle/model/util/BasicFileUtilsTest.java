@@ -33,6 +33,12 @@ public class BasicFileUtilsTest {
     }
 
     @Test
+    public void testEscapeBackSlash() {
+        String str = "Begin\\End";
+        assertEquals(str, BasicFileUtils.toSafelyPastableToJavaCode(str));
+    }
+
+    @Test
     public void testToSafelyPastableToJavaCode1ArgAscii() {
         String str = "BasicString'\"";
         assertEquals(str, BasicFileUtils.toSafelyPastableToJavaCode(str));
