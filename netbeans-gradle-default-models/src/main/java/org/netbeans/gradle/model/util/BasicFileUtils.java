@@ -14,9 +14,54 @@ import java.util.logging.Logger;
 public final class BasicFileUtils {
     private static final Logger LOGGER = Logger.getLogger(BasicFileUtils.class.getName());
 
-    private static final String HEX_TABLE = "0123456789abcdef";
+    private static final char[] HEX_TABLE_LOWER = "0123456789abcdef".toCharArray();
+    private static final char[] HEX_TABLE_UPPER = "0123456789ABCDEF".toCharArray();
+
     private static final AtomicReference<File> NB_GRADLE_TEMP_DIR_REF = new AtomicReference<File>(null);
     private static final int MAX_TMP_FILE_WITH_SAME_NAME = 5;
+
+    private static int sumLengths(String... strings)  {
+        int length = 0;
+        for (String string: strings) {
+            length += string.length();
+        }
+        return length;
+    }
+
+    private static void appendAsEscaped(char ch, StringBuilder result) {
+        result.append('\\');
+        result.append('u');
+
+        int value = ch & 0xFFFF;
+        result.append(HEX_TABLE_UPPER[(value >>> 12) & 0xF]);
+        result.append(HEX_TABLE_UPPER[(value >>> 8) & 0xF]);
+        result.append(HEX_TABLE_UPPER[(value >>> 4) & 0xF]);
+        result.append(HEX_TABLE_UPPER[value & 0xF]);
+    }
+
+    public static String toSafelyPastableToJavaCode(String... strings)  {
+        StringBuilder result = new StringBuilder(sumLengths(strings));
+
+        char lastCh = '?'; // Anything but '\\'
+        for (String string: strings) {
+            for (int i = 0; i < string.length(); i++) {
+                char ch = string.charAt(i);
+                if ((lastCh == '\\' && ch == 'u') || ch > 127) {
+                    appendAsEscaped(ch, result);
+                }
+                else if (ch == '\\') {
+                    result.append("\\\\");
+                }
+                else {
+                    result.append(ch);
+                }
+
+                lastCh = ch;
+            }
+        }
+
+        return result.toString();
+    }
 
     private static File findAvailableTempFileDir() {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
@@ -189,8 +234,8 @@ public final class BasicFileUtils {
     private static String byteArrayToHex(byte[] array) {
         StringBuilder result = new StringBuilder(array.length * 2);
         for (byte value: array) {
-            result.append(HEX_TABLE.charAt(((int)value & 0xF0) >>> 4));
-            result.append(HEX_TABLE.charAt((int)value & 0x0F));
+            result.append(HEX_TABLE_LOWER[((int)value & 0xF0) >>> 4]);
+            result.append(HEX_TABLE_LOWER[(int)value & 0x0F]);
         }
         return result.toString();
     }
