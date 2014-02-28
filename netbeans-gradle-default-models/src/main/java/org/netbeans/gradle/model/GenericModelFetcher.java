@@ -41,6 +41,12 @@ public final class GenericModelFetcher {
 
     private static final AtomicReference<String> INIT_SCRIPT_REF = new AtomicReference<String>(null);
 
+    private static final String DEFAULT_MODEL_INPUT_PREFIX = "model-input";
+    private static final String DEFAULT_INIT_SCRIPT_PREFIX = "dyn-model-gradle-init";
+
+    private static volatile String modelInputPrefix = DEFAULT_MODEL_INPUT_PREFIX;
+    private static volatile String initScriptPrefix = DEFAULT_INIT_SCRIPT_PREFIX;
+
     // key -> list of BuildInfoBuilder
     private final GradleInfoQueryMap buildInfoBuilders;
 
@@ -60,6 +66,21 @@ public final class GenericModelFetcher {
         this.modelClasses = Collections.unmodifiableSet(new HashSet<Class<?>>(modelClasses));
 
         CollectionUtils.checkNoNullElements(this.modelClasses, "modelClasses");
+    }
+
+    public static void setDefaultPrefixes() {
+        modelInputPrefix = DEFAULT_MODEL_INPUT_PREFIX;
+        initScriptPrefix = DEFAULT_INIT_SCRIPT_PREFIX;
+    }
+
+    public static void setModelInputPrefix(String modelInputPrefix) {
+        if (modelInputPrefix == null) throw new NullPointerException("modelInputPrefix");
+        GenericModelFetcher.modelInputPrefix = modelInputPrefix;
+    }
+
+    public static void setInitScriptPrefix(String initScriptPrefix) {
+        if (initScriptPrefix == null) throw new NullPointerException("initScriptPrefix");
+        GenericModelFetcher.initScriptPrefix = initScriptPrefix;
     }
 
     private FetchedModelsOrError transformActionModels(ActionFetchedModelsOrError actionModels) {
@@ -126,12 +147,12 @@ public final class GenericModelFetcher {
         TemporaryFileManager fileManager = TemporaryFileManager.getDefault();
 
         ModelQueryInput modelInput = new ModelQueryInput(projectInfoBuilders.getSerializableBuilderMap());
-        TemporaryFileRef modelInputFile = fileManager.createFileFromSerialized("model-input", modelInput);
+        TemporaryFileRef modelInputFile = fileManager.createFileFromSerialized(modelInputPrefix, modelInput);
         try {
             initScript = initScript.replace("$INPUT_FILE", toPastableString(modelInputFile.getFile()));
 
             TemporaryFileRef initScriptRef = fileManager
-                    .createFile("dyn-model-gradle-init", initScript, INIT_SCRIPT_ENCODING);
+                    .createFile(initScriptPrefix, initScript, INIT_SCRIPT_ENCODING);
             try {
                 String[] executerArgs = new String[userArgs.length + 2];
                 System.arraycopy(userArgs, 0, executerArgs, 0, userArgs.length);
