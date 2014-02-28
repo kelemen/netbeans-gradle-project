@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -23,6 +24,10 @@ public class Latin2ProjectTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        // Contains all non-ascii Hungarian characters
+        String floodTolerantMirrorDrill = "\u00E1rv\u00EDzt\u0171r\u0151t\u00FCk\u00F6rf\u00FAr\u00F3g\u00E9p";
+        GenericModelFetcher.setModelInputPrefix("nb-m-input-" + floodTolerantMirrorDrill);
+
         MockServices.setServices();
 
         GlobalGradleSettings.getDefault().setAllToDefault();
@@ -35,6 +40,8 @@ public class Latin2ProjectTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
+        GenericModelFetcher.setDefaultPrefixes();
+
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 
