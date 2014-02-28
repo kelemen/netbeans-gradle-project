@@ -33,6 +33,30 @@ public class BasicFileUtilsTest {
     }
 
     @Test
+    public void testEscapeBackSlashU1() {
+        String str = "Begin\\" + "u";
+        assertEquals("Begin\\\\" + "u0075", BasicFileUtils.toSafelyPastableToJavaCode(str));
+    }
+
+    @Test
+    public void testEscapeBackSlashU2() {
+        String str = "Begin\\" + "uEnd";
+        assertEquals("Begin\\\\" + "u0075End", BasicFileUtils.toSafelyPastableToJavaCode(str));
+    }
+
+    @Test
+    public void testEscapeBackSlashU3() {
+        String str = "\\" + "uEnd";
+        assertEquals("\\\\" + "u0075End", BasicFileUtils.toSafelyPastableToJavaCode(str));
+    }
+
+    @Test
+    public void testEscapeBackSlashU4() {
+        String[] strs = {"Begin\\", "uEnd"};
+        assertEquals("Begin\\\\" + "u0075End", BasicFileUtils.toSafelyPastableToJavaCode(strs));
+    }
+
+    @Test
     public void testEscapeBackSlash() {
         String str = "Begin\\End";
         assertEquals(str, BasicFileUtils.toSafelyPastableToJavaCode(str));
