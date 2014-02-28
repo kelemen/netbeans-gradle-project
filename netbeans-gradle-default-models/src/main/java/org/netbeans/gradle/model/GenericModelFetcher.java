@@ -28,6 +28,7 @@ import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
 import org.netbeans.gradle.model.internal.ModelQueryOutputRef;
+import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -179,7 +180,7 @@ public final class GenericModelFetcher {
         String result = value;
         result = result.replace("\\", "\\\\");
         result = result.replace("'", "\\'");
-        result = result.replace("\\" + "u", "\\' + 'u");
+        result = BasicFileUtils.toSafelyPastableToJavaCode(result);
         return "'" + result + "'";
     }
 
