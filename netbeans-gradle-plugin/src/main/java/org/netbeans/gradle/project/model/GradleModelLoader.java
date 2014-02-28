@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -133,6 +135,10 @@ public final class GradleModelLoader {
 
     public static GradleConnector createGradleConnector(final Project project) {
         final GradleConnector result = GradleConnector.newConnector();
+        Integer timeoutSec = GlobalGradleSettings.getGradleDaemonTimeoutSec().getValue();
+        if (timeoutSec != null && result instanceof DefaultGradleConnector) {
+            ((DefaultGradleConnector)result).daemonMaxIdleTime(timeoutSec, TimeUnit.SECONDS);
+        }
 
         NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
         if (gradleProject == null) {

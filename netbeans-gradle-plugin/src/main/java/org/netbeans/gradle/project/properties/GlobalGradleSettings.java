@@ -38,6 +38,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> omitInitScript;
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
+    private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -72,6 +73,9 @@ public final class GlobalGradleSettings {
         modelLoadingStrategy = new GlobalProperty<ModelLoadingStrategy>(
                 withNS(namespace, "model-load-strategy"),
                 new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.NEWEST_POSSIBLE));
+        gradleDaemonTimeoutSec = new GlobalProperty<Integer>(
+                withNS(namespace, "gradle-daemon-timeout-sec"),
+                new IntegerConverter(1, Integer.MAX_VALUE, null));
     }
 
     private static String withNS(String namespace, String name) {
@@ -97,6 +101,10 @@ public final class GlobalGradleSettings {
                 mayRelyOnJavaOfScript,
                 modelLoadingStrategy
         );
+    }
+
+    public StringBasedProperty<Integer> gradleDaemonTimeoutSec() {
+        return gradleDaemonTimeoutSec;
     }
 
     public StringBasedProperty<GradleLocation> gradleLocation() {
@@ -154,6 +162,10 @@ public final class GlobalGradleSettings {
     public static FileObject getGradleLocation() {
         File result = getGradleInstallationAsFile();
         return result != null ? FileUtil.toFileObject(result) : null;
+    }
+
+    public static StringBasedProperty<Integer> getGradleDaemonTimeoutSec() {
+        return getDefault().gradleDaemonTimeoutSec;
     }
 
     public static StringBasedProperty<ModelLoadingStrategy> getModelLoadingStrategy() {
