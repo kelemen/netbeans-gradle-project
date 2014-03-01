@@ -213,6 +213,11 @@
             <artifactId>netbeans-gradle-default-models</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jtrim</groupId>
+            <artifactId>jtrim-gui</artifactId>
+            <version>1.7.1</version>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
