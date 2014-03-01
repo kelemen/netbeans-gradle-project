@@ -102,7 +102,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
                 return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
             }
         });
-        jTaskCombo.setModel(new DefaultComboBoxModel(items.toArray()));
+        jTaskCombo.setModel(new DefaultComboBoxModel<BuiltInTaskItem>(items.toArray(new BuiltInTaskItem[items.size()])));
         jTaskCombo.getModel().setSelectedItem(items.get(0));
     }
 
@@ -320,7 +320,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jTaskCombo = new javax.swing.JComboBox();
+        jTaskCombo = new javax.swing.JComboBox<BuiltInTaskItem>();
         jInheritCheck = new javax.swing.JCheckBox();
         jTaskConfigHolder = new javax.swing.JPanel();
 
@@ -356,7 +356,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jInheritCheck;
-    private javax.swing.JComboBox jTaskCombo;
+    private javax.swing.JComboBox<BuiltInTaskItem> jTaskCombo;
     private javax.swing.JPanel jTaskConfigHolder;
     // End of variables declaration//GEN-END:variables
 }

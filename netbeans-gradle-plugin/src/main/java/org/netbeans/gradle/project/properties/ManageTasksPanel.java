@@ -45,11 +45,11 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     private void sortTasks() {
         Object selected = jDefinedTasks.getSelectedValue();
 
-        DefaultListModel model = getModelOfTaskList();
+        DefaultListModel<PredefinedTaskItem> model = getModelOfTaskList();
         int elementCount = model.getSize();
         PredefinedTaskItem[] elements = new PredefinedTaskItem[elementCount];
         for (int i = 0; i < elementCount; i++) {
-            elements[i] = (PredefinedTaskItem)model.get(i);
+            elements[i] = model.get(i);
         }
         Arrays.sort(elements, new Comparator<PredefinedTaskItem>() {
             @Override
@@ -65,20 +65,20 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jDefinedTasks.setSelectedValue(selected, true);
     }
 
-    private DefaultListModel getModelOfTaskList() {
-        ListModel model = jDefinedTasks.getModel();
+    private DefaultListModel<PredefinedTaskItem> getModelOfTaskList() {
+        ListModel<PredefinedTaskItem> model = jDefinedTasks.getModel();
         if (model instanceof DefaultListModel) {
-            return (DefaultListModel)model;
+            return (DefaultListModel<PredefinedTaskItem>)model;
         }
 
-        DefaultListModel result = new DefaultListModel();
+        DefaultListModel<PredefinedTaskItem> result = new DefaultListModel<PredefinedTaskItem>();
         jDefinedTasks.setModel(result);
         return result;
     }
 
     @SuppressWarnings("unchecked")
     private PredefinedTaskItem getSelectedTask() {
-        return (PredefinedTaskItem)jDefinedTasks.getSelectedValue();
+        return jDefinedTasks.getSelectedValue();
     }
 
     private PredefinedTask getShownTask() {
@@ -113,13 +113,13 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         updateShownInList();
 
-        DefaultListModel listedTasks = getModelOfTaskList();
+        DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
 
         List<PredefinedTask> newTasks = new ArrayList<PredefinedTask>(elementCount);
         for (int i = 0; i < elementCount; i++) {
             @SuppressWarnings("unchecked")
-            PredefinedTaskItem current = (PredefinedTaskItem)listedTasks.getElementAt(i);
+            PredefinedTaskItem current = listedTasks.getElementAt(i);
             newTasks.add(current.getTask());
         }
         properties.getCommonTasks().setValue(newTasks);
@@ -131,12 +131,12 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             return;
         }
 
-        DefaultListModel listedTasks = getModelOfTaskList();
+        DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
 
         for (int i = 0; i < elementCount; i++) {
             @SuppressWarnings("unchecked")
-            PredefinedTaskItem current = (PredefinedTaskItem)listedTasks.getElementAt(i);
+            PredefinedTaskItem current = listedTasks.getElementAt(i);
             if (current == currentlyShown) {
                 currentlyShown = new PredefinedTaskItem(newTaskDef);
                 listedTasks.set(i, currentlyShown);
@@ -155,7 +155,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         updateShownInList();
 
         @SuppressWarnings("unchecked")
-        PredefinedTaskItem selected = (PredefinedTaskItem)getModelOfTaskList().getElementAt(selectedIndex);
+        PredefinedTaskItem selected = getModelOfTaskList().getElementAt(selectedIndex);
 
         currentlyShown = selected;
         jActionPanel.updatePanel(selected.getTask());
@@ -165,7 +165,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     public void initSettings(ProjectProperties properties) {
         List<PredefinedTask> commonTasks = properties.getCommonTasks().getValue();
 
-        DefaultListModel listModel = getModelOfTaskList();
+        DefaultListModel<PredefinedTaskItem> listModel = getModelOfTaskList();
         listModel.clear();
         for (PredefinedTask task: commonTasks) {
             listModel.addElement(new PredefinedTaskItem(task));
@@ -210,7 +210,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jDefinedTasks = new javax.swing.JList();
+        jDefinedTasks = new javax.swing.JList<PredefinedTaskItem>();
         jTasksCaption = new javax.swing.JLabel();
         jTaskSettingsHolder = new javax.swing.JPanel();
         jAddNewButton = new javax.swing.JButton();
@@ -286,11 +286,11 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             return;
         }
 
-        DefaultListModel listedTasks = getModelOfTaskList();
+        DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
         for (int i = 0; i < elementCount; i++) {
             @SuppressWarnings("unchecked")
-            PredefinedTaskItem current = (PredefinedTaskItem)listedTasks.getElementAt(i);
+            PredefinedTaskItem current = listedTasks.getElementAt(i);
             if (current == selected) {
                 listedTasks.remove(i);
                 break;
@@ -332,7 +332,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jAddNewButton;
-    private javax.swing.JList jDefinedTasks;
+    private javax.swing.JList<PredefinedTaskItem> jDefinedTasks;
     private javax.swing.JCheckBox jMustExistCheck;
     private javax.swing.JButton jRemoveButton;
     private javax.swing.JScrollPane jScrollPane1;

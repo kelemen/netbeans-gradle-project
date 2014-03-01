@@ -76,7 +76,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             profileItems.add(new ProfileItem(profile));
         }
 
-        jProfileCombo.setModel(new DefaultComboBoxModel(profileItems.toArray(new ProfileItem[0])));
+        jProfileCombo.setModel(new DefaultComboBoxModel<ProfileItem>(profileItems.toArray(new ProfileItem[0])));
         jProfileCombo.setSelectedItem(new ProfileItem(project.getCurrentProfile()));
         loadSelectedProfile();
     }
@@ -135,7 +135,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void sortProfileComboItems() {
-        ComboBoxModel model = jProfileCombo.getModel();
+        ComboBoxModel<ProfileItem> model = jProfileCombo.getModel();
         int itemCount = model.getSize();
         List<NbGradleConfiguration> configs = new ArrayList<NbGradleConfiguration>(itemCount);
 
@@ -153,7 +153,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         for (int i = 0; i < profiles.length; i++) {
             profiles[i] = new ProfileItem(configArray[i]);
         }
-        jProfileCombo.setModel(new DefaultComboBoxModel(profiles));
+        jProfileCombo.setModel(new DefaultComboBoxModel<ProfileItem>(profiles));
     }
 
     private ProfileItem getSelectedProfile() {
@@ -237,7 +237,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             }
         }
 
-        jPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new ProjectPlatformComboItem[0])));
+        jPlatformCombo.setModel(new DefaultComboBoxModel<ProjectPlatformComboItem>(comboItems.toArray(new ProjectPlatformComboItem[0])));
     }
 
     private void fillScriptPlatformCombo() {
@@ -251,7 +251,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             }
         }
 
-        jScriptPlatformCombo.setModel(new DefaultComboBoxModel(comboItems.toArray(new JavaPlatformComboItem[0])));
+        jScriptPlatformCombo.setModel(new DefaultComboBoxModel<JavaPlatformComboItem>(comboItems.toArray(new JavaPlatformComboItem[0])));
     }
 
     private PanelLockRef lockPanel() {
@@ -585,15 +585,15 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jSourceEncodingCaption = new javax.swing.JLabel();
         jSourceEncoding = new javax.swing.JTextField();
         jPlatformCaption = new javax.swing.JLabel();
-        jPlatformCombo = new javax.swing.JComboBox();
+        jPlatformCombo = new javax.swing.JComboBox<ProjectPlatformComboItem>();
         jSourceLevelCaption = new javax.swing.JLabel();
-        jSourceLevelCombo = new javax.swing.JComboBox();
+        jSourceLevelCombo = new javax.swing.JComboBox<String>();
         jManageTasksButton = new javax.swing.JButton();
         jSourceEncodingInherit = new javax.swing.JCheckBox();
         jPlatformComboInherit = new javax.swing.JCheckBox();
         jSourceLevelComboInherit = new javax.swing.JCheckBox();
         jProfileCaption = new javax.swing.JLabel();
-        jProfileCombo = new javax.swing.JComboBox();
+        jProfileCombo = new javax.swing.JComboBox<ProfileItem>();
         jAddProfileButton = new javax.swing.JButton();
         jRemoveProfileButton = new javax.swing.JButton();
         jManageBuiltInTasks = new javax.swing.JButton();
@@ -601,7 +601,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jGradleHomeEdit = new javax.swing.JTextField();
         jGradleHomeInherit = new javax.swing.JCheckBox();
         jScriptPlatformCaption = new javax.swing.JLabel();
-        jScriptPlatformCombo = new javax.swing.JComboBox();
+        jScriptPlatformCombo = new javax.swing.JComboBox<JavaPlatformComboItem>();
         jScriptPlatformInherit = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceEncodingCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jSourceEncodingCaption.text")); // NOI18N
@@ -899,19 +899,19 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private javax.swing.JButton jManageBuiltInTasks;
     private javax.swing.JButton jManageTasksButton;
     private javax.swing.JLabel jPlatformCaption;
-    private javax.swing.JComboBox jPlatformCombo;
+    private javax.swing.JComboBox<ProjectPlatformComboItem> jPlatformCombo;
     private javax.swing.JCheckBox jPlatformComboInherit;
     private javax.swing.JLabel jProfileCaption;
-    private javax.swing.JComboBox jProfileCombo;
+    private javax.swing.JComboBox<ProfileItem> jProfileCombo;
     private javax.swing.JButton jRemoveProfileButton;
     private javax.swing.JLabel jScriptPlatformCaption;
-    private javax.swing.JComboBox jScriptPlatformCombo;
+    private javax.swing.JComboBox<JavaPlatformComboItem> jScriptPlatformCombo;
     private javax.swing.JCheckBox jScriptPlatformInherit;
     private javax.swing.JTextField jSourceEncoding;
     private javax.swing.JLabel jSourceEncodingCaption;
     private javax.swing.JCheckBox jSourceEncodingInherit;
     private javax.swing.JLabel jSourceLevelCaption;
-    private javax.swing.JComboBox jSourceLevelCombo;
+    private javax.swing.JComboBox<String> jSourceLevelCombo;
     private javax.swing.JCheckBox jSourceLevelComboInherit;
     // End of variables declaration//GEN-END:variables
 }

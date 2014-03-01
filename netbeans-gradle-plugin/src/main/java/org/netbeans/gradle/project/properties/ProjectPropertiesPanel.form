@@ -148,6 +148,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ProjectPlatformComboItem&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="jSourceLevelCaption">
       <Properties>
@@ -169,6 +172,9 @@
           </StringArray>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="jManageTasksButton">
       <Properties>
@@ -214,6 +220,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ProfileItem&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="jAddProfileButton">
       <Properties>
@@ -279,6 +288,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;JavaPlatformComboItem&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jScriptPlatformInherit">
       <Properties>

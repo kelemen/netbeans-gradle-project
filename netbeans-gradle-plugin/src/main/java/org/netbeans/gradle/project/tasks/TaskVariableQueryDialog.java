@@ -290,19 +290,19 @@ public final class TaskVariableQueryDialog extends JDialog {
 
         private final DisplayedTaskVariable variable;
         private final JLabel label;
-        private final JComboBox value;
+        private final JComboBox<ComboValue> value;
 
         public EnumVariable(DisplayedTaskVariable variable) {
             if (variable == null) throw new NullPointerException("variable");
 
             this.variable = variable;
             this.label = new JLabel(variable.getDisplayName());
-            this.value = new JComboBox();
+            this.value = new JComboBox<ComboValue>();
 
             parseComboValues(variable.getTypeDescription().getEscapedTypeArguments(), value);
         }
 
-        private static void parseComboValues(String valuesDef, JComboBox combo) {
+        private static void parseComboValues(String valuesDef, JComboBox<ComboValue> combo) {
             String[] values = StringUtils.unescapedSplit(valuesDef, ',');
 
             ComboValue[] comboValues = new ComboValue[values.length];
@@ -325,7 +325,7 @@ public final class TaskVariableQueryDialog extends JDialog {
                 }
             });
 
-            combo.setModel(new DefaultComboBoxModel(comboValues));
+            combo.setModel(new DefaultComboBoxModel<ComboValue>(comboValues));
             combo.setSelectedItem(selected);
         }
 

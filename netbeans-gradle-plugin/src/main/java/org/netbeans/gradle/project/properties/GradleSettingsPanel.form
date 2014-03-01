@@ -164,6 +164,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;JavaPlatformItem&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="jGradleJdkCaption">
       <Properties>
@@ -239,6 +242,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ModelLoadStrategyItem&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="jModelLoadStrategyLabel">
       <Properties>

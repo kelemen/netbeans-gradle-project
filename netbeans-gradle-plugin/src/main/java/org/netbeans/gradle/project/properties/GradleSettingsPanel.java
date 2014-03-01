@@ -49,7 +49,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             comboItems[i] = new JavaPlatformItem(platforms[i]);
         }
 
-        jJdkCombo.setModel(new DefaultComboBoxModel(comboItems));
+        jJdkCombo.setModel(new DefaultComboBoxModel<JavaPlatformItem>(comboItems));
     }
 
     public final void updateSettings() {
@@ -213,7 +213,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleVMArgsCaption = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jGradleJVMArgs = new javax.swing.JTextArea();
-        jJdkCombo = new javax.swing.JComboBox();
+        jJdkCombo = new javax.swing.JComboBox<JavaPlatformItem>();
         jGradleJdkCaption = new javax.swing.JLabel();
         jSkipTestsCheck = new javax.swing.JCheckBox();
         jProjectCacheSize = new javax.swing.JSpinner();
@@ -224,7 +224,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jGradleUserHomeEdit = new javax.swing.JTextField();
         jBrowseUserHomeDirButton = new javax.swing.JButton();
         jReliableJavaVersionCheck = new javax.swing.JCheckBox();
-        jModelLoadStrategy = new javax.swing.JComboBox();
+        jModelLoadStrategy = new javax.swing.JComboBox<ModelLoadStrategyItem>();
         jModelLoadStrategyLabel = new javax.swing.JLabel();
         jReadWikiButton = new javax.swing.JButton();
 
@@ -398,8 +398,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jGradleUserHomeCaption;
     private javax.swing.JTextField jGradleUserHomeEdit;
     private javax.swing.JLabel jGradleVMArgsCaption;
-    private javax.swing.JComboBox jJdkCombo;
-    private javax.swing.JComboBox jModelLoadStrategy;
+    private javax.swing.JComboBox<JavaPlatformItem> jJdkCombo;
+    private javax.swing.JComboBox<ModelLoadStrategyItem> jModelLoadStrategy;
     private javax.swing.JLabel jModelLoadStrategyLabel;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
