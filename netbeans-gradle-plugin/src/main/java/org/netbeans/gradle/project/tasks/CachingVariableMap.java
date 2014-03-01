@@ -67,7 +67,7 @@ public final class CachingVariableMap<ProjectInfo> implements TaskVariableMap {
         this.project = project;
         this.actionContext = actionContext;
         this.taskVariableMap = taskVariableMap;
-        this.cache = new ConcurrentHashMap<TaskVariable, VariableValue>();
+        this.cache = new ConcurrentHashMap<>();
     }
 
     @Override

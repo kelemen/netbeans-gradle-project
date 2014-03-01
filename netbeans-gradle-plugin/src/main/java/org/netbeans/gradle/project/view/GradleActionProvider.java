@@ -68,7 +68,7 @@ public final class GradleActionProvider implements ActionProvider {
     }
 
     protected List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<FileObject>();
+        List<FileObject> files = new LinkedList<>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
             if (file != null) {
@@ -188,7 +188,7 @@ public final class GradleActionProvider implements ActionProvider {
                 : project.getCurrentProfile();
 
         final AtomicReference<CustomCommandActions> customActionsRef
-                = new AtomicReference<CustomCommandActions>(null);
+                = new AtomicReference<>(null);
 
         return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override

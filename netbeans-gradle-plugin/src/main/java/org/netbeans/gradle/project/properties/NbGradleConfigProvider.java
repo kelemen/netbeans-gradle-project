@@ -35,7 +35,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     private static final Lock CONFIG_PROVIDERS_LOCK = new ReentrantLock();
     private static final Map<File, NbGradleConfigProvider> CONFIG_PROVIDERS
-            = new WeakValueHashMap<File, NbGradleConfigProvider>();
+            = new WeakValueHashMap<>();
 
     private final File rootDirectory;
     private final PropertyChangeSupport changeSupport;
@@ -52,8 +52,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.hasBeenUsed = new AtomicBoolean(false);
         this.changeSupport = new PropertyChangeSupport(this);
         this.activeConfigChanges = new ChangeSupport(this);
-        this.activeConfig = new AtomicReference<NbGradleConfiguration>(NbGradleConfiguration.DEFAULT_CONFIG);
-        this.configs = new AtomicReference<List<NbGradleConfiguration>>(
+        this.activeConfig = new AtomicReference<>(NbGradleConfiguration.DEFAULT_CONFIG);
+        this.configs = new AtomicReference<>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
         this.hasActiveBeenSet = false;
     }
@@ -83,7 +83,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
         do {
             currentList = configs.get();
-            newList = new ArrayList<NbGradleConfiguration>(currentList);
+            newList = new ArrayList<>(currentList);
             newList.remove(config);
             newList = Collections.unmodifiableList(newList);
         } while (!configs.compareAndSet(currentList, newList));
@@ -95,10 +95,10 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
         do {
             currentList = configs.get();
-            Set<NbGradleConfiguration> configSet = new HashSet<NbGradleConfiguration>(currentList);
+            Set<NbGradleConfiguration> configSet = new HashSet<>(currentList);
             configSet.addAll(toAdd);
 
-            newList = new ArrayList<NbGradleConfiguration>(configSet);
+            newList = new ArrayList<>(configSet);
             NbGradleConfiguration.sortProfiles(newList);
 
             newList = Collections.unmodifiableList(newList);
@@ -156,7 +156,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
         Collection<ProfileDef> profileDefs = SettingsFiles.getAvailableProfiles(rootDirectory);
         List<NbGradleConfiguration> currentConfigs
-                = new ArrayList<NbGradleConfiguration>(profileDefs.size() + 1);
+                = new ArrayList<>(profileDefs.size() + 1);
 
         currentConfigs.add(NbGradleConfiguration.DEFAULT_CONFIG);
         for (ProfileDef profileDef: profileDefs) {

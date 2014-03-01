@@ -31,17 +31,17 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         ProjectPlatform defaultPlatform = AbstractProjectPlatformSource.getDefaultPlatform();
         JavaPlatform defaultJavaPlatform = JavaPlatform.getDefault();
 
-        this.builtInChangeSignal = new DefaultMutableProperty<Object>(new Object(), true, false);
-        this.sourceLevel = new DefaultMutableProperty<String>(getSourceLevelFromPlatform(defaultPlatform), true, false);
-        this.platform = new DefaultMutableProperty<ProjectPlatform>(defaultPlatform, true, false);
-        this.scriptPlatform = new DefaultMutableProperty<JavaPlatform>(defaultJavaPlatform, true, false);
+        this.builtInChangeSignal = new DefaultMutableProperty<>(new Object(), true, false);
+        this.sourceLevel = new DefaultMutableProperty<>(getSourceLevelFromPlatform(defaultPlatform), true, false);
+        this.platform = new DefaultMutableProperty<>(defaultPlatform, true, false);
+        this.scriptPlatform = new DefaultMutableProperty<>(defaultJavaPlatform, true, false);
         this.gradleHome = new DefaultMutableProperty<GradleLocation>(GradleLocationDefault.INSTANCE, true, false);
-        this.licenseHeader = new DefaultMutableProperty<LicenseHeaderInfo>(null, true, true);
-        this.auxConfigListener = new DefaultMutableProperty<Void>(null, true, true);
-        this.sourceEncoding = new DefaultMutableProperty<Charset>(DEFAULT_SOURCE_ENCODING, true, false);
-        this.commonTasks = new MutableListProperty<PredefinedTask>(Collections.<PredefinedTask>emptyList(), true);
-        this.auxProperties = new ConcurrentHashMap<DomElementKey, AuxConfigProperty>();
-        this.builtInTasks = new ConcurrentHashMap<String, MutableProperty<PredefinedTask>>(32);
+        this.licenseHeader = new DefaultMutableProperty<>(null, true, true);
+        this.auxConfigListener = new DefaultMutableProperty<>(null, true, true);
+        this.sourceEncoding = new DefaultMutableProperty<>(DEFAULT_SOURCE_ENCODING, true, false);
+        this.commonTasks = new MutableListProperty<>(Collections.<PredefinedTask>emptyList(), true);
+        this.auxProperties = new ConcurrentHashMap<>();
+        this.builtInTasks = new ConcurrentHashMap<>(32);
     }
 
     @Override
@@ -85,7 +85,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
 
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
-            result = new DefaultMutableProperty<PredefinedTask>(null, true, true);
+            result = new DefaultMutableProperty<>(null, true, true);
             result.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
@@ -112,7 +112,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     @Override
     public Collection<MutableProperty<?>> getAllProperties() {
         Collection<MutableProperty<?>> superProperties = super.getAllProperties();
-        Collection<MutableProperty<?>> result = new ArrayList<MutableProperty<?>>(superProperties.size() + 1);
+        Collection<MutableProperty<?>> result = new ArrayList<>(superProperties.size() + 1);
         result.addAll(superProperties);
         result.add(builtInChangeSignal);
         return result;
@@ -150,6 +150,6 @@ public final class MemProjectProperties extends AbstractProjectProperties {
 
     @Override
     public Collection<AuxConfigProperty> getAllAuxConfigs() {
-        return new ArrayList<AuxConfigProperty>(auxProperties.values());
+        return new ArrayList<>(auxProperties.values());
     }
 }

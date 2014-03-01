@@ -34,7 +34,7 @@ public final class PluginClassImplementation {
 
         this.type = type;
         this.invocationHandler = invocationHandler;
-        this.instanceRef = new AtomicReference<Object>(null);
+        this.instanceRef = new AtomicReference<>(null);
     }
 
     public Object tryGetAsPluginClass() {

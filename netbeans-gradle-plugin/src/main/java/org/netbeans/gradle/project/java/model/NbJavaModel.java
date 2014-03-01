@@ -31,7 +31,7 @@ public final class NbJavaModel implements Serializable {
         this.modelSource = modelSource;
         this.mainModule = mainModule;
         this.projectDependencies = projectDependencies;
-        this.allDependenciesRef = new AtomicReference<Set<JavaProjectReference>>(null);
+        this.allDependenciesRef = new AtomicReference<>(null);
     }
 
     private static void addAll(
@@ -57,7 +57,7 @@ public final class NbJavaModel implements Serializable {
         if (possibleDependencies == null) throw new NullPointerException("possibleDependencies");
 
         Map<File, JavaProjectDependency> relevantDependencies
-                = new HashMap<File, JavaProjectDependency>();
+                = new HashMap<>();
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
             JavaClassPaths classpaths = sourceSet.getClasspaths();
 
@@ -81,7 +81,7 @@ public final class NbJavaModel implements Serializable {
     }
 
     private Set<JavaProjectReference> extractAllDependencies() {
-        Set<JavaProjectReference> result = new HashSet<JavaProjectReference>();
+        Set<JavaProjectReference> result = new HashSet<>();
         for (JavaProjectDependency dependency: projectDependencies.values()) {
             result.add(dependency.getProjectReference());
         }

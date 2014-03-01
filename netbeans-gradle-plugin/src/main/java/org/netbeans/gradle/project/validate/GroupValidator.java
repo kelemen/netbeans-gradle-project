@@ -13,7 +13,7 @@ public final class GroupValidator {
 
     public GroupValidator() {
         this.mainLock = new ReentrantLock();
-        this.validators = new LinkedList<InputAndValidator<?>>();
+        this.validators = new LinkedList<>();
 
         this.inputCollector = new InputCollector<Validator<Void>>() {
             @Override
@@ -21,13 +21,13 @@ public final class GroupValidator {
                 List<InputAndValidator<?>> currentValidators;
                 mainLock.lock();
                 try {
-                    currentValidators = new ArrayList<InputAndValidator<?>>(validators);
+                    currentValidators = new ArrayList<>(validators);
                 } finally {
                     mainLock.unlock();
                 }
 
                 List<Validator<Void>> fetchedValidators
-                        = new ArrayList<Validator<Void>>(currentValidators.size());
+                        = new ArrayList<>(currentValidators.size());
                 for (InputAndValidator<?> element: currentValidators) {
                     fetchedValidators.add(element.getValidatorWithInput());
                 }
@@ -44,7 +44,7 @@ public final class GroupValidator {
         if (validator == null) throw new NullPointerException("validator");
         if (inputCollector == null) throw new NullPointerException("inputCollector");
 
-        InputAndValidator<InputType> toAdd = new InputAndValidator<InputType>(validator, inputCollector);
+        InputAndValidator<InputType> toAdd = new InputAndValidator<>(validator, inputCollector);
         mainLock.lock();
         try {
             validators.add(toAdd);
@@ -101,7 +101,7 @@ public final class GroupValidator {
         }
 
         public Validator<Void> getValidatorWithInput() {
-            return new FetchedValidator<InputType>(collector.getInput(), validator);
+            return new FetchedValidator<>(collector.getInput(), validator);
         }
     }
 

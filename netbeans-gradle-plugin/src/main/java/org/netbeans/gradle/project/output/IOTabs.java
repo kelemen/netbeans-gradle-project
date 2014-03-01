@@ -23,7 +23,7 @@ import org.openide.windows.InputOutput;
 
 public final class IOTabs {
     private static final IOTabMaintainer<TaskOutputKey, TaskIOTab> TASK_TABS
-            = new IOTabMaintainer<TaskOutputKey, TaskIOTab>(createTaskIOTabFactory());
+            = new IOTabMaintainer<>(createTaskIOTabFactory());
 
     private static IOTabFactory<TaskIOTab> createTaskIOTabFactory() {
         return new IOTabFactory<TaskIOTab>() {
@@ -82,7 +82,7 @@ public final class IOTabs {
 
         private static PredefinedTask toPredefined(GradleTaskDef taskDef) {
             List<String> sourceNames = taskDef.getTaskNames();
-            List<PredefinedTask.Name> names = new ArrayList<PredefinedTask.Name>(sourceNames.size());
+            List<PredefinedTask.Name> names = new ArrayList<>(sourceNames.size());
             for (String name: sourceNames) {
                 names.add(new PredefinedTask.Name(name, false));
             }

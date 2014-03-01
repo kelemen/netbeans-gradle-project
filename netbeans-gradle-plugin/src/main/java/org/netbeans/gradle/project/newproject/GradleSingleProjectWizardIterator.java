@@ -45,9 +45,9 @@ implements
     private int descriptorIndex;
 
     public GradleSingleProjectWizardIterator() {
-        this.descriptors = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>(1);
+        this.descriptors = new ArrayList<>(1);
         this.descriptorIndex = 0;
-        this.configRef = new AtomicReference<GradleSingleProjectConfig>(null);
+        this.configRef = new AtomicReference<>(null);
     }
 
     private static void createBuildGradle(
@@ -56,7 +56,7 @@ implements
         String mainClass = config.getMainClass();
         String sourceLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
-        Map<String, String> varReplaceMap = new HashMap<String, String>();
+        Map<String, String> varReplaceMap = new HashMap<>();
         varReplaceMap.put("${MAIN_CLASS}", StringUtils.emptyForNull(mainClass));
         varReplaceMap.put("${SOURCE_LEVEL}", sourceLevel);
 

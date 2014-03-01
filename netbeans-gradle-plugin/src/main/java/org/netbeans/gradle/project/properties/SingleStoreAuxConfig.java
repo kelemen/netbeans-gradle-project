@@ -17,7 +17,7 @@ public final class SingleStoreAuxConfig {
     public SingleStoreAuxConfig(AuxConfigStorage storage) {
         if (storage == null) throw new NullPointerException("storage");
         this.storage = storage;
-        this.temporaryStore = new ConcurrentHashMap<DomElementKey, ElementRef>();
+        this.temporaryStore = new ConcurrentHashMap<>();
     }
 
     public Element getConfigurationFragment(String elementName, String namespace) {
@@ -68,7 +68,7 @@ public final class SingleStoreAuxConfig {
     }
 
     public Collection<DomElementKey> getConfigElements() {
-        Set<DomElementKey> result = new LinkedHashSet<DomElementKey>();
+        Set<DomElementKey> result = new LinkedHashSet<>();
         for (AuxConfigProperty property: storage.getAllAuxConfigs()) {
             result.add(property.getKey());
         }

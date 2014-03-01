@@ -14,7 +14,7 @@ public final class JavaInitScriptQuery implements InitScriptQuery {
     private final AtomicReference<String> initScriptCache;
 
     public JavaInitScriptQuery() {
-        this.initScriptCache = new AtomicReference<String>(null);
+        this.initScriptCache = new AtomicReference<>(null);
     }
 
     @Override

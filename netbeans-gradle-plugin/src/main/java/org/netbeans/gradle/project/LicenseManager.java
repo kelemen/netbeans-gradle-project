@@ -24,7 +24,7 @@ public final class LicenseManager {
     private final Map<File, AtomicInteger> useCount;
 
     public LicenseManager() {
-        this.useCount = new HashMap<File, AtomicInteger>();
+        this.useCount = new HashMap<>();
     }
 
     private FileObject getLicenseRoot() {

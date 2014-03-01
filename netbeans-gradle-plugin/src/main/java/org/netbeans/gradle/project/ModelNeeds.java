@@ -53,7 +53,7 @@ public final class ModelNeeds {
         return new GradleModelDefQuery1() {
             @Override
             public Collection<Class<?>> getToolingModels(GradleTarget gradleTarget) {
-                List<Class<?>> result = new LinkedList<Class<?>>();
+                List<Class<?>> result = new LinkedList<>();
                 for (GradleModelDefQuery1 query: queries) {
                     Collection<Class<?>> models = safelyReturn(query.getToolingModels(gradleTarget), query);
                     result.addAll(models);
@@ -101,9 +101,9 @@ public final class ModelNeeds {
             @Override
             public GradleModelDef getModelDef(GradleTarget gradleTarget) {
                 List<GradleProjectInfoQuery<?>> projectInfoQueries
-                        = new LinkedList<GradleProjectInfoQuery<?>>();
+                        = new LinkedList<>();
 
-                List<Class<?>> toolingModels = new LinkedList<Class<?>>();
+                List<Class<?>> toolingModels = new LinkedList<>();
 
                 for (GradleModelDefQuery2 query: queries) {
                     GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), query);

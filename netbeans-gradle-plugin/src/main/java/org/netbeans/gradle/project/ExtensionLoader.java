@@ -125,7 +125,7 @@ public final class ExtensionLoader {
                 = defaultLookup.lookupAll(defClass());
 
         int expectedExtensionCount = defs1.size() + defs2.size();
-        List<NbGradleExtensionRef> result = new ArrayList<NbGradleExtensionRef>(expectedExtensionCount);
+        List<NbGradleExtensionRef> result = new ArrayList<>(expectedExtensionCount);
 
         Set<String> alreadyLoaded = CollectionUtils.newHashSet(expectedExtensionCount);
         for (GradleProjectExtensionDef<?> def: defs2) {
@@ -146,7 +146,7 @@ public final class ExtensionLoader {
     private static GradleModelDefQuery1 getModelQuery(
             org.netbeans.gradle.project.api.entry.GradleProjectExtension extension) {
 
-        List<Class<?>> allModels = new LinkedList<Class<?>>();
+        List<Class<?>> allModels = new LinkedList<>();
         for (List<Class<?>> models: extension.getGradleModels()) {
             allModels.addAll(models);
         }
@@ -226,7 +226,7 @@ public final class ExtensionLoader {
                 extension.deduceModelsForProjects(retrievedModels));
 
         if (!deduced.containsKey(projectDir)) {
-            List<Object> lookupContent = new LinkedList<Object>();
+            List<Object> lookupContent = new LinkedList<>();
             for (List<Class<?>> models: extension.getGradleModels()) {
                 for (Class<?> neededModel: models) {
                     Object model = retrievedModels.lookup(neededModel);
@@ -237,16 +237,16 @@ public final class ExtensionLoader {
                 }
             }
 
-            return new ParsedModel<SerializableLookup>(serializableLookup(lookupContent), deduced);
+            return new ParsedModel<>(serializableLookup(lookupContent), deduced);
         }
 
         SerializableLookup mainModels = deduced.get(projectDir);
         if (mainModels != null) {
-            deduced = new HashMap<File, SerializableLookup>(deduced);
+            deduced = new HashMap<>(deduced);
             deduced.remove(projectDir);
         }
 
-        return new ParsedModel<SerializableLookup>(mainModels, deduced);
+        return new ParsedModel<>(mainModels, deduced);
     }
 
     /** @deprecated  */
@@ -407,7 +407,7 @@ public final class ExtensionLoader {
             }
 
             private static Object[] filterSerializable(Collection<?> objects) {
-                List<Object> result = new ArrayList<Object>(objects.size());
+                List<Object> result = new ArrayList<>(objects.size());
                 for (Object obj: objects) {
                     if (obj instanceof Serializable) {
                         result.add(obj);

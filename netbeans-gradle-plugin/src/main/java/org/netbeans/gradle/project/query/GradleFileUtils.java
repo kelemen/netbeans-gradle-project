@@ -22,7 +22,7 @@ public final class GradleFileUtils {
 
     public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList("jar", "bundle")));
+            new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";

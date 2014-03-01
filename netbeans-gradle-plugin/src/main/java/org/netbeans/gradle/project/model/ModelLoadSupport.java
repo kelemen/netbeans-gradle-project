@@ -15,7 +15,7 @@ final class ModelLoadSupport {
 
     public ModelLoadSupport() {
         this.mainLock = new ReentrantLock();
-        this.listeners = new LinkedList<ModelLoadListener>();
+        this.listeners = new LinkedList<>();
     }
 
     public void addListener(ModelLoadListener listener) {

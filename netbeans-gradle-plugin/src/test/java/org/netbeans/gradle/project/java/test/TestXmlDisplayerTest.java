@@ -153,7 +153,7 @@ public class TestXmlDisplayerTest {
 
         public MockManager() {
             super("MockManager");
-            this.sessions = new ConcurrentLinkedQueue<MockSession>();
+            this.sessions = new ConcurrentLinkedQueue<>();
         }
 
         @Override
@@ -197,7 +197,7 @@ public class TestXmlDisplayerTest {
             this.name = name;
             this.project = project;
             this.gsfSession = new TestSession(name, project, TestSession.SessionType.TEST);
-            this.suites = new ConcurrentLinkedQueue<MockSuite>();
+            this.suites = new ConcurrentLinkedQueue<>();
             this.closed = new AtomicBoolean(false);
         }
 
@@ -259,7 +259,7 @@ public class TestXmlDisplayerTest {
             this.parent = parent;
             this.suiteName = suiteName;
             this.closed = new AtomicBoolean(false);
-            this.testcases = new ConcurrentLinkedQueue<Testcase>();
+            this.testcases = new ConcurrentLinkedQueue<>();
         }
 
         @Override
@@ -311,7 +311,7 @@ public class TestXmlDisplayerTest {
 
         public ErrorCollector(String name) {
             this.name = name;
-            this.errors = new ConcurrentLinkedQueue<Throwable>();
+            this.errors = new ConcurrentLinkedQueue<>();
         }
 
         public final void addError(Throwable error) {
@@ -331,7 +331,7 @@ public class TestXmlDisplayerTest {
         }
 
         public final void verifyNoErrors() {
-            List<Throwable> currentErrors = new ArrayList<Throwable>(errors);
+            List<Throwable> currentErrors = new ArrayList<>(errors);
             if (currentErrors.isEmpty()) {
                 return;
             }
@@ -354,7 +354,7 @@ public class TestXmlDisplayerTest {
         public ExpectedSession(Project project) {
             this.project = project;
             this.sessionName = getExpectedSessionName(project);
-            this.suites = new HashMap<String, ExpectedSuite>();
+            this.suites = new HashMap<>();
         }
 
         public ExpectedSuite addSuite(String suiteName, long suiteTimeMillis) {
@@ -372,7 +372,7 @@ public class TestXmlDisplayerTest {
 
         public ExpectedSuite(String suiteName, long suiteTimeMillis) {
             this.suiteName = suiteName;
-            this.verifiers = new HashMap<String, TestcaseVerifier>();
+            this.verifiers = new HashMap<>();
             this.suiteTimeMillis = suiteTimeMillis;
         }
 

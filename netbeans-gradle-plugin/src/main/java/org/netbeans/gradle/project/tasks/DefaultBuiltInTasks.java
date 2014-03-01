@@ -47,7 +47,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     private static final Map<String, String> DISPLAY_NAME_MAP;
 
     static {
-        DEFAULT_TASKS = new HashMap<String, CommandWithActions>();
+        DEFAULT_TASKS = new HashMap<>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_CLEAN, DEFAULT_CLEAN_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
@@ -55,7 +55,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
 
         // We have to provide names for the following commands because of the
         // contract of BuiltInGradleCommandQuery.tryGetDisplayNameOfCommand.
-        DISPLAY_NAME_MAP = new HashMap<String, String>();
+        DISPLAY_NAME_MAP = new HashMap<>();
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_BUILD, NbStrings.getBuildCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_TEST, NbStrings.getTestCommandCaption());
         DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_CLEAN, NbStrings.getCleanCommandCaption());

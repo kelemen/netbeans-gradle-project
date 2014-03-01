@@ -58,7 +58,7 @@ implements
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
             if (GradleFileUtils.isParentOrSame(outputDirs.getClassesDir(), binaryRoot)) {
-                List<File> result = new LinkedList<File>();
+                List<File> result = new LinkedList<>();
 
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                     result.addAll(sourceGroup.getSourceRoots());
@@ -78,7 +78,7 @@ implements
             return NO_ROOTS;
         }
 
-        List<FileObject> result = new ArrayList<FileObject>(srcRoots.size());
+        List<FileObject> result = new ArrayList<>(srcRoots.size());
 
         for (File srcRoot: srcRoots) {
             FileObject rootObj = FileUtil.toFileObject(srcRoot);

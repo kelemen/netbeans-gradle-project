@@ -195,7 +195,7 @@ final class XmlPropertyFormat {
 
     private static void addBuiltInTasks(Node node, PropertiesSnapshot snapshot) {
         Set<String> knownBuiltInCommands = snapshot.getKnownBuiltInCommands();
-        List<PredefinedTask> tasks = new ArrayList<PredefinedTask>(knownBuiltInCommands.size());
+        List<PredefinedTask> tasks = new ArrayList<>(knownBuiltInCommands.size());
         for (String command: knownBuiltInCommands) {
             PropertySource<PredefinedTask> taskProperty = snapshot.tryGetBuiltInTask(command);
             if (taskProperty != null && !taskProperty.isDefault()) {
@@ -232,7 +232,7 @@ final class XmlPropertyFormat {
     }
 
     private static List<AuxConfigSource> sortDomProperties(Collection<AuxConfigSource> properties) {
-        List<AuxConfigSource> currentConfigs = new ArrayList<AuxConfigSource>(properties);
+        List<AuxConfigSource> currentConfigs = new ArrayList<>(properties);
 
         // Return them sorted, so that they are saved in a deterministic order.
         Collections.sort(currentConfigs, new Comparator<AuxConfigSource>() {
@@ -251,7 +251,7 @@ final class XmlPropertyFormat {
             return;
         }
 
-        List<Element> auxElements = new ArrayList<Element>(configs.size());
+        List<Element> auxElements = new ArrayList<>(configs.size());
         for (AuxConfigSource config: configs) {
             Element value = config.getSource().getValue();
             if (value != null) {
@@ -287,7 +287,7 @@ final class XmlPropertyFormat {
 
         // We sort them only to save them in a deterministic order, so the
         // property file only changes if the properties really change.
-        TreeMap<String, String> sortedProperties = new TreeMap<String, String>(licenseHeader.getProperties());
+        TreeMap<String, String> sortedProperties = new TreeMap<>(licenseHeader.getProperties());
         for (Map.Entry<String, String> property: sortedProperties.entrySet()) {
             Element propertyNode = addSimpleChild(licenseNode, LICENSE_PROPERTY_NODE, property.getValue());
             propertyNode.setAttribute(LICENSE_PROPERTY_NAME_ATTR, property.getKey());
@@ -412,7 +412,7 @@ final class XmlPropertyFormat {
             }
         }
 
-        List<PredefinedTask.Name> names = new LinkedList<PredefinedTask.Name>();
+        List<PredefinedTask.Name> names = new LinkedList<>();
         Element nameListNode = getFirstChildByTagName(root, TASK_NAME_LIST_NODE);
         if (nameListNode != null) {
             for (Element nameNode: getChildElements(nameListNode, TASK_NAME_NODE)) {
@@ -426,7 +426,7 @@ final class XmlPropertyFormat {
             }
         }
 
-        List<String> args = new LinkedList<String>();
+        List<String> args = new LinkedList<>();
         Element argsNode = getFirstChildByTagName(root, TASK_ARGS_NODE);
         if (argsNode != null) {
             for (Element argNode: getChildElements(argsNode, ARG_NODE)) {
@@ -438,7 +438,7 @@ final class XmlPropertyFormat {
             }
         }
 
-        List<String> jvmArgs = new LinkedList<String>();
+        List<String> jvmArgs = new LinkedList<>();
         Element jvmArgsNode = getFirstChildByTagName(root, TASK_JVM_ARGS_NODE);
         if (jvmArgsNode != null) {
             for (Element jvmArgNode: getChildElements(jvmArgsNode, ARG_NODE)) {
@@ -459,7 +459,7 @@ final class XmlPropertyFormat {
             return Collections.emptyList();
         }
 
-        List<PredefinedTask> result = new LinkedList<PredefinedTask>();
+        List<PredefinedTask> result = new LinkedList<>();
         for (Element taskNode: getChildElements(commonTasksNode, TASK_NODE)) {
             result.add(readTask(taskNode));
         }
@@ -471,7 +471,7 @@ final class XmlPropertyFormat {
     }
 
     private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<ValueType>(value, defaultValue);
+        return new ConstPropertySource<>(value, defaultValue);
     }
 
     private static List<PredefinedTask> readBuiltInTasks(Element root) {
@@ -523,7 +523,7 @@ final class XmlPropertyFormat {
 
         File licenseTemplate = tryReadFilePath(licenseNode, LICENSE_FILE_NODE);
 
-        Map<String, String> properties = new TreeMap<String, String>();
+        Map<String, String> properties = new TreeMap<>();
         NodeList childNodes = licenseNode.getChildNodes();
         int childCount = childNodes.getLength();
         for (int i = 0; i < childCount; i++) {
@@ -546,7 +546,7 @@ final class XmlPropertyFormat {
     }
 
     private static Collection<AuxConfig> readAuxiliaryConfigs(Element root) {
-        List<AuxConfig> result = new LinkedList<AuxConfig>();
+        List<AuxConfig> result = new LinkedList<>();
 
         Element auxNode = getFirstChildByTagName(root, AUXILIARY_NODE);
         if (auxNode == null) {

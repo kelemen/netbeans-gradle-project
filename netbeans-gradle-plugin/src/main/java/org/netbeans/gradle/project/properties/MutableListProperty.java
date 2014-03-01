@@ -8,7 +8,7 @@ public final class MutableListProperty<ElementType> implements MutableProperty<L
     private final MutableProperty<List<ElementType>> wrapped;
 
     public MutableListProperty(List<? extends ElementType> value, boolean defaultValue) {
-        this.wrapped = new DefaultMutableProperty<List<ElementType>>(
+        this.wrapped = new DefaultMutableProperty<>(
                 CollectionUtils.copyNullSafeList(value), defaultValue, false);
     }
 

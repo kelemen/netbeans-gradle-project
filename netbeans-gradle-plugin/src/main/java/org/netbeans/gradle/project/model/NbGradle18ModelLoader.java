@@ -63,7 +63,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
         List<V> values = map.get(key);
         if (values == null) {
-            values = new LinkedList<V>();
+            values = new LinkedList<>();
             map.put(key, values);
         }
         values.addAll(newValues);
@@ -112,7 +112,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             this.extensions = mainProject.getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
-            this.issues = new LinkedList<ModelLoadIssue>();
+            this.issues = new LinkedList<>();
             this.modelLoadResultCache = CollectionUtils.newHashMap(extensions.size());
         }
 
@@ -152,7 +152,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             for (NbGradleExtensionRef extension: extensions) {
                 String extensionName = extension.getName();
 
-                List<Object> models = new ArrayList<Object>();
+                List<Object> models = new ArrayList<>();
                 addProjectInfoResults(projectModels, extension, models);
                 addAllNullSafe(models, modelFetcher.getToolingModelsForExtension(extension, projectModels));
                 models.add(genericProperties);
@@ -208,7 +208,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                     fetchedModels.getDefaultProjectModels(),
                     extensionModels);
 
-            List<NbGradleModel> otherModels = new ArrayList<NbGradleModel>();
+            List<NbGradleModel> otherModels = new ArrayList<>();
             for (FetchedProjectModels models: otherProjectModels) {
                 File projectDir = getProjectDirFromModels(models);
                 if (defaultProjectDir.equals(projectDir)) {
@@ -306,7 +306,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final Map<String, CachedModel> models;
 
         public ProjectExtensionModelCache() {
-            this.models = new HashMap<String, CachedModel>();
+            this.models = new HashMap<>();
         }
 
         public CachedModel tryGetModel(String extensionName) {
@@ -322,7 +322,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final Map<File, ProjectExtensionModelCache> projectCaches;
 
         public ExtensionModelCache() {
-            this.projectCaches = new HashMap<File, ProjectExtensionModelCache>();
+            this.projectCaches = new HashMap<>();
         }
 
         public ProjectExtensionModelCache tryGetProjectCache(File projectDir) {
@@ -353,9 +353,9 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests = Collections.emptyMap();
 
             Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests
-                    = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+                    = new HashMap<>();
 
-            List<Class<?>> models = new LinkedList<Class<?>>();
+            List<Class<?>> models = new LinkedList<>();
             for (NbGradleExtensionRef extensionRef: extensions) {
                 String extensionName = extensionRef.getName();
 
@@ -388,7 +388,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             }
 
             Map<Class<?>, Object> allModels = projectModels.getToolingModels();
-            List<Object> result = new ArrayList<Object>(needs.size());
+            List<Object> result = new ArrayList<>(needs.size());
             for (Class<?> need: needs) {
                 Object model = allModels.get(need);
                 if (model != null) {

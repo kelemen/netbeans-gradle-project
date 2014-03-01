@@ -79,8 +79,8 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         NbJavaModel currentModel = javaExt.getCurrentModel();
 
         NbJavaModule mainModule = currentModel.getMainModule();
-        Set<FileObject> srcRoots = new LinkedHashSet<FileObject>();
-        Set<File> runtimeDependencies = new HashSet<File>(100);
+        Set<FileObject> srcRoots = new LinkedHashSet<>();
+        Set<File> runtimeDependencies = new HashSet<>(100);
 
         addSourcesOfModule(mainModule, srcRoots);
         getBinaryRuntimeDependencies(mainModule, runtimeDependencies);
@@ -108,7 +108,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     private void doAttach(int port) throws DebuggerStartException {
         LOGGER.log(Level.INFO, "Attempting to attach to debugee on port: {0}", port);
 
-        Map<String, Object> services = new HashMap<String, Object>();
+        Map<String, Object> services = new HashMap<>();
         services.put("name", javaExt.getCurrentModel().getMainModule().getUniqueName());
         services.put("baseDir", javaExt.getProjectDirectoryAsFile());
         services.put("jdksources", getJdkSources());

@@ -31,8 +31,8 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
     private final SimpleCache<FileObject, ClassPath> binPathsCache;
 
     public GradleHomeClassPathProvider() {
-        this.sourcePathsCache = new SimpleCache<FileObject, ClassPath>(1);
-        this.binPathsCache = new SimpleCache<FileObject, ClassPath>(1);
+        this.sourcePathsCache = new SimpleCache<>(1);
+        this.binPathsCache = new SimpleCache<>(1);
     }
 
     public static URL[] getGradleLibs(FileObject gradleHomeObj, FilenameFilter filter) {
@@ -51,7 +51,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         }
 
         File[] jars = libDir.listFiles(filter);
-        List<URL> result = new ArrayList<URL>(jars.length);
+        List<URL> result = new ArrayList<>(jars.length);
         for (File jar: jars) {
             URL url = FileUtil.urlForArchiveOrDir(jar);
             if (url != null) {
@@ -159,7 +159,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
 
             float loadFactor = 0.75f;
             int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
-            this.cache = new LinkedHashMap<KeyType, ValueType>(capacity, loadFactor, true);
+            this.cache = new LinkedHashMap<>(capacity, loadFactor, true);
             this.maxCapacity = maxCapacity;
         }
 

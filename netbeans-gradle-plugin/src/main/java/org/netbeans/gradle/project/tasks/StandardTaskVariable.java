@@ -163,7 +163,7 @@ public enum StandardTaskVariable {
     }
 
     private static List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<FileObject>();
+        List<FileObject> files = new LinkedList<>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
             if (file != null) {
@@ -207,7 +207,7 @@ public enum StandardTaskVariable {
 
     public static TaskVariableMap createVarReplaceMap(
             NbGradleProject project, Lookup actionContext) {
-        return new CachingVariableMap<NbGradleProject>(TASK_VARIABLE_MAP, project, actionContext);
+        return new CachingVariableMap<>(TASK_VARIABLE_MAP, project, actionContext);
     }
 
     public static String replaceVars(String str, TaskVariableMap varReplaceMap) {
@@ -263,7 +263,7 @@ public enum StandardTaskVariable {
     }
 
     private CachingVariableMap.VariableDef<NbGradleProject> asVariableDef() {
-        return new CachingVariableMap.VariableDef<NbGradleProject>(variable, valueGetter);
+        return new CachingVariableMap.VariableDef<>(variable, valueGetter);
     }
 
     public TaskVariable getVariable() {

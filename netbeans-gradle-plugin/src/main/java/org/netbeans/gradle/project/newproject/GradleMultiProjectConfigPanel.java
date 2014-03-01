@@ -15,7 +15,7 @@ public final class GradleMultiProjectConfigPanel implements WizardDescriptor.Pan
         if (configRef == null) throw new NullPointerException("configRef");
 
         this.configRef = configRef;
-        this.panel = new AtomicReference<GradleMultiProjectPropertiesPanel>();
+        this.panel = new AtomicReference<>();
         this.wizard = wizard;
     }
 

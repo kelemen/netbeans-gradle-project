@@ -45,7 +45,7 @@ implements
     }
 
     private void updateExtensionProfiles() {
-        List<ProfileDef> customProfileDefs = new LinkedList<ProfileDef>();
+        List<ProfileDef> customProfileDefs = new LinkedList<>();
         for (CustomProfileQuery profileQuery: project.getLookup().lookupAll(CustomProfileQuery.class)) {
             for (ProfileDef profileDef: profileQuery.getCustomProfiles()) {
                 customProfileDefs.add(profileDef);
@@ -77,7 +77,7 @@ implements
         Collection<NbGradleConfiguration> currentExtProfiles = extensionProfiles;
 
         List<NbGradleConfiguration> result
-                = new ArrayList<NbGradleConfiguration>(commonProfiles.size() + currentExtProfiles.size());
+                = new ArrayList<>(commonProfiles.size() + currentExtProfiles.size());
         result.addAll(commonProfiles);
         result.addAll(currentExtProfiles);
         NbGradleConfiguration.sortProfiles(result);
@@ -140,7 +140,7 @@ implements
     }
 
     public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
-        List<NbGradleConfiguration> result = new LinkedList<NbGradleConfiguration>();
+        List<NbGradleConfiguration> result = new LinkedList<>();
         result.addAll(extensionProfiles);
         result.addAll(commonConfig.findAndUpdateConfigurations(mayRemove));
         return result;

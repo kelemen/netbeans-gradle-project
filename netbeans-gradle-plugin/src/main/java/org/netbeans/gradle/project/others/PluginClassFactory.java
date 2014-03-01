@@ -12,7 +12,7 @@ public final class PluginClassFactory {
         if (moduleNamePrefix == null) throw new NullPointerException("moduleNamePrefix");
 
         this.moduleNamePrefix = moduleNamePrefix;
-        this.moduleInfoRef = new AtomicReference<ModuleInfo>(null);
+        this.moduleInfoRef = new AtomicReference<>(null);
     }
 
     private ModuleInfo tryFindModuleInfo() {

@@ -10,7 +10,7 @@ import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
  */
 public final class GlobalConfig {
     private static final NbPropertySource<Boolean> SKIP_TESTS
-            = new NbPropertySourceWrapper<Boolean>(GlobalGradleSettings.getSkipTests());
+            = new NbPropertySourceWrapper<>(GlobalGradleSettings.getSkipTests());
 
     /**
      * Returns the property indicating if tests should be skipped when executing

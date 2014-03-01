@@ -21,7 +21,7 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
     }
 
     private List<BuiltInGradleCommandQuery> getAllQueries() {
-        List<BuiltInGradleCommandQuery> result = new LinkedList<BuiltInGradleCommandQuery>();
+        List<BuiltInGradleCommandQuery> result = new LinkedList<>();
         result.addAll(project.getCombinedExtensionLookup().lookupAll(BuiltInGradleCommandQuery.class));
         result.add(defaultBuiltInTasks);
         return result;
@@ -29,7 +29,7 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
 
     @Override
     public Set<String> getSupportedCommands() {
-        Set<String> result = new HashSet<String>(32);
+        Set<String> result = new HashSet<>(32);
         for (BuiltInGradleCommandQuery query: getAllQueries()) {
             result.addAll(query.getSupportedCommands());
         }

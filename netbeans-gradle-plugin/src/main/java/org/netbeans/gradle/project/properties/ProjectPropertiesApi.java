@@ -8,7 +8,7 @@ import org.netbeans.gradle.project.api.property.GradleProperty;
 
 public final class ProjectPropertiesApi {
     public static GradleProperty.SourceEncoding sourceEncoding(MutableProperty<Charset> property) {
-        final NbPropertySourceWrapper<Charset> result = new NbPropertySourceWrapper<Charset>(property);
+        final NbPropertySourceWrapper<Charset> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.SourceEncoding() {
             @Override
             public Charset getValue() {
@@ -23,7 +23,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.ScriptPlatform scriptPlatform(MutableProperty<JavaPlatform> property) {
-        final NbPropertySourceWrapper<JavaPlatform> result = new NbPropertySourceWrapper<JavaPlatform>(property);
+        final NbPropertySourceWrapper<JavaPlatform> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.ScriptPlatform() {
             @Override
             public JavaPlatform getValue() {
@@ -38,7 +38,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.SourceLevel sourceLevel(MutableProperty<String> property) {
-        final NbPropertySourceWrapper<String> result = new NbPropertySourceWrapper<String>(property);
+        final NbPropertySourceWrapper<String> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.SourceLevel() {
             @Override
             public String getValue() {
@@ -53,7 +53,7 @@ public final class ProjectPropertiesApi {
     }
 
     public static GradleProperty.BuildPlatform buildPlatform(MutableProperty<ProjectPlatform> property) {
-        final NbPropertySourceWrapper<ProjectPlatform> result = new NbPropertySourceWrapper<ProjectPlatform>(property);
+        final NbPropertySourceWrapper<ProjectPlatform> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.BuildPlatform() {
             @Override
             public ProjectPlatform getValue() {

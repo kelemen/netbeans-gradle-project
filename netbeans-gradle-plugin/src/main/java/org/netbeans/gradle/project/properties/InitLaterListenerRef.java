@@ -52,7 +52,7 @@ public final class InitLaterListenerRef implements NbListenerRef {
      * to set the {@code NbListenerRef} to which calls are to be forwarded.
      */
     public InitLaterListenerRef() {
-        this.currentRef = new AtomicReference<NbListenerRef>(null);
+        this.currentRef = new AtomicReference<>(null);
     }
 
     private void completeUnregistration(NbListenerRef listenerRef) {

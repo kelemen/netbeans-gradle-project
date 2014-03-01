@@ -19,8 +19,8 @@ public final class BackgroundValidator {
     public BackgroundValidator() {
         this.changes = new ChangeSupport(this);
         this.validationSubmitted = new AtomicBoolean(false);
-        this.validatorsRef = new AtomicReference<GroupValidator>(null);
-        this.currentProblemRef = new AtomicReference<Problem>(null);
+        this.validatorsRef = new AtomicReference<>(null);
+        this.currentProblemRef = new AtomicReference<>(null);
     }
 
     public void setValidators(GroupValidator validators) {

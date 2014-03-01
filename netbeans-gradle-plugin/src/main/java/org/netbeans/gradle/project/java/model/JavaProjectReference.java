@@ -35,8 +35,8 @@ public final class JavaProjectReference implements Serializable {
         this.projectDir = projectDir;
         this.initialModule = initialModule;
 
-        this.projectRef = new AtomicReference<Project>(null);
-        this.javaExtensionRef = new AtomicReference<JavaExtension>(null);
+        this.projectRef = new AtomicReference<>(null);
+        this.javaExtensionRef = new AtomicReference<>(null);
     }
 
     public File getProjectDir() {

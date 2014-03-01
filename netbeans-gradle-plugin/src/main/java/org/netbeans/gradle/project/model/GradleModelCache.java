@@ -19,7 +19,7 @@ import org.openide.filesystems.FileUtil;
 
 public final class GradleModelCache {
     private static final AtomicReference<GradleModelCache> DEFAULT_REF
-            = new AtomicReference<GradleModelCache>(null);
+            = new AtomicReference<>(null);
 
     private final ReentrantLock cacheLock;
     private final Map<CacheKey, NbGradleModel> cache;
@@ -36,7 +36,7 @@ public final class GradleModelCache {
 
         float loadFactor = 0.75f;
         int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
-        this.cache = new LinkedHashMap<CacheKey, NbGradleModel>(capacity, loadFactor, true);
+        this.cache = new LinkedHashMap<>(capacity, loadFactor, true);
         this.updateListeners = new PropertyChangeSupport(this);
     }
 

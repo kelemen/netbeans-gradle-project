@@ -107,7 +107,7 @@ public final class JavaDependenciesNode extends AbstractNode {
             if (javaExt == null) throw new NullPointerException("javaExt");
 
             this.javaExt = javaExt;
-            this.lastModule = new AtomicReference<NbJavaModule>(null);
+            this.lastModule = new AtomicReference<>(null);
         }
 
         @Override
@@ -210,7 +210,7 @@ public final class JavaDependenciesNode extends AbstractNode {
         }
 
         private static List<SingleNodeFactory> filesToNodes(NbJavaModel currentModel, Collection<File> files) {
-            List<SingleNodeFactory> result = new ArrayList<SingleNodeFactory>(files.size());
+            List<SingleNodeFactory> result = new ArrayList<>(files.size());
             for (File file: files) {
                 JavaProjectDependency projectDep = currentModel.tryGetDepedency(file);
                 if (projectDep == null) {
@@ -371,7 +371,7 @@ public final class JavaDependenciesNode extends AbstractNode {
                 largerSet = set1;
             }
 
-            Set<T> intersect = new HashSet<T>();
+            Set<T> intersect = new HashSet<>();
             for (T element: smallerSet) {
                 if (largerSet.remove(element)) {
                     intersect.add(element);
@@ -385,18 +385,18 @@ public final class JavaDependenciesNode extends AbstractNode {
         private static Map<String, Set<String>> sourceSetDependencyGraph(
                 NbJavaModule mainModule) {
 
-            Map<File, String> buildOutput = new HashMap<File, String>();
+            Map<File, String> buildOutput = new HashMap<>();
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 buildOutput.put(sourceSet.getOutputDirs().getClassesDir(), sourceSet.getName());
             }
 
-            Map<String, Set<String>> result = new HashMap<String, Set<String>>();
+            Map<String, Set<String>> result = new HashMap<>();
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 String sourceSetName = sourceSet.getName();
 
                 Set<File> runtimeClasspaths = sourceSet.getClasspaths().getRuntimeClasspaths();
 
-                Set<String> dependencies = new HashSet<String>();
+                Set<String> dependencies = new HashSet<>();
                 for (Map.Entry<File, String> entry: buildOutput.entrySet()) {
                     if (runtimeClasspaths.contains(entry.getKey())) {
                         String dependencyName = entry.getValue();
@@ -423,8 +423,8 @@ public final class JavaDependenciesNode extends AbstractNode {
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 JavaClassPaths classpaths = sourceSet.getClasspaths();
 
-                Set<File> providedClassPaths = new HashSet<File>(classpaths.getCompileClasspaths());
-                Set<File> runtimeClassPaths = new HashSet<File>(classpaths.getRuntimeClasspaths());
+                Set<File> providedClassPaths = new HashSet<>(classpaths.getCompileClasspaths());
+                Set<File> runtimeClassPaths = new HashSet<>(classpaths.getRuntimeClasspaths());
                 Set<File> compileClassPaths = splitSets(providedClassPaths, runtimeClassPaths);
 
                 Set<String> sourceDependencies = dependencyGraph.get(sourceSet.getName());
@@ -477,7 +477,7 @@ public final class JavaDependenciesNode extends AbstractNode {
         private final List<SingleNodeFactory> dependencies;
 
         public DependencyGroupChildFactory(Collection<? extends SingleNodeFactory> dependencies) {
-            this.dependencies = new ArrayList<SingleNodeFactory>(dependencies);
+            this.dependencies = new ArrayList<>(dependencies);
         }
 
         protected void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {

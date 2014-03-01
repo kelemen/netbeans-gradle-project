@@ -49,7 +49,7 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static Map<String, UserVariableFactory> variableFactoryMap() {
-        Map<String, UserVariableFactory> result = new HashMap<String, UserVariableFactory>();
+        Map<String, UserVariableFactory> result = new HashMap<>();
 
         result.put(VariableTypeDescription.TYPE_NAME_BOOL, BoolVariable.FACTORY);
         result.put(VariableTypeDescription.TYPE_NAME_ENUM, EnumVariable.FACTORY);
@@ -59,7 +59,7 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static Map<String, Integer> typeOrderMap() {
-        Map<String, Integer> result = new HashMap<String, Integer>();
+        Map<String, Integer> result = new HashMap<>();
 
         result.put(VariableTypeDescription.TYPE_NAME_STRING, 0);
         result.put(VariableTypeDescription.TYPE_NAME_ENUM, 1);
@@ -74,7 +74,7 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static List<UserVariable> toUserVariables(Collection<DisplayedTaskVariable> variables) {
-        List<UserVariable> result = new ArrayList<UserVariable>(variables.size());
+        List<UserVariable> result = new ArrayList<>(variables.size());
         for (DisplayedTaskVariable variable: variables) {
             String tpyeName = variable.getTypeDescription().getTypeName();
 
@@ -211,7 +211,7 @@ public final class TaskVariableQueryDialog extends JDialog {
             return null;
         }
 
-        Map<DisplayedTaskVariable, String> result = new HashMap<DisplayedTaskVariable, String>();
+        Map<DisplayedTaskVariable, String> result = new HashMap<>();
         for (UserVariable variable: variablesToQuery) {
             result.put(variable.getDisplayedVariable(), variable.getValue());
         }
@@ -297,7 +297,7 @@ public final class TaskVariableQueryDialog extends JDialog {
 
             this.variable = variable;
             this.label = new JLabel(variable.getDisplayName());
-            this.value = new JComboBox<ComboValue>();
+            this.value = new JComboBox<>();
 
             parseComboValues(variable.getTypeDescription().getEscapedTypeArguments(), value);
         }
@@ -325,7 +325,7 @@ public final class TaskVariableQueryDialog extends JDialog {
                 }
             });
 
-            combo.setModel(new DefaultComboBoxModel<ComboValue>(comboValues));
+            combo.setModel(new DefaultComboBoxModel<>(comboValues));
             combo.setSelectedItem(selected);
         }
 

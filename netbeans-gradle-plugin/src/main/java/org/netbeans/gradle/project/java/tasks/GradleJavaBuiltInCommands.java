@@ -124,7 +124,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final Map<String, CommandWithActions> DEFAULT_TASKS;
 
     static {
-        DEFAULT_TASKS = new HashMap<String, CommandWithActions>();
+        DEFAULT_TASKS = new HashMap<>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
@@ -456,7 +456,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()) {
                 GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(command);
                 List<String> prevArguments = command.getArguments();
-                List<String> newArguments = new ArrayList<String>(prevArguments.size() + 2);
+                List<String> newArguments = new ArrayList<>(prevArguments.size() + 2);
                 newArguments.addAll(prevArguments);
                 newArguments.add("-x");
                 newArguments.add(TestTaskName.DEFAULT_TEST_TASK_NAME);

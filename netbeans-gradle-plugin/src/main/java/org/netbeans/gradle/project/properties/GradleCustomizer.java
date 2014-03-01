@@ -37,7 +37,7 @@ public final class GradleCustomizer implements CustomizerProvider {
 
     private static ProjectCustomizer.CompositeCategoryProvider[] getExternalCustomizers() {
         List<ProjectCustomizer.CompositeCategoryProvider> result
-                = new LinkedList<ProjectCustomizer.CompositeCategoryProvider>();
+                = new LinkedList<>();
 
         result.add(Customizers.createFormattingCategoryProvider(Collections.emptyMap()));
 
@@ -53,7 +53,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         ProjectCustomizer.CompositeCategoryProvider[] externalCategories
                 = getExternalCustomizers();
         List<ProjectCustomizer.CompositeCategoryProvider> allCategoriesList
-                = new ArrayList<ProjectCustomizer.CompositeCategoryProvider>(externalCategories.length + 2);
+                = new ArrayList<>(externalCategories.length + 2);
 
         allCategoriesList.add(new MainCustomizer(project));
         allCategoriesList.add(new LicenseCustomizer(project));

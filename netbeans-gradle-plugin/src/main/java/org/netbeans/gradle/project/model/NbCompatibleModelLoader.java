@@ -60,7 +60,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException {
 
-        List<NbGradleModel.Builder> otherModels = new LinkedList<NbGradleModel.Builder>();
+        List<NbGradleModel.Builder> otherModels = new LinkedList<>();
 
         NbGradleModel.Builder mainModel;
         if (baseModels == null) {
@@ -97,11 +97,11 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleModel.Builder mainModel,
             Map<File, NbGradleModel.Builder> otherModels) {
 
-        Map<Class<?>, Object> found = new HashMap<Class<?>, Object>();
+        Map<Class<?>, Object> found = new HashMap<>();
 
         NbGradleModel initialMainModel = mainModel.create();
         for (NbGradleExtensionRef extensionRef: GradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
-            List<Object> extensionModels = new LinkedList<Object>();
+            List<Object> extensionModels = new LinkedList<>();
 
             GradleModelDefQuery1 query1 = extensionRef.getModelNeeds().getQuery1();
             for (Class<?> modelClass: query1.getToolingModels(gradleTarget)) {
@@ -142,7 +142,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
     private static List<GradleTaskID> getTasksOfModule(IdeaModule module) {
         DomainObjectSet<? extends GradleTask> modelTasks = module.getGradleProject().getTasks();
-        List<GradleTaskID> result = new ArrayList<GradleTaskID>(modelTasks.size());
+        List<GradleTaskID> result = new ArrayList<>(modelTasks.size());
 
         for (GradleTask modelTask: modelTasks) {
             result.add(new GradleTaskID(modelTask.getName(), modelTask.getPath()));
@@ -157,7 +157,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         }
 
         int expectedChildCount = module.getGradleProject().getChildren().size();
-        List<NbGradleProjectTree> children = new ArrayList<NbGradleProjectTree>(expectedChildCount);
+        List<NbGradleProjectTree> children = new ArrayList<>(expectedChildCount);
         for (IdeaModule child: getChildModules(module)) {
             NbGradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child);
             if (childInfo != null) {
@@ -181,7 +181,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             childrenPaths.add(child.getPath());
         }
 
-        List<IdeaModule> result = new LinkedList<IdeaModule>();
+        List<IdeaModule> result = new LinkedList<>();
         for (IdeaModule candidateChild: module.getProject().getModules()) {
             if (childrenPaths.contains(candidateChild.getGradleProject().getPath())) {
                 result.add(candidateChild);

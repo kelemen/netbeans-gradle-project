@@ -26,7 +26,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
  * @see GradleProjectExtensionDef#parseModel(ModelLoadResult) GradleProjectExtensionDef.parseModel
  */
 public final class ParsedModel<ModelType> {
-    private static final ParsedModel<?> EMPTY = new ParsedModel<Object>();
+    private static final ParsedModel<?> EMPTY = new ParsedModel<>();
 
     private final ModelType mainModel;
     private final Map<File, ModelType> otherProjectsModel;

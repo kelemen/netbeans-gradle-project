@@ -57,9 +57,9 @@ implements
 
         this.root = root;
         this.project = project;
-        this.lastTree = new AtomicReference<NbGradleProjectTree>(null);
+        this.lastTree = new AtomicReference<>(null);
         if (subProjects != null) {
-            this.subProjects = new ArrayList<NbGradleProjectTree>(subProjects);
+            this.subProjects = new ArrayList<>(subProjects);
             sortModules(this.subProjects);
 
             for (NbGradleProjectTree subProject: this.subProjects) {
@@ -159,7 +159,7 @@ implements
             return subProjects;
         }
 
-        List<NbGradleProjectTree> result = new ArrayList<NbGradleProjectTree>(
+        List<NbGradleProjectTree> result = new ArrayList<>(
                 project.getAvailableModel().getMainProject().getChildren());
         sortModules(result);
         return result;
@@ -219,7 +219,7 @@ implements
                     Lookups.fixed(module));
             this.module = module;
             this.immediateChildren = Collections.unmodifiableList(GradleProjectChildFactory.getAllChildren(module));
-            this.children = Collections.unmodifiableList(new ArrayList<NbGradleProjectTree>(children));
+            this.children = Collections.unmodifiableList(new ArrayList<>(children));
         }
 
         @Override

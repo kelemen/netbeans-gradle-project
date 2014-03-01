@@ -50,7 +50,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
     public ProjectPropertiesPanel(NbGradleProject project) {
         this.project = project;
-        this.storeForProperties = new HashMap<ProfileItem, ProjectProperties>();
+        this.storeForProperties = new HashMap<>();
         this.currentlyShownProfile = null;
 
         initComponents();
@@ -67,7 +67,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void fillProfileCombo(Collection<NbGradleConfiguration> profiles) {
-        List<ProfileItem> profileItems = new ArrayList<ProfileItem>(profiles.size() + 1);
+        List<ProfileItem> profileItems = new ArrayList<>(profiles.size() + 1);
 
         NbGradleConfiguration[] profileArray = profiles.toArray(new NbGradleConfiguration[0]);
         NbGradleConfiguration.sortProfiles(profileArray);
@@ -76,13 +76,13 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             profileItems.add(new ProfileItem(profile));
         }
 
-        jProfileCombo.setModel(new DefaultComboBoxModel<ProfileItem>(profileItems.toArray(new ProfileItem[0])));
+        jProfileCombo.setModel(new DefaultComboBoxModel<>(profileItems.toArray(new ProfileItem[0])));
         jProfileCombo.setSelectedItem(new ProfileItem(project.getCurrentProfile()));
         loadSelectedProfile();
     }
 
     private void fetchProfilesAndSelect() {
-        final AtomicReference<PanelLockRef> lockRef = new AtomicReference<PanelLockRef>(lockPanel());
+        final AtomicReference<PanelLockRef> lockRef = new AtomicReference<>(lockPanel());
 
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
@@ -137,7 +137,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private void sortProfileComboItems() {
         ComboBoxModel<ProfileItem> model = jProfileCombo.getModel();
         int itemCount = model.getSize();
-        List<NbGradleConfiguration> configs = new ArrayList<NbGradleConfiguration>(itemCount);
+        List<NbGradleConfiguration> configs = new ArrayList<>(itemCount);
 
         for (int i = 0; i < itemCount; i++) {
             Object element = model.getElementAt(i);
@@ -153,7 +153,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         for (int i = 0; i < profiles.length; i++) {
             profiles[i] = new ProfileItem(configArray[i]);
         }
-        jProfileCombo.setModel(new DefaultComboBoxModel<ProfileItem>(profiles));
+        jProfileCombo.setModel(new DefaultComboBoxModel<>(profiles));
     }
 
     private ProfileItem getSelectedProfile() {
@@ -230,19 +230,19 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private void fillProjectPlatformCombo() {
-        List<ProjectPlatformComboItem> comboItems = new LinkedList<ProjectPlatformComboItem>();
+        List<ProjectPlatformComboItem> comboItems = new LinkedList<>();
         for (GradleProjectPlatformQuery query: Lookup.getDefault().lookupAll(GradleProjectPlatformQuery.class)) {
             for (ProjectPlatform platform: query.getAvailablePlatforms()) {
                 comboItems.add(new ProjectPlatformComboItem(platform));
             }
         }
 
-        jPlatformCombo.setModel(new DefaultComboBoxModel<ProjectPlatformComboItem>(comboItems.toArray(new ProjectPlatformComboItem[0])));
+        jPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new ProjectPlatformComboItem[0])));
     }
 
     private void fillScriptPlatformCombo() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<JavaPlatformComboItem> comboItems = new LinkedList<JavaPlatformComboItem>();
+        List<JavaPlatformComboItem> comboItems = new LinkedList<>();
         for (int i = 0; i < platforms.length; i++) {
             JavaPlatform platform = platforms[i];
             Specification specification = platform.getSpecification();
@@ -251,7 +251,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             }
         }
 
-        jScriptPlatformCombo.setModel(new DefaultComboBoxModel<JavaPlatformComboItem>(comboItems.toArray(new JavaPlatformComboItem[0])));
+        jScriptPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new JavaPlatformComboItem[0])));
     }
 
     private PanelLockRef lockPanel() {
@@ -294,7 +294,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     }
 
     private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<ValueType>(value, defaultValue);
+        return new ConstPropertySource<>(value, defaultValue);
     }
 
     private static <ValueType> void copyProperty(MutableProperty<ValueType> src, MutableProperty<ValueType> dest) {

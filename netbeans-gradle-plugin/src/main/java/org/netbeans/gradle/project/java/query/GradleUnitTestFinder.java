@@ -38,7 +38,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static URL[] urlsFromSourceSets(Collection<JavaSourceSet> sourceSets) {
-        List<URL> result = new LinkedList<URL>();
+        List<URL> result = new LinkedList<>();
         for (JavaSourceSet sourceSet: sourceSets) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {

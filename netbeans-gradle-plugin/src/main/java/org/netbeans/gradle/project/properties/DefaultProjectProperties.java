@@ -129,12 +129,12 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
 
     @Override
     public MutableProperty<JavaPlatform> getScriptPlatform() {
-        return new WrappedUnmodifiableProperty<JavaPlatform>("ScriptPlatform", GlobalGradleSettings.getGradleJdk());
+        return new WrappedUnmodifiableProperty<>("ScriptPlatform", GlobalGradleSettings.getGradleJdk());
     }
 
     @Override
     public MutableProperty<GradleLocation> getGradleLocation() {
-        return new WrappedUnmodifiableProperty<GradleLocation>("GradleLocation", GlobalGradleSettings.getGradleHome());
+        return new WrappedUnmodifiableProperty<>("GradleLocation", GlobalGradleSettings.getGradleHome());
     }
 
     @Override
@@ -159,7 +159,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
 
     private static PredefinedTask templateToPredefined(
             String displayName, GradleCommandTemplate command) {
-        List<PredefinedTask.Name> taskNames = new LinkedList<PredefinedTask.Name>();
+        List<PredefinedTask.Name> taskNames = new LinkedList<>();
         for (String taskName: command.getTasks()) {
             taskNames.add(new PredefinedTask.Name(taskName, false));
         }

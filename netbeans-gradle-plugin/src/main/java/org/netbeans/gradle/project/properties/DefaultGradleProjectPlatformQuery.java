@@ -23,7 +23,7 @@ implements
     private final Set<String> knownPlatforms;
 
     public DefaultGradleProjectPlatformQuery() {
-        this.knownPlatforms = new HashSet<String>(Arrays.asList("j2se"));
+        this.knownPlatforms = new HashSet<>(Arrays.asList("j2se"));
     }
 
     @Override
@@ -66,7 +66,7 @@ implements
     @Override
     public Collection<ProjectPlatform> getAvailablePlatforms() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<ProjectPlatform> result = new ArrayList<ProjectPlatform>(platforms.length);
+        List<ProjectPlatform> result = new ArrayList<>(platforms.length);
 
         for (final JavaPlatform platform: platforms) {
             result.add(AbstractProjectPlatformSource.getJavaPlatform(platform));

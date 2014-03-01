@@ -54,7 +54,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         this.changeSupport = new ChangeSupport(this);
         this.currentGroups = Collections.emptyMap();
         this.hasScanned = new AtomicBoolean(false);
-        this.scanRequestId = new AtomicReference<Object>(null);
+        this.scanRequestId = new AtomicReference<>(null);
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
             @Override
@@ -91,7 +91,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     private static <K, V> void addToMultiMap(K key, V value, Map<K, List<V>> map) {
         List<V> sourceGroupList = map.get(key);
         if (sourceGroupList == null) {
-            sourceGroupList = new LinkedList<V>();
+            sourceGroupList = new LinkedList<>();
             map.put(key, sourceGroupList);
         }
 
@@ -100,7 +100,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
 
     private static Map<String, List<SourceGroup>> findSourceGroupsOfModule(
             NbJavaModule module) {
-        Map<String, List<SourceGroup>> result = new HashMap<String, List<SourceGroup>>(8);
+        Map<String, List<SourceGroup>> result = new HashMap<>(8);
 
         for (NamedSourceRoot root: module.getNamedSourceRoots()) {
             SourceGroup newGroup = tryCreateSourceGroup(root);

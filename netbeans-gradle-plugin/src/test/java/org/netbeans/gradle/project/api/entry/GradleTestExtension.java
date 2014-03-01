@@ -17,7 +17,7 @@ public class GradleTestExtension implements GradleProjectExtension {
     private final AtomicReference<Lookup> lookupRef;
 
     public GradleTestExtension() {
-        this.lookupRef = new AtomicReference<Lookup>(null);
+        this.lookupRef = new AtomicReference<>(null);
     }
 
     @Override

@@ -46,7 +46,7 @@ public final class SingleFileModelCache implements PersistentModelCache {
         Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(cachedModels.size() + models.size());
         updatedModels.putAll(cachedModels);
 
-        List<NbGradleModel> remainingModels = new LinkedList<NbGradleModel>();
+        List<NbGradleModel> remainingModels = new LinkedList<>();
         for (NbGradleModel model: models) {
             if (!rootDir.equals(model.getRootProjectDir())) {
                 remainingModels.add(model);

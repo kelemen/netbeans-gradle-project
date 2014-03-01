@@ -7,7 +7,7 @@ public final class DomElementProperty implements MutableProperty<Element> {
     private final MutableProperty<Element> wrapped;
 
     public DomElementProperty() {
-        this.wrapped = new DefaultMutableProperty<Element>(new DomElementSource(null, true), true);
+        this.wrapped = new DefaultMutableProperty<>(new DomElementSource(null, true), true);
     }
 
     @Override

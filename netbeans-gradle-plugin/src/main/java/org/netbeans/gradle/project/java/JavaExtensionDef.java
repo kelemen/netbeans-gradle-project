@@ -103,7 +103,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
                 : parseFromNewModels(retrievedModels);
 
         NbJavaModel mainModule = result.get(retrievedModels.getMainProjectDir());
-        return new ParsedModel<NbJavaModel>(mainModule, result);
+        return new ParsedModel<>(mainModule, result);
     }
 
     @Override

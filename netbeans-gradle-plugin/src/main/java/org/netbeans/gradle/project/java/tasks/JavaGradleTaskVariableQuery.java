@@ -35,7 +35,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     public static final TaskVariable TEST_TASK_NAME_CAPITAL = StandardTaskVariable.TEST_TASK_NAME_CAPITAL.getVariable();
 
     private static final AtomicReference<VariableDefMap<JavaExtension>> VARIABLE_DEF_MAP_REF
-            = new AtomicReference<VariableDefMap<JavaExtension>>(null);
+            = new AtomicReference<>(null);
 
     private final JavaExtension javaExt;
 
@@ -132,7 +132,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
 
     private static VariableDefMap<JavaExtension> createVariableDefMap() {
         final Map<TaskVariable, VariableDef<JavaExtension>> varMap
-                = new HashMap<TaskVariable, VariableDef<JavaExtension>>();
+                = new HashMap<>();
         defineVariables(varMap);
 
         return new VariableDefMap<JavaExtension>() {
@@ -147,16 +147,16 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
             Map<TaskVariable, VariableDef<JavaExtension>> varMap,
             TaskVariable taskVariable,
             ValueGetter<JavaExtension> valueGetter) {
-        varMap.put(taskVariable, new VariableDef<JavaExtension>(taskVariable, valueGetter));
+        varMap.put(taskVariable, new VariableDef<>(taskVariable, valueGetter));
     }
 
     @Override
     public TaskVariableMap getVariableMap(final Lookup actionContext) {
-        return new CachingVariableMap<JavaExtension>(getVariableDefMap(), javaExt, actionContext);
+        return new CachingVariableMap<>(getVariableDefMap(), javaExt, actionContext);
     }
 
     private static List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<FileObject>();
+        List<FileObject> files = new LinkedList<>();
 
         SingleMethod method = context.lookup(SingleMethod.class);
         if (method != null) {

@@ -72,13 +72,13 @@ implements
 
         this.javaExt = javaExt;
         this.currentPlatform = null;
-        this.infoRefRef = new AtomicReference<ProjectInfoRef>(null);
+        this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
 
-        this.classpathResources = new ConcurrentHashMap<ClassPathKey, List<PathResourceImplementation>>();
-        this.classpaths = new ConcurrentHashMap<ClassPathKey, ClassPath>();
+        this.classpathResources = new ConcurrentHashMap<>();
+        this.classpaths = new ConcurrentHashMap<>();
         this.allSources = Collections.emptyList();
-        this.allSourcesClassPathRef = new AtomicReference<ClassPath>(null);
+        this.allSourcesClassPathRef = new AtomicReference<>(null);
 
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
@@ -249,7 +249,7 @@ implements
         NbJavaModel currentModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = currentModel.getMainModule();
 
-        List<File> sources = new LinkedList<File>();
+        List<File> sources = new LinkedList<>();
         addSourcesOfModule(mainModule, sources);
 
         for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
@@ -261,12 +261,12 @@ implements
 
         List<PathResourceImplementation> sourceContainer = getPathResources(sources, new HashSet<File>());
 
-        allSources = Collections.unmodifiableList(new ArrayList<PathResourceImplementation>(sourceContainer));
+        allSources = Collections.unmodifiableList(new ArrayList<>(sourceContainer));
     }
 
     public static List<PathResourceImplementation> getPathResources(Collection<File> files, Set<File> invalid) {
-        List<PathResourceImplementation> result = new ArrayList<PathResourceImplementation>(files.size());
-        for (File file: new LinkedHashSet<File>(files)) {
+        List<PathResourceImplementation> result = new ArrayList<>(files.size());
+        for (File file: new LinkedHashSet<>(files)) {
             URL url = FileUtil.urlForArchiveOrDir(file);
 
             // Ignore invalid classpath entries
@@ -298,7 +298,7 @@ implements
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.RUNTIME),
                 getPathResources(runtimeCP, invalid));
 
-        List<File> sources = new LinkedList<File>();
+        List<File> sources = new LinkedList<>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
             sources.addAll(sourceGroup.getSourceRoots());
         }
@@ -309,7 +309,7 @@ implements
     }
 
     private void loadBootClassPath() {
-        List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
+        List<PathResourceImplementation> platformResources = new LinkedList<>();
         ProjectPlatform platform = currentPlatform;
         if (platform == null) {
             platform = getPlatformProperty().getValue();
@@ -322,7 +322,7 @@ implements
     }
 
     private void loadAllRuntimeClassPath(NbJavaModule mainModule) {
-        Set<File> classPaths = new HashSet<File>();
+        Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
             classPaths.add(sourceSet.getOutputDirs().getClassesDir());
@@ -346,7 +346,7 @@ implements
     }
 
     private void loadRuntimeForGlobalClassPath(NbJavaModel projectModel) {
-        Set<File> classPaths = new HashSet<File>();
+        Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
             classPaths.addAll(sourceSet.getClasspaths().getRuntimeClasspaths());
@@ -360,7 +360,7 @@ implements
     }
 
     private void loadCompileForGlobalClassPath(NbJavaModel projectModel) {
-        Set<File> classPaths = new HashSet<File>();
+        Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
             classPaths.addAll(sourceSet.getClasspaths().getCompileClasspaths());
@@ -374,7 +374,7 @@ implements
     }
 
     private void loadAllBuildOutputClassPath(NbJavaModel projectModel) {
-        Set<File> classPaths = new HashSet<File>();
+        Set<File> classPaths = new HashSet<>();
 
         for (JavaSourceSet sourceSet: projectModel.getMainModule().getSources()) {
             classPaths.add(sourceSet.getOutputDirs().getClassesDir());
@@ -398,7 +398,7 @@ implements
         // TODO: This method must be called whenever any of the dependent projects
         //   is reloaded.
 
-        Set<File> missing = new HashSet<File>();
+        Set<File> missing = new HashSet<>();
 
         NbJavaModule mainModule = projectModel.getMainModule();
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
@@ -418,7 +418,7 @@ implements
             getInfoRef().setInfo(null);
         }
         else {
-            List<ProjectInfo.Entry> infos = new LinkedList<ProjectInfo.Entry>();
+            List<ProjectInfo.Entry> infos = new LinkedList<>();
             for (File missingDep: missing) {
                 infos.add(new ProjectInfo.Entry(ProjectInfo.Kind.WARNING,
                         NbStrings.getInvalidClassPathEntry(missingDep.getPath())));

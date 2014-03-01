@@ -31,7 +31,7 @@ public final class PluginClassMethod {
         this.pluginClass = pluginClass;
         this.methodName = methodName;
         this.argTypeFinders = argTypeFinders.clone();
-        this.methodRef = new AtomicReference<Method>(null);
+        this.methodRef = new AtomicReference<>(null);
         this.argTypesCache = null;
 
         CollectionUtils.checkNoNullElements(Arrays.asList(this.argTypeFinders), "argTypeFinders");

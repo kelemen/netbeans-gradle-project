@@ -16,7 +16,7 @@ public abstract class AbstractJavadocForBinaryQuery implements JavadocForBinaryQ
     private final ConcurrentMap<File, JavadocForBinaryQuery.Result> cache;
 
     public AbstractJavadocForBinaryQuery() {
-        this.cache = new ConcurrentHashMap<File, JavadocForBinaryQuery.Result>();
+        this.cache = new ConcurrentHashMap<>();
     }
 
     protected abstract JavadocForBinaryQuery.Result tryFindJavadoc(File binaryRoot);

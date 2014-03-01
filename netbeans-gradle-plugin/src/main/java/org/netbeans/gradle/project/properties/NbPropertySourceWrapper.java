@@ -16,7 +16,7 @@ implements
     }
 
     public NbPropertySourceWrapper(MutableProperty<ValueType> property) {
-        this(new PropertySourceWrapper<ValueType>(property));
+        this(new PropertySourceWrapper<>(property));
     }
 
     @Override

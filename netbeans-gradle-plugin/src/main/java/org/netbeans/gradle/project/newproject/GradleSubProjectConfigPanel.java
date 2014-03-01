@@ -20,7 +20,7 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
 
         this.configRef = configRef;
         this.wizard = wizard;
-        this.panel = new AtomicReference<GradleSingleProjectPropertiesPanel>();
+        this.panel = new AtomicReference<>();
     }
 
     private GradleSingleProjectPropertiesPanel getPanel() {

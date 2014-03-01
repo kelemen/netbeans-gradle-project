@@ -52,9 +52,9 @@ extends
 
         this.project = project;
         this.parent = parent;
-        this.nodeExtensionsRef = new AtomicReference<NodeExtensions>(NodeExtensions.EMPTY);
+        this.nodeExtensionsRef = new AtomicReference<>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
-        this.listenerRegistrations = new LinkedList<NbListenerRef>();
+        this.listenerRegistrations = new LinkedList<>();
 
         this.enableRefresh = true;
         this.hasPreventedRefresh = new AtomicBoolean(false);
@@ -65,7 +65,7 @@ extends
     }
 
     private List<GradleProjectExtensionNodes> getExtensionNodes() {
-        List<GradleProjectExtensionNodes> result = new ArrayList<GradleProjectExtensionNodes>(
+        List<GradleProjectExtensionNodes> result = new ArrayList<>(
                 project.getCombinedExtensionLookup().lookupAll(GradleProjectExtensionNodes.class));
         return result;
     }
@@ -185,7 +185,7 @@ extends
 
     @Override
     protected void removeNotify() {
-        Collection<NbListenerRef> toUnregister = new ArrayList<NbListenerRef>(listenerRegistrations);
+        Collection<NbListenerRef> toUnregister = new ArrayList<>(listenerRegistrations);
         listenerRegistrations.clear();
 
         for (NbListenerRef listenerRef: toUnregister) {
@@ -230,13 +230,13 @@ extends
     }
 
     public static List<NbGradleProjectTree> getAllChildren(NbGradleProjectTree module) {
-        List<NbGradleProjectTree> result = new LinkedList<NbGradleProjectTree>();
+        List<NbGradleProjectTree> result = new LinkedList<>();
         getAllChildren(module, result);
         return result;
     }
 
     private static List<NbGradleProjectTree> getAllChildren(NbGradleModel model) {
-        List<NbGradleProjectTree> result = new LinkedList<NbGradleProjectTree>();
+        List<NbGradleProjectTree> result = new LinkedList<>();
         getAllChildren(model.getMainProject(), result);
         return result;
     }
@@ -339,7 +339,7 @@ extends
                 Collection<? extends GradleProjectExtensionNodes> nodeFactories,
                 List<NbListenerRef> listenerRefs) {
             this.nodeFactories = Collections.unmodifiableList(
-                    new ArrayList<GradleProjectExtensionNodes>(nodeFactories));
+                    new ArrayList<>(nodeFactories));
 
             this.listenerRefs = listenerRefs;
             this.needRefreshOnProjectReload = !isAllAnnotatedWith(nodeFactories, ManualRefreshedNodes.class);
@@ -362,7 +362,7 @@ extends
                 Collection<? extends GradleProjectExtensionNodes> nodeFactories,
                 Runnable changeListener) {
 
-            List<NbListenerRef> listenerRefs = new ArrayList<NbListenerRef>(nodeFactories.size());
+            List<NbListenerRef> listenerRefs = new ArrayList<>(nodeFactories.size());
             for (GradleProjectExtensionNodes nodeFactory: nodeFactories) {
                 listenerRefs.add(nodeFactory.addNodeChangeListener(changeListener));
             }

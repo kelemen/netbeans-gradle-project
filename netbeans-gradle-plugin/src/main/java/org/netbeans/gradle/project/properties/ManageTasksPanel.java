@@ -71,7 +71,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             return (DefaultListModel<PredefinedTaskItem>)model;
         }
 
-        DefaultListModel<PredefinedTaskItem> result = new DefaultListModel<PredefinedTaskItem>();
+        DefaultListModel<PredefinedTaskItem> result = new DefaultListModel<>();
         jDefinedTasks.setModel(result);
         return result;
     }
@@ -91,7 +91,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         List<PredefinedTask.Name> names;
         if (rawTaskNames.length > 0) {
-            names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
+            names = new ArrayList<>(rawTaskNames.length);
             for (String name: rawTaskNames) {
                 names.add(new PredefinedTask.Name(name, mustExist));
             }
@@ -116,7 +116,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
         int elementCount = listedTasks.getSize();
 
-        List<PredefinedTask> newTasks = new ArrayList<PredefinedTask>(elementCount);
+        List<PredefinedTask> newTasks = new ArrayList<>(elementCount);
         for (int i = 0; i < elementCount; i++) {
             @SuppressWarnings("unchecked")
             PredefinedTaskItem current = listedTasks.getElementAt(i);

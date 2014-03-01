@@ -114,7 +114,7 @@ public final class GradleModelDef {
             Collection<? extends Class<?>> modelTypes,
             ProjectInfoBuilder<?>... builders) {
 
-        List<GradleProjectInfoQuery<?>> queries = new ArrayList<GradleProjectInfoQuery<?>>(builders.length);
+        List<GradleProjectInfoQuery<?>> queries = new ArrayList<>(builders.length);
         for (ProjectInfoBuilder<?> builder: builders) {
             queries.add(createDefaultQuery(builder));
         }
@@ -140,7 +140,7 @@ public final class GradleModelDef {
      */
     @Nonnull
     public static GradleModelDef fromProjectInfoBuilders(ProjectInfoBuilder<?>... builders) {
-        List<GradleProjectInfoQuery<?>> queries = new ArrayList<GradleProjectInfoQuery<?>>(builders.length);
+        List<GradleProjectInfoQuery<?>> queries = new ArrayList<>(builders.length);
         for (ProjectInfoBuilder<?> builder: builders) {
             queries.add(createDefaultQuery(builder));
         }

@@ -59,14 +59,14 @@ public final class NbJavaModule implements Serializable {
         this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
         this.testTasks = testTasks;
 
-        this.mainSourceSetRef = new AtomicReference<JavaSourceSet>(null);
-        this.testSourceSetRef = new AtomicReference<JavaSourceSet>(null);
-        this.testSourceSetsRef = new AtomicReference<List<JavaSourceSet>>(null);
-        this.nonTestSourceSetsRef = new AtomicReference<List<JavaSourceSet>>(null);
-        this.namedSourceRootsRef = new AtomicReference<List<NamedSourceRoot>>(null);
-        this.nameToSourceSetRef = new AtomicReference<Map<String, JavaSourceSet>>(null);
-        this.testNameToModelRef = new AtomicReference<Map<String, JavaTestTask>>(null);
-        this.allBuildOutputRefs = new AtomicReference<Set<File>>(null);
+        this.mainSourceSetRef = new AtomicReference<>(null);
+        this.testSourceSetRef = new AtomicReference<>(null);
+        this.testSourceSetsRef = new AtomicReference<>(null);
+        this.nonTestSourceSetsRef = new AtomicReference<>(null);
+        this.namedSourceRootsRef = new AtomicReference<>(null);
+        this.nameToSourceSetRef = new AtomicReference<>(null);
+        this.testNameToModelRef = new AtomicReference<>(null);
+        this.allBuildOutputRefs = new AtomicReference<>(null);
     }
 
     public GenericProjectProperties getProperties() {
@@ -138,7 +138,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private List<JavaSourceSet> findSourceSets(SourceSetFilter filter) {
-        List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
+        List<JavaSourceSet> result = new LinkedList<>();
         for (JavaSourceSet sourceSet: sources) {
             if (!filter.needSourceSet(sourceSet)) {
                 continue;

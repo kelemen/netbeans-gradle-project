@@ -20,7 +20,7 @@ public final class JavaProjectPlatform implements ProjectPlatform {
     }
 
     private static Collection<URL> urlsOfClassPath(ClassPath classPath) {
-        List<URL> urls = new LinkedList<URL>();
+        List<URL> urls = new LinkedList<>();
 
         for (ClassPath.Entry entry: classPath.entries()) {
             urls.add(entry.getURL());

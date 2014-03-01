@@ -36,35 +36,35 @@ extends
         this.mainProperties = mainProperties;
         this.defaultProperties = defaultProperties;
 
-        this.sourceLevel = new FallbackProperty<String>(
+        this.sourceLevel = new FallbackProperty<>(
                 mainProperties.getSourceLevel(),
                 defaultProperties.getSourceLevel());
 
-        this.platform = new FallbackProperty<ProjectPlatform>(
+        this.platform = new FallbackProperty<>(
                 mainProperties.getPlatform(),
                 defaultProperties.getPlatform());
 
-        this.scriptPlatform = new FallbackProperty<JavaPlatform>(
+        this.scriptPlatform = new FallbackProperty<>(
                 mainProperties.getScriptPlatform(),
                 defaultProperties.getScriptPlatform());
 
-        this.gradleHome = new FallbackProperty<GradleLocation>(
+        this.gradleHome = new FallbackProperty<>(
                 mainProperties.getGradleLocation(),
                 defaultProperties.getGradleLocation());
 
-        this.sourceEncoding = new FallbackProperty<Charset>(
+        this.sourceEncoding = new FallbackProperty<>(
                 mainProperties.getSourceEncoding(),
                 defaultProperties.getSourceEncoding());
 
-        this.licenseHeader = new FallbackProperty<LicenseHeaderInfo>(
+        this.licenseHeader = new FallbackProperty<>(
                 mainProperties.getLicenseHeader(),
                 defaultProperties.getLicenseHeader());
 
-        this.auxConfigListener = new FallbackProperty<Void>(
+        this.auxConfigListener = new FallbackProperty<>(
                 mainProperties.getAuxConfigListener(),
                 defaultProperties.getAuxConfigListener());
 
-        this.commonTasks = new ListMergerProperty<PredefinedTask>(
+        this.commonTasks = new ListMergerProperty<>(
                 mainProperties.getCommonTasks(),
                 defaultProperties.getCommonTasks());
     }
@@ -121,7 +121,7 @@ extends
             return mainProperty;
         }
 
-        return new FallbackProperty<PredefinedTask>(mainProperty, defaultProperty);
+        return new FallbackProperty<>(mainProperty, defaultProperty);
     }
 
     @Override
@@ -142,7 +142,7 @@ extends
 
     @Override
     public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
-        FallbackProperty<Element> property = new FallbackProperty<Element>(
+        FallbackProperty<Element> property = new FallbackProperty<>(
                 mainProperties.getAuxConfig(elementName, namespace).getProperty(),
                 defaultProperties.getAuxConfig(elementName, namespace).getProperty());
         return new AuxConfigProperty(elementName, namespace, property);
@@ -188,7 +188,7 @@ extends
             List<ElementType> mainList = mainValue.getValue();
             List<ElementType> defaultList = defaultValue.getValue();
 
-            List<ElementType> result = new ArrayList<ElementType>(mainList.size() + defaultList.size());
+            List<ElementType> result = new ArrayList<>(mainList.size() + defaultList.size());
             result.addAll(mainList);
             result.addAll(defaultList);
             return result;

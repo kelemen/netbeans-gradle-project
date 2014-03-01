@@ -25,7 +25,7 @@ implements
         this.changesLock = new ReentrantLock();
         this.changes = new ChangeSupport(this);
         this.subListenerRef = null;
-        this.queryRef = new AtomicReference<GradleProjectPlatformQuery>(null);
+        this.queryRef = new AtomicReference<>(null);
     }
 
     public static ProjectPlatform getDefaultPlatform() {

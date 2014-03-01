@@ -185,7 +185,7 @@ public final class GradleTaskDef {
         private static <T> List<T> concatNullSafeLists(
                 List<? extends T> list1,
                 List<? extends T> list2) {
-            List<T> result = new ArrayList<T>(list1.size() + list2.size());
+            List<T> result = new ArrayList<>(list1.size() + list2.size());
             result.addAll(list1);
             result.addAll(list2);
             for (T element: result) {
@@ -376,7 +376,7 @@ public final class GradleTaskDef {
     }
 
     private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
-        List<String> result = new ArrayList<String>(strings.size());
+        List<String> result = new ArrayList<>(strings.size());
         for (String str: strings) {
             result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
         }
@@ -448,7 +448,7 @@ public final class GradleTaskDef {
         String displayName = command.getDisplayName();
 
         return displayName.isEmpty()
-                ? new ArrayList<String>(command.getTasks())
+                ? new ArrayList<>(command.getTasks())
                 : displayName;
     }
 

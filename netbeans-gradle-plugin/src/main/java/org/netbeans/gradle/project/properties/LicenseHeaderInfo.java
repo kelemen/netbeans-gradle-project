@@ -24,7 +24,7 @@ public final class LicenseHeaderInfo {
         if (properties == null) throw new NullPointerException("properties");
 
         this.licenseName = licenseName;
-        this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
+        this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
         this.licenseTemplateFile = licenseTemplateFile;
 
         String randomStr = Long.toHexString(RND.nextLong()) + "-" + Long.toHexString(RND.nextLong());

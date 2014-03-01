@@ -47,7 +47,7 @@ implements
         if (javaExt == null) throw new NullPointerException("javaExt");
         this.javaExt = javaExt;
         this.nodeChanges = new ChangeSupport(this);
-        this.lastDisplayed = new AtomicReference<NodesDescription>(null);
+        this.lastDisplayed = new AtomicReference<>(null);
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
             @Override
@@ -89,7 +89,7 @@ implements
     }
 
     private static Set<SourceRootID> getAvailableSourceRootIDs(List<JavaSourceSet> sourceSets) {
-        Set<SourceRootID> result = new HashSet<SourceRootID>();
+        Set<SourceRootID> result = new HashSet<>();
         for (JavaSourceSet sourceSet: sourceSets) {
             getAvailableSourceRootIDs(sourceSet, result);
         }
@@ -204,7 +204,7 @@ implements
 
     @Override
     public List<SingleNodeFactory> getNodeFactories() {
-        List<SingleNodeFactory> result = new LinkedList<SingleNodeFactory>();
+        List<SingleNodeFactory> result = new LinkedList<>();
 
         Set<SourceRootID> sourceRoots = addSourceRoots(result);
         Set<NbListedDir> listedDirs = addListedDirs(result);

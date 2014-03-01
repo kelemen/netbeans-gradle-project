@@ -49,8 +49,8 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     public GradleFilesClassPathProvider() {
         this.initialized = new AtomicBoolean(false);
         this.initSignal = new WaitableSignal();
-        this.classpaths = new EnumMap<ClassPathType, ClassPath>(ClassPathType.class);
-        this.classpathResources = new ConcurrentHashMap<ClassPathType, List<PathResourceImplementation>>();
+        this.classpaths = new EnumMap<>(ClassPathType.class);
+        this.classpathResources = new ConcurrentHashMap<>();
 
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
@@ -93,7 +93,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
                     Arrays.toString(jars));
         }
 
-        List<PathResourceImplementation> jarResources = new ArrayList<PathResourceImplementation>(jars.length);
+        List<PathResourceImplementation> jarResources = new ArrayList<>(jars.length);
         for (URL jar: jars) {
             jarResources.add(ClassPathSupport.createResource(jar));
         }
@@ -103,7 +103,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
         JavaPlatform platform = GlobalGradleSettings.getGradleJdk().getValue();
         if (platform != null) {
-            List<PathResourceImplementation> platformResources = new LinkedList<PathResourceImplementation>();
+            List<PathResourceImplementation> platformResources = new LinkedList<>();
             for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
                 platformResources.add(ClassPathSupport.createResource(entry.getURL()));
             }

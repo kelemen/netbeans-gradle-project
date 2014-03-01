@@ -45,61 +45,61 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     public ProjectPropertiesProxy(NbGradleProject project) {
         if (project == null) throw new NullPointerException("project");
         this.project = project;
-        this.propertiesRef = new AtomicReference<ProjectProperties>(null);
+        this.propertiesRef = new AtomicReference<>(null);
         this.changes = new ChangeSupport(this);
         this.loadedSignal = new WaitableSignal();
 
-        this.auxProperties = new ConcurrentHashMap<DomElementKey, AuxConfigProperty>();
-        this.auxConfigListener = new MutablePropertyProxy<Void>(new ProjectMutablePropertyRef<Void>(this) {
+        this.auxProperties = new ConcurrentHashMap<>();
+        this.auxConfigListener = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Void>(this) {
             @Override
             public MutableProperty<Void> getProperty() {
                 return super.getProperties().getAuxConfigListener();
             }
         });
-        this.sourceLevelProxy = new MutablePropertyProxy<String>(new ProjectMutablePropertyRef<String>(this) {
+        this.sourceLevelProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<String>(this) {
             @Override
             public MutableProperty<String> getProperty() {
                 return super.getProperties().getSourceLevel();
             }
         });
-        this.platformProxy = new MutablePropertyProxy<ProjectPlatform>(new ProjectMutablePropertyRef<ProjectPlatform>(this) {
+        this.platformProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<ProjectPlatform>(this) {
             @Override
             public MutableProperty<ProjectPlatform> getProperty() {
                 return super.getProperties().getPlatform();
             }
         });
-        this.scriptPlatformProxy = new MutablePropertyProxy<JavaPlatform>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
+        this.scriptPlatformProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
             @Override
             public MutableProperty<JavaPlatform> getProperty() {
                 return super.getProperties().getScriptPlatform();
             }
         });
-        this.gradleHomeProxy = new MutablePropertyProxy<GradleLocation>(new ProjectMutablePropertyRef<GradleLocation>(this) {
+        this.gradleHomeProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<GradleLocation>(this) {
             @Override
             public MutableProperty<GradleLocation> getProperty() {
                 return super.getProperties().getGradleLocation();
             }
         });
-        this.sourceEncodingProxy = new MutablePropertyProxy<Charset>(new ProjectMutablePropertyRef<Charset>(this) {
+        this.sourceEncodingProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Charset>(this) {
             @Override
             public MutableProperty<Charset> getProperty() {
                 return super.getProperties().getSourceEncoding();
             }
         });
-        this.licenseHeaderProxy = new MutablePropertyProxy<LicenseHeaderInfo>(new ProjectMutablePropertyRef<LicenseHeaderInfo>(this) {
+        this.licenseHeaderProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<LicenseHeaderInfo>(this) {
             @Override
             public MutableProperty<LicenseHeaderInfo> getProperty() {
                 return super.getProperties().getLicenseHeader();
             }
         });
-        this.commonTasksProxy = new MutablePropertyProxy<List<PredefinedTask>>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
+        this.commonTasksProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
             @Override
             public MutableProperty<List<PredefinedTask>> getProperty() {
                 return super.getProperties().getCommonTasks();
             }
         });
 
-        this.builtInTasks = new ConcurrentHashMap<String, MutablePropertyProxy<PredefinedTask>>();
+        this.builtInTasks = new ConcurrentHashMap<>();
     }
 
     public boolean isLoaded() {
@@ -196,7 +196,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
-            MutablePropertyProxy<PredefinedTask> proxy = new MutablePropertyProxy<PredefinedTask>(new ProjectMutablePropertyRef<PredefinedTask>(this) {
+            MutablePropertyProxy<PredefinedTask> proxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<PredefinedTask>(this) {
                 @Override
                 public MutableProperty<PredefinedTask> getProperty() {
                     MutableProperty<PredefinedTask> taskProperty = super.getProperties().tryGetBuiltInTask(command);
@@ -220,7 +220,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             return property;
         }
 
-        MutablePropertyProxy<Element> proxy = new MutablePropertyProxy<Element>(new ProjectMutablePropertyRef<Element>(this) {
+        MutablePropertyProxy<Element> proxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Element>(this) {
             @Override
             public MutableProperty<Element> getProperty() {
                 return super.getProperties().getAuxConfig(elementName, namespace).getProperty();
@@ -248,7 +248,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
     @Override
     public Collection<AuxConfigProperty> getAllAuxConfigs() {
-        return new ArrayList<AuxConfigProperty>(auxProperties.values());
+        return new ArrayList<>(auxProperties.values());
     }
 
     private static interface MutablePropertyRef<ValueType> {
@@ -294,7 +294,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         public MutablePropertyProxy(MutablePropertyRef<ValueType> propertyRef) {
             this.propertyRef = propertyRef;
             this.mainLock = new ReentrantLock();
-            this.listeners = new LinkedList<ChangeListener>();
+            this.listeners = new LinkedList<>();
             this.forwardingTo = null;
             this.forwarder = new ChangeListener() {
                 @Override
@@ -303,7 +303,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                     mainLock.lock();
                     try {
                         if (!listeners.isEmpty()) {
-                            listenersCopy = new ArrayList<ChangeListener>(listeners);
+                            listenersCopy = new ArrayList<>(listeners);
                         }
                     } finally {
                         mainLock.unlock();

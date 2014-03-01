@@ -43,7 +43,7 @@ public class PredefinedTaskTest {
     }
 
     private static List<PredefinedTask.Name> createTaskNames(boolean mustExist, String... names) {
-        List<PredefinedTask.Name> result = new ArrayList<PredefinedTask.Name>(names.length);
+        List<PredefinedTask.Name> result = new ArrayList<>(names.length);
         for (String name: names) {
             result.add(new PredefinedTask.Name(name, mustExist));
         }
@@ -123,7 +123,7 @@ public class PredefinedTaskTest {
     }
 
     private static List<GradleTaskID> gradleTasks(String projectFullName, String... names) {
-        List<GradleTaskID> result = new ArrayList<GradleTaskID>(names.length);
+        List<GradleTaskID> result = new ArrayList<>(names.length);
         for (String name: names) {
             String fullName = projectFullName.endsWith(":")
                     ? projectFullName + name

@@ -33,7 +33,7 @@ public final class ProjectPropertiesManager {
     // Don't forget that the value can't be wrapped, it must be the one to be
     // returned, otherwise it might get garbage collected.
     private static final Map<ProjectPropertySource, CachedProperties> PROPERTIES
-            = new WeakValueHashMap<ProjectPropertySource, CachedProperties>();
+            = new WeakValueHashMap<>();
 
     private static void saveIfRequired(
             final NbGradleProject project,
@@ -97,7 +97,7 @@ public final class ProjectPropertiesManager {
     }
 
     public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, List<File> propertiesFiles) {
-        List<ProjectPropertySource> sources = new ArrayList<ProjectPropertySource>();
+        List<ProjectPropertySource> sources = new ArrayList<>();
         for (File propertyFile: propertiesFiles) {
             sources.add(getFilePropertySource(project, propertyFile));
         }
@@ -230,7 +230,7 @@ public final class ProjectPropertiesManager {
 
             if (result == null) {
                 final AtomicReference<CachedProperties> resultRef
-                        = new AtomicReference<CachedProperties>(null);
+                        = new AtomicReference<>(null);
 
                 final AtomicInteger subTaskCount = new AtomicInteger();
                 // Setting the value of resultRef is counted as a subTask as well.
@@ -402,7 +402,7 @@ public final class ProjectPropertiesManager {
             assert properties != null;
             this.properties = properties;
             this.loadLock = new ReentrantLock();
-            this.onLoadedTask = new LinkedList<PropertiesLoadListener>();
+            this.onLoadedTask = new LinkedList<>();
         }
 
         public void signalPropertiesLoaded() {

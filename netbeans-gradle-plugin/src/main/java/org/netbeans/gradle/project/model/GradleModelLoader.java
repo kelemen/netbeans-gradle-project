@@ -208,7 +208,7 @@ public final class GradleModelLoader {
             NbGradleProject project,
             NbGradleModel baseModels) {
 
-        List<NbGradleExtensionRef> result = new LinkedList<NbGradleExtensionRef>();
+        List<NbGradleExtensionRef> result = new LinkedList<>();
         for (NbGradleExtensionRef extension: project.getExtensionRefs()) {
             if (!baseModels.hasModelOfExtension(extension)) {
                 result.add(extension);
@@ -446,7 +446,7 @@ public final class GradleModelLoader {
             List<NbGradleModel> otherModels,
             NbGradleModel mainModel) {
 
-        List<NbGradleModel> toSave = new ArrayList<NbGradleModel>(otherModels.size() + 1);
+        List<NbGradleModel> toSave = new ArrayList<>(otherModels.size() + 1);
         for (NbGradleModel model: otherModels) {
             toSave.add(introduceLoadedModel(model, false));
         }
@@ -573,10 +573,10 @@ public final class GradleModelLoader {
                     : JavaPlatform.getDefault();
 
             this.arguments = arguments != null
-                    ? new ArrayList<String>(arguments)
+                    ? new ArrayList<>(arguments)
                     : Collections.<String>emptyList();
             this.jvmArgs = jvmArgs != null
-                    ? new ArrayList<String>(jvmArgs)
+                    ? new ArrayList<>(jvmArgs)
                     : Collections.<String>emptyList();
         }
 

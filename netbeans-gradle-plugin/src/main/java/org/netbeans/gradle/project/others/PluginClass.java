@@ -13,7 +13,7 @@ public final class PluginClass implements ClassFinder {
 
         this.classFactory = classFactory;
         this.className = className;
-        this.loadedClass = new AtomicReference<Class<?>>();
+        this.loadedClass = new AtomicReference<>();
     }
 
     @Override

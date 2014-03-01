@@ -34,7 +34,7 @@ public final class GradleHomeRegistry {
 
         USING_GLOBAL_PATHS = new AtomicBoolean(false);
         REGISTERED_GLOBAL_PATH = new AtomicBoolean(false);
-        GRADLE_HOME_BINARIES = new AtomicReference<GradleHomePaths>(new GradleHomePaths());
+        GRADLE_HOME_BINARIES = new AtomicReference<>(new GradleHomePaths());
     }
 
     private static void doRegisterGlobalClassPath() {
@@ -119,7 +119,7 @@ public final class GradleHomeRegistry {
 
             this.homePath = homePath;
 
-            List<PathResourceImplementation> resources = new ArrayList<PathResourceImplementation>(urls.length);
+            List<PathResourceImplementation> resources = new ArrayList<>(urls.length);
             for (URL url: urls) {
                 resources.add(ClassPathSupport.createResource(url));
             }

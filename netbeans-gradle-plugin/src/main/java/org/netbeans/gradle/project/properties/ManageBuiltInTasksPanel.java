@@ -43,7 +43,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         this.project = project;
         this.projectProperties = properties;
         lastShownItem = null;
-        toSaveTasks = new HashMap<String, SavedTask>();
+        toSaveTasks = new HashMap<>();
 
         initComponents();
         jActionPanel = new CustomActionPanel();
@@ -92,7 +92,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
 
     private void fillTaskCombo() {
         Set<String> commands = projectProperties.getKnownBuiltInCommands();
-        List<BuiltInTaskItem> items = new ArrayList<BuiltInTaskItem>(commands.size());
+        List<BuiltInTaskItem> items = new ArrayList<>(commands.size());
         for (String command: commands) {
             items.add(new BuiltInTaskItem(command, getDisplayNameOfCommand(command)));
         }
@@ -102,7 +102,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
                 return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
             }
         });
-        jTaskCombo.setModel(new DefaultComboBoxModel<BuiltInTaskItem>(items.toArray(new BuiltInTaskItem[items.size()])));
+        jTaskCombo.setModel(new DefaultComboBoxModel<>(items.toArray(new BuiltInTaskItem[items.size()])));
         jTaskCombo.getModel().setSelectedItem(items.get(0));
     }
 
@@ -155,7 +155,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         String[] rawTaskNames = jActionPanel.getTasks();
         List<PredefinedTask.Name> names;
         if (rawTaskNames.length > 0) {
-            names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
+            names = new ArrayList<>(rawTaskNames.length);
             for (String name: rawTaskNames) {
                 names.add(new PredefinedTask.Name(name, false));
             }
@@ -222,7 +222,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     }
 
     private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<ValueType>(value, defaultValue);
+        return new ConstPropertySource<>(value, defaultValue);
     }
 
     public void saveModifiedTasks() {

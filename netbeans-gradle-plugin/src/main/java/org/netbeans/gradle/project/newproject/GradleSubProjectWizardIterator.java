@@ -41,9 +41,9 @@ implements
     private int descriptorIndex;
 
     public GradleSubProjectWizardIterator() {
-        this.descriptors = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>(1);
+        this.descriptors = new ArrayList<>(1);
         this.descriptorIndex = 0;
-        this.configRef = new AtomicReference<GradleSingleProjectConfig>(null);
+        this.configRef = new AtomicReference<>(null);
     }
 
     private static void createBuildGradle(

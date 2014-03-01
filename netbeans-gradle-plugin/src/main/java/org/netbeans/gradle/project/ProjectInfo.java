@@ -9,7 +9,7 @@ public final class ProjectInfo {
     private final List<Entry> entries;
 
     public ProjectInfo(Collection<Entry> entries) {
-        this.entries = Collections.unmodifiableList(new ArrayList<Entry>(entries));
+        this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
         for (Entry entry: entries) {
             if (entry == null) throw new NullPointerException("entry");
         }

@@ -44,37 +44,37 @@ public final class GlobalGradleSettings {
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
         // for backward compatibility reason.
-        gradleLocation = new GlobalProperty<GradleLocation>(
+        gradleLocation = new GlobalProperty<>(
                 withNS(namespace, "gradle-home"),
                 GradleLocationConverter.INSTANCE);
-        gradleUserHomeDir = new GlobalProperty<File>(
+        gradleUserHomeDir = new GlobalProperty<>(
                 withNS(namespace, "gradle-user-home"),
                 FileConverter.INSTANCE);
-        gradleJvmArgs = new GlobalProperty<List<String>>(
+        gradleJvmArgs = new GlobalProperty<>(
                 withNS(namespace, "gradle-jvm-args"),
                 StringToStringListConverter.INSTANCE);
-        gradleJdk = new GlobalProperty<JavaPlatform>(
+        gradleJdk = new GlobalProperty<>(
                 withNS(namespace, "gradle-jdk"),
                 JavaPlaformConverter.INSTANCE);
-        skipTests = new GlobalProperty<Boolean>(
+        skipTests = new GlobalProperty<>(
                 withNS(namespace, "skip-tests"),
                 new BooleanConverter(false));
-        projectCacheSize = new GlobalProperty<Integer>(
+        projectCacheSize = new GlobalProperty<>(
                 withNS(namespace, "project-cache-size"),
                 new IntegerConverter(1, Integer.MAX_VALUE, 100));
-        alwaysClearOutput = new GlobalProperty<Boolean>(
+        alwaysClearOutput = new GlobalProperty<>(
                 withNS(namespace, "always-clear-output"),
                 new BooleanConverter(false));
-        omitInitScript = new GlobalProperty<Boolean>(
+        omitInitScript = new GlobalProperty<>(
                 withNS(namespace, "omit-init-script"),
                 new BooleanConverter(false));
-        mayRelyOnJavaOfScript = new GlobalProperty<Boolean>(
+        mayRelyOnJavaOfScript = new GlobalProperty<>(
                 withNS(namespace, "rely-on-java-of-script"),
                 new BooleanConverter(false));
-        modelLoadingStrategy = new GlobalProperty<ModelLoadingStrategy>(
+        modelLoadingStrategy = new GlobalProperty<>(
                 withNS(namespace, "model-load-strategy"),
-                new EnumConverter<ModelLoadingStrategy>(ModelLoadingStrategy.NEWEST_POSSIBLE));
-        gradleDaemonTimeoutSec = new GlobalProperty<Integer>(
+                new EnumConverter<>(ModelLoadingStrategy.NEWEST_POSSIBLE));
+        gradleDaemonTimeoutSec = new GlobalProperty<>(
                 withNS(namespace, "gradle-daemon-timeout-sec"),
                 new IntegerConverter(1, Integer.MAX_VALUE, null));
     }

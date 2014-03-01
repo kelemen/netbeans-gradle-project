@@ -118,7 +118,7 @@ public final class IdeaJavaModelUtils {
 
     private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {
         Map<JavaSourceGroupName, List<File>> sourceRootMap
-                = new EnumMap<JavaSourceGroupName, List<File>>(JavaSourceGroupName.class);
+                = new EnumMap<>(JavaSourceGroupName.class);
 
         for (IdeaSourceDirectory root: roots) {
             File dir = root.getDirectory();
@@ -140,13 +140,13 @@ public final class IdeaJavaModelUtils {
 
             List<File> rootsList = sourceRootMap.get(choice);
             if (rootsList == null) {
-                rootsList = new LinkedList<File>();
+                rootsList = new LinkedList<>();
                 sourceRootMap.put(choice, rootsList);
             }
             rootsList.add(dir);
         }
 
-        List<JavaSourceGroup> result = new ArrayList<JavaSourceGroup>(sourceRootMap.size());
+        List<JavaSourceGroup> result = new ArrayList<>(sourceRootMap.size());
         for (Map.Entry<JavaSourceGroupName, List<File>> entry: sourceRootMap.entrySet()) {
             result.add(new JavaSourceGroup(entry.getKey(), entry.getValue()));
         }
@@ -195,7 +195,7 @@ public final class IdeaJavaModelUtils {
             }
         }
 
-        List<JavaSourceSet> result = new ArrayList<JavaSourceSet>(2);
+        List<JavaSourceSet> result = new ArrayList<>(2);
         if (mainSourceRootCount > 0) {
             result.add(main.create());
         }
@@ -248,7 +248,7 @@ public final class IdeaJavaModelUtils {
 
             if (dependency instanceof IdeaModuleDependency) {
                 if (nextProjectsToSkip == null) {
-                    nextProjectsToSkip = new HashSet<String>(projectsToSkip);
+                    nextProjectsToSkip = new HashSet<>(projectsToSkip);
                     nextProjectsToSkip.add(uniqueProjectName);
                 }
 
@@ -294,7 +294,7 @@ public final class IdeaJavaModelUtils {
     }
 
     private static List<NbListedDir> lookupListedDirs(Collection<JavaSourceSet> sources) {
-        List<NbListedDir> result = new LinkedList<NbListedDir>();
+        List<NbListedDir> result = new LinkedList<>();
 
         NbListedDir webAppDir = findWebAppDir(sources);
         if (webAppDir != null) {
@@ -415,10 +415,10 @@ public final class IdeaJavaModelUtils {
         private Set<File> testRuntime;
 
         public IdeaDependencyBuilder() {
-            this.mainCompile = new LinkedHashSet<File>();
-            this.mainRuntime = new LinkedHashSet<File>();
-            this.testCompile = new LinkedHashSet<File>();
-            this.testRuntime = new LinkedHashSet<File>();
+            this.mainCompile = new LinkedHashSet<>();
+            this.mainRuntime = new LinkedHashSet<>();
+            this.testCompile = new LinkedHashSet<>();
+            this.testRuntime = new LinkedHashSet<>();
         }
 
         public void addAll(IdeaDependencyType type, IdeaDependencyBuilder dependencies) {

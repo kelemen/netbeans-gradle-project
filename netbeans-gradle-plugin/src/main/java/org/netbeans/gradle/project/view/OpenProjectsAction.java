@@ -27,7 +27,7 @@ public final class OpenProjectsAction extends AbstractAction {
     public static OpenProjectsAction createFromModules(
             String caption,
             Collection<? extends NbGradleProjectTree> projects) {
-        Collection<File> projectDirs = new ArrayList<File>(projects.size());
+        Collection<File> projectDirs = new ArrayList<>(projects.size());
         for (NbGradleProjectTree project: projects) {
             if (project == null) throw new NullPointerException("project");
             projectDirs.add(project.getProjectDir());
@@ -38,7 +38,7 @@ public final class OpenProjectsAction extends AbstractAction {
     public static OpenProjectsAction createFromProjectDirs(
             String caption,
             Collection<File> projectDirs) {
-        Collection<File> safeProjectDirs = new ArrayList<File>(projectDirs);
+        Collection<File> safeProjectDirs = new ArrayList<>(projectDirs);
         for (File project: safeProjectDirs) {
             if (project == null) throw new NullPointerException("project");
         }

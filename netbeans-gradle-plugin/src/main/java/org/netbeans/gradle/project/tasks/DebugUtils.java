@@ -62,7 +62,7 @@ public final class DebugUtils {
     }
 
     private static FileObject[] extractFileObjectsfromLookup(Lookup lookup) {
-        List<FileObject> files = new ArrayList<FileObject>(lookup.lookupAll(FileObject.class));
+        List<FileObject> files = new ArrayList<>(lookup.lookupAll(FileObject.class));
         if (files.isEmpty()) { // fallback to old nodes
             for (DataObject d : lookup.lookupAll(DataObject.class)) {
                 files.add(d.getPrimaryFile());
@@ -121,7 +121,7 @@ public final class DebugUtils {
             return;
         }
 
-        Map<String, byte[]> map = new HashMap<String, byte[]>();
+        Map<String, byte[]> map = new HashMap<>();
         EditorContext editorContext = DebuggerManager.
                 getDebuggerManager().lookupFirst(null, EditorContext.class);
 

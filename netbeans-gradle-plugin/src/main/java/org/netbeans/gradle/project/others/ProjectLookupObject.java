@@ -18,7 +18,7 @@ public final class ProjectLookupObject {
     }
 
     private static Map<Class<?>, Object> createArgs(Project project) {
-        Map<Class<?>, Object> result = new HashMap<Class<?>, Object>();
+        Map<Class<?>, Object> result = new HashMap<>();
         result.put(Project.class, project);
         result.put(Lookup.class, Lookup.EMPTY);
         return result;

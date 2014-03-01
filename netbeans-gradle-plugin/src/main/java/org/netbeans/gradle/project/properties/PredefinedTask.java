@@ -149,7 +149,7 @@ public final class PredefinedTask {
     }
 
     public GradleCommandTemplate toCommandTemplate(String displayName) {
-        List<String> rawTaskNames = new ArrayList<String>(taskNames.size());
+        List<String> rawTaskNames = new ArrayList<>(taskNames.size());
         for (Name name: taskNames) {
             rawTaskNames.add(name.getName());
         }

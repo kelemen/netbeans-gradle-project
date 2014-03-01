@@ -40,8 +40,8 @@ public final class PropertiesSnapshot {
             this.gradleHome = null;
             this.commonTasks = null;
             this.licenseHeader = null;
-            this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>();
-            this.auxProperties = new LinkedList<AuxConfigSource>();
+            this.builtInTasks = new HashMap<>();
+            this.auxProperties = new LinkedList<>();
         }
 
         public void addAuxConfig(AuxConfig config, boolean defaultValue) {
@@ -66,7 +66,7 @@ public final class PropertiesSnapshot {
         }
 
         public Collection<AuxConfigSource> getAuxProperties() {
-            return new ArrayList<AuxConfigSource>(auxProperties);
+            return new ArrayList<>(auxProperties);
         }
 
         public void setBuiltInTask(String command, PropertySource<PredefinedTask> task) {
@@ -212,7 +212,7 @@ public final class PropertiesSnapshot {
         this.licenseHeader = asConst(properties.getLicenseHeader());
 
         Collection<AuxConfigProperty> otherAuxConfigs = properties.getAllAuxConfigs();
-        this.auxProperties = new ArrayList<AuxConfigSource>(otherAuxConfigs.size());
+        this.auxProperties = new ArrayList<>(otherAuxConfigs.size());
         for (AuxConfigProperty auxProperty: otherAuxConfigs) {
             MutableProperty<Element> property = auxProperty.getProperty();
             this.auxProperties.add(new AuxConfigSource(
@@ -222,7 +222,7 @@ public final class PropertiesSnapshot {
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
 
         Set<String> commands = properties.getKnownBuiltInCommands();
-        this.knownBuiltInCommands = Collections.unmodifiableSet(new HashSet<String>(commands));
+        this.knownBuiltInCommands = Collections.unmodifiableSet(new HashSet<>(commands));
         this.builtInTasks = CollectionUtils.newHashMap(commands.size());
         for (String command: commands) {
             MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
@@ -244,7 +244,7 @@ public final class PropertiesSnapshot {
     }
 
     private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<ValueType>(value, defaultValue);
+        return new ConstPropertySource<>(value, defaultValue);
     }
 
     private static Map<DomElementKey, AuxConfigSource> sourcesToMap(Collection<AuxConfigSource> sources) {
@@ -263,9 +263,9 @@ public final class PropertiesSnapshot {
         this.sourceEncoding = builder.getSourceEncoding();
         this.commonTasks = builder.getCommonTasks();
         this.licenseHeader = builder.getLicenseHeader();
-        this.builtInTasks = new HashMap<String, PropertySource<PredefinedTask>>(builder.builtInTasks);
+        this.builtInTasks = new HashMap<>(builder.builtInTasks);
         this.knownBuiltInCommands = Collections.unmodifiableSet(builtInTasks.keySet());
-        this.auxProperties = Collections.unmodifiableList(new ArrayList<AuxConfigSource>(builder.auxProperties));
+        this.auxProperties = Collections.unmodifiableList(new ArrayList<>(builder.auxProperties));
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
     }
 

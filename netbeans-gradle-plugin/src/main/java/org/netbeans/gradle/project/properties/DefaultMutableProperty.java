@@ -49,7 +49,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
 
     private static <ValueType> PropertySource<? extends ValueType> asSource(
             ValueType value, boolean defaultValue, boolean allowNulls) {
-        return new ConstPropertySource<ValueType>(
+        return new ConstPropertySource<>(
                 allowNulls ? value : checkNull(value),
                 defaultValue);
     }
@@ -87,7 +87,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
             if (value == null) throw new NullPointerException("value");
         }
 
-        setValueFromSource(new ConstPropertySource<ValueType>(value, false));
+        setValueFromSource(new ConstPropertySource<>(value, false));
     }
 
     @Override

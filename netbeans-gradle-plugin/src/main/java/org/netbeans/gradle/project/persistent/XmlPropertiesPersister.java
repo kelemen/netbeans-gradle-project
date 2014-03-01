@@ -70,7 +70,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     private static <ValueType> PropertySetter<ValueType> newPropertySetter(
             MutableProperty<ValueType> property,
             PropertyGetter<ValueType> getter) {
-        return new PropertySetter<ValueType>(property, getter);
+        return new PropertySetter<>(property, getter);
     }
 
     @Override
@@ -80,7 +80,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         // We must listen for changes, so that we do not overwrite properties
         // modified later.
 
-        final List<PropertySetter<?>> setters = new LinkedList<PropertySetter<?>>();
+        final List<PropertySetter<?>> setters = new LinkedList<>();
 
         // Just add a new element to the list when a new property needs to be
         // saved.
@@ -178,7 +178,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                                 }
                             }
 
-                            List<AuxConfig> newAuxConfigs = new LinkedList<AuxConfig>();
+                            List<AuxConfig> newAuxConfigs = new LinkedList<>();
                             for (AuxConfigSource config: snapshot.getAuxProperties()) {
                                 newAuxConfigs.add(new AuxConfig(config.getKey(), config.getSource().getValue()));
                             }
@@ -219,7 +219,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
             assert property != null;
             this.property = property;
             this.getter = getter;
-            this.detectorRef = new AtomicReference<ChangeDetector>(new ChangeDetector());
+            this.detectorRef = new AtomicReference<>(new ChangeDetector());
         }
 
         private ChangeDetector getDectector() {

@@ -16,7 +16,7 @@ public abstract class AbstractBinaryForSourceQuery implements BinaryForSourceQue
     private final ConcurrentMap<File, BinaryForSourceQuery.Result> cache;
 
     public AbstractBinaryForSourceQuery() {
-        this.cache = new ConcurrentHashMap<File, BinaryForSourceQuery.Result>();
+        this.cache = new ConcurrentHashMap<>();
     }
 
     protected abstract BinaryForSourceQuery.Result tryFindBinaryRoots(File sourceRoot);

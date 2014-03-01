@@ -138,7 +138,7 @@ public abstract class Yenta extends ModuleInstall {
                 Field friendNamesF = Class.forName("org.netbeans.ModuleData", true, data.getClass().getClassLoader()).getDeclaredField("friendNames");
                 friendNamesF.setAccessible(true);
                 Set<?> names = (Set<?>)friendNamesF.get(data);
-                Set<Object> newNames = new HashSet<Object>(names);
+                Set<Object> newNames = new HashSet<>(names);
                 newNames.add(me.getCodeNameBase());
                 friendNamesF.set(data, newNames);
             }

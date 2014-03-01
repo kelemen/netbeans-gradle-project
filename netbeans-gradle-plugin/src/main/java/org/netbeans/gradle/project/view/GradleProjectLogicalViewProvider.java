@@ -92,7 +92,7 @@ implements
         this.project = project;
         this.childRefreshListeners = Collections.newSetFromMap(
                 new ConcurrentHashMap<ModelRefreshListener, Boolean>());
-        this.listenersToFinalize = new AtomicReference<Collection<ModelRefreshListener>>(null);
+        this.listenersToFinalize = new AtomicReference<>(null);
         this.refreshRequestListeners = new ChangeSupport(this);
     }
 
@@ -147,7 +147,7 @@ implements
     @Override
     public void startRefresh() {
         Collection<ModelRefreshListener> listeners
-                = new ArrayList<ModelRefreshListener>(childRefreshListeners);
+                = new ArrayList<>(childRefreshListeners);
         Collection<ModelRefreshListener> prevListeners = listenersToFinalize.getAndSet(listeners);
         if (prevListeners != null) {
             LOGGER.warning("startRefresh/endRefresh mismatch.");
@@ -279,7 +279,7 @@ implements
             TasksActionMenu tasksAction = new TasksActionMenu(project);
             CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
 
-            List<Action> projectActions = new LinkedList<Action>();
+            List<Action> projectActions = new LinkedList<>();
             projectActions.add(CommonProjectActions.newFileAction());
             projectActions.add(null);
             projectActions.add(createProjectAction(
@@ -364,7 +364,7 @@ implements
             Collection<ProjectInfo> infos = project.getProjectInfoManager().getInformations();
             if (!infos.isEmpty()) {
                 Map<ProjectInfo.Kind, List<String>> infoMap
-                        = new EnumMap<ProjectInfo.Kind, List<String>>(ProjectInfo.Kind.class);
+                        = new EnumMap<>(ProjectInfo.Kind.class);
 
                 for (ProjectInfo.Kind kind: ProjectInfo.Kind.values()) {
                     infoMap.put(kind, new LinkedList<String>());
@@ -455,7 +455,7 @@ implements
             else if (FileUtil.isParentOf(xfo, fo)) {
                 FileObject folder = fo.isFolder() ? fo : fo.getParent();
                 String relPath = FileUtil.getRelativePath(xfo, folder);
-                List<String> path = new ArrayList<String>();
+                List<String> path = new ArrayList<>();
                 StringTokenizer strtok = new StringTokenizer(relPath, "/");
                 while (strtok.hasMoreTokens()) {
                     String token = strtok.nextToken();
@@ -508,7 +508,7 @@ implements
                 String displayName,
                 boolean tasksMustExist) {
             String[] rawTaskNames = actionPanel.getTasks();
-            List<PredefinedTask.Name> names = new ArrayList<PredefinedTask.Name>(rawTaskNames.length);
+            List<PredefinedTask.Name> names = new ArrayList<>(rawTaskNames.length);
             for (String name: rawTaskNames) {
                 names.add(new PredefinedTask.Name(name, tasksMustExist));
             }
@@ -551,7 +551,7 @@ implements
 
             MutableProperty<List<PredefinedTask>> commonTasks = project.getProperties().getCommonTasks();
 
-            List<PredefinedTask> newTasks = new LinkedList<PredefinedTask>(commonTasks.getValue());
+            List<PredefinedTask> newTasks = new LinkedList<>(commonTasks.getValue());
             newTasks.add(newTaskDef);
             commonTasks.setValue(newTasks);
             return displayName;
@@ -690,7 +690,7 @@ implements
             lastUsedTasks = commonTasks;
             lastUsedModule = mainModule;
 
-            commonTasks = new ArrayList<PredefinedTask>(commonTasks);
+            commonTasks = new ArrayList<>(commonTasks);
             Collections.sort(commonTasks, new Comparator<PredefinedTask>() {
                 @Override
                 public int compare(PredefinedTask o1, PredefinedTask o2) {
@@ -817,8 +817,8 @@ implements
         private GradleActionType lastActionType;
 
         public ExtensionActions() {
-            this.buildActions = new LinkedList<Action>();
-            this.projectManagementActions = new LinkedList<Action>();
+            this.buildActions = new LinkedList<>();
+            this.projectManagementActions = new LinkedList<>();
             this.lastActionType = GradleActionType.BUILD_ACTION;
         }
 

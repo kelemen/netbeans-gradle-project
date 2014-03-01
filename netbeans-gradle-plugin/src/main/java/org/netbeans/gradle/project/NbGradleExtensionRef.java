@@ -32,7 +32,7 @@ public final class NbGradleExtensionRef {
         checkExtensionName(name, extensionDef);
 
         this.displayName = useNameIfNoDisplayName(extensionDef.getDisplayName(), name);
-        this.defWithExtension = new DefWithExtension<ModelType>(extensionDef, extension);
+        this.defWithExtension = new DefWithExtension<>(extensionDef, extension);
         this.modelNeed = new ModelNeeds(extensionDef);
 
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());

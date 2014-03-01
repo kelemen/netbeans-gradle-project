@@ -104,24 +104,24 @@ public final class NbGradleProject implements Project {
             throw new IOException("Project directory does not exist.");
         }
 
-        this.mergedCommandQueryRef = new AtomicReference<BuiltInGradleCommandQuery>(null);
+        this.mergedCommandQueryRef = new AtomicReference<>(null);
         this.state = state;
-        this.defaultLookupRef = new AtomicReference<Lookup>(null);
+        this.defaultLookupRef = new AtomicReference<>(null);
         this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
         this.combinedExtensionLookup = new DynamicLookup();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
-        this.loadErrorRef = new AtomicReference<ProjectInfoRef>(null);
+        this.loadErrorRef = new AtomicReference<>(null);
         this.modelChanges = new ChangeSupport(this);
-        this.currentModelRef = new AtomicReference<NbGradleModel>(
+        this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
-        this.lookupRef = new AtomicReference<DynamicLookup>(null);
+        this.lookupRef = new AtomicReference<>(null);
     }
 
     @Nonnull
@@ -151,7 +151,7 @@ public final class NbGradleProject implements Project {
         Lookup baseContext = getDefaultLookup();
         // baseContext must contain the Project instance.
 
-        List<Lookup> result = new LinkedList<Lookup>();
+        List<Lookup> result = new LinkedList<>();
         for (LookupProvider provider: providerContainer.lookupAll(LookupProvider.class)) {
             result.add(provider.createAdditionalLookup(baseContext));
         }
@@ -165,7 +165,7 @@ public final class NbGradleProject implements Project {
     }
 
     private void updateCombinedExtensionLookup() {
-        List<Lookup> extensionLookups = new ArrayList<Lookup>(extensionRefs.size());
+        List<Lookup> extensionLookups = new ArrayList<>(extensionRefs.size());
         for (NbGradleExtensionRef extenion: extensionRefs) {
             extensionLookups.add(extenion.getExtensionLookup());
         }
@@ -173,7 +173,7 @@ public final class NbGradleProject implements Project {
     }
 
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
-        List<Lookup> allLookups = new ArrayList<Lookup>(extensions.size() + 2);
+        List<Lookup> allLookups = new ArrayList<>(extensions.size() + 2);
 
         Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
 
@@ -186,7 +186,7 @@ public final class NbGradleProject implements Project {
         allLookups.addAll(getLookupsFromAnnotations());
 
         this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
-        this.extensionRefs = Collections.unmodifiableList(new ArrayList<NbGradleExtensionRef>(extensions));
+        this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
 
         final Lookup combinedAllLookups = new ProxyLookup(allLookups.toArray(new Lookup[allLookups.size()]));
         getMainLookup().replaceLookups(new ProjectLookupHack(new ProjectLookupHack.LookupContainer() {
@@ -247,7 +247,7 @@ public final class NbGradleProject implements Project {
 
     @Nonnull
     public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
-        final List<TaskVariableMap> maps = new LinkedList<TaskVariableMap>();
+        final List<TaskVariableMap> maps = new LinkedList<>();
 
         Collection<? extends GradleTaskVariableQuery> taskVariables
                 = getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
@@ -662,7 +662,7 @@ public final class NbGradleProject implements Project {
 
         private void updateExtensionActivation(NbGradleModel model) {
             Collection<ModelRefreshListener> refreshListeners
-                    = new ArrayList<ModelRefreshListener>(getLookup().lookupAll(ModelRefreshListener.class));
+                    = new ArrayList<>(getLookup().lookupAll(ModelRefreshListener.class));
 
             boolean extensionsChanged = false;
 

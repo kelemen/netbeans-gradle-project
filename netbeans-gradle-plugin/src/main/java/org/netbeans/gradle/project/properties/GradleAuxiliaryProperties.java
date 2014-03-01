@@ -60,7 +60,7 @@ public final class GradleAuxiliaryProperties implements AuxiliaryProperties {
 
     @Override
     public Iterable<String> listKeys(boolean shared) {
-        List<String> result = new LinkedList<String>();
+        List<String> result = new LinkedList<>();
         for (DomElementKey key: config.getConfigElements(shared)) {
             result.add(key.getName());
         }

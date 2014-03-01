@@ -168,7 +168,7 @@ public final class ModelLoadIssueReporter {
     }
 
     private static Set<String> getProjectNames(List<ModelLoadIssue> issues) {
-        Set<String> names = new LinkedHashSet<String>();
+        Set<String> names = new LinkedHashSet<>();
         for (ModelLoadIssue issue: issues) {
             names.add(issue.getRequestedProject().getDisplayName());
         }
@@ -176,7 +176,7 @@ public final class ModelLoadIssueReporter {
     }
 
     private static Set<String> getExtensionNames(List<ModelLoadIssue> issues) {
-        Set<String> names = new LinkedHashSet<String>();
+        Set<String> names = new LinkedHashSet<>();
         for (ModelLoadIssue issue: issues) {
             NbGradleExtensionRef extensionRef = issue.getExtensionRef();
 
@@ -245,7 +245,7 @@ public final class ModelLoadIssueReporter {
     }
 
     private static Set<String> getFailedDependencyProjectNames(List<DependencyResolutionIssue> issues) {
-        Set<String> names = new LinkedHashSet<String>();
+        Set<String> names = new LinkedHashSet<>();
         for (DependencyResolutionIssue issue: issues) {
             names.add(issue.getProjectName());
         }

@@ -11,7 +11,7 @@ public final class KeyCounter<Key> {
 
     public KeyCounter() {
         this.mainLock = new ReentrantLock();
-        this.keys = new HashMap<Key, Counter>();
+        this.keys = new HashMap<>();
     }
 
     public int getCount(Key key) {

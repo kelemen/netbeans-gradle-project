@@ -75,13 +75,13 @@ public class StandardTaskVariableTest {
                 + " SEPARATOR2 "
                 + var4.getScriptReplaceConstant();
 
-        Map<DisplayedTaskVariable, String> valueMap = new HashMap<DisplayedTaskVariable, String>();
+        Map<DisplayedTaskVariable, String> valueMap = new HashMap<>();
         valueMap.put(var1, "VALUE1");
         valueMap.put(var2, "VALUE2");
         valueMap.put(var3, "VALUE3");
         valueMap.put(var4, "VALUE4");
 
-        List<DisplayedTaskVariable> foundVars = new LinkedList<DisplayedTaskVariable>();
+        List<DisplayedTaskVariable> foundVars = new LinkedList<>();
         String resultStr = StandardTaskVariable.replaceVars(str, variableMap(valueMap), foundVars);
         assertEquals("VALUE1 SEPARATOR1 ${unknown-var}${illegal-chars*-=\\}}}}}VALUE2VALUE3 SEPARATOR2 VALUE4",
                 resultStr);

@@ -34,7 +34,7 @@ public final class NbGradleProjectTree implements Serializable {
         this.tasks = CollectionUtils.copyNullSafeList(tasks);
         this.children = CollectionUtils.copyNullSafeList(children);
 
-        this.childrenMap = new AtomicReference<Map<String, NbGradleProjectTree>>(null);
+        this.childrenMap = new AtomicReference<>(null);
     }
 
     public NbGradleProjectTree(GradleProjectTree tree) {
@@ -44,11 +44,11 @@ public final class NbGradleProjectTree implements Serializable {
         this.tasks = tree.getTasks();
         this.children = fromModels(tree.getChildren());
 
-        this.childrenMap = new AtomicReference<Map<String, NbGradleProjectTree>>(null);
+        this.childrenMap = new AtomicReference<>(null);
     }
 
     private static Collection<NbGradleProjectTree> fromModels(Collection<GradleProjectTree> models) {
-        List<NbGradleProjectTree> result = new ArrayList<NbGradleProjectTree>(models.size());
+        List<NbGradleProjectTree> result = new ArrayList<>(models.size());
         for (GradleProjectTree model: models) {
             result.add(new NbGradleProjectTree(model));
         }

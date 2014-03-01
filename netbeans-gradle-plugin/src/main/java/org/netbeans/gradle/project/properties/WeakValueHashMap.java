@@ -22,8 +22,8 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
     private final ReferenceQueue<V> references;
 
     public WeakValueHashMap() {
-        this.wrappedMap = new HashMap<K, TableRef<K, V>>();
-        this.references = new ReferenceQueue<V>();
+        this.wrappedMap = new HashMap<>();
+        this.references = new ReferenceQueue<>();
     }
 
     private void removeUnreferenced() {
@@ -90,7 +90,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
         if (key == null) throw new NullPointerException("key");
         if (value == null) throw new NullPointerException("value");
 
-        WeakReference<V> resultRef = getMap().put(key, new TableRef<K, V>(key, value, references));
+        WeakReference<V> resultRef = getMap().put(key, new TableRef<>(key, value, references));
         return resultRef != null ? resultRef.get() : null;
     }
 
@@ -118,7 +118,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
         return new AbstractCollection<V>() {
             @Override
             public Iterator<V> iterator() {
-                return new WeakRefItr<K, V>(getMap().values().iterator());
+                return new WeakRefItr<>(getMap().values().iterator());
             }
 
             @Override
@@ -133,7 +133,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
         return new AbstractSet<Entry<K, V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return new EntryItr<K, V>(getMap().entrySet().iterator());
+                return new EntryItr<>(getMap().entrySet().iterator());
             }
 
             @Override
@@ -158,7 +158,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
                 Entry<K, TableRef<K, V>> next = itr.next();
                 V nextEntryValue = next.getValue().getValue();
                 if (nextEntryValue != null) {
-                    nextValue = new AbstractMap.SimpleImmutableEntry<K, V>(
+                    nextValue = new AbstractMap.SimpleImmutableEntry<>(
                             next.getKey(), nextEntryValue);
                     return;
                 }

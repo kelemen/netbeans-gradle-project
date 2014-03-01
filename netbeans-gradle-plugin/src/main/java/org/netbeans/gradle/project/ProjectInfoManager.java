@@ -19,7 +19,7 @@ public final class ProjectInfoManager {
 
     public ProjectInfoManager() {
         this.mainLock = new ReentrantLock();
-        this.informations = new HashMap<InfoKey, ProjectInfo>();
+        this.informations = new HashMap<>();
         this.changes = new ChangeSupport(this);
         this.hasUnprocessedChangeEvent = new AtomicBoolean(false);
     }
@@ -47,7 +47,7 @@ public final class ProjectInfoManager {
     public Collection<ProjectInfo> getInformations() {
         mainLock.lock();
         try {
-            return new ArrayList<ProjectInfo>(informations.values());
+            return new ArrayList<>(informations.values());
         } finally {
             mainLock.unlock();
         }

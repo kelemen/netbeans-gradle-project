@@ -41,7 +41,7 @@ public final class DeleteProjectAction extends AbstractAction {
         OpenProjects openProjects = OpenProjects.getDefault();
         FileObject rootDir = project.getProjectDirectory();
 
-        List<Project> toClose = new LinkedList<Project>();
+        List<Project> toClose = new LinkedList<>();
         toClose.add(project);
         for (Project opened: openProjects.getOpenProjects()) {
             if (FileUtil.isParentOf(rootDir, opened.getProjectDirectory())) {

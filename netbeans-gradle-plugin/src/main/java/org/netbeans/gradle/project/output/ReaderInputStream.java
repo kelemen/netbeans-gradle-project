@@ -25,7 +25,7 @@ public final class ReaderInputStream extends InputStream {
             throw new NullPointerException("encoding");
         this.reader = reader;
         this.encoding = encoding;
-        this.cacheRef = new AtomicReference<byte[]>(new byte[0]);
+        this.cacheRef = new AtomicReference<>(new byte[0]);
     }
 
     private int readFromCache(byte[] b, int offset, int length) {

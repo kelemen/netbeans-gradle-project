@@ -93,7 +93,7 @@ public final class JavaParsingUtils {
             Collection<File> files,
             Map<File, File> dependencyMap) {
 
-        List<File> result = new ArrayList<File>(files.size());
+        List<File> result = new ArrayList<>(files.size());
         for (File file: files) {
             File adjusted = dependencyMap.get(file);
             result.add(adjusted != null ? adjusted : file);
@@ -130,7 +130,7 @@ public final class JavaParsingUtils {
             JavaSourcesModel sourcesModel,
             Map<File, File> dependencyMap) {
 
-        List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
+        List<JavaSourceSet> result = new LinkedList<>();
         for (JavaSourceSet sourceSet: sourcesModel.getSourceSets()) {
             result.add(adjustedSources(sourceSet, dependencyMap));
         }
@@ -142,7 +142,7 @@ public final class JavaParsingUtils {
     }
 
     private static List<NbListedDir> getListedDirs(ModelLoadResult retrievedModels, Lookup projectInfo) {
-        List<NbListedDir> listedDirs = new LinkedList<NbListedDir>();
+        List<NbListedDir> listedDirs = new LinkedList<>();
 
         NbGradleProject project = getProject(retrievedModels.getMainProjectDir());
         if (project == null || !OtherPlugins.hasJavaEEExtension(project)) {
@@ -160,7 +160,7 @@ public final class JavaParsingUtils {
 
         Map<File, Lookup> allProjects = retrievedModels.getEvaluatedProjectsModel();
 
-        List<NbJavaModule> result = new ArrayList<NbJavaModule>(allProjects.size());
+        List<NbJavaModule> result = new ArrayList<>(allProjects.size());
         for (Lookup projectInfo: allProjects.values()) {
             JavaCompatibilityModel versions = projectInfo.lookup(JavaCompatibilityModel.class);
             JavaSourcesModel sourcesModel = projectInfo.lookup(JavaSourcesModel.class);
@@ -202,7 +202,7 @@ public final class JavaParsingUtils {
     }
 
     public static Map<File, JavaProjectDependency> asDependencies(Collection<NbJavaModule> modules) {
-        Map<File, JavaProjectDependency> result = new HashMap<File, JavaProjectDependency>(3 * modules.size());
+        Map<File, JavaProjectDependency> result = new HashMap<>(3 * modules.size());
         for (NbJavaModule module: modules) {
             JavaProjectReference projectRef = new JavaProjectReference(module.getModuleDir(), module);
 

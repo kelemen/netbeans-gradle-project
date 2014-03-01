@@ -48,9 +48,9 @@ implements
     private int descriptorIndex;
 
     public GradleMultiProjectWizardIterator() {
-        this.descriptors = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>(1);
+        this.descriptors = new ArrayList<>(1);
         this.descriptorIndex = 0;
-        this.configRef = new AtomicReference<GradleMultiProjectConfig>(null);
+        this.configRef = new AtomicReference<>(null);
     }
 
     private static void createSettingsGradle(File projectDir) throws IOException {
@@ -68,7 +68,7 @@ implements
             File projectDir,
             GradleMultiProjectConfig config) throws IOException {
 
-        Map<String, String> varReplaceMap = new HashMap<String, String>();
+        Map<String, String> varReplaceMap = new HashMap<>();
         varReplaceMap.put("${MAVEN_GROUP}", config.getMavenGroupId());
         varReplaceMap.put("${MAVEN_VERSION}", config.getMavenVersion());
         varReplaceMap.put("${SOURCE_LEVEL}", AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));

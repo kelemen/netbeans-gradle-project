@@ -100,7 +100,7 @@ public final class DisplayedTaskVariable {
     }
 
     public static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
-        final Map<TaskVariable, String> appliedMap = new HashMap<TaskVariable, String>();
+        final Map<TaskVariable, String> appliedMap = new HashMap<>();
         for (Map.Entry<DisplayedTaskVariable, String> entry: map.entrySet()) {
             appliedMap.put(entry.getKey().getVariable(), entry.getValue());
         }

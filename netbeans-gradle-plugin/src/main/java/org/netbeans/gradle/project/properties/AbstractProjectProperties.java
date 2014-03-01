@@ -88,7 +88,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
 
     @Override
     public Collection<MutableProperty<?>> getAllProperties() {
-        List<MutableProperty<?>> result = new LinkedList<MutableProperty<?>>();
+        List<MutableProperty<?>> result = new LinkedList<>();
         result.add(getPlatform());
         result.add(getSourceEncoding());
         result.add(getSourceLevel());

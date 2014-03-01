@@ -119,7 +119,7 @@ public final class AsyncGradleTask implements Runnable {
         Collection<? extends InitScriptQuery> scriptQueries
                 = project.getCombinedExtensionLookup().lookupAll(InitScriptQuery.class);
 
-        List<TemporaryFileRef> results = new ArrayList<TemporaryFileRef>(scriptQueries.size());
+        List<TemporaryFileRef> results = new ArrayList<>(scriptQueries.size());
         try {
             for (InitScriptQuery scriptQuery: scriptQueries) {
                 try {
@@ -169,7 +169,7 @@ public final class AsyncGradleTask implements Runnable {
 
         GradleModelLoader.setupLongRunningOP(targetSetup, buildLauncher);
 
-        List<String> arguments = new LinkedList<String>();
+        List<String> arguments = new LinkedList<>();
         arguments.addAll(taskDef.getArguments());
 
         for (TemporaryFileRef initScript: initScripts) {
@@ -198,15 +198,15 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher,
             TaskIOTab tab) {
 
-        List<SmartOutputHandler.Consumer> consumers = new LinkedList<SmartOutputHandler.Consumer>();
+        List<SmartOutputHandler.Consumer> consumers = new LinkedList<>();
         consumers.add(new StackTraceConsumer(project));
         consumers.add(new OutputUrlConsumer());
         consumers.add(new ProjectFileConsumer(project));
 
-        List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<SmartOutputHandler.Consumer>();
+        List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<>();
         outputConsumers.addAll(consumers);
 
-        List<SmartOutputHandler.Consumer> errorConsumers = new LinkedList<SmartOutputHandler.Consumer>();
+        List<SmartOutputHandler.Consumer> errorConsumers = new LinkedList<>();
         errorConsumers.add(new BuildErrorConsumer());
         errorConsumers.addAll(consumers);
         errorConsumers.add(new FileLineConsumer());
@@ -395,7 +395,7 @@ public final class AsyncGradleTask implements Runnable {
     private static TaskVariableMap queryVariablesNow(List<DisplayedTaskVariable> taskVars) {
         assert SwingUtilities.isEventDispatchThread();
 
-        final Map<TaskVariable, DisplayedTaskVariable> names = new LinkedHashMap<TaskVariable, DisplayedTaskVariable>();
+        final Map<TaskVariable, DisplayedTaskVariable> names = new LinkedHashMap<>();
         for (DisplayedTaskVariable var: taskVars) {
             DisplayedTaskVariable currentValue = names.get(var.getVariable());
             if (currentValue == null || currentValue.isDefault()) {
@@ -411,7 +411,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static TaskVariableMap queryVariables(final List<DisplayedTaskVariable> taskVars) {
-        final AtomicReference<TaskVariableMap> result = new AtomicReference<TaskVariableMap>(null);
+        final AtomicReference<TaskVariableMap> result = new AtomicReference<>(null);
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -433,7 +433,7 @@ public final class AsyncGradleTask implements Runnable {
         String[] arguments = taskDef.getArgumentArray();
         String[] jvmArguments = taskDef.getJvmArgumentsArray();
 
-        List<DisplayedTaskVariable> taskVars = new LinkedList<DisplayedTaskVariable>();
+        List<DisplayedTaskVariable> taskVars = new LinkedList<>();
         collectTaskVars(taskNames, taskVars);
         collectTaskVars(arguments, taskVars);
         collectTaskVars(jvmArguments, taskVars);

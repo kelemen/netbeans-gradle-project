@@ -80,12 +80,12 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.project = project;
         this.currentModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
         this.cpProvider = new GradleClassPathProvider(this);
-        this.projectLookupRef = new AtomicReference<Lookup>(null);
-        this.permanentLookupRef = new AtomicReference<Lookup>(null);
-        this.extensionLookupRef = new AtomicReference<Lookup>(null);
-        this.combinedLookupRef = new AtomicReference<Lookup>(null);
+        this.projectLookupRef = new AtomicReference<>(null);
+        this.permanentLookupRef = new AtomicReference<>(null);
+        this.extensionLookupRef = new AtomicReference<>(null);
+        this.combinedLookupRef = new AtomicReference<>(null);
         this.hasEverBeenLoaded = false;
-        this.sourceDirsHandlerRef = new AtomicReference<JavaSourceDirHandler>(null);
+        this.sourceDirsHandlerRef = new AtomicReference<>(null);
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
         this.modelChanges = new ChangeSupport(this);
     }
@@ -279,7 +279,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private void checkDependencyResolveProblems(NbJavaModule module) {
         String projectName = module.getProperties().getProjectName();
 
-        List<DependencyResolutionIssue> issues = new LinkedList<DependencyResolutionIssue>();
+        List<DependencyResolutionIssue> issues = new LinkedList<>();
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
 
@@ -295,7 +295,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
 
         if (!issues.isEmpty()) {
-            List<ProjectInfo.Entry> entries = new ArrayList<ProjectInfo.Entry>(issues.size());
+            List<ProjectInfo.Entry> entries = new ArrayList<>(issues.size());
             for (DependencyResolutionIssue issue: issues) {
                 entries.add(new ProjectInfo.Entry(ProjectInfo.Kind.ERROR, issue.getMessage()));
             }
@@ -338,7 +338,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         public OpenHook() {
             this.opened = false;
 
-            this.paths = new LinkedList<GlobalPathReg>();
+            this.paths = new LinkedList<>();
             this.paths.add(new GlobalPathReg(ClassPath.SOURCE));
             this.paths.add(new GlobalPathReg(ClassPath.BOOT));
             this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
@@ -408,7 +408,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
         public GlobalPathReg(String type) {
             this.type = type;
-            this.paths = new AtomicReference<ClassPath[]>(null);
+            this.paths = new AtomicReference<>(null);
         }
 
         private void replaceRegistration(ClassPath[] newPaths) {

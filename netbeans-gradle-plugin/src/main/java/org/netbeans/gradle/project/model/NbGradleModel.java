@@ -21,12 +21,12 @@ public final class NbGradleModel {
             if (genericInfo == null) throw new NullPointerException("genericInfo");
 
             this.genericInfo = genericInfo;
-            this.extensionModels = new HashMap<String, Object>();
+            this.extensionModels = new HashMap<>();
         }
 
         public Builder(NbGradleModel base) {
             this.genericInfo = base.getGenericInfo();
-            this.extensionModels = new HashMap<String, Object>(base.extensionModels);
+            this.extensionModels = new HashMap<>(base.extensionModels);
         }
 
         public File getProjectDir() {
@@ -75,7 +75,7 @@ public final class NbGradleModel {
     }
 
     public static List<NbGradleModel> createAll(Collection<? extends Builder> builders) {
-        List<NbGradleModel> result = new ArrayList<NbGradleModel>(builders.size());
+        List<NbGradleModel> result = new ArrayList<>(builders.size());
         for (Builder builder: builders) {
             result.add(builder.create());
         }
@@ -180,7 +180,7 @@ public final class NbGradleModel {
 
     public NbGradleModel updateEntry(NbGradleModel newContent) {
         Map<String, Object> newExtensionModels
-                = new HashMap<String, Object>(extensionModels);
+                = new HashMap<>(extensionModels);
 
         for (Map.Entry<String, Object> entry: newContent.extensionModels.entrySet()) {
             newExtensionModels.put(entry.getKey(), entry.getValue());

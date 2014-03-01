@@ -26,7 +26,7 @@ public class IOTabMaintainerTest {
     }
 
     private static IOTabMaintainer<Integer, Tab> create() {
-        return new IOTabMaintainer<Integer, Tab>(new IOTabFactory<Tab>() {
+        return new IOTabMaintainer<>(new IOTabFactory<Tab>() {
             @Override
             public Tab create(String caption) {
                 return new Tab(caption);

@@ -26,7 +26,7 @@ public class SingleStoreAuxConfigTest {
 
     private static AuxConfigProperty createAuxProperty(DomElementKey key, Element initialValue) {
         return new AuxConfigProperty(
-                key, new DefaultMutableProperty<Element>(initialValue, false, true));
+                key, new DefaultMutableProperty<>(initialValue, false, true));
     }
 
     private static AuxConfigProperty createAuxProperty(DomElementKey key) {
@@ -109,14 +109,14 @@ public class SingleStoreAuxConfigTest {
         addToStorage(key3, value3);
         addToStorage(key1, valuex);
 
-        Set<DomElementKey> expected = new HashSet<DomElementKey>();
+        Set<DomElementKey> expected = new HashSet<>();
         expected.add(key1);
         expected.add(key2);
         expected.add(key3);
 
         Collection<DomElementKey> elements = auxConfig.getConfigElements();
 
-        HashSet<DomElementKey> elementsSet = new HashSet<DomElementKey>(elements);
+        HashSet<DomElementKey> elementsSet = new HashSet<>(elements);
         assertEquals("Multiple keys are not allowed.", expected.size(), elementsSet.size());
         assertEquals(expected, elementsSet);
     }
@@ -125,7 +125,7 @@ public class SingleStoreAuxConfigTest {
         private final ConcurrentMap<DomElementKey, AuxConfigProperty> properties;
 
         public TestAuxConfigStorage() {
-            this.properties = new ConcurrentHashMap<DomElementKey, AuxConfigProperty>();
+            this.properties = new ConcurrentHashMap<>();
         }
 
         public void addProperty(DomElementKey key, AuxConfigProperty value) {
@@ -158,7 +158,7 @@ public class SingleStoreAuxConfigTest {
 
         @Override
         public Collection<AuxConfigProperty> getAllAuxConfigs() {
-            return new ArrayList<AuxConfigProperty>(properties.values());
+            return new ArrayList<>(properties.values());
         }
     }
 }

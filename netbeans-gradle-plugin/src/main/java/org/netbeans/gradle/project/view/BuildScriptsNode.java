@@ -238,7 +238,7 @@ public final class BuildScriptsNode extends AbstractNode {
                 addFileObject(propertiesFile, toPopulate);
             }
 
-            List<FileObject> gradleFiles = new LinkedList<FileObject>();
+            List<FileObject> gradleFiles = new LinkedList<>();
             for (FileObject file : project.getProjectDirectory().getChildren()) {
                 if (file.equals(buildGradle) || file.equals(settingsGradle)) {
                     continue;

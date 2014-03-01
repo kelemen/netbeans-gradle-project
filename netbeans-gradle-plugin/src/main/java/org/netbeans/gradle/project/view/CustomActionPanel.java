@@ -66,7 +66,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
     }
 
     private static String[] splitTextIgnoreVars(String text, String delimiters) {
-        List<String> result = new LinkedList<String>();
+        List<String> result = new LinkedList<>();
 
         StringBuilder currentPart = new StringBuilder();
 

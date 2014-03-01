@@ -49,7 +49,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             comboItems[i] = new JavaPlatformItem(platforms[i]);
         }
 
-        jJdkCombo.setModel(new DefaultComboBoxModel<JavaPlatformItem>(comboItems));
+        jJdkCombo.setModel(new DefaultComboBoxModel<>(comboItems));
     }
 
     public final void updateSettings() {

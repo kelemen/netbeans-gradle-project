@@ -23,7 +23,7 @@ public final class PluginClassConstructor {
 
         this.pluginClass = pluginClass;
         this.argTypeFinders = argTypeFinders.clone();
-        this.constructorRef = new AtomicReference<Constructor<?>>(null);
+        this.constructorRef = new AtomicReference<>(null);
         this.argTypesCache = null;
 
         CollectionUtils.checkNoNullElements(Arrays.asList(this.argTypeFinders), "argTypeFinders");

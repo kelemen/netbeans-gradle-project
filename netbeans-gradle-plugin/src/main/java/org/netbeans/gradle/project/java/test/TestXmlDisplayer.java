@@ -213,7 +213,7 @@ public final class TestXmlDisplayer {
         }
 
         private List<SpecificTestcase> getSpecificTestcases(Set<Testcase> tests) {
-            List<SpecificTestcase> result = new ArrayList<SpecificTestcase>(tests.size());
+            List<SpecificTestcase> result = new ArrayList<>(tests.size());
             for (Testcase test: tests) {
                 String name = test.getName();
                 String testClassName = test.getClassName();

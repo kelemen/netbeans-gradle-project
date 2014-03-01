@@ -68,7 +68,7 @@ public final class NamedSourceRoot {
     }
 
     public static List<NamedSourceRoot> getAllSourceRoots(NbJavaModule module) {
-        List<NamedSourceRoot> result = new LinkedList<NamedSourceRoot>();
+        List<NamedSourceRoot> result = new LinkedList<>();
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
@@ -197,7 +197,7 @@ public final class NamedSourceRoot {
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {
         List<V> valueList = map.get(key);
         if (valueList == null) {
-            valueList = new LinkedList<V>();
+            valueList = new LinkedList<>();
             map.put(key, valueList);
         }
         valueList.add(value);
@@ -225,7 +225,7 @@ public final class NamedSourceRoot {
             didSomething = false;
 
             List<Map.Entry<String, List<FileWithBase>>> currentEntries
-                    = new ArrayList<Map.Entry<String, List<FileWithBase>>>(nameToFile.entrySet());
+                    = new ArrayList<>(nameToFile.entrySet());
             for (Map.Entry<String, List<FileWithBase>> entry: currentEntries) {
                 String entryName = entry.getKey();
                 List<FileWithBase> entryFiles = entry.getValue();

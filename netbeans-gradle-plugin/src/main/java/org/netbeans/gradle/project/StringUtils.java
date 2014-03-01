@@ -42,7 +42,7 @@ public final class StringUtils {
 
     public static String[] splitText(String text, String delimiters) {
         StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
-        List<String> result = new LinkedList<String>();
+        List<String> result = new LinkedList<>();
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken().trim();
             if (!token.isEmpty()) {
@@ -166,7 +166,7 @@ public final class StringUtils {
             return new String[]{str};
         }
 
-        List<String> result = new LinkedList<String>();
+        List<String> result = new LinkedList<>();
 
         int pos = 0;
         while (true) {

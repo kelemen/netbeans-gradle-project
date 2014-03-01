@@ -22,9 +22,9 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
         if (factory == null) throw new NullPointerException("factory");
 
         this.mainLock = new ReentrantLock();
-        this.currentTabs = new HashMap<TabKey, List<CountedTab<IOTab>>>();
+        this.currentTabs = new HashMap<>();
         this.factory = factory;
-        this.tabIndexes = new KeyCounter<TabKey>();
+        this.tabIndexes = new KeyCounter<>();
     }
 
     private CountedTab<IOTab> tryGetAvailable(TabKey key) {
@@ -65,7 +65,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
     }
 
     private Set<CountedTab<IOTab>> getTabsToClose() {
-        List<CountedTab<IOTab>> allTabs = new LinkedList<CountedTab<IOTab>>();
+        List<CountedTab<IOTab>> allTabs = new LinkedList<>();
 
         mainLock.lock();
         try {
@@ -76,7 +76,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
             mainLock.unlock();
         }
 
-        Set<CountedTab<IOTab>> result = new HashSet<CountedTab<IOTab>>();
+        Set<CountedTab<IOTab>> result = new HashSet<>();
         for (CountedTab<IOTab> tab: allTabs) {
             if (tab.isClosed()) {
                 result.add(tab);
@@ -124,7 +124,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
                     ? caption
                     : caption + " #" + index;
             IOTab tab = factory.create(captionWithIndex);
-            return new CountedTab<IOTab>(index, tab);
+            return new CountedTab<>(index, tab);
         } catch (Throwable ex) {
             tabIndexes.decAndGet(key);
             throw Exceptions.throwUnchecked(ex);
@@ -184,7 +184,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
             try {
                 List<CountedTab<IOTab>> tabList = currentTabs.get(key);
                 if (tabList == null) {
-                    tabList = new LinkedList<CountedTab<IOTab>>();
+                    tabList = new LinkedList<>();
                     currentTabs.put(key, tabList);
                 }
                 tabList.add(tab);

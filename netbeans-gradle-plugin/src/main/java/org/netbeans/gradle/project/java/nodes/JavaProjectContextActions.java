@@ -45,7 +45,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
 
     @Override
     public List<Action> getContextActions() {
-        List<Action> result = new LinkedList<Action>();
+        List<Action> result = new LinkedList<>();
 
         CustomTestsAction customTestsAction = new CustomTestsAction();
         if (customTestsAction.hasCustomTestActions()) {
@@ -173,7 +173,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         public CustomTestsAction() {
             JavaTestModel testTasksModel = javaExt.getCurrentModel().getMainModule().getTestTasks();
             Collection<JavaTestTask> testTasks = testTasksModel.getTestTasks();
-            this.customTestTasks = new ArrayList<CustomTestAction>(testTasks.size());
+            this.customTestTasks = new ArrayList<>(testTasks.size());
 
             for (JavaTestTask testTask: testTasks) {
                 if (!TestTaskName.DEFAULT_TEST_TASK_NAME.equals(testTask.getName())) {

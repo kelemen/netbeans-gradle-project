@@ -44,7 +44,7 @@ public final class SettingsFiles {
             return Collections.emptySet();
         }
 
-        List<ProfileDef> result = new ArrayList<ProfileDef>(profileFiles.length);
+        List<ProfileDef> result = new ArrayList<>(profileFiles.length);
         int suffixLength = PROFILE_FILE_NAME_SUFFIX.length();
         for (File profileFile: profileFiles) {
             String fileName = profileFile.getName();

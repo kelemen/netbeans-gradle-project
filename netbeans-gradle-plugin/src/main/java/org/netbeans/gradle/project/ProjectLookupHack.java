@@ -48,7 +48,7 @@ public final class ProjectLookupHack extends ProxyLookup {
         private final Map<Class<?>, Lookup> typeActions;
 
         public AccessPreventerLookup() {
-            this.typeActions = new HashMap<Class<?>, Lookup>();
+            this.typeActions = new HashMap<>();
             typeActions.put(SubprojectProvider.class, Lookup.EMPTY);
             typeActions.put(ClassPathProvider.class, Lookups.singleton(new UnimportantRootClassPathProvider()));
 

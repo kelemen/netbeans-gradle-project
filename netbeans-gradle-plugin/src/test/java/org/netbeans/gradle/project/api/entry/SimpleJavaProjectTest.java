@@ -134,7 +134,7 @@ public class SimpleJavaProjectTest {
         NbGradleProject project = rootProject;
 
         ActionProvider actionProvider = project.getLookup().lookup(ActionProvider.class);
-        Set<String> supportedActions = new HashSet<String>(Arrays.asList(actionProvider.getSupportedActions()));
+        Set<String> supportedActions = new HashSet<>(Arrays.asList(actionProvider.getSupportedActions()));
 
         FileObject javaFile = project.getProjectDirectory().getFileObject(
                 "src/main/java/org/netbeans/gradle/Sample.java");
@@ -147,7 +147,7 @@ public class SimpleJavaProjectTest {
     }
 
     private Set<String> getRootsOfClassPath(ClassPath classpath) {
-        Set<String> roots = new HashSet<String>();
+        Set<String> roots = new HashSet<>();
         for (FileObject cpEntry: classpath.getRoots()) {
             roots.add(cpEntry.getPath());
         }
