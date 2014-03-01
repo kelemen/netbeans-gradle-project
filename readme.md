@@ -5,7 +5,7 @@ The latest release can be downloaded from
 [http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support) and is also
 available via the Update Center (Tools/Plugins: Look for "Gradle Support").
 
-**JDK 6**: If you are using NetBeans with JDK 6, the last version of the plugin compatible with Java 6 is [1.3.0](http://dl.bintray.com/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.3.0/#netbeans-gradle-plugin-1.3.0.nbm). Note: You will still be able to open Java 6 based projects (even Java 5). The limitation applies only for the JDK used to start NetBeans.
+**JDK 6**: If you are using NetBeans with JDK 6, the last version of the plugin compatible with Java 6 is [1.3.0](http://dl.bintray.com/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.3.0/netbeans-gradle-plugin-1.3.0.nbm). Note: You will still be able to open Java 6 based projects (even Java 5). The limitation applies only for the JDK used to start NetBeans.
 
 General Description
 -------------------
