@@ -135,20 +135,6 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         return task != null ? task.customActions : null;
     }
 
-    private static CommandWithActions blockingCommand(
-            List<String> taskNames,
-            List<String> arguments,
-            List<String> jvmArguments,
-            CustomCommandActions customActions) {
-
-        GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
-        commandBuilder.setArguments(arguments);
-        commandBuilder.setJvmArguments(jvmArguments);
-        commandBuilder.setBlocking(true);
-
-        return new CommandWithActions(commandBuilder.create(), customActions);
-    }
-
     private static CommandWithActions nonBlockingCommand(
             List<String> taskNames,
             List<String> arguments,

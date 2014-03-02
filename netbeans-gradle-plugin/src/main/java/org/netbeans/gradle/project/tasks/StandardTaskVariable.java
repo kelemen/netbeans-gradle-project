@@ -277,8 +277,4 @@ public enum StandardTaskVariable {
     public String getScriptReplaceConstant() {
         return variable.getScriptReplaceConstant();
     }
-
-    private VariableValue tryGetValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-        return valueGetter.getValue(variables, project, actionContext);
-    }
 }
