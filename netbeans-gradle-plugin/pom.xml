@@ -287,6 +287,23 @@
                         <publicPackage>org.gradle.tooling.model.idea</publicPackage>
                         <publicPackage>org.gradle.tooling.provider</publicPackage>
                         <publicPackage>org.gradle.tooling.provider.model</publicPackage>
+                        <publicPackage>org.jtrim.access</publicPackage>
+                        <publicPackage>org.jtrim.cache</publicPackage>
+                        <publicPackage>org.jtrim.cancel</publicPackage>
+                        <publicPackage>org.jtrim.collections</publicPackage>
+                        <publicPackage>org.jtrim.concurrent</publicPackage>
+                        <publicPackage>org.jtrim.concurrent.async</publicPackage>
+                        <publicPackage>org.jtrim.concurrent.async.io</publicPackage>
+                        <publicPackage>org.jtrim.event</publicPackage>
+                        <publicPackage>org.jtrim.image</publicPackage>
+                        <publicPackage>org.jtrim.image.async</publicPackage>
+                        <publicPackage>org.jtrim.image.transform</publicPackage>
+                        <publicPackage>org.jtrim.property</publicPackage>
+                        <publicPackage>org.jtrim.property.swing</publicPackage>
+                        <publicPackage>org.jtrim.swing.component</publicPackage>
+                        <publicPackage>org.jtrim.swing.concurrent</publicPackage>
+                        <publicPackage>org.jtrim.swing.concurrent.async</publicPackage>
+                        <publicPackage>org.jtrim.utils</publicPackage>
                         <publicPackage>org.netbeans.gradle.model.api</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.config</publicPackage>
                         <publicPackage>org.netbeans.gradle.project.api.entry</publicPackage>
