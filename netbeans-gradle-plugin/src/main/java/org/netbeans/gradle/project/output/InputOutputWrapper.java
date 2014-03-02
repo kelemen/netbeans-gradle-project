@@ -6,16 +6,12 @@ import java.io.Reader;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class InputOutputWrapper implements Closeable {
-    private static final Logger LOGGER = Logger.getLogger(InputOutputWrapper.class.getName());
-
     private final InputOutput io;
 
     private final AtomicBoolean closed;
@@ -109,12 +105,8 @@ public final class InputOutputWrapper implements Closeable {
                     resource.close();
                 }
             } catch (Throwable ex) {
-                if (toThrow == null) {
-                    toThrow = ex;
-                }
-                else {
-                    LOGGER.log(Level.INFO, "Suppressing exception", ex);
-                }
+                if (toThrow == null) toThrow = ex;
+                else toThrow.addSuppressed(ex);
             }
         }
 
