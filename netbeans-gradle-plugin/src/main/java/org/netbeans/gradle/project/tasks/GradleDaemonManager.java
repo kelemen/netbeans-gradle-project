@@ -89,7 +89,7 @@ public final class GradleDaemonManager {
         final ReplaceableProgressHandle progress = new ReplaceableProgressHandle(cancel.getController());
 
         progress.start(origDisplayName);
-        executor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        executor.execute(cancel.getToken(), new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws Exception {
                 DaemonTaskDef taskDef;
