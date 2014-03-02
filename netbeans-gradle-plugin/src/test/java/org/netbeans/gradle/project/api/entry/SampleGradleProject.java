@@ -3,8 +3,6 @@ package org.netbeans.gradle.project.api.entry;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
@@ -19,7 +17,6 @@ import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.openide.filesystems.FileUtil;
 
 public final class SampleGradleProject implements Closeable {
-    private static final Logger LOGGER = Logger.getLogger(SampleGradleProject.class.getName());
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
     public static final GradleLocation DEFAULT_GRADLE_TARGET = new GradleLocationVersion(DEFAULT_GRADLE_VERSION);
 
@@ -41,23 +38,7 @@ public final class SampleGradleProject implements Closeable {
             Class<?> resourceBase,
             String resourceRelPath) throws IOException {
 
-        File tempFolder = null;
-        try {
-            return new SampleGradleProject(ZipUtils.unzipResourceToTemp(resourceBase, resourceRelPath));
-        } catch (Throwable ex) {
-            try {
-                if (tempFolder != null) {
-                    ZipUtils.recursiveDelete(tempFolder);
-                }
-            } catch (Throwable subEx) {
-                LOGGER.log(Level.SEVERE, "Suppressing exception.", subEx);
-            }
-
-            if (ex instanceof IOException) {
-                throw (IOException)ex;
-            }
-            throw Exceptions.throwUnchecked(ex);
-        }
+        return new SampleGradleProject(ZipUtils.unzipResourceToTemp(resourceBase, resourceRelPath));
     }
 
     private static File subDir(File base, String... subDirs) throws IOException {
