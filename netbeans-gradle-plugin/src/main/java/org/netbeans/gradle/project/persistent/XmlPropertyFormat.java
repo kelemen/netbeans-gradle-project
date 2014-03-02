@@ -355,9 +355,7 @@ final class XmlPropertyFormat {
 
         try {
             saveDocument(project, propertyfile, document);
-        } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
-        } catch (TransformerException ex) {
+        } catch (IOException | TransformerException ex) {
             LOGGER.log(Level.INFO, "Failed to save the properties.", ex);
         }
     }

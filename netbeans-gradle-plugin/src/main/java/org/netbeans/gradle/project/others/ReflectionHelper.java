@@ -69,12 +69,8 @@ public final class ReflectionHelper {
 
                 try {
                     return constructor.newInstance(passedArgs);
-                } catch (InstantiationException ex) {
-                    LOGGER.log(Level.WARNING, "Unexpected InstantiationException.", ex);
-                } catch (IllegalAccessException ex) {
-                    LOGGER.log(Level.WARNING, "Unexpected IllegalAccessException.", ex);
-                } catch (IllegalArgumentException ex) {
-                    LOGGER.log(Level.WARNING, "Unexpected IllegalAccessException.", ex);
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+                    LOGGER.log(Level.WARNING, "Unexpected consturctor invocation error.", ex);
                 } catch (InvocationTargetException ex) {
                     throw Exceptions.throwUnchecked(ex.getCause());
                 }

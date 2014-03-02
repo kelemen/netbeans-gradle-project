@@ -80,11 +80,7 @@ public final class PluginClassConstructor {
             return constructor != null
                     ? constructor.newInstance(arguments)
                     : null;
-        } catch (InstantiationException ex) {
-            throw new RuntimeException(ex);
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException(ex);
-        } catch (InvocationTargetException ex) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }
     }

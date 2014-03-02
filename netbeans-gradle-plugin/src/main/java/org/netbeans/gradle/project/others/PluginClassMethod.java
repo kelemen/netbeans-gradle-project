@@ -103,9 +103,7 @@ public final class PluginClassMethod {
                         new Object[]{methodName, getClassName()});
                 return null;
             }
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException(ex);
-        } catch (InvocationTargetException ex) {
+        } catch (IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }
     }

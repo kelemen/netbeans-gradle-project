@@ -106,9 +106,7 @@ public final class GradleModelLoader {
             if (project != null) {
                 return project.getLookup().lookup(NbGradleProject.class);
             }
-        } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Failed to load project: " + projectDir, ex);
-        } catch (IllegalArgumentException ex) {
+        } catch (IOException | IllegalArgumentException ex) {
             LOGGER.log(Level.INFO, "Failed to load project: " + projectDir, ex);
         } finally {
             try {
