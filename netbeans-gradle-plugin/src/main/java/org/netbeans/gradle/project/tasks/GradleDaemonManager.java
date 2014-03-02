@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.tasks;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -144,36 +143,6 @@ public final class GradleDaemonManager {
                 }
             }
         });
-    }
-
-    private static final class ThreadInterrupter {
-        private final Lock mainLock;
-        private Thread thread;
-
-        public ThreadInterrupter(Thread thread) {
-            this.mainLock = new ReentrantLock();
-            this.thread = thread;
-        }
-
-        public void interrupt() {
-            mainLock.lock();
-            try {
-                if (thread != null) {
-                    thread.interrupt();
-                }
-            } finally {
-                mainLock.unlock();
-            }
-        }
-
-        public void stopInterrupting() {
-            mainLock.lock();
-            try {
-                thread = null;
-            } finally {
-                mainLock.unlock();
-            }
-        }
     }
 
     private static final class ReplaceableProgressHandle {
