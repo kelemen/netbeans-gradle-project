@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class DaemonTaskDef {
@@ -45,7 +46,7 @@ public final class DaemonTaskDef {
         }
 
         @Override
-        public DaemonTaskDef tryCreateTaskDef() {
+        public DaemonTaskDef tryCreateTaskDef(CancellationToken cancelToken) {
             return taskDef;
         }
     }

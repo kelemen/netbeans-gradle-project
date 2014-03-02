@@ -104,7 +104,7 @@ public final class GradleDaemonManager {
 
                 DaemonTaskDef taskDef;
                 try {
-                    taskDef = taskDefFactory.tryCreateTaskDef();
+                    taskDef = taskDefFactory.tryCreateTaskDef(cancelToken);
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Failed to create DaemonTaskDef.", ex);
                     return;

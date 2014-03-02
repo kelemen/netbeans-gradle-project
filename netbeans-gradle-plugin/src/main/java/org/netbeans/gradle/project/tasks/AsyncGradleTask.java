@@ -488,7 +488,7 @@ public final class AsyncGradleTask implements Runnable {
             }
 
             @Override
-            public DaemonTaskDef tryCreateTaskDef() throws Exception {
+            public DaemonTaskDef tryCreateTaskDef(CancellationToken cancelToken) throws Exception {
                 GradleCommandSpec commandSpec = taskDefFactory.tryCreateCommandSpec();
                 if (commandSpec == null) {
                     return null;
