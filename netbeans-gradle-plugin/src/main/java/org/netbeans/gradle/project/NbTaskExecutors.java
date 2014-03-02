@@ -1,6 +1,9 @@
 package org.netbeans.gradle.project;
 
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jtrim.cancel.OperationCanceledException;
 import org.jtrim.concurrent.DelegatedTaskExecutorService;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.SingleThreadedExecutor;
@@ -8,6 +11,8 @@ import org.jtrim.concurrent.ThreadPoolTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class NbTaskExecutors {
+    private static final Logger LOGGER = Logger.getLogger(NbTaskExecutors.class.getName());
+
     private static final long IDLE_TIMEOUT_MS = 1000;
 
     public static MonitorableTaskExecutorService newExecutor(String name, int threadCount) {
@@ -23,6 +28,14 @@ public final class NbTaskExecutors {
         else {
             return new ThreadPoolTaskExecutor(name, threadCount, Integer.MAX_VALUE, IDLE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
+    }
+
+    public static void defaultCleanup(boolean canceled, Throwable error) {
+        if (error == null || (canceled && error instanceof OperationCanceledException)) {
+            return;
+        }
+
+        LOGGER.log(Level.SEVERE, "Uncaught exception in task.", error);
     }
 
     private static final class Unstoppable
