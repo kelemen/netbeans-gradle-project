@@ -1,11 +1,14 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.CancelableWaits;
 import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
@@ -81,6 +84,12 @@ public final class GradleDaemonManager {
         ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
+        final CancellationSource cancel = Cancellation.createCancellationSource();
+        final String origDisplayName = taskDefFactory.getDisplayName();
+
+        final ReplaceableProgressHandle progress = new ReplaceableProgressHandle(cancel.getController());
+
+        progress.start(origDisplayName);
         executor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws Exception {
@@ -99,6 +108,10 @@ public final class GradleDaemonManager {
                 String displayName = taskDef.getCaption();
                 boolean nonBlocking = taskDef.isNonBlocking();
                 DaemonTask task = taskDef.getTask();
+
+                if (!Objects.equals(displayName, origDisplayName)) {
+                    progress.start(displayName);
+                }
 
                 // TODO: Create the ProgressHandle before starting the task
                 //       This requires a DaemonTaskDefFactory returning the caption.
@@ -127,7 +140,11 @@ public final class GradleDaemonManager {
         }, new CleanupTask() {
             @Override
             public void cleanup(boolean canceled, Throwable error) throws Exception {
-                listener.onComplete(canceled ? null : error);
+                try {
+                    listener.onComplete(canceled ? null : error);
+                } finally {
+                    progress.finish();
+                }
             }
         });
     }
@@ -158,6 +175,42 @@ public final class GradleDaemonManager {
                 thread = null;
             } finally {
                 mainLock.unlock();
+            }
+        }
+    }
+
+    private static final class ReplaceableProgressHandle {
+        private final AtomicReference<ProgressHandle> handleRef;
+        private final CancellationController cancelController;
+
+        public ReplaceableProgressHandle(CancellationController cancelController) {
+            ExceptionHelper.checkNotNullArgument(cancelController, "cancelController");
+
+            this.handleRef = new AtomicReference<>(null);
+            this.cancelController = cancelController;
+        }
+
+        public void start(String displayName) {
+            ProgressHandle newHandle = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    cancelController.cancel();
+                    return true;
+                }
+            });
+
+            newHandle.start();
+
+            ProgressHandle prevHandle = handleRef.getAndSet(newHandle);
+            if (prevHandle != null) {
+                prevHandle.finish();
+            }
+        }
+
+        public void finish() {
+            ProgressHandle prevRef = handleRef.getAndSet(null);
+            if (prevRef != null) {
+                prevRef.finish();
             }
         }
     }
