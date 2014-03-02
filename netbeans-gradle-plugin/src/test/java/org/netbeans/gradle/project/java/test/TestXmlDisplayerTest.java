@@ -437,6 +437,7 @@ public class TestXmlDisplayerTest {
             Trouble trouble = testcase.getTrouble();
             assertNotNull(message("Trouble"), trouble);
 
+            assertEquals(message("Trouble.isError"), error, trouble.isError());
             assertTrue(message("StackTrace[" + expectedStackTraceLine + "]"),
                     contains(trouble.getStackTrace(), expectedStackTraceLine));
         }
