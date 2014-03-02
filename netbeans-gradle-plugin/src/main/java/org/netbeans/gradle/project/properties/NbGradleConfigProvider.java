@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
@@ -46,7 +47,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private volatile boolean hasActiveBeenSet;
 
     private NbGradleConfigProvider(File rootDirectory) {
-        if (rootDirectory == null) throw new NullPointerException("rootDirectory");
+        ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
 
         this.rootDirectory = rootDirectory;
         this.hasBeenUsed = new AtomicBoolean(false);

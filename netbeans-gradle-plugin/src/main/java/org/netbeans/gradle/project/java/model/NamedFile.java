@@ -1,14 +1,15 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class NamedFile {
     private final File path;
     private final String name;
 
     public NamedFile(File path, String name) {
-        if (path == null) throw new NullPointerException("path");
-        if (name == null) throw new NullPointerException("name");
+        ExceptionHelper.checkNotNullArgument(path, "path");
+        ExceptionHelper.checkNotNullArgument(name, "name");
 
         this.path = path;
         this.name = name;

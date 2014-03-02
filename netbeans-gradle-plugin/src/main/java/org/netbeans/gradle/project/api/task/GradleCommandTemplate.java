@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.api.task;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 /**
@@ -100,7 +101,7 @@ public final class GradleCommandTemplate {
         public Builder(
                 @Nonnull String displayName,
                 @Nonnull List<String> tasks) {
-            if (displayName == null) throw new NullPointerException("displayName");
+            ExceptionHelper.checkNotNullArgument(displayName, "displayName");
 
             this.displayName = displayName;
             this.tasks = CollectionUtils.copyNullSafeList(tasks);

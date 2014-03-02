@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
@@ -31,8 +32,8 @@ public final class JavaTestMethodNode extends TestMethodNode {
             TestTaskName testTaskName) {
         super(testcase, javaExt.getProject());
 
-        if (javaExt == null) throw new NullPointerException("javaExt");
-        if (testTaskName == null) throw new NullPointerException("testTaskName");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        ExceptionHelper.checkNotNullArgument(testTaskName, "testTaskName");
 
         this.javaExt = javaExt;
         this.testTaskName = testTaskName;

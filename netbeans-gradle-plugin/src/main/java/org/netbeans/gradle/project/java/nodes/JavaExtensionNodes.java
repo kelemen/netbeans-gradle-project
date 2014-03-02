@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
@@ -44,7 +45,8 @@ implements
     private final AtomicReference<NodesDescription> lastDisplayed;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+
         this.javaExt = javaExt;
         this.nodeChanges = new ChangeSupport(this);
         this.lastDisplayed = new AtomicReference<>(null);
@@ -110,7 +112,7 @@ implements
 
     @Override
     public NbListenerRef addNodeChangeListener(final Runnable listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final ChangeListener listenerWrapper = new ChangeListener() {
             @Override

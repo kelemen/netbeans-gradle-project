@@ -13,9 +13,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
@@ -56,7 +58,7 @@ public final class ExtensionLoader {
 
         try {
             extension = def.loadExtensionForProject(project);
-            if (extension == null) throw new NullPointerException("def.loadExtensionForProject");
+            Objects.requireNonNull(extension, "def.loadExtensionForProject");
 
             File projectDir = project.getProjectDirectoryAsFile();
             GradleProjectExtensionDef<SerializableLookup> def2
@@ -286,9 +288,7 @@ public final class ExtensionLoader {
             this.projectDirOfExtension = projectDirOfExtension;
             this.query = query;
 
-            if (extensionName == null) {
-                throw new NullPointerException("GradleProjectExtension.getExtensionName()");
-            }
+            Objects.requireNonNull(extensionName, "GradleProjectExtension.getExtensionName()");
         }
 
         @Override
@@ -358,9 +358,7 @@ public final class ExtensionLoader {
             org.netbeans.gradle.project.api.entry.GradleProjectExtension newExtension
                     = query.loadExtensionForProject(project);
 
-            if (newExtension == null) {
-                throw new NullPointerException("GradleProjectExtensionQuery.loadExtensionForProject");
-            }
+            Objects.requireNonNull(newExtension, "GradleProjectExtensionQuery.loadExtensionForProject");
             return createWrappedProjectExtension(newExtension);
         }
 
@@ -376,7 +374,7 @@ public final class ExtensionLoader {
         private final Lookup lookup;
 
         public SerializableLookup(Lookup lookup) {
-            if (lookup == null) throw new NullPointerException("lookup");
+            ExceptionHelper.checkNotNullArgument(lookup, "lookup");
 
             this.lookup = lookup;
         }

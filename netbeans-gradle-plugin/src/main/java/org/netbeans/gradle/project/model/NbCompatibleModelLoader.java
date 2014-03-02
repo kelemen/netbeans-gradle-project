@@ -19,6 +19,7 @@ import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -32,7 +33,6 @@ import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
-import org.openide.util.Parameters;
 import org.openide.util.lookup.Lookups;
 
 public final class NbCompatibleModelLoader implements NbModelLoader {
@@ -46,8 +46,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleModel baseModels,
             OperationInitializer setup,
             GradleTarget gradleTarget) {
-        Parameters.notNull("setup", setup);
-        Parameters.notNull("gradleTarget", gradleTarget);
+        ExceptionHelper.checkNotNullArgument(setup, "setup");
+        ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
 
         this.gradleTarget = gradleTarget;
         this.baseModels = baseModels;
@@ -193,8 +193,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private static NbGradleModel loadMainModelFromIdeaModule(
             NbGradleProjectTree rootProject,
             IdeaModule ideaModule) throws IOException {
-        if (rootProject == null) throw new NullPointerException("rootProject");
-        if (ideaModule == null) throw new NullPointerException("ideaModule");
+        ExceptionHelper.checkNotNullArgument(rootProject, "rootProject");
+        ExceptionHelper.checkNotNullArgument(ideaModule, "ideaModule");
 
         NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
         if (projectTree == null) {
@@ -227,9 +227,9 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             NbGradleProject project,
             IdeaProject ideaProject,
             List<NbGradleModel.Builder> otherModels) throws IOException {
-        if (project == null) throw new NullPointerException("project");
-        if (ideaProject == null) throw new NullPointerException("ideaProject");
-        if (otherModels == null) throw new NullPointerException("otherModels");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(ideaProject, "ideaProject");
+        ExceptionHelper.checkNotNullArgument(otherModels, "otherModels");
 
         File projectDir = project.getProjectDirectoryAsFile();
         IdeaModule mainModule = IdeaJavaModelUtils.tryFindMainModule(projectDir, ideaProject);

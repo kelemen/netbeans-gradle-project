@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -36,7 +37,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     private final JavaExtension javaExt;
 
     public AttacherListener(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
         this.javaExt = javaExt;
     }
 

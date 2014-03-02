@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -32,7 +33,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     private final File propertiesFile;
 
     public XmlPropertiesPersister(File propertiesFile) {
-        if (propertiesFile == null) throw new NullPointerException("propertiesFile");
+        ExceptionHelper.checkNotNullArgument(propertiesFile, "propertiesFile");
 
         this.propertiesFile = propertiesFile;
     }

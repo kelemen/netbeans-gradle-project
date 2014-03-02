@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.ChangeSupport;
 import org.openide.util.RequestProcessor;
 
@@ -24,7 +25,7 @@ public final class BackgroundValidator {
     }
 
     public void setValidators(GroupValidator validators) {
-        if (validators == null) throw new NullPointerException("validators");
+        ExceptionHelper.checkNotNullArgument(validators, "validators");
 
         if (!validatorsRef.compareAndSet(null, validators)) {
             if (validatorsRef.get() != validators) {

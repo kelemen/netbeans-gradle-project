@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
@@ -15,7 +16,7 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
     private final BuiltInGradleCommandQuery defaultBuiltInTasks;
 
     public MergedBuiltInGradleCommandQuery(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.defaultBuiltInTasks = new DefaultBuiltInTasks(project);
     }

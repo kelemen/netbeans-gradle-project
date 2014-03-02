@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.modules.SpecificationVersion;
@@ -41,7 +42,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
     }
 
     public static GradleLocation getGradleLocationFromString(String gradleLocation) {
-        if (gradleLocation == null) throw new NullPointerException("gradleLocation");
+        ExceptionHelper.checkNotNullArgument(gradleLocation, "gradleLocation");
 
         String location = gradleLocation.trim();
         if (location.isEmpty()) {

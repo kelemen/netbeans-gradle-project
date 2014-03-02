@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
@@ -31,7 +32,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     private final NbGradleProject project;
 
     public GradleCustomizer(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
     }
 

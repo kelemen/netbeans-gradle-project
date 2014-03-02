@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -25,6 +26,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.TemporaryFileManager;
@@ -72,12 +74,9 @@ public final class AsyncGradleTask implements Runnable {
             NbGradleProject project,
             Callable<GradleCommandSpec> taskDefFactroy,
             CommandCompleteListener listener) {
-        if (project == null)
-            throw new NullPointerException("project");
-        if (taskDefFactroy == null)
-            throw new NullPointerException("taskDefFactroy");
-        if (listener == null)
-            throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(taskDefFactroy, "taskDefFactroy");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         this.project = project;
         this.taskDefFactroy = taskDefFactroy;
@@ -266,7 +265,7 @@ public final class AsyncGradleTask implements Runnable {
             BuildExecutionItem buildItem) {
 
         GradleTaskDef taskDef = buildItem.getProcessedTaskDef();
-        if (taskDef == null) throw new NullPointerException("command.processed");
+        Objects.requireNonNull(taskDef, "command.processed");
 
         StringBuilder commandBuilder = new StringBuilder(128);
         commandBuilder.append("gradle");
@@ -670,9 +669,8 @@ public final class AsyncGradleTask implements Runnable {
 
         public OutputRef(Writer... writers) {
             this.writers = writers.clone();
-            for (Writer writer: this.writers) {
-                if (writer == null) throw new NullPointerException("writer");
-            }
+
+            ExceptionHelper.checkNotNullElements(this.writers, "writers");
         }
 
         @Override

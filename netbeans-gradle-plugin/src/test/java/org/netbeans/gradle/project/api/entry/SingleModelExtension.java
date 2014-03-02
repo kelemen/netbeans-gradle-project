@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.WaitableSignal;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -17,7 +18,7 @@ public final class SingleModelExtension implements GradleProjectExtension {
     private volatile Object lastModel;
 
     public SingleModelExtension(Class<?> requestedModel) {
-        if (requestedModel == null) throw new NullPointerException("requestedModel");
+        ExceptionHelper.checkNotNullArgument(requestedModel, "requestedModel");
         this.requestedModel = requestedModel;
         this.loadedSignal = new WaitableSignal();
         this.lastModel = null;

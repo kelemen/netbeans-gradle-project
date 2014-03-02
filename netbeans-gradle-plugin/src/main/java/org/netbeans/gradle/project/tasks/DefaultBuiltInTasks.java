@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -81,7 +82,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     }
 
     private static String tryGetDisplayNameOfDefaultCommand(String command) {
-        if (command == null) throw new NullPointerException("command");
+        ExceptionHelper.checkNotNullArgument(command, "command");
         return DISPLAY_NAME_MAP.get(command);
     }
 
@@ -106,7 +107,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
     private final Set<String> supportedCommands;
 
     public DefaultBuiltInTasks(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.project = project;
         this.supportedCommands = Collections.unmodifiableSet(DEFAULT_TASKS.keySet());

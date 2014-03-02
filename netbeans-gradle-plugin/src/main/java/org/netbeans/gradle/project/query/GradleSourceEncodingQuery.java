@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.query;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
@@ -15,7 +16,7 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
     private final NbGradleProject project;
 
     public GradleSourceEncodingQuery(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
     }
 

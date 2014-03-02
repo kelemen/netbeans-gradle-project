@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -82,7 +83,7 @@ public final class InitLaterListenerRef implements NbListenerRef {
      *   called
      */
     public void init(NbListenerRef listenerRef) {
-        if (listenerRef == null) throw new NullPointerException("listenerRef");
+        ExceptionHelper.checkNotNullArgument(listenerRef, "listenerRef");
 
         do {
             NbListenerRef oldRef = currentRef.get();

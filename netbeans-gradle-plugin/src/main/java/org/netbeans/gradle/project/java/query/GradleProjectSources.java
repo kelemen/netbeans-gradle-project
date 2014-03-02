@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
@@ -49,7 +50,8 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     private final AtomicReference<Object> scanRequestId;
 
     public GradleProjectSources(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+
         this.javaExt = javaExt;
         this.changeSupport = new ChangeSupport(this);
         this.currentGroups = Collections.emptyMap();

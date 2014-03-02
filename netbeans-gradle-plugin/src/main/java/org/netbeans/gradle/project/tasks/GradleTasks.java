@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -11,7 +12,7 @@ public final class GradleTasks {
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
 
     private static Callable<GradleCommandSpec> toSpecFactory(final Callable<GradleTaskDef> taskDefFactory) {
-        if (taskDefFactory == null) throw new NullPointerException("taskDefFactory");
+        ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
 
         return new Callable<GradleCommandSpec>() {
             @Override
@@ -51,7 +52,7 @@ public final class GradleTasks {
     }
 
     public static CommandCompleteListener projectTaskCompleteListener(final NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         return new CommandCompleteListener() {
             @Override

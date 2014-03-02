@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -75,7 +76,7 @@ public final class GradleHomeRegistry {
     }
 
     public static void setGradleHome(final FileObject gradleHome) {
-        if (gradleHome == null) throw new NullPointerException("gradleHome");
+        ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
 
         NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
             @Override
@@ -115,7 +116,7 @@ public final class GradleHomeRegistry {
         }
 
         public GradleHomePaths(FileObject homePath, URL[] urls) {
-            if (urls == null) throw new NullPointerException("urls");
+            ExceptionHelper.checkNotNullElements(urls, "urls");
 
             this.homePath = homePath;
 

@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -46,7 +47,8 @@ implements
     private final ChangeSupport changes;
 
     public GradleSourceForBinaryQuery(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+
         this.javaExt = javaExt;
 
         EventSource eventSource = new EventSource();

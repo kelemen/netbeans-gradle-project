@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -45,19 +46,19 @@ public final class PropertiesSnapshot {
         }
 
         public void addAuxConfig(AuxConfig config, boolean defaultValue) {
-            if (config == null) throw new NullPointerException("config");
+            ExceptionHelper.checkNotNullArgument(config, "config");
             auxProperties.add(new AuxConfigSource(
                     config.getKey(),
                     new DomElementSource(config.getValue(), defaultValue)));
         }
 
         public void addAuxProperty(AuxConfigSource source) {
-            if (source == null) throw new NullPointerException("source");
+            ExceptionHelper.checkNotNullArgument(source, "source");
             auxProperties.add(source);
         }
 
         public void addAuxProperty(AuxConfigProperty auxProperty) {
-            if (auxProperty == null) throw new NullPointerException("auxProperty");
+            ExceptionHelper.checkNotNullArgument(auxProperty, "auxProperty");
 
             MutableProperty<Element> property = auxProperty.getProperty();
             auxProperties.add(new AuxConfigSource(
@@ -70,14 +71,14 @@ public final class PropertiesSnapshot {
         }
 
         public void setBuiltInTask(String command, PropertySource<PredefinedTask> task) {
-            if (command == null) throw new NullPointerException("command");
-            if (task == null) throw new NullPointerException("task");
+            ExceptionHelper.checkNotNullArgument(command, "command");
+            ExceptionHelper.checkNotNullArgument(task, "task");
 
             builtInTasks.put(command, task);
         }
 
         public PropertySource<PredefinedTask> getBuiltInTask(String command) {
-            if (command == null) throw new NullPointerException("command");
+            ExceptionHelper.checkNotNullArgument(command, "command");
 
             PropertySource<PredefinedTask> result = builtInTasks.get(command);
             return result != null
@@ -92,7 +93,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setLicenseHeader(PropertySource<LicenseHeaderInfo> licenseFile) {
-            if (licenseFile == null) throw new NullPointerException("licenseFile");
+            ExceptionHelper.checkNotNullArgument(licenseFile, "licenseFile");
             this.licenseHeader = licenseFile;
         }
 
@@ -103,7 +104,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setSourceLevel(PropertySource<String> sourceLevel) {
-            if (sourceLevel == null) throw new NullPointerException("sourceLevel");
+            ExceptionHelper.checkNotNullArgument(sourceLevel, "sourceLevel");
             this.sourceLevel = sourceLevel;
         }
 
@@ -114,7 +115,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setPlatform(PropertySource<ProjectPlatform> platform) {
-            if (platform == null) throw new NullPointerException("platform");
+            ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
         }
 
@@ -125,7 +126,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setScriptPlatform(PropertySource<JavaPlatform> scriptPlatform) {
-            if (scriptPlatform == null) throw new NullPointerException("scriptPlatform");
+            ExceptionHelper.checkNotNullArgument(scriptPlatform, "scriptPlatform");
             this.scriptPlatform = scriptPlatform;
         }
 
@@ -170,7 +171,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setSourceEncoding(PropertySource<Charset> sourceEncoding) {
-            if (sourceEncoding == null) throw new NullPointerException("sourceEncoding");
+            ExceptionHelper.checkNotNullArgument(sourceEncoding, "sourceEncoding");
             this.sourceEncoding = sourceEncoding;
         }
 
@@ -181,7 +182,7 @@ public final class PropertiesSnapshot {
         }
 
         public void setCommonTasks(PropertySource<List<PredefinedTask>> commonTasks) {
-            if (commonTasks == null) throw new NullPointerException("commonTasks");
+            ExceptionHelper.checkNotNullArgument(commonTasks, "commonTasks");
             this.commonTasks = commonTasks;
         }
 
@@ -302,7 +303,8 @@ public final class PropertiesSnapshot {
     }
 
     public AuxConfigSource getAuxProperty(DomElementKey key) {
-        if (key == null) throw new NullPointerException("key");
+        ExceptionHelper.checkNotNullArgument(key, "key");
+
         AuxConfigSource result = auxPropertiesMap.get(key);
         if (result == null) {
             result = new AuxConfigSource(key, new DomElementSource(null, true));
@@ -311,7 +313,8 @@ public final class PropertiesSnapshot {
     }
 
     public PropertySource<PredefinedTask> tryGetBuiltInTask(String command) {
-        if (command == null) throw new NullPointerException("command");
+        ExceptionHelper.checkNotNullArgument(command, "command");
+
         PropertySource<PredefinedTask> result = builtInTasks.get(command);
         return result != null
                 ? result

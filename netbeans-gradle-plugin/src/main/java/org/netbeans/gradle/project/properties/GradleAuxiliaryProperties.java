@@ -7,6 +7,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.spi.project.AuxiliaryProperties;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,7 +18,7 @@ public final class GradleAuxiliaryProperties implements AuxiliaryProperties {
     private final Lock factoryLock;
 
     public GradleAuxiliaryProperties(GradleAuxiliaryConfiguration config) {
-        if (config == null) throw new NullPointerException("config");
+        ExceptionHelper.checkNotNullArgument(config, "config");
         this.config = config;
         this.factoryLock = new ReentrantLock();
         try {

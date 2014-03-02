@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.openide.util.Parameters;
+import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Element;
 
 public final class AuxConfig {
@@ -14,7 +14,7 @@ public final class AuxConfig {
     }
 
     public AuxConfig(@Nonnull DomElementKey key, @Nullable Element value) {
-        Parameters.notNull("key", key);
+        ExceptionHelper.checkNotNullArgument(key, "key");
 
         this.key = key;
         this.value = value != null ? (Element)value.cloneNode(true) : null;

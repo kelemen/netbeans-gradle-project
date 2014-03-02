@@ -1,10 +1,12 @@
 package org.netbeans.gradle.project.others;
 
+import org.jtrim.utils.ExceptionHelper;
+
 public final class PluginEnum implements ClassFinder {
     private final ClassFinder pluginClass;
 
     public PluginEnum(ClassFinder pluginClass) {
-        if (pluginClass == null) throw new NullPointerException("pluginClass");
+        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
 
         this.pluginClass = pluginClass;
     }
@@ -19,7 +21,7 @@ public final class PluginEnum implements ClassFinder {
     }
 
     public Object tryGetEnumConst(String name) {
-        if (name == null) throw new NullPointerException("name");
+        ExceptionHelper.checkNotNullArgument(name, "name");
 
         Class<?> type = pluginClass.tryGetClass();
         if (type == null) {

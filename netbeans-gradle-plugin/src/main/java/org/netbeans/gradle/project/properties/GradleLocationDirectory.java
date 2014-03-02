@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.openide.filesystems.FileUtil;
 
@@ -10,7 +11,7 @@ public final class GradleLocationDirectory implements GradleLocation {
     private final File gradleHome;
 
     public GradleLocationDirectory(File gradleHome) {
-        if (gradleHome == null) throw new NullPointerException("gradleHome");
+        ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
         this.gradleHome = FileUtil.normalizeFile(gradleHome);
     }
 

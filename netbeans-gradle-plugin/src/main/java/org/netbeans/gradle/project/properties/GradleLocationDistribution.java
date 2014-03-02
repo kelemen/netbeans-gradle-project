@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.net.URI;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public final class GradleLocationDistribution implements GradleLocation {
@@ -9,7 +10,7 @@ public final class GradleLocationDistribution implements GradleLocation {
     private final URI location;
 
     public GradleLocationDistribution(URI location) {
-        if (location == null) throw new NullPointerException("location");
+        ExceptionHelper.checkNotNullArgument(location, "location");
         this.location = location;
     }
 

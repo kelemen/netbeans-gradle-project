@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
@@ -231,7 +232,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final String[] possibleValues;
 
         public BoolVariable(DisplayedTaskVariable variable) {
-            if (variable == null) throw new NullPointerException("variable");
+            ExceptionHelper.checkNotNullArgument(variable, "variable");
 
             this.variable = variable;
             this.checkBox = new JCheckBox(variable.getDisplayName());
@@ -293,7 +294,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final JComboBox<ComboValue> value;
 
         public EnumVariable(DisplayedTaskVariable variable) {
-            if (variable == null) throw new NullPointerException("variable");
+            ExceptionHelper.checkNotNullArgument(variable, "variable");
 
             this.variable = variable;
             this.label = new JLabel(variable.getDisplayName());
@@ -380,7 +381,7 @@ public final class TaskVariableQueryDialog extends JDialog {
         private final JTextField value;
 
         public StringVariable(DisplayedTaskVariable variable) {
-            if (variable == null) throw new NullPointerException("variable");
+            ExceptionHelper.checkNotNullArgument(variable, "variable");
 
             this.variable = variable;
             this.label = new JLabel(variable.getDisplayName());

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.others;
 
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class PluginClass implements ClassFinder {
     private final PluginClassFactory classFactory;
@@ -8,8 +9,8 @@ public final class PluginClass implements ClassFinder {
     private final AtomicReference<Class<?>> loadedClass;
 
     public PluginClass(PluginClassFactory classFactory, String className) {
-        if (classFactory == null) throw new NullPointerException("classFactory");
-        if (className == null) throw new NullPointerException("className");
+        ExceptionHelper.checkNotNullArgument(classFactory, "classFactory");
+        ExceptionHelper.checkNotNullArgument(className, "className");
 
         this.classFactory = classFactory;
         this.className = className;

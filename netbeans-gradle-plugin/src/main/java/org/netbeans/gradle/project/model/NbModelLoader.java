@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.gradle.tooling.ProjectConnection;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -24,9 +25,9 @@ public interface NbModelLoader {
                 NbGradleModel mainModel,
                 Collection<NbGradleModel> otherModels,
                 Collection<? extends ModelLoadIssue> issues) {
-            if (mainModel == null) throw new NullPointerException("mainModel");
-            if (otherModels == null) throw new NullPointerException("otherModels");
-            if (issues == null) throw new NullPointerException("issues");
+            ExceptionHelper.checkNotNullArgument(mainModel, "mainModel");
+            ExceptionHelper.checkNotNullArgument(otherModels, "otherModels");
+            ExceptionHelper.checkNotNullArgument(issues, "issues");
 
             this.mainModel = mainModel;
             this.otherModels = CollectionUtils.copyNullSafeList(otherModels);

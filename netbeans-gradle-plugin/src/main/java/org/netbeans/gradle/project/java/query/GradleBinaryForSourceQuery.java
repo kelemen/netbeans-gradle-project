@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -33,7 +34,8 @@ implements
     private final ChangeSupport changes;
 
     public GradleBinaryForSourceQuery(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+
         this.javaExt = javaExt;
 
         EventSource eventSource = new EventSource();

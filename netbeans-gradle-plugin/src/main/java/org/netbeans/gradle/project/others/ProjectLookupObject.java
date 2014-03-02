@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.openide.util.Lookup;
 
@@ -13,7 +14,7 @@ public final class ProjectLookupObject {
     private final PluginClass pluginClass;
 
     public ProjectLookupObject(PluginClass pluginClass) {
-        if (pluginClass == null) throw new NullPointerException("pluginClass");
+        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
         this.pluginClass = pluginClass;
     }
 

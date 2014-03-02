@@ -7,6 +7,7 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
@@ -20,15 +21,15 @@ public final class NbGradleMultiProjectDef implements Serializable {
     private final NbGradleProjectTree mainProject;
 
     public NbGradleMultiProjectDef(NbGradleProjectTree rootProject, NbGradleProjectTree mainProject) {
-        if (rootProject == null) throw new NullPointerException("rootProject");
-        if (mainProject == null) throw new NullPointerException("mainProject");
+        ExceptionHelper.checkNotNullArgument(rootProject, "rootProject");
+        ExceptionHelper.checkNotNullArgument(mainProject, "mainProject");
 
         this.rootProject = rootProject;
         this.mainProject = mainProject;
     }
 
     public NbGradleMultiProjectDef(GradleMultiProjectDef model) {
-        if (model == null) throw new NullPointerException("model");
+        ExceptionHelper.checkNotNullArgument(model, "model");
 
         this.rootProject = new NbGradleProjectTree(model.getRootProject());
 

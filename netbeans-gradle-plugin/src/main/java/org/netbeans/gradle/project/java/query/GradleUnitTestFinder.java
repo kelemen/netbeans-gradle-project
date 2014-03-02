@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -18,7 +19,7 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     private final JavaExtension javaExt;
 
     public GradleUnitTestFinder(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
         this.javaExt = javaExt;
     }
 

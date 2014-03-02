@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -18,7 +19,7 @@ public final class NbGradleModel {
         private final Map<String, Object> extensionModels;
 
         public Builder(NbGenericModelInfo genericInfo) {
-            if (genericInfo == null) throw new NullPointerException("genericInfo");
+            ExceptionHelper.checkNotNullArgument(genericInfo, "genericInfo");
 
             this.genericInfo = genericInfo;
             this.extensionModels = new HashMap<>();
@@ -66,7 +67,7 @@ public final class NbGradleModel {
             Map<String, Object> extensionModels,
             boolean copyMap) {
 
-        if (genericInfo == null) throw new NullPointerException("genericInfo");
+        ExceptionHelper.checkNotNullArgument(genericInfo, "genericInfo");
 
         this.genericInfo = genericInfo;
         this.extensionModels = copyMap

@@ -6,6 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -67,9 +68,9 @@ public final class GradleDaemonManager {
             Executor executor,
             final Callable<DaemonTaskDef> taskDefFactory,
             final CommandCompleteListener listener) {
-        if (executor == null) throw new NullPointerException("executor");
-        if (taskDefFactory == null) throw new NullPointerException("taskDefFactory");
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(executor, "executor");
+        ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final Runnable executeTask = new Runnable() {
             @Override

@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
@@ -81,7 +82,7 @@ public final class MemProjectProperties extends AbstractProjectProperties {
 
     @Override
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
-        if (command == null) throw new NullPointerException("command");
+        ExceptionHelper.checkNotNullArgument(command, "command");
 
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {

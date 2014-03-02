@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.java.test;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
@@ -12,8 +13,8 @@ public final class JavaTestRunnerNodeFactory extends TestRunnerNodeFactory {
     private final TestTaskName testTaskName;
 
     public JavaTestRunnerNodeFactory(JavaExtension javaExt, TestTaskName testTaskName) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
-        if (testTaskName == null) throw new NullPointerException("testTaskName");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        ExceptionHelper.checkNotNullArgument(testTaskName, "testTaskName");
 
         this.javaExt = javaExt;
         this.testTaskName = testTaskName;

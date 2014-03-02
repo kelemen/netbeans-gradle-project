@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.DefaultProjectProperties;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
@@ -17,7 +18,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
     private final NbGradleProject project;
 
     public GradleTemplateAttrProvider(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.project = project;
     }

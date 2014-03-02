@@ -34,6 +34,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -295,8 +296,8 @@ final class XmlPropertyFormat {
     }
 
     public static void saveToXml(NbGradleProject project, File propertyfile, PropertiesSnapshot snapshot) {
-        if (propertyfile == null) throw new NullPointerException("propertyfile");
-        if (snapshot == null) throw new NullPointerException("snapshot");
+        ExceptionHelper.checkNotNullArgument(propertyfile, "propertyfile");
+        ExceptionHelper.checkNotNullArgument(snapshot, "snapshot");
 
         DocumentBuilder builder;
         try {
@@ -683,7 +684,7 @@ final class XmlPropertyFormat {
         private final NodeList nodeList;
 
         public NodeListAsIterable(NodeList nodeList) {
-            if (nodeList == null) throw new NullPointerException("nodeList");
+            ExceptionHelper.checkNotNullArgument(nodeList, "nodeList");
             this.nodeList = nodeList;
         }
 

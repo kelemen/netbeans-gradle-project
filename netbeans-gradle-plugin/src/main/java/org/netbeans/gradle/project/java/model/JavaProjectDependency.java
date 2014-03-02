@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.Serializable;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class JavaProjectDependency implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -9,8 +10,8 @@ public final class JavaProjectDependency implements Serializable {
     private final JavaProjectReference projectReference;
 
     public JavaProjectDependency(String sourceSetName, JavaProjectReference projectReference) {
-        if (sourceSetName == null) throw new NullPointerException("sourceSetName");
-        if (projectReference == null) throw new NullPointerException("projectReference");
+        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
+        ExceptionHelper.checkNotNullArgument(projectReference, "projectReference");
 
         this.sourceSetName = sourceSetName;
         this.projectReference = projectReference;

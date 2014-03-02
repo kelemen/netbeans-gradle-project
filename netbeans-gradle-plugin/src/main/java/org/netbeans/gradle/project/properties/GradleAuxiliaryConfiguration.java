@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Collection;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
@@ -10,7 +11,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     private final SingleStoreAuxConfig privateConfig;
 
     public GradleAuxiliaryConfiguration(final NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.sharedConfig = new SingleStoreAuxConfig(
                 new ProjectPropertiesStorage(getSharedProperties(project)));
@@ -60,7 +61,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
         private final ProjectProperties properties;
 
         public ProjectPropertiesStorage(ProjectProperties properties) {
-            if (properties == null) throw new NullPointerException("properties");
+            ExceptionHelper.checkNotNullArgument(properties, "properties");
             this.properties = properties;
         }
 

@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
@@ -29,8 +30,8 @@ public final class JavaProjectReference implements Serializable {
     private final AtomicReference<JavaExtension> javaExtensionRef;
 
     public JavaProjectReference(File projectDir, NbJavaModule initialModule) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
-        if (initialModule == null) throw new NullPointerException("initialModule");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        ExceptionHelper.checkNotNullArgument(initialModule, "initialModule");
 
         this.projectDir = projectDir;
         this.initialModule = initialModule;

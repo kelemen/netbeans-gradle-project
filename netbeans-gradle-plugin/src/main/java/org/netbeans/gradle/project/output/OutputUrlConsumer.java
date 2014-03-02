@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.StringUtils;
 import org.openide.awt.HtmlBrowser;
 import org.openide.windows.OutputEvent;
@@ -66,7 +67,7 @@ public final class OutputUrlConsumer implements SmartOutputHandler.Consumer {
     }
 
     public static OutputListener getUrlListener(final URL url) {
-        if (url == null) throw new NullPointerException("url");
+        ExceptionHelper.checkNotNullArgument(url, "url");
 
         return new OutputListener() {
             @Override

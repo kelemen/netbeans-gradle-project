@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -17,7 +18,7 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
     public JavaCallstackFrameNode(String frameInfo, String displayName, JavaExtension javaExt) {
         super(frameInfo, displayName);
 
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
     }

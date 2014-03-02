@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -45,7 +46,7 @@ implements
     }
 
     protected final GradleProjectPlatformQuery trySetQuery(GradleProjectPlatformQuery query) {
-        if (query == null) throw new NullPointerException("query");
+        ExceptionHelper.checkNotNullArgument(query, "query");
 
         if (queryRef.compareAndSet(null, query)) {
             NbListenerRef toRemove = null;

@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -21,13 +22,13 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
     private final int lineNumber;
 
     public OpenEditorOutputListener(EditorCookie editor, int lineNumber) {
-        if (editor == null) throw new NullPointerException("editor");
+        ExceptionHelper.checkNotNullArgument(editor, "editor");
         this.editor = editor;
         this.lineNumber = lineNumber;
     }
 
     public static OpenEditorOutputListener tryCreateListener(File file, int lineNumber) {
-        if (file == null) throw new NullPointerException("file");
+        ExceptionHelper.checkNotNullArgument(file, "file");
 
         File normFile = FileUtil.normalizeFile(file);
         if (normFile == null) {
@@ -39,7 +40,7 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
     }
 
     public static OpenEditorOutputListener tryCreateListener(FileObject fileObj, int lineNumber) {
-        if (fileObj == null) throw new NullPointerException("fileObj");
+        ExceptionHelper.checkNotNullArgument(fileObj, "fileObj");
 
         try {
             DataObject dataObj = DataObject.find(fileObj);

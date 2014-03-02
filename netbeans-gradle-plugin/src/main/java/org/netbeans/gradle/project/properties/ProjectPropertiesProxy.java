@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
@@ -43,7 +44,8 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final WaitableSignal loadedSignal;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
         this.project = project;
         this.propertiesRef = new AtomicReference<>(null);
         this.changes = new ChangeSupport(this);
@@ -192,7 +194,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
     @Override
     public MutableProperty<PredefinedTask> tryGetBuiltInTask(final String command) {
-        if (command == null) throw new NullPointerException("command");
+        ExceptionHelper.checkNotNullArgument(command, "command");
 
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {

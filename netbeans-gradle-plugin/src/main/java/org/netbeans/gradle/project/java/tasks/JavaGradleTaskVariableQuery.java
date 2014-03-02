@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.StringUtils;
@@ -40,7 +41,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     private final JavaExtension javaExt;
 
     public JavaGradleTaskVariableQuery(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
         this.javaExt = javaExt;
     }
 

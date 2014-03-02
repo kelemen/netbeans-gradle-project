@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
@@ -21,7 +22,7 @@ public final class DefaultPropertySources {
             final PropertySource<ProjectPlatform> source,
             final boolean defaultValue) {
 
-        if (source == null) throw new NullPointerException("source");
+        ExceptionHelper.checkNotNullArgument(source, "source");
 
         return new PropertySource<String>() {
             @Override
@@ -56,8 +57,8 @@ public final class DefaultPropertySources {
             String versionStr,
             JavaPlatform[] platforms) {
 
-        if (specName == null) throw new NullPointerException("specName");
-        if (versionStr == null) throw new NullPointerException("versionStr");
+        ExceptionHelper.checkNotNullArgument(specName, "specName");
+        ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
 
         SpecificationVersion version;
         try {
@@ -147,8 +148,8 @@ public final class DefaultPropertySources {
             final String versionStr,
             final boolean defaultValue) {
 
-        if (specName == null) throw new NullPointerException("specName");
-        if (versionStr == null) throw new NullPointerException("versionStr");
+        ExceptionHelper.checkNotNullArgument(specName, "specName");
+        ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
 
         return new JavaPlatformSource<JavaPlatform>() {
             @Override

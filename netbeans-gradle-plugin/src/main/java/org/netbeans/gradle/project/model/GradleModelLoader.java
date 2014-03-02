@@ -25,6 +25,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.api.progress.ProgressHandle;
@@ -81,7 +82,7 @@ public final class GradleModelLoader {
     }
 
     public static NbGradleProject tryFindGradleProject(File projectDir) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
 
         FileObject projectDirObj = FileUtil.toFileObject(projectDir);
         return projectDirObj != null
@@ -90,8 +91,8 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleProject tryFindGradleProject(FileObject projectDir, File plainProjectDir) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
-        if (plainProjectDir == null) throw new NullPointerException("plainProjectDir");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        ExceptionHelper.checkNotNullArgument(plainProjectDir, "plainProjectDir");
 
         Closeable safeToOpen = null;
         try {
@@ -252,8 +253,8 @@ public final class GradleModelLoader {
             final NbGradleProject project,
             final NbGradleModel baseModel,
             final ModelRetrievedListener listener) {
-        if (project == null) throw new NullPointerException("project");
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final File projectDir = project.getProjectDirectoryAsFile();
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
@@ -346,8 +347,8 @@ public final class GradleModelLoader {
             final NbGradleProject project,
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
-        if (project == null) throw new NullPointerException("project");
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
@@ -384,7 +385,7 @@ public final class GradleModelLoader {
     }
 
     private static JavaPlatform tryGetScriptJavaPlatform(Project project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
 

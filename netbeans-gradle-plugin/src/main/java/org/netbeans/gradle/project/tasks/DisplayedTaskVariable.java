@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -21,9 +22,9 @@ public final class DisplayedTaskVariable {
             String displayName,
             VariableTypeDescription typeDescription) {
 
-        if (variable == null) throw new NullPointerException("variable");
-        if (displayName == null) throw new NullPointerException("displayName");
-        if (typeDescription == null) throw new NullPointerException("typeDescription");
+        ExceptionHelper.checkNotNullArgument(variable, "variable");
+        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+        ExceptionHelper.checkNotNullArgument(typeDescription, "typeDescription");
 
         this.variable = variable;
         this.displayName = displayName;

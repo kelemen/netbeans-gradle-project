@@ -2,11 +2,10 @@ package org.netbeans.gradle.project.others;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.netbeans.gradle.model.util.CollectionUtils;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class PluginClassMethod {
     private static final Logger LOGGER = Logger.getLogger(PluginClassMethod.class.getName());
@@ -25,8 +24,8 @@ public final class PluginClassMethod {
     }
 
     public PluginClassMethod(ClassFinder pluginClass, String methodName, ClassFinder... argTypeFinders) {
-        if (pluginClass == null) throw new NullPointerException("pluginClass");
-        if (methodName == null) throw new NullPointerException("methodName");
+        ExceptionHelper.checkNotNullArgument(pluginClass, "pluginClass");
+        ExceptionHelper.checkNotNullArgument(methodName, "methodName");
 
         this.pluginClass = pluginClass;
         this.methodName = methodName;
@@ -34,7 +33,7 @@ public final class PluginClassMethod {
         this.methodRef = new AtomicReference<>(null);
         this.argTypesCache = null;
 
-        CollectionUtils.checkNoNullElements(Arrays.asList(this.argTypeFinders), "argTypeFinders");
+        ExceptionHelper.checkNotNullElements(this.argTypeFinders, "argTypeFinders");
     }
 
     public static PluginClassMethod noArgMethod(ClassFinder pluginClass, String methodName) {

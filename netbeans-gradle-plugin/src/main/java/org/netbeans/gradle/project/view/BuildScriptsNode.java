@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -66,8 +67,7 @@ public final class BuildScriptsNode extends AbstractNode {
         private final NbGradleProject project;
 
         public BuildScriptChildFactory(NbGradleProject project) {
-            if (project == null)
-                throw new NullPointerException("project");
+            ExceptionHelper.checkNotNullArgument(project, "project");
             this.project = project;
         }
 

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.openide.util.Lookup;
@@ -10,8 +11,8 @@ public final class ProjectPlatformSource extends AbstractProjectPlatformSource {
     private final boolean defaultValue;
 
     public ProjectPlatformSource(String name, String version, boolean defaultValue) {
-        if (name == null) throw new NullPointerException("name");
-        if (version == null) throw new NullPointerException("version");
+        ExceptionHelper.checkNotNullArgument(name, "name");
+        ExceptionHelper.checkNotNullArgument(version, "version");
 
         this.name = name;
         this.version = version;

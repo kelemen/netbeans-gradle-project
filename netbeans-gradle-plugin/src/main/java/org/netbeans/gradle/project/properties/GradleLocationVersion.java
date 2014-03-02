@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public final class GradleLocationVersion implements GradleLocation {
@@ -8,7 +9,7 @@ public final class GradleLocationVersion implements GradleLocation {
     private final String versionStr;
 
     public GradleLocationVersion(String versionStr) {
-        if (versionStr == null) throw new NullPointerException("versionStr");
+        ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
         this.versionStr = versionStr;
     }
 

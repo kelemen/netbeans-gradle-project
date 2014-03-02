@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 
@@ -11,7 +12,7 @@ implements
     private final PropertySource<ValueType> source;
 
     public NbPropertySourceWrapper(PropertySource<ValueType> source) {
-        if (source == null) throw new NullPointerException("source");
+        ExceptionHelper.checkNotNullArgument(source, "source");
         this.source = source;
     }
 
@@ -26,7 +27,7 @@ implements
 
     @Override
     public NbListenerRef addChangeListener(final Runnable listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final ChangeListener changeListener = new ChangeListener() {
             @Override
@@ -56,7 +57,7 @@ implements
         private final MutableProperty<ValueType> property;
 
         public PropertySourceWrapper(MutableProperty<ValueType> property) {
-            if (property == null) throw new NullPointerException("property");
+            ExceptionHelper.checkNotNullArgument(property, "property");
             this.property = property;
         }
 

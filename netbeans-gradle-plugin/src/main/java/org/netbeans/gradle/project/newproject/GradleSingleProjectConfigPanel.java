@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.newproject;
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
@@ -11,8 +12,10 @@ public final class GradleSingleProjectConfigPanel implements WizardDescriptor.Pa
     private final AtomicReference<GradleSingleProjectConfig> configRef;
     private final WizardDescriptor wizard;
 
-    public GradleSingleProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef, WizardDescriptor wizard) {
-        if (configRef == null) throw new NullPointerException("configRef");
+    public GradleSingleProjectConfigPanel(
+            AtomicReference<GradleSingleProjectConfig> configRef,
+            WizardDescriptor wizard) {
+        ExceptionHelper.checkNotNullArgument(configRef, "configRef");
 
         this.configRef = configRef;
         this.wizard = wizard;

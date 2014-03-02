@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class PluginClassImplementation {
@@ -29,8 +30,8 @@ public final class PluginClassImplementation {
             ClassFinder type,
             InvocationHandler invocationHandler) {
 
-        if (type == null) throw new NullPointerException("type");
-        if (invocationHandler == null) throw new NullPointerException("invocationHandler");
+        ExceptionHelper.checkNotNullArgument(type, "type");
+        ExceptionHelper.checkNotNullArgument(invocationHandler, "invocationHandler");
 
         this.type = type;
         this.invocationHandler = invocationHandler;
@@ -90,7 +91,7 @@ public final class PluginClassImplementation {
         private final Object delegate;
 
         public SimpleDelegator(Object delegate) {
-            if (delegate == null) throw new NullPointerException("delegate");
+            ExceptionHelper.checkNotNullArgument(delegate, "delegate");
             this.delegate = delegate;
         }
 

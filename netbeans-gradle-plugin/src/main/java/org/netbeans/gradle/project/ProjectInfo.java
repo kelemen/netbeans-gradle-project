@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class ProjectInfo {
     private final List<Entry> entries;
 
     public ProjectInfo(Collection<Entry> entries) {
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
-        for (Entry entry: entries) {
-            if (entry == null) throw new NullPointerException("entry");
-        }
+
+        ExceptionHelper.checkNotNullElements(this.entries, "entries");
     }
 
     public List<Entry> getEntries() {
@@ -24,8 +24,9 @@ public final class ProjectInfo {
         private final String info;
 
         public Entry(Kind kind, String info) {
-            if (kind == null) throw new NullPointerException("kind");
-            if (info == null) throw new NullPointerException("info");
+            ExceptionHelper.checkNotNullArgument(kind, "kind");
+            ExceptionHelper.checkNotNullArgument(info, "info");
+
             this.kind = kind;
             this.info = info;
         }

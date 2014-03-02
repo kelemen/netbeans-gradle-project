@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
@@ -24,7 +25,7 @@ public final class JavaSourceDirHandler {
     }
 
     public NbListenerRef addDirsCreatedListener(final Runnable listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final ChangeListener listenerWrapper = new ChangeListener() {
             @Override

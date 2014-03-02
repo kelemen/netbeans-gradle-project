@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -75,7 +76,7 @@ public final class GradleTaskDef {
         }
 
         public Builder(TaskOutputDef outputDef, List<String> taskNames) {
-            if (outputDef == null) throw new NullPointerException("outputDef");
+            ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
 
             this.commandName = "";
             this.outputDef = outputDef;
@@ -102,7 +103,7 @@ public final class GradleTaskDef {
         }
 
         public void addNonUserTaskVariables(final TaskVariableMap nonUserTaskVariables) {
-            if (nonUserTaskVariables == null) throw new NullPointerException("nonUserTaskVariables");
+            ExceptionHelper.checkNotNullArgument(nonUserTaskVariables, "nonUserTaskVariables");
 
             final TaskVariableMap currentTaskVariables = this.nonUserTaskVariables;
             if (currentTaskVariables == EmptyTaskVarMap.INSTANCE) {
@@ -119,12 +120,12 @@ public final class GradleTaskDef {
         }
 
         public void setCommandExceptionHider(CommandExceptionHider commandExceptionHider) {
-            if (commandExceptionHider == null) throw new NullPointerException("commandExceptionHider");
+            ExceptionHelper.checkNotNullArgument(commandExceptionHider, "commandExceptionHider");
             this.commandExceptionHider = commandExceptionHider;
         }
 
         public void setNonUserTaskVariables(TaskVariableMap nonUserTaskVariables) {
-            if (nonUserTaskVariables == null) throw new NullPointerException("nonUserTaskVariables");
+            ExceptionHelper.checkNotNullArgument(nonUserTaskVariables, "nonUserTaskVariables");
             this.nonUserTaskVariables = nonUserTaskVariables;
         }
 
@@ -141,7 +142,7 @@ public final class GradleTaskDef {
         }
 
         public void setCommandName(String commandName) {
-            if (commandName == null) throw new NullPointerException("commandName");
+            ExceptionHelper.checkNotNullArgument(commandName, "commandName");
             this.commandName = commandName;
         }
 
@@ -150,7 +151,7 @@ public final class GradleTaskDef {
         }
 
         public void setOutputDef(TaskOutputDef outputDef) {
-            if (outputDef == null) throw new NullPointerException("outputDef");
+            ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
             this.outputDef = outputDef;
         }
 
@@ -188,9 +189,8 @@ public final class GradleTaskDef {
             List<T> result = new ArrayList<>(list1.size() + list2.size());
             result.addAll(list1);
             result.addAll(list2);
-            for (T element: result) {
-                if (element == null) throw new NullPointerException("element");
-            }
+
+            ExceptionHelper.checkNotNullElements(result, "result");
             return result;
         }
 
@@ -215,7 +215,7 @@ public final class GradleTaskDef {
         }
 
         public void setStdOutListener(SingleExecutionOutputProcessor stdOutListener) {
-            if (stdOutListener == null) throw new NullPointerException("stdOutListener");
+            ExceptionHelper.checkNotNullArgument(stdOutListener, "stdOutListener");
             this.stdOutListener = stdOutListener;
         }
 
@@ -224,7 +224,7 @@ public final class GradleTaskDef {
         }
 
         public void setStdErrListener(SingleExecutionOutputProcessor stdErrListener) {
-            if (stdErrListener == null) throw new NullPointerException("stdErrListener");
+            ExceptionHelper.checkNotNullArgument(stdErrListener, "stdErrListener");
             this.stdErrListener = stdErrListener;
         }
 
@@ -233,7 +233,7 @@ public final class GradleTaskDef {
         }
 
         public void setSuccessfulCommandFinalizer(ContextAwareCommandFinalizer successfulCommandFinalizer) {
-            if (successfulCommandFinalizer == null) throw new NullPointerException("successfulCommandFinalizer");
+            ExceptionHelper.checkNotNullArgument(successfulCommandFinalizer, "successfulCommandFinalizer");
             this.successfulCommandFinalizer = successfulCommandFinalizer;
         }
 
@@ -242,7 +242,7 @@ public final class GradleTaskDef {
         }
 
         public void setCommandFinalizer(ContextAwareCommandCompleteListener commandFinalizer) {
-            if (commandFinalizer == null) throw new NullPointerException("commandFinalizer");
+            ExceptionHelper.checkNotNullArgument(commandFinalizer, "commandFinalizer");
             this.commandFinalizer = commandFinalizer;
         }
 
@@ -387,9 +387,9 @@ public final class GradleTaskDef {
             TaskOutputDef outputDef,
             GradleCommandTemplate command,
             TaskVariableMap varReplaceMap) {
-        if (outputDef == null) throw new NullPointerException("outputDef");
-        if (command == null) throw new NullPointerException("command");
-        if (varReplaceMap == null) throw new NullPointerException("varReplaceMap");
+        ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
+        ExceptionHelper.checkNotNullArgument(command, "command");
+        ExceptionHelper.checkNotNullArgument(varReplaceMap, "varReplaceMap");
 
         GradleTaskDef.Builder builder = new Builder(outputDef, processList(command.getTasks(), varReplaceMap));
         builder.setCommandName(command.getDisplayName());

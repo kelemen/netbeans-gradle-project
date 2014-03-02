@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.PropertySource;
 import org.openide.filesystems.FileObject;
@@ -106,7 +107,7 @@ public final class GradleFileUtils {
     }
 
     public static boolean isKnownBinaryDirName(String dirName) {
-        if (dirName == null) throw new NullPointerException("dirName");
+        ExceptionHelper.checkNotNullArgument(dirName, "dirName");
 
         String lowerDirName = dirName.toLowerCase(Locale.US);
         return BINARY_DIR_NAMES.contains(lowerDirName);

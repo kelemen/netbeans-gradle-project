@@ -8,6 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
@@ -25,7 +26,7 @@ public final class InputOutputWrapper implements Closeable {
     private volatile Reader in;
 
     public InputOutputWrapper(InputOutput io) {
-        if (io == null) throw new NullPointerException("io");
+        ExceptionHelper.checkNotNullArgument(io, "io");
 
         this.io = io;
         this.closed = new AtomicBoolean(false);

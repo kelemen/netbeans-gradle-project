@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.util.concurrent.Callable;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
@@ -12,7 +13,7 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
     private final NbGradleProject project;
 
     public DefaultGradleCommandExecutor(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
     }
 
@@ -20,9 +21,8 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
     public void executeCommand(
             final GradleCommandTemplate command,
             final CustomCommandActions customActions) {
-
-        if (command == null) throw new NullPointerException("command");
-        if (customActions == null) throw new NullPointerException("customActions");
+        ExceptionHelper.checkNotNullArgument(command, "command");
+        ExceptionHelper.checkNotNullArgument(customActions, "customActions");
 
         Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
             @Override

@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
@@ -29,9 +30,9 @@ public final class OpenProjectsAction extends AbstractAction {
             Collection<? extends NbGradleProjectTree> projects) {
         Collection<File> projectDirs = new ArrayList<>(projects.size());
         for (NbGradleProjectTree project: projects) {
-            if (project == null) throw new NullPointerException("project");
             projectDirs.add(project.getProjectDir());
         }
+
         return new OpenProjectsAction(caption, projectDirs);
     }
 
@@ -39,9 +40,8 @@ public final class OpenProjectsAction extends AbstractAction {
             String caption,
             Collection<File> projectDirs) {
         Collection<File> safeProjectDirs = new ArrayList<>(projectDirs);
-        for (File project: safeProjectDirs) {
-            if (project == null) throw new NullPointerException("project");
-        }
+
+        ExceptionHelper.checkNotNullElements(safeProjectDirs, "projectDirs");
         return new OpenProjectsAction(caption, safeProjectDirs);
     }
 

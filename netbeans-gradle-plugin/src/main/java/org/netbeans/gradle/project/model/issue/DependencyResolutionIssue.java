@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.model.issue;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.openide.util.Parameters;
 
 public final class DependencyResolutionIssue {
     public enum DependencyKind {
@@ -20,10 +20,10 @@ public final class DependencyResolutionIssue {
             DependencyKind dependencyKind,
             Throwable stackTrace) {
 
-        Parameters.notNull("projectName", projectName);
-        Parameters.notNull("sourceSetName", sourceSetName);
-        Parameters.notNull("dependencyKind", dependencyKind);
-        Parameters.notNull("stackTrace", stackTrace);
+        ExceptionHelper.checkNotNullArgument(projectName, "projectName");
+        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
+        ExceptionHelper.checkNotNullArgument(dependencyKind, "dependencyKind");
+        ExceptionHelper.checkNotNullArgument(stackTrace, "stackTrace");
 
         this.projectName = projectName;
         this.sourceSetName = sourceSetName;

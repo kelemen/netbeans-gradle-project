@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.validate;
 
+import org.jtrim.utils.ExceptionHelper;
+
 public final class Problem {
     public enum Level {
         INFO(0),
@@ -33,8 +35,8 @@ public final class Problem {
     private final String message;
 
     public Problem(Level level, String message) {
-        if (level == null) throw new NullPointerException("level");
-        if (message == null) throw new NullPointerException("message");
+        ExceptionHelper.checkNotNullArgument(level, "level");
+        ExceptionHelper.checkNotNullArgument(message, "message");
 
         this.level = level;
         this.message = message;

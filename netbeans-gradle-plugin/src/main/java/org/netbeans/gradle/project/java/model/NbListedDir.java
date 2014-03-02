@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
 import java.io.Serializable;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class NbListedDir implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -10,8 +11,8 @@ public final class NbListedDir implements Serializable {
     private final File directory;
 
     public NbListedDir(String name, File directory) {
-        if (name == null) throw new NullPointerException("name");
-        if (directory == null) throw new NullPointerException("directory");
+        ExceptionHelper.checkNotNullArgument(name, "name");
+        ExceptionHelper.checkNotNullArgument(directory, "directory");
 
         this.name = name;
         this.directory = directory;

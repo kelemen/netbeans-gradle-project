@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines the command string NetBeans passes to
@@ -25,7 +26,8 @@ public final class NbCommandString {
      *   This argument cannot be {@code null}.
      */
     public NbCommandString(@Nonnull String commandString) {
-        if (commandString == null) throw new NullPointerException("commandString");
+        ExceptionHelper.checkNotNullArgument(commandString, "commandString");
+
         this.commandString = commandString;
     }
 

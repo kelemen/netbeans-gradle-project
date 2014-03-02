@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -26,7 +27,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.NotificationDisplayer;
-import org.openide.util.Parameters;
 
 public final class ModelLoadIssueReporter {
     private static final Logger LOGGER = Logger.getLogger(ModelLoadIssueReporter.class.getName());
@@ -150,7 +150,8 @@ public final class ModelLoadIssueReporter {
             Collection<? extends ModelLoadIssue> issues) {
 
         logIssues(issues);
-        if (message == null) throw new NullPointerException("message");
+
+        ExceptionHelper.checkNotNullElements(issues, "issues");
 
         final List<ModelLoadIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
         SwingUtilities.invokeLater(new Runnable() {
@@ -233,8 +234,8 @@ public final class ModelLoadIssueReporter {
     }
 
     public static void reportBuildScriptError(final NbGradleProject project, final Throwable error) {
-        Parameters.notNull("project", project);
-        Parameters.notNull("error", error);
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(error, "error");
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override

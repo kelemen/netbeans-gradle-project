@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.api.project.Project;
@@ -26,7 +27,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
     private final ClassPath classPath;
 
     public StackTraceConsumer(Project project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.project = project;
         this.classPath = getClassPathFromProject(project);

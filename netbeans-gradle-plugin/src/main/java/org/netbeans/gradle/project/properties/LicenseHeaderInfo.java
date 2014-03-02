@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 
 public final class LicenseHeaderInfo {
@@ -20,8 +21,8 @@ public final class LicenseHeaderInfo {
             String licenseName,
             Map<String, String> properties,
             File licenseTemplateFile) {
-        if (licenseName == null) throw new NullPointerException("licenseName");
-        if (properties == null) throw new NullPointerException("properties");
+        ExceptionHelper.checkNotNullArgument(licenseName, "licenseName");
+        ExceptionHelper.checkNotNullArgument(properties, "properties");
 
         this.licenseName = licenseName;
         this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
@@ -36,7 +37,7 @@ public final class LicenseHeaderInfo {
     }
 
     public File getLicenseTemplateFile(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         if (licenseTemplateFile == null) {
             return null;
@@ -69,7 +70,7 @@ public final class LicenseHeaderInfo {
     }
 
     public String getPrivateLicenseName(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         if (licenseTemplateFile != null) {
             return privateName;

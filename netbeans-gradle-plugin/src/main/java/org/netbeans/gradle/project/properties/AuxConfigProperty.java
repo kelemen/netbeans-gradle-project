@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Element;
 
 public final class AuxConfigProperty {
@@ -11,8 +12,8 @@ public final class AuxConfigProperty {
     }
 
     public AuxConfigProperty(DomElementKey key, MutableProperty<Element> property) {
-        if (key == null) throw new NullPointerException("key");
-        if (property == null) throw new NullPointerException("property");
+        ExceptionHelper.checkNotNullArgument(key, "key");
+        ExceptionHelper.checkNotNullArgument(property, "property");
 
         this.key = key;
         this.property = property;

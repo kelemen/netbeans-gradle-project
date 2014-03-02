@@ -11,6 +11,7 @@ import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
@@ -77,8 +78,8 @@ public final class NewProjectUtils {
     }
 
     public static void createMainClass(File projectDir, String mainClass) throws IOException {
-        if (projectDir == null) throw new NullPointerException("projectDir");
-        if (mainClass == null) throw new NullPointerException("mainClass");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        ExceptionHelper.checkNotNullArgument(mainClass, "mainClass");
 
         String packageName;
         String simpleClassName;
@@ -250,7 +251,7 @@ public final class NewProjectUtils {
     }
 
     public static void chooseProjectLocation(Component parent, JTextComponent jProjectEdit) {
-        if (jProjectEdit == null) throw new NullPointerException("jProjectEdit");
+        ExceptionHelper.checkNotNullArgument(jProjectEdit, "jProjectEdit");
 
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(null);
@@ -276,10 +277,11 @@ public final class NewProjectUtils {
             final JTextComponent jProjectNameEdit,
             final JTextComponent jProjectFolderEdit,
             final JTextComponent jProjectLocationEdit) {
-        if (validators == null) throw new NullPointerException("validators");
-        if (jProjectNameEdit == null) throw new NullPointerException("jProjectNameEdit");
-        if (jProjectFolderEdit == null) throw new NullPointerException("jProjectFolderEdit");
-        if (jProjectLocationEdit == null) throw new NullPointerException("jProjectLocationEdit");
+        ExceptionHelper.checkNotNullArgument(bckgValidator, "bckgValidator");
+        ExceptionHelper.checkNotNullArgument(validators, "validators");
+        ExceptionHelper.checkNotNullArgument(jProjectNameEdit, "jProjectNameEdit");
+        ExceptionHelper.checkNotNullArgument(jProjectFolderEdit, "jProjectFolderEdit");
+        ExceptionHelper.checkNotNullArgument(jProjectLocationEdit, "jProjectLocationEdit");
 
         validators.addValidator(
                 NewProjectUtils.createProjectNameValidator(),

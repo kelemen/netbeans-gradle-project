@@ -5,6 +5,7 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.OperationInitializer;
@@ -18,7 +19,7 @@ public final class DownloadSourcesTask implements DaemonTask {
     private final Project project;
 
     public DownloadSourcesTask(Project project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
     }
 

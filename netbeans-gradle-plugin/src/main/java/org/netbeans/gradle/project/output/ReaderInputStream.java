@@ -8,6 +8,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class ReaderInputStream extends InputStream {
     private final Reader reader;
@@ -19,10 +20,9 @@ public final class ReaderInputStream extends InputStream {
     }
 
     public ReaderInputStream(Reader reader, Charset encoding) {
-        if (reader == null)
-            throw new NullPointerException("reader");
-        if (encoding == null)
-            throw new NullPointerException("encoding");
+        ExceptionHelper.checkNotNullArgument(reader, "reader");
+        ExceptionHelper.checkNotNullArgument(encoding, "encoding");
+
         this.reader = reader;
         this.encoding = encoding;
         this.cacheRef = new AtomicReference<>(new byte[0]);
@@ -91,17 +91,16 @@ public final class ReaderInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
+        ExceptionHelper.checkNotNullArgument(b, "b");
+        ExceptionHelper.checkArgumentInRange(off, 0, b.length, "off");
+        ExceptionHelper.checkArgumentInRange(len, 0, b.length - off, "len");
         // Note that while this method is implemented to be thread-safe
         // calling it concurrently is unadvised, since read is not atomic.
-        if (b == null) {
-            throw new NullPointerException();
-        }
-        else if (off < 0 || len < 0 || len > b.length - off) {
-            throw new IndexOutOfBoundsException();
-        }
-        else if (len == 0) {
+
+        if (len == 0) {
             return 0;
         }
+
         int currentOffset = off;
         int currentLength = len;
         int readCount = 0;

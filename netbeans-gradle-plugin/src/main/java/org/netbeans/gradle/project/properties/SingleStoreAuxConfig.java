@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Element;
 
 public final class SingleStoreAuxConfig {
@@ -15,7 +16,7 @@ public final class SingleStoreAuxConfig {
     private final ConcurrentMap<DomElementKey, ElementRef> temporaryStore;
 
     public SingleStoreAuxConfig(AuxConfigStorage storage) {
-        if (storage == null) throw new NullPointerException("storage");
+        ExceptionHelper.checkNotNullArgument(storage, "storage");
         this.storage = storage;
         this.temporaryStore = new ConcurrentHashMap<>();
     }

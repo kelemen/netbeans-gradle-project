@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.others;
 
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.modules.ModuleInfo;
 import org.openide.util.Lookup;
 
@@ -9,7 +10,7 @@ public final class PluginClassFactory {
     private final AtomicReference<ModuleInfo> moduleInfoRef;
 
     public PluginClassFactory(String moduleNamePrefix) {
-        if (moduleNamePrefix == null) throw new NullPointerException("moduleNamePrefix");
+        ExceptionHelper.checkNotNullArgument(moduleNamePrefix, "moduleNamePrefix");
 
         this.moduleNamePrefix = moduleNamePrefix;
         this.moduleInfoRef = new AtomicReference<>(null);

@@ -5,6 +5,7 @@ import java.io.Writer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class LineOutputWriter extends Writer {
     public static interface Handler {
@@ -19,7 +20,7 @@ public final class LineOutputWriter extends Writer {
     private char lastChar;
 
     public LineOutputWriter(Handler handler) {
-        if (handler == null) throw new NullPointerException("handler");
+        ExceptionHelper.checkNotNullArgument(handler, "handler");
 
         this.handler = handler;
         this.lineBuffer = new StringBuilder(256);
@@ -30,14 +31,9 @@ public final class LineOutputWriter extends Writer {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
-        if (cbuf == null) throw new NullPointerException("cbuf");
-        if (len < 0) {
-            throw new IllegalArgumentException();
-        }
-        int endOffset = off + len;
-        if (off < 0 || off > cbuf.length || endOffset > cbuf.length || endOffset < 0) {
-            throw new IndexOutOfBoundsException();
-        }
+        ExceptionHelper.checkNotNullArgument(cbuf, "cbuf");
+        ExceptionHelper.checkArgumentInRange(off, 0, cbuf.length, "off");
+        ExceptionHelper.checkArgumentInRange(len, 0, cbuf.length - off, "len");
 
         int currentOffset = off;
         int currentLength = len;

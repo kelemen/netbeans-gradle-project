@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.openide.util.Parameters;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
@@ -58,8 +58,8 @@ public final class ProfileDef {
             @Nullable String groupName,
             @Nonnull String fileName,
             @Nonnull String displayName) {
-        Parameters.notNull("fileName", fileName);
-        Parameters.notNull("displayName", displayName);
+        ExceptionHelper.checkNotNullArgument(fileName, "fileName");
+        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
 
         this.groupName = groupName;
         this.fileName = fileName;

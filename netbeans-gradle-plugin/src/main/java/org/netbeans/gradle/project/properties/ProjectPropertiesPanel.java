@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
@@ -375,7 +376,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         private final JavaPlatform platform;
 
         public JavaPlatformComboItem(JavaPlatform platform) {
-            if (platform == null) throw new NullPointerException("platform");
+            ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
         }
 
@@ -414,7 +415,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         private final ProjectPlatform platform;
 
         public ProjectPlatformComboItem(ProjectPlatform platform) {
-            if (platform == null) throw new NullPointerException("platform");
+            ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
         }
 
@@ -482,7 +483,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         private final NbGradleConfiguration config;
 
         public ProfileItem(NbGradleConfiguration config) {
-            if (config == null) throw new NullPointerException("config");
+            ExceptionHelper.checkNotNullArgument(config, "config");
             this.config = config;
         }
 

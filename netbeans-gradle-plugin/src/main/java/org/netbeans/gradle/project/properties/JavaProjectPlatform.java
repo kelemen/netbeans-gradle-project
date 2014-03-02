@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -14,8 +15,7 @@ public final class JavaProjectPlatform implements ProjectPlatform {
     private final JavaPlatform platform;
 
     public JavaProjectPlatform(JavaPlatform platform) {
-        if (platform == null)
-            throw new NullPointerException("platform");
+        ExceptionHelper.checkNotNullArgument(platform, "platform");
         this.platform = platform;
     }
 

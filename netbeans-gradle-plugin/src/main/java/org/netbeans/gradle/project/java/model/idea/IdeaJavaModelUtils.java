@@ -23,6 +23,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaClassPaths;
@@ -57,7 +58,8 @@ public final class IdeaJavaModelUtils {
     }
 
     public static NbJavaModel createEmptyModel(File projectDir) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
         return createEmptyModel(projectDir, Lookup.EMPTY);
     }
 

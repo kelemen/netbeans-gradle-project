@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableSignal;
@@ -74,7 +75,7 @@ public final class ProjectPropertiesManager {
     public static ProjectProperties getProperties(
             NbGradleProject project,
             final WaitableSignal loadedSignal) {
-        if (loadedSignal == null) throw new NullPointerException("loadedSignal");
+        ExceptionHelper.checkNotNullArgument(loadedSignal, "loadedSignal");
         return getPropertySourceForProject(project).load(new PropertiesLoadListener() {
             @Override
             public void loadedProperties(ProjectProperties properties) {
@@ -152,7 +153,7 @@ public final class ProjectPropertiesManager {
         private final File propertiesFile;
 
         public FileProjectPropertySource(NbGradleProject project, File propertiesFile) {
-            if (propertiesFile == null) throw new NullPointerException("propertiesFile");
+            ExceptionHelper.checkNotNullArgument(propertiesFile, "propertiesFile");
             this.project = project;
             this.propertiesFile = propertiesFile;
         }
@@ -213,9 +214,8 @@ public final class ProjectPropertiesManager {
 
         public CombinedProjectPropertySource(ProjectPropertySource[] propertySources, int offset) {
             this.propertySources = Arrays.copyOfRange(propertySources, offset, propertySources.length);
-            for (ProjectPropertySource source: this.propertySources) {
-                if (source == null) throw new NullPointerException("propertySource");
-            }
+
+            ExceptionHelper.checkNotNullElements(this.propertySources, "propertySources");
         }
 
         @Override
@@ -323,7 +323,7 @@ public final class ProjectPropertiesManager {
         private final ProjectPropertySource defaultSource;
 
         public NbProfileProjectPropertySource(NbGradleProject project, ProfileDef profileDef) {
-            if (project == null) throw new NullPointerException("project");
+            ExceptionHelper.checkNotNullArgument(project, "project");
 
             this.project = project;
             this.profileDef = profileDef;
@@ -364,7 +364,7 @@ public final class ProjectPropertiesManager {
         private final ProjectPropertySource defaultSource;
 
         public NbCurrentProfileProjectPropertySource(NbGradleProject project) {
-            if (project == null) throw new NullPointerException("project");
+            ExceptionHelper.checkNotNullArgument(project, "project");
 
             this.project = project;
             this.defaultSource = new DefaultProjectPropertySource(project);
@@ -426,7 +426,7 @@ public final class ProjectPropertiesManager {
         }
 
         public void notifyOnLoad(PropertiesLoadListener listener) {
-            if (listener == null) throw new NullPointerException("listener");
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
 
             if (loaded) {
                 listener.loadedProperties(properties);

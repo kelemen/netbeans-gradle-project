@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.util.Exceptions;
@@ -27,7 +28,7 @@ public final class SampleGradleProject implements Closeable {
     private final File tempFolder;
 
     public SampleGradleProject(File tempFolder) {
-        if (tempFolder == null) throw new NullPointerException("tempFolder");
+        ExceptionHelper.checkNotNullArgument(tempFolder, "tempFolder");
         this.tempFolder = tempFolder;
     }
 

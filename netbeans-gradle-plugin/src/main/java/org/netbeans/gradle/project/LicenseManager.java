@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -126,7 +127,8 @@ public final class LicenseManager {
     }
 
     public Ref registerLicense(NbGradleProject project, LicenseHeaderInfo header) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
         if (header == null) {
             return NoOpRef.INSTANCE;
         }

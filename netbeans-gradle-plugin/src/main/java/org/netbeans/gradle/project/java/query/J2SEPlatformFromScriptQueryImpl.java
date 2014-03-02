@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.java.query;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.ProjectPlatformSource;
@@ -12,7 +13,7 @@ implements
     private final JavaExtension javaExt;
 
     public J2SEPlatformFromScriptQueryImpl(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
         this.javaExt = javaExt;
     }
 

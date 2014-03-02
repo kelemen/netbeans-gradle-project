@@ -6,6 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 
 final class ModelLoadSupport {
     private static final Logger LOGGER = Logger.getLogger(ModelLoadSupport.class.getName());
@@ -19,7 +20,7 @@ final class ModelLoadSupport {
     }
 
     public void addListener(ModelLoadListener listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         mainLock.lock();
         try {
@@ -34,7 +35,7 @@ final class ModelLoadSupport {
     }
 
     public void removeListener(ModelLoadListener listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         mainLock.lock();
         try {
@@ -45,7 +46,7 @@ final class ModelLoadSupport {
     }
 
     public void fireEvent(NbGradleModel model) {
-        if (model == null) throw new NullPointerException("model");
+        ExceptionHelper.checkNotNullArgument(model, "model");
 
         ModelLoadListener[] currentListeners;
 

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.java.query;
 
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -19,7 +20,7 @@ implements
     private final ChangeSupport changes;
 
     public GradleSourceLevelQueryImplementation(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
 

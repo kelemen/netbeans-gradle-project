@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.model.issue;
 
 import javax.annotation.Nullable;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.openide.util.Parameters;
 
 public final class ModelLoadIssue {
     private final NbGradleProject requestedProject;
@@ -18,8 +18,8 @@ public final class ModelLoadIssue {
             NbGradleExtensionRef extensionRef,
             String builderName,
             Throwable stackTrace) {
-        Parameters.notNull("requestedProject", requestedProject);
-        Parameters.notNull("stackTrace", stackTrace);
+        ExceptionHelper.checkNotNullArgument(requestedProject, "requestedProject");
+        ExceptionHelper.checkNotNullArgument(stackTrace, "stackTrace");
 
         this.requestedProject = requestedProject;
         this.actualProjectPath = actualProjectPath;

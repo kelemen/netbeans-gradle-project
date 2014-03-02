@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
@@ -16,7 +17,7 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
     private final WizardDescriptor wizard;
 
     public GradleSubProjectConfigPanel(AtomicReference<GradleSingleProjectConfig> configRef, WizardDescriptor wizard) {
-        if (configRef == null) throw new NullPointerException("configRef");
+        ExceptionHelper.checkNotNullArgument(configRef, "configRef");
 
         this.configRef = configRef;
         this.wizard = wizard;

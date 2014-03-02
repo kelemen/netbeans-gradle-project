@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.others.test;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.gsf.testrunner.api.Manager;
 import org.netbeans.modules.gsf.testrunner.api.Report;
@@ -23,8 +24,8 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
             TestRunnerNodeFactory nodeFactory,
             RerunHandler rerunHandler) {
 
-        if (name == null) throw new NullPointerException("name");
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(name, "name");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         TestSession session = nodeFactory != null
                 ? new TestSession(name, project, TestSession.SessionType.TEST, nodeFactory)
@@ -53,7 +54,7 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
 
         @Override
         public NbGradleTestSuite startTestSuite(String suiteName) {
-            if (suiteName == null) throw new NullPointerException("suiteName");
+            ExceptionHelper.checkNotNullArgument(suiteName, "suiteName");
 
             final TestSuite suite = new TestSuite(suiteName);
             session.addSuite(suite);

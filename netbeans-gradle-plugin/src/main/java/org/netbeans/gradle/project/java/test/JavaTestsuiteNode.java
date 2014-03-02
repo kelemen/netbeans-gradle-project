@@ -5,6 +5,7 @@ import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -34,8 +35,8 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         super(suiteName, filtered);
 
-        if (javaExt == null) throw new NullPointerException("javaExt");
-        if (testTaskName == null) throw new NullPointerException("testTaskName");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        ExceptionHelper.checkNotNullArgument(testTaskName, "testTaskName");
 
         this.javaExt = javaExt;
         this.testTaskName = testTaskName;

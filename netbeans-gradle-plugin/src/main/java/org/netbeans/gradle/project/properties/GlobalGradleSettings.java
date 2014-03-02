@@ -15,6 +15,7 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.StringUtils;
@@ -462,8 +463,8 @@ public final class GlobalGradleSettings {
         private final PreferenceChangeListener changeForwarder;
 
         public GlobalProperty(String settingsName, ValueConverter<ValueType> converter) {
-            if (settingsName == null) throw new NullPointerException("settingsName");
-            if (converter == null) throw new NullPointerException("converter");
+            ExceptionHelper.checkNotNullArgument(settingsName, "settingsName");
+            ExceptionHelper.checkNotNullArgument(converter, "converter");
 
             this.settingsName = settingsName;
             this.converter = converter;

@@ -13,6 +13,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.Task;
@@ -34,9 +35,9 @@ public final class ShowTestUtils {
             JavaExtension javaExt,
             final SpecificTestcase specificTestcase) {
 
-        if (cancelToken == null) throw new NullPointerException("cancelToken");
-        if (javaExt == null) throw new NullPointerException("javaExt");
-        if (specificTestcase == null) throw new NullPointerException("specificTestcase");
+        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        ExceptionHelper.checkNotNullArgument(specificTestcase, "specificTestcase");
 
         FileObject testFile = JavaTestsuiteNode.tryGetTestFile(
                 javaExt,

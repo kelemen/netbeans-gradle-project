@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
@@ -13,9 +14,9 @@ public final class ProjectQueryPlatformSource extends AbstractProjectPlatformSou
             String name,
             String version,
             boolean defaultValue) {
-        if (query == null) throw new NullPointerException("query");
-        if (name == null) throw new NullPointerException("name");
-        if (version == null) throw new NullPointerException("version");
+        ExceptionHelper.checkNotNullArgument(query, "query");
+        ExceptionHelper.checkNotNullArgument(name, "name");
+        ExceptionHelper.checkNotNullArgument(version, "version");
 
         this.name = name;
         this.version = version;

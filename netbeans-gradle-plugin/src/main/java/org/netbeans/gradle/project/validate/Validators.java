@@ -7,6 +7,7 @@ import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.WizardDescriptor;
 
@@ -15,7 +16,7 @@ public final class Validators {
 
     public static InputCollector<String> createCollector(
             final JTextComponent component) {
-        if (component == null) throw new NullPointerException("component");
+        ExceptionHelper.checkNotNullArgument(component, "component");
 
         return new InputCollector<String>() {
             @Override
@@ -29,8 +30,8 @@ public final class Validators {
     public static Validator<String> createNonEmptyValidator(
             final Problem.Level severity,
             final String errorMessage) {
-        if (severity == null) throw new NullPointerException("severity");
-        if (errorMessage == null) throw new NullPointerException("errorMessage");
+        ExceptionHelper.checkNotNullArgument(severity, "severity");
+        ExceptionHelper.checkNotNullArgument(errorMessage, "errorMessage");
 
         return new Validator<String>() {
             @Override
@@ -52,9 +53,9 @@ public final class Validators {
             final Pattern pattern,
             final Problem.Level severity,
             final String errorMessage) {
-        if (pattern == null) throw new NullPointerException("pattern");
-        if (severity == null) throw new NullPointerException("severity");
-        if (errorMessage == null) throw new NullPointerException("errorMessage");
+        ExceptionHelper.checkNotNullArgument(pattern, "pattern");
+        ExceptionHelper.checkNotNullArgument(severity, "severity");
+        ExceptionHelper.checkNotNullArgument(errorMessage, "errorMessage");
 
         return new Validator<String>() {
             @Override
@@ -94,8 +95,8 @@ public final class Validators {
     public static void connectLabelToProblems(
             final BackgroundValidator validator,
             final JLabel jLabel) {
-        if (validator == null) throw new NullPointerException("validator");
-        if (jLabel == null) throw new NullPointerException("jLabel");
+        ExceptionHelper.checkNotNullArgument(validator, "validator");
+        ExceptionHelper.checkNotNullArgument(jLabel, "jLabel");
 
         jLabel.setText("");
         validator.addChangeListener(new ChangeListener() {
@@ -135,12 +136,12 @@ public final class Validators {
             }
         });
     }
-        
+
     public static void connectWizardDescriptorToProblems(
             final BackgroundValidator validator,
             final WizardDescriptor wizard) {
-        if (validator == null) throw new NullPointerException("validator");
-        if (wizard == null) throw new NullPointerException("wizard");
+        ExceptionHelper.checkNotNullArgument(validator, "validator");
+        ExceptionHelper.checkNotNullArgument(wizard, "wizard");
 
         wizard.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
         validator.addChangeListener(new ChangeListener() {
@@ -173,6 +174,6 @@ public final class Validators {
                 }
             }
         });
-        
+
     }
 }

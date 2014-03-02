@@ -3,6 +3,7 @@ package org.netbeans.gradle.project;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
@@ -25,8 +26,8 @@ public final class NbGradleExtensionRef {
             GradleProjectExtensionDef<ModelType> extensionDef,
             GradleProjectExtension2<ModelType> extension) {
 
-        if (extensionDef == null) throw new NullPointerException("extensionDef");
-        if (extension == null) throw new NullPointerException("extension");
+        ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
+        ExceptionHelper.checkNotNullArgument(extension, "extension");
 
         this.name = extensionDef.getName();
         checkExtensionName(name, extensionDef);
@@ -45,7 +46,7 @@ public final class NbGradleExtensionRef {
             throw new NullPointerException("Extension name cannot be null for " + def.getClass().getName());
         }
         if (name.trim().isEmpty()) {
-            throw new NullPointerException("Extension name cannot be empty for " + def.getClass().getName());
+            throw new IllegalArgumentException("Extension name cannot be empty for " + def.getClass().getName());
         }
     }
 
@@ -100,7 +101,7 @@ public final class NbGradleExtensionRef {
     }
 
     public ParsedModel<?> parseModel(ModelLoadResult retrievedModels) {
-        if (retrievedModels == null) throw new NullPointerException("retrievedModels");
+        ExceptionHelper.checkNotNullArgument(retrievedModels, "retrievedModels");
 
         try {
             return safelyReturn(getExtensionDef().parseModel(retrievedModels));
@@ -145,8 +146,8 @@ public final class NbGradleExtensionRef {
                 GradleProjectExtensionDef<ModelType> extensionDef,
                 GradleProjectExtension2<ModelType> extension) {
 
-            if (extensionDef == null) throw new NullPointerException("extensionDef");
-            if (extension == null) throw new NullPointerException("extension");
+            ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
+            ExceptionHelper.checkNotNullArgument(extension, "extension");
 
             this.extensionDef = extensionDef;
             this.extension = extension;
@@ -159,7 +160,7 @@ public final class NbGradleExtensionRef {
         }
 
         public void activate(Object model) {
-            if (model == null) throw new NullPointerException("model");
+            ExceptionHelper.checkNotNullArgument(model, "model");
 
             extension.activateExtension(modelType.cast(model));
         }

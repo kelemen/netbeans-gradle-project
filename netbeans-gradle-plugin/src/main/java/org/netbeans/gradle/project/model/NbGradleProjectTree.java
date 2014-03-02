@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -29,7 +30,8 @@ public final class NbGradleProjectTree implements Serializable {
             GenericProjectProperties genericProperties,
             Collection<GradleTaskID> tasks,
             Collection<NbGradleProjectTree> children) {
-        if (genericProperties == null) throw new NullPointerException("genericProperties");
+        ExceptionHelper.checkNotNullArgument(genericProperties, "genericProperties");
+
         this.genericProperties = genericProperties;
         this.tasks = CollectionUtils.copyNullSafeList(tasks);
         this.children = CollectionUtils.copyNullSafeList(children);
@@ -38,7 +40,7 @@ public final class NbGradleProjectTree implements Serializable {
     }
 
     public NbGradleProjectTree(GradleProjectTree tree) {
-        if (tree == null) throw new NullPointerException("tree");
+        ExceptionHelper.checkNotNullArgument(tree, "tree");
 
         this.genericProperties = tree.getGenericProperties();
         this.tasks = tree.getTasks();

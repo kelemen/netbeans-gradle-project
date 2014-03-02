@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.Exceptions;
@@ -185,7 +186,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private final Set<String> supportedCommands;
 
     public GradleJavaBuiltInCommands(JavaExtension javaExt) {
-        if (javaExt == null) throw new NullPointerException("javaExt");
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
         this.supportedCommands = Collections.unmodifiableSet(DEFAULT_TASKS.keySet());

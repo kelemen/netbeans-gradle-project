@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.spi.project.ProjectFactory;
@@ -35,7 +36,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static Closeable safeToOpen(File projectDir) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
 
         RefCounter counter;
         RefCounter newCounter;
@@ -178,7 +179,8 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         private final AtomicBoolean closed;
 
         public CounterCloser(File key) {
-            if (key == null) throw new NullPointerException("key");
+            ExceptionHelper.checkNotNullArgument(key, "key");
+
             this.key = key;
             this.closed = new AtomicBoolean(false);
         }

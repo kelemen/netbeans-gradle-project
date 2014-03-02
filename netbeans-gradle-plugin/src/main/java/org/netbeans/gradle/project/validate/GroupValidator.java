@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class GroupValidator {
     private final Lock mainLock;
@@ -41,8 +42,8 @@ public final class GroupValidator {
             Validator<InputType> validator,
             InputCollector<? extends InputType> inputCollector) {
 
-        if (validator == null) throw new NullPointerException("validator");
-        if (inputCollector == null) throw new NullPointerException("inputCollector");
+        ExceptionHelper.checkNotNullArgument(validator, "validator");
+        ExceptionHelper.checkNotNullArgument(inputCollector, "inputCollector");
 
         InputAndValidator<InputType> toAdd = new InputAndValidator<>(validator, inputCollector);
         mainLock.lock();
@@ -93,8 +94,8 @@ public final class GroupValidator {
         public InputAndValidator(
                 Validator<InputType> validator,
                 InputCollector<? extends InputType> collector) {
-            if (validator == null) throw new NullPointerException("validator");
-            if (collector == null) throw new NullPointerException("collector");
+            ExceptionHelper.checkNotNullArgument(validator, "validator");
+            ExceptionHelper.checkNotNullArgument(collector, "collector");
 
             this.validator = validator;
             this.collector = collector;

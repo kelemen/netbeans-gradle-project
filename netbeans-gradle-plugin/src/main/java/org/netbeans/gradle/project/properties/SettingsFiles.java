@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -70,7 +71,7 @@ public final class SettingsFiles {
     }
 
     private static File getSettingsDir(File rootDir) {
-        if (rootDir == null) throw new NullPointerException("rootDir");
+        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
         return new File(rootDir, SETTINGS_DIR_NAME);
     }
 
@@ -79,7 +80,7 @@ public final class SettingsFiles {
     }
 
     public static File getProfileFile(File rootDir, ProfileDef profileDef) {
-        if (rootDir == null) throw new NullPointerException("rootDir");
+        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
         if (profileDef != null) {
             File profileFileDir = getProfileDirectory(rootDir);
@@ -96,7 +97,7 @@ public final class SettingsFiles {
     }
 
     public static File[] getFilesForProfile(File rootDir, ProfileDef profileDef) {
-        if (rootDir == null) throw new NullPointerException("rootDir");
+        ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
         File mainFile = new File(rootDir, SETTINGS_FILENAME);
 

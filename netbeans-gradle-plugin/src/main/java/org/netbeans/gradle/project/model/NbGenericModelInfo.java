@@ -5,6 +5,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.query.GradleFileUtils;
@@ -26,7 +27,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, File settingsFile) {
-        if (projectDef == null) throw new NullPointerException("projectTree");
+        ExceptionHelper.checkNotNullArgument(projectDef, "projectDef");
 
         this.settingsFile = settingsFile;
         this.projectDef = projectDef;

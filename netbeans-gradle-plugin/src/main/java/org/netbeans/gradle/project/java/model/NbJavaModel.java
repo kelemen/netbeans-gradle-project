@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 
@@ -52,9 +53,9 @@ public final class NbJavaModel implements Serializable {
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
 
-        if (modelSource == null) throw new NullPointerException("modelSource");
-        if (mainModule == null) throw new NullPointerException("mainModule");
-        if (possibleDependencies == null) throw new NullPointerException("possibleDependencies");
+        ExceptionHelper.checkNotNullArgument(modelSource, "modelSource");
+        ExceptionHelper.checkNotNullArgument(mainModule, "mainModule");
+        ExceptionHelper.checkNotNullArgument(possibleDependencies, "possibleDependencies");
 
         Map<File, JavaProjectDependency> relevantDependencies
                 = new HashMap<>();

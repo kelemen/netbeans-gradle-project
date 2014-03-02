@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.util.Collections;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.openide.filesystems.FileChooserBuilder;
 import org.openide.filesystems.FileObject;
@@ -22,7 +23,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
      * Creates new form LicenseHeaderPanel
      */
     public LicenseHeaderPanel(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.project = project;
 

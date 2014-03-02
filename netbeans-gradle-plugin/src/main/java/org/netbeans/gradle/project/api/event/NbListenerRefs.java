@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.api.event;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Contains utility methods related to {@link NbListenerRef}.
@@ -24,7 +25,7 @@ public final class NbListenerRefs {
      */
     @Nonnull
     public static NbListenerRef fromRunnable(@Nonnull final Runnable unregisterTask) {
-        if (unregisterTask == null) throw new NullPointerException("unregisterTask");
+        ExceptionHelper.checkNotNullArgument(unregisterTask, "unregisterTask");
 
         return new NbListenerRef() {
             private volatile boolean registered = true;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.openide.windows.OutputWriter;
 
@@ -22,20 +23,16 @@ public final class SmartOutputHandler implements LineOutputWriter.Handler {
             OutputWriter output,
             List<TaskOutputProcessor> visitors,
             List<Consumer> processors) {
-        if (output == null) throw new NullPointerException("output");
-        if (visitors == null) throw new NullPointerException("visitors");
-        if (processors == null) throw new NullPointerException("processors");
+        ExceptionHelper.checkNotNullArgument(output, "output");
+        ExceptionHelper.checkNotNullArgument(visitors, "visitors");
+        ExceptionHelper.checkNotNullArgument(processors, "processors");
 
         this.output = output;
         this.visitors = visitors.toArray(new TaskOutputProcessor[0]);
         this.processors = processors.toArray(new Consumer[0]);
 
-        for (TaskOutputProcessor visitor: this.visitors) {
-            if (visitor == null) throw new NullPointerException("visitor");
-        }
-        for (Consumer processor: this.processors) {
-            if (processor == null) throw new NullPointerException("processor");
-        }
+        ExceptionHelper.checkNotNullElements(this.visitors, "visitors");
+        ExceptionHelper.checkNotNullElements(this.processors, "processors");
     }
 
     @Override

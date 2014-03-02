@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -25,7 +26,8 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     private final JavaExtension javaExt;
 
     public DefaultProjectProperties(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
         this.project = project;
         this.javaExt = project.getLookup().lookup(JavaExtension.class);
     }
@@ -232,7 +234,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         public WrappedUnmodifiableProperty(String propertyName, MutableProperty<ValueType> wrapped) {
             super(propertyName);
 
-            if (wrapped == null) throw new NullPointerException("wrapped");
+            ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
             this.wrapped = wrapped;
         }
 
@@ -256,7 +258,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         private final String propertyName;
 
         public UnmodifiableProperty(String propertyName) {
-            if (propertyName == null) throw new NullPointerException("propertyName");
+            ExceptionHelper.checkNotNullArgument(propertyName, "propertyName");
             this.propertyName = propertyName;
         }
 

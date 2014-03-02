@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 
 public final class DebugTextListener implements TaskOutputProcessor {
@@ -19,8 +20,7 @@ public final class DebugTextListener implements TaskOutputProcessor {
     private final AtomicBoolean found;
 
     public DebugTextListener(DebugeeListener listener) {
-        if (listener == null)
-            throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
         this.listener = listener;
         this.found = new AtomicBoolean(false);
     }

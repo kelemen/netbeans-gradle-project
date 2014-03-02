@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.openide.util.Parameters;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines custom actions to be associated with a
@@ -92,7 +92,7 @@ public final class CustomCommandActions {
          *   {@code null}
          */
         public Builder(@Nonnull TaskKind taskKind) {
-            Parameters.notNull("taskKind", taskKind);
+            ExceptionHelper.checkNotNullArgument(taskKind, "taskKind");
 
             this.taskKind = taskKind;
             this.commandCompleteListener = null;
@@ -439,7 +439,8 @@ public final class CustomCommandActions {
      */
     @Nonnull
     public static CustomCommandActions simpleAction(@Nonnull TaskKind taskKind) {
-        if (taskKind == null) throw new NullPointerException("taskKind");
+        ExceptionHelper.checkNotNullArgument(taskKind, "taskKind");
+
         switch (taskKind) {
             case BUILD:
                 return BUILD;

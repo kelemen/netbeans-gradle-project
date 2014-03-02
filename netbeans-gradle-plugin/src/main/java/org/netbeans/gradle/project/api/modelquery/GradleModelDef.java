@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
@@ -149,7 +150,7 @@ public final class GradleModelDef {
     }
 
     private static <T> GradleProjectInfoQuery<T> createDefaultQuery(final ProjectInfoBuilder<T> builder) {
-        if (builder == null) throw new NullPointerException("builder");
+        ExceptionHelper.checkNotNullArgument(builder, "builder");
 
         ClassLoader classLoader = builder.getClass().getClassLoader();
         File classPath = ModelClassPathDef.getClassPathOfClass(builder.getClass());

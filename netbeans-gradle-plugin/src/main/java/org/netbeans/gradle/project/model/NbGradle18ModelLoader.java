@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.gradle.tooling.ProjectConnection;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.BuilderResult;
@@ -43,8 +44,8 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     private final OperationInitializer setup;
 
     public NbGradle18ModelLoader(OperationInitializer setup, GradleTarget gradleTarget) {
-        if (setup == null) throw new NullPointerException("setup");
-        if (gradleTarget == null) throw new NullPointerException("gradleTarget");
+        ExceptionHelper.checkNotNullArgument(setup, "setup");
+        ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
 
         this.gradleTarget = gradleTarget;
         this.setup = setup;

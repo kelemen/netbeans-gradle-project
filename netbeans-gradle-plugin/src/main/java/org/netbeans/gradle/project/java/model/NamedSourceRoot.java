@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -27,9 +28,9 @@ public final class NamedSourceRoot {
     private final File root;
 
     public NamedSourceRoot(JavaSourceGroupID groupID, String displayName, File root) {
-        if (groupID == null) throw new NullPointerException("groupID");
-        if (displayName == null) throw new NullPointerException("displayName");
-        if (root == null) throw new NullPointerException("root");
+        ExceptionHelper.checkNotNullArgument(groupID, "groupID");
+        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+        ExceptionHelper.checkNotNullArgument(root, "root");
 
         this.groupID = groupID;
         this.displayName = displayName;

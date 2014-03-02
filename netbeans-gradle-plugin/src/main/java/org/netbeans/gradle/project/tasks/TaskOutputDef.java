@@ -1,12 +1,14 @@
 package org.netbeans.gradle.project.tasks;
 
+import org.jtrim.utils.ExceptionHelper;
+
 public final class TaskOutputDef {
     private final TaskOutputKey key;
     private final String caption;
 
     public TaskOutputDef(TaskOutputKey key, String caption) {
-        if (key == null) throw new NullPointerException("key");
-        if (caption == null) throw new NullPointerException("caption");
+        ExceptionHelper.checkNotNullArgument(key, "key");
+        ExceptionHelper.checkNotNullArgument(caption, "caption");
 
         this.key = key;
         this.caption = caption;

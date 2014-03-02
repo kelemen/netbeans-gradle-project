@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.util.Collection;
 import java.util.List;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -22,7 +23,7 @@ public final class DynamicLookup extends ProxyLookup {
     }
 
     public static Lookup viewLookup(final Lookup lookup) {
-        if (lookup == null) throw new NullPointerException("lookup");
+        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
 
         return new Lookup() {
             @Override

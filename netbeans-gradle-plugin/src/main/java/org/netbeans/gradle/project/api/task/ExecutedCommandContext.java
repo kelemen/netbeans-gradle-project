@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.task;
 
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines in what context has a particular Gradle command been executed.
@@ -24,7 +25,7 @@ public final class ExecutedCommandContext {
      *   command has been resolved. This argument cannot be {@code null}.
      */
     public ExecutedCommandContext(@Nonnull TaskVariableMap taskVariables) {
-        if (taskVariables == null) throw new NullPointerException("taskVariables");
+        ExceptionHelper.checkNotNullArgument(taskVariables, "taskVariables");
 
         this.taskVariables = taskVariables;
     }

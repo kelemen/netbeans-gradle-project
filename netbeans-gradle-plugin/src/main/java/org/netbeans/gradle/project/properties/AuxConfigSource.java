@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Element;
 
 public final class AuxConfigSource {
@@ -11,8 +12,8 @@ public final class AuxConfigSource {
     }
 
     public AuxConfigSource(DomElementKey key, PropertySource<Element> source) {
-        if (key == null) throw new NullPointerException("key");
-        if (source == null) throw new NullPointerException("source");
+        ExceptionHelper.checkNotNullArgument(key, "key");
+        ExceptionHelper.checkNotNullArgument(source, "source");
 
         this.key = key;
         this.source = source;

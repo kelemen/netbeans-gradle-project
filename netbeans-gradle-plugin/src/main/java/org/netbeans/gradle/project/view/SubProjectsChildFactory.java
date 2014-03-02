@@ -15,6 +15,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -53,7 +54,7 @@ implements
             Collection<? extends NbGradleProjectTree> subProjects,
             boolean root) {
 
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.root = root;
         this.project = project;
@@ -62,9 +63,7 @@ implements
             this.subProjects = new ArrayList<>(subProjects);
             sortModules(this.subProjects);
 
-            for (NbGradleProjectTree subProject: this.subProjects) {
-                if (subProject == null) throw new NullPointerException("project");
-            }
+            ExceptionHelper.checkNotNullElements(this.subProjects, "subProjects");
         }
         else {
             this.subProjects = null;

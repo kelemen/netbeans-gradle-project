@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.java.test;
 
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.Lookup;
 
 public final class TestTaskName {
@@ -9,7 +10,7 @@ public final class TestTaskName {
     private final String taskName;
 
     public TestTaskName(String taskName) {
-        if (taskName == null) throw new NullPointerException("taskName");
+        ExceptionHelper.checkNotNullArgument(taskName, "taskName");
 
         this.taskName = taskName;
     }

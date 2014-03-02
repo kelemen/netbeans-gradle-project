@@ -21,6 +21,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -104,7 +105,7 @@ public final class JavaDependenciesNode extends AbstractNode {
         private final AtomicReference<NbJavaModule> lastModule;
 
         public DependenciesChildFactory(JavaExtension javaExt) {
-            if (javaExt == null) throw new NullPointerException("javaExt");
+            ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
             this.javaExt = javaExt;
             this.lastModule = new AtomicReference<>(null);

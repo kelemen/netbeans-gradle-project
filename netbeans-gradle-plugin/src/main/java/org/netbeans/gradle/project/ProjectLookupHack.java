@@ -6,13 +6,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
-import org.openide.util.Parameters;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -29,7 +29,8 @@ public final class ProjectLookupHack extends ProxyLookup {
     private final LookupContainer lookupContainer;
 
     public ProjectLookupHack(LookupContainer lookupContainer) {
-        Parameters.notNull("lookupContainer", lookupContainer);
+        ExceptionHelper.checkNotNullArgument(lookupContainer, "lookupContainer");
+
         this.lookupContainer = lookupContainer;
         this.activated = new AtomicBoolean(false);
 

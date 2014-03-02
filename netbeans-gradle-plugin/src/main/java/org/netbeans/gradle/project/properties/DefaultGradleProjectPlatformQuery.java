@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
@@ -28,7 +29,7 @@ implements
 
     @Override
     public NbListenerRef addPlatformChangeListener(final Runnable listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final PropertyChangeListener changeListener = new PropertyChangeListener() {
             @Override

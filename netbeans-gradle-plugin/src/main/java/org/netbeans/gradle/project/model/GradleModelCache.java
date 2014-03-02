@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
@@ -98,7 +99,7 @@ public final class GradleModelCache {
     }
 
     private static CacheKey tryCreateKey(NbGradleModel model) {
-        if (model == null) throw new NullPointerException("model");
+        ExceptionHelper.checkNotNullArgument(model, "model");
 
         File projectDir = model.getGenericInfo().getProjectDir();
 
@@ -115,7 +116,7 @@ public final class GradleModelCache {
     }
 
     public NbListenerRef addModelUpdateListener(final ProjectModelUpdatedListener listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final PropertyChangeListener forwarder = new PropertyChangeListener() {
             @Override
@@ -209,7 +210,7 @@ public final class GradleModelCache {
         private final File settingsFile;
 
         public CacheKey(File projectDir, File settingsFile) {
-            if (projectDir == null) throw new NullPointerException("buildFile");
+            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
             this.projectDir = projectDir;
             this.settingsFile = settingsFile;
         }

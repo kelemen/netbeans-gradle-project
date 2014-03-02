@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.ChangeSupport;
 import org.openide.util.Utilities;
 
@@ -25,7 +26,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     public DefaultMutableProperty(
             final PropertySource<? extends ValueType> initialValue,
             boolean allowNulls) {
-        if (initialValue == null) throw new NullPointerException("initialValue");
+        ExceptionHelper.checkNotNullArgument(initialValue, "initialValue");
 
         this.allowNulls = allowNulls;
         this.valueSource = initialValue;
@@ -55,13 +56,13 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     }
 
     private static <T> T checkNull(T value) {
-        if (value == null) throw new NullPointerException("value");
+        ExceptionHelper.checkNotNullArgument(value, "value");
         return value;
     }
 
     @Override
     public void setValueFromSource(PropertySource<? extends ValueType> source) {
-        if (source == null) throw new NullPointerException("source");
+        ExceptionHelper.checkNotNullArgument(source, "source");
 
         changesLock.lock();
         try {
@@ -84,7 +85,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     @Override
     public void setValue(ValueType value) {
         if (!allowNulls) {
-            if (value == null) throw new NullPointerException("value");
+            ExceptionHelper.checkNotNullArgument(value, "value");
         }
 
         setValueFromSource(new ConstPropertySource<>(value, false));

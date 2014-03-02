@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
     // Note that this is not a true general purpose implementation.
@@ -58,14 +59,14 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public boolean containsKey(Object key) {
-        if (key == null) throw new NullPointerException("key");
+        ExceptionHelper.checkNotNullArgument(key, "key");
 
         return getMap().containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        if (value == null) throw new NullPointerException("value");
+        ExceptionHelper.checkNotNullArgument(value, "value");
 
         Map<K, TableRef<K, V>> map = getMap();
         for (TableRef<?, V> valueRef: map.values()) {
@@ -79,7 +80,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public V get(Object key) {
-        if (key == null) throw new NullPointerException("key");
+        ExceptionHelper.checkNotNullArgument(key, "key");
 
         WeakReference<V> resultRef = getMap().get(key);
         return resultRef != null ? resultRef.get() : null;
@@ -87,8 +88,8 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public V put(K key, V value) {
-        if (key == null) throw new NullPointerException("key");
-        if (value == null) throw new NullPointerException("value");
+        ExceptionHelper.checkNotNullArgument(key, "key");
+        ExceptionHelper.checkNotNullArgument(value, "value");
 
         WeakReference<V> resultRef = getMap().put(key, new TableRef<>(key, value, references));
         return resultRef != null ? resultRef.get() : null;
@@ -96,7 +97,7 @@ public final class WeakValueHashMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public V remove(Object key) {
-        if (key == null) throw new NullPointerException("key");
+        ExceptionHelper.checkNotNullArgument(key, "key");
 
         WeakReference<V> resultRef = getMap().remove(key);
         return resultRef != null ? resultRef.get() : null;

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
@@ -30,8 +31,8 @@ implements
     private NbGradleSingleProjectConfigProvider(
             NbGradleProject project,
             NbGradleConfigProvider multiProjectProvider) {
-        if (project == null) throw new NullPointerException("project");
-        if (multiProjectProvider == null) throw new NullPointerException("multiProjectProvider");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(multiProjectProvider, "multiProjectProvider");
 
         this.project = project;
         this.commonConfig = multiProjectProvider;

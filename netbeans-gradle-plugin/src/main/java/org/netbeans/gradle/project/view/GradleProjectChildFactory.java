@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -47,8 +48,8 @@ extends
     private final AtomicBoolean hasPreventedRefresh;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
-        if (project == null) throw new NullPointerException("project");
-        if (parent == null) throw new NullPointerException("parent");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(parent, "parent");
 
         this.project = project;
         this.parent = parent;

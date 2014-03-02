@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
@@ -62,7 +63,8 @@ public final class StringUtils {
     }
 
     public static String getTopMostClassName(String className) {
-        if (className == null) throw new NullPointerException("className");
+        ExceptionHelper.checkNotNullArgument(className, "className");
+
         int nestedClassSeparator = className.indexOf('$');
         return nestedClassSeparator >= 0
                 ? className.substring(0, nestedClassSeparator)

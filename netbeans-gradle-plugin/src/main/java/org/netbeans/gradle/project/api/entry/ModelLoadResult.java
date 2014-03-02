@@ -3,7 +3,9 @@ package org.netbeans.gradle.project.api.entry;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.openide.util.Lookup;
 
@@ -42,15 +44,13 @@ public final class ModelLoadResult {
             @Nonnull File mainProjectDir,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
 
-        if (mainProjectDir == null) throw new NullPointerException("mainProjectDir");
+        ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
 
         this.mainProjectDir = mainProjectDir;
         this.evaluatedProjectsModel = CollectionUtils.copyNullSafeHashMap(evaluatedProjectsModel);
         this.mainProjectModels = this.evaluatedProjectsModel.get(mainProjectDir);
 
-        if (mainProjectModels == null) {
-            throw new NullPointerException("evaluatedProjectsModel.get(mainProjectDir)");
-        }
+        Objects.requireNonNull(mainProjectModels, "evaluatedProjectsModel.get(mainProjectDir)");
     }
 
     /**
@@ -77,8 +77,8 @@ public final class ModelLoadResult {
             @Nonnull Lookup mainProjectModels,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
 
-        if (mainProjectDir == null) throw new NullPointerException("mainProjectDir");
-        if (mainProjectModels == null) throw new NullPointerException("mainProjectModels");
+        ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
+        ExceptionHelper.checkNotNullArgument(mainProjectModels, "mainProjectModels");
 
         this.mainProjectDir = mainProjectDir;
         this.mainProjectModels = mainProjectModels;
@@ -98,7 +98,8 @@ public final class ModelLoadResult {
      */
     @Nonnull
     public ModelLoadResult withMainProject(@Nonnull File projectDir) {
-        if (projectDir == null) throw new NullPointerException("projectDir");
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
         Lookup models = evaluatedProjectsModel.get(projectDir);
         if (models == null) {
             throw new IllegalArgumentException("Not an evaluated project: " + projectDir);

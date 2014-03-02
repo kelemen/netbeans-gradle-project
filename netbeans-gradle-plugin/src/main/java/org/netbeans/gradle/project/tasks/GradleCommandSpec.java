@@ -2,13 +2,14 @@ package org.netbeans.gradle.project.tasks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jtrim.utils.ExceptionHelper;
 
 public final class GradleCommandSpec {
     private final GradleTaskDef source;
     private final GradleTaskDef processed;
 
     public GradleCommandSpec(GradleTaskDef source, GradleTaskDef processed) {
-        if (source == null) throw new NullPointerException("source");
+        ExceptionHelper.checkNotNullArgument(source, "source");
 
         this.source = source;
         this.processed = processed;

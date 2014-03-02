@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -30,8 +31,8 @@ extends
     private final MutableProperty<List<PredefinedTask>> commonTasks;
 
     public FallbackProjectProperties(ProjectProperties mainProperties, ProjectProperties defaultProperties) {
-        if (mainProperties == null) throw new NullPointerException("mainProperties");
-        if (defaultProperties == null) throw new NullPointerException("defaultProperties");
+        ExceptionHelper.checkNotNullArgument(mainProperties, "mainProperties");
+        ExceptionHelper.checkNotNullArgument(defaultProperties, "defaultProperties");
 
         this.mainProperties = mainProperties;
         this.defaultProperties = defaultProperties;
@@ -166,8 +167,8 @@ extends
         private final MutableProperty<List<ElementType>> defaultValue;
 
         public ListMergerProperty(MutableProperty<List<ElementType>> mainValue, MutableProperty<List<ElementType>> defaultValue) {
-            if (mainValue == null) throw new NullPointerException("mainValue");
-            if (defaultValue == null) throw new NullPointerException("defaultValue");
+            ExceptionHelper.checkNotNullArgument(mainValue, "mainValue");
+            ExceptionHelper.checkNotNullArgument(defaultValue, "defaultValue");
 
             this.mainValue = mainValue;
             this.defaultValue = defaultValue;
@@ -201,7 +202,7 @@ extends
 
         @Override
         public void addChangeListener(ChangeListener listener) {
-            if (listener == null) throw new NullPointerException("listener");
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
 
             mainValue.addChangeListener(listener);
             defaultValue.addChangeListener(listener);
@@ -209,7 +210,7 @@ extends
 
         @Override
         public void removeChangeListener(ChangeListener listener) {
-            if (listener == null) throw new NullPointerException("listener");
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
 
             defaultValue.removeChangeListener(listener);
             mainValue.removeChangeListener(listener);

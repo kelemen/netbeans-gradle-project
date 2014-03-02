@@ -1,13 +1,15 @@
 package org.netbeans.gradle.project.model;
 
+import org.jtrim.utils.ExceptionHelper;
+
 public final class NbGradleTask {
     private final String qualifiedName;
     private final String localName;
     private final String description;
 
     public NbGradleTask(String qualifiedName, String description) {
-        if (qualifiedName == null) throw new NullPointerException("qualifiedName");
-        if (description == null) throw new NullPointerException("description");
+        ExceptionHelper.checkNotNullArgument(qualifiedName, "qualifiedName");
+        ExceptionHelper.checkNotNullArgument(description, "description");
 
         this.qualifiedName = qualifiedName;
         this.localName = getLocalName(qualifiedName);

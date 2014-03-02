@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -72,10 +73,12 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final ChangeSupport modelChanges;
 
     private JavaExtension(Project project) throws IOException {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.projectDirectoryAsFile = FileUtil.toFile(project.getProjectDirectory());
-        if (projectDirectoryAsFile == null) throw new NullPointerException("projectDirAsFile");
+        if (projectDirectoryAsFile == null) {
+            throw new IOException("Project directory does not exist: " + project.getProjectDirectory());
+        }
 
         this.project = project;
         this.currentModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
@@ -310,7 +313,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     @Override
     public void activateExtension(NbJavaModel parsedModel) {
-        if (parsedModel == null) throw new NullPointerException("parsedModel");
+        ExceptionHelper.checkNotNullArgument(parsedModel, "parsedModel");
 
         currentModel = parsedModel;
         hasEverBeenLoaded = true;

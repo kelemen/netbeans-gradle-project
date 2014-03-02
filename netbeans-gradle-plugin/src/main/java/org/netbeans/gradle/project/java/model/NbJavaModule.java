@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -47,11 +48,11 @@ public final class NbJavaModule implements Serializable {
             List<NbListedDir> listedDirs,
             JavaTestModel testTasks) {
 
-        if (properties == null) throw new NullPointerException("properties");
-        if (compatibilityModel == null) throw new NullPointerException("compatibilityModel");
-        if (sources == null) throw new NullPointerException("sources");
-        if (listedDirs == null) throw new NullPointerException("listedDirs");
-        if (testTasks == null) throw new NullPointerException("testTasks");
+        ExceptionHelper.checkNotNullArgument(properties, "properties");
+        ExceptionHelper.checkNotNullArgument(compatibilityModel, "compatibilityModel");
+        ExceptionHelper.checkNotNullElements(sources, "sources");
+        ExceptionHelper.checkNotNullElements(listedDirs, "listedDirs");
+        ExceptionHelper.checkNotNullArgument(testTasks, "testTasks");
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
@@ -227,7 +228,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public JavaSourceSet tryGetSourceSetByName(String name) {
-        if (name == null) throw new NullPointerException("name");
+        ExceptionHelper.checkNotNullArgument(name, "name");
 
         return getNameToSourceSet().get(name);
     }
@@ -257,7 +258,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public JavaTestTask tryGetTestModelByName(String name) {
-        if (name == null) throw new NullPointerException("name");
+        ExceptionHelper.checkNotNullArgument(name, "name");
 
         return getTestNameToModel().get(name);
     }
@@ -299,7 +300,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     public String findTestTaskForSourceSet(String sourceSetName) {
-        if (sourceSetName == null) throw new NullPointerException("sourceSetName");
+        ExceptionHelper.checkNotNullArgument(sourceSetName, "sourceSetName");
 
         String expectedName = getExpectedTestName(sourceSetName);
 

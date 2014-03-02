@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.query;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.queries.SharabilityQuery.Sharability;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
@@ -13,7 +14,7 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
     private final NbGradleProject project;
 
     public GradleSharabilityQuery(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
     }
 

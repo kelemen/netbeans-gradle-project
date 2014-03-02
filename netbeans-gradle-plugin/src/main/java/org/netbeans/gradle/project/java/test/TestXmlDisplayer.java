@@ -13,6 +13,7 @@ import javax.swing.event.ChangeListener;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
@@ -51,9 +52,9 @@ public final class TestXmlDisplayer {
     }
 
     public TestXmlDisplayer(Project project, String testName, NbGradleTestManager testManager) {
-        if (project == null) throw new NullPointerException("project");
-        if (testName == null) throw new NullPointerException("testName");
-        if (testManager == null) throw new NullPointerException("testManager");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(testName, "testName");
+        ExceptionHelper.checkNotNullArgument(testManager, "testManager");
 
         this.project = project;
         this.testName = testName;
@@ -186,7 +187,7 @@ public final class TestXmlDisplayer {
     }
 
     public boolean displayReport(Lookup runContext) {
-        if (runContext == null) throw new NullPointerException("runContext");
+        ExceptionHelper.checkNotNullArgument(runContext, "runContext");
 
         File[] reportFiles = getTestReportFiles();
         if (reportFiles.length == 0) {

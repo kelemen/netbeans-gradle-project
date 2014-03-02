@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
@@ -21,7 +22,7 @@ public final class ModelNeeds {
     private final GradleModelDefQuery2 query2;
 
     public ModelNeeds(GradleProjectExtensionDef<?> extensionDef) {
-        if (extensionDef == null) throw new NullPointerException("extensionDef");
+        ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
 
         this.query1 = createQuery1(extensionDef);
         this.query2 = createQuery2(extensionDef);

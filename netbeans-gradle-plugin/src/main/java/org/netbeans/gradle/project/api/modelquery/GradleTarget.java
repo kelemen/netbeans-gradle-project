@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.api.modelquery;
 
 import javax.annotation.Nonnull;
 import org.gradle.util.GradleVersion;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.modules.SpecificationVersion;
 
 /**
@@ -25,8 +26,8 @@ public final class GradleTarget {
     public GradleTarget(
             @Nonnull SpecificationVersion javaVersion,
             @Nonnull GradleVersion gradleVersion) {
-        if (javaVersion == null) throw new NullPointerException("javaVersion");
-        if (gradleVersion == null) throw new NullPointerException("gradleVersion");
+        ExceptionHelper.checkNotNullArgument(javaVersion, "javaVersion");
+        ExceptionHelper.checkNotNullArgument(gradleVersion, "gradleVersion");
 
         this.jdkVersion = javaVersion;
         this.gradleVersion = gradleVersion;

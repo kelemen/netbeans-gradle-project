@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.util.Arrays;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskKind;
 
 public final class TaskOutputKey {
@@ -10,7 +11,7 @@ public final class TaskOutputKey {
     private final Object[] otherKeys;
 
     public TaskOutputKey(TaskKind kind, Object... otherKeys) {
-        if (kind == null) throw new NullPointerException("kind");
+        ExceptionHelper.checkNotNullArgument(kind, "kind");
 
         this.kind = kind;
         this.otherKeys = cloneToObjectArray(otherKeys);

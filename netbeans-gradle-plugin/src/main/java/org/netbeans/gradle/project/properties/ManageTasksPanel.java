@@ -11,6 +11,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
@@ -109,7 +110,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     }
 
     public void saveTasks(ProjectProperties properties) {
-        if (properties == null) throw new NullPointerException("properties");
+        ExceptionHelper.checkNotNullArgument(properties, "properties");
 
         updateShownInList();
 
@@ -177,7 +178,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         private final PredefinedTask task;
 
         public PredefinedTaskItem(PredefinedTask task) {
-            if (task == null) throw new NullPointerException("task");
+            ExceptionHelper.checkNotNullArgument(task, "task");
             this.task = task;
         }
 

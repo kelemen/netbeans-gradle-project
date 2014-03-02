@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -88,7 +89,7 @@ implements
     private final ChangeSupport refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
-        if (project == null) throw new NullPointerException("project");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.childRefreshListeners = Collections.newSetFromMap(
                 new ConcurrentHashMap<ModelRefreshListener, Boolean>());
@@ -101,7 +102,7 @@ implements
     }
 
     public NbListenerRef addRefreshRequestListeners(final Runnable listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final ChangeListener wrapperListener = new ChangeListener() {
             @Override
@@ -120,7 +121,7 @@ implements
     }
 
     public NbListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
-        if (listener == null) throw new NullPointerException("listener");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         // To handle multiple registration of the same listener, etc.
         final ModelRefreshListener wrapperListener = new ModelRefreshListener() {
@@ -670,8 +671,8 @@ implements
         private NbGradleModel lastUsedModule;
 
         public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
-            if (project == null) throw new NullPointerException("project");
-            if (menu == null) throw new NullPointerException("menu");
+            ExceptionHelper.checkNotNullArgument(project, "project");
+            ExceptionHelper.checkNotNullArgument(menu, "menu");
 
             this.project = project;
             this.menu = menu;
@@ -775,8 +776,8 @@ implements
         private NbGradleModel lastUsedModel;
 
         public TasksMenuBuilder(NbGradleProject project, JMenu menu) {
-            if (project == null) throw new NullPointerException("project");
-            if (menu == null) throw new NullPointerException("menu");
+            ExceptionHelper.checkNotNullArgument(project, "project");
+            ExceptionHelper.checkNotNullArgument(menu, "menu");
 
             this.project = project;
             this.menu = menu;
