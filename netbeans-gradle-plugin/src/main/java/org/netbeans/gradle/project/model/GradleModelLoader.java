@@ -277,7 +277,6 @@ public final class GradleModelLoader {
     private static void reportModelLoadError(NbGradleProject project, GradleModelLoadError error) {
         Throwable unexpectedError = error.getUnexpectedError();
         if (unexpectedError != null) {
-            ModelLoadIssues.projectModelLoadError(project, null, null, unexpectedError);
             ModelLoadIssue unexpectedIssue = ModelLoadIssues
                     .projectModelLoadError(project, null, null, unexpectedError);
             ModelLoadIssueReporter.reportAllIssues(Collections.singleton(unexpectedIssue));
