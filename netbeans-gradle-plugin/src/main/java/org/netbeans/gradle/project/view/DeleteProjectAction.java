@@ -7,6 +7,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.CleanupTask;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -14,20 +19,16 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.RequestProcessor;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class DeleteProjectAction extends AbstractAction {
     private static final long serialVersionUID = -386797460711624644L;
 
     private static final Logger LOGGER = Logger.getLogger(DeleteProjectAction.class.getName());
-    private static final RequestProcessor PROJECT_PROCESSOR
-            = new RequestProcessor("Delete-Project-Processor", 1, true);
+    private static final MonitorableTaskExecutorService PROJECT_PROCESSOR
+            = NbTaskExecutors.newExecutor("Delete-Project-Processor", 1);
 
     private final NbGradleProject project;
 
@@ -76,15 +77,18 @@ public final class DeleteProjectAction extends AbstractAction {
 
         final ProgressHandle progress
                 = ProgressHandleFactory.createHandle(NbStrings.getDeleteProjectProgress(project.getDisplayName()));
+
         progress.start();
-        PROJECT_PROCESSOR.execute(new Runnable() {
+        PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
-                try {
-                    doRemoveProject();
-                } finally {
-                    progress.finish();
-                }
+            public void execute(CancellationToken cancelToken) {
+                doRemoveProject();
+            }
+        }, new CleanupTask() {
+            @Override
+            public void cleanup(boolean canceled, Throwable error) throws Exception {
+                NbTaskExecutors.defaultCleanup(canceled, error);
+                progress.finish();
             }
         });
     }
