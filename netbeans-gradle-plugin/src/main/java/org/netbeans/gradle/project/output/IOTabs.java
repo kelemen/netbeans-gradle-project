@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.jtrim.cancel.CancellationToken;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -152,8 +153,8 @@ public final class IOTabs {
         }
 
         @Override
-        public GradleCommandSpec tryCreateCommandSpec() throws Exception {
-            GradleCommandSpec original = source.tryCreateCommandSpec();
+        public GradleCommandSpec tryCreateCommandSpec(CancellationToken cancelToken) throws Exception {
+            GradleCommandSpec original = source.tryCreateCommandSpec(cancelToken);
             if (original == null) {
                 return null;
             }

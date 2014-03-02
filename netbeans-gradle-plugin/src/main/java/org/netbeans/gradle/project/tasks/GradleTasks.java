@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.tasks;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -21,8 +21,8 @@ public final class GradleTasks {
             }
 
             @Override
-            public GradleCommandSpec tryCreateCommandSpec() throws Exception {
-                GradleTaskDef result = taskDefFactory.tryCreateTaskDef(Cancellation.UNCANCELABLE_TOKEN);
+            public GradleCommandSpec tryCreateCommandSpec(CancellationToken cancelToken) throws Exception {
+                GradleTaskDef result = taskDefFactory.tryCreateTaskDef(cancelToken);
                 return result != null
                         ? new GradleCommandSpec(result, null)
                         : null;
