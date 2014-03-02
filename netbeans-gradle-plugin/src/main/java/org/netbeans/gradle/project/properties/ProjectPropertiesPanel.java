@@ -252,8 +252,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private void fillScriptPlatformCombo() {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<JavaPlatformComboItem> comboItems = new LinkedList<>();
-        for (int i = 0; i < platforms.length; i++) {
-            JavaPlatform platform = platforms[i];
+
+        for (JavaPlatform platform: platforms) {
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
                 comboItems.add(new JavaPlatformComboItem(platform));
