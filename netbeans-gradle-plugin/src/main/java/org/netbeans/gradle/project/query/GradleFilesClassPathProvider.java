@@ -183,23 +183,24 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private static ClassPathType getClassPathType(String type) {
-        if (ClassPath.SOURCE.equals(type)) {
+        if (type == null) {
             return null;
         }
-        else if (ClassPath.BOOT.equals(type)) {
-            return ClassPathType.BOOT;
-        }
-        else if (ClassPath.COMPILE.equals(type)) {
-            return ClassPathType.COMPILE;
-        }
-        else if (ClassPath.EXECUTE.equals(type)) {
-            return ClassPathType.RUNTIME;
-        }
-        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
-            return ClassPathType.COMPILE;
-        }
 
-        return null;
+        switch (type) {
+            case ClassPath.SOURCE:
+                return null;
+            case ClassPath.BOOT:
+                return ClassPathType.BOOT;
+            case ClassPath.COMPILE:
+                return ClassPathType.COMPILE;
+            case ClassPath.EXECUTE:
+                return ClassPathType.RUNTIME;
+            case JavaClassPathConstants.PROCESSOR_PATH:
+                return ClassPathType.COMPILE;
+            default:
+                return null;
+        }
     }
 
     private class GradleClassPaths implements ClassPathImplementation {

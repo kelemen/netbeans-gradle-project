@@ -308,31 +308,34 @@ public final class TestXmlDisplayer {
         }
 
         private void tryAddTestCase(String uri, String localName, String qName, Attributes attributes) {
-            if ("testcase".equals(qName)) {
-                testcase = tryGetTestCase(attributes);
-                testcase.setStatus(Status.PASSED);
-
-            }
-            else if ("ignored-testcase".equals(qName)) {
-                testcase = tryGetTestCase(attributes);
-                testcase.setStatus(Status.SKIPPED);
+            switch (qName) {
+                case "testcase":
+                    testcase = tryGetTestCase(attributes);
+                    testcase.setStatus(Status.PASSED);
+                    break;
+                case "ignored-testcase":
+                    testcase = tryGetTestCase(attributes);
+                    testcase.setStatus(Status.SKIPPED);
+                    break;
             }
         }
 
         private void tryUpdateTestCase(String uri, String localName, String qName, Attributes attributes) {
             if (testcase != null) {
-                if ("failure".equals(qName)) {
-                    error = false;
-                    testcase.setStatus(Status.FAILED);
-                }
-                else if ("error".equals(qName)) {
-                    error = true;
-                    testcase.setStatus(Status.ERROR);
-                }
-                else {
-                    LOGGER.log(Level.WARNING, "Unexpected element in testcase: {0}", qName);
-                    error = true;
-                    testcase.setStatus(Status.ERROR);
+                switch (qName) {
+                    case "failure":
+                        error = false;
+                        testcase.setStatus(Status.FAILED);
+                        break;
+                    case "error":
+                        error = true;
+                        testcase.setStatus(Status.ERROR);
+                        break;
+                    default:
+                        LOGGER.log(Level.WARNING, "Unexpected element in testcase: {0}", qName);
+                        error = true;
+                        testcase.setStatus(Status.ERROR);
+                        break;
                 }
                 failureContent = new StringBuilder(1024);
             }

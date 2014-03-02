@@ -116,26 +116,27 @@ implements
     }
 
     public ClassPath getClassPaths(String type) {
-        if (ClassPath.SOURCE.equals(type)) {
-            ClassPath result = allSourcesClassPathRef.get();
-            if (result == null) {
-                result = ClassPathFactory.createClassPath(new AllSourcesClassPaths());
-                allSourcesClassPathRef.compareAndSet(null, result);
-                result = allSourcesClassPathRef.get();
-            }
-            return result;
-        }
-        else if (ClassPath.BOOT.equals(type)) {
-            return getPaths(SpecialClassPath.BOOT);
-        }
-        else if (ClassPath.COMPILE.equals(type)) {
-            return getPaths(SpecialClassPath.COMPILE_FOR_GLOBAL);
-        }
-        else if (ClassPath.EXECUTE.equals(type)) {
-            return getPaths(SpecialClassPath.RUNTIME_FOR_GLOBAL);
-        }
-        else {
+        if (type == null) {
             return ClassPath.EMPTY;
+        }
+
+        switch (type) {
+            case ClassPath.SOURCE:
+                ClassPath result = allSourcesClassPathRef.get();
+                if (result == null) {
+                    result = ClassPathFactory.createClassPath(new AllSourcesClassPaths());
+                    allSourcesClassPathRef.compareAndSet(null, result);
+                    result = allSourcesClassPathRef.get();
+                }
+                return result;
+            case ClassPath.BOOT:
+                return getPaths(SpecialClassPath.BOOT);
+            case ClassPath.COMPILE:
+                return getPaths(SpecialClassPath.COMPILE_FOR_GLOBAL);
+            case ClassPath.EXECUTE:
+                return getPaths(SpecialClassPath.RUNTIME_FOR_GLOBAL);
+            default:
+                return ClassPath.EMPTY;
         }
     }
 
@@ -214,6 +215,10 @@ implements
     }
 
     private ClassPathKey getClassPathType(NbJavaModel projectModel, FileObject fileObj, String type) {
+        if (type == null) {
+            return null;
+        }
+
         JavaSourceSet sourceSet = findAssociatedSourceSet(projectModel, fileObj);
         if (sourceSet == null) {
             return null;
@@ -225,20 +230,18 @@ implements
 
         String name = sourceSet.getName();
 
-        if (ClassPath.SOURCE.equals(type)) {
-            return new SourceSetClassPathType(name, ClassPathType.SOURCES);
+        switch (type) {
+            case ClassPath.SOURCE:
+                return new SourceSetClassPathType(name, ClassPathType.SOURCES);
+            case ClassPath.COMPILE:
+                return new SourceSetClassPathType(name, ClassPathType.COMPILE);
+            case ClassPath.EXECUTE:
+                return new SourceSetClassPathType(name, ClassPathType.RUNTIME);
+            case JavaClassPathConstants.PROCESSOR_PATH:
+                return new SourceSetClassPathType(name, ClassPathType.COMPILE);
+            default:
+                return null;
         }
-        else if (ClassPath.COMPILE.equals(type)) {
-            return new SourceSetClassPathType(name, ClassPathType.COMPILE);
-        }
-        else if (ClassPath.EXECUTE.equals(type)) {
-            return new SourceSetClassPathType(name, ClassPathType.RUNTIME);
-        }
-        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
-            return new SourceSetClassPathType(name, ClassPathType.COMPILE);
-        }
-
-        return null;
     }
 
     private static void addSourcesOfModule(NbJavaModule module, List<File> sources) {

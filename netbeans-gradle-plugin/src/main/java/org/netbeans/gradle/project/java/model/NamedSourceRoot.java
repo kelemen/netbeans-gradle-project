@@ -76,14 +76,16 @@ public final class NamedSourceRoot {
             String displaySourceSetName = displayNameOfSourceSet(sourceSetName);
 
             String mainName;
-            if (JavaSourceSet.NAME_MAIN.equals(sourceSetName)) {
-                mainName = NbStrings.getSrcPackageCaption();
-            }
-            else if (JavaSourceSet.NAME_TEST.equals(sourceSetName)) {
-                mainName = NbStrings.getTestPackageCaption();
-            }
-            else {
-                mainName = null;
+            switch (sourceSetName) {
+                case JavaSourceSet.NAME_MAIN:
+                    mainName = NbStrings.getSrcPackageCaption();
+                    break;
+                case JavaSourceSet.NAME_TEST:
+                    mainName = NbStrings.getTestPackageCaption();
+                    break;
+                default:
+                    mainName = null;
+                    break;
             }
 
             Collection<JavaSourceGroup> sourceGroups = sourceSet.getSourceGroups();

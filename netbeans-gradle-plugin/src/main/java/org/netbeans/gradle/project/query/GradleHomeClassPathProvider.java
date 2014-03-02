@@ -117,6 +117,10 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
+        if (type == null) {
+            return null;
+        }
+
         FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
         if (gradleHome == null) {
             return null;
@@ -127,25 +131,20 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         }
 
         GradleHomeRegistry.requireGradlePaths();
-
-        if (ClassPath.SOURCE.equals(type)) {
-            return getSourcePaths(gradleHome, file);
-        }
-        else if (ClassPath.BOOT.equals(type)) {
-            JavaPlatform platform = JavaPlatform.getDefault();
-            return platform != null ? platform.getBootstrapLibraries() : null;
-        }
-        else if (ClassPath.COMPILE.equals(type)) {
-            return getBinaryPaths(gradleHome);
-        }
-        else if (ClassPath.EXECUTE.equals(type)) {
-            return getBinaryPaths(gradleHome);
-        }
-        else if (JavaClassPathConstants.PROCESSOR_PATH.equals(type)) {
-            return getBinaryPaths(gradleHome);
-        }
-        else {
-            return null;
+        switch (type) {
+            case ClassPath.SOURCE:
+                return getSourcePaths(gradleHome, file);
+            case ClassPath.BOOT:
+                JavaPlatform platform = JavaPlatform.getDefault();
+                return platform != null ? platform.getBootstrapLibraries() : null;
+            case ClassPath.COMPILE:
+                return getBinaryPaths(gradleHome);
+            case ClassPath.EXECUTE:
+                return getBinaryPaths(gradleHome);
+            case JavaClassPathConstants.PROCESSOR_PATH:
+                return getBinaryPaths(gradleHome);
+            default:
+                return null;
         }
     }
 
