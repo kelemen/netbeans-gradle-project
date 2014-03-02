@@ -100,6 +100,8 @@ public final class TaskVariable {
 
     /**
      * {@inheritDoc }
+     *
+     * @return a hash code compatible with the {@code equals} method
      */
     @Override
     public int hashCode() {
