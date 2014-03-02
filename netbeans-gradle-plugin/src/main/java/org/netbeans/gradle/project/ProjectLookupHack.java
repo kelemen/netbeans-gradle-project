@@ -1,9 +1,12 @@
 package org.netbeans.gradle.project;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
@@ -18,6 +21,9 @@ import org.openide.util.lookup.ProxyLookup;
 
 public final class ProjectLookupHack extends ProxyLookup {
     private static final Logger LOGGER = Logger.getLogger(ProjectLookupHack.class.getName());
+
+    private static final AtomicReference<Collection<Class<?>>> NOT_IMPLEMENTED_SERVICES
+            = new AtomicReference<>();
 
     public interface LookupContainer {
         public NbGradleProject getProject();
@@ -45,12 +51,38 @@ public final class ProjectLookupHack extends ProxyLookup {
         return result;
     }
 
+    private static void tryAddClass(String className, Collection<Class<?>> result) {
+        try {
+            result.add(Class.forName(className));
+        } catch (ClassNotFoundException ex) {
+        }
+    }
+
+    private static Collection<Class<?>> getNotImplementedServices() {
+        Collection<Class<?>> result = NOT_IMPLEMENTED_SERVICES.get();
+        if (result == null) {
+            result = new LinkedList<>();
+
+            // We could implement these interfaces but do not want to
+            // because for this information we need to parse the build script
+            // which is too slow to be useful in the project open dialog.
+            result.add(SubprojectProvider.class);
+            tryAddClass("org.netbeans.spi.project.ProjectContainerProvider", result);
+            tryAddClass("org.netbeans.spi.project.DependencyProjectProvider", result);
+            NOT_IMPLEMENTED_SERVICES.set(Collections.unmodifiableCollection(result));
+            result = NOT_IMPLEMENTED_SERVICES.get();
+        }
+        return result;
+    }
+
     private class AccessPreventerLookup extends Lookup {
         private final Map<Class<?>, Lookup> typeActions;
 
         public AccessPreventerLookup() {
             this.typeActions = new HashMap<>();
-            typeActions.put(SubprojectProvider.class, Lookup.EMPTY);
+            for (Class<?> type: getNotImplementedServices()) {
+                typeActions.put(type, Lookup.EMPTY);
+            }
             typeActions.put(ClassPathProvider.class, Lookups.singleton(new UnimportantRootClassPathProvider()));
 
             Lookup wrappedLookup = lookupContainer.getLookup();
