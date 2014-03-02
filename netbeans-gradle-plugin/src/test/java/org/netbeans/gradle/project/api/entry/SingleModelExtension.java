@@ -8,19 +8,19 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class SingleModelExtension implements GradleProjectExtension {
     private final Class<?> requestedModel;
-    private final WaitableSignal loadedSignal;
+    private final WaitableInterruptibleSignal loadedSignal;
     private volatile Object lastModel;
 
     public SingleModelExtension(Class<?> requestedModel) {
         ExceptionHelper.checkNotNullArgument(requestedModel, "requestedModel");
         this.requestedModel = requestedModel;
-        this.loadedSignal = new WaitableSignal();
+        this.loadedSignal = new WaitableInterruptibleSignal();
         this.lastModel = null;
     }
 

@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
@@ -95,7 +95,7 @@ public final class GradleActionProvider implements ActionProvider {
             }
         }
         else {
-            final WaitableSignal loadedSignal = new WaitableSignal();
+            final WaitableInterruptibleSignal loadedSignal = new WaitableInterruptibleSignal();
             properties = project.getPropertiesForProfile(config.getProfileDef(), true, new PropertiesLoadListener() {
                 @Override
                 public void loadedProperties(ProjectProperties properties) {

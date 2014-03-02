@@ -5,12 +5,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class WaitableSignal {
+public final class WaitableInterruptibleSignal {
     private final Lock lock;
     private final Condition signalEvent;
     private volatile boolean signaled;
 
-    public WaitableSignal() {
+    public WaitableInterruptibleSignal() {
         this.lock = new ReentrantLock();
         this.signalEvent = this.lock.newCondition();
         this.signaled = false;

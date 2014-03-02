@@ -90,7 +90,7 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
-    private final WaitableSignal loadedAtLeastOnceSignal;
+    private final WaitableInterruptibleSignal loadedAtLeastOnceSignal;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
@@ -117,7 +117,7 @@ public final class NbGradleProject implements Project {
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
-        this.loadedAtLeastOnceSignal = new WaitableSignal();
+        this.loadedAtLeastOnceSignal = new WaitableInterruptibleSignal();
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();

@@ -26,7 +26,7 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -42,7 +42,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleFilesClassPathProvider.class.getName());
 
     private final AtomicBoolean initialized;
-    private final WaitableSignal initSignal;
+    private final WaitableInterruptibleSignal initSignal;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
     private final Map<ClassPathType, ClassPath> classpaths;
 
@@ -51,7 +51,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     @SuppressWarnings("MapReplaceableByEnumMap") // no, it's not.
     public GradleFilesClassPathProvider() {
         this.initialized = new AtomicBoolean(false);
-        this.initSignal = new WaitableSignal();
+        this.initSignal = new WaitableInterruptibleSignal();
         this.classpaths = new EnumMap<>(ClassPathType.class);
         this.classpathResources = new ConcurrentHashMap<>();
 

@@ -18,7 +18,7 @@ import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
 import org.openide.util.ChangeSupport;
@@ -41,7 +41,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private final MutablePropertyProxy<Void> auxConfigListener;
     private final ConcurrentMap<String, MutablePropertyProxy<PredefinedTask>> builtInTasks;
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
-    private final WaitableSignal loadedSignal;
+    private final WaitableInterruptibleSignal loadedSignal;
 
     public ProjectPropertiesProxy(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -49,7 +49,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.project = project;
         this.propertiesRef = new AtomicReference<>(null);
         this.changes = new ChangeSupport(this);
-        this.loadedSignal = new WaitableSignal();
+        this.loadedSignal = new WaitableInterruptibleSignal();
 
         this.auxProperties = new ConcurrentHashMap<>();
         this.auxConfigListener = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Void>(this) {

@@ -25,7 +25,7 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableSignal;
+import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
@@ -78,7 +78,7 @@ public final class ProjectPropertiesManager {
 
     public static ProjectProperties getProperties(
             NbGradleProject project,
-            final WaitableSignal loadedSignal) {
+            final WaitableInterruptibleSignal loadedSignal) {
         ExceptionHelper.checkNotNullArgument(loadedSignal, "loadedSignal");
         return getPropertySourceForProject(project).load(new PropertiesLoadListener() {
             @Override
