@@ -100,8 +100,6 @@ public final class GradleDaemonManager {
                 boolean nonBlocking = taskDef.isNonBlocking();
                 DaemonTask task = taskDef.getTask();
 
-                final ThreadInterrupter interrupter = new ThreadInterrupter(Thread.currentThread());
-
                 // TODO: Create the ProgressHandle before starting the task
                 //       This requires a DaemonTaskDefFactory returning the caption.
                 final CancellationSource cancel = Cancellation.createChildCancellationSource(cancelToken);
@@ -123,7 +121,6 @@ public final class GradleDaemonManager {
                         runBlockingGradleTask(cancel.getToken(), task, progress);
                     }
                 } finally {
-                    interrupter.stopInterrupting();
                     progress.finish();
                 }
             }
