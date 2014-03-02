@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.WaitableInterruptibleSignal;
@@ -84,15 +86,12 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
-    private ProjectProperties getLoadedProperties(NbGradleConfiguration config) {
+    private ProjectProperties getLoadedProperties(CancellationToken cancelToken, NbGradleConfiguration config) {
         checkNotEdt();
 
         ProjectProperties properties;
         if (config == null) {
-            properties = project.tryGetLoadedProperties();
-            if (properties == null) {
-                properties = project.getProperties();
-            }
+            properties = project.getLoadedProperties(cancelToken);
         }
         else {
             final WaitableInterruptibleSignal loadedSignal = new WaitableInterruptibleSignal();
@@ -217,7 +216,7 @@ public final class GradleActionProvider implements ActionProvider {
 
             @Override
             public GradleTaskDef tryCreateTaskDef() throws Exception {
-                ProjectProperties properties = getLoadedProperties(appliedConfig);
+                ProjectProperties properties = getLoadedProperties(Cancellation.UNCANCELABLE_TOKEN, appliedConfig);
                 MutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
                 if (builtInTask == null) {
                     return null;

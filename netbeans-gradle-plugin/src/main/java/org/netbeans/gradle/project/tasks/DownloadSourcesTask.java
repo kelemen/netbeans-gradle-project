@@ -33,7 +33,7 @@ public final class DownloadSourcesTask implements DaemonTask {
 
     @Override
     public void run(CancellationToken cancelToken, ProgressHandle progress) {
-        GradleConnector connector = GradleModelLoader.createGradleConnector(project);
+        GradleConnector connector = GradleModelLoader.createGradleConnector(cancelToken, project);
         FileObject projectDirObj = project.getProjectDirectory();
         File projectDir = FileUtil.toFile(projectDirObj);
         if (projectDir == null) {

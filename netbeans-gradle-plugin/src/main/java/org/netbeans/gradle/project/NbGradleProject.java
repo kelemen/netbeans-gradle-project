@@ -387,13 +387,9 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    public ProjectProperties tryGetLoadedProperties() {
-        if (properties.tryWaitForLoaded()) {
-            return properties;
-        }
-        else {
-            return null;
-        }
+    public ProjectProperties getLoadedProperties(CancellationToken cancelToken) {
+        properties.waitForLoaded(cancelToken);
+        return properties;
     }
 
     @Nonnull

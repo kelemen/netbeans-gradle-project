@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.query;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.ProjectProperties;
@@ -24,10 +25,8 @@ public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementa
     public Charset getEncoding(FileObject file) {
         if (FileUtil.isParentOf(project.getProjectDirectory(), file)) {
             try {
-                ProjectProperties properties = project.tryGetLoadedProperties();
-                if (properties != null) {
-                    return properties.getSourceEncoding().getValue();
-                }
+                ProjectProperties properties = project.getLoadedProperties(Cancellation.UNCANCELABLE_TOKEN);
+                return properties.getSourceEncoding().getValue();
             } catch (IllegalStateException ex) {
                 LOGGER.log(Level.INFO, "The character encoding of a file has been requested from a wrong thread.", ex);
             }

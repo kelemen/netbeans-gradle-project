@@ -137,7 +137,12 @@ public final class GradleModelLoader {
         return GradleModelCache.getDefault();
     }
 
-    public static GradleConnector createGradleConnector(final Project project) {
+    public static GradleConnector createGradleConnector(
+            CancellationToken cancelToken,
+            final Project project) {
+        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
         final GradleConnector result = GradleConnector.newConnector();
         Integer timeoutSec = GlobalGradleSettings.getGradleDaemonTimeoutSec().getValue();
         if (timeoutSec != null && result instanceof DefaultGradleConnector) {
@@ -155,7 +160,7 @@ public final class GradleModelLoader {
         }
 
         GradleLocation gradleLocation;
-        ProjectProperties projectProperties = gradleProject.tryGetLoadedProperties();
+        ProjectProperties projectProperties = gradleProject.getLoadedProperties(cancelToken);
         if (projectProperties == null) {
             LOGGER.warning("Could not wait for retrieving the project properties. Using the globally defined one");
             gradleLocation = GlobalGradleSettings.getGradleHome().getValue();
@@ -364,11 +369,9 @@ public final class GradleModelLoader {
                         model = tryGetFromCache(projectDir);
                     }
                     if (model == null || hasUnloadedExtension(project, model)) {
-                        model = loadModelWithProgress(project, progress, model);
+                        model = loadModelWithProgress(cancelToken, project, progress, model);
                     }
-                } catch (IOException ex) {
-                    error = ex;
-                } catch (BuildException ex) {
+                } catch (IOException | BuildException ex) {
                     error = ex;
                 } catch (GradleConnectionException ex) {
                     error = ex;
@@ -468,6 +471,7 @@ public final class GradleModelLoader {
     }
 
     private static NbGradleModel loadModelWithProgress(
+            CancellationToken cancelToken,
             final NbGradleProject project,
             final ProgressHandle progress,
             final NbGradleModel cachedEntry) throws IOException, GradleModelLoadError {
@@ -475,7 +479,7 @@ public final class GradleModelLoader {
 
         LOGGER.log(Level.INFO, "Loading Gradle project from directory: {0}", projectDir);
 
-        GradleConnector gradleConnector = createGradleConnector(project);
+        GradleConnector gradleConnector = createGradleConnector(cancelToken, project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
 

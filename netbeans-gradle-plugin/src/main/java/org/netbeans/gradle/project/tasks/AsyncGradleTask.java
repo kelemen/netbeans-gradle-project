@@ -262,6 +262,7 @@ public final class AsyncGradleTask implements Runnable {
 
     // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgress(
+            CancellationToken cancelToken,
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
 
@@ -288,7 +289,7 @@ public final class AsyncGradleTask implements Runnable {
 
         Throwable commandError = null;
 
-        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(project);
+        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancelToken, project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
@@ -584,7 +585,7 @@ public final class AsyncGradleTask implements Runnable {
             this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
                 @Override
                 public void run(CancellationToken cancelToken, ProgressHandle progress) {
-                    doGradleTasksWithProgress(progress, BuildExecutionItem.this);
+                    doGradleTasksWithProgress(cancelToken, progress, BuildExecutionItem.this);
                 }
             });
             this.running = true;
