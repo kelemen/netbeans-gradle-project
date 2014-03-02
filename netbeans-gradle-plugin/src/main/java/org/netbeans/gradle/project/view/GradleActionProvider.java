@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -215,8 +214,8 @@ public final class GradleActionProvider implements ActionProvider {
             }
 
             @Override
-            public GradleTaskDef tryCreateTaskDef() throws Exception {
-                ProjectProperties properties = getLoadedProperties(Cancellation.UNCANCELABLE_TOKEN, appliedConfig);
+            public GradleTaskDef tryCreateTaskDef(CancellationToken cancelToken) throws Exception {
+                ProjectProperties properties = getLoadedProperties(cancelToken, appliedConfig);
                 MutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
                 if (builtInTask == null) {
                     return null;

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -30,7 +31,7 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
             }
 
             @Override
-            public GradleTaskDef tryCreateTaskDef() {
+            public GradleTaskDef tryCreateTaskDef(CancellationToken cancelToken) {
                 return GradleTaskDef.createFromTemplate(project, command, customActions, Lookup.EMPTY).create();
             }
         };
