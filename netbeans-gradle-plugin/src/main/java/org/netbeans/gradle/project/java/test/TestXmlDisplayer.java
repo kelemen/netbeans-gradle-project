@@ -252,7 +252,7 @@ public final class TestXmlDisplayer {
         }
     }
 
-    private class TestXmlContentHandler extends DefaultHandler {
+    private static final class TestXmlContentHandler extends DefaultHandler {
         private final NbGradleTestSession session;
         private final File reportFile;
 
