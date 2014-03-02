@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,12 +67,12 @@ public final class AsyncGradleTask implements Runnable {
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final NbGradleProject project;
-    private final Callable<GradleCommandSpec> taskDefFactroy;
+    private final GradleCommandSpecFactory taskDefFactroy;
     private final CommandCompleteListener listener;
 
     public AsyncGradleTask(
             NbGradleProject project,
-            Callable<GradleCommandSpec> taskDefFactroy,
+            GradleCommandSpecFactory taskDefFactroy,
             CommandCompleteListener listener) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(taskDefFactroy, "taskDefFactroy");
@@ -88,7 +87,7 @@ public final class AsyncGradleTask implements Runnable {
         return project;
     }
 
-    public Callable<GradleCommandSpec> getTaskDefFactroy() {
+    public GradleCommandSpecFactory getTaskDefFactroy() {
         return taskDefFactroy;
     }
 
@@ -476,14 +475,19 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private void submitGradleTask(
-            final Callable<GradleCommandSpec> taskDefFactory,
+            final GradleCommandSpecFactory taskDefFactory,
             final CommandCompleteListener listener) {
         preSubmitGradleTask();
 
-        Callable<DaemonTaskDef> daemonTaskDefFactory = new Callable<DaemonTaskDef>() {
+        DaemonTaskDefFactory daemonTaskDefFactory = new DaemonTaskDefFactory() {
             @Override
-            public DaemonTaskDef call() throws Exception {
-                GradleCommandSpec commandSpec = taskDefFactory.call();
+            public String getDisplayName() {
+                return taskDefFactory.getDisplayName();
+            }
+
+            @Override
+            public DaemonTaskDef tryCreateTaskDef() throws Exception {
+                GradleCommandSpec commandSpec = taskDefFactory.tryCreateCommandSpec();
                 if (commandSpec == null) {
                     return null;
                 }
@@ -502,7 +506,7 @@ public final class AsyncGradleTask implements Runnable {
         return adjust(new CommandAdjusterFactory(taskDefFactroy, taskDef));
     }
 
-    private AsyncGradleTask adjust(Callable<GradleCommandSpec> newFactory) {
+    private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
         return new AsyncGradleTask(project, newFactory, listener);
     }
 
@@ -630,13 +634,13 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static final class CommandAdjusterFactory implements Callable<GradleCommandSpec> {
-        private final Callable<GradleCommandSpec> source;
+    private static final class CommandAdjusterFactory implements GradleCommandSpecFactory {
+        private final GradleCommandSpecFactory source;
         private final List<String> taskNames;
         private final List<String> arguments;
         private final List<String> jvmArguments;
 
-        public CommandAdjusterFactory(Callable<GradleCommandSpec> source, GradleTaskDef taskDef) {
+        public CommandAdjusterFactory(GradleCommandSpecFactory source, GradleTaskDef taskDef) {
             this.source = source;
             this.taskNames = taskDef.getTaskNames();
             this.arguments = taskDef.getArguments();
@@ -644,8 +648,13 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         @Override
-        public GradleCommandSpec call() throws Exception {
-            GradleCommandSpec original = source.call();
+        public String getDisplayName() {
+            return source.getDisplayName();
+        }
+
+        @Override
+        public GradleCommandSpec tryCreateCommandSpec() throws Exception {
+            GradleCommandSpec original = source.tryCreateCommandSpec();
             if (original == null) {
                 return null;
             }

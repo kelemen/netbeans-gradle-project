@@ -27,4 +27,26 @@ public final class DaemonTaskDef {
     public DaemonTask getTask() {
         return task;
     }
+
+    public DaemonTaskDefFactory toFactory() {
+        return new ConstFactory(this);
+    }
+
+    private static class ConstFactory implements DaemonTaskDefFactory {
+        private final DaemonTaskDef taskDef;
+
+        public ConstFactory(DaemonTaskDef taskDef) {
+            this.taskDef = taskDef;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return taskDef.getCaption();
+        }
+
+        @Override
+        public DaemonTaskDef tryCreateTaskDef() {
+            return taskDef;
+        }
+    }
 }

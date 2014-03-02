@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.view;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +19,7 @@ import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
+import org.netbeans.gradle.project.tasks.GradleTaskDefFactory;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
@@ -166,6 +166,18 @@ public final class GradleActionProvider implements ActionProvider {
         return new ProxyLookup(Lookups.singleton(nbCommandString), context);
     }
 
+    private String tryGetDisplayNameOfCommand(String command) {
+        return project.getMergedCommandQuery().tryGetDisplayNameOfCommand(command);
+    }
+
+    private String getDisplayNameOfCommand(String command) {
+        String displayName = tryGetDisplayNameOfCommand(command);
+        if (displayName == null) {
+            displayName = command;
+        }
+        return displayName;
+    }
+
     private Runnable createAction(final String command, Lookup context) {
         if (command == null) {
             return null;
@@ -190,9 +202,21 @@ public final class GradleActionProvider implements ActionProvider {
         final AtomicReference<CustomCommandActions> customActionsRef
                 = new AtomicReference<>(null);
 
-        return GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+        GradleTaskDefFactory taskDefFactory = new GradleTaskDefFactory() {
+            private final AtomicReference<String> displayNameRef = new AtomicReference<>(null);
+
             @Override
-            public GradleTaskDef call() {
+            public String getDisplayName() {
+                String result = displayNameRef.get();
+                if (result == null) {
+                    displayNameRef.compareAndSet(null, getDisplayNameOfCommand(command));
+                    result = displayNameRef.get();
+                }
+                return result;
+            }
+
+            @Override
+            public GradleTaskDef tryCreateTaskDef() throws Exception {
                 ProjectProperties properties = getLoadedProperties(appliedConfig);
                 MutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
                 if (builtInTask == null) {
@@ -212,7 +236,7 @@ public final class GradleActionProvider implements ActionProvider {
 
                 customActionsRef.set(customActions);
 
-                String displayName = project.getMergedCommandQuery().tryGetDisplayNameOfCommand(command);
+                String displayName = tryGetDisplayNameOfCommand(command);
                 if (displayName == null) {
                     displayName = task.getDisplayName();
                 }
@@ -222,7 +246,9 @@ public final class GradleActionProvider implements ActionProvider {
                         customActions,
                         appliedContext).create();
             }
-        }, new CommandCompleteListener() {
+        };
+
+        return GradleTasks.createAsyncGradleTask(project, taskDefFactory, new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 try {

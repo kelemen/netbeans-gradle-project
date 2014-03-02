@@ -12,6 +12,7 @@ import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleCommandSpec;
+import org.netbeans.gradle.project.tasks.GradleCommandSpecFactory;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.TaskOutputKey;
 import org.netbeans.gradle.project.view.CustomActionPanel;
@@ -130,14 +131,14 @@ public final class IOTabs {
         }
     }
 
-    private static final class CommandAdjusterFactory implements Callable<GradleCommandSpec> {
-        private final Callable<GradleCommandSpec> source;
+    private static final class CommandAdjusterFactory implements GradleCommandSpecFactory {
+        private final GradleCommandSpecFactory source;
         private final List<String> taskNames;
         private final List<String> arguments;
         private final List<String> jvmArguments;
 
         public CommandAdjusterFactory(
-                Callable<GradleCommandSpec> source,
+                GradleCommandSpecFactory source,
                 GradleCommandTemplate template) {
 
             this.source = source;
@@ -147,8 +148,13 @@ public final class IOTabs {
         }
 
         @Override
-        public GradleCommandSpec call() throws Exception {
-            GradleCommandSpec original = source.call();
+        public String getDisplayName() {
+            return source.getDisplayName();
+        }
+
+        @Override
+        public GradleCommandSpec tryCreateCommandSpec() throws Exception {
+            GradleCommandSpec original = source.tryCreateCommandSpec();
             if (original == null) {
                 return null;
             }

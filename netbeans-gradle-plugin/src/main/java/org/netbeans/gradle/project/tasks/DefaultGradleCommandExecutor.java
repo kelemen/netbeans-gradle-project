@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.util.concurrent.Callable;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -24,12 +23,19 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
         ExceptionHelper.checkNotNullArgument(command, "command");
         ExceptionHelper.checkNotNullArgument(customActions, "customActions");
 
-        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, new Callable<GradleTaskDef>() {
+        GradleTaskDefFactory taskDefFactory = new GradleTaskDefFactory() {
             @Override
-            public GradleTaskDef call() {
+            public String getDisplayName() {
+                return command.getSafeDisplayName();
+            }
+
+            @Override
+            public GradleTaskDef tryCreateTaskDef() {
                 return GradleTaskDef.createFromTemplate(project, command, customActions, Lookup.EMPTY).create();
             }
-        }, new CommandCompleteListener() {
+        };
+
+        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, taskDefFactory, new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 try {

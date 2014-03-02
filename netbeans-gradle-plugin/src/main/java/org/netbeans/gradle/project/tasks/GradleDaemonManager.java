@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.tasks;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -61,17 +60,12 @@ public final class GradleDaemonManager {
             TaskExecutor executor,
             final DaemonTaskDef taskDef,
             CommandCompleteListener listener) {
-        submitGradleTask(executor, new Callable<DaemonTaskDef>() {
-            @Override
-            public DaemonTaskDef call() {
-                return taskDef;
-            }
-        }, listener);
+        submitGradleTask(executor, taskDef.toFactory(), listener);
     }
 
     public static void submitGradleTask(
             TaskExecutor executor,
-            final Callable<DaemonTaskDef> taskDefFactory,
+            final DaemonTaskDefFactory taskDefFactory,
             final CommandCompleteListener listener) {
         ExceptionHelper.checkNotNullArgument(executor, "executor");
         ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
@@ -82,7 +76,7 @@ public final class GradleDaemonManager {
             public void execute(CancellationToken cancelToken) throws Exception {
                 DaemonTaskDef taskDef;
                 try {
-                    taskDef = taskDefFactory.call();
+                    taskDef = taskDefFactory.tryCreateTaskDef();
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Failed to create DaemonTaskDef.", ex);
                     return;
