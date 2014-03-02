@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -83,11 +84,24 @@ public final class GradleDaemonManager {
         final String origDisplayName = taskDefFactory.getDisplayName();
 
         final ReplaceableProgressHandle progress = new ReplaceableProgressHandle(cancel.getController());
+        final AtomicBoolean inProgress = new AtomicBoolean(false);
+
+        cancel.getToken().addCancellationListener(new Runnable() {
+            @Override
+            public void run() {
+                if (!inProgress.get()) {
+                    progress.finish();
+                }
+            }
+        });
 
         progress.start(origDisplayName);
         executor.execute(cancel.getToken(), new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws Exception {
+                inProgress.set(true);
+                cancelToken.checkCanceled();
+
                 DaemonTaskDef taskDef;
                 try {
                     taskDef = taskDefFactory.tryCreateTaskDef();
