@@ -4,11 +4,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.event.ChangeListener;
+import org.jtrim.event.InitLaterListenerRef;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.openide.util.ChangeSupport;
 
 import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSource.getJavaPlatform;
@@ -19,7 +20,7 @@ implements
 
     private final Lock changesLock;
     private final ChangeSupport changes;
-    private NbListenerRef subListenerRef;
+    private ListenerRef subListenerRef;
     private final AtomicReference<GradleProjectPlatformQuery> queryRef;
 
     public AbstractProjectPlatformSource() {
@@ -49,7 +50,7 @@ implements
         ExceptionHelper.checkNotNullArgument(query, "query");
 
         if (queryRef.compareAndSet(null, query)) {
-            NbListenerRef toRemove = null;
+            ListenerRef toRemove = null;
             InitLaterListenerRef toAdd = null;
 
             changesLock.lock();
@@ -90,7 +91,7 @@ implements
 
     @Override
     public final void addChangeListener(ChangeListener listener) {
-        NbListenerRef toRemove = null;
+        ListenerRef toRemove = null;
         InitLaterListenerRef toAdd = null;
         GradleProjectPlatformQuery query = queryRef.get();
 
@@ -122,7 +123,7 @@ implements
 
     @Override
     public final void removeChangeListener(ChangeListener listener) {
-        NbListenerRef toRemove = null;
+        ListenerRef toRemove = null;
 
         changesLock.lock();
         try {
