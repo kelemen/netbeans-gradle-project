@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -26,7 +26,6 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -41,8 +40,8 @@ import org.openide.util.lookup.ServiceProviders;
 public final class GradleFilesClassPathProvider implements ClassPathProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleFilesClassPathProvider.class.getName());
 
-    private final AtomicBoolean initialized;
-    private final WaitableInterruptibleSignal initSignal;
+    private volatile boolean initialized;
+    private final ReentrantLock initLock;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
     private final Map<ClassPathType, ClassPath> classpaths;
 
@@ -50,8 +49,8 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
     @SuppressWarnings("MapReplaceableByEnumMap") // no, it's not.
     public GradleFilesClassPathProvider() {
-        this.initialized = new AtomicBoolean(false);
-        this.initSignal = new WaitableInterruptibleSignal();
+        this.initLock = new ReentrantLock();
+        this.initialized = false;
         this.classpaths = new EnumMap<>(ClassPathType.class);
         this.classpathResources = new ConcurrentHashMap<>();
 
@@ -123,6 +122,24 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private void init() {
+        if (initialized) {
+            return;
+        }
+
+        initLock.lock();
+        try {
+            if (!initialized) {
+                unsafeInit();
+            }
+        } finally {
+            initialized = true;
+            initLock.unlock();
+        }
+    }
+
+    private void unsafeInit() {
+        assert initLock.isHeldByCurrentThread();
+
         ChangeListener changeListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -153,20 +170,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             return null;
         }
 
-        if (initialized.compareAndSet(false, true)) {
-            try {
-                init();
-            } finally {
-                initSignal.signal();
-            }
-        }
-        else {
-            if (!initSignal.tryWaitForSignal()) {
-                // The current thread has been interrupted (shutdown?),
-                // returning null is the best we can do.
-                return null;
-            }
-        }
+        init();
 
         ClassPathType classPathType = getClassPathType(type);
         if (classPathType == null) {
