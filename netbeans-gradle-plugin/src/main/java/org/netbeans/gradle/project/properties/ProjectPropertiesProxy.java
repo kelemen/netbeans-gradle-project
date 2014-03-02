@@ -114,7 +114,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         if (NbGradleProject.PROJECT_PROCESSOR.isExecutingInThis()) {
             throw new IllegalStateException("This method cannot be access from the PROJECT_PROCESSOR.");
         }
-        if (PropertiesPersister.PERSISTER_PROCESSOR.isRequestProcessorThread()) {
+        if (PropertiesPersister.PERSISTER_PROCESSOR.isExecutingInThis()) {
             throw new IllegalStateException("This method cannot be access from the PERSISTER_PROCESSOR.");
         }
 

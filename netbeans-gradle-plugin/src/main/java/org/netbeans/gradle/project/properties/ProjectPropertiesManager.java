@@ -18,6 +18,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -43,13 +46,13 @@ public final class ProjectPropertiesManager {
             final PropertiesPersister persister) {
 
         if (saveQueued.compareAndSet(false, true)) {
-            PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
+            PropertiesPersister.PERSISTER_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     saveQueued.set(false);
                     persister.save(project, properties, null);
                 }
-            });
+            }, null);
         }
     }
 
@@ -130,9 +133,9 @@ public final class ProjectPropertiesManager {
 
         final CachedProperties result = new CachedProperties(new MemProjectProperties());
         final PropertiesPersister persister = new XmlPropertiesPersister(propertiesFile);
-        PropertiesPersister.PERSISTER_PROCESSOR.execute(new Runnable() {
-            @Override
-            public void run() {
+        PropertiesPersister.PERSISTER_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                @Override
+                public void execute(CancellationToken cancelToken) {
                 persister.load(result, false, new Runnable() {
                     @Override
                     public void run() {
@@ -144,7 +147,7 @@ public final class ProjectPropertiesManager {
                     }
                 });
             }
-        });
+        }, null);
         return result;
     }
 

@@ -44,7 +44,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     private void checkCallingThread() {
-        if (!PropertiesPersister.PERSISTER_PROCESSOR.isRequestProcessorThread()) {
+        if (!PropertiesPersister.PERSISTER_PROCESSOR.isExecutingInThis()) {
             throw new IllegalStateException("This method may only be called from PropertiesPersister.PERSISTER_PROCESSOR.");
         }
     }
