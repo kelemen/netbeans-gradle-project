@@ -21,6 +21,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaClassPaths;
@@ -29,6 +30,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -47,14 +49,13 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.RequestProcessor;
 
 public final class JavaDependenciesNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
     private static final Collator STR_CMP = Collator.getInstance();
 
-    private static final RequestProcessor SOURCES_DOWNLOADER
-            = new RequestProcessor("Sources-downloader", 1, true);
+    private static final TaskExecutor SOURCES_DOWNLOADER
+            = NbTaskExecutors.newExecutor("Sources-downloader", 1);
 
     private final JavaExtension javaExt;
 

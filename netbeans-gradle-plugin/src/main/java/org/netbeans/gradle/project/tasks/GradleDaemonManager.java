@@ -1,11 +1,16 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationSource;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.CleanupTask;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -44,7 +49,7 @@ public final class GradleDaemonManager {
     }
 
     public static void submitGradleTask(
-            Executor executor,
+            TaskExecutor executor,
             String caption,
             DaemonTask task,
             boolean nonBlocking,
@@ -53,7 +58,7 @@ public final class GradleDaemonManager {
     }
 
     public static void submitGradleTask(
-            Executor executor,
+            TaskExecutor executor,
             final DaemonTaskDef taskDef,
             CommandCompleteListener listener) {
         submitGradleTask(executor, new Callable<DaemonTaskDef>() {
@@ -65,16 +70,16 @@ public final class GradleDaemonManager {
     }
 
     public static void submitGradleTask(
-            Executor executor,
+            TaskExecutor executor,
             final Callable<DaemonTaskDef> taskDefFactory,
             final CommandCompleteListener listener) {
         ExceptionHelper.checkNotNullArgument(executor, "executor");
         ExceptionHelper.checkNotNullArgument(taskDefFactory, "taskDefFactory");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final Runnable executeTask = new Runnable() {
+        executor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) throws Exception {
                 DaemonTaskDef taskDef;
                 try {
                     taskDef = taskDefFactory.call();
@@ -92,14 +97,19 @@ public final class GradleDaemonManager {
                 DaemonTask task = taskDef.getTask();
 
                 final ThreadInterrupter interrupter = new ThreadInterrupter(Thread.currentThread());
+
+                // TODO: Create the ProgressHandle before starting the task
+                //       This requires a DaemonTaskDefFactory returning the caption.
+                final CancellationSource cancel = Cancellation.createChildCancellationSource(cancelToken);
                 ProgressHandle progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        interrupter.interrupt();
+                        cancel.getController().cancel();
                         return true;
                     }
                 });
 
+                // TODO: Forward the cancellation token.
                 progress.start();
                 try {
                     if (nonBlocking) {
@@ -108,31 +118,15 @@ public final class GradleDaemonManager {
                     else {
                         runBlockingGradleTask(task, progress);
                     }
-                } catch (InterruptedException ex) {
-                    // We must hide InterruptedException because we use it
-                    // for our own purpose: To signal that a task must be
-                    // canceled.
-                    // In case executors don't use interrupt for other purposes
-                    // (and they should not), this shouldn't cause problems.
-                } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "Unexpected exception in Gradle daemon task.", ex);
                 } finally {
                     interrupter.stopInterrupting();
                     progress.finish();
                 }
             }
-        };
-
-        executor.execute(new Runnable() {
+        }, new CleanupTask() {
             @Override
-            public void run() {
-                Throwable error = null;
-                try {
-                    executeTask.run();
-                } catch (Throwable ex) {
-                    error = ex;
-                }
-                listener.onComplete(error);
+            public void cleanup(boolean canceled, Throwable error) throws Exception {
+                listener.onComplete(canceled ? null : error);
             }
         });
     }

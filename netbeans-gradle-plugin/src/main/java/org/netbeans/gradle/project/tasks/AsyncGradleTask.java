@@ -26,6 +26,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
@@ -33,6 +34,7 @@ import org.netbeans.gradle.model.util.TemporaryFileManager;
 import org.netbeans.gradle.model.util.TemporaryFileRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -57,12 +59,11 @@ import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;
-import org.openide.util.RequestProcessor;
 import org.openide.windows.OutputWriter;
 
 public final class AsyncGradleTask implements Runnable {
-    private static final RequestProcessor TASK_EXECUTOR
-            = new RequestProcessor("Gradle-Task-Executor", 10, true);
+    private static final TaskExecutor TASK_EXECUTOR
+            = NbTaskExecutors.newExecutor("Gradle-Task-Executor", Integer.MAX_VALUE);
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final Charset UTF8 = Charset.forName("UTF-8");
 

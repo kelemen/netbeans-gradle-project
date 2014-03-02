@@ -25,6 +25,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -38,6 +39,7 @@ import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
@@ -58,8 +60,8 @@ import org.openide.util.RequestProcessor;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    private static final RequestProcessor PROJECT_LOADER
-            = new RequestProcessor("Gradle-Project-Loader", 1, true);
+    private static final TaskExecutor PROJECT_LOADER
+            = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
 
     private static final RequestProcessor MODEL_LOAD_NOTIFIER
             = new RequestProcessor("Gradle-Project-Load-Notifier", 1, true);
