@@ -5,7 +5,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.element.Element;
@@ -13,25 +12,27 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.Task;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.openide.filesystems.FileObject;
-import org.openide.util.RequestProcessor;
 
 public final class ShowTestUtils {
     private static final Logger LOGGER = Logger.getLogger(ShowTestUtils.class.getName());
 
-    public static final RequestProcessor FILE_OPEN_PROCESSOR
-            = new RequestProcessor("Gradle-Project-Processor", 1, true);
+    public static final MonitorableTaskExecutorService FILE_OPEN_PROCESSOR
+            = NbTaskExecutors.newExecutor("Test-File-Open-Processor", 1);
 
     // This is mostly copied from the Maven plugin.
     public static boolean openTestMethod(
-            final AtomicBoolean cancelToken,
+            final CancellationToken cancelToken,
             JavaExtension javaExt,
             final SpecificTestcase specificTestcase) {
 
@@ -54,9 +55,7 @@ public final class ShowTestUtils {
             return false;
         }
 
-        if (cancelToken.get()) {
-            return true;
-        }
+        cancelToken.checkCanceled();
 
         try {
             javaSource.runUserActionTask(new Task<CompilationController>() {
@@ -71,7 +70,7 @@ public final class ShowTestUtils {
                         if (element != null && element.getKind() == ElementKind.CLASS && element.getSimpleName().contentEquals(fo2open[0].getName())) {
                             List<? extends ExecutableElement> methodElements = ElementFilter.methodsIn(element.getEnclosedElements());
                             for (Element child: methodElements) {
-                                if (cancelToken.get()) {
+                                if (cancelToken.isCanceled()) {
                                     return;
                                 }
 
@@ -91,14 +90,12 @@ public final class ShowTestUtils {
             return false;
         }
 
-        if (cancelToken.get()) {
-            return true;
-        }
+        cancelToken.checkCanceled();
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (!cancelToken.get()) {
+                if (!cancelToken.isCanceled()) {
                     OpenEditorOutputListener.tryOpenFile(fo2open[0], (int)line[0]);
                 }
             }

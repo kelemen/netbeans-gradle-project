@@ -5,6 +5,9 @@ import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -141,12 +144,12 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(new Runnable() {
+            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     jumpToSourcesNow();
                 }
-            });
+            }, null);
         }
     }
 

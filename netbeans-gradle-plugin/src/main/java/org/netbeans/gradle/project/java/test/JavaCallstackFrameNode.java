@@ -5,6 +5,9 @@ import java.awt.event.ActionListener;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
@@ -73,12 +76,12 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(new Runnable() {
+            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     doActionNow(e);
                 }
-            });
+            }, null);
         }
     }
 }

@@ -2,10 +2,13 @@ package org.netbeans.gradle.project.java.test;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationSource;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -117,7 +120,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
         return null;
     }
 
-    private boolean openTestMethod(AtomicBoolean cancelToken) {
+    private boolean openTestMethod(CancellationToken cancelToken) {
         if (specificTestcase != null) {
             return ShowTestUtils.openTestMethod(cancelToken, javaExt, specificTestcase);
         }
@@ -158,14 +161,14 @@ public final class JavaTestMethodNode extends TestMethodNode {
             super(NbStrings.getJumpToSource());
         }
 
-        private void doActionNow(final AtomicBoolean cancelToken, final ActionEvent e) {
+        private void doActionNow(final CancellationToken cancelToken, final ActionEvent e) {
             if (!openTestMethod(cancelToken)) {
                 final ActionListener openInEditorAction = tryGetOpenEditorActionAtFailure();
                 if (openInEditorAction != null) {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            if (!cancelToken.get()) {
+                            if (!cancelToken.isCanceled()) {
                                 openInEditorAction.actionPerformed(e);
                             }
                         }
@@ -177,18 +180,18 @@ public final class JavaTestMethodNode extends TestMethodNode {
         @Override
         public void actionPerformed(final ActionEvent e) {
             // TODO: Replace with CancellationToken in the future.
-            final AtomicBoolean cancelToken = new AtomicBoolean(false);
+            final CancellationSource cancel = Cancellation.createCancellationSource();
             final ProgressHandle progress = ProgressHandleFactory.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    cancelToken.set(true);
+                    cancel.getController().cancel();
                     return true;
                 }
             });
 
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(new Runnable() {
+            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(cancel.getToken(), new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     progress.start();
                     try {
                         doActionNow(cancelToken, e);
@@ -196,7 +199,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
                         progress.finish();
                     }
                 }
-            });
+            }, null);
         }
     }
 }
