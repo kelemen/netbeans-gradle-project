@@ -7,20 +7,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class SingleModelExtension implements GradleProjectExtension {
     private final Class<?> requestedModel;
-    private final WaitableInterruptibleSignal loadedSignal;
+    private final WaitableSignal loadedSignal;
     private volatile Object lastModel;
 
     public SingleModelExtension(Class<?> requestedModel) {
         ExceptionHelper.checkNotNullArgument(requestedModel, "requestedModel");
         this.requestedModel = requestedModel;
-        this.loadedSignal = new WaitableInterruptibleSignal();
+        this.loadedSignal = new WaitableSignal();
         this.lastModel = null;
     }
 
@@ -52,7 +53,7 @@ public final class SingleModelExtension implements GradleProjectExtension {
     }
 
     public Object getModel(long timeout, TimeUnit unit) throws TimeoutException {
-        if (!loadedSignal.tryWaitForSignal(timeout, unit)) {
+        if (!loadedSignal.tryWaitSignal(Cancellation.UNCANCELABLE_TOKEN, timeout, unit)) {
             throw new TimeoutException();
         }
         return lastModel;
