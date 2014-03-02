@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -433,27 +434,19 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 41 * hash + (this.platform.getName().hashCode());
-            hash = 41 * hash + (this.platform.getVersion().hashCode());
+            hash = 41 * hash + Objects.hashCode(platform.getName());
+            hash = 41 * hash + Objects.hashCode(platform.getVersion());
             return hash;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
             final ProjectPlatformComboItem other = (ProjectPlatformComboItem)obj;
-            if (!this.platform.getName().equals(other.platform.getName())) {
-                return false;
-            }
-            if (!this.platform.getVersion().equals(other.platform.getVersion())) {
-                return false;
-            }
-            return true;
+            return Objects.equals(this.platform.getName(), other.platform.getName())
+                    && Objects.equals(this.platform.getVersion(), other.platform.getVersion());
         }
 
         @Override
@@ -505,20 +498,17 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 47 * hash + (this.config != null ? this.config.hashCode() : 0);
+            hash = 47 * hash + Objects.hashCode(config);
             return hash;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
             final ProfileItem other = (ProfileItem)obj;
-            if (this.config != other.config && (this.config == null || !this.config.equals(other.config)))
-                return false;
-            return true;
+            return Objects.equals(this.config, other.config);
         }
 
         @Override

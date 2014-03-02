@@ -551,9 +551,8 @@ implements
 
             final SourceSetClassPathType other = (SourceSetClassPathType)obj;
 
-            if (!this.sourceSetName.equals(other.sourceSetName)) return false;
-            if (this.classPathType != other.classPathType) return false;
-            return true;
+            return this.sourceSetName.equals(other.sourceSetName)
+                    && this.classPathType == other.classPathType;
         }
     }
 

@@ -77,10 +77,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         if (directory.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME) != null) {
             return true;
         }
-        if (directory.getFileObject(directory.getNameExt() + GradleProjectConstants.DEFAULT_GRADLE_EXTENSION) != null) {
-            return true;
-        }
-        return false;
+        return directory.getFileObject(directory.getNameExt() + GradleProjectConstants.DEFAULT_GRADLE_EXTENSION) != null;
     }
 
     @Override

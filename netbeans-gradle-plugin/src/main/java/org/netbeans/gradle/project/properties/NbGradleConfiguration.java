@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfiguration;
@@ -65,19 +66,16 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 79 * hash + (this.profileDef != null ? this.profileDef.hashCode() : 0);
+        hash = 79 * hash + Objects.hashCode(profileDef);
         return hash;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+
         final NbGradleConfiguration other = (NbGradleConfiguration)obj;
-        if ((this.profileDef == null) ? (other.profileDef != null) : !this.profileDef.equals(other.profileDef))
-            return false;
-        return true;
+        return Objects.equals(this.profileDef, other.profileDef);
     }
 }

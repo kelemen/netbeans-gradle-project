@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.Objects;
+
 public final class DomElementKey implements Comparable<DomElementKey> {
     private final String name;
     private final String namespace;
@@ -20,8 +22,8 @@ public final class DomElementKey implements Comparable<DomElementKey> {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 31 * hash + (this.name != null ? this.name.hashCode() : 0);
-        hash = 31 * hash + (this.namespace != null ? this.namespace.hashCode() : 0);
+        hash = 31 * hash + Objects.hashCode(name);
+        hash = 31 * hash + Objects.hashCode(namespace);
         return hash;
     }
 
@@ -31,11 +33,9 @@ public final class DomElementKey implements Comparable<DomElementKey> {
         if (getClass() != obj.getClass()) return false;
 
         final DomElementKey other = (DomElementKey)obj;
-        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name))
-            return false;
-        if ((this.namespace == null) ? (other.namespace != null) : !this.namespace.equals(other.namespace))
-            return false;
-        return true;
+
+        return Objects.equals(this.name, other.name)
+                && Objects.equals(this.namespace, other.namespace);
     }
 
     private int nullSafeStrCmp(String str1, String str2) {

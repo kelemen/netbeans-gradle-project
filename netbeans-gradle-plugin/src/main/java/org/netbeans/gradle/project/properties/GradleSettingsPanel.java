@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -164,11 +165,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             if (getClass() != obj.getClass()) {
                 return false;
             }
+
             final JavaPlatformItem other = (JavaPlatformItem)obj;
-            if (this.platform != other.platform && !this.platform.equals(other.platform)) {
-                return false;
-            }
-            return true;
+            return Objects.equals(this.platform, other.platform);
         }
     }
 

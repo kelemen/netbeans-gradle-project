@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -342,8 +343,8 @@ public final class ProjectPropertiesManager {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 73 * hash + this.project.hashCode();
-            hash = 73 * hash + (this.profileDef != null ? this.profileDef.hashCode() : 0);
+            hash = 73 * hash + project.hashCode();
+            hash = 73 * hash + Objects.hashCode(profileDef);
             return hash;
         }
 
@@ -354,11 +355,9 @@ public final class ProjectPropertiesManager {
             if (getClass() != obj.getClass()) return false;
 
             final NbProfileProjectPropertySource other = (NbProfileProjectPropertySource)obj;
-            if (!this.project.equals(other.project)) return false;
-            if ((this.profileDef == null) ? (other.profileDef != null) : !this.profileDef.equals(other.profileDef)) {
-                return false;
-            }
-            return true;
+
+            return Objects.equals(this.project, other.project)
+                    && Objects.equals(this.profileDef, other.profileDef);
         }
     }
 

@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -289,20 +290,17 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 79 * hash + (this.command != null ? this.command.hashCode() : 0);
+            hash = 79 * hash + Objects.hashCode(command);
             return hash;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
             final BuiltInTaskItem other = (BuiltInTaskItem)obj;
-            if ((this.command == null) ? (other.command != null) : !this.command.equals(other.command))
-                return false;
-            return true;
+            return Objects.equals(this.command, other.command);
         }
 
         @Override
