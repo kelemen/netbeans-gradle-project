@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
@@ -53,15 +52,8 @@ public final class SingleFileModelCache implements PersistentModelCache {
                 continue;
             }
 
-            SerializedNbGradleModels serializedModel = SerializedNbGradleModels.tryCreateSerialized(model);
-            if (serializedModel != null) {
-                updatedModels.put(getCacheKey(model), serializedModel);
-            }
-            else {
-                LOGGER.log(Level.WARNING,
-                        "The model of a Gradle project cannot be serialized {0}",
-                        model.getProjectDir());
-            }
+            SerializedNbGradleModels serializedModel = SerializedNbGradleModels.createSerialized(model);
+            updatedModels.put(getCacheKey(model), serializedModel);
         }
 
         File cacheFile = getCacheFile(rootDir);

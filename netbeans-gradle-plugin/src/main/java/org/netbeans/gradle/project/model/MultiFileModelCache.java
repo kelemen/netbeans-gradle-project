@@ -48,10 +48,8 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     private void saveGradleModel(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
-        SerializedNbGradleModels toSave = SerializedNbGradleModels.tryCreateSerialized(model);
-        if (toSave != null) {
-            saveGradleModel(model, toSave, hashCalculator);
-        }
+        SerializedNbGradleModels toSave = SerializedNbGradleModels.createSerialized(model);
+        saveGradleModel(model, toSave, hashCalculator);
     }
 
     private static String limitLength(String str, int maxLength) {

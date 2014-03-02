@@ -28,7 +28,7 @@ public final class SerializedNbGradleModels implements Serializable {
         this.extensionModels = extensionModels;
     }
 
-    public static SerializedNbGradleModels tryCreateSerialized(NbGradleModel model) {
+    public static SerializedNbGradleModels createSerialized(NbGradleModel model) {
         Map<String, Object> extensionModels = model.getExtensionModels();
         Map<String, byte[]> serializedModels = CollectionUtils.newHashMap(extensionModels.size());
 

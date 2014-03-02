@@ -283,10 +283,6 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         }
 
         GradleProject rootProject = getRoot(modules.iterator().next().getGradleProject());
-        if (rootProject == null) {
-            return null;
-        }
-
         String rootName = rootProject.getPath();
 
         for (IdeaModule module: ideaModel.getModules()) {
