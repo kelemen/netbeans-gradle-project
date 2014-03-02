@@ -285,7 +285,7 @@ public final class GradleModelLoader {
 
         Throwable buildScriptEvaluationError = error.getBuildScriptEvaluationError();
         if (buildScriptEvaluationError != null) {
-            ModelLoadIssueReporter.reportBuildScriptError(project, unexpectedError);
+            ModelLoadIssueReporter.reportBuildScriptError(project, buildScriptEvaluationError);
         }
     }
 
