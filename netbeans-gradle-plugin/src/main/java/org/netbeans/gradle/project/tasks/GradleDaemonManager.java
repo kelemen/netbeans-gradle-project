@@ -113,8 +113,6 @@ public final class GradleDaemonManager {
                     progress.start(displayName);
                 }
 
-                // TODO: Create the ProgressHandle before starting the task
-                //       This requires a DaemonTaskDefFactory returning the caption.
                 final CancellationSource cancel = Cancellation.createChildCancellationSource(cancelToken);
                 ProgressHandle progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                     @Override
@@ -124,7 +122,6 @@ public final class GradleDaemonManager {
                     }
                 });
 
-                // TODO: Forward the cancellation token.
                 progress.start();
                 try {
                     if (nonBlocking) {
