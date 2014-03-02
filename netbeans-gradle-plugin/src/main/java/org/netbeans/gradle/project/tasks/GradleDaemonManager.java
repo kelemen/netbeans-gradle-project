@@ -119,7 +119,9 @@ public final class GradleDaemonManager {
             @Override
             public void cleanup(boolean canceled, Throwable error) throws Exception {
                 try {
-                    listener.onComplete(canceled ? null : error);
+                    if (!canceled) {
+                        listener.onComplete(error);
+                    }
                 } finally {
                     progress.finish();
                 }
