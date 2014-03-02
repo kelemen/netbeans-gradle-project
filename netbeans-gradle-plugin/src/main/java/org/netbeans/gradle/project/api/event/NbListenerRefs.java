@@ -2,12 +2,41 @@ package org.netbeans.gradle.project.api.event;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Contains utility methods related to {@link NbListenerRef}.
  */
 public final class NbListenerRefs {
+    /**
+     * Converts {@code ListenerRef} instances to {@code NbListenerRef} instances.
+     * All calls to the returned {@code NbListenerRef} are delegated to the
+     * appropriate method of the specified {@code ListenerRef}.
+     *
+     * @param listenerRef the {@code ListenerRef} to be converted to
+     *   {@code NbListenerRef}. This argument cannot be {@code null}.
+     * @return the {@code NbListenerRef} delegating all of its calls to the
+     *   {@code ListenerRef} specified in the argument. This method never
+     *   returns {@code null}.
+     */
+    @Nonnull
+    public static NbListenerRef asNbRef(@Nonnull final ListenerRef listenerRef) {
+        ExceptionHelper.checkNotNullArgument(listenerRef, "listenerRef");
+
+        return new NbListenerRef() {
+            @Override
+            public boolean isRegistered() {
+                return listenerRef.isRegistered();
+            }
+
+            @Override
+            public void unregister() {
+                listenerRef.unregister();
+            }
+        };
+    }
+
     /**
      * Converts a {@code Runnable} to an {@link NbListenerRef}. The given task
      * is called in the {@code unregister} method of the returned
