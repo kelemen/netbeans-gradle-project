@@ -32,7 +32,7 @@ public final class GradleDaemonManager {
         CancelableWaits.lock(cancelToken, QUEUE_LOCK);
         try {
             progress.switchToIndeterminate();
-            task.run(progress);
+            task.run(cancelToken, progress);
         } finally{
             QUEUE_LOCK.unlock();
         }
@@ -50,7 +50,7 @@ public final class GradleDaemonManager {
         QUEUE_LOCK.unlock();
 
         progress.switchToIndeterminate();
-        task.run(progress);
+        task.run(cancelToken, progress);
     }
 
     public static boolean isRunningExclusiveTask() {

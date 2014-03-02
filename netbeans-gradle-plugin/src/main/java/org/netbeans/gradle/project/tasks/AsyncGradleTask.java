@@ -25,6 +25,7 @@ import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
@@ -582,7 +583,7 @@ public final class AsyncGradleTask implements Runnable {
             boolean nonBlocking = processedCommandSpec.getProcessedTaskDef().isNonBlocking();
             this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
                 @Override
-                public void run(ProgressHandle progress) {
+                public void run(CancellationToken cancelToken, ProgressHandle progress) {
                     doGradleTasksWithProgress(progress, BuildExecutionItem.this);
                 }
             });

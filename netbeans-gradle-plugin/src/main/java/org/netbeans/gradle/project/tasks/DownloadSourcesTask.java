@@ -5,6 +5,7 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
@@ -31,7 +32,7 @@ public final class DownloadSourcesTask implements DaemonTask {
     }
 
     @Override
-    public void run(ProgressHandle progress) {
+    public void run(CancellationToken cancelToken, ProgressHandle progress) {
         GradleConnector connector = GradleModelLoader.createGradleConnector(project);
         FileObject projectDirObj = project.getProjectDirectory();
         File projectDir = FileUtil.toFile(projectDirObj);

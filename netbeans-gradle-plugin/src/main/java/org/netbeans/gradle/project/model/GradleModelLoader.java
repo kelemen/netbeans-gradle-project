@@ -263,7 +263,7 @@ public final class GradleModelLoader {
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
-            public void run(ProgressHandle progress) {
+            public void run(CancellationToken cancelToken, ProgressHandle progress) {
                 NbGradleModel model = tryGetFromCache(projectDir);
                 if (model == null) {
                     model = baseModel;
@@ -355,7 +355,7 @@ public final class GradleModelLoader {
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
-            public void run(ProgressHandle progress) {
+            public void run(CancellationToken cancelToken, ProgressHandle progress) {
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
