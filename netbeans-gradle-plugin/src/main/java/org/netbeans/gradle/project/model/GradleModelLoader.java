@@ -25,6 +25,10 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -55,7 +59,6 @@ import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.SpecificationVersion;
-import org.openide.util.RequestProcessor;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
@@ -63,8 +66,8 @@ public final class GradleModelLoader {
     private static final TaskExecutor PROJECT_LOADER
             = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
 
-    private static final RequestProcessor MODEL_LOAD_NOTIFIER
-            = new RequestProcessor("Gradle-Project-Load-Notifier", 1, true);
+    private static final MonitorableTaskExecutorService MODEL_LOAD_NOTIFIER
+            = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
     private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
@@ -238,16 +241,16 @@ public final class GradleModelLoader {
             return;
         }
 
-        if (MODEL_LOAD_NOTIFIER.isRequestProcessorThread()) {
+        if (MODEL_LOAD_NOTIFIER.isExecutingInThis()) {
             listener.onComplete(model, error);
         }
         else {
-            MODEL_LOAD_NOTIFIER.execute(new Runnable() {
+            MODEL_LOAD_NOTIFIER.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     listener.onComplete(model, error);
                 }
-            });
+            }, null);
         }
     }
 
@@ -315,9 +318,9 @@ public final class GradleModelLoader {
             return;
         }
 
-        MODEL_LOAD_NOTIFIER.execute(new Runnable() {
+        MODEL_LOAD_NOTIFIER.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 NbGradleModel model = null;
                 boolean needLoadFromScripts = true;
 
@@ -342,7 +345,7 @@ public final class GradleModelLoader {
                     }
                 }
             }
-        });
+        }, null);
     }
 
     private static void fetchModelWithoutPersistentCache(
