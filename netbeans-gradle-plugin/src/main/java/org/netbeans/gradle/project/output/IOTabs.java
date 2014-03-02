@@ -4,7 +4,6 @@ import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import javax.swing.Action;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
