@@ -29,8 +29,6 @@ public final class GradleDaemonManager {
             DaemonTask task,
             ProgressHandle progress) {
 
-        progress.suspend("");
-
         CancelableWaits.lock(cancelToken, QUEUE_LOCK);
         try {
             progress.switchToIndeterminate();
@@ -44,8 +42,6 @@ public final class GradleDaemonManager {
             CancellationToken cancelToken,
             DaemonTask task,
             ProgressHandle progress) {
-
-        progress.suspend("");
 
         // This lock/unlock is here only to wait for pending non-blocking tasks.
         CancelableWaits.lock(cancelToken, QUEUE_LOCK);
@@ -152,6 +148,7 @@ public final class GradleDaemonManager {
             });
 
             newHandle.start();
+            newHandle.suspend("");
 
             ProgressHandle prevHandle = handleRef.getAndSet(newHandle);
             if (prevHandle != null) {
