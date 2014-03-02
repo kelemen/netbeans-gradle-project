@@ -233,12 +233,11 @@ implements
         switch (type) {
             case ClassPath.SOURCE:
                 return new SourceSetClassPathType(name, ClassPathType.SOURCES);
+            case JavaClassPathConstants.PROCESSOR_PATH: /* falls through */
             case ClassPath.COMPILE:
                 return new SourceSetClassPathType(name, ClassPathType.COMPILE);
             case ClassPath.EXECUTE:
                 return new SourceSetClassPathType(name, ClassPathType.RUNTIME);
-            case JavaClassPathConstants.PROCESSOR_PATH:
-                return new SourceSetClassPathType(name, ClassPathType.COMPILE);
             default:
                 return null;
         }
