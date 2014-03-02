@@ -4,6 +4,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.CancelableWaits;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
@@ -21,9 +22,14 @@ public final class GradleDaemonManager {
 
     private static final ReentrantLock QUEUE_LOCK = new ReentrantLock(true);
 
-    private static void runNonBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws InterruptedException {
+    private static void runNonBlockingGradleTask(
+            CancellationToken cancelToken,
+            DaemonTask task,
+            ProgressHandle progress) {
+
         progress.suspend("");
-        QUEUE_LOCK.lockInterruptibly();
+
+        CancelableWaits.lock(cancelToken, QUEUE_LOCK);
         try {
             progress.switchToIndeterminate();
             task.run(progress);
@@ -32,11 +38,15 @@ public final class GradleDaemonManager {
         }
     }
 
-    private static void runBlockingGradleTask(DaemonTask task, ProgressHandle progress) throws InterruptedException {
+    private static void runBlockingGradleTask(
+            CancellationToken cancelToken,
+            DaemonTask task,
+            ProgressHandle progress) {
+
         progress.suspend("");
 
         // This lock/unlock is here only to wait for pending non-blocking tasks.
-        QUEUE_LOCK.lockInterruptibly();
+        CancelableWaits.lock(cancelToken, QUEUE_LOCK);
         QUEUE_LOCK.unlock();
 
         progress.switchToIndeterminate();
@@ -107,10 +117,10 @@ public final class GradleDaemonManager {
                 progress.start();
                 try {
                     if (nonBlocking) {
-                        runNonBlockingGradleTask(task, progress);
+                        runNonBlockingGradleTask(cancel.getToken(), task, progress);
                     }
                     else {
-                        runBlockingGradleTask(task, progress);
+                        runBlockingGradleTask(cancel.getToken(), task, progress);
                     }
                 } finally {
                     interrupter.stopInterrupting();
