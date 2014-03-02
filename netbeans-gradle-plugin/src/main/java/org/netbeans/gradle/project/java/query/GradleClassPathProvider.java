@@ -18,6 +18,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
@@ -138,12 +141,12 @@ implements
 
     @Override
     public void onModelChange() {
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 loadPathResources(javaExt.getCurrentModel());
             }
-        });
+        }, null);
     }
 
     private GradleProperty.BuildPlatform getPlatformProperty() {

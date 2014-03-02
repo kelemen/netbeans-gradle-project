@@ -13,9 +13,14 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;
@@ -52,15 +57,17 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
             @Override
             public void run() {
                 final PropertiesSnapshot snapshot = new PropertiesSnapshot(properties);
-                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+                NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                     @Override
-                    public void run() {
-                        try {
-                            XmlPropertyFormat.saveToXml(project, propertiesFile, snapshot);
-                        } finally {
-                            if (onDone != null) {
-                                onDone.run();
-                            }
+                    public void execute(CancellationToken cancelToken) {
+                        XmlPropertyFormat.saveToXml(project, propertiesFile, snapshot);
+                    }
+                }, new CleanupTask() {
+                    @Override
+                    public void cleanup(boolean canceled, Throwable error) throws Exception {
+                        NbTaskExecutors.defaultCleanup(canceled, error);
+                        if (onDone != null) {
+                            onDone.run();
                         }
                     }
                 });
@@ -149,60 +156,62 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                 ? SwingExecutor.INSTANCE
                 : RecursiveExecutor.INSTANCE;
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
-                try {
-                    final PropertiesSnapshot snapshot = XmlPropertyFormat.readFromXml(propertiesFile);
+            public void execute(CancellationToken cancelToken) {
+                final PropertiesSnapshot snapshot = XmlPropertyFormat.readFromXml(propertiesFile);
 
-                    setterExecutor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (PropertySetter<?> setter: setters) {
-                                setter.set(snapshot);
+                setterExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (PropertySetter<?> setter: setters) {
+                            setter.set(snapshot);
+                        }
+
+                        // TODO: This might overwrite concurrently set
+                        //  properties which is unexpected by the user. This
+                        //  is unlikely to happen but should be fixed anyway.
+
+                        Set<Map.Entry<String, PropertySource<PredefinedTask>>> builtInTasks
+                                = snapshot.getBuiltInTasks().entrySet();
+                        for (Map.Entry<String, PropertySource<PredefinedTask>> taskEntry: builtInTasks) {
+                            MutableProperty<PredefinedTask> property
+                                    = properties.tryGetBuiltInTask(taskEntry.getKey());
+                            if (property == null) {
+                                LOGGER.log(Level.SEVERE, "Cannot set property for built-in task: {0}", taskEntry.getKey());
                             }
-
-                            // TODO: This might overwrite concurrently set
-                            //  properties which is unexpected by the user. This
-                            //  is unlikely to happen but should be fixed anyway.
-
-                            Set<Map.Entry<String, PropertySource<PredefinedTask>>> builtInTasks
-                                    = snapshot.getBuiltInTasks().entrySet();
-                            for (Map.Entry<String, PropertySource<PredefinedTask>> taskEntry: builtInTasks) {
-                                MutableProperty<PredefinedTask> property
-                                        = properties.tryGetBuiltInTask(taskEntry.getKey());
-                                if (property == null) {
-                                    LOGGER.log(Level.SEVERE, "Cannot set property for built-in task: {0}", taskEntry.getKey());
-                                }
-                                else {
-                                    property.setValueFromSource(taskEntry.getValue());
-                                }
-                            }
-
-                            List<AuxConfig> newAuxConfigs = new LinkedList<>();
-                            for (AuxConfigSource config: snapshot.getAuxProperties()) {
-                                newAuxConfigs.add(new AuxConfig(config.getKey(), config.getSource().getValue()));
-                            }
-                            properties.setAllAuxConfigs(newAuxConfigs);
-
-                            if (onDone != null) {
-                                onDone.run();
+                            else {
+                                property.setValueFromSource(taskEntry.getValue());
                             }
                         }
-                    });
-                } finally {
-                    // required, so that the listeners will not
-                    // be removed before setting the properties.
-                    setterExecutor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (PropertySetter<?> setter: setters) {
-                                setter.done();
-                            }
-                        }
-                    });
-                }
 
+                        List<AuxConfig> newAuxConfigs = new LinkedList<>();
+                        for (AuxConfigSource config: snapshot.getAuxProperties()) {
+                            newAuxConfigs.add(new AuxConfig(config.getKey(), config.getSource().getValue()));
+                        }
+                        properties.setAllAuxConfigs(newAuxConfigs);
+
+                        if (onDone != null) {
+                            onDone.run();
+                        }
+                    }
+                });
+            }
+        }, new CleanupTask() {
+            @Override
+            public void cleanup(boolean canceled, Throwable error) throws Exception {
+                NbTaskExecutors.defaultCleanup(canceled, error);
+
+                // required, so that the listeners will not
+                // be removed before setting the properties.
+                setterExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (PropertySetter<?> setter: setters) {
+                            setter.done();
+                        }
+                    }
+                });
             }
         });
     }

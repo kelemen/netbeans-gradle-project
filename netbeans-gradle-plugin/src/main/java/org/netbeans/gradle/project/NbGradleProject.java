@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -61,7 +62,6 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
-import org.openide.util.RequestProcessor;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -70,8 +70,8 @@ public final class NbGradleProject implements Project {
 
     // Note: There is a lot of assumption on that this executor is
     //   single-threaded and executes task in the order they were submitted.
-    public static final RequestProcessor PROJECT_PROCESSOR
-            = new RequestProcessor("Gradle-Project-Processor", 1, true);
+    public static final MonitorableTaskExecutorService PROJECT_PROCESSOR
+            = NbTaskExecutors.newExecutor("Gradle-Project-Processor", 1);
     private static final LicenseManager LICENSE_MANAGER = new LicenseManager();
 
     private final FileObject projectDir;

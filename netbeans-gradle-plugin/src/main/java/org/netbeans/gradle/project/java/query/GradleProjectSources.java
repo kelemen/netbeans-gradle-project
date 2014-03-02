@@ -16,6 +16,9 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
@@ -188,9 +191,9 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         }
 
         hasScanned.set(true);
-        NbGradleProject.PROJECT_PROCESSOR.submit(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 scanRequestId.compareAndSet(requestId, null);
 
                 Map<String, SourceGroup[]> groups = findSourceGroups(javaExt);
@@ -205,7 +208,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                     }
                 });
             }
-        });
+        }, null);
     }
 
     private SourceGroup[] getGenericGroup() {

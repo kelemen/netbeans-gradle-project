@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
@@ -120,15 +123,15 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
 
     @Override
     public void onDebugeeListening(final int port) {
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 try {
                     doAttach(port);
                 } catch (DebuggerStartException ex) {
                     LOGGER.log(Level.INFO, "Failed to attach to debugee.", ex);
                 }
             }
-        });
+        }, null);
     }
 }

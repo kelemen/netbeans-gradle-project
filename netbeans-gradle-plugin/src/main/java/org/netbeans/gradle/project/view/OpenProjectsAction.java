@@ -9,6 +9,9 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
@@ -91,13 +94,13 @@ public final class OpenProjectsAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 for (File projectDir: projectDirs) {
                     openProject(projectDir);
                 }
             }
-        });
+        }, null);
     }
 }

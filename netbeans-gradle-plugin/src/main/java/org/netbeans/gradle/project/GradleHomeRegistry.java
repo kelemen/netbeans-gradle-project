@@ -11,6 +11,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -78,9 +81,9 @@ public final class GradleHomeRegistry {
     public static void setGradleHome(final FileObject gradleHome) {
         ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 URL[] urls = GradleHomeClassPathProvider.getAllGradleLibs(gradleHome);
                 if (urls.length == 0) {
                     // Keep the previous classpaths if there are non found.
@@ -104,7 +107,7 @@ public final class GradleHomeRegistry {
                     doRegisterGlobalClassPath();
                 }
             }
-        });
+        }, null);
     }
 
     private static class GradleHomePaths {

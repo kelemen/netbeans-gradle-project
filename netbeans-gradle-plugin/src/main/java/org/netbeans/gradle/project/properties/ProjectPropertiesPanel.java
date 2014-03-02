@@ -26,12 +26,17 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -85,31 +90,33 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private void fetchProfilesAndSelect() {
         final AtomicReference<PanelLockRef> lockRef = new AtomicReference<>(lockPanel());
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
-                try {
-                    final Collection<NbGradleConfiguration> profiles = project
-                            .getLookup()
-                            .lookup(NbGradleSingleProjectConfigProvider.class)
-                            .findAndUpdateConfigurations(false);
+            public void execute(CancellationToken cancelToken) {
+                final Collection<NbGradleConfiguration> profiles = project
+                        .getLookup()
+                        .lookup(NbGradleSingleProjectConfigProvider.class)
+                        .findAndUpdateConfigurations(false);
 
-                    final PanelLockRef swingLock = lockRef.getAndSet(null);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                fillProfileCombo(profiles);
-                            } finally {
-                                swingLock.release();
-                            }
+                final PanelLockRef swingLock = lockRef.getAndSet(null);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            fillProfileCombo(profiles);
+                        } finally {
+                            swingLock.release();
                         }
-                    });
-                } finally {
-                    PanelLockRef lock = lockRef.get();
-                    if (lock != null) {
-                        lock.release();
                     }
+                });
+            }
+        }, new CleanupTask() {
+            @Override
+            public void cleanup(boolean canceled, Throwable error) throws Exception {
+                NbTaskExecutors.defaultCleanup(canceled, error);
+                PanelLockRef lock = lockRef.get();
+                if (lock != null) {
+                    lock.release();
                 }
             }
         });

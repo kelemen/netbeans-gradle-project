@@ -23,6 +23,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -112,9 +115,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             return;
         }
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 removeFromConfig(config);
                 File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
                 if (profileFile.isFile()) {
@@ -130,7 +133,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                     }
                 });
             }
-        });
+        }, null);
     }
 
     public void addConfiguration(final NbGradleConfiguration config) {
@@ -222,7 +225,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     private void saveActiveProfileNow() {
-        assert NbGradleProject.PROJECT_PROCESSOR.isRequestProcessorThread();
+        assert NbGradleProject.PROJECT_PROCESSOR.isExecutingInThis();
 
         File lastProfileFile = getLastProfileFile();
 
@@ -254,23 +257,23 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     private void saveActiveProfile() {
-        NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) {
                 saveActiveProfileNow();
             }
-        });
+        }, null);
     }
 
     private void ensureLoadedAsynchronously() {
         if (hasBeenUsed.compareAndSet(false, true)) {
-            NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+            NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
-                public void run() {
+                public void execute(CancellationToken cancelToken) {
                     findAndUpdateConfigurations(false);
                     readAndUpdateDefaultProfile();
                 }
-            });
+            }, null);
         }
     }
 

@@ -111,7 +111,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     public boolean tryWaitForLoaded() {
         // Attempting to call this method from any of the threads below could
         // cause a dead-lock.
-        if (NbGradleProject.PROJECT_PROCESSOR.isRequestProcessorThread()) {
+        if (NbGradleProject.PROJECT_PROCESSOR.isExecutingInThis()) {
             throw new IllegalStateException("This method cannot be access from the PROJECT_PROCESSOR.");
         }
         if (PropertiesPersister.PERSISTER_PROCESSOR.isRequestProcessorThread()) {

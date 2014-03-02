@@ -18,6 +18,9 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -123,9 +126,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         ChangeListener changeListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                NbGradleProject.PROJECT_PROCESSOR.execute(new Runnable() {
+                NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                     @Override
-                    public void run() {
+                    public void execute(CancellationToken cancelToken) {
                         updateClassPathResources();
                         SwingUtilities.invokeLater(new Runnable() {
                             @Override
@@ -134,7 +137,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
                             }
                         });
                     }
-                });
+                }, null);
             }
         };
         GlobalGradleSettings.getGradleHome().addChangeListener(changeListener);
