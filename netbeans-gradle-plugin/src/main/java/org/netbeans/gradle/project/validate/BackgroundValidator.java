@@ -4,13 +4,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.openide.util.ChangeSupport;
-import org.openide.util.RequestProcessor;
 
 public final class BackgroundValidator {
-    private static final RequestProcessor VALIDATOR_PROCESSOR
-            = new RequestProcessor("Gradle-NewProject-Validator-Processor", 1, true);
+    private static final MonitorableTaskExecutorService VALIDATOR_PROCESSOR
+            = NbTaskExecutors.newExecutor("Gradle-NewProject-Validator-Processor", 1);
 
     private final AtomicReference<GroupValidator> validatorsRef;
     private final ChangeSupport changes;
@@ -71,13 +75,13 @@ public final class BackgroundValidator {
                     final Validator<Void> input
                             = currentValidators.getInputCollector().getInput();
 
-                    VALIDATOR_PROCESSOR.execute(new Runnable() {
+                    VALIDATOR_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                         @Override
-                        public void run() {
+                        public void execute(CancellationToken cancelToken) {
                             Problem problem = input.validateInput(null);
                             setCurrentProblem(problem);
                         }
-                    });
+                    }, null);
                 }
             });
         }
