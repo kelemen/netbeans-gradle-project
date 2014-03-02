@@ -112,25 +112,11 @@ public final class GradleDaemonManager {
                     progress.start(displayName);
                 }
 
-                final CancellationSource cancel = Cancellation.createChildCancellationSource(cancelToken);
-                ProgressHandle progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-                    @Override
-                    public boolean cancel() {
-                        cancel.getController().cancel();
-                        return true;
-                    }
-                });
-
-                progress.start();
-                try {
-                    if (nonBlocking) {
-                        runNonBlockingGradleTask(cancel.getToken(), task, progress);
-                    }
-                    else {
-                        runBlockingGradleTask(cancel.getToken(), task, progress);
-                    }
-                } finally {
-                    progress.finish();
+                if (nonBlocking) {
+                    runNonBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
+                }
+                else {
+                    runBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
                 }
             }
         }, new CleanupTask() {
@@ -171,6 +157,10 @@ public final class GradleDaemonManager {
             if (prevHandle != null) {
                 prevHandle.finish();
             }
+        }
+
+        public ProgressHandle getCurrentHandle() {
+            return handleRef.get();
         }
 
         public void finish() {
