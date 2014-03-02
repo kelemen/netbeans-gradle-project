@@ -8,17 +8,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.RequestProcessor;
 
 public final class LicenseManager {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
 
-    private static final RequestProcessor SYNC_EXECUTOR
-            = new RequestProcessor("LicenseManager-Processor", 1, true);
+    private static final MonitorableTaskExecutorService SYNC_EXECUTOR
+            = NbTaskExecutors.newExecutor("LicenseManager-Processor", 1);
 
     // The key File does not contain a path we only use File to properly
     // use case insensitivity if required.
@@ -36,7 +39,7 @@ public final class LicenseManager {
     }
 
     private void removeLicense(File file) throws IOException {
-        assert SYNC_EXECUTOR.isRequestProcessorThread();
+        assert SYNC_EXECUTOR.isExecutingInThis();
 
         FileObject licenseRoot = getLicenseRoot();
         if (licenseRoot == null) {
@@ -53,7 +56,7 @@ public final class LicenseManager {
     }
 
     private void addLicense(File file, NbGradleProject project, LicenseHeaderInfo header) throws IOException {
-        assert SYNC_EXECUTOR.isRequestProcessorThread();
+        assert SYNC_EXECUTOR.isExecutingInThis();
 
         FileObject licenseRoot = getLicenseRoot();
         if (licenseRoot == null) {
@@ -82,9 +85,9 @@ public final class LicenseManager {
     }
 
     private void doUnregister(final File file) {
-        SYNC_EXECUTOR.execute(new Runnable() {
+        SYNC_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) throws IOException {
                 AtomicInteger fileCount = useCount.get(file);
                 if (fileCount == null) {
                     LOGGER.log(Level.WARNING, "Too many unregister call to LicenseManager.", new Exception());
@@ -93,20 +96,16 @@ public final class LicenseManager {
 
                 if (fileCount.decrementAndGet() == 0) {
                     useCount.remove(file);
-                    try {
-                        removeLicense(file);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex.getMessage(), ex);
-                    }
+                    removeLicense(file);
                 }
             }
-        });
+        }, null);
     }
 
     private void doRegister(final File file, final NbGradleProject project, final LicenseHeaderInfo header) {
-        SYNC_EXECUTOR.execute(new Runnable() {
+        SYNC_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void run() {
+            public void execute(CancellationToken cancelToken) throws IOException {
                 AtomicInteger fileCount = useCount.get(file);
                 if (fileCount == null) {
                     fileCount = new AtomicInteger(1);
@@ -115,15 +114,12 @@ public final class LicenseManager {
                 else {
                     fileCount.incrementAndGet();
                 }
-                try {
-                    if (fileCount.get() == 1) {
-                        addLicense(file, project, header);
-                    }
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
+
+                if (fileCount.get() == 1) {
+                    addLicense(file, project, header);
                 }
             }
-        });
+        }, null);
     }
 
     public Ref registerLicense(NbGradleProject project, LicenseHeaderInfo header) {
