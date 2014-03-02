@@ -40,9 +40,10 @@ public class IOTabMaintainerTest {
 
         String caption = "my-tab";
 
-        IOTabRef<Tab> tabRef = maintainer.getTab(1, caption);
-        Tab originalTab = tabRef.getTab();
-        tabRef.close();
+        Tab originalTab;
+        try (IOTabRef<Tab> tabRef = maintainer.getTab(1, caption)) {
+            originalTab = tabRef.getTab();
+        }
 
         assertEquals(caption, originalTab.caption);
 
@@ -54,18 +55,20 @@ public class IOTabMaintainerTest {
     public void testReturnsDifferentTabForDifferentKeys() {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
-        IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1");
-        Tab tab1 = tabRef1.getTab();
-
-        IOTabRef<Tab> tabRef2 = maintainer.getTab(2, "tab2");
-        Tab tab2 = tabRef2.getTab();
-
-        tabRef1.close();
+        Tab tab1;
+        IOTabRef<Tab> tabRef2;
+        Tab tab2;
+        try (IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1")) {
+            tab1 = tabRef1.getTab();
+            tabRef2 = maintainer.getTab(2, "tab2");
+            tab2 = tabRef2.getTab();
+        }
         tabRef2.close();
 
-        IOTabRef<Tab> tabRef3 = maintainer.getTab(3, "tab3");
-        Tab tab3 = tabRef3.getTab();
-        tabRef3.close();
+        Tab tab3;
+        try (IOTabRef<Tab> tabRef3 = maintainer.getTab(3, "tab3")) {
+            tab3 = tabRef3.getTab();
+        }
 
         assertEquals("tab1", tab1.caption);
         assertEquals("tab2", tab2.caption);
@@ -76,9 +79,10 @@ public class IOTabMaintainerTest {
     public void testDoesNotReturnClosedTab() {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
-        IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1");
-        Tab tab1 = tabRef1.getTab();
-        tabRef1.close();
+        Tab tab1;
+        try (IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1")) {
+            tab1 = tabRef1.getTab();
+        }
 
         tab1.close();
 

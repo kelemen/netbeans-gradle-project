@@ -300,10 +300,9 @@ public final class AsyncGradleTask implements Runnable {
 
                 TaskOutputDef outputDef = taskDef.getOutputDef();
 
-                IOTabRef<TaskIOTab> ioRef
-                        = IOTabs.taskTabs().getTab(outputDef.getKey(), outputDef.getCaption());
-
-                try {
+                TaskOutputKey outputDefKey = outputDef.getKey();
+                String outputDefCaption = outputDef.getCaption();
+                try (IOTabRef<TaskIOTab> ioRef = IOTabs.taskTabs().getTab(outputDefKey, outputDefCaption)) {
                     TaskIOTab tab = ioRef.getTab();
                     tab.setLastTask(buildItem.getSourceTaskDef(), adjust(taskDef));
                     tab.taskStarted();
@@ -320,8 +319,9 @@ public final class AsyncGradleTask implements Runnable {
                         }
                         printCommand(buildOutput, command, taskDef);
 
-                        OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab);
-                        try {
+                        try (OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab)) {
+                            assert outputRef != null; // Avoid warning
+
                             InputOutputWrapper io = tab.getIo();
                             io.getIo().select();
 
@@ -332,10 +332,6 @@ public final class AsyncGradleTask implements Runnable {
                                         buildOutput,
                                         io.getErrRef());
                             }
-                        } finally {
-                            // This close method will only forward the last lines
-                            // if they were not terminated with a line separator.
-                            outputRef.close();
                         }
                     } catch (Throwable ex) {
                         Level logLevel;
@@ -361,8 +357,6 @@ public final class AsyncGradleTask implements Runnable {
                     }
 
                     tab.taskCompleted();
-                } finally {
-                    ioRef.close();
                 }
                 buildItem.markFinished();
                 BuildExecutionSupport.registerFinishedItem(buildItem);

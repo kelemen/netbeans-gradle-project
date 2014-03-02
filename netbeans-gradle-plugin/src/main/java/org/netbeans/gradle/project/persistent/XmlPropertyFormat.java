@@ -108,14 +108,8 @@ final class XmlPropertyFormat {
     }
 
     private static void writeBytesToFile(File outputFile, byte[] content) throws IOException {
-        OutputStream output = null;
-        try {
-            output = new FileOutputStream(outputFile);
+        try (OutputStream output = new FileOutputStream(outputFile)) {
             output.write(content);
-        } finally {
-            if (output != null) {
-                output.close();
-            }
         }
     }
 

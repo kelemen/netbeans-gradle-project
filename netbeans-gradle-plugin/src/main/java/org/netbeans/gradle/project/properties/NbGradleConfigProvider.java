@@ -199,11 +199,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
         SavedProfileDef savedDef;
         try {
-            ObjectInputStream input = new ObjectInputStream(new FileInputStream(lastProfileFile));
-            try {
+            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(lastProfileFile))) {
                 savedDef = (SavedProfileDef)input.readObject();
-            } finally {
-                input.close();
             }
         } catch (Exception ex) {
             LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);
@@ -246,12 +243,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 if (parentFile != null) {
                     parentFile.mkdirs();
                 }
-
-                ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(lastProfileFile));
-                try {
+                try (FileOutputStream fileOutput = new FileOutputStream(lastProfileFile);
+                        ObjectOutputStream output = new ObjectOutputStream(fileOutput)) {
                     output.writeObject(savedDef);
-                } finally {
-                    output.close();
                 }
             } catch (IOException ex) {
                 LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);

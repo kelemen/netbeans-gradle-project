@@ -49,11 +49,10 @@ public final class JavaProjectReference implements Serializable {
         if (result == null) {
             FileObject projectDirObj = FileUtil.toFileObject(projectDir);
             try {
-                Closeable safeToOpen = NbGradleProjectFactory.safeToOpen(projectDir);
-                try {
+                try (Closeable safeToOpen = NbGradleProjectFactory.safeToOpen(projectDir)) {
+                    assert safeToOpen != null; // Avoid warning
+
                     result = ProjectManager.getDefault().findProject(projectDirObj);
-                } finally {
-                    safeToOpen.close();
                 }
             } catch (IOException ex) {
                 LOGGER.log(Level.INFO, "Failed to open project.", ex);

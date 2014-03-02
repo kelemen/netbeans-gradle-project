@@ -63,9 +63,9 @@ public final class OpenProjectsAction extends AbstractAction {
 
         try {
             ProjectManager projectManager = ProjectManager.getDefault();
+            try (Closeable safeToOpenKey = NbGradleProjectFactory.safeToOpen(projectDirObj)) {
+                assert safeToOpenKey != null; // Avoid warning
 
-            Closeable safeToOpenKey = NbGradleProjectFactory.safeToOpen(projectDirObj);
-            try {
                 // We have to clear this list because if the project
                 // does not have build.gradle, NetBeans might have
                 // already determined that the directory does not
@@ -81,8 +81,6 @@ public final class OpenProjectsAction extends AbstractAction {
                 }
                 OpenProjects.getDefault().open(new Project[]{subProject}, false);
 
-            } finally {
-                safeToOpenKey.close();
             }
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING,

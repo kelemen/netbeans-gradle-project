@@ -70,8 +70,9 @@ public final class SampleGradleProject implements Closeable {
 
     private Project getUnloadedProject(File projectDir) throws IOException {
         File normProjectDir = FileUtil.normalizeFile(projectDir);
-        Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(normProjectDir);
-        try {
+        try (Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(normProjectDir)) {
+            assert safeToOpenRef != null; // Avoid warning
+
             Project project = ProjectManager.getDefault().findProject(FileUtil.toFileObject(normProjectDir));
             if (project == null) {
                 throw new IllegalArgumentException("Project does not exist: " + normProjectDir);
@@ -80,8 +81,6 @@ public final class SampleGradleProject implements Closeable {
             return project;
         } catch (IOException ex) {
             throw Exceptions.throwUnchecked(ex);
-        } finally {
-            safeToOpenRef.close();
         }
     }
 

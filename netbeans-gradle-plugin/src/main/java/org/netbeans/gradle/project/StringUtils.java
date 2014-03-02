@@ -77,27 +77,18 @@ public final class StringUtils {
             classLoader = ClassLoader.getSystemClassLoader();
         }
 
-        InputStream resource = null;
-        try {
-            resource = classLoader.getResourceAsStream(resourcePath);
-            Reader reader = new InputStreamReader(resource, encoding);
-            try {
-                int bufferSize = 4096;
-                StringWriter writer = new StringWriter(bufferSize);
+        try (InputStream resource = classLoader.getResourceAsStream(resourcePath);
+                Reader reader = new InputStreamReader(resource, encoding)) {
 
-                char[] buffer = new char[bufferSize];
-                for (int readCount = reader.read(buffer); readCount > 0; readCount = reader.read(buffer)) {
-                    writer.write(buffer, 0, readCount);
-                }
+            int bufferSize = 4096;
+            StringWriter writer = new StringWriter(bufferSize);
 
-                return writer.toString();
-            } finally {
-                reader.close();
+            char[] buffer = new char[bufferSize];
+            for (int readCount = reader.read(buffer); readCount > 0; readCount = reader.read(buffer)) {
+                writer.write(buffer, 0, readCount);
             }
-        } finally {
-            if (resource != null) {
-                resource.close();
-            }
+
+            return writer.toString();
         }
     }
 
@@ -106,15 +97,8 @@ public final class StringUtils {
         if (parent != null) {
             FileUtil.createFolder(parent);
         }
-
-        OutputStream output = null;
-        try {
-            output = new FileOutputStream(file);
+        try (OutputStream output = new FileOutputStream(file)) {
             output.write(content.getBytes(encoding));
-        } finally {
-            if (output != null) {
-                output.close();
-            }
         }
     }
 
