@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -43,7 +44,7 @@ extends
     private final GradleProjectLogicalViewProvider parent;
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
     private final AtomicBoolean lastHasSubprojects;
-    private final List<NbListenerRef> listenerRegistrations;
+    private final List<ListenerRef> listenerRegistrations;
     private volatile boolean enableRefresh;
     private final AtomicBoolean hasPreventedRefresh;
 
@@ -93,7 +94,7 @@ extends
         });
     }
 
-    private NbListenerRef registerModelRefreshListener() {
+    private ListenerRef registerModelRefreshListener() {
         return parent.addChildModelRefreshListener(new ModelRefreshListener() {
             @Override
             public void startRefresh() {
@@ -186,10 +187,10 @@ extends
 
     @Override
     protected void removeNotify() {
-        Collection<NbListenerRef> toUnregister = new ArrayList<>(listenerRegistrations);
+        Collection<ListenerRef> toUnregister = new ArrayList<>(listenerRegistrations);
         listenerRegistrations.clear();
 
-        for (NbListenerRef listenerRef: toUnregister) {
+        for (ListenerRef listenerRef: toUnregister) {
             listenerRef.unregister();
         }
     }

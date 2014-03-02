@@ -15,9 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -29,6 +27,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventDispatcher;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -83,16 +85,14 @@ implements
 
     private final NbGradleProject project;
 
-    // TODO: When using JTrim replace this with proper event handling code.
-    private final Set<ModelRefreshListener> childRefreshListeners;
+    private final ListenerManager<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
     private final ChangeSupport refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
-        this.childRefreshListeners = Collections.newSetFromMap(
-                new ConcurrentHashMap<ModelRefreshListener, Boolean>());
+        this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
         this.refreshRequestListeners = new ChangeSupport(this);
     }
@@ -120,42 +120,26 @@ implements
         });
     }
 
-    public NbListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
+    public ListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        // To handle multiple registration of the same listener, etc.
-        final ModelRefreshListener wrapperListener = new ModelRefreshListener() {
-            @Override
-            public void startRefresh() {
-                listener.startRefresh();
-            }
-
-            @Override
-            public void endRefresh(boolean extensionsChanged) {
-                listener.endRefresh(extensionsChanged);
-            }
-        };
-
-        childRefreshListeners.add(wrapperListener);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                childRefreshListeners.remove(wrapperListener);
-            }
-        });
+        return childRefreshListeners.registerListener(listener);
     }
 
     @Override
     public void startRefresh() {
-        Collection<ModelRefreshListener> listeners
-                = new ArrayList<>(childRefreshListeners);
+        final List<ModelRefreshListener> listeners = new LinkedList<>();
+        childRefreshListeners.onEvent(new EventDispatcher<ModelRefreshListener, Void>() {
+            @Override
+            public void onEvent(ModelRefreshListener eventListener, Void arg) {
+                eventListener.startRefresh();
+                listeners.add(eventListener);
+            }
+        }, null);
+
         Collection<ModelRefreshListener> prevListeners = listenersToFinalize.getAndSet(listeners);
         if (prevListeners != null) {
             LOGGER.warning("startRefresh/endRefresh mismatch.");
-        }
-
-        for (ModelRefreshListener listener: listeners) {
-            listener.startRefresh();
         }
     }
 
