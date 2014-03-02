@@ -123,6 +123,10 @@ public final class GradleDaemonManager {
                 } finally {
                     progress.finish();
                 }
+
+                if (canceled) {
+                    LOGGER.log(Level.INFO, "Canceled task: {0}", origDisplayName);
+                }
             }
         });
     }
