@@ -69,7 +69,7 @@ public final class LicenseManager {
             return;
         }
 
-        project.tryWaitForLoadedProject();
+        project.waitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN);
         File licenseTemplateFile = FileUtil.normalizeFile(header.getLicenseTemplateFile(project));
         if (licenseTemplateFile == null) {
             return;

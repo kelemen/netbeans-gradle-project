@@ -17,7 +17,10 @@ import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
+import org.jtrim.concurrent.WaitableSignal;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -90,7 +93,7 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
-    private final WaitableInterruptibleSignal loadedAtLeastOnceSignal;
+    private final WaitableSignal loadedAtLeastOnceSignal;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
@@ -117,7 +120,7 @@ public final class NbGradleProject implements Project {
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
-        this.loadedAtLeastOnceSignal = new WaitableInterruptibleSignal();
+        this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
@@ -312,19 +315,23 @@ public final class NbGradleProject implements Project {
     }
 
     public boolean tryWaitForLoadedProject(long timeout, TimeUnit unit) {
-        checkCanWaitForProjectLoad();
-
-        // Ensure that the project is started to be loaded.
-        getCurrentModel();
-        return loadedAtLeastOnceSignal.tryWaitForSignal(timeout, unit);
+        return tryWaitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN, timeout, unit);
     }
 
-    public boolean tryWaitForLoadedProject() {
+    public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
         checkCanWaitForProjectLoad();
 
         // Ensure that the project is started to be loaded.
         getCurrentModel();
-        return loadedAtLeastOnceSignal.tryWaitForSignal();
+        return loadedAtLeastOnceSignal.tryWaitSignal(cancelToken, timeout, unit);
+    }
+
+    public void waitForLoadedProject(CancellationToken cancelToken) {
+        checkCanWaitForProjectLoad();
+
+        // Ensure that the project is started to be loaded.
+        getCurrentModel();
+        loadedAtLeastOnceSignal.waitSignal(cancelToken);
     }
 
     private void onModelChange() {
