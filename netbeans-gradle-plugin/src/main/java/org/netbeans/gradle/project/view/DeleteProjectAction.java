@@ -22,6 +22,7 @@ import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Cancellable;
@@ -57,10 +58,11 @@ public final class DeleteProjectAction extends AbstractAction {
         openProjects.close(toClose.toArray(new Project[0]));
     }
 
-    private void doRemoveProject() {
+    private void doRemoveProject(CancellationToken cancelToken) {
         try {
             closeAffectedProjects();
-            project.getProjectDirectory().delete();
+
+            NbFileUtils.deleteDirectory(cancelToken, project.getProjectDirectory());
         } catch (Exception ex) {
             LOGGER.log(Level.INFO, "There was an error while trying to remove the project.", ex);
             String title = NbStrings.getErrorDeleteProjectTitle();
@@ -96,7 +98,7 @@ public final class DeleteProjectAction extends AbstractAction {
         PROJECT_PROCESSOR.execute(cancel.getToken(), new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
-                doRemoveProject();
+                doRemoveProject(cancelToken);
             }
         }, new CleanupTask() {
             @Override
