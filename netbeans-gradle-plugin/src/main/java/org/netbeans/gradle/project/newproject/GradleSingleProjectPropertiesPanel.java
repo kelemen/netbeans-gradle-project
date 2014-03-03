@@ -67,11 +67,11 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
     }
 
     public void addChangeListener(ChangeListener listener) {
-        bckgValidator.addChangeListener(listener);
+        bckgValidator.currentProblemForSwing().addChangeListener(listener);
     }
 
     public void removeChangeListener(ChangeListener listener) {
-        bckgValidator.removeChangeListener(listener);
+        bckgValidator.currentProblemForSwing().removeChangeListener(listener);
     }
 
     public GradleSingleProjectConfig getConfig() {

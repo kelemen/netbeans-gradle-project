@@ -4,9 +4,9 @@ package org.netbeans.gradle.project.validate;
 import java.awt.Color;
 import java.util.regex.Pattern;
 import javax.swing.JLabel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.WizardDescriptor;
@@ -92,17 +92,19 @@ public final class Validators {
         };
     }
 
-    public static void connectLabelToProblems(
-            final BackgroundValidator validator,
+    public static ListenerRef connectLabelToProblems(
+            BackgroundValidator validator,
             final JLabel jLabel) {
         ExceptionHelper.checkNotNullArgument(validator, "validator");
         ExceptionHelper.checkNotNullArgument(jLabel, "jLabel");
 
         jLabel.setText("");
-        validator.addChangeListener(new ChangeListener() {
+
+        final PropertySource<Problem> validatorProblem = validator.currentProblem();
+        return validatorProblem.addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                Problem currentProblem = validator.getCurrentProblem();
+            public void run() {
+                Problem currentProblem = validatorProblem.getValue();
                 String message = currentProblem != null
                         ? currentProblem.getMessage()
                         : "";
@@ -137,17 +139,19 @@ public final class Validators {
         });
     }
 
-    public static void connectWizardDescriptorToProblems(
-            final BackgroundValidator validator,
+    public static ListenerRef connectWizardDescriptorToProblems(
+            BackgroundValidator validator,
             final WizardDescriptor wizard) {
         ExceptionHelper.checkNotNullArgument(validator, "validator");
         ExceptionHelper.checkNotNullArgument(wizard, "wizard");
 
         wizard.putProperty(WizardDescriptor.PROP_ERROR_MESSAGE, null);
-        validator.addChangeListener(new ChangeListener() {
+
+        final PropertySource<Problem> validatorProblem = validator.currentProblem();
+        return validatorProblem.addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                Problem currentProblem = validator.getCurrentProblem();
+            public void run() {
+                Problem currentProblem = validatorProblem.getValue();
                 String message = currentProblem != null
                         ? currentProblem.getMessage()
                         : "";

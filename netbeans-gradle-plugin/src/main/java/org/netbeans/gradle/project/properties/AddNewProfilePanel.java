@@ -68,11 +68,11 @@ public class AddNewProfilePanel extends javax.swing.JPanel {
     }
 
     public void addValidityChangeListener(ChangeListener listener) {
-        bckgValidator.addChangeListener(listener);
+        bckgValidator.currentProblemForSwing().addChangeListener(listener);
     }
 
     public void removeValidityChangeListener(ChangeListener listener) {
-        bckgValidator.removeChangeListener(listener);
+        bckgValidator.currentProblemForSwing().removeChangeListener(listener);
     }
 
     /**

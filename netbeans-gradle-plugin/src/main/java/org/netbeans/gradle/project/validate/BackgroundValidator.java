@@ -2,33 +2,45 @@ package org.netbeans.gradle.project.validate;
 
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.collections.Equality;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.event.EventDispatcher;
+import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingProperties;
+import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbTaskExecutors;
-import org.openide.util.ChangeSupport;
+
+import static org.jtrim.property.PropertyFactory.*;
 
 public final class BackgroundValidator {
     private static final MonitorableTaskExecutorService VALIDATOR_PROCESSOR
             = NbTaskExecutors.newExecutor("Gradle-NewProject-Validator-Processor", 1);
 
     private final AtomicReference<GroupValidator> validatorsRef;
-    private final ChangeSupport changes;
     private final UpdateTaskExecutor validationSubmitter;
     private final UpdateTaskExecutor validationExecutor;
-    private final UpdateTaskExecutor changeNotifier;
-    private final AtomicReference<Problem> currentProblemRef;
+
+    private final MutableProperty<Problem> currentProblem;
+    private final SwingPropertySource<Problem, ChangeListener> currentProblemForSwing;
 
     public BackgroundValidator() {
-        this.changes = new ChangeSupport(this);
         this.validationSubmitter = new SwingUpdateTaskExecutor(true);
         this.validationExecutor = new GenericUpdateTaskExecutor(VALIDATOR_PROCESSOR);
-        this.changeNotifier = new SwingUpdateTaskExecutor(true);
         this.validatorsRef = new AtomicReference<>(null);
-        this.currentProblemRef = new AtomicReference<>(null);
+        this.currentProblem = lazilySetProperty(memProperty((Problem)null, true), Equality.<Problem>referenceEquality());
+        this.currentProblemForSwing = SwingProperties.toSwingSource(currentProblem, new EventDispatcher<ChangeListener, Void>() {
+            @Override
+            public void onEvent(ChangeListener eventListener, Void arg) {
+                eventListener.stateChanged(new ChangeEvent(BackgroundValidator.this));
+            }
+        });
     }
 
     public void setValidators(GroupValidator validators) {
@@ -42,25 +54,12 @@ public final class BackgroundValidator {
         performValidation();
     }
 
-    public void addChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
+    public PropertySource<Problem> currentProblem() {
+        return currentProblem;
     }
 
-    public void removeChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
-    }
-
-    private void setCurrentProblem(Problem newProblem) {
-        Problem prevValue = currentProblemRef.getAndSet(newProblem);
-
-        if (prevValue != newProblem) {
-            changeNotifier.execute(new Runnable() {
-                @Override
-                public void run() {
-                    changes.fireChange();
-                }
-            });
-        }
+    public SwingPropertySource<Problem, ChangeListener> currentProblemForSwing() {
+        return currentProblemForSwing;
     }
 
     private Validator<Void> tryGetValidatorInput() {
@@ -81,7 +80,7 @@ public final class BackgroundValidator {
                 Problem problem = input != null
                         ? input.validateInput(null)
                         : Problem.severe("");
-                setCurrentProblem(problem);
+                currentProblem.setValue(problem);
             }
         });
     }
@@ -95,12 +94,8 @@ public final class BackgroundValidator {
         });
     }
 
-    public Problem getCurrentProblem() {
-        return currentProblemRef.get();
-    }
-
     public boolean isValid() {
-        Problem currentProblem = getCurrentProblem();
-        return currentProblem == null || currentProblem.getLevel() != Problem.Level.SEVERE;
+        Problem currentProblemValue = currentProblem.getValue();
+        return currentProblemValue == null || currentProblemValue.getLevel() != Problem.Level.SEVERE;
     }
 }
