@@ -16,7 +16,7 @@ import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
-import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -59,7 +59,7 @@ implements
     private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            if (GradleFileUtils.isParentOrSame(outputDirs.getClassesDir(), binaryRoot)) {
+            if (NbFileUtils.isParentOrSame(outputDirs.getClassesDir(), binaryRoot)) {
                 List<File> result = new LinkedList<>();
 
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {

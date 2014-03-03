@@ -20,7 +20,7 @@ import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDefMap;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableValue;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
-import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.SingleMethod;
 import org.openide.filesystems.FileObject;
@@ -63,7 +63,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
         for (JavaSourceSet sourceSet: sourceSets) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                    if (GradleFileUtils.isParentOrSame(sourceRoot, fileOfContext)) {
+                    if (NbFileUtils.isParentOrSame(sourceRoot, fileOfContext)) {
                         return sourceSet.getName();
                     }
                 }

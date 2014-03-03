@@ -7,6 +7,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -130,7 +131,7 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
             // ...... \\HASH_OF_SOURCE\\binary-sources.XXX
             // ...... \\HASH_OF_BINARY\\binary.XXX
 
-            FileObject binFile = GradleFileUtils.getFileFromASubDir(artifactRoot, binFileName);
+            FileObject binFile = NbFileUtils.getFileFromASubDir(artifactRoot, binFileName);
             return binFile != null
                     ? new URL[]{binFile.toURL()}
                     : NO_ROOTS;
@@ -169,7 +170,7 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
                     continue;
                 }
 
-                FileObject binFile = GradleFileUtils.getFileFromASubDir(binDir, binFileName);
+                FileObject binFile = NbFileUtils.getFileFromASubDir(binDir, binFileName);
                 if (binFile != null) {
                     return new URL[]{binFile.toURL()};
                 }

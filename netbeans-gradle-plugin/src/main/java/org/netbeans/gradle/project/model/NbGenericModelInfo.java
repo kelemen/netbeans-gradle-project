@@ -8,7 +8,7 @@ import java.io.Serializable;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -83,11 +83,11 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public FileObject tryGetBuildFileObj() {
-        return GradleFileUtils.asFileObject(getBuildFile());
+        return NbFileUtils.asFileObject(getBuildFile());
     }
 
     public FileObject tryGetSettingsFileObj() {
-        return GradleFileUtils.asFileObject(settingsFile);
+        return NbFileUtils.asFileObject(settingsFile);
     }
 
     public File getRootProjectDir() {

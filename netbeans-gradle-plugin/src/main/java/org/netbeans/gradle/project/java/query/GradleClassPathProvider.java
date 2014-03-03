@@ -41,7 +41,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
-import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -179,7 +179,7 @@ implements
 
     private boolean isInOneOf(File file, Collection<File> roots) {
         for (File root: roots) {
-            if (GradleFileUtils.isParentOrSame(root, file)) {
+            if (NbFileUtils.isParentOrSame(root, file)) {
                 return true;
             }
         }
