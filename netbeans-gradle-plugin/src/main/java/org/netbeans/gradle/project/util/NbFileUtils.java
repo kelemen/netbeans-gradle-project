@@ -2,6 +2,15 @@ package org.netbeans.gradle.project.util;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.utils.ExceptionHelper;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -61,6 +70,51 @@ public final class NbFileUtils {
             }
         }
         return false;
+    }
+
+    public static void deleteDirectory(final CancellationToken cancelToken, Path directory) throws IOException {
+        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+        ExceptionHelper.checkNotNullArgument(directory, "directory");
+
+        Files.walkFileTree(directory, new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                cancelToken.checkCanceled();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                cancelToken.checkCanceled();
+                Files.deleteIfExists(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                cancelToken.checkCanceled();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                cancelToken.checkCanceled();
+                Files.deleteIfExists(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    public static void deleteDirectory(CancellationToken cancelToken, FileObject directory) throws IOException {
+        ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+        ExceptionHelper.checkNotNullArgument(directory, "directory");
+
+        File asFile = FileUtil.toFile(directory);
+        if (asFile == null) {
+            throw new FileNotFoundException("Cannot find " + directory);
+        }
+
+        deleteDirectory(cancelToken, asFile.toPath());
     }
 
     private NbFileUtils() {
