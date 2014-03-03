@@ -45,22 +45,7 @@ public final class GroupValidator {
         ExceptionHelper.checkNotNullArgument(validator, "validator");
         ExceptionHelper.checkNotNullArgument(input, "input");
 
-        addValidator(validator, new InputCollector<InputType>() {
-            @Override
-            public InputType getInput() {
-                return input.getValue();
-            }
-        });
-    }
-
-    public <InputType> void addValidator(
-            Validator<InputType> validator,
-            InputCollector<? extends InputType> inputCollector) {
-
-        ExceptionHelper.checkNotNullArgument(validator, "validator");
-        ExceptionHelper.checkNotNullArgument(inputCollector, "inputCollector");
-
-        InputAndValidator<InputType> toAdd = new InputAndValidator<>(validator, inputCollector);
+        InputAndValidator<InputType> toAdd = new InputAndValidator<>(validator, input);
         mainLock.lock();
         try {
             validators.add(toAdd);
@@ -104,11 +89,11 @@ public final class GroupValidator {
 
     private static class InputAndValidator<InputType> {
         private final Validator<InputType> validator;
-        private final InputCollector<? extends InputType> collector;
+        private final PropertySource<? extends InputType> collector;
 
         public InputAndValidator(
                 Validator<InputType> validator,
-                InputCollector<? extends InputType> collector) {
+                PropertySource<? extends InputType> collector) {
             ExceptionHelper.checkNotNullArgument(validator, "validator");
             ExceptionHelper.checkNotNullArgument(collector, "collector");
 
@@ -117,7 +102,7 @@ public final class GroupValidator {
         }
 
         public Validator<Void> getValidatorWithInput() {
-            return new FetchedValidator<>(collector.getInput(), validator);
+            return new FetchedValidator<>(collector.getValue(), validator);
         }
     }
 

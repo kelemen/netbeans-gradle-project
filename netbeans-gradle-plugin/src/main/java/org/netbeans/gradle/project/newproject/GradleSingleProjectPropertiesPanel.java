@@ -29,7 +29,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
         validators = new GroupValidator();
         validators.addValidator(
                 NewProjectUtils.createClassNameValidator(true),
-                Validators.createCollector(jMainClassEdit));
+                Validators.trimmedText(jMainClassEdit));
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir(wizard));
 
@@ -59,7 +59,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
     public void addProjectLocationValidator(Validator<String> validator) {
         validators.addValidator(
                 validator,
-                Validators.createCollector(jProjectLocationEdit));
+                Validators.trimmedText(jProjectLocationEdit));
     }
 
     public void startValidation() {

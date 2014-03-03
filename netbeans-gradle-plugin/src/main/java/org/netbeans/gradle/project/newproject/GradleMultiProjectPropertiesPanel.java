@@ -27,10 +27,10 @@ public class GradleMultiProjectPropertiesPanel extends javax.swing.JPanel {
         validators = new GroupValidator();
         validators.addValidator(
                 NewProjectUtils.createGroupIdValidator(),
-                Validators.createCollector(jMavenGroupEdit));
+                Validators.trimmedText(jMavenGroupEdit));
         validators.addValidator(
                 NewProjectUtils.createVersionValidator(),
-                Validators.createCollector(jMavenVersionEdit));
+                Validators.trimmedText(jMavenVersionEdit));
 
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir(wizard));
 

@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.properties;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.GroupValidator;
@@ -26,7 +28,7 @@ public class AddNewProfilePanel extends javax.swing.JPanel {
         validators = new GroupValidator();
         validators.addValidator(
                 profileNameValidator(),
-                Validators.createCollector(jProfileEdit));
+                Validators.trimmedText(jProfileEdit));
 
         Validators.connectLabelToProblems(bckgValidator, jInfoLabel);
 

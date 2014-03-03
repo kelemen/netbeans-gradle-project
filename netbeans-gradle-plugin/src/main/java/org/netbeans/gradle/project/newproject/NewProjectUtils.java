@@ -285,10 +285,10 @@ public final class NewProjectUtils {
 
         validators.addValidator(
                 NewProjectUtils.createProjectNameValidator(),
-                Validators.createCollector(jProjectNameEdit));
+                Validators.trimmedText(jProjectNameEdit));
         validators.addValidator(
                 NewProjectUtils.createNewFolderValidator(),
-                Validators.createCollector(jProjectFolderEdit));
+                Validators.trimmedText(jProjectFolderEdit));
 
         DocumentListener validationPerformer = new DocumentListener() {
             @Override

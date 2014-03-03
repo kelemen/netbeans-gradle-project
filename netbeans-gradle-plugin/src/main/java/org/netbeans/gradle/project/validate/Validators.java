@@ -6,7 +6,11 @@ import java.util.regex.Pattern;
 import javax.swing.JLabel;
 import javax.swing.text.JTextComponent;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
+import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.WizardDescriptor;
@@ -14,17 +18,14 @@ import org.openide.WizardDescriptor;
 public final class Validators {
     private static final Pattern LEGAL_FILENAME_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]*");
 
-    public static InputCollector<String> createCollector(
-            final JTextComponent component) {
-        ExceptionHelper.checkNotNullArgument(component, "component");
-
-        return new InputCollector<String>() {
+    public static PropertySource<String> trimmedText(JTextComponent component) {
+        MutableProperty<String> property = SwingProperties.textProperty(component);
+        return PropertyFactory.convert(property, new ValueConverter<String, String>() {
             @Override
-            public String getInput() {
-                String result = component.getText();
-                return result != null ? result.trim() : "";
+            public String convert(String input) {
+                return input != null ? input.trim() : "";
             }
-        };
+        });
     }
 
     public static Validator<String> createNonEmptyValidator(
