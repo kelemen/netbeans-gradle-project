@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.query;
 
 import java.nio.charset.Charset;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

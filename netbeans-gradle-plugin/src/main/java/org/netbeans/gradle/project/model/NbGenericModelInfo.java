@@ -8,7 +8,7 @@ import java.io.Serializable;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.query.GradleFileUtils;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 

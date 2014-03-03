@@ -16,6 +16,7 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.GradleHomeRegistry;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;

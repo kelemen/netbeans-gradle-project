@@ -16,7 +16,7 @@ import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
-import org.netbeans.gradle.project.query.GradleFileUtils;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

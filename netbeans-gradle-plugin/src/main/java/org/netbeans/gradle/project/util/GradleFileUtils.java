@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.query;
+package org.netbeans.gradle.project.util;
 
 import java.io.File;
 import java.io.FileFilter;

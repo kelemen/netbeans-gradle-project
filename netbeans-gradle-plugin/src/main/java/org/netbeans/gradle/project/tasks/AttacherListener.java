@@ -29,7 +29,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.output.DebugTextListener;
-import org.netbeans.gradle.project.query.GradleFileUtils;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
