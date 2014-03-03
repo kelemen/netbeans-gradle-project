@@ -30,7 +30,7 @@ import javax.swing.WindowConstants;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {

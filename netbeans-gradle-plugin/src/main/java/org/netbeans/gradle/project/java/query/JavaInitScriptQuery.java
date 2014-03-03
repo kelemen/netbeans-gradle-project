@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.api.annotations.common.StaticResource;
-import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class JavaInitScriptQuery implements InitScriptQuery {
     @StaticResource

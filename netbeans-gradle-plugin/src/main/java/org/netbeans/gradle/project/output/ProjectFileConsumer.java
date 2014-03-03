@@ -6,7 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Utilities;
 import org.openide.windows.OutputListener;

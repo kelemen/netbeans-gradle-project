@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class DisplayedTaskVariable {
     private static final char START_TYPE_CHAR = '[';

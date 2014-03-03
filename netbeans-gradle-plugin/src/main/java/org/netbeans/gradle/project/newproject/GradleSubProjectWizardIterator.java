@@ -14,7 +14,7 @@ import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

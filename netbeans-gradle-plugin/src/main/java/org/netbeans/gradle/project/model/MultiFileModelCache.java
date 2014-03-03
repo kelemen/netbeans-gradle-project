@@ -8,8 +8,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.StringUtils;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache implements PersistentModelCache {
     private static final Charset UTF8 = Charset.forName("UTF-8");

@@ -18,7 +18,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class NamedSourceRoot {
     private static final Collator STR_CMP = Collator.getInstance();

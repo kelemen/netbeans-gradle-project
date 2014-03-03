@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-import org.jtrim.cancel.CancellationToken;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;

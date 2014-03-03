@@ -5,7 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.awt.HtmlBrowser;
 import org.openide.windows.OutputEvent;
 import org.openide.windows.OutputListener;

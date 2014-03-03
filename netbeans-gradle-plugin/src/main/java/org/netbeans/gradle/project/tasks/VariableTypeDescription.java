@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.util.Locale;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.StringUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class VariableTypeDescription {
     public static final String TYPE_NAME_STRING = "string";
