@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class GroupValidator {
@@ -36,6 +37,20 @@ public final class GroupValidator {
                 return new MostSevereValidator(fetchedValidators);
             }
         };
+    }
+
+    public <InputType> void addValidator(
+            Validator<InputType> validator,
+            final PropertySource<? extends InputType> input) {
+        ExceptionHelper.checkNotNullArgument(validator, "validator");
+        ExceptionHelper.checkNotNullArgument(input, "input");
+
+        addValidator(validator, new InputCollector<InputType>() {
+            @Override
+            public InputType getInput() {
+                return input.getValue();
+            }
+        });
     }
 
     public <InputType> void addValidator(
