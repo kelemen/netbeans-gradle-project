@@ -1,13 +1,12 @@
 package org.netbeans.gradle.project.validate;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
+import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.openide.util.ChangeSupport;
@@ -18,12 +17,16 @@ public final class BackgroundValidator {
 
     private final AtomicReference<GroupValidator> validatorsRef;
     private final ChangeSupport changes;
-    private final AtomicBoolean validationSubmitted;
+    private final UpdateTaskExecutor validationSubmitter;
+    private final UpdateTaskExecutor validationExecutor;
+    private final UpdateTaskExecutor changeNotifier;
     private final AtomicReference<Problem> currentProblemRef;
 
     public BackgroundValidator() {
         this.changes = new ChangeSupport(this);
-        this.validationSubmitted = new AtomicBoolean(false);
+        this.validationSubmitter = new SwingUpdateTaskExecutor(true);
+        this.validationExecutor = new GenericUpdateTaskExecutor(VALIDATOR_PROCESSOR);
+        this.changeNotifier = new SwingUpdateTaskExecutor(true);
         this.validatorsRef = new AtomicReference<>(null);
         this.currentProblemRef = new AtomicReference<>(null);
     }
@@ -51,7 +54,7 @@ public final class BackgroundValidator {
         Problem prevValue = currentProblemRef.getAndSet(newProblem);
 
         if (prevValue != newProblem) {
-            SwingUtilities.invokeLater(new Runnable() {
+            changeNotifier.execute(new Runnable() {
                 @Override
                 public void run() {
                     changes.fireChange();
@@ -60,31 +63,36 @@ public final class BackgroundValidator {
         }
     }
 
+    private Validator<Void> tryGetValidatorInput() {
+        assert SwingUtilities.isEventDispatchThread();
+
+        GroupValidator currentValidators = validatorsRef.get();
+        return GroupValidator != null
+                ? currentValidators.getInputCollector().getInput()
+                : null;
+    }
+
+    private void submitValidation() {
+        final Validator<Void> input = tryGetValidatorInput();
+
+        validationExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Problem problem = input != null
+                        ? input.validateInput(null)
+                        : Problem.severe("");
+                setCurrentProblem(problem);
+            }
+        });
+    }
+
     public void performValidation() {
-        if (validationSubmitted.compareAndSet(false, true)) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    validationSubmitted.set(false);
-                    final GroupValidator currentValidators = validatorsRef.get();
-                    if (currentValidators == null) {
-                        setCurrentProblem(Problem.severe(""));
-                        return;
-                    }
-
-                    final Validator<Void> input
-                            = currentValidators.getInputCollector().getInput();
-
-                    VALIDATOR_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                        @Override
-                        public void execute(CancellationToken cancelToken) {
-                            Problem problem = input.validateInput(null);
-                            setCurrentProblem(problem);
-                        }
-                    }, null);
-                }
-            });
-        }
+        validationSubmitter.execute(new Runnable() {
+            @Override
+            public void run() {
+                submitValidation();
+            }
+        });
     }
 
     public Problem getCurrentProblem() {
