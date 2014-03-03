@@ -179,7 +179,6 @@ public final class JavaTestMethodNode extends TestMethodNode {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            // TODO: Replace with CancellationToken in the future.
             final CancellationSource cancel = Cancellation.createCancellationSource();
             final ProgressHandle progress = ProgressHandleFactory.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
                 @Override
