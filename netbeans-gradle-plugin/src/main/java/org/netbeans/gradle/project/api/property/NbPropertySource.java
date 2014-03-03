@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.api.property;
 
 import javax.annotation.Nonnull;
+import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 
 /**
@@ -26,44 +27,17 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  *
  * @param <ValueType> the type of the value of the property
  */
-public interface NbPropertySource<ValueType> {
+public interface NbPropertySource<ValueType> extends PropertySource<ValueType> {
     /**
-     * Returns the current value of this property. Implementations of this
-     * method must not do any expensive computations or otherwise block. That
-     * is, this method might be called from threads where responsiveness is
-     * necessary, such as the <I>AWT Event Dispatch Thread</I>.
-     * <P>
-     * Implementation note:
-     * Implementations are recommended to only return the value of a
-     * {@code volatile} field (and possibly make defensive copy of the value).
-     * If the property is read from some other sources then a separate thread
-     * should read the value and update the volatile field.
-     *
-     * @return the current value of this property. This method may return
-     *   {@code null} if the implementation allows {@code null} values for a
-     *   property.
+     * {@inheritDoc }
      */
+    @Override
     public ValueType getValue();
 
     /**
-     * Registers a listener to be notified after the value of this property
-     * changes. In what context the listener is called is implementation
-     * dependent.
-     * <P>
-     * Once a listener is notified, it needs to get the current value of this
-     * property by calling the {@link #getValue() getValue()} method. Note that,
-     * it is allowed for implementations to notify the listener even if the
-     * property does not change. Also, implementations may merge listener
-     * notifications. That is, if a value is changed multiple times before it is
-     * notified, implementations may decide to only notify the listener once.
-     *
-     * @param listener the listener whose {@code run()} method is to be called
-     *   whenever the value of this property changes. This argument cannot be
-     *   {@code null}.
-     * @return the {@code NbListenerRef} which can be used to unregister the
-     *   currently added listener, so that it will no longer be notified of
-     *   subsequent changes. This method may never return {@code null}.
+     * {@inheritDoc }
      */
     @Nonnull
+    @Override
     public NbListenerRef addChangeListener(@Nonnull Runnable listener);
 }
