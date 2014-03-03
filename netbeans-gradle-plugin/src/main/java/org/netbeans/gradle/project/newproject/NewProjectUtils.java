@@ -4,18 +4,20 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
-import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
@@ -271,69 +273,43 @@ public final class NewProjectUtils {
         }
     }
 
-    public static void setupNewProjectValidators(
+    public static ListenerRef setupNewProjectValidators(
             final BackgroundValidator bckgValidator,
-            final GroupValidator validators,
             final JTextComponent jProjectNameEdit,
             final JTextComponent jProjectFolderEdit,
             final JTextComponent jProjectLocationEdit) {
         ExceptionHelper.checkNotNullArgument(bckgValidator, "bckgValidator");
-        ExceptionHelper.checkNotNullArgument(validators, "validators");
         ExceptionHelper.checkNotNullArgument(jProjectNameEdit, "jProjectNameEdit");
         ExceptionHelper.checkNotNullArgument(jProjectFolderEdit, "jProjectFolderEdit");
         ExceptionHelper.checkNotNullArgument(jProjectLocationEdit, "jProjectLocationEdit");
 
-        validators.addValidator(
+        PropertySource<String> projectName = Validators.trimmedText(jProjectNameEdit);
+        PropertySource<String> projectFolder = Validators.trimmedText(jProjectFolderEdit);
+        PropertySource<String> projectLocation = Validators.trimmedText(jProjectLocationEdit);
+
+        List<ListenerRef> refs = new LinkedList<>();
+
+        refs.add(bckgValidator.addValidator(
                 NewProjectUtils.createProjectNameValidator(),
-                Validators.trimmedText(jProjectNameEdit));
-        validators.addValidator(
+                projectName));
+        refs.add(bckgValidator.addValidator(
                 NewProjectUtils.createNewFolderValidator(),
-                Validators.trimmedText(jProjectFolderEdit));
+                projectFolder));
 
-        DocumentListener validationPerformer = new DocumentListener() {
+        Runnable projectFolderUpdater = new Runnable() {
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-        };
-        DocumentListener projectFolderEditor = new DocumentListener() {
-            private void updateFolderLocation() {
+            public void run() {
                 File location = new File(
                         jProjectLocationEdit.getText().trim(),
                         jProjectNameEdit.getText().trim());
                 jProjectFolderEdit.setText(location.getPath());
             }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateFolderLocation();
-            }
         };
-        jProjectNameEdit.getDocument().addDocumentListener(projectFolderEditor);
-        jProjectLocationEdit.getDocument().addDocumentListener(projectFolderEditor);
 
-        jProjectNameEdit.getDocument().addDocumentListener(validationPerformer);
-        jProjectLocationEdit.getDocument().addDocumentListener(validationPerformer);
+        refs.add(projectName.addChangeListener(projectFolderUpdater));
+        refs.add(projectLocation.addChangeListener(projectFolderUpdater));
+
+        return ListenerRegistries.combineListenerRefs(refs.toArray(new ListenerRef[refs.size()]));
     }
 
     private NewProjectUtils() {

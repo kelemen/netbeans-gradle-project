@@ -1,19 +1,17 @@
 package org.netbeans.gradle.project.newproject;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
-import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
 import org.openide.WizardDescriptor;
 
 @SuppressWarnings("serial")
 public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel {
-
-    private final GroupValidator validators;
+    private final AtomicBoolean started;
     private final BackgroundValidator bckgValidator;
     private final WizardDescriptor wizard;
 
@@ -21,49 +19,34 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
      * Creates new form GradleSingleProjectPropertiesPanel
      */
     public GradleSingleProjectPropertiesPanel(WizardDescriptor wizard) {
-        bckgValidator = new BackgroundValidator();
+        this.started = new AtomicBoolean(false);
+        this.bckgValidator = new BackgroundValidator();
         this.wizard = wizard;
 
         initComponents();
 
-        validators = new GroupValidator();
-        validators.addValidator(
-                NewProjectUtils.createClassNameValidator(true),
-                Validators.trimmedText(jMainClassEdit));
-
         jProjectLocationEdit.setText(NewProjectUtils.getDefaultProjectDir(wizard));
-
-        Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
-        NewProjectUtils.setupNewProjectValidators(bckgValidator, validators,
-                jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
-
-        DocumentListener validationPerformer = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-        };
-        jMainClassEdit.getDocument().addDocumentListener(validationPerformer);
     }
 
-    public void addProjectLocationValidator(Validator<String> validator) {
-        validators.addValidator(
+    public ListenerRef addProjectLocationValidator(Validator<String> validator) {
+        return bckgValidator.addValidator(
                 validator,
                 Validators.trimmedText(jProjectLocationEdit));
     }
 
     public void startValidation() {
-        bckgValidator.setValidators(validators);
+        if (!started.compareAndSet(false, true)) {
+            return;
+        }
+
+        bckgValidator.addValidator(
+                NewProjectUtils.createClassNameValidator(true),
+                Validators.trimmedText(jMainClassEdit));
+
+        NewProjectUtils.setupNewProjectValidators(bckgValidator,
+                jProjectNameEdit, jProjectFolderEdit, jProjectLocationEdit);
+
+        Validators.connectWizardDescriptorToProblems(bckgValidator, wizard);
     }
 
     public void addChangeListener(ChangeListener listener) {

@@ -1,53 +1,26 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.swing.SwingProperties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
-import org.netbeans.gradle.project.validate.GroupValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
 
 @SuppressWarnings("serial")
 public class AddNewProfilePanel extends javax.swing.JPanel {
+    private final AtomicBoolean started;
     private final BackgroundValidator bckgValidator;
-    private final GroupValidator validators;
 
     /**
      * Creates new form AddNewProfilePanel
      */
     public AddNewProfilePanel() {
+        this.started = new AtomicBoolean(false);
+        this.bckgValidator = new BackgroundValidator();
+
         initComponents();
         jInfoLabel.setText("");
-
-        bckgValidator = new BackgroundValidator();
-
-        validators = new GroupValidator();
-        validators.addValidator(
-                profileNameValidator(),
-                Validators.trimmedText(jProfileEdit));
-
-        Validators.connectLabelToProblems(bckgValidator, jInfoLabel);
-
-        jProfileEdit.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                bckgValidator.performValidation();
-            }
-        });
     }
 
     private static Validator<String> profileNameValidator() {
@@ -57,7 +30,15 @@ public class AddNewProfilePanel extends javax.swing.JPanel {
     }
 
     public void startValidation() {
-        bckgValidator.setValidators(validators);
+        if (!started.compareAndSet(false, true)) {
+            return;
+        }
+
+        bckgValidator.addValidator(
+                profileNameValidator(),
+                Validators.trimmedText(jProfileEdit));
+
+        Validators.connectLabelToProblems(bckgValidator, jInfoLabel);
     }
 
     public String getProfileName() {
