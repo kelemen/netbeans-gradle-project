@@ -7,9 +7,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.WaitableSignal;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.WaitableInterruptibleSignal;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
@@ -93,14 +93,14 @@ public final class GradleActionProvider implements ActionProvider {
             properties = project.getLoadedProperties(cancelToken);
         }
         else {
-            final WaitableInterruptibleSignal loadedSignal = new WaitableInterruptibleSignal();
+            final WaitableSignal loadedSignal = new WaitableSignal();
             properties = project.getPropertiesForProfile(config.getProfileDef(), true, new PropertiesLoadListener() {
                 @Override
                 public void loadedProperties(ProjectProperties properties) {
                     loadedSignal.signal();
                 }
             });
-            loadedSignal.tryWaitForSignal();
+            loadedSignal.waitSignal(cancelToken);
         }
         return properties;
     }
