@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.gradle.project.NbStrings;
@@ -59,20 +58,12 @@ public class AddNewProfilePanel extends javax.swing.JPanel {
         bckgValidator.setValidators(validators);
     }
 
-    public boolean isValidProfileName() {
-        return bckgValidator.isValid();
-    }
-
     public String getProfileName() {
         return jProfileEdit.getText().trim();
     }
 
-    public void addValidityChangeListener(ChangeListener listener) {
-        bckgValidator.currentProblemForSwing().addChangeListener(listener);
-    }
-
-    public void removeValidityChangeListener(ChangeListener listener) {
-        bckgValidator.currentProblemForSwing().removeChangeListener(listener);
+    public org.jtrim.property.PropertySource<Boolean> validProfileName() {
+        return bckgValidator.valid();
     }
 
     /**

@@ -820,13 +820,14 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 null,
                 null);
 
-        panel.addValidityChangeListener(new ChangeListener() {
+        final org.jtrim.property.PropertySource<Boolean> validProfileName = panel.validProfileName();
+        validProfileName.addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                dlgDescriptor.setValid(panel.isValidProfileName());
+            public void run() {
+                dlgDescriptor.setValid(validProfileName.getValue());
             }
         });
-        dlgDescriptor.setValid(panel.isValidProfileName());
+        dlgDescriptor.setValid(validProfileName.getValue());
 
         Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
         dlg.pack();

@@ -10,7 +10,9 @@ import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
@@ -29,6 +31,7 @@ public final class BackgroundValidator {
 
     private final MutableProperty<Problem> currentProblem;
     private final SwingPropertySource<Problem, ChangeListener> currentProblemForSwing;
+    private final PropertySource<Boolean> valid;
 
     public BackgroundValidator() {
         this.validationSubmitter = new SwingUpdateTaskExecutor(true);
@@ -39,6 +42,12 @@ public final class BackgroundValidator {
             @Override
             public void onEvent(ChangeListener eventListener, Void arg) {
                 eventListener.stateChanged(new ChangeEvent(BackgroundValidator.this));
+            }
+        });
+        this.valid = PropertyFactory.convert(currentProblem, new ValueConverter<Problem, Boolean>() {
+            @Override
+            public Boolean convert(Problem input) {
+                return input == null || input.getLevel() != Problem.Level.SEVERE;
             }
         });
     }
@@ -94,8 +103,11 @@ public final class BackgroundValidator {
         });
     }
 
+    public PropertySource<Boolean> valid() {
+        return valid;
+    }
+
     public boolean isValid() {
-        Problem currentProblemValue = currentProblem.getValue();
-        return currentProblemValue == null || currentProblemValue.getLevel() != Problem.Level.SEVERE;
+        return valid.getValue();
     }
 }
