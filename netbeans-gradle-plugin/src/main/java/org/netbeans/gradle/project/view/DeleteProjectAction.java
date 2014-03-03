@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationController;
+import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
@@ -22,6 +24,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Cancellable;
 
 public final class DeleteProjectAction extends AbstractAction {
     private static final long serialVersionUID = -386797460711624644L;
@@ -66,6 +69,17 @@ public final class DeleteProjectAction extends AbstractAction {
         }
     }
 
+    private ProgressHandle createProgress(final CancellationController cancelController) {
+        String caption = NbStrings.getDeleteProjectProgress(project.getDisplayName());
+        return ProgressHandleFactory.createHandle(caption, new Cancellable() {
+            @Override
+            public boolean cancel() {
+                cancelController.cancel();
+                return true;
+            }
+        });
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object[] answers = {NbStrings.getYesOption(), NbStrings.getNoOption()};
@@ -75,11 +89,11 @@ public final class DeleteProjectAction extends AbstractAction {
             return;
         }
 
-        final ProgressHandle progress
-                = ProgressHandleFactory.createHandle(NbStrings.getDeleteProjectProgress(project.getDisplayName()));
+        CancellationSource cancel = Cancellation.createCancellationSource();
+        final ProgressHandle progress = createProgress(cancel.getController());
 
         progress.start();
-        PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        PROJECT_PROCESSOR.execute(cancel.getToken(), new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 doRemoveProject();
