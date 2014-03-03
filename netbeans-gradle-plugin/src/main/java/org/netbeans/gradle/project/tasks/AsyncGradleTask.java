@@ -505,7 +505,11 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private AsyncGradleTask adjust(GradleTaskDef taskDef) {
-        return adjust(new CommandAdjusterFactory(taskDefFactroy, taskDef));
+        return adjust(GradleCommandSpec.adjustFactory(
+                taskDefFactroy,
+                taskDef.getTaskNames(),
+                taskDef.getArguments(),
+                taskDef.getJvmArguments()));
     }
 
     private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
@@ -633,40 +637,6 @@ public final class AsyncGradleTask implements Runnable {
         @Override
         public void stopRunning() {
             // no-op
-        }
-    }
-
-    private static final class CommandAdjusterFactory implements GradleCommandSpecFactory {
-        private final GradleCommandSpecFactory source;
-        private final List<String> taskNames;
-        private final List<String> arguments;
-        private final List<String> jvmArguments;
-
-        public CommandAdjusterFactory(GradleCommandSpecFactory source, GradleTaskDef taskDef) {
-            this.source = source;
-            this.taskNames = taskDef.getTaskNames();
-            this.arguments = taskDef.getArguments();
-            this.jvmArguments = taskDef.getJvmArguments();
-        }
-
-        @Override
-        public String getDisplayName() {
-            return source.getDisplayName();
-        }
-
-        @Override
-        public GradleCommandSpec tryCreateCommandSpec(CancellationToken cancelToken) throws Exception {
-            GradleCommandSpec original = source.tryCreateCommandSpec(cancelToken);
-            if (original == null) {
-                return null;
-            }
-
-            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original.getSource());
-            result.setTaskNames(taskNames);
-            result.setArguments(arguments);
-            result.setJvmArguments(jvmArguments);
-
-            return new GradleCommandSpec(original.getSource(), result.create());
         }
     }
 

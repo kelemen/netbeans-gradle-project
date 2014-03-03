@@ -96,6 +96,17 @@ public final class IOTabs {
                     false);
         }
 
+        private static GradleCommandSpecFactory adjust(
+                GradleCommandSpecFactory source,
+                GradleCommandTemplate template) {
+
+            return GradleCommandSpec.adjustFactory(
+                    source,
+                    template.getTasks(),
+                    template.getArguments(),
+                    template.getJvmArguments());
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             GradleTaskDef lastSource = getLastSourceTask();
@@ -124,47 +135,10 @@ public final class IOTabs {
                         = panel.tryGetGradleCommand(lastSource.getCommandName());
                 AsyncGradleTask newTask = new AsyncGradleTask(
                         task.getProject(),
-                        new CommandAdjusterFactory(task.getTaskDefFactroy(), template),
+                        adjust(task.getTaskDefFactroy(), template),
                         task.getListener());
                 newTask.run();
             }
-        }
-    }
-
-    private static final class CommandAdjusterFactory implements GradleCommandSpecFactory {
-        private final GradleCommandSpecFactory source;
-        private final List<String> taskNames;
-        private final List<String> arguments;
-        private final List<String> jvmArguments;
-
-        public CommandAdjusterFactory(
-                GradleCommandSpecFactory source,
-                GradleCommandTemplate template) {
-
-            this.source = source;
-            this.taskNames = template.getTasks();
-            this.arguments = template.getArguments();
-            this.jvmArguments = template.getJvmArguments();
-        }
-
-        @Override
-        public String getDisplayName() {
-            return source.getDisplayName();
-        }
-
-        @Override
-        public GradleCommandSpec tryCreateCommandSpec(CancellationToken cancelToken) throws Exception {
-            GradleCommandSpec original = source.tryCreateCommandSpec(cancelToken);
-            if (original == null) {
-                return null;
-            }
-
-            GradleTaskDef.Builder result = new GradleTaskDef.Builder(original.getSource());
-            result.setTaskNames(taskNames);
-            result.setArguments(arguments);
-            result.setJvmArguments(jvmArguments);
-
-            return new GradleCommandSpec(result.create(), null);
         }
     }
 
