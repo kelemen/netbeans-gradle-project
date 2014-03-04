@@ -25,11 +25,11 @@ public class GlobalGradleSettingsTest {
         return Collections.unmodifiableList(Arrays.asList(elements));
     }
 
-    private static <T> void testGetAndSet(MutableProperty<T> property, T value) {
+    private static <T> void testGetAndSet(OldMutableProperty<T> property, T value) {
         testGetAndSet(property, value, value);
     }
 
-    private static <T> void testGetAndSet(MutableProperty<T> property, T value, T expected) {
+    private static <T> void testGetAndSet(OldMutableProperty<T> property, T value, T expected) {
         property.setValue(value);
         assertEquals(expected, property.getValue());
     }

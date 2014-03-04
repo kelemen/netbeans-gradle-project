@@ -3,15 +3,15 @@ package org.netbeans.gradle.project.properties;
 import org.jtrim.event.ListenerRef;
 import org.w3c.dom.Element;
 
-public final class DomElementProperty implements MutableProperty<Element> {
-    private final MutableProperty<Element> wrapped;
+public final class DomElementProperty implements OldMutableProperty<Element> {
+    private final OldMutableProperty<Element> wrapped;
 
     public DomElementProperty() {
         this.wrapped = new DefaultMutableProperty<>(new DomElementSource(null, true), true);
     }
 
     @Override
-    public void setValueFromSource(PropertySource<? extends Element> source) {
+    public void setValueFromSource(OldPropertySource<? extends Element> source) {
         wrapped.setValueFromSource(source);
     }
 

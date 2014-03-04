@@ -7,11 +7,11 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class DefaultMutableProperty<ValueType> implements MutableProperty<ValueType> {
+public final class DefaultMutableProperty<ValueType> implements OldMutableProperty<ValueType> {
     private static final Logger LOGGER = Logger.getLogger(DefaultMutableProperty.class.getName());
 
     private final boolean allowNulls;
-    private volatile PropertySource<? extends ValueType> valueSource;
+    private volatile OldPropertySource<? extends ValueType> valueSource;
     private final PropertySourceProxy<ValueType> valueSourceRef;
 
     public DefaultMutableProperty(ValueType value, boolean defaultValue, boolean allowNulls) {
@@ -19,7 +19,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     }
 
     public DefaultMutableProperty(
-            final PropertySource<? extends ValueType> initialValue,
+            final OldPropertySource<? extends ValueType> initialValue,
             boolean allowNulls) {
         ExceptionHelper.checkNotNullArgument(initialValue, "initialValue");
 
@@ -28,7 +28,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
         this.valueSourceRef = PropertyFactory.proxySource(initialValue);
     }
 
-    private static <ValueType> PropertySource<? extends ValueType> asSource(
+    private static <ValueType> OldPropertySource<? extends ValueType> asSource(
             ValueType value, boolean defaultValue, boolean allowNulls) {
         return new ConstPropertySource<>(
                 allowNulls ? value : checkNull(value),
@@ -41,7 +41,7 @@ public final class DefaultMutableProperty<ValueType> implements MutableProperty<
     }
 
     @Override
-    public void setValueFromSource(PropertySource<? extends ValueType> source) {
+    public void setValueFromSource(OldPropertySource<? extends ValueType> source) {
         valueSourceRef.replaceSource(source);
     }
 

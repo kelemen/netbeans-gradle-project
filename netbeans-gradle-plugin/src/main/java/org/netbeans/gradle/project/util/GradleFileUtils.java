@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
-import org.netbeans.gradle.project.properties.PropertySource;
+import org.netbeans.gradle.project.properties.OldPropertySource;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -20,7 +20,7 @@ public final class GradleFileUtils {
 
     private static final File NORM_USER_HOME = getUserHome();
 
-    public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
+    public static final OldPropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
@@ -49,8 +49,8 @@ public final class GradleFileUtils {
         return new File(NORM_USER_HOME, ".gradle");
     }
 
-    private static PropertySource<File> getGradleUserHome() {
-        return new PropertySource<File>() {
+    private static OldPropertySource<File> getGradleUserHome() {
+        return new OldPropertySource<File>() {
             @Override
             public File getValue() {
                 File value = GlobalGradleSettings.getGradleUserHomeDir().getValue();

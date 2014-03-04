@@ -122,7 +122,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         return null;
     }
 
-    private MutableProperty<PredefinedTask> getTaskProperty(BuiltInTaskItem item) {
+    private OldMutableProperty<PredefinedTask> getTaskProperty(BuiltInTaskItem item) {
         if (item == null) {
             return null;
         }
@@ -130,7 +130,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     }
 
     private PredefinedTask getCurrentValue(String command) {
-        MutableProperty<PredefinedTask> property = projectProperties.tryGetBuiltInTask(command);
+        OldMutableProperty<PredefinedTask> property = projectProperties.tryGetBuiltInTask(command);
         PredefinedTask result = null;
         if (property != null) {
             result = property.getValue();
@@ -203,7 +203,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
             defaultValue = savedTask.isInherited();
         }
         else {
-            MutableProperty<PredefinedTask> taskProperty = getTaskProperty(selectedItem);
+            OldMutableProperty<PredefinedTask> taskProperty = getTaskProperty(selectedItem);
             task = taskProperty != null ? taskProperty.getValue() : null;
             defaultValue = taskProperty != null ? taskProperty.isDefault() : false;
         }
@@ -222,7 +222,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         setEnabledDisabledState();
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
+    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
         return new ConstPropertySource<>(value, defaultValue);
     }
 
@@ -231,7 +231,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
 
         for (SavedTask task: toSaveTasks.values()) {
             String command = task.getCommand();
-            MutableProperty<PredefinedTask> taskProperty = projectProperties.tryGetBuiltInTask(command);
+            OldMutableProperty<PredefinedTask> taskProperty = projectProperties.tryGetBuiltInTask(command);
             if (taskProperty != null) {
                 if (task.isInherited()) {
                     PredefinedTask defaultTask = getCurrentValue(command);

@@ -5,13 +5,13 @@ import org.w3c.dom.Element;
 
 public final class AuxConfigProperty {
     private final DomElementKey key;
-    private final MutableProperty<Element> property;
+    private final OldMutableProperty<Element> property;
 
-    public AuxConfigProperty(String elementName, String namespace, MutableProperty<Element> property) {
+    public AuxConfigProperty(String elementName, String namespace, OldMutableProperty<Element> property) {
         this(new DomElementKey(elementName, namespace), property);
     }
 
-    public AuxConfigProperty(DomElementKey key, MutableProperty<Element> property) {
+    public AuxConfigProperty(DomElementKey key, OldMutableProperty<Element> property) {
         ExceptionHelper.checkNotNullArgument(key, "key");
         ExceptionHelper.checkNotNullArgument(property, "property");
 
@@ -23,7 +23,7 @@ public final class AuxConfigProperty {
         return key;
     }
 
-    public MutableProperty<Element> getProperty() {
+    public OldMutableProperty<Element> getProperty() {
         return property;
     }
 }

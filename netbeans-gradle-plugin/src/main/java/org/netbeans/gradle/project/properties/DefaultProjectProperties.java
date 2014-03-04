@@ -35,7 +35,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+    public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader() {
         return new UnmodifiableProperty<LicenseHeaderInfo>("LicenseHeader") {
             @Override
             public LicenseHeaderInfo getValue() {
@@ -64,7 +64,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<String> getSourceLevel() {
+    public OldMutableProperty<String> getSourceLevel() {
         return new UnmodifiableProperty<String>("SourceLevel") {
             @Override
             public String getValue() {
@@ -91,13 +91,13 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<ProjectPlatform> getPlatform() {
+    public OldMutableProperty<ProjectPlatform> getPlatform() {
         return new UnmodifiableProperty<ProjectPlatform>("Platform") {
             // This is here only to register and remove listeners because
             // it can detect changes in the list of platforms defined in
             // NetBeans. We will never request the value of this property
             // source, so the actual parameters do not matter.
-            private final PropertySource<?> platformListHelper
+            private final OldPropertySource<?> platformListHelper
                     = DefaultPropertySources.findPlatformSource("j2se", "1.3", true);
 
             @Override
@@ -125,17 +125,17 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getScriptPlatform() {
+    public OldMutableProperty<JavaPlatform> getScriptPlatform() {
         return new WrappedUnmodifiableProperty<>("ScriptPlatform", GlobalGradleSettings.getGradleJdk());
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleLocation() {
+    public OldMutableProperty<GradleLocation> getGradleLocation() {
         return new WrappedUnmodifiableProperty<>("GradleLocation", GlobalGradleSettings.getGradleHome());
     }
 
     @Override
-    public MutableProperty<Charset> getSourceEncoding() {
+    public OldMutableProperty<Charset> getSourceEncoding() {
         return new UnmodifiableProperty<Charset>("SourceEncoding") {
             @Override
             public Charset getValue() {
@@ -145,7 +145,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+    public OldMutableProperty<List<PredefinedTask>> getCommonTasks() {
         return new UnmodifiableProperty<List<PredefinedTask>>("CommonTasks") {
             @Override
             public List<PredefinedTask> getValue() {
@@ -169,7 +169,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+    public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
         ProfileDef profile = project.getCurrentProfile().getProfileDef();
         GradleCommandTemplate commandTemplate
                 = project.getMergedCommandQuery().tryGetDefaultGradleCommand(profile, command);
@@ -191,7 +191,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<Void> getAuxConfigListener() {
+    public OldMutableProperty<Void> getAuxConfigListener() {
         return new UnmodifiableProperty<Void>("AuxConfigListener") {
             @Override
             public Void getValue() {
@@ -224,9 +224,9 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     private static final class WrappedUnmodifiableProperty<ValueType> extends UnmodifiableProperty<ValueType> {
-        private final MutableProperty<ValueType> wrapped;
+        private final OldMutableProperty<ValueType> wrapped;
 
-        public WrappedUnmodifiableProperty(String propertyName, MutableProperty<ValueType> wrapped) {
+        public WrappedUnmodifiableProperty(String propertyName, OldMutableProperty<ValueType> wrapped) {
             super(propertyName);
 
             ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
@@ -244,7 +244,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         }
     }
 
-    private static abstract class UnmodifiableProperty<ValueType> implements MutableProperty<ValueType> {
+    private static abstract class UnmodifiableProperty<ValueType> implements OldMutableProperty<ValueType> {
         private final String propertyName;
 
         public UnmodifiableProperty(String propertyName) {
@@ -253,7 +253,7 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         }
 
         @Override
-        public final void setValueFromSource(PropertySource<? extends ValueType> source) {
+        public final void setValueFromSource(OldPropertySource<? extends ValueType> source) {
             LOGGER.log(Level.WARNING, "Attempting to modify a default property: {0}", propertyName);
         }
 

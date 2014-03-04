@@ -1,8 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 
-public interface PropertySource<ValueType> extends org.jtrim.property.PropertySource<ValueType> {
+public interface OldPropertySource<ValueType> extends PropertySource<ValueType> {
     @Override
     public ValueType getValue();
 

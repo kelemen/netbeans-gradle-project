@@ -5,7 +5,7 @@ import org.jtrim.event.UnregisteredListenerRef;
 
 public final class ConstPropertySource<ValueType>
 implements
-        PropertySource<ValueType> {
+        OldPropertySource<ValueType> {
 
     private final ValueType value;
     private final boolean defaultValue;

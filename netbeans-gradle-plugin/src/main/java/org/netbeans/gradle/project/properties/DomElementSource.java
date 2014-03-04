@@ -4,7 +4,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.event.UnregisteredListenerRef;
 import org.w3c.dom.Element;
 
-public final class DomElementSource implements PropertySource<Element> {
+public final class DomElementSource implements OldPropertySource<Element> {
     private final Element element;
     private final boolean defaultValue;
 

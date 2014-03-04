@@ -1,15 +1,14 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class FallbackProperty<ValueType> implements MutableProperty<ValueType> {
-    private final MutableProperty<ValueType> mainValue;
-    private final MutableProperty<ValueType> defaultValue;
+public final class FallbackProperty<ValueType> implements OldMutableProperty<ValueType> {
+    private final OldMutableProperty<ValueType> mainValue;
+    private final OldMutableProperty<ValueType> defaultValue;
 
-    public FallbackProperty(MutableProperty<ValueType> mainValue, MutableProperty<ValueType> defaultValue) {
+    public FallbackProperty(OldMutableProperty<ValueType> mainValue, OldMutableProperty<ValueType> defaultValue) {
         ExceptionHelper.checkNotNullArgument(mainValue, "mainValue");
         ExceptionHelper.checkNotNullArgument(defaultValue, "defaultValue");
 
@@ -18,7 +17,7 @@ public final class FallbackProperty<ValueType> implements MutableProperty<ValueT
     }
 
     @Override
-    public void setValueFromSource(PropertySource<? extends ValueType> source) {
+    public void setValueFromSource(OldPropertySource<? extends ValueType> source) {
         mainValue.setValueFromSource(source);
     }
 

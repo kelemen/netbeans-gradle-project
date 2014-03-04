@@ -23,14 +23,14 @@ public final class PropertiesSnapshot {
     private static final Logger LOGGER = Logger.getLogger(PropertiesSnapshot.class.getName());
 
     public static final class Builder {
-        private PropertySource<String> sourceLevel;
-        private PropertySource<ProjectPlatform> platform;
-        private PropertySource<JavaPlatform> scriptPlatform;
-        private PropertySource<GradleLocation> gradleHome;
-        private PropertySource<Charset> sourceEncoding;
-        private PropertySource<LicenseHeaderInfo> licenseHeader;
-        private PropertySource<List<PredefinedTask>> commonTasks;
-        private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
+        private OldPropertySource<String> sourceLevel;
+        private OldPropertySource<ProjectPlatform> platform;
+        private OldPropertySource<JavaPlatform> scriptPlatform;
+        private OldPropertySource<GradleLocation> gradleHome;
+        private OldPropertySource<Charset> sourceEncoding;
+        private OldPropertySource<LicenseHeaderInfo> licenseHeader;
+        private OldPropertySource<List<PredefinedTask>> commonTasks;
+        private final Map<String, OldPropertySource<PredefinedTask>> builtInTasks;
         private final List<AuxConfigSource> auxProperties;
 
         public Builder() {
@@ -60,7 +60,7 @@ public final class PropertiesSnapshot {
         public void addAuxProperty(AuxConfigProperty auxProperty) {
             ExceptionHelper.checkNotNullArgument(auxProperty, "auxProperty");
 
-            MutableProperty<Element> property = auxProperty.getProperty();
+            OldMutableProperty<Element> property = auxProperty.getProperty();
             auxProperties.add(new AuxConfigSource(
                     auxProperty.getKey(),
                     new DomElementSource(property.getValue(), property.isDefault())));
@@ -70,68 +70,68 @@ public final class PropertiesSnapshot {
             return new ArrayList<>(auxProperties);
         }
 
-        public void setBuiltInTask(String command, PropertySource<PredefinedTask> task) {
+        public void setBuiltInTask(String command, OldPropertySource<PredefinedTask> task) {
             ExceptionHelper.checkNotNullArgument(command, "command");
             ExceptionHelper.checkNotNullArgument(task, "task");
 
             builtInTasks.put(command, task);
         }
 
-        public PropertySource<PredefinedTask> getBuiltInTask(String command) {
+        public OldPropertySource<PredefinedTask> getBuiltInTask(String command) {
             ExceptionHelper.checkNotNullArgument(command, "command");
 
-            PropertySource<PredefinedTask> result = builtInTasks.get(command);
+            OldPropertySource<PredefinedTask> result = builtInTasks.get(command);
             return result != null
                     ? result
                     : PropertiesSnapshot.<PredefinedTask>asConstNullForNull(null, true);
         }
 
-        public PropertySource<LicenseHeaderInfo> getLicenseHeader() {
+        public OldPropertySource<LicenseHeaderInfo> getLicenseHeader() {
             return licenseHeader != null
                     ? licenseHeader
                     : asConst((LicenseHeaderInfo)null, true);
         }
 
-        public void setLicenseHeader(PropertySource<LicenseHeaderInfo> licenseFile) {
+        public void setLicenseHeader(OldPropertySource<LicenseHeaderInfo> licenseFile) {
             ExceptionHelper.checkNotNullArgument(licenseFile, "licenseFile");
             this.licenseHeader = licenseFile;
         }
 
-        public PropertySource<String> getSourceLevel() {
+        public OldPropertySource<String> getSourceLevel() {
             return sourceLevel != null
                     ? sourceLevel
                     : DefaultPropertySources.parseSourceLevelSource(getPlatform(), true);
         }
 
-        public void setSourceLevel(PropertySource<String> sourceLevel) {
+        public void setSourceLevel(OldPropertySource<String> sourceLevel) {
             ExceptionHelper.checkNotNullArgument(sourceLevel, "sourceLevel");
             this.sourceLevel = sourceLevel;
         }
 
-        public PropertySource<ProjectPlatform> getPlatform() {
+        public OldPropertySource<ProjectPlatform> getPlatform() {
             return platform != null
                     ? platform
                     : asConst(AbstractProjectPlatformSource.getDefaultPlatform(), true);
         }
 
-        public void setPlatform(PropertySource<ProjectPlatform> platform) {
+        public void setPlatform(OldPropertySource<ProjectPlatform> platform) {
             ExceptionHelper.checkNotNullArgument(platform, "platform");
             this.platform = platform;
         }
 
-        public PropertySource<JavaPlatform> getScriptPlatform() {
+        public OldPropertySource<JavaPlatform> getScriptPlatform() {
             return scriptPlatform != null
                     ? scriptPlatform
                     : asConst(JavaPlatform.getDefault(), true);
         }
 
-        public void setScriptPlatform(PropertySource<JavaPlatform> scriptPlatform) {
+        public void setScriptPlatform(OldPropertySource<JavaPlatform> scriptPlatform) {
             ExceptionHelper.checkNotNullArgument(scriptPlatform, "scriptPlatform");
             this.scriptPlatform = scriptPlatform;
         }
 
-        private static PropertySource<GradleLocation> getGlobalGradleHomeAsFile(final boolean defaultValue) {
-            return new PropertySource<GradleLocation>() {
+        private static OldPropertySource<GradleLocation> getGlobalGradleHomeAsFile(final boolean defaultValue) {
+            return new OldPropertySource<GradleLocation>() {
                 @Override
                 public GradleLocation getValue() {
                     return GlobalGradleSettings.getGradleHome().getValue();
@@ -149,34 +149,34 @@ public final class PropertiesSnapshot {
             };
         }
 
-        public PropertySource<GradleLocation> getGradleHome() {
+        public OldPropertySource<GradleLocation> getGradleHome() {
             return gradleHome != null
                     ? gradleHome
                     : getGlobalGradleHomeAsFile(true);
         }
 
-        public void setGradleHome(PropertySource<GradleLocation> gradleHome) {
+        public void setGradleHome(OldPropertySource<GradleLocation> gradleHome) {
             this.gradleHome = gradleHome;
         }
 
-        public PropertySource<Charset> getSourceEncoding() {
+        public OldPropertySource<Charset> getSourceEncoding() {
             return sourceEncoding != null
                     ? sourceEncoding
                     : asConst(AbstractProjectProperties.DEFAULT_SOURCE_ENCODING, true);
         }
 
-        public void setSourceEncoding(PropertySource<Charset> sourceEncoding) {
+        public void setSourceEncoding(OldPropertySource<Charset> sourceEncoding) {
             ExceptionHelper.checkNotNullArgument(sourceEncoding, "sourceEncoding");
             this.sourceEncoding = sourceEncoding;
         }
 
-        public PropertySource<List<PredefinedTask>> getCommonTasks() {
+        public OldPropertySource<List<PredefinedTask>> getCommonTasks() {
             return commonTasks != null
                     ? commonTasks
                     : asConst(Collections.<PredefinedTask>emptyList(), true);
         }
 
-        public void setCommonTasks(PropertySource<List<PredefinedTask>> commonTasks) {
+        public void setCommonTasks(OldPropertySource<List<PredefinedTask>> commonTasks) {
             ExceptionHelper.checkNotNullArgument(commonTasks, "commonTasks");
             this.commonTasks = commonTasks;
         }
@@ -186,14 +186,14 @@ public final class PropertiesSnapshot {
         }
     }
 
-    private final PropertySource<String> sourceLevel;
-    private final PropertySource<ProjectPlatform> platform;
-    private final PropertySource<JavaPlatform> scriptPlatform;
-    private final PropertySource<GradleLocation> gradleHome;
-    private final PropertySource<Charset> sourceEncoding;
-    private final PropertySource<LicenseHeaderInfo> licenseHeader;
-    private final PropertySource<List<PredefinedTask>> commonTasks;
-    private final Map<String, PropertySource<PredefinedTask>> builtInTasks;
+    private final OldPropertySource<String> sourceLevel;
+    private final OldPropertySource<ProjectPlatform> platform;
+    private final OldPropertySource<JavaPlatform> scriptPlatform;
+    private final OldPropertySource<GradleLocation> gradleHome;
+    private final OldPropertySource<Charset> sourceEncoding;
+    private final OldPropertySource<LicenseHeaderInfo> licenseHeader;
+    private final OldPropertySource<List<PredefinedTask>> commonTasks;
+    private final Map<String, OldPropertySource<PredefinedTask>> builtInTasks;
     private final List<AuxConfigSource> auxProperties;
     private final Map<DomElementKey, AuxConfigSource> auxPropertiesMap;
     private final Set<String> knownBuiltInCommands;
@@ -210,7 +210,7 @@ public final class PropertiesSnapshot {
         Collection<AuxConfigProperty> otherAuxConfigs = properties.getAllAuxConfigs();
         this.auxProperties = new ArrayList<>(otherAuxConfigs.size());
         for (AuxConfigProperty auxProperty: otherAuxConfigs) {
-            MutableProperty<Element> property = auxProperty.getProperty();
+            OldMutableProperty<Element> property = auxProperty.getProperty();
             this.auxProperties.add(new AuxConfigSource(
                     auxProperty.getKey(),
                     new DomElementSource(property.getValue(), property.isDefault())));
@@ -221,7 +221,7 @@ public final class PropertiesSnapshot {
         this.knownBuiltInCommands = Collections.unmodifiableSet(new HashSet<>(commands));
         this.builtInTasks = CollectionUtils.newHashMap(commands.size());
         for (String command: commands) {
-            MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
+            OldMutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
             if (taskProperty == null) {
                 LOGGER.log(Level.WARNING, "ProjectProperties does not contain customizable command: {0}", command);
             }
@@ -231,15 +231,15 @@ public final class PropertiesSnapshot {
         }
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(MutableProperty<ValueType> property) {
+    private static <ValueType> OldPropertySource<ValueType> asConst(OldMutableProperty<ValueType> property) {
         return asConst(property.getValue(), property.isDefault());
     }
 
-    private static <ValueType> PropertySource<ValueType> asConstNullForNull(ValueType value, boolean defaultValue) {
+    private static <ValueType> OldPropertySource<ValueType> asConstNullForNull(ValueType value, boolean defaultValue) {
         return value != null ? asConst(value, defaultValue) : null;
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
+    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
         return new ConstPropertySource<>(value, defaultValue);
     }
 
@@ -265,31 +265,31 @@ public final class PropertiesSnapshot {
         this.auxPropertiesMap = sourcesToMap(this.auxProperties);
     }
 
-    public PropertySource<LicenseHeaderInfo> getLicenseHeader() {
+    public OldPropertySource<LicenseHeaderInfo> getLicenseHeader() {
         return licenseHeader;
     }
 
-    public PropertySource<String> getSourceLevel() {
+    public OldPropertySource<String> getSourceLevel() {
         return sourceLevel;
     }
 
-    public PropertySource<ProjectPlatform> getPlatform() {
+    public OldPropertySource<ProjectPlatform> getPlatform() {
         return platform;
     }
 
-    public PropertySource<JavaPlatform> getScriptPlatform() {
+    public OldPropertySource<JavaPlatform> getScriptPlatform() {
         return scriptPlatform;
     }
 
-    public PropertySource<GradleLocation> getGradleHome() {
+    public OldPropertySource<GradleLocation> getGradleHome() {
         return gradleHome;
     }
 
-    public PropertySource<Charset> getSourceEncoding() {
+    public OldPropertySource<Charset> getSourceEncoding() {
         return sourceEncoding;
     }
 
-    public PropertySource<List<PredefinedTask>> getCommonTasks() {
+    public OldPropertySource<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
     }
 
@@ -307,16 +307,16 @@ public final class PropertiesSnapshot {
         return result;
     }
 
-    public PropertySource<PredefinedTask> tryGetBuiltInTask(String command) {
+    public OldPropertySource<PredefinedTask> tryGetBuiltInTask(String command) {
         ExceptionHelper.checkNotNullArgument(command, "command");
 
-        PropertySource<PredefinedTask> result = builtInTasks.get(command);
+        OldPropertySource<PredefinedTask> result = builtInTasks.get(command);
         return result != null
                 ? result
                 : PropertiesSnapshot.<PredefinedTask>asConstNullForNull(null, true);
     }
 
-    public Map<String, PropertySource<PredefinedTask>> getBuiltInTasks() {
+    public Map<String, OldPropertySource<PredefinedTask>> getBuiltInTasks() {
         return Collections.unmodifiableMap(builtInTasks);
     }
 

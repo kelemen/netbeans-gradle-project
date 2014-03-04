@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;
@@ -45,7 +46,7 @@ public class AddNewProfilePanel extends javax.swing.JPanel {
         return jProfileEdit.getText().trim();
     }
 
-    public org.jtrim.property.PropertySource<Boolean> validProfileName() {
+    public PropertySource<Boolean> validProfileName() {
         return bckgValidator.valid();
     }
 

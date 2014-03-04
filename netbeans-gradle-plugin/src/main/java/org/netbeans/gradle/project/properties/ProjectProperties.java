@@ -23,28 +23,28 @@ public interface ProjectProperties {
     //   Other places need to be updated will not compile.
 
     @Nonnull
-    public MutableProperty<String> getSourceLevel();
+    public OldMutableProperty<String> getSourceLevel();
 
     @Nonnull
-    public MutableProperty<ProjectPlatform> getPlatform();
+    public OldMutableProperty<ProjectPlatform> getPlatform();
 
     @Nonnull
-    public MutableProperty<JavaPlatform> getScriptPlatform();
+    public OldMutableProperty<JavaPlatform> getScriptPlatform();
 
     @Nonnull
-    public MutableProperty<GradleLocation> getGradleLocation();
+    public OldMutableProperty<GradleLocation> getGradleLocation();
 
     @Nonnull
-    public MutableProperty<Charset> getSourceEncoding();
+    public OldMutableProperty<Charset> getSourceEncoding();
 
     @Nonnull
-    public MutableProperty<List<PredefinedTask>> getCommonTasks();
+    public OldMutableProperty<List<PredefinedTask>> getCommonTasks();
 
     @Nonnull
-    public MutableProperty<LicenseHeaderInfo> getLicenseHeader();
+    public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader();
 
     @Nullable
-    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
+    public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(String command);
 
     @Nonnull
     public Set<String> getKnownBuiltInCommands();
@@ -52,7 +52,7 @@ public interface ProjectProperties {
     // The listener of this property is always notified whenever any of the
     // auxilary configuration changes.
     @Nonnull
-    public MutableProperty<Void> getAuxConfigListener();
+    public OldMutableProperty<Void> getAuxConfigListener();
 
     @Nonnull
     public AuxConfigProperty getAuxConfig(@Nullable String elementName, @Nullable String namespace);
@@ -64,5 +64,5 @@ public interface ProjectProperties {
     public Collection<AuxConfigProperty> getAllAuxConfigs();
 
     @Nonnull
-    public Collection<MutableProperty<?>> getAllProperties();
+    public Collection<OldMutableProperty<?>> getAllProperties();
 }

@@ -46,10 +46,10 @@ import org.netbeans.gradle.project.properties.ConstPropertySource;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
+import org.netbeans.gradle.project.properties.OldPropertySource;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectPlatformSource;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
-import org.netbeans.gradle.project.properties.PropertySource;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -192,7 +192,7 @@ final class XmlPropertyFormat {
         Set<String> knownBuiltInCommands = snapshot.getKnownBuiltInCommands();
         List<PredefinedTask> tasks = new ArrayList<>(knownBuiltInCommands.size());
         for (String command: knownBuiltInCommands) {
-            PropertySource<PredefinedTask> taskProperty = snapshot.tryGetBuiltInTask(command);
+            OldPropertySource<PredefinedTask> taskProperty = snapshot.tryGetBuiltInTask(command);
             if (taskProperty != null && !taskProperty.isDefault()) {
                 PredefinedTask task = taskProperty.getValue();
                 if (task != null) {
@@ -467,7 +467,7 @@ final class XmlPropertyFormat {
         return readTasks(COMMON_TASKS_NODE, root);
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
+    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
         return new ConstPropertySource<>(value, defaultValue);
     }
 
@@ -475,7 +475,7 @@ final class XmlPropertyFormat {
         return readTasks(BUILT_IN_TASKS_NODE, root);
     }
 
-    private static PropertySource<JavaPlatform> readPlatform(Element root, String nodeName) {
+    private static OldPropertySource<JavaPlatform> readPlatform(Element root, String nodeName) {
         Element platformNode = getFirstChildByTagName(root, nodeName);
         if (platformNode == null) {
             return null;
@@ -502,7 +502,7 @@ final class XmlPropertyFormat {
         return new File(strPath.trim().replace(SAVE_FILE_NAME_SEPARATOR, File.separator));
     }
 
-    private static PropertySource<LicenseHeaderInfo> readLicenseHeader(Element root, String nodeName) {
+    private static OldPropertySource<LicenseHeaderInfo> readLicenseHeader(Element root, String nodeName) {
         Element licenseNode = getFirstChildByTagName(root, nodeName);
         if (licenseNode == null) {
             return null;
@@ -622,12 +622,12 @@ final class XmlPropertyFormat {
             result.setGradleHome(asConst(gradleHome, false));
         }
 
-        PropertySource<JavaPlatform> scriptPlatform = readPlatform(root, SCRIPT_PLATFORM_NODE);
+        OldPropertySource<JavaPlatform> scriptPlatform = readPlatform(root, SCRIPT_PLATFORM_NODE);
         if (scriptPlatform != null) {
             result.setScriptPlatform(scriptPlatform);
         }
 
-        PropertySource<LicenseHeaderInfo> licenseHeader = readLicenseHeader(root, LICENSE_HEADER_NODE);
+        OldPropertySource<LicenseHeaderInfo> licenseHeader = readLicenseHeader(root, LICENSE_HEADER_NODE);
         if (licenseHeader != null) {
             result.setLicenseHeader(licenseHeader);
         }

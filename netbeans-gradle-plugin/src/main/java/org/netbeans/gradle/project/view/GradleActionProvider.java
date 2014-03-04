@@ -14,8 +14,8 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.NbCommandString;
-import org.netbeans.gradle.project.properties.MutableProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
+import org.netbeans.gradle.project.properties.OldMutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
@@ -216,7 +216,7 @@ public final class GradleActionProvider implements ActionProvider {
             @Override
             public GradleTaskDef tryCreateTaskDef(CancellationToken cancelToken) throws Exception {
                 ProjectProperties properties = getLoadedProperties(cancelToken, appliedConfig);
-                MutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
+                OldMutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
                 if (builtInTask == null) {
                     return null;
                 }

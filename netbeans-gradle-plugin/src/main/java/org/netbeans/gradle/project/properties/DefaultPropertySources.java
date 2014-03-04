@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -16,13 +17,13 @@ import org.openide.modules.SpecificationVersion;
 public final class DefaultPropertySources {
     private static final Logger LOGGER = Logger.getLogger(DefaultPropertySources.class.getName());
 
-    public static PropertySource<String> parseSourceLevelSource(
-            final PropertySource<ProjectPlatform> source,
+    public static OldPropertySource<String> parseSourceLevelSource(
+            final OldPropertySource<ProjectPlatform> source,
             final boolean defaultValue) {
 
         ExceptionHelper.checkNotNullArgument(source, "source");
 
-        return new PropertySource<String>() {
+        return new OldPropertySource<String>() {
             @Override
             public String getValue() {
                 return AbstractProjectProperties.getSourceLevelFromPlatform(source.getValue());
@@ -136,7 +137,7 @@ public final class DefaultPropertySources {
         return bestMatch;
     }
 
-    public static PropertySource<JavaPlatform> findPlatformSource(
+    public static OldPropertySource<JavaPlatform> findPlatformSource(
             final String specName,
             final String versionStr,
             final boolean defaultValue) {
@@ -165,7 +166,7 @@ public final class DefaultPropertySources {
         };
     }
 
-    private static final class InstalledPlatformSource implements org.jtrim.property.PropertySource<JavaPlatform[]> {
+    private static final class InstalledPlatformSource implements PropertySource<JavaPlatform[]> {
         @Override
         public JavaPlatform[] getValue() {
             return JavaPlatformManager.getDefault().getInstalledPlatforms();
@@ -196,9 +197,9 @@ public final class DefaultPropertySources {
 
     private static abstract class JavaPlatformSource<ValueType>
     implements
-            PropertySource<ValueType> {
+            OldPropertySource<ValueType> {
 
-        private final org.jtrim.property.PropertySource<JavaPlatform[]> installedPlatforms;
+        private final PropertySource<JavaPlatform[]> installedPlatforms;
 
         public JavaPlatformSource() {
             this.installedPlatforms = new InstalledPlatformSource();

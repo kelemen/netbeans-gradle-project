@@ -15,7 +15,7 @@ import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSour
 
 public abstract class AbstractProjectPlatformSource
 implements
-        PropertySource<ProjectPlatform> {
+        OldPropertySource<ProjectPlatform> {
 
     private final ProxyListenerRegistry<Runnable> listeners;
     private final AtomicReference<GradleProjectPlatformQuery> queryRef;

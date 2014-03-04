@@ -4,8 +4,8 @@ import java.util.List;
 import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
-public final class MutableListProperty<ElementType> implements MutableProperty<List<ElementType>> {
-    private final MutableProperty<List<ElementType>> wrapped;
+public final class MutableListProperty<ElementType> implements OldMutableProperty<List<ElementType>> {
+    private final OldMutableProperty<List<ElementType>> wrapped;
 
     public MutableListProperty(List<? extends ElementType> value, boolean defaultValue) {
         this.wrapped = new DefaultMutableProperty<>(
@@ -13,7 +13,7 @@ public final class MutableListProperty<ElementType> implements MutableProperty<L
     }
 
     @Override
-    public void setValueFromSource(PropertySource<? extends List<ElementType>> source) {
+    public void setValueFromSource(OldPropertySource<? extends List<ElementType>> source) {
         wrapped.setValueFromSource(source);
     }
 

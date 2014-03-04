@@ -22,14 +22,14 @@ extends
     private final ProjectProperties mainProperties;
     private final ProjectProperties defaultProperties;
 
-    private final MutableProperty<String> sourceLevel;
-    private final MutableProperty<ProjectPlatform> platform;
-    private final MutableProperty<JavaPlatform> scriptPlatform;
-    private final MutableProperty<GradleLocation> gradleHome;
-    private final MutableProperty<Charset> sourceEncoding;
-    private final MutableProperty<LicenseHeaderInfo> licenseHeader;
-    private final MutableProperty<Void> auxConfigListener;
-    private final MutableProperty<List<PredefinedTask>> commonTasks;
+    private final OldMutableProperty<String> sourceLevel;
+    private final OldMutableProperty<ProjectPlatform> platform;
+    private final OldMutableProperty<JavaPlatform> scriptPlatform;
+    private final OldMutableProperty<GradleLocation> gradleHome;
+    private final OldMutableProperty<Charset> sourceEncoding;
+    private final OldMutableProperty<LicenseHeaderInfo> licenseHeader;
+    private final OldMutableProperty<Void> auxConfigListener;
+    private final OldMutableProperty<List<PredefinedTask>> commonTasks;
 
     public FallbackProjectProperties(ProjectProperties mainProperties, ProjectProperties defaultProperties) {
         ExceptionHelper.checkNotNullArgument(mainProperties, "mainProperties");
@@ -72,44 +72,44 @@ extends
     }
 
     @Override
-    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+    public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader() {
         return licenseHeader;
     }
 
     @Override
-    public MutableProperty<String> getSourceLevel() {
+    public OldMutableProperty<String> getSourceLevel() {
         return sourceLevel;
     }
 
     @Override
-    public MutableProperty<ProjectPlatform> getPlatform() {
+    public OldMutableProperty<ProjectPlatform> getPlatform() {
         return platform;
     }
 
     @Override
-    public MutableProperty<Charset> getSourceEncoding() {
+    public OldMutableProperty<Charset> getSourceEncoding() {
         return sourceEncoding;
     }
 
     @Override
-    public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+    public OldMutableProperty<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getScriptPlatform() {
+    public OldMutableProperty<JavaPlatform> getScriptPlatform() {
         return scriptPlatform;
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleLocation() {
+    public OldMutableProperty<GradleLocation> getGradleLocation() {
         return gradleHome;
     }
 
     @Override
-    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
-        MutableProperty<PredefinedTask> mainProperty = mainProperties.tryGetBuiltInTask(command);
-        MutableProperty<PredefinedTask> defaultProperty = defaultProperties.tryGetBuiltInTask(command);
+    public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+        OldMutableProperty<PredefinedTask> mainProperty = mainProperties.tryGetBuiltInTask(command);
+        OldMutableProperty<PredefinedTask> defaultProperty = defaultProperties.tryGetBuiltInTask(command);
         if (mainProperty == null) {
             if (defaultProperty == null) {
                 // We must ignore because otherwise someone trying to set the
@@ -138,7 +138,7 @@ extends
     }
 
     @Override
-    public MutableProperty<Void> getAuxConfigListener() {
+    public OldMutableProperty<Void> getAuxConfigListener() {
         return auxConfigListener;
     }
 
@@ -162,12 +162,12 @@ extends
 
     private static class ListMergerProperty<ElementType>
     implements
-            MutableProperty<List<ElementType>> {
+            OldMutableProperty<List<ElementType>> {
 
-        private final MutableProperty<List<ElementType>> mainValue;
-        private final MutableProperty<List<ElementType>> defaultValue;
+        private final OldMutableProperty<List<ElementType>> mainValue;
+        private final OldMutableProperty<List<ElementType>> defaultValue;
 
-        public ListMergerProperty(MutableProperty<List<ElementType>> mainValue, MutableProperty<List<ElementType>> defaultValue) {
+        public ListMergerProperty(OldMutableProperty<List<ElementType>> mainValue, OldMutableProperty<List<ElementType>> defaultValue) {
             ExceptionHelper.checkNotNullArgument(mainValue, "mainValue");
             ExceptionHelper.checkNotNullArgument(defaultValue, "defaultValue");
 
@@ -176,7 +176,7 @@ extends
         }
 
         @Override
-        public void setValueFromSource(PropertySource<? extends List<ElementType>> source) {
+        public void setValueFromSource(OldPropertySource<? extends List<ElementType>> source) {
             mainValue.setValueFromSource(source);
         }
 

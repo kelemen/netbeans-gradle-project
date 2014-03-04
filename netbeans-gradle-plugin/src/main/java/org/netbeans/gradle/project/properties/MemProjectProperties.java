@@ -13,18 +13,18 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 
 public final class MemProjectProperties extends AbstractProjectProperties {
-    private final MutableProperty<String> sourceLevel;
-    private final MutableProperty<ProjectPlatform> platform;
-    private final MutableProperty<JavaPlatform> scriptPlatform;
-    private final MutableProperty<GradleLocation> gradleHome;
-    private final MutableProperty<Charset> sourceEncoding;
-    private final MutableProperty<LicenseHeaderInfo> licenseHeader;
-    private final MutableProperty<Void> auxConfigListener;
-    private final MutableProperty<List<PredefinedTask>> commonTasks;
-    private final ConcurrentMap<String, MutableProperty<PredefinedTask>> builtInTasks;
+    private final OldMutableProperty<String> sourceLevel;
+    private final OldMutableProperty<ProjectPlatform> platform;
+    private final OldMutableProperty<JavaPlatform> scriptPlatform;
+    private final OldMutableProperty<GradleLocation> gradleHome;
+    private final OldMutableProperty<Charset> sourceEncoding;
+    private final OldMutableProperty<LicenseHeaderInfo> licenseHeader;
+    private final OldMutableProperty<Void> auxConfigListener;
+    private final OldMutableProperty<List<PredefinedTask>> commonTasks;
+    private final ConcurrentMap<String, OldMutableProperty<PredefinedTask>> builtInTasks;
     private final ConcurrentMap<DomElementKey, AuxConfigProperty> auxProperties;
 
-    private final MutableProperty<Object> builtInChangeSignal;
+    private final OldMutableProperty<Object> builtInChangeSignal;
 
     public MemProjectProperties() {
         ProjectPlatform defaultPlatform = AbstractProjectPlatformSource.getDefaultPlatform();
@@ -44,45 +44,45 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+    public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader() {
         return licenseHeader;
     }
 
     @Override
-    public MutableProperty<String> getSourceLevel() {
+    public OldMutableProperty<String> getSourceLevel() {
         return sourceLevel;
     }
 
     @Override
-    public MutableProperty<ProjectPlatform> getPlatform() {
+    public OldMutableProperty<ProjectPlatform> getPlatform() {
         return platform;
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getScriptPlatform() {
+    public OldMutableProperty<JavaPlatform> getScriptPlatform() {
         return scriptPlatform;
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleLocation() {
+    public OldMutableProperty<GradleLocation> getGradleLocation() {
         return gradleHome;
     }
 
     @Override
-    public MutableProperty<Charset> getSourceEncoding() {
+    public OldMutableProperty<Charset> getSourceEncoding() {
         return sourceEncoding;
     }
 
     @Override
-    public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+    public OldMutableProperty<List<PredefinedTask>> getCommonTasks() {
         return commonTasks;
     }
 
     @Override
-    public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+    public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
         ExceptionHelper.checkNotNullArgument(command, "command");
 
-        MutableProperty<PredefinedTask> result = builtInTasks.get(command);
+        OldMutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
             result = new DefaultMutableProperty<>(null, true, true);
             result.addChangeListener(new Runnable() {
@@ -104,14 +104,14 @@ public final class MemProjectProperties extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<Void> getAuxConfigListener() {
+    public OldMutableProperty<Void> getAuxConfigListener() {
         return auxConfigListener;
     }
 
     @Override
-    public Collection<MutableProperty<?>> getAllProperties() {
-        Collection<MutableProperty<?>> superProperties = super.getAllProperties();
-        Collection<MutableProperty<?>> result = new ArrayList<>(superProperties.size() + 1);
+    public Collection<OldMutableProperty<?>> getAllProperties() {
+        Collection<OldMutableProperty<?>> superProperties = super.getAllProperties();
+        Collection<OldMutableProperty<?>> result = new ArrayList<>(superProperties.size() + 1);
         result.addAll(superProperties);
         result.add(builtInChangeSignal);
         return result;

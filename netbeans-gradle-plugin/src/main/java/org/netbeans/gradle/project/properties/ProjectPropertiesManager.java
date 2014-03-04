@@ -69,7 +69,7 @@ public final class ProjectPropertiesManager {
             }
         };
 
-        for (MutableProperty<?> property: properties.getAllProperties()) {
+        for (OldMutableProperty<?> property: properties.getAllProperties()) {
             property.addChangeListener(saveIfRequiredTask);
         }
     }
@@ -447,42 +447,42 @@ public final class ProjectPropertiesManager {
         }
 
         @Override
-        public MutableProperty<String> getSourceLevel() {
+        public OldMutableProperty<String> getSourceLevel() {
             return properties.getSourceLevel();
         }
 
         @Override
-        public MutableProperty<ProjectPlatform> getPlatform() {
+        public OldMutableProperty<ProjectPlatform> getPlatform() {
             return properties.getPlatform();
         }
 
         @Override
-        public MutableProperty<JavaPlatform> getScriptPlatform() {
+        public OldMutableProperty<JavaPlatform> getScriptPlatform() {
             return properties.getScriptPlatform();
         }
 
         @Override
-        public MutableProperty<GradleLocation> getGradleLocation() {
+        public OldMutableProperty<GradleLocation> getGradleLocation() {
             return properties.getGradleLocation();
         }
 
         @Override
-        public MutableProperty<Charset> getSourceEncoding() {
+        public OldMutableProperty<Charset> getSourceEncoding() {
             return properties.getSourceEncoding();
         }
 
         @Override
-        public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+        public OldMutableProperty<List<PredefinedTask>> getCommonTasks() {
             return properties.getCommonTasks();
         }
 
         @Override
-        public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+        public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader() {
             return properties.getLicenseHeader();
         }
 
         @Override
-        public MutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
+        public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(String command) {
             return properties.tryGetBuiltInTask(command);
         }
 
@@ -492,7 +492,7 @@ public final class ProjectPropertiesManager {
         }
 
         @Override
-        public MutableProperty<Void> getAuxConfigListener() {
+        public OldMutableProperty<Void> getAuxConfigListener() {
             return properties.getAuxConfigListener();
         }
 
@@ -512,7 +512,7 @@ public final class ProjectPropertiesManager {
         }
 
         @Override
-        public Collection<MutableProperty<?>> getAllProperties() {
+        public Collection<OldMutableProperty<?>> getAllProperties() {
             return properties.getAllProperties();
         }
     }

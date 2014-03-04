@@ -51,7 +51,7 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
-import org.netbeans.gradle.project.properties.MutableProperty;
+import org.netbeans.gradle.project.properties.OldMutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
@@ -534,7 +534,7 @@ implements
                 newTaskDef = createTaskDef(actionPanel, displayName, false);
             }
 
-            MutableProperty<List<PredefinedTask>> commonTasks = project.getProperties().getCommonTasks();
+            OldMutableProperty<List<PredefinedTask>> commonTasks = project.getProperties().getCommonTasks();
 
             List<PredefinedTask> newTasks = new LinkedList<>(commonTasks.getValue());
             newTasks.add(newTaskDef);

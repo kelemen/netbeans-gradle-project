@@ -5,13 +5,13 @@ import org.w3c.dom.Element;
 
 public final class AuxConfigSource {
     private final DomElementKey key;
-    private final PropertySource<Element> source;
+    private final OldPropertySource<Element> source;
 
-    public AuxConfigSource(String elementName, String namespace, PropertySource<Element> source) {
+    public AuxConfigSource(String elementName, String namespace, OldPropertySource<Element> source) {
         this(new DomElementKey(elementName, namespace), source);
     }
 
-    public AuxConfigSource(DomElementKey key, PropertySource<Element> source) {
+    public AuxConfigSource(DomElementKey key, OldPropertySource<Element> source) {
         ExceptionHelper.checkNotNullArgument(key, "key");
         ExceptionHelper.checkNotNullArgument(source, "source");
 
@@ -23,7 +23,7 @@ public final class AuxConfigSource {
         return key;
     }
 
-    public PropertySource<Element> getSource() {
+    public OldPropertySource<Element> getSource() {
         return source;
     }
 }

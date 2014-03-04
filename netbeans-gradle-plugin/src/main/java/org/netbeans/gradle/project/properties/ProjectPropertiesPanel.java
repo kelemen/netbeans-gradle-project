@@ -31,6 +31,7 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -302,11 +303,11 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jSourceLevelCombo.setEnabled(!jSourceLevelComboInherit.isSelected());
     }
 
-    private static <ValueType> PropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
+    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
         return new ConstPropertySource<>(value, defaultValue);
     }
 
-    private static <ValueType> void copyProperty(MutableProperty<ValueType> src, MutableProperty<ValueType> dest) {
+    private static <ValueType> void copyProperty(OldMutableProperty<ValueType> src, OldMutableProperty<ValueType> dest) {
         dest.setValueFromSource(asConst(src.getValue(), src.isDefault()));
     }
 
@@ -820,7 +821,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 null,
                 null);
 
-        final org.jtrim.property.PropertySource<Boolean> validProfileName = panel.validProfileName();
+        final PropertySource<Boolean> validProfileName = panel.validProfileName();
         validProfileName.addChangeListener(new Runnable() {
             @Override
             public void run() {

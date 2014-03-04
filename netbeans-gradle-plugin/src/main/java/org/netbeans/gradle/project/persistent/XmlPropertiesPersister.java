@@ -25,11 +25,11 @@ import org.netbeans.gradle.project.properties.AuxConfig;
 import org.netbeans.gradle.project.properties.AuxConfigSource;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
-import org.netbeans.gradle.project.properties.MutableProperty;
+import org.netbeans.gradle.project.properties.OldMutableProperty;
+import org.netbeans.gradle.project.properties.OldPropertySource;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.PropertiesSnapshot;
-import org.netbeans.gradle.project.properties.PropertySource;
 
 public final class XmlPropertiesPersister implements PropertiesPersister {
     private static final Logger LOGGER = Logger.getLogger(XmlPropertiesPersister.class.getName());
@@ -75,7 +75,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     private static <ValueType> PropertySetter<ValueType> newPropertySetter(
-            MutableProperty<ValueType> property,
+            OldMutableProperty<ValueType> property,
             PropertyGetter<ValueType> getter) {
         return new PropertySetter<>(property, getter);
     }
@@ -93,55 +93,55 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         // saved.
         setters.add(newPropertySetter(properties.getPlatform(), new PropertyGetter<ProjectPlatform>() {
             @Override
-            public PropertySource<ProjectPlatform> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<ProjectPlatform> get(PropertiesSnapshot snapshot) {
                 return snapshot.getPlatform();
             }
         }));
         setters.add(newPropertySetter(properties.getSourceEncoding(), new PropertyGetter<Charset>() {
             @Override
-            public PropertySource<Charset> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<Charset> get(PropertiesSnapshot snapshot) {
                 return snapshot.getSourceEncoding();
             }
         }));
         setters.add(newPropertySetter(properties.getSourceLevel(), new PropertyGetter<String>() {
             @Override
-            public PropertySource<String> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<String> get(PropertiesSnapshot snapshot) {
                 return snapshot.getSourceLevel();
             }
         }));
         setters.add(newPropertySetter(properties.getCommonTasks(), new PropertyGetter<List<PredefinedTask>>() {
             @Override
-            public PropertySource<List<PredefinedTask>> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<List<PredefinedTask>> get(PropertiesSnapshot snapshot) {
                 return snapshot.getCommonTasks();
             }
         }));
         setters.add(newPropertySetter(properties.getScriptPlatform(), new PropertyGetter<JavaPlatform>() {
             @Override
-            public PropertySource<JavaPlatform> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<JavaPlatform> get(PropertiesSnapshot snapshot) {
                 return snapshot.getScriptPlatform();
             }
         }));
         setters.add(newPropertySetter(properties.getGradleLocation(), new PropertyGetter<GradleLocation>() {
             @Override
-            public PropertySource<GradleLocation> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<GradleLocation> get(PropertiesSnapshot snapshot) {
                 return snapshot.getGradleHome();
             }
         }));
         setters.add(newPropertySetter(properties.getLicenseHeader(), new PropertyGetter<LicenseHeaderInfo>() {
             @Override
-            public PropertySource<LicenseHeaderInfo> get(PropertiesSnapshot snapshot) {
+            public OldPropertySource<LicenseHeaderInfo> get(PropertiesSnapshot snapshot) {
                 return snapshot.getLicenseHeader();
             }
         }));
         for (final String command: properties.getKnownBuiltInCommands()) {
-            MutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
+            OldMutableProperty<PredefinedTask> taskProperty = properties.tryGetBuiltInTask(command);
             if (taskProperty == null) {
                 LOGGER.log(Level.WARNING, "tryGetBuiltInTask returned null for command: {0}", command);
                 continue;
             }
             setters.add(newPropertySetter(taskProperty, new PropertyGetter<PredefinedTask>() {
                 @Override
-                public PropertySource<PredefinedTask> get(PropertiesSnapshot snapshot) {
+                public OldPropertySource<PredefinedTask> get(PropertiesSnapshot snapshot) {
                     return snapshot.tryGetBuiltInTask(command);
                 }
             }));
@@ -171,10 +171,10 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
                         //  properties which is unexpected by the user. This
                         //  is unlikely to happen but should be fixed anyway.
 
-                        Set<Map.Entry<String, PropertySource<PredefinedTask>>> builtInTasks
+                        Set<Map.Entry<String, OldPropertySource<PredefinedTask>>> builtInTasks
                                 = snapshot.getBuiltInTasks().entrySet();
-                        for (Map.Entry<String, PropertySource<PredefinedTask>> taskEntry: builtInTasks) {
-                            MutableProperty<PredefinedTask> property
+                        for (Map.Entry<String, OldPropertySource<PredefinedTask>> taskEntry: builtInTasks) {
+                            OldMutableProperty<PredefinedTask> property
                                     = properties.tryGetBuiltInTask(taskEntry.getKey());
                             if (property == null) {
                                 LOGGER.log(Level.SEVERE, "Cannot set property for built-in task: {0}", taskEntry.getKey());
@@ -216,16 +216,16 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     }
 
     private interface PropertyGetter<ValueType> {
-        public PropertySource<ValueType> get(PropertiesSnapshot snapshot);
+        public OldPropertySource<ValueType> get(PropertiesSnapshot snapshot);
     }
 
     private static class PropertySetter<ValueType> {
-        private final MutableProperty<ValueType> property;
+        private final OldMutableProperty<ValueType> property;
         private final PropertyGetter<? extends ValueType> getter;
         private final AtomicReference<ListenerRef> changeListenerRef;
         private volatile boolean changed;
 
-        public PropertySetter(MutableProperty<ValueType> property, PropertyGetter<? extends ValueType> getter) {
+        public PropertySetter(OldMutableProperty<ValueType> property, PropertyGetter<? extends ValueType> getter) {
             assert property != null;
             this.property = property;
             this.getter = getter;
@@ -248,7 +248,7 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         }
 
         public void set(PropertiesSnapshot snapshot) {
-            PropertySource<? extends ValueType> source = getter.get(snapshot);
+            OldPropertySource<? extends ValueType> source = getter.get(snapshot);
             if (source != null) {
                 if (!changed) {
                     property.setValueFromSource(source);

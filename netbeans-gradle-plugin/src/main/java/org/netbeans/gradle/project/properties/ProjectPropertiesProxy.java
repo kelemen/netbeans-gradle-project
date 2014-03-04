@@ -53,49 +53,49 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         this.auxProperties = new ConcurrentHashMap<>();
         this.auxConfigListener = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Void>(this) {
             @Override
-            public MutableProperty<Void> getProperty() {
+            public OldMutableProperty<Void> getProperty() {
                 return super.getProperties().getAuxConfigListener();
             }
         });
         this.sourceLevelProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<String>(this) {
             @Override
-            public MutableProperty<String> getProperty() {
+            public OldMutableProperty<String> getProperty() {
                 return super.getProperties().getSourceLevel();
             }
         });
         this.platformProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<ProjectPlatform>(this) {
             @Override
-            public MutableProperty<ProjectPlatform> getProperty() {
+            public OldMutableProperty<ProjectPlatform> getProperty() {
                 return super.getProperties().getPlatform();
             }
         });
         this.scriptPlatformProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<JavaPlatform>(this) {
             @Override
-            public MutableProperty<JavaPlatform> getProperty() {
+            public OldMutableProperty<JavaPlatform> getProperty() {
                 return super.getProperties().getScriptPlatform();
             }
         });
         this.gradleHomeProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<GradleLocation>(this) {
             @Override
-            public MutableProperty<GradleLocation> getProperty() {
+            public OldMutableProperty<GradleLocation> getProperty() {
                 return super.getProperties().getGradleLocation();
             }
         });
         this.sourceEncodingProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Charset>(this) {
             @Override
-            public MutableProperty<Charset> getProperty() {
+            public OldMutableProperty<Charset> getProperty() {
                 return super.getProperties().getSourceEncoding();
             }
         });
         this.licenseHeaderProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<LicenseHeaderInfo>(this) {
             @Override
-            public MutableProperty<LicenseHeaderInfo> getProperty() {
+            public OldMutableProperty<LicenseHeaderInfo> getProperty() {
                 return super.getProperties().getLicenseHeader();
             }
         });
         this.commonTasksProxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<List<PredefinedTask>>(this) {
             @Override
-            public MutableProperty<List<PredefinedTask>> getProperty() {
+            public OldMutableProperty<List<PredefinedTask>> getProperty() {
                 return super.getProperties().getCommonTasks();
             }
         });
@@ -148,37 +148,37 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<LicenseHeaderInfo> getLicenseHeader() {
+    public OldMutableProperty<LicenseHeaderInfo> getLicenseHeader() {
         return licenseHeaderProxy;
     }
 
     @Override
-    public MutableProperty<String> getSourceLevel() {
+    public OldMutableProperty<String> getSourceLevel() {
         return sourceLevelProxy;
     }
 
     @Override
-    public MutableProperty<ProjectPlatform> getPlatform() {
+    public OldMutableProperty<ProjectPlatform> getPlatform() {
         return platformProxy;
     }
 
     @Override
-    public MutableProperty<JavaPlatform> getScriptPlatform() {
+    public OldMutableProperty<JavaPlatform> getScriptPlatform() {
         return scriptPlatformProxy;
     }
 
     @Override
-    public MutableProperty<GradleLocation> getGradleLocation() {
+    public OldMutableProperty<GradleLocation> getGradleLocation() {
         return gradleHomeProxy;
     }
 
     @Override
-    public MutableProperty<Charset> getSourceEncoding() {
+    public OldMutableProperty<Charset> getSourceEncoding() {
         return sourceEncodingProxy;
     }
 
     @Override
-    public MutableProperty<List<PredefinedTask>> getCommonTasks() {
+    public OldMutableProperty<List<PredefinedTask>> getCommonTasks() {
         return commonTasksProxy;
     }
 
@@ -188,15 +188,15 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<PredefinedTask> tryGetBuiltInTask(final String command) {
+    public OldMutableProperty<PredefinedTask> tryGetBuiltInTask(final String command) {
         ExceptionHelper.checkNotNullArgument(command, "command");
 
-        MutableProperty<PredefinedTask> result = builtInTasks.get(command);
+        OldMutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
             MutablePropertyProxy<PredefinedTask> proxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<PredefinedTask>(this) {
                 @Override
-                public MutableProperty<PredefinedTask> getProperty() {
-                    MutableProperty<PredefinedTask> taskProperty = super.getProperties().tryGetBuiltInTask(command);
+                public OldMutableProperty<PredefinedTask> getProperty() {
+                    OldMutableProperty<PredefinedTask> taskProperty = super.getProperties().tryGetBuiltInTask(command);
                     if (taskProperty == null) {
                         throw new IllegalStateException("Missing customizable command: " + command);
                     }
@@ -219,7 +219,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
         MutablePropertyProxy<Element> proxy = new MutablePropertyProxy<>(new ProjectMutablePropertyRef<Element>(this) {
             @Override
-            public MutableProperty<Element> getProperty() {
+            public OldMutableProperty<Element> getProperty() {
                 return super.getProperties().getAuxConfig(elementName, namespace).getProperty();
             }
         });
@@ -228,7 +228,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     @Override
-    public MutableProperty<Void> getAuxConfigListener() {
+    public OldMutableProperty<Void> getAuxConfigListener() {
         return auxConfigListener;
     }
 
@@ -249,7 +249,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     }
 
     private static interface MutablePropertyRef<ValueType> {
-        public MutableProperty<ValueType> getProperty();
+        public OldMutableProperty<ValueType> getProperty();
 
         public ListenerRef addChangeListener(Runnable listener);
     }
@@ -274,7 +274,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         }
     }
 
-    private static class MutablePropertyProxy<ValueType> implements MutableProperty<ValueType> {
+    private static class MutablePropertyProxy<ValueType> implements OldMutableProperty<ValueType> {
         private final MutablePropertyRef<ValueType> propertyRef;
 
         public MutablePropertyProxy(MutablePropertyRef<ValueType> propertyRef) {
@@ -282,7 +282,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         }
 
         @Override
-        public void setValueFromSource(PropertySource<? extends ValueType> source) {
+        public void setValueFromSource(OldPropertySource<? extends ValueType> source) {
             propertyRef.getProperty().setValueFromSource(source);
         }
 

@@ -7,7 +7,7 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 
 public final class ProjectPropertiesApi {
-    public static GradleProperty.SourceEncoding sourceEncoding(MutableProperty<Charset> property) {
+    public static GradleProperty.SourceEncoding sourceEncoding(OldMutableProperty<Charset> property) {
         final NbPropertySourceWrapper<Charset> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.SourceEncoding() {
             @Override
@@ -22,7 +22,7 @@ public final class ProjectPropertiesApi {
         };
     }
 
-    public static GradleProperty.ScriptPlatform scriptPlatform(MutableProperty<JavaPlatform> property) {
+    public static GradleProperty.ScriptPlatform scriptPlatform(OldMutableProperty<JavaPlatform> property) {
         final NbPropertySourceWrapper<JavaPlatform> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.ScriptPlatform() {
             @Override
@@ -37,7 +37,7 @@ public final class ProjectPropertiesApi {
         };
     }
 
-    public static GradleProperty.SourceLevel sourceLevel(MutableProperty<String> property) {
+    public static GradleProperty.SourceLevel sourceLevel(OldMutableProperty<String> property) {
         final NbPropertySourceWrapper<String> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.SourceLevel() {
             @Override
@@ -52,7 +52,7 @@ public final class ProjectPropertiesApi {
         };
     }
 
-    public static GradleProperty.BuildPlatform buildPlatform(MutableProperty<ProjectPlatform> property) {
+    public static GradleProperty.BuildPlatform buildPlatform(OldMutableProperty<ProjectPlatform> property) {
         final NbPropertySourceWrapper<ProjectPlatform> result = new NbPropertySourceWrapper<>(property);
         return new GradleProperty.BuildPlatform() {
             @Override
