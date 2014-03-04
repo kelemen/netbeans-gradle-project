@@ -3,34 +3,32 @@ package org.netbeans.gradle.project.properties;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.persistent.PropertiesPersister;
-import org.openide.util.ChangeSupport;
 import org.w3c.dom.Element;
 
 public final class ProjectPropertiesProxy extends AbstractProjectProperties {
-    private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesProxy.class.getName());
-
     private final NbGradleProject project;
     private final AtomicReference<ProjectProperties> propertiesRef;
-    private final ChangeSupport changes;
+    private final ListenerManager<Runnable> changes;
 
     private final MutablePropertyProxy<String> sourceLevelProxy;
     private final MutablePropertyProxy<ProjectPlatform> platformProxy;
@@ -49,7 +47,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
 
         this.project = project;
         this.propertiesRef = new AtomicReference<>(null);
-        this.changes = new ChangeSupport(this);
+        this.changes = new CopyOnTriggerListenerManager<>();
         this.loadedSignal = new WaitableSignal();
 
         this.auxProperties = new ConcurrentHashMap<>();
@@ -132,7 +130,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                     @Override
                     public void stateChanged(ChangeEvent e) {
                         propertiesRef.set(ProjectPropertiesManager.getProperties(project, loadedSignal));
-                        changes.fireChange();
+                        EventListeners.dispatchRunnable(changes);
                     }
                 };
 
@@ -145,12 +143,8 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         return properties;
     }
 
-    private void addModelChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
-    }
-
-    private void removeModelChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
+    private ListenerRef addModelChangeListener(Runnable listener) {
+        return changes.registerListener(listener);
     }
 
     @Override
@@ -257,8 +251,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
     private static interface MutablePropertyRef<ValueType> {
         public MutableProperty<ValueType> getProperty();
 
-        public void addChangeListener(ChangeListener listener);
-        public void removeChangeListener(ChangeListener listener);
+        public ListenerRef addChangeListener(Runnable listener);
     }
 
     private static abstract class ProjectMutablePropertyRef<ValueType>
@@ -276,53 +269,16 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         }
 
         @Override
-        public final void addChangeListener(ChangeListener listener) {
-            parent.addModelChangeListener(listener);
-        }
-
-        @Override
-        public final void removeChangeListener(ChangeListener listener) {
-            parent.removeModelChangeListener(listener);
+        public ListenerRef addChangeListener(Runnable listener) {
+            return parent.addModelChangeListener(listener);
         }
     }
 
     private static class MutablePropertyProxy<ValueType> implements MutableProperty<ValueType> {
         private final MutablePropertyRef<ValueType> propertyRef;
 
-        private final Lock mainLock;
-        private MutableProperty<?> forwardingTo;
-        private final ChangeListener forwarder;
-        private final List<ChangeListener> listeners;
-
         public MutablePropertyProxy(MutablePropertyRef<ValueType> propertyRef) {
             this.propertyRef = propertyRef;
-            this.mainLock = new ReentrantLock();
-            this.listeners = new LinkedList<>();
-            this.forwardingTo = null;
-            this.forwarder = new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    List<ChangeListener> listenersCopy = null;
-                    mainLock.lock();
-                    try {
-                        if (!listeners.isEmpty()) {
-                            listenersCopy = new ArrayList<>(listeners);
-                        }
-                    } finally {
-                        mainLock.unlock();
-                    }
-
-                    if (listenersCopy != null) {
-                        for (ChangeListener listener: listenersCopy) {
-                            try {
-                                listener.stateChanged(e);
-                            } catch (Throwable ex) {
-                                LOGGER.log(Level.SEVERE, "Unexpected exception in a listener.", ex);
-                            }
-                        }
-                    }
-                }
-            };
         }
 
         @Override
@@ -345,44 +301,46 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
             return propertyRef.getProperty().isDefault();
         }
 
-        @Override
-        public void addChangeListener(ChangeListener listener) {
-            mainLock.lock();
-            try {
-                if (listeners.isEmpty()) {
-                    forwardingTo = propertyRef.getProperty();
-                    forwardingTo.addChangeListener(forwarder);
-                    propertyRef.addChangeListener(forwarder);
-                }
-                listeners.add(listener);
-            } finally {
-                mainLock.unlock();
+        private void registerWithSubListener(Runnable listener, AtomicReference<ListenerRef> subListenerRef) {
+            ListenerRef newRef = propertyRef.getProperty().addChangeListener(listener);
+            ListenerRef prevRef = subListenerRef.getAndSet(newRef);
+            if (prevRef != null) {
+                prevRef.unregister();
+            }
+            else {
+                subListenerRef.compareAndSet(newRef, null);
+                newRef.unregister();
             }
         }
 
         @Override
-        public void removeChangeListener(ChangeListener listener) {
-            mainLock.lock();
-            try {
-                if (listeners.isEmpty()) {
-                    return;
-                }
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                listeners.remove(listener);
-                if (listeners.isEmpty()) {
-                    if (forwardingTo != null) {
-                        propertyRef.removeChangeListener(forwarder);
-                        forwardingTo.removeChangeListener(listener);
-                        forwardingTo = null;
-                    }
-                    else {
-                        String logMessage = "Cannot remove forwarding listener.";
-                        LOGGER.log(Level.SEVERE, logMessage, new IllegalStateException(logMessage));
+            // null means that the client unregistered
+            final AtomicReference<ListenerRef> subListenerRef
+                    = new AtomicReference<ListenerRef>(UnregisteredListenerRef.INSTANCE);
+
+            final ListenerRef listenerRef = propertyRef.addChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    registerWithSubListener(listener, subListenerRef);
+                    listener.run();
+                }
+            });
+
+            registerWithSubListener(listener, subListenerRef);
+
+            return NbListenerRefs.fromRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    listenerRef.unregister();
+                    ListenerRef subRef = subListenerRef.getAndSet(null);
+                    if (subRef != null) {
+                        subRef.unregister();
                     }
                 }
-            } finally {
-                mainLock.unlock();
-            }
+            });
         }
     }
 }

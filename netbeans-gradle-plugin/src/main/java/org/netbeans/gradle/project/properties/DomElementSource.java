@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.w3c.dom.Element;
 
 public final class DomElementSource implements PropertySource<Element> {
@@ -23,10 +24,7 @@ public final class DomElementSource implements PropertySource<Element> {
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener listener) {
+    public ListenerRef addChangeListener(Runnable listener) {
+        return UnregisteredListenerRef.INSTANCE;
     }
 }

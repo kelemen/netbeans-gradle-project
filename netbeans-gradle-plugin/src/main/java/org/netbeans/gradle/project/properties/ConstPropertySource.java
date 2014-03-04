@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.UnregisteredListenerRef;
 
 public final class ConstPropertySource<ValueType>
 implements
@@ -25,10 +26,7 @@ implements
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener listener) {
+    public ListenerRef addChangeListener(Runnable listener) {
+        return UnregisteredListenerRef.INSTANCE;
     }
 }

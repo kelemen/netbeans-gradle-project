@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class FallbackProperty<ValueType> implements MutableProperty<ValueType> {
@@ -42,18 +44,12 @@ public final class FallbackProperty<ValueType> implements MutableProperty<ValueT
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
+    public ListenerRef addChangeListener(Runnable listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        mainValue.addChangeListener(listener);
-        defaultValue.addChangeListener(listener);
-    }
+        ListenerRef ref1 = mainValue.addChangeListener(listener);
+        ListenerRef ref2 = defaultValue.addChangeListener(listener);
 
-    @Override
-    public void removeChangeListener(ChangeListener listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        defaultValue.removeChangeListener(listener);
-        mainValue.removeChangeListener(listener);
+        return ListenerRegistries.combineListenerRefs(ref1, ref2);
     }
 }

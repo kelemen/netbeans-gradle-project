@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.w3c.dom.Element;
 
 public final class DomElementProperty implements MutableProperty<Element> {
@@ -31,12 +31,7 @@ public final class DomElementProperty implements MutableProperty<Element> {
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
-        wrapped.addChangeListener(listener);
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener listener) {
-        wrapped.removeChangeListener(listener);
+    public ListenerRef addChangeListener(Runnable listener) {
+        return wrapped.addChangeListener(listener);
     }
 }

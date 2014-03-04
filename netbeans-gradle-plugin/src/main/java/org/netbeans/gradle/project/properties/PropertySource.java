@@ -1,11 +1,13 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 
-public interface PropertySource<ValueType> {
+public interface PropertySource<ValueType> extends org.jtrim.property.PropertySource<ValueType> {
+    @Override
     public ValueType getValue();
-    public boolean isDefault();
 
-    public void addChangeListener(ChangeListener listener);
-    public void removeChangeListener(ChangeListener listener);
+    @Override
+    public ListenerRef addChangeListener(Runnable listener);
+
+    public boolean isDefault();
 }

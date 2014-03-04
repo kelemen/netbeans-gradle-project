@@ -16,8 +16,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
@@ -140,9 +138,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     private void unsafeInit() {
         assert initLock.isHeldByCurrentThread();
 
-        ChangeListener changeListener = new ChangeListener() {
+        Runnable changeListener = new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                     @Override
                     public void execute(CancellationToken cancelToken) {
@@ -157,6 +155,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
                 }, null);
             }
         };
+
         GlobalGradleSettings.getGradleHome().addChangeListener(changeListener);
         GlobalGradleSettings.getGradleJdk().addChangeListener(changeListener);
 

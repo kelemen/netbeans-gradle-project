@@ -2,18 +2,16 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.openide.modules.SpecificationVersion;
-import org.openide.util.ChangeSupport;
 
 public final class DefaultPropertySources {
     private static final Logger LOGGER = Logger.getLogger(DefaultPropertySources.class.getName());
@@ -36,13 +34,8 @@ public final class DefaultPropertySources {
             }
 
             @Override
-            public void addChangeListener(ChangeListener listener) {
-                source.addChangeListener(listener);
-            }
-
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                source.removeChangeListener(listener);
+            public ListenerRef addChangeListener(Runnable listener) {
+                return source.addChangeListener(listener);
             }
         };
     }
@@ -172,25 +165,43 @@ public final class DefaultPropertySources {
         };
     }
 
+    private static final class InstalledPlatformSource implements org.jtrim.property.PropertySource<JavaPlatform[]> {
+        @Override
+        public JavaPlatform[] getValue() {
+            return JavaPlatformManager.getDefault().getInstalledPlatforms();
+        }
+
+        @Override
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+            final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
+                        listener.run();
+                    }
+                }
+            };
+
+            JavaPlatformManager.getDefault().addPropertyChangeListener(propertyChangeListener);
+            return NbListenerRefs.fromRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    JavaPlatformManager.getDefault().removePropertyChangeListener(propertyChangeListener);
+                }
+            });
+        }
+    }
+
     private static abstract class JavaPlatformSource<ValueType>
     implements
             PropertySource<ValueType> {
 
-        private final Lock changesLock;
-        private final ChangeSupport changes;
-        private final PropertyChangeListener changeForwarder;
+        private final org.jtrim.property.PropertySource<JavaPlatform[]> installedPlatforms;
 
         public JavaPlatformSource() {
-            this.changesLock = new ReentrantLock();
-            this.changes = new ChangeSupport(this);
-            this.changeForwarder = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
-                        changes.fireChange();
-                    }
-                }
-            };
+            this.installedPlatforms = new InstalledPlatformSource();
         }
 
         protected abstract ValueType chooseFromPlatforms(JavaPlatform[] platforms);
@@ -201,34 +212,8 @@ public final class DefaultPropertySources {
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
-            changesLock.lock();
-            try {
-                boolean addedNow = !changes.hasListeners();
-                changes.addChangeListener(listener);
-                if (addedNow) {
-                    JavaPlatformManager.getDefault().addPropertyChangeListener(changeForwarder);
-                }
-            } finally {
-                changesLock.unlock();
-            }
-        }
-
-        @Override
-        public void removeChangeListener(ChangeListener listener) {
-            changesLock.lock();
-            try {
-                if (!changes.hasListeners()) {
-                    return;
-                }
-
-                changes.removeChangeListener(listener);
-                if (!changes.hasListeners()) {
-                    JavaPlatformManager.getDefault().removePropertyChangeListener(changeForwarder);
-                }
-            } finally {
-                changesLock.unlock();
-            }
+        public ListenerRef addChangeListener(Runnable listener) {
+            return installedPlatforms.addChangeListener(listener);
         }
     }
 

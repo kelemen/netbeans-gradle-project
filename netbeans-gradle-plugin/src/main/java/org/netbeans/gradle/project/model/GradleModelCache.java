@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -51,9 +49,9 @@ public final class GradleModelCache {
             result = new GradleModelCache(getProjectCacheSize());
             if (DEFAULT_REF.compareAndSet(null, result)) {
                 final GradleModelCache cache = result;
-                GlobalGradleSettings.getProjectCacheSize().addChangeListener(new ChangeListener() {
+                GlobalGradleSettings.getProjectCacheSize().addChangeListener(new Runnable() {
                     @Override
-                    public void stateChanged(ChangeEvent e) {
+                    public void run() {
                         cache.setMaxCapacity(getProjectCacheSize());
                     }
                 });

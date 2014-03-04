@@ -1,16 +1,15 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import javax.swing.event.ChangeListener;
-import org.jtrim.event.InitLaterListenerRef;
+import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ProxyListenerRegistry;
+import org.jtrim.event.SimpleListenerRegistry;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.openide.util.ChangeSupport;
 
 import static org.netbeans.gradle.project.properties.AbstractProjectPlatformSource.getJavaPlatform;
 
@@ -18,16 +17,12 @@ public abstract class AbstractProjectPlatformSource
 implements
         PropertySource<ProjectPlatform> {
 
-    private final Lock changesLock;
-    private final ChangeSupport changes;
-    private ListenerRef subListenerRef;
+    private final ProxyListenerRegistry<Runnable> listeners;
     private final AtomicReference<GradleProjectPlatformQuery> queryRef;
 
     public AbstractProjectPlatformSource() {
-        this.changesLock = new ReentrantLock();
-        this.changes = new ChangeSupport(this);
-        this.subListenerRef = null;
         this.queryRef = new AtomicReference<>(null);
+        this.listeners = new ProxyListenerRegistry<>(NoOpListenerRegistry.INSTANCE);
     }
 
     public static ProjectPlatform getDefaultPlatform() {
@@ -43,39 +38,24 @@ implements
     }
 
     protected final void firePlatformChange() {
-        changes.fireChange();
+        listeners.onEvent(EventListeners.runnableDispatcher(), null);
+    }
+
+    private static SimpleListenerRegistry<Runnable> asListenerRegistry(final GradleProjectPlatformQuery query) {
+        return new SimpleListenerRegistry<Runnable>() {
+            @Override
+            public ListenerRef registerListener(Runnable listener) {
+                return query.addPlatformChangeListener(listener);
+            }
+        };
     }
 
     protected final GradleProjectPlatformQuery trySetQuery(GradleProjectPlatformQuery query) {
         ExceptionHelper.checkNotNullArgument(query, "query");
 
         if (queryRef.compareAndSet(null, query)) {
-            ListenerRef toRemove = null;
-            InitLaterListenerRef toAdd = null;
-
-            changesLock.lock();
-            try {
-                if (changes.hasListeners()) {
-                    toRemove = subListenerRef;
-                    toAdd = new InitLaterListenerRef();
-                    subListenerRef = toAdd;
-                }
-            } finally {
-                changesLock.unlock();
-            }
-
-            if (toRemove != null) {
-                toRemove.unregister();
-            }
-            if (toAdd != null) {
-                toAdd.init(query.addPlatformChangeListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        firePlatformChange();
-                    }
-                }));
-                firePlatformChange();
-            }
+            listeners.replaceRegistry(asListenerRegistry(query));
+            firePlatformChange();
         }
 
         return queryRef.get();
@@ -90,54 +70,16 @@ implements
     }
 
     @Override
-    public final void addChangeListener(ChangeListener listener) {
-        ListenerRef toRemove = null;
-        InitLaterListenerRef toAdd = null;
-        GradleProjectPlatformQuery query = queryRef.get();
-
-        changesLock.lock();
-        try {
-            if (!changes.hasListeners() && query != null) {
-                toRemove = subListenerRef;
-                toAdd = new InitLaterListenerRef();
-                subListenerRef = toAdd;
-            }
-            changes.addChangeListener(listener);
-        } finally {
-            changesLock.unlock();
-        }
-
-        if (toRemove != null) {
-            toRemove.unregister();
-        }
-        if (toAdd != null) {
-            assert query != null;
-            toAdd.init(query.addPlatformChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    changes.fireChange();
-                }
-            }));
-        }
+    public final ListenerRef addChangeListener(Runnable listener) {
+        return listeners.registerListener(listener);
     }
 
-    @Override
-    public final void removeChangeListener(ChangeListener listener) {
-        ListenerRef toRemove = null;
+    private enum NoOpListenerRegistry implements SimpleListenerRegistry<Runnable> {
+        INSTANCE;
 
-        changesLock.lock();
-        try {
-            changes.removeChangeListener(listener);
-            if (!changes.hasListeners()) {
-                toRemove = subListenerRef;
-                subListenerRef = null;
-            }
-        } finally {
-            changesLock.unlock();
-        }
-
-        if (toRemove != null) {
-            toRemove.unregister();
+        @Override
+        public ListenerRef registerListener(Runnable listener) {
+            return UnregisteredListenerRef.INSTANCE;
         }
     }
 }

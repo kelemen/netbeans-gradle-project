@@ -21,10 +21,13 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -268,6 +271,25 @@ public final class NbGradleProject implements Project {
         return projectInfoManager;
     }
 
+    public ListenerRef addModelChangeListener(final Runnable listener) {
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+        final ChangeListener changeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                listener.run();
+            }
+        };
+
+        addModelChangeListener(changeListener);
+        return NbListenerRefs.fromRunnable(new Runnable() {
+            @Override
+            public void run() {
+                removeModelChangeListener(changeListener);
+            }
+        });
+    }
+
     public void addModelChangeListener(ChangeListener listener) {
         modelChanges.addChangeListener(listener);
     }
@@ -500,7 +522,7 @@ public final class NbGradleProject implements Project {
     // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook {
         private final ModelLoadListener modelLoadListener;
-        private ChangeListener licenseChangeListener;
+        private final AtomicReference<ListenerRef> licenseChangeListenerRef;
         private LicenseManager.Ref licenseRef;
         private boolean opened;
 
@@ -508,7 +530,7 @@ public final class NbGradleProject implements Project {
             this.opened = false;
 
             this.licenseRef = null;
-            this.licenseChangeListener = null;
+            this.licenseChangeListenerRef = new AtomicReference<>(null);
 
             this.modelLoadListener = new ModelLoadListener() {
                 @Override
@@ -548,18 +570,18 @@ public final class NbGradleProject implements Project {
             GradleModelLoader.addModelLoadedListener(modelLoadListener);
             reloadProject(true);
 
-            if (licenseChangeListener != null) {
-                LOGGER.warning("projectOpened() without close.");
-                properties.getLicenseHeader().removeChangeListener(licenseChangeListener);
-            }
-
-            licenseChangeListener = new ChangeListener() {
+            ListenerRef newRef = properties.getLicenseHeader().addChangeListener(new Runnable() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
+                public void run() {
                     registerLicense();
                 }
-            };
-            properties.getLicenseHeader().addChangeListener(licenseChangeListener);
+            });
+
+            ListenerRef prevRef = licenseChangeListenerRef.getAndSet(newRef);
+            if (prevRef != null) {
+                LOGGER.warning("projectOpened() without close.");
+                prevRef.unregister();
+            }
 
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -584,9 +606,9 @@ public final class NbGradleProject implements Project {
                 }
             });
 
-           if (licenseChangeListener != null) {
-                properties.getLicenseHeader().removeChangeListener(licenseChangeListener);
-                licenseChangeListener = null;
+            ListenerRef listenerRef = licenseChangeListenerRef.getAndSet(null);
+            if (listenerRef != null) {
+                listenerRef.unregister();
             }
 
             GradleModelLoader.removeModelLoadedListener(modelLoadListener);

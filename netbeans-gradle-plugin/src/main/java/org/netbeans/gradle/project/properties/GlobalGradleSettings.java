@@ -7,21 +7,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
@@ -458,9 +456,6 @@ public final class GlobalGradleSettings {
     private static class GlobalProperty<ValueType> implements StringBasedProperty<ValueType> {
         private final String settingsName;
         private final ValueConverter<ValueType> converter;
-        private final Lock changesLock;
-        private final ChangeSupport changes;
-        private final PreferenceChangeListener changeForwarder;
 
         public GlobalProperty(String settingsName, ValueConverter<ValueType> converter) {
             ExceptionHelper.checkNotNullArgument(settingsName, "settingsName");
@@ -468,16 +463,6 @@ public final class GlobalGradleSettings {
 
             this.settingsName = settingsName;
             this.converter = converter;
-            this.changesLock = new ReentrantLock();
-            this.changes = new ChangeSupport(this);
-            this.changeForwarder = new PreferenceChangeListener() {
-                @Override
-                public void preferenceChange(PreferenceChangeEvent evt) {
-                    if (GlobalProperty.this.settingsName.equals(evt.getKey())) {
-                        changes.fireChange();
-                    }
-                }
-            };
         }
 
         private static Preferences getPreferences() {
@@ -510,31 +495,25 @@ public final class GlobalGradleSettings {
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
-            changesLock.lock();
-            try {
-                boolean hasListeners = changes.hasListeners();
-                changes.addChangeListener(listener);
-                if (!hasListeners) {
-                    getPreferences().addPreferenceChangeListener(changeForwarder);
-                }
-            } finally {
-                changesLock.unlock();
-            }
-        }
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        @Override
-        public void removeChangeListener(ChangeListener listener) {
-            changesLock.lock();
-            try {
-                changes.removeChangeListener(listener);
-                boolean hasListeners = changes.hasListeners();
-                if (!hasListeners) {
-                    getPreferences().removePreferenceChangeListener(changeForwarder);
+            final Preferences preferences = getPreferences();
+            final PreferenceChangeListener changeListener = new PreferenceChangeListener() {
+                @Override
+                public void preferenceChange(PreferenceChangeEvent evt) {
+                    if (GlobalProperty.this.settingsName.equals(evt.getKey())) {
+                        listener.run();
+                    }
                 }
-            } finally {
-                changesLock.unlock();
-            }
+            };
+
+            return NbListenerRefs.fromRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    preferences.removePreferenceChangeListener(changeListener);
+                }
+            });
         }
 
         @Override

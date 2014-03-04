@@ -11,12 +11,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -223,31 +222,37 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
     private static class PropertySetter<ValueType> {
         private final MutableProperty<ValueType> property;
         private final PropertyGetter<? extends ValueType> getter;
-        private final AtomicReference<ChangeDetector> detectorRef;
+        private final AtomicReference<ListenerRef> changeListenerRef;
+        private volatile boolean changed;
 
         public PropertySetter(MutableProperty<ValueType> property, PropertyGetter<? extends ValueType> getter) {
             assert property != null;
             this.property = property;
             this.getter = getter;
-            this.detectorRef = new AtomicReference<>(new ChangeDetector());
-        }
-
-        private ChangeDetector getDectector() {
-            ChangeDetector detector = detectorRef.get();
-            if (detector == null) {
-                throw new IllegalStateException();
-            }
-            return detector;
+            this.changeListenerRef = new AtomicReference<>();
+            this.changed = false;
         }
 
         public void start() {
-            property.addChangeListener(getDectector());
+            ListenerRef prevRef = changeListenerRef.getAndSet(property.addChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    changed = true;
+                }
+            }));
+
+            if (prevRef != null) {
+                prevRef.unregister();
+                throw new IllegalStateException();
+            }
         }
 
         public void set(PropertiesSnapshot snapshot) {
             PropertySource<? extends ValueType> source = getter.get(snapshot);
             if (source != null) {
-                property.setValueFromSource(source);
+                if (!changed) {
+                    property.setValueFromSource(source);
+                }
             }
             else {
                 LOGGER.warning("null property source.");
@@ -255,23 +260,10 @@ public final class XmlPropertiesPersister implements PropertiesPersister {
         }
 
         public void done() {
-            ChangeDetector detector = detectorRef.getAndSet(null);
-            if (detector != null) {
-                property.removeChangeListener(detector);
+            ListenerRef listenerRef = changeListenerRef.getAndSet(null);
+            if (listenerRef != null) {
+                listenerRef.unregister();
             }
-        }
-    }
-
-    private static class ChangeDetector implements ChangeListener {
-        private volatile boolean changed;
-
-        public boolean hasChanged() {
-            return changed;
-        }
-
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            changed = true;
         }
     }
 

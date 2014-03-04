@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -143,13 +143,8 @@ public final class PropertiesSnapshot {
                 }
 
                 @Override
-                public void addChangeListener(ChangeListener listener) {
-                    GlobalGradleSettings.getGradleHome().addChangeListener(listener);
-                }
-
-                @Override
-                public void removeChangeListener(ChangeListener listener) {
-                    GlobalGradleSettings.getGradleHome().removeChangeListener(listener);
+                public ListenerRef addChangeListener(Runnable listener) {
+                    return GlobalGradleSettings.getGradleHome().addChangeListener(listener);
                 }
             };
         }

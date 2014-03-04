@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.query;
 import java.io.File;
 import java.net.URL;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
 import org.netbeans.gradle.project.util.GradleFileUtils;
@@ -25,9 +24,9 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
         CHANGES = new ChangeSupport(eventSource);
         eventSource.init(CHANGES);
 
-        GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new ChangeListener() {
+        GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 notifyCacheChange();
             }
         });

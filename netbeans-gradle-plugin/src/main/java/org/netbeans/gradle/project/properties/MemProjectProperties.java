@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -87,9 +85,9 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         MutableProperty<PredefinedTask> result = builtInTasks.get(command);
         if (result == null) {
             result = new DefaultMutableProperty<>(null, true, true);
-            result.addChangeListener(new ChangeListener() {
+            result.addChangeListener(new Runnable() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
+                public void run() {
                     builtInChangeSignal.setValue(new Object());
                 }
             });
@@ -128,9 +126,9 @@ public final class MemProjectProperties extends AbstractProjectProperties {
         }
 
         AuxConfigProperty newProperty = new AuxConfigProperty(key, new DomElementProperty());
-        newProperty.getProperty().addChangeListener(new ChangeListener() {
+        newProperty.getProperty().addChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 getAuxConfigListener().setValue(null);
             }
         });

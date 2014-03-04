@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -76,17 +78,14 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
             }
 
             @Override
-            public void addChangeListener(ChangeListener listener) {
-                getPlatform().addChangeListener(listener);
-                project.addModelChangeListener(listener);
-                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
-            }
+            public ListenerRef addChangeListener(Runnable listener) {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                GlobalGradleSettings.getMayRelyOnJavaOfScript().removeChangeListener(listener);
-                project.removeModelChangeListener(listener);
-                getPlatform().removeChangeListener(listener);
+                ListenerRef ref1 = GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                ListenerRef ref2 = project.addModelChangeListener(listener);
+                ListenerRef ref3 = getPlatform().addChangeListener(listener);
+
+                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
             }
         };
     }
@@ -113,18 +112,14 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
             }
 
             @Override
-            public void addChangeListener(ChangeListener listener) {
-                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
-                project.addModelChangeListener(listener);
-                platformListHelper.addChangeListener(listener);
+            public ListenerRef addChangeListener(Runnable listener) {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            }
+                ListenerRef ref1 = GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                ListenerRef ref2 = project.addModelChangeListener(listener);
+                ListenerRef ref3 = platformListHelper.addChangeListener(listener);
 
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                platformListHelper.removeChangeListener(listener);
-                project.removeModelChangeListener(listener);
-                GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
             }
         };
     }
@@ -244,13 +239,8 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
-            wrapped.addChangeListener(listener);
-        }
-
-        @Override
-        public void removeChangeListener(ChangeListener listener) {
-            wrapped.removeChangeListener(listener);
+        public ListenerRef addChangeListener(Runnable listener) {
+            return wrapped.addChangeListener(listener);
         }
     }
 
@@ -278,11 +268,8 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
-        }
-
-        @Override
-        public void removeChangeListener(ChangeListener listener) {
+        public ListenerRef addChangeListener(Runnable listener) {
+            return UnregisteredListenerRef.INSTANCE;
         }
     }
 }

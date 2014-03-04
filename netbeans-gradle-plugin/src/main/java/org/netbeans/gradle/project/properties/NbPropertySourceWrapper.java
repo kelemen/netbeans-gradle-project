@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 
 public final class NbPropertySourceWrapper<ValueType>
@@ -26,31 +26,8 @@ implements
     }
 
     @Override
-    public NbListenerRef addChangeListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                listener.run();
-            }
-        };
-
-        source.addChangeListener(changeListener);
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
-
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
-
-            @Override
-            public void unregister() {
-                source.removeChangeListener(changeListener);
-                registered = false;
-            }
-        };
+    public NbListenerRef addChangeListener(Runnable listener) {
+        return NbListenerRefs.asNbRef(source.addChangeListener(listener));
     }
 
     private static class PropertySourceWrapper<ValueType> implements PropertySource<ValueType> {
@@ -72,13 +49,8 @@ implements
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
-            property.addChangeListener(listener);
-        }
-
-        @Override
-        public void removeChangeListener(ChangeListener listener) {
-            property.removeChangeListener(listener);
+        public ListenerRef addChangeListener(Runnable listener) {
+            return property.addChangeListener(listener);
         }
     }
 }

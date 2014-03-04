@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
@@ -64,9 +62,9 @@ public final class GradleHomeRegistry {
 
     public static void requireGradlePaths() {
         if (USING_GLOBAL_PATHS.compareAndSet(false, true)) {
-            GlobalGradleSettings.getGradleHome().addChangeListener(new ChangeListener() {
+            GlobalGradleSettings.getGradleHome().addChangeListener(new Runnable() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
+                public void run() {
                     CHANGES.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
                 }
             });

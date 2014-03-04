@@ -17,8 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
@@ -64,9 +62,9 @@ public final class ProjectPropertiesManager {
 
         final AtomicBoolean saveQueued = new AtomicBoolean(false);
 
-        ChangeListener saveIfRequiredTask = new ChangeListener() {
+        Runnable saveIfRequiredTask = new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 saveIfRequired(project, saveQueued, properties, persister);
             }
         };

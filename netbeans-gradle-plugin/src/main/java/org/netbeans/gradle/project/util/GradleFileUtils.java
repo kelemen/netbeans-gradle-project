@@ -8,7 +8,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.PropertySource;
@@ -66,13 +66,8 @@ public final class GradleFileUtils {
             }
 
             @Override
-            public void addChangeListener(ChangeListener listener) {
-                GlobalGradleSettings.getGradleUserHomeDir().addChangeListener(listener);
-            }
-
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                GlobalGradleSettings.getGradleUserHomeDir().removeChangeListener(listener);
+            public ListenerRef addChangeListener(Runnable listener) {
+                return GlobalGradleSettings.getGradleUserHomeDir().addChangeListener(listener);
             }
         };
     }

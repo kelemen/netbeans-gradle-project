@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.List;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 public final class MutableListProperty<ElementType> implements MutableProperty<List<ElementType>> {
@@ -33,12 +33,7 @@ public final class MutableListProperty<ElementType> implements MutableProperty<L
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
-        wrapped.addChangeListener(listener);
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener listener) {
-        wrapped.removeChangeListener(listener);
+    public ListenerRef addChangeListener(Runnable listener) {
+        return wrapped.addChangeListener(listener);
     }
 }

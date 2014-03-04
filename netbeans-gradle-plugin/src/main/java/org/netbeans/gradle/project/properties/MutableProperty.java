@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 
 public interface MutableProperty<ValueType> {
     // Getting the value of a property is thread-safe but setting it must be
@@ -14,6 +14,5 @@ public interface MutableProperty<ValueType> {
 
     public boolean isDefault();
 
-    public void addChangeListener(ChangeListener listener);
-    public void removeChangeListener(ChangeListener listener);
+    public ListenerRef addChangeListener(Runnable listener);
 }
