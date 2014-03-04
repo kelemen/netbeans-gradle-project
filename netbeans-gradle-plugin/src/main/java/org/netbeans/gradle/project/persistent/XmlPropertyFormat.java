@@ -293,6 +293,10 @@ final class XmlPropertyFormat {
         ExceptionHelper.checkNotNullArgument(propertyfile, "propertyfile");
         ExceptionHelper.checkNotNullArgument(snapshot, "snapshot");
 
+        LOGGER.log(Level.INFO,
+                "Saving project properties for {0} in {1}",
+                new Object[]{project.getDisplayName(), propertyfile});
+
         DocumentBuilder builder;
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -560,6 +564,8 @@ final class XmlPropertyFormat {
     }
 
     public static PropertiesSnapshot readFromXml(File propertiesFile) {
+        LOGGER.log(Level.INFO, "Loading project properties from {0}", propertiesFile);
+
         PropertiesSnapshot.Builder result = new PropertiesSnapshot.Builder();
 
         DocumentBuilder builder;
