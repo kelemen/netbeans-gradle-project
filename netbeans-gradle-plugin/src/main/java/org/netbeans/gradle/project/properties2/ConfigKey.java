@@ -2,7 +2,11 @@ package org.netbeans.gradle.project.properties2;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
+import org.jtrim.utils.ExceptionHelper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public final class ConfigKey {
     private final String name;
@@ -15,6 +19,39 @@ public final class ConfigKey {
     public ConfigKey(String name, String namespace) {
         this.name = name;
         this.namespace = namespace;
+    }
+
+    public Node tryGetChildNode(Node parent) {
+        NodeList childNodes = parent.getChildNodes();
+        int length = childNodes.getLength();
+        for (int i = 0; i < length; i++) {
+            Node child = childNodes.item(i);
+
+            if (Objects.equals(name, child.getNodeName())
+                    && Objects.equals(namespace, child.getNamespaceURI())) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    public Element addChildIfNeeded(Node parent) {
+        ExceptionHelper.checkNotNullArgument(parent, "parent");
+        Document ownerDocument = Objects.requireNonNull(parent.getOwnerDocument(), "Node needs OwnerDocument");
+
+        Node childNode = tryGetChildNode(parent);
+        if (childNode instanceof Element) {
+            return (Element)childNode;
+        }
+
+        if (childNode != null) {
+            parent.removeChild(childNode);
+        }
+
+        Element childElement = ownerDocument.createElementNS(name, namespace);
+        // TODO: Allow inserting it in a user defined location.
+        parent.appendChild(childElement);
+        return childElement;
     }
 
     @Nullable
