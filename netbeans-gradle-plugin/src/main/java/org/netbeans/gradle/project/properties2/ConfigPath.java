@@ -6,7 +6,6 @@ import java.util.List;
 import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public final class ConfigPath {
     private static final ConfigKey[] NO_KEYS = new ConfigKey[0];
@@ -70,14 +69,9 @@ public final class ConfigPath {
 
         ConfigKey pathKey = pathKeys[offset];
 
-        NodeList childNodes = current.getChildNodes();
-        int childNodeCount = childNodes.getLength();
-        for (int i = 0; i < childNodeCount; i++) {
-            Node childNode = childNodes.item(i);
-            ConfigKey childKey = new ConfigKey(childNode);
-            if (childKey.equals(pathKey)) {
-                return removePath(current, childNode, pathKeys, offset + 1);
-            }
+        Node childNode = pathKey.tryGetChildNode(current);
+        if (childNode != null) {
+            return removePath(current, childNode, pathKeys, offset + 1);
         }
         return false;
     }
