@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 public final class ConfigPath {
@@ -50,6 +51,16 @@ public final class ConfigPath {
 
     public List<ConfigKey> getKeys() {
         return keysAsList;
+    }
+
+    public Element addToNode(Element root) {
+        ExceptionHelper.checkNotNullArgument(root, "root");
+
+        Element result = root;
+        for (ConfigKey key: keys) {
+            result = key.addChildIfNeeded(result);
+        }
+        return result;
     }
 
     public boolean removeFromNode(Node root) {
