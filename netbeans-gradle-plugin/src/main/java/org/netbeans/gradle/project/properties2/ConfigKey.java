@@ -37,7 +37,6 @@ public final class ConfigKey {
 
     public Element addChildIfNeeded(Node parent) {
         ExceptionHelper.checkNotNullArgument(parent, "parent");
-        Document ownerDocument = Objects.requireNonNull(parent.getOwnerDocument(), "Node needs OwnerDocument");
 
         Node childNode = tryGetChildNode(parent);
         if (childNode instanceof Element) {
@@ -48,6 +47,7 @@ public final class ConfigKey {
             parent.removeChild(childNode);
         }
 
+        Document ownerDocument = Objects.requireNonNull(parent.getOwnerDocument(), "Node needs OwnerDocument");
         Element childElement = ownerDocument.createElementNS(name, namespace);
         // TODO: Allow inserting it in a user defined location.
         parent.appendChild(childElement);
