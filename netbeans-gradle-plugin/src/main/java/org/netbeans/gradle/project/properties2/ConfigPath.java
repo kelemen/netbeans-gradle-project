@@ -15,15 +15,19 @@ public final class ConfigPath {
     private int hashCache;
 
     private ConfigPath(ConfigKey[] keys) {
-        this.keys = keys.clone();
-        this.keysAsList = ArraysEx.viewAsList(this.keys);
+        this(keys, ArraysEx.viewAsList(keys));
 
         ExceptionHelper.checkNotNullElements(this.keys, "keys");
     }
 
+    private ConfigPath(ConfigKey[] keys, List<ConfigKey> keysAsList) {
+        this.keys = keys;
+        this.keysAsList = keysAsList;
+    }
+
     public static ConfigPath fromKeys(ConfigKey... keys) {
         return keys.length > 0
-                ? new ConfigPath(keys)
+                ? new ConfigPath(keys.clone())
                 : ROOT;
     }
 
