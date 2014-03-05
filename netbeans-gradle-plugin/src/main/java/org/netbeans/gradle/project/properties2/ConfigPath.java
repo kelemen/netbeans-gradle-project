@@ -1,12 +1,14 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class ConfigPath {
-    public static final ConfigPath ROOT = new ConfigPath(new ConfigKey[0]);
+    private static final ConfigKey[] NO_KEYS = new ConfigKey[0];
+    public static final ConfigPath ROOT = new ConfigPath(NO_KEYS, Collections.<ConfigKey>emptyList());
 
     private final ConfigKey[] keys;
     private final List<ConfigKey> keysAsList;
@@ -28,6 +30,12 @@ public final class ConfigPath {
     public static ConfigPath fromKeys(ConfigKey... keys) {
         return keys.length > 0
                 ? new ConfigPath(keys.clone())
+                : ROOT;
+    }
+
+    public static ConfigPath fromKeys(List<ConfigKey> keys) {
+        return keys.isEmpty()
+                ? new ConfigPath(keys.toArray(NO_KEYS))
                 : ROOT;
     }
 
