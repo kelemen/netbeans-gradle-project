@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public final class ConfigPath {
     private static final ConfigKey[] NO_KEYS = new ConfigKey[0];
@@ -49,6 +51,35 @@ public final class ConfigPath {
 
     public List<ConfigKey> getKeys() {
         return keysAsList;
+    }
+
+    public boolean removeFromNode(Node root) {
+        ExceptionHelper.checkNotNullArgument(root, "root");
+
+        return removePath(null, root, keys, 0);
+    }
+
+    private static boolean removePath(Node parent, Node current, ConfigKey[] pathKeys, int offset) {
+        if (offset >= pathKeys.length) {
+            if (parent != null) {
+                parent.removeChild(current);
+                return true;
+            }
+            return false;
+        }
+
+        ConfigKey pathKey = pathKeys[offset];
+
+        NodeList childNodes = current.getChildNodes();
+        int childNodeCount = childNodes.getLength();
+        for (int i = 0; i < childNodeCount; i++) {
+            Node childNode = childNodes.item(i);
+            ConfigKey childKey = new ConfigKey(childNode);
+            if (childKey.equals(pathKey)) {
+                return removePath(current, childNode, pathKeys, offset + 1);
+            }
+        }
+        return false;
     }
 
     @Override
