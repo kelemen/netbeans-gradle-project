@@ -39,6 +39,14 @@ public final class ConfigPath {
                 : ROOT;
     }
 
+    public int getKeyCount() {
+        return keys.length;
+    }
+
+    public ConfigKey getKeyAt(int index) {
+        return keys[index];
+    }
+
     public List<ConfigKey> getKeys() {
         return keysAsList;
     }
