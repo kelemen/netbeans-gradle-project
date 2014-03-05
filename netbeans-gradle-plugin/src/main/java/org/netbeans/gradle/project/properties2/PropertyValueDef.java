@@ -1,8 +1,13 @@
 package org.netbeans.gradle.project.properties2;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.jtrim.property.PropertySource;
 
 public interface PropertyValueDef<ValueKey, ValueType> {
-    public PropertySource<ValueType> property(ValueKey valueKey);
+    @Nonnull
+    public PropertySource<ValueType> property(@Nullable ValueKey valueKey);
+
+    @Nullable
     public ValueKey getKeyFromValue(ValueType value);
 }
