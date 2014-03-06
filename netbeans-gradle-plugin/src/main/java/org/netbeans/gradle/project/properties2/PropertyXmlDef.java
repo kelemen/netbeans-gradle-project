@@ -1,8 +1,11 @@
 package org.netbeans.gradle.project.properties2;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.w3c.dom.Element;
 
 public interface PropertyXmlDef<ValueKey> {
-    public ValueKey loadFromXml(Element node);
-    public void addToXml(Element parent, ValueKey value);
+    @Nullable
+    public ValueKey loadFromXml(@Nonnull Element node);
+    public void addToXml(@Nonnull Element parent, @Nonnull ValueKey value);
 }
