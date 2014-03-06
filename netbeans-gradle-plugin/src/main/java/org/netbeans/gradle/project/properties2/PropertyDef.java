@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties2;
 
 import javax.annotation.Nonnull;
+import org.jtrim.collections.Equality;
+import org.jtrim.collections.EqualityComparator;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
@@ -11,11 +13,13 @@ public final class PropertyDef<ValueKey, ValueType> {
         private PropertyXmlDef<ValueKey> xmlDef;
         private PropertyValueDef<ValueKey, ValueType> valueDef;
         private ValueMerger<ValueType> valueMerger;
+        private EqualityComparator<? super ValueKey> valueKeyEquality;
 
         public Builder() {
             this.xmlDef = NoOpXmlDef.getInstance();
             this.valueDef = NoOpValueDef.getInstance();
             this.valueMerger = NoOpValueMerger.getInstance();
+            this.valueKeyEquality = Equality.naturalEquality();
         }
 
         public void setXmlDef(@Nonnull PropertyXmlDef<ValueKey> xmlDef) {
@@ -33,6 +37,11 @@ public final class PropertyDef<ValueKey, ValueType> {
             this.valueMerger = valueMerger;
         }
 
+        public void setValueKeyEquality(EqualityComparator<? super ValueKey> valueKeyEquality) {
+            ExceptionHelper.checkNotNullArgument(valueKeyEquality, "valueKeyEquality");
+            this.valueKeyEquality = valueKeyEquality;
+        }
+
         public PropertyDef<ValueKey, ValueType> create() {
             return new PropertyDef<>(this);
         }
@@ -41,11 +50,13 @@ public final class PropertyDef<ValueKey, ValueType> {
     private final PropertyXmlDef<ValueKey> xmlDef;
     private final PropertyValueDef<ValueKey, ValueType> valueDef;
     private final ValueMerger<ValueType> valueMerger;
+    private final EqualityComparator<? super ValueKey> valueKeyEquality;
 
     private PropertyDef(Builder<ValueKey, ValueType> builder) {
         this.xmlDef = builder.xmlDef;
         this.valueDef = builder.valueDef;
         this.valueMerger = builder.valueMerger;
+        this.valueKeyEquality = builder.valueKeyEquality;
     }
 
     @Nonnull
@@ -61,6 +72,11 @@ public final class PropertyDef<ValueKey, ValueType> {
     @Nonnull
     public ValueMerger<ValueType> getValueMerger() {
         return valueMerger;
+    }
+
+    @Nonnull
+    public EqualityComparator<? super ValueKey> getValueKeyEquality() {
+        return valueKeyEquality;
     }
 
     private static final class NoOpXmlDef<ValueKey>

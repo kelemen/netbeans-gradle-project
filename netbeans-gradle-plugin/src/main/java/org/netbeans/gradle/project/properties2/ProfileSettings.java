@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.collections.EqualityComparator;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
@@ -207,12 +208,18 @@ public final class ProfileSettings {
         private final ConfigPath configParent;
         private final ConfigPath[] configPaths;
         private final List<ConfigPath> configPathsAsList;
+
         private final PropertyXmlDef<ValueKey> xmlDef;
         private final PropertyValueDef<ValueKey, ValueType> valueDef;
+        private final EqualityComparator<? super ValueKey> valueKeyEquality;
+
         private final UpdateTaskExecutor valueUpdaterThread;
         private final UpdateTaskExecutor eventThread;
 
         private final PropertySourceProxy<ValueType> source;
+
+        private boolean lastValueKeyInitialized;
+        private ValueKey lastValueKey;
 
         public DomTrackingProperty(
                 Collection<ConfigPath> configPaths,
@@ -221,11 +228,18 @@ public final class ProfileSettings {
             this.configPathsAsList = copyPaths(configPaths);
             this.configPaths = configPathsAsList.toArray(new ConfigPath[configPathsAsList.size()]);
             this.configParent = getCommonParent(this.configPaths);
+
             this.xmlDef = propertyDef.getXmlDef();
             this.valueDef = propertyDef.getValueDef();
+            this.valueKeyEquality = propertyDef.getValueKeyEquality();
+
             this.source = PropertyFactory.proxySource(valueDef.property(null));
+
             this.valueUpdaterThread = new GenericUpdateTaskExecutor(DOCUMENT_ACCESSOR_THREAD);
             this.eventThread = new GenericUpdateTaskExecutor(EVENT_THREAD);
+
+            this.lastValueKey = null;
+            this.lastValueKeyInitialized = false;
 
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
@@ -249,8 +263,12 @@ public final class ProfileSettings {
         private void updateDocumentFromKey(ValueKey valueKey) {
             assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
 
-            // TODO: We should check if ValueKey has changed or not with a
-            //       user provided equality.
+            if (lastValueKeyInitialized && valueKeyEquality.equals(valueKey, lastValueKey)) {
+                return;
+            }
+
+            lastValueKey = valueKey;
+            lastValueKeyInitialized = true;
 
             Element root = getDocument().getDocumentElement();
             if (root != null) {
