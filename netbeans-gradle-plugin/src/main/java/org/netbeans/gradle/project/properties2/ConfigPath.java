@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties2;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.jtrim.collections.ArraysEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Element;
@@ -51,6 +52,20 @@ public final class ConfigPath {
 
     public List<ConfigKey> getKeys() {
         return keysAsList;
+    }
+
+    public boolean isParentOfOrEqual(ConfigPath childCandidate) {
+        ConfigKey[] childCandidateKeys = childCandidate.keys;
+        if (childCandidateKeys.length < keys.length) {
+            return false;
+        }
+
+        for (int i = 0; i < keys.length; i++) {
+            if (!Objects.equals(keys[i], childCandidateKeys[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Element tryGetChildElement(Element root) {
