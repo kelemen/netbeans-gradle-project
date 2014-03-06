@@ -119,6 +119,18 @@ public final class ProfileSettings {
         loadFromDocument(document);
     }
 
+    public void loadFromStream(InputStream xmlSource) {
+        Document document;
+        try {
+            document = readXml(xmlSource);
+        } catch (IOException | SAXException ex) {
+            LOGGER.log(Level.INFO, "Unable to parse XML config file from stream.", ex);
+            return;
+        }
+
+        loadFromDocument(document);
+    }
+
     private void fireDocumentUpdate(final Collection<ConfigPath> path) {
         DOCUMENT_ACCESSOR_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
@@ -144,6 +156,12 @@ public final class ProfileSettings {
     private Document getDocument() {
         assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
         return currentDocument;
+    }
+
+    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
+            ConfigPath configPath,
+            PropertyDef<ValueKey, ValueType> propertyDef) {
+        return getProperty(Collections.singleton(configPath), propertyDef);
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
