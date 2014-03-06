@@ -57,10 +57,12 @@ public final class ProfileSettings {
     private final EventDispatcher<DocumentUpdateListener, Collection<ConfigPath>> documentUpdateDispatcher;
 
     private Document currentDocument;
+    private volatile boolean loadedDocumentAtLeastOnce;
 
     public ProfileSettings() {
         this.documentUpdateListeners = new CopyOnTriggerListenerManager<>();
         this.currentDocument = getEmptyDocument();
+        this.loadedDocumentAtLeastOnce = false;
 
         this.documentUpdateDispatcher = new EventDispatcher<DocumentUpdateListener, Collection<ConfigPath>>() {
             @Override
@@ -129,6 +131,7 @@ public final class ProfileSettings {
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
+        loadedDocumentAtLeastOnce = true;
         DOCUMENT_ACCESSOR_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws Exception {
@@ -245,6 +248,18 @@ public final class ProfileSettings {
         }
 
         public void init(CancellationToken cancelToken) {
+            if (!loadedDocumentAtLeastOnce) {
+                // In this case the client code should not expect that the
+                // property value is up to date.
+                valueUpdaterThread.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateFromDocument();
+                    }
+                });
+                return;
+            }
+
             if (DOCUMENT_ACCESSOR_THREAD.isExecutingInThis()) {
                 updateFromDocument();
             }
