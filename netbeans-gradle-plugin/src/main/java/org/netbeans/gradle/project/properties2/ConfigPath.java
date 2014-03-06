@@ -53,6 +53,20 @@ public final class ConfigPath {
         return keysAsList;
     }
 
+    public Element tryGetChildElement(Element root) {
+        ExceptionHelper.checkNotNullArgument(root, "root");
+
+        Node result = root;
+        for (ConfigKey key: keys) {
+            result = key.tryGetChildNode(result);
+            if (result == null) {
+                return null;
+            }
+        }
+
+        return result instanceof Element ? (Element)result : null;
+    }
+
     public Element addToNode(Element root) {
         ExceptionHelper.checkNotNullArgument(root, "root");
 
