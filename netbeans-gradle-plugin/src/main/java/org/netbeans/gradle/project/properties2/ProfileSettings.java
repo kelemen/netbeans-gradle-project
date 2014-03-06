@@ -151,7 +151,7 @@ public final class ProfileSettings {
 
         DomTrackingProperty<ValueKey, ValueType> result
                 = new DomTrackingProperty<>(configPaths, propertyDef);
-        result.init();
+        result.init(Cancellation.UNCANCELABLE_TOKEN);
         return result;
     }
 
@@ -244,13 +244,18 @@ public final class ProfileSettings {
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
 
-        public void init() {
-            valueUpdaterThread.execute(new Runnable() {
-                @Override
-                public void run() {
-                    updateFromDocument();
-                }
-            });
+        public void init(CancellationToken cancelToken) {
+            if (DOCUMENT_ACCESSOR_THREAD.isExecutingInThis()) {
+                updateFromDocument();
+            }
+            else {
+                DOCUMENT_ACCESSOR_THREAD.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                    @Override
+                    public void execute(CancellationToken cancelToken) {
+                        updateFromDocument();
+                    }
+                }, null).waitAndGet(cancelToken);
+            }
         }
 
         private void updateDocumentFromValue(ValueType value) {
