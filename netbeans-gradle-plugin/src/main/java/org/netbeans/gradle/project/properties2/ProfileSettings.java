@@ -403,5 +403,10 @@ public final class ProfileSettings {
 
             return ListenerRegistries.combineListenerRefs(ref1, ref2);
         }
+
+        @Override
+        public String toString() {
+            return "Property{" + configPaths + '}';
+        }
     }
 }
