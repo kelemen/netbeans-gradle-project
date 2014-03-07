@@ -135,4 +135,9 @@ public final class ConfigPath {
         final ConfigPath other = (ConfigPath)obj;
         return Arrays.equals(this.keys, other.keys);
     }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(keys);
+    }
 }
