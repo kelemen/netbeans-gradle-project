@@ -81,4 +81,9 @@ public final class ConfigKey {
         return Objects.equals(this.name, other.name)
                 && Objects.equals(this.namespace, other.namespace);
     }
+
+    @Override
+    public String toString() {
+        return namespace + '/' + name;
+    }
 }
