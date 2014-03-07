@@ -38,8 +38,8 @@ public final class ConfigPath {
 
     public static ConfigPath fromKeys(List<ConfigKey> keys) {
         return keys.isEmpty()
-                ? new ConfigPath(keys.toArray(NO_KEYS))
-                : ROOT;
+                ? ROOT
+                : new ConfigPath(keys.toArray(NO_KEYS));
     }
 
     public int getKeyCount() {
