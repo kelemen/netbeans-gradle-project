@@ -291,13 +291,6 @@ public final class ProfileSettings {
             }
         }
 
-        private void updateDocumentFromValue(ValueType value) {
-            assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
-
-            ValueKey valueKey = valueDef.getKeyFromValue(value);
-            updateDocumentFromKey(valueKey);
-        }
-
         private void updateDocumentFromKey(ValueKey valueKey) {
             assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
 
@@ -321,17 +314,18 @@ public final class ProfileSettings {
                 }
             }
 
-            source.replaceSource(valueDef.property(valueKey));
-
             fireDocumentUpdate(configPathsAsList);
         }
 
         @Override
         public void setValue(final ValueType value) {
+            final ValueKey valueKey = valueDef.getKeyFromValue(value);
+            source.replaceSource(valueDef.property(valueKey));
+
             valueUpdaterThread.execute(new Runnable() {
                 @Override
                 public void run() {
-                    updateDocumentFromValue(value);
+                    updateDocumentFromKey(valueKey);
                 }
             });
         }
