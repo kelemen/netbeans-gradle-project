@@ -6,8 +6,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.OperationCanceledException;
+import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -202,8 +206,13 @@ public class ProfileSettingsTest {
         MutableProperty<String> property = getTextProperty(settings, propertyPath);
         assertEquals(propertyName, initialValue, property.getValue());
 
+        WaitableListener listener = new WaitableListener();
+        property.addChangeListener(listener);
+
         property.setValue(newValue);
         assertEquals(propertyName, newValue, property.getValue());
+
+        listener.waitForCall();
     }
 
     @Test
@@ -250,6 +259,25 @@ public class ProfileSettingsTest {
             Element other = (Element)element.cloneNode(true);
             other.setTextContent(newText);
             return new WrappedNodeValue(other);
+        }
+    }
+
+    private static final class WaitableListener implements Runnable {
+        private final WaitableSignal calledSignal;
+
+        public WaitableListener() {
+            this.calledSignal = new WaitableSignal();
+        }
+
+        @Override
+        public void run() {
+            calledSignal.signal();
+        }
+
+        public void waitForCall() {
+            if (!calledSignal.tryWaitSignal(Cancellation.UNCANCELABLE_TOKEN, 10, TimeUnit.SECONDS)) {
+                throw new OperationCanceledException("timeout");
+            }
         }
     }
 }
