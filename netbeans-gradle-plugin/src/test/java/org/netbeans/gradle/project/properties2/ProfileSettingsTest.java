@@ -233,8 +233,8 @@ public class ProfileSettingsTest {
         property.setValue(newValue);
         assertEquals(propertyName, newValue, property.getValue());
 
-        listener.waitForCall();
-        documentListener.waitForCall();
+        listener.waitForCall("Value change for text node.");
+        documentListener.waitForCall("Document change for text node.");
     }
 
     @Test
@@ -276,8 +276,8 @@ public class ProfileSettingsTest {
         property.setValue(newValue);
         assertEquals(propertyName, newValue, property.getValue());
 
-        listener.waitForCall();
-        documentListener.waitForCall();
+        listener.waitForCall("Value change for multi node.");
+        documentListener.waitForCall("Document change for multi node.");
     }
 
     private static final class WrappedNodeKey {
@@ -326,9 +326,9 @@ public class ProfileSettingsTest {
             calledSignal.signal();
         }
 
-        public void waitForCall() {
+        public void waitForCall(String taskName) {
             if (!calledSignal.tryWaitSignal(Cancellation.UNCANCELABLE_TOKEN, 10, TimeUnit.SECONDS)) {
-                throw new OperationCanceledException("timeout");
+                throw new OperationCanceledException("Timeout: " + taskName);
             }
         }
     }
