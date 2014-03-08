@@ -50,6 +50,10 @@ public final class ConfigTree {
             return result;
         }
 
+        public void setValue(@Nonnull String keyName, @Nonnull String value) {
+            setValue(new ConfigKey(keyName, null), value);
+        }
+
         public void setValue(@Nonnull ConfigKey key, @Nonnull String value) {
             ExceptionHelper.checkNotNullArgument(key, "key");
             ExceptionHelper.checkNotNullArgument(value, "value");
