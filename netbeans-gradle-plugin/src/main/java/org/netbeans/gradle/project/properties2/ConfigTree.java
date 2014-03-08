@@ -13,22 +13,64 @@ public final class ConfigTree {
 
     public static final class Builder {
         private final Map<ConfigKey, String> values;
-        private final Map<ConfigKey, ConfigTree.Builder> subTrees;
+        private Map<ConfigKey, ConfigTree> subTrees;
+        private Map<ConfigKey, ConfigTree.Builder> subTreeBuilders;
+
+        public Builder(@Nonnull ConfigTree initialValue) {
+            this();
+
+            values.putAll(initialValue.values);
+
+            if (!initialValue.subTrees.isEmpty()) {
+                getSubTrees().putAll(initialValue.subTrees);
+            }
+        }
 
         public Builder() {
             this.values = new HashMap<>();
-            this.subTrees = new HashMap<>();
+            this.subTreeBuilders = null;
+            this.subTrees = null;
+        }
+
+        private Map<ConfigKey, ConfigTree.Builder> getSubTreeBuilders() {
+            Map<ConfigKey, ConfigTree.Builder> result = subTreeBuilders;
+            if (result == null) {
+                result = new HashMap<>();
+                subTreeBuilders = result;
+            }
+            return result;
+        }
+
+        private Map<ConfigKey, ConfigTree> getSubTrees() {
+            Map<ConfigKey, ConfigTree> result = subTrees;
+            if (result == null) {
+                result = new HashMap<>();
+                subTrees = result;
+            }
+            return result;
         }
 
         public void setValue(@Nonnull ConfigKey key, @Nonnull String value) {
             ExceptionHelper.checkNotNullArgument(key, "key");
             ExceptionHelper.checkNotNullArgument(value, "value");
 
-            if (subTrees.containsKey(key)) {
+            if ((subTreeBuilders != null && subTreeBuilders.containsKey(key))
+                    || (subTrees != null && subTrees.containsKey(key))) {
                 throw new IllegalStateException("Configuration tree contains a subtree with the given key: " + key);
             }
 
             values.put(key, value);
+        }
+
+        public void setChildTree(@Nonnull ConfigKey key, @Nonnull ConfigTree tree) {
+            ExceptionHelper.checkNotNullArgument(key, "key");
+            ExceptionHelper.checkNotNullArgument(tree, "tree");
+
+            if (subTreeBuilders != null) {
+                subTreeBuilders.remove(key);
+            }
+
+            getSubTrees().put(key, tree);
         }
 
         public Builder getDeepSubBuilder(@Nonnull String... keyNames) {
@@ -52,15 +94,21 @@ public final class ConfigTree {
         }
 
         public Builder getSubBuilder(@Nonnull ConfigKey key) {
-            Builder result = subTrees.get(key);
+            Map<ConfigKey, Builder> childBuilders = getSubTreeBuilders();
+            Builder result = childBuilders.get(key);
             if (result == null) {
                 if (values.containsKey(key)) {
                     throw new IllegalStateException("Configuration tree contains a value with the given key: " + key);
                 }
 
-                result = new Builder();
-                subTrees.put(key, result);
+                ConfigTree currentTree = subTrees.remove(key);
+
+                result = currentTree != null
+                        ? new Builder(currentTree)
+                        : new Builder();
+                childBuilders.put(key, result);
             }
+
             return result;
         }
 
@@ -76,20 +124,34 @@ public final class ConfigTree {
             return Collections.unmodifiableMap(new HashMap<>(values));
         }
 
-        private Map<ConfigKey, ConfigTree> getChildTreesSnapshot() {
-            int subTreeCount = subTrees.size();
-            if (subTreeCount == 0) {
-                return Collections.emptyMap();
+        private void addFromTreeBuilders(Map<ConfigKey, ConfigTree> result) {
+            if (subTreeBuilders == null) {
+                return;
             }
 
-            Map<ConfigKey, ConfigTree> result = CollectionsEx.newHashMap(subTreeCount);
-
-            for (Map.Entry<ConfigKey, ConfigTree.Builder> entry: subTrees.entrySet()) {
+            for (Map.Entry<ConfigKey, ConfigTree.Builder> entry: subTreeBuilders.entrySet()) {
                 ConfigTree subTree = entry.getValue().create();
                 if (subTree.hasValues()) {
                     result.put(entry.getKey(), subTree);
                 }
             }
+        }
+
+        private Map<ConfigKey, ConfigTree> getChildTreesSnapshot() {
+            int subTreeBuildersCount = subTreeBuilders != null ? subTreeBuilders.size() : 0;
+            int subTreeCount = subTrees != null ? subTrees.size() : 0;
+
+            int childTreeCount = subTreeBuildersCount + subTreeCount;
+            if (childTreeCount == 0) {
+                return Collections.emptyMap();
+            }
+
+            Map<ConfigKey, ConfigTree> result = CollectionsEx.newHashMap(childTreeCount);
+
+            if (subTrees != null) {
+                result.putAll(subTrees);
+            }
+            addFromTreeBuilders(result);
 
             return Collections.unmodifiableMap(result);
         }
