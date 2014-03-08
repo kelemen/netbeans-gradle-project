@@ -76,6 +76,17 @@ public final class ProfileSettings {
         return SwingUtilities.isEventDispatchThread();
     }
 
+    ListenerRef addDocumentChangeListener(final Runnable listener) {
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+        return documentUpdateListeners.registerListener(new DocumentUpdateListener() {
+            @Override
+            public void updateDocument(Collection<ConfigPath> changedPaths) {
+                listener.run();
+            }
+        });
+    }
+
     private static DocumentBuilder getDocumentBuilder() {
         try {
             return DocumentBuilderFactory.newInstance().newDocumentBuilder();

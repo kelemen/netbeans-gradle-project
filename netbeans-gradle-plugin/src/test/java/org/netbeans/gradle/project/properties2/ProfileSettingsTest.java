@@ -128,6 +128,24 @@ public class ProfileSettingsTest {
         return result.create();
     }
 
+    private static PropertyDef<PlatformId, PlatformId> getTargetPlatformProfileDef() {
+        PropertyDef.Builder<PlatformId, PlatformId> result = new PropertyDef.Builder<>();
+        result.setValueDef(new PropertyValueDef<PlatformId, PlatformId>() {
+            @Override
+            public PropertySource<PlatformId> property(PlatformId valueKey) {
+                return PropertyFactory.constSource(valueKey);
+            }
+
+            @Override
+            public PlatformId getKeyFromValue(PlatformId value) {
+                return value;
+            }
+        });
+        result.setXmlDef(StandardProperties.getTargetPlatformXmlDef());
+
+        return result.create();
+    }
+
     private static PropertyDef<WrappedNodeKey, String> getTextProfileDef() {
         final Document elementFactory;
         try {
@@ -226,6 +244,36 @@ public class ProfileSettingsTest {
     @Test
     public void testSetValueOfDeepTextProperty() throws IOException {
         testSetValueOfTextProperty("LF", "CRLF", "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
+    }
+
+    @Test
+    public void testMultiNodeProperty() throws IOException {
+        ProfileSettings settings = new ProfileSettings();
+        readFromSettings1(settings);
+
+        List<ConfigPath> configPaths = Arrays.asList(
+                getConfigPath("target-platform-name"),
+                getConfigPath("target-platform"));
+
+        MutableProperty<PlatformId> property
+                = settings.getProperty(configPaths, getTargetPlatformProfileDef());
+
+        String propertyName = "TargetPlatform";
+
+        assertEquals(propertyName, new PlatformId("j2se", "1.7"), property.getValue());
+
+        WaitableListener documentListener = new WaitableListener();
+        settings.addDocumentChangeListener(documentListener);
+
+        WaitableListener listener = new WaitableListener();
+        property.addChangeListener(listener);
+
+        PlatformId newValue = new PlatformId("j2me", "1.5");
+        property.setValue(newValue);
+        assertEquals(propertyName, newValue, property.getValue());
+
+        listener.waitForCall();
+        documentListener.waitForCall();
     }
 
     private static final class WrappedNodeKey {
