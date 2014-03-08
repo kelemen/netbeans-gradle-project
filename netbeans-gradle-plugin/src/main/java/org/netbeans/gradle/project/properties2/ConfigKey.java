@@ -48,7 +48,7 @@ public final class ConfigKey {
         }
 
         Document ownerDocument = Objects.requireNonNull(parent.getOwnerDocument(), "Node needs OwnerDocument");
-        Element childElement = ownerDocument.createElementNS(name, namespace);
+        Element childElement = ownerDocument.createElementNS(namespace, name);
         parent.appendChild(childElement);
         return childElement;
     }
