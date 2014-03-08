@@ -17,6 +17,8 @@ public final class ConfigKey {
     }
 
     public ConfigKey(String name, String namespace) {
+        ExceptionHelper.checkNotNullArgument(name, "name");
+
         this.name = name;
         this.namespace = namespace;
     }
