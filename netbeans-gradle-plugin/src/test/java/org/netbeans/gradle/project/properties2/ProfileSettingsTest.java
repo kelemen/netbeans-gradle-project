@@ -224,6 +224,9 @@ public class ProfileSettingsTest {
         MutableProperty<String> property = getTextProperty(settings, propertyPath);
         assertEquals(propertyName, initialValue, property.getValue());
 
+        WaitableListener documentListener = new WaitableListener();
+        settings.addDocumentChangeListener(documentListener);
+
         WaitableListener listener = new WaitableListener();
         property.addChangeListener(listener);
 
@@ -231,6 +234,7 @@ public class ProfileSettingsTest {
         assertEquals(propertyName, newValue, property.getValue());
 
         listener.waitForCall();
+        documentListener.waitForCall();
     }
 
     @Test
