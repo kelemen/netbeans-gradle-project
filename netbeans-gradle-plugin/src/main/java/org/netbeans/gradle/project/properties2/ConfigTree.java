@@ -219,6 +219,7 @@ public final class ConfigTree {
 
     private final String value;
     private final Map<ConfigKey, List<ConfigTree>> childTrees;
+    private int hash; // Only works if we rely on the default value: 0
 
     private ConfigTree(Builder builder) {
         this(builder.value, builder.getChildTreesSnapshot());
@@ -369,9 +370,13 @@ public final class ConfigTree {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + Objects.hashCode(value);
-        hash = 83 * hash + Objects.hashCode(childTrees);
+        int result = hash;
+        if (result == 0) {
+            result = 3;
+            result = 83 * result + Objects.hashCode(value);
+            result = 83 * result + Objects.hashCode(childTrees);
+            hash = result;
+        }
         return hash;
     }
 
