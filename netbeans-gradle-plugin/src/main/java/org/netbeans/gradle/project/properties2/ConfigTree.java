@@ -116,42 +116,18 @@ public final class ConfigTree {
             return result;
         }
 
-        private ConfigTree createDeepChild(Iterator<ConfigKey> keys) {
-            Builder prev = null;
-            ConfigKey prevKey = null;
-
-            Builder result = this;
-            while (keys.hasNext()) {
-                ConfigKey key = keys.next();
-
-                ConfigTree builtTree = result.subTrees != null
-                        ? result.subTrees.get(key)
-                        : null;
-                if (builtTree != null) {
-                    return builtTree.getDeepSubTree(keys);
-                }
-
-                prev = result;
-                prevKey = key;
-                result = result.subTreeBuilders != null
-                        ? result.subTreeBuilders.get(key)
-                        : null;
-                if (result == null) {
-                    return EMPTY;
-                }
+        public void detachSubTreeBuilders() {
+            if (subTreeBuilders == null || subTreeBuilders.isEmpty()) {
+                return;
             }
 
-            ConfigTree builtResult = result.create();
-            if (prev != null) {
-                prev.subTreeBuilders.remove(prevKey);
-                prev.subTrees.put(prevKey, builtResult);
-            }
-            return builtResult;
-        }
+            for (Map.Entry<ConfigKey, Builder> entry: subTreeBuilders.entrySet()) {
+                ConfigKey key = entry.getKey();
+                ConfigTree tree = entry.getValue().create();
 
-        public ConfigTree createDeepChild(ConfigPath path) {
-            ExceptionHelper.checkNotNullArgument(path, "path");
-            return createDeepChild(path.getKeys().iterator());
+                subTrees.put(key, tree);
+            }
+            subTreeBuilders = null;
         }
 
         public ConfigTree create() {
