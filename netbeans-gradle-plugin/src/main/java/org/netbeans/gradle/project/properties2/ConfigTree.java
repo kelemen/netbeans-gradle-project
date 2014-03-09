@@ -200,13 +200,18 @@ public final class ConfigTree {
 
                     if (entryValueSize == 1) {
                         // A common special case
-                        ConfigTree child = entryValue.get(0).createTree();
-                        result.put(entryKey, Collections.singletonList(child));
+                        ConfigTree child = entryValue.get(0).createTreeIfHasValue();
+                        if (child != null) {
+                            result.put(entryKey, Collections.singletonList(child));
+                        }
                     }
                     else if (entryValueSize > 0) {
                         List<ConfigTree> resultChild = new ArrayList<>(entryValueSize);
                         for (TreeOrBuilder child: entryValue) {
-                            resultChild.add(child.createTree());
+                            ConfigTree builtTree = child.createTreeIfHasValue();
+                            if (builtTree != null) {
+                                resultChild.add(builtTree);
+                            }
                         }
                         result.put(entryKey, Collections.unmodifiableList(resultChild));
                     }
@@ -340,6 +345,11 @@ public final class ConfigTree {
 
             this.tree = null;
             this.builder = builder;
+        }
+
+        public ConfigTree createTreeIfHasValue() {
+            ConfigTree result = createTree();
+            return result.hasValues() ? result : null;
         }
 
         public ConfigTree createTree() {
