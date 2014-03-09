@@ -178,7 +178,7 @@ final class ConfigXmlUtils {
 
             String attrName = fromElementName(attribute.getNodeName());
             String attrValue = attribute.getNodeValue();
-            result.getChildBuilder(attrName).setValue(attrValue);
+            result.getChildBuilder(asAttributeName(attrName)).setValue(attrValue);
         }
     }
 
