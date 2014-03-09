@@ -88,10 +88,7 @@ final class ConfigXmlUtils {
         if (ch >= 'A' && ch <= 'Z') {
             return true;
         }
-        if (ch >= 'a' && ch <= 'z') {
-            return true;
-        }
-        return ch == '_';
+        return ch >= 'a' && ch <= 'z';
     }
 
     private static boolean isValidElementChar(char ch) {
