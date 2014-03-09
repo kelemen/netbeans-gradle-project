@@ -6,25 +6,24 @@ import org.jtrim.collections.EqualityComparator;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.w3c.dom.Element;
 
 public final class PropertyDef<ValueKey, ValueType> {
     public static final class Builder<ValueKey, ValueType> {
-        private PropertyXmlDef<ValueKey> xmlDef;
+        private PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
         private PropertyValueDef<ValueKey, ValueType> valueDef;
         private ValueMerger<ValueType> valueMerger;
         private EqualityComparator<? super ValueKey> valueKeyEquality;
 
         public Builder() {
-            this.xmlDef = NoOpXmlDef.getInstance();
+            this.keyEncodingDef = NoOpKeyEncodingDef.getInstance();
             this.valueDef = NoOpValueDef.getInstance();
             this.valueMerger = NoOpValueMerger.getInstance();
             this.valueKeyEquality = Equality.naturalEquality();
         }
 
-        public void setXmlDef(@Nonnull PropertyXmlDef<ValueKey> xmlDef) {
-            ExceptionHelper.checkNotNullArgument(xmlDef, "xmlDef");
-            this.xmlDef = xmlDef;
+        public void setKeyEncodingDef(@Nonnull PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
+            ExceptionHelper.checkNotNullArgument(keyEncodingDef, "keyEncodingDef");
+            this.keyEncodingDef = keyEncodingDef;
         }
 
         public void setValueDef(@Nonnull PropertyValueDef<ValueKey, ValueType> valueDef) {
@@ -47,21 +46,21 @@ public final class PropertyDef<ValueKey, ValueType> {
         }
     }
 
-    private final PropertyXmlDef<ValueKey> xmlDef;
+    private final PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
     private final PropertyValueDef<ValueKey, ValueType> valueDef;
     private final ValueMerger<ValueType> valueMerger;
     private final EqualityComparator<? super ValueKey> valueKeyEquality;
 
     private PropertyDef(Builder<ValueKey, ValueType> builder) {
-        this.xmlDef = builder.xmlDef;
+        this.keyEncodingDef = builder.keyEncodingDef;
         this.valueDef = builder.valueDef;
         this.valueMerger = builder.valueMerger;
         this.valueKeyEquality = builder.valueKeyEquality;
     }
 
     @Nonnull
-    public PropertyXmlDef<ValueKey> getXmlDef() {
-        return xmlDef;
+    public PropertyKeyEncodingDef<ValueKey> getKeyEncodingDef() {
+        return keyEncodingDef;
     }
 
     @Nonnull
@@ -79,24 +78,25 @@ public final class PropertyDef<ValueKey, ValueType> {
         return valueKeyEquality;
     }
 
-    private static final class NoOpXmlDef<ValueKey>
+    private static final class NoOpKeyEncodingDef<ValueKey>
     implements
-            PropertyXmlDef<ValueKey> {
+            PropertyKeyEncodingDef<ValueKey> {
 
-        private static final PropertyXmlDef<?> INSTANCE = new NoOpXmlDef<>();
+        private static final PropertyKeyEncodingDef<?> INSTANCE = new NoOpKeyEncodingDef<>();
 
         @SuppressWarnings("unchecked")
-        public static <ValueKey> PropertyXmlDef<ValueKey> getInstance() {
-            return (PropertyXmlDef<ValueKey>)INSTANCE;
+        public static <ValueKey> PropertyKeyEncodingDef<ValueKey> getInstance() {
+            return (PropertyKeyEncodingDef<ValueKey>)INSTANCE;
         }
 
         @Override
-        public ValueKey loadFromXml(Element node) {
+        public ValueKey decode(ConfigTree config) {
             return null;
         }
 
         @Override
-        public void addToXml(Element parent, ValueKey value) {
+        public ConfigTree encode(ValueKey value) {
+            return ConfigTree.EMPTY;
         }
     }
 

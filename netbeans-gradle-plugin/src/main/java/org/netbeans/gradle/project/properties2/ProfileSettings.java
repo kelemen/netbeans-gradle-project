@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -37,7 +38,6 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 public final class ProfileSettings {
@@ -50,24 +50,24 @@ public final class ProfileSettings {
             = SwingTaskExecutor.getStrictExecutor(false);
 
     // Must be FIFO / ProfileSettings instance.
-    private static final MonitorableTaskExecutorService DOCUMENT_ACCESSOR_THREAD
-            = NbTaskExecutors.newExecutor("Property-Updater", 1);
+    private static final MonitorableTaskExecutorService DOCUMENT_EVENT_THREAD
+            = NbTaskExecutors.newExecutor("Document-Change-Events", 1);
 
-    private final ListenerManager<DocumentUpdateListener> documentUpdateListeners;
-    private final EventDispatcher<DocumentUpdateListener, Collection<ConfigPath>> documentUpdateDispatcher;
+    private final ListenerManager<ConfigUpdateListener> configUpdateListeners;
+    private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
 
-    private Document currentDocument;
-    private volatile boolean loadedDocumentAtLeastOnce;
+    private final ReentrantLock configLock;
+    private ConfigTree.Builder currentConfig;
 
     public ProfileSettings() {
-        this.documentUpdateListeners = new CopyOnTriggerListenerManager<>();
-        this.currentDocument = getEmptyDocument();
-        this.loadedDocumentAtLeastOnce = false;
+        this.configLock = new ReentrantLock();
+        this.currentConfig = new ConfigTree.Builder();
+        this.configUpdateListeners = new CopyOnTriggerListenerManager<>();
 
-        this.documentUpdateDispatcher = new EventDispatcher<DocumentUpdateListener, Collection<ConfigPath>>() {
+        this.configUpdateDispatcher = new EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>>() {
             @Override
-            public void onEvent(DocumentUpdateListener eventListener, Collection<ConfigPath> arg) {
-                eventListener.updateDocument(arg);
+            public void onEvent(ConfigUpdateListener eventListener, Collection<ConfigPath> arg) {
+                eventListener.configUpdated(arg);
             }
         };
     }
@@ -79,9 +79,9 @@ public final class ProfileSettings {
     ListenerRef addDocumentChangeListener(final Runnable listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        return documentUpdateListeners.registerListener(new DocumentUpdateListener() {
+        return configUpdateListeners.registerListener(new ConfigUpdateListener() {
             @Override
-            public void updateDocument(Collection<ConfigPath> changedPaths) {
+            public void configUpdated(Collection<ConfigPath> changedPaths) {
                 listener.run();
             }
         });
@@ -143,10 +143,10 @@ public final class ProfileSettings {
     }
 
     private void fireDocumentUpdate(final Collection<ConfigPath> path) {
-        DOCUMENT_ACCESSOR_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        DOCUMENT_EVENT_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
-                documentUpdateListeners.onEvent(documentUpdateDispatcher, path);
+                configUpdateListeners.onEvent(configUpdateDispatcher, path);
             }
         }, null);
     }
@@ -154,19 +154,54 @@ public final class ProfileSettings {
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
-        loadedDocumentAtLeastOnce = true;
-        DOCUMENT_ACCESSOR_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                currentDocument = document;
-                fireDocumentUpdate(ROOT_PATH);
-            }
-        }, null);
+        ConfigTree.Builder parsedDocument = ConfigXmlUtils.parseDocument(document);
+
+        configLock.lock();
+        try {
+            currentConfig = parsedDocument;
+        } finally {
+            configLock.unlock();
+        }
+
+        fireDocumentUpdate(ROOT_PATH);
     }
 
-    private Document getDocument() {
-        assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
-        return currentDocument;
+    private static ConfigTree createSubTree(ConfigTree.Builder builer, ConfigPath path) {
+        ConfigTree.Builder subBuilder = builer.getDeepSubBuilder(path);
+        subBuilder.detachSubTreeBuilders();
+        return subBuilder.create();
+    }
+
+    private ConfigTree getSubConfig(ConfigPath path) {
+        configLock.lock();
+        try {
+            return createSubTree(currentConfig, path);
+        } finally {
+            configLock.unlock();
+        }
+    }
+
+    private ConfigTree getSubConfig(ConfigPath basePath, ConfigPath[] relPaths) {
+        if (relPaths.length == 1) {
+            assert relPaths[0].getKeyCount() == 0;
+
+            // Common case
+            return getSubConfig(basePath);
+        }
+
+        ConfigTree.Builder result = new ConfigTree.Builder();
+        configLock.lock();
+        try {
+            ConfigTree.Builder baseBuilder = currentConfig.getDeepSubBuilder(basePath);
+            for (ConfigPath relPath: relPaths) {
+                ConfigTree subTree = createSubTree(baseBuilder, relPath);
+                setChildTree(baseBuilder, relPath, subTree);
+            }
+        } finally {
+            configLock.unlock();
+        }
+
+        return result.create();
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
@@ -181,10 +216,7 @@ public final class ProfileSettings {
         ExceptionHelper.checkNotNullArgument(configPaths, "configPaths");
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        DomTrackingProperty<ValueKey, ValueType> result
-                = new DomTrackingProperty<>(configPaths, propertyDef);
-        result.init(Cancellation.UNCANCELABLE_TOKEN);
-        return result;
+        return new DomTrackingProperty<>(configPaths, propertyDef);
     }
 
     private static List<ConfigPath> copyPaths(Collection<ConfigPath> paths) {
@@ -196,6 +228,19 @@ public final class ProfileSettings {
             default:
                 return Collections.unmodifiableList(new ArrayList<>(paths));
         }
+    }
+
+    private static ConfigPath[] removeTopParents(int removeCount, ConfigPath[] paths) {
+        if (removeCount == 0) {
+            return paths;
+        }
+
+        ConfigPath[] result = new ConfigPath[paths.length];
+        for (int i = 0; i < result.length; i++) {
+            List<ConfigKey> keys = paths[i].getKeys();
+            result[i] = ConfigPath.fromKeys(keys.subList(removeCount, keys.size()));
+        }
+        return result;
     }
 
     private static ConfigPath getCommonParent(ConfigPath[] paths) {
@@ -229,8 +274,28 @@ public final class ProfileSettings {
         return ConfigPath.fromKeys(result);
     }
 
-    private static interface DocumentUpdateListener {
-        public void updateDocument(Collection<ConfigPath> changedPaths);
+    private static void setChildTree(ConfigTree.Builder builder, ConfigPath path, ConfigTree content) {
+        int keyCount = path.getKeyCount();
+        assert keyCount > 0;
+
+        ConfigTree.Builder subConfig = builder;
+        for (int i = 0; i < keyCount - 1; i++) {
+            subConfig = subConfig.getSubBuilder(path.getKeyAt(i));
+        }
+        subConfig.setChildTree(path.getKeyAt(keyCount - 1), content);
+    }
+
+    private <ValueKey> ValueKey getValueKeyFromCurrentConfig(
+            ConfigPath parent,
+            ConfigPath[] relativePaths,
+            PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
+
+        ConfigTree parentBasedConfig = getSubConfig(parent, relativePaths);
+        return keyEncodingDef.decode(parentBasedConfig);
+    }
+
+    private static interface ConfigUpdateListener {
+        public void configUpdated(Collection<ConfigPath> changedPaths);
     }
 
     private class DomTrackingProperty<ValueKey, ValueType>
@@ -239,9 +304,10 @@ public final class ProfileSettings {
 
         private final ConfigPath configParent;
         private final ConfigPath[] configPaths;
+        private final ConfigPath[] relativeConfigPaths;
         private final List<ConfigPath> configPathsAsList;
 
-        private final PropertyXmlDef<ValueKey> xmlDef;
+        private final PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
         private final PropertyValueDef<ValueKey, ValueType> valueDef;
         private final EqualityComparator<? super ValueKey> valueKeyEquality;
 
@@ -250,79 +316,61 @@ public final class ProfileSettings {
 
         private final PropertySourceProxy<ValueType> source;
 
-        private boolean lastValueKeyInitialized;
-        private ValueKey lastValueKey;
-
         public DomTrackingProperty(
                 Collection<ConfigPath> configPaths,
                 PropertyDef<ValueKey, ValueType> propertyDef) {
 
+            ExceptionHelper.checkNotNullArgument(configPaths, "configPaths");
+            ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
+
             this.configPathsAsList = copyPaths(configPaths);
             this.configPaths = configPathsAsList.toArray(new ConfigPath[configPathsAsList.size()]);
             this.configParent = getCommonParent(this.configPaths);
+            this.relativeConfigPaths = removeTopParents(configParent.getKeyCount(), this.configPaths);
 
-            this.xmlDef = propertyDef.getXmlDef();
+            this.keyEncodingDef = propertyDef.getKeyEncodingDef();
             this.valueDef = propertyDef.getValueDef();
             this.valueKeyEquality = propertyDef.getValueKeyEquality();
 
-            this.source = PropertyFactory.proxySource(valueDef.property(null));
+            ValueKey initialValueKey = getValueKeyFromCurrentConfig(
+                    this.configParent,
+                    this.relativeConfigPaths,
+                    this.keyEncodingDef);
+            this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey));
 
-            this.valueUpdaterThread = new GenericUpdateTaskExecutor(DOCUMENT_ACCESSOR_THREAD);
+            this.valueUpdaterThread = new GenericUpdateTaskExecutor(DOCUMENT_EVENT_THREAD);
             this.eventThread = new GenericUpdateTaskExecutor(EVENT_THREAD);
-
-            this.lastValueKey = null;
-            this.lastValueKeyInitialized = false;
 
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
 
-        public void init(CancellationToken cancelToken) {
-            if (!loadedDocumentAtLeastOnce) {
-                // In this case the client code should not expect that the
-                // property value is up to date.
-                valueUpdaterThread.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateFromDocument();
-                    }
-                });
-                return;
-            }
+        private void updateConfigAtPath(ConfigPath path, ConfigTree content) {
+            assert configLock.isHeldByCurrentThread();
 
-            if (DOCUMENT_ACCESSOR_THREAD.isExecutingInThis()) {
-                updateFromDocument();
+            if (path.getKeyCount() == 0) {
+                currentConfig = new ConfigTree.Builder(content);
             }
             else {
-                DOCUMENT_ACCESSOR_THREAD.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                    @Override
-                    public void execute(CancellationToken cancelToken) {
-                        updateFromDocument();
-                    }
-                }, null).waitAndGet(cancelToken);
+                setChildTree(currentConfig, path, content);
             }
         }
 
-        private void updateDocumentFromKey(ValueKey valueKey) {
-            assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
+        private void updateConfigFromKey(ValueKey valueKey) {
+            ConfigTree encodedValueKey = keyEncodingDef.encode(valueKey);
 
-            if (lastValueKeyInitialized && valueKeyEquality.equals(valueKey, lastValueKey)) {
-                return;
-            }
+            configLock.lock();
+            try {
+                // TODO: Report unsaved keys.
+                int pathCount = relativeConfigPaths.length;
+                for (int i = 0; i < pathCount; i++) {
+                    ConfigPath relativePath = relativeConfigPaths[i];
+                    ConfigPath path = configPaths[i];
 
-            lastValueKey = valueKey;
-            lastValueKeyInitialized = true;
-
-            Element root = getDocument().getDocumentElement();
-            if (root != null) {
-                for (ConfigPath path: configPaths) {
-                    path.removeFromNode(root);
+                    ConfigTree configTree = encodedValueKey.getDeepSubTree(relativePath);
+                    updateConfigAtPath(path, configTree);
                 }
-            }
-
-            if (valueKey != null) {
-                for (ConfigPath path: configPaths) {
-                    xmlDef.addToXml(path.addToNode(root), valueKey);
-                }
+            } finally {
+                configLock.unlock();
             }
 
             fireDocumentUpdate(configPathsAsList);
@@ -331,12 +379,14 @@ public final class ProfileSettings {
         @Override
         public void setValue(final ValueType value) {
             final ValueKey valueKey = valueDef.getKeyFromValue(value);
-            source.replaceSource(valueDef.property(valueKey));
+            if (!updateSource(valueKey)) {
+                return;
+            }
 
             valueUpdaterThread.execute(new Runnable() {
                 @Override
                 public void run() {
-                    updateDocumentFromKey(valueKey);
+                    updateConfigFromKey(valueKey);
                 }
             });
         }
@@ -365,36 +415,28 @@ public final class ProfileSettings {
         }
 
         private ValueKey getValueKey() {
-            assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
-
-            Element root = getDocument().getDocumentElement();
-            if (root == null) {
-                return null;
-            }
-
-            Element child = configParent.tryGetChildElement(root);
-            if (child == null) {
-                return null;
-            }
-
-            return xmlDef.loadFromXml(child);
+            return getValueKeyFromCurrentConfig(configParent, relativeConfigPaths, keyEncodingDef);
         }
 
-        private void updateFromDocument() {
-            assert DOCUMENT_ACCESSOR_THREAD.isExecutingInThis();
+        private boolean updateSource(ValueKey valueKey) {
+            // TODO: Check if we really need to update.
+            source.replaceSource(valueDef.property(valueKey));
+            return true;
+        }
 
-            source.replaceSource(valueDef.property(getValueKey()));
+        private void updateFromConfig() {
+            updateSource(getValueKey());
         }
 
         @Override
         public ListenerRef addChangeListener(final Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            ListenerRef ref1 = documentUpdateListeners.registerListener(new DocumentUpdateListener() {
+            ListenerRef ref1 = configUpdateListeners.registerListener(new ConfigUpdateListener() {
                 @Override
-                public void updateDocument(Collection<ConfigPath> changedPaths) {
+                public void configUpdated(Collection<ConfigPath> changedPaths) {
                     if (affectsThis(changedPaths)) {
-                        updateFromDocument();
+                        updateFromConfig();
                     }
                 }
             });

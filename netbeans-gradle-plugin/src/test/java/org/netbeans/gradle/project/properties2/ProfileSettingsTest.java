@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.OperationCanceledException;
 import org.jtrim.concurrent.WaitableSignal;
@@ -20,9 +18,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import static org.junit.Assert.*;
 
@@ -90,40 +85,34 @@ public class ProfileSettingsTest {
         return settings.getProperty(configPath, propertyDef);
     }
 
-    private static void setNodeXmlDef(PropertyDef.Builder<WrappedNodeKey, ?> result) {
-        result.setXmlDef(new PropertyXmlDef<WrappedNodeKey>() {
+    private static void setSimpleEncodingDef(PropertyDef.Builder<ConfigTree, ?> result) {
+        result.setKeyEncodingDef(new PropertyKeyEncodingDef<ConfigTree>() {
             @Override
-            public WrappedNodeKey loadFromXml(Element node) {
-                return new WrappedNodeKey((Element)node.cloneNode(true));
+            public ConfigTree decode(ConfigTree config) {
+                return config;
             }
 
             @Override
-            public void addToXml(Element parent, WrappedNodeKey value) {
-                Document document = parent.getOwnerDocument();
-
-                NodeList children = value.element.getChildNodes();
-                int childCount = children.getLength();
-                for (int i = 0; i < childCount; i++) {
-                    parent.appendChild(document.importNode(children.item(i), true));
-                }
+            public ConfigTree encode(ConfigTree value) {
+                return value;
             }
         });
     }
 
-    private static PropertyDef<WrappedNodeKey, WrappedNodeValue> getNodeProfileDef() {
-        PropertyDef.Builder<WrappedNodeKey, WrappedNodeValue> result = new PropertyDef.Builder<>();
-        result.setValueDef(new PropertyValueDef<WrappedNodeKey, WrappedNodeValue>() {
+    private static PropertyDef<ConfigTree, ConfigTree> getNodeProfileDef() {
+        PropertyDef.Builder<ConfigTree, ConfigTree> result = new PropertyDef.Builder<>();
+        result.setValueDef(new PropertyValueDef<ConfigTree, ConfigTree>() {
             @Override
-            public PropertySource<WrappedNodeValue> property(WrappedNodeKey valueKey) {
-                return PropertyFactory.constSource(valueKey != null ? valueKey.toValue() : null);
+            public PropertySource<ConfigTree> property(ConfigTree valueKey) {
+                return PropertyFactory.constSource(valueKey);
             }
 
             @Override
-            public WrappedNodeKey getKeyFromValue(WrappedNodeValue value) {
-                return value != null ? value.toKey() : null;
+            public ConfigTree getKeyFromValue(ConfigTree value) {
+                return value;
             }
         });
-        setNodeXmlDef(result);
+        setSimpleEncodingDef(result);
 
         return result.create();
     }
@@ -141,41 +130,31 @@ public class ProfileSettingsTest {
                 return value;
             }
         });
-        result.setXmlDef(StandardProperties.getTargetPlatformXmlDef());
+        result.setKeyEncodingDef(StandardProperties.getTargetPlatformEncodingDef());
 
         return result.create();
     }
 
-    private static PropertyDef<WrappedNodeKey, String> getTextProfileDef() {
-        final Document elementFactory;
-        try {
-            elementFactory = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-        } catch (ParserConfigurationException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        PropertyDef.Builder<WrappedNodeKey, String> result = new PropertyDef.Builder<>();
-        result.setValueDef(new PropertyValueDef<WrappedNodeKey, String>() {
+    private static PropertyDef<ConfigTree, String> getTextProfileDef() {
+        PropertyDef.Builder<ConfigTree, String> result = new PropertyDef.Builder<>();
+        result.setValueDef(new PropertyValueDef<ConfigTree, String>() {
             @Override
-            public PropertySource<String> property(WrappedNodeKey valueKey) {
+            public PropertySource<String> property(ConfigTree valueKey) {
                 return PropertyFactory.constSource(valueKey != null
-                        ? valueKey.element.getTextContent()
+                        ? valueKey.getValue(null)
                         : null);
             }
 
             @Override
-            public WrappedNodeKey getKeyFromValue(String value) {
+            public ConfigTree getKeyFromValue(String value) {
                 if (value == null) {
                     return null;
                 }
 
-                Element element = elementFactory.createElement("KEY");
-                element.setTextContent(value);
-
-                return new WrappedNodeKey(element);
+                return ConfigTree.singleValue(value);
             }
         });
-        setNodeXmlDef(result);
+        setSimpleEncodingDef(result);
 
         return result.create();
     }
@@ -188,7 +167,7 @@ public class ProfileSettingsTest {
         return settings.getProperty(configPath, getTextProfileDef());
     }
 
-    private static MutableProperty<WrappedNodeValue> getProperty(
+    private static MutableProperty<ConfigTree> getProperty(
             ProfileSettings settings,
             String... keys) {
 
@@ -197,13 +176,13 @@ public class ProfileSettingsTest {
     }
 
     private static void assertTextNodePropertyValue(
-            MutableProperty<WrappedNodeValue> property,
+            MutableProperty<ConfigTree> property,
             String expectedValue) {
 
-        WrappedNodeValue value = property.getValue();
+        ConfigTree value = property.getValue();
 
         assertNotNull(property + " must have a value.", value);
-        assertEquals(property.toString(), expectedValue, value.getText());
+        assertEquals(property.toString(), expectedValue, value.getValue(null));
     }
 
     private static void assertTextNodePropertyValue(
@@ -211,7 +190,7 @@ public class ProfileSettingsTest {
             String propertyName,
             String expectedValue) {
 
-        MutableProperty<WrappedNodeValue> property = getProperty(settings, propertyName);
+        MutableProperty<ConfigTree> property = getProperty(settings, propertyName);
         assertTextNodePropertyValue(property, expectedValue);
     }
 
@@ -278,40 +257,6 @@ public class ProfileSettingsTest {
 
         listener.waitForCall("Value change for multi node.");
         documentListener.waitForCall("Document change for multi node.");
-    }
-
-    private static final class WrappedNodeKey {
-        public final Element element;
-
-        public WrappedNodeKey(Element element) {
-            this.element = element;
-        }
-
-        public WrappedNodeValue toValue() {
-            return new WrappedNodeValue(element);
-        }
-    }
-
-    private static final class WrappedNodeValue {
-        public final Element element;
-
-        public WrappedNodeValue(Element element) {
-            this.element = element;
-        }
-
-        public WrappedNodeKey toKey() {
-            return new WrappedNodeKey(element);
-        }
-
-        public String getText() {
-            return element.getTextContent().trim();
-        }
-
-        public WrappedNodeValue withText(String newText) {
-            Element other = (Element)element.cloneNode(true);
-            other.setTextContent(newText);
-            return new WrappedNodeValue(other);
-        }
     }
 
     private static final class WaitableListener implements Runnable {
