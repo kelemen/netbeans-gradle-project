@@ -117,6 +117,9 @@ public final class ConfigTree {
         }
 
         private ConfigTree createDeepChild(Iterator<ConfigKey> keys) {
+            Builder prev = null;
+            ConfigKey prevKey = null;
+
             Builder result = this;
             while (keys.hasNext()) {
                 ConfigKey key = keys.next();
@@ -128,6 +131,8 @@ public final class ConfigTree {
                     return builtTree.getDeepSubTree(keys);
                 }
 
+                prev = result;
+                prevKey = key;
                 result = result.subTreeBuilders != null
                         ? result.subTreeBuilders.get(key)
                         : null;
@@ -136,7 +141,12 @@ public final class ConfigTree {
                 }
             }
 
-            return result.create();
+            ConfigTree builtResult = result.create();
+            if (prev != null) {
+                prev.subTreeBuilders.remove(prevKey);
+                prev.subTrees.put(prevKey, builtResult);
+            }
+            return builtResult;
         }
 
         public ConfigTree createDeepChild(ConfigPath path) {
