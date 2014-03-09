@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties2;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -84,6 +85,14 @@ public final class ConfigTree {
             return getSubBuilder(new ConfigKey(keyName, null));
         }
 
+        public Builder getDeepSubBuilder(@Nonnull ConfigPath path) {
+            Builder result = this;
+            for (ConfigKey key: path.getKeys()) {
+                result = result.getSubBuilder(key);
+            }
+            return result;
+        }
+
         public Builder getDeepSubBuilder(@Nonnull ConfigKey... keys) {
             Builder result = this;
             for (ConfigKey key: keys) {
@@ -105,6 +114,34 @@ public final class ConfigTree {
             }
 
             return result;
+        }
+
+        private ConfigTree createDeepChild(Iterator<ConfigKey> keys) {
+            Builder result = this;
+            while (keys.hasNext()) {
+                ConfigKey key = keys.next();
+
+                ConfigTree builtTree = result.subTrees != null
+                        ? result.subTrees.get(key)
+                        : null;
+                if (builtTree != null) {
+                    return builtTree.getDeepSubTree(keys);
+                }
+
+                result = result.subTreeBuilders != null
+                        ? result.subTreeBuilders.get(key)
+                        : null;
+                if (result == null) {
+                    return EMPTY;
+                }
+            }
+
+            return result.create();
+        }
+
+        public ConfigTree createDeepChild(ConfigPath path) {
+            ExceptionHelper.checkNotNullArgument(path, "path");
+            return createDeepChild(path.getKeys().iterator());
         }
 
         public ConfigTree create() {
@@ -209,11 +246,32 @@ public final class ConfigTree {
     }
 
     @Nonnull
+    public ConfigTree getDeepSubTree(ConfigPath path) {
+        ExceptionHelper.checkNotNullArgument(path, "path");
+
+        return getDeepSubTree(path.getKeys().iterator());
+    }
+
+    @Nonnull
     public ConfigTree getDeepSubTree(ConfigKey... keys) {
         ExceptionHelper.checkNotNullElements(keys, "keys");
 
         ConfigTree result = this;
         for (ConfigKey key: keys) {
+            // Minor optimization
+            if (result == EMPTY) {
+                return EMPTY;
+            }
+
+            result = result.getSubTree(key);
+        }
+        return result;
+    }
+
+    private ConfigTree getDeepSubTree(Iterator<ConfigKey> keys) {
+        ConfigTree result = this;
+        while (keys.hasNext()) {
+            ConfigKey key = keys.next();
             // Minor optimization
             if (result == EMPTY) {
                 return EMPTY;
