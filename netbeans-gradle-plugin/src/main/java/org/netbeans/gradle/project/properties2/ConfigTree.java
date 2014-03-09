@@ -127,11 +127,12 @@ public final class ConfigTree {
                 return;
             }
 
+            Map<ConfigKey, ConfigTree> currentSubTrees = getSubTrees();
             for (Map.Entry<ConfigKey, Builder> entry: subTreeBuilders.entrySet()) {
                 ConfigKey key = entry.getKey();
                 ConfigTree tree = entry.getValue().create();
 
-                subTrees.put(key, tree);
+                currentSubTrees.put(key, tree);
             }
             subTreeBuilders = null;
 
