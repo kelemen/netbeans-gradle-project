@@ -10,7 +10,7 @@ import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class ConfigTree {
-    public static final ConfigTree EMPTY = new Builder().create();
+    public static final ConfigTree EMPTY = singleValue(null);
 
     public static final class Builder {
         private String value;
@@ -177,8 +177,18 @@ public final class ConfigTree {
     private final Map<ConfigKey, ConfigTree> subTrees;
 
     private ConfigTree(Builder builder) {
-        this.value = builder.value;
-        this.subTrees = builder.getChildTreesSnapshot();
+        this(builder.value, builder.getChildTreesSnapshot());
+    }
+
+    private ConfigTree(String value, Map<ConfigKey, ConfigTree> subTrees) {
+        this.value = value;
+        this.subTrees = subTrees;
+    }
+
+    public static ConfigTree singleValue(String value) {
+        return value != null
+                ? new ConfigTree(value, Collections.<ConfigKey, ConfigTree>emptyMap())
+                : EMPTY;
     }
 
     public boolean hasValues() {
