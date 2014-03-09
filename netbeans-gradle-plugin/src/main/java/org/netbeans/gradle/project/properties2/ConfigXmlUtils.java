@@ -186,9 +186,10 @@ final class ConfigXmlUtils {
         for (int i = 0; i < attributeCount; i++) {
             Node attribute = attributes.item(i);
 
+            // TODO: There will be special attributes later starting with "__".
             String attrName = fromElementName(attribute.getNodeName());
             String attrValue = attribute.getNodeValue();
-            result.getChildBuilder(asAttributeName(attrName)).setValue(attrValue);
+            result.addChildBuilder(asAttributeName(attrName)).setValue(attrValue);
         }
     }
 
@@ -206,7 +207,7 @@ final class ConfigXmlUtils {
                         fromElementName(elementChild.getNodeName()),
                         elementChild.getNamespaceURI());
 
-                ConfigTree.Builder childBuilder = result.getChildBuilder(elementKey);
+                ConfigTree.Builder childBuilder = result.addChildBuilder(elementKey);
                 String nodeValue = parseNode(elementChild, childBuilder);
                 if (nodeValue != null) {
                     childBuilder.setValue(nodeValue);
