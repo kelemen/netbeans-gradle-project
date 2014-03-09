@@ -397,7 +397,8 @@ public final class ConfigTree {
         if (getClass() != obj.getClass()) return false;
 
         final ConfigTree other = (ConfigTree)obj;
-        return Objects.equals(this.childTrees, other.childTrees);
+        return Objects.equals(this.value, other.value)
+                && Objects.equals(this.childTrees, other.childTrees);
     }
 
     private static void appendIndent(StringBuilder result, int indent) {
