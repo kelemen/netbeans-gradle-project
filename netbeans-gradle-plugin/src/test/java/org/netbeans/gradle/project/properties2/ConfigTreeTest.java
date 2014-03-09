@@ -272,6 +272,29 @@ public class ConfigTreeTest {
     }
 
     @Test
+    public void testToString() {
+        assumeBasicBuilderWorks();
+
+        ConfigTree.Builder builder = new ConfigTree.Builder();
+        builder.setValue("value1");
+
+        builder.addChildBuilder("key1").setValue("value2");
+        builder.addChildBuilder("key1").setValue("value3");
+
+        builder.addChildBuilder("key2").setValue("value4");
+
+        String strValue = builder.create().toString();
+        assertNotNull(strValue);
+
+        assertTrue(strValue.contains("value1"));
+        assertTrue(strValue.contains("value2"));
+        assertTrue(strValue.contains("value3"));
+        assertTrue(strValue.contains("value4"));
+        assertTrue(strValue.contains("key1"));
+        assertTrue(strValue.contains("key2"));
+    }
+
+    @Test
     public void testDoesntHaveValueWithDeepTree() {
         ConfigTree tree = getSinglePath(null, "key1", "key2");
         if (tree.hasValues()) {
@@ -281,15 +304,25 @@ public class ConfigTreeTest {
 
     private void verifyEquals(ConfigTree tree1, ConfigTree tree2) {
         if (!tree1.equals(tree2)) {
-            fail("tree1.equals(tree2) must be true. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+            fail("tree1.equals(tree2) must be true.\nTree1 = " + tree1 + ",\nTree2 = " + tree2);
         }
 
         if (!tree2.equals(tree1)) {
-            fail("tree2.equals(tree1) must be true. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+            fail("tree2.equals(tree1) must be true.\nTree1 = " + tree1 + ",\nTree2 = " + tree2);
         }
 
         if (tree1.hashCode() != tree2.hashCode()) {
-            fail("The hash code for equivalent trees must match. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+            fail("The hash code for equivalent trees must match.\nTree1 = " + tree1 + ",\nTree2 = " + tree2);
+        }
+    }
+
+    private void verifyNotEquals(ConfigTree tree1, ConfigTree tree2) {
+        if (tree1.equals(tree2)) {
+            fail("tree1.equals(tree2) must be false.\nTree1 = " + tree1 + ",\nTree2 = " + tree2);
+        }
+
+        if (tree2.equals(tree1)) {
+            fail("tree2.equals(tree1) must be false.\nTree1 = " + tree1 + ",\nTree2 = " + tree2);
         }
     }
 
@@ -317,5 +350,68 @@ public class ConfigTreeTest {
         String value = "value-testEqualsWithOnlyValues";
         String[] path = {"key1", "key2"};
         verifyEquals(getSinglePath(value, path), getSinglePath(value, path));
+    }
+
+    @Test
+    public void testEqualsWithEmptyWithNoValueTree() {
+        assumeBasicBuilderWorks();
+
+        String[] path = {"key1", "key2"};
+        verifyEquals(getSinglePath(null, path), ConfigTree.EMPTY);
+    }
+
+    @Test
+    public void testNotEqualsWithDifferentValues() {
+        assumeBasicBuilderWorks();
+
+        verifyNotEquals(getSinglePath("value1"), getSinglePath("value2"));
+        verifyNotEquals(getSinglePath("value3"), getSinglePath(null));
+    }
+
+    @Test
+    public void testNotEqualsWithDifferentChildValues() {
+        assumeBasicBuilderWorks();
+
+        String[] path = {"key1", "key2"};
+        verifyNotEquals(getSinglePath("value1", path), getSinglePath("value2", path));
+        verifyNotEquals(getSinglePath("value3", path), getSinglePath(null, path));
+    }
+
+    @Test
+    public void testNotEqualsWithDifferentPathToChild() {
+        assumeBasicBuilderWorks();
+
+        String[] path1 = {"key1", "key2"};
+        String[] path2 = {"key1", "key3"};
+        verifyNotEquals(getSinglePath("value1", path1), getSinglePath("value1", path2));
+    }
+
+    @Test
+    public void testNotEqualsWithDifferentNumberOfChildren() {
+        assumeBasicBuilderWorks();
+
+        ConfigTree.Builder builder1 = new ConfigTree.Builder();
+        builder1.addChildBuilder("key1").setValue("value1");
+        builder1.addChildBuilder("key2").setValue("value2");
+
+        ConfigTree.Builder builder2 = new ConfigTree.Builder();
+        builder2.addChildBuilder("key1").setValue("value1");
+
+        verifyNotEquals(builder1.create(), builder2.create());
+    }
+
+    @Test
+    public void testNotEqualsWithDifferentOrderOfChildren() {
+        assumeBasicBuilderWorks();
+
+        ConfigTree.Builder builder1 = new ConfigTree.Builder();
+        builder1.addChildBuilder("key1").setValue("value1");
+        builder1.addChildBuilder("key1").setValue("value2");
+
+        ConfigTree.Builder builder2 = new ConfigTree.Builder();
+        builder2.addChildBuilder("key1").setValue("value2");
+        builder2.addChildBuilder("key1").setValue("value1");
+
+        verifyNotEquals(builder1.create(), builder2.create());
     }
 }
