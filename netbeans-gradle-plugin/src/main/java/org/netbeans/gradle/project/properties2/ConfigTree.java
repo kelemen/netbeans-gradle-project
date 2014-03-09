@@ -58,11 +58,6 @@ public final class ConfigTree {
             ExceptionHelper.checkNotNullArgument(key, "key");
             ExceptionHelper.checkNotNullArgument(value, "value");
 
-            if ((subTreeBuilders != null && subTreeBuilders.containsKey(key))
-                    || (subTrees != null && subTrees.containsKey(key))) {
-                throw new IllegalStateException("Configuration tree contains a subtree with the given key: " + key);
-            }
-
             values.put(key, value);
         }
 
@@ -101,10 +96,6 @@ public final class ConfigTree {
             Map<ConfigKey, Builder> childBuilders = getSubTreeBuilders();
             Builder result = childBuilders.get(key);
             if (result == null) {
-                if (values.containsKey(key)) {
-                    throw new IllegalStateException("Configuration tree contains a value with the given key: " + key);
-                }
-
                 ConfigTree currentTree = subTrees.remove(key);
 
                 result = currentTree != null
