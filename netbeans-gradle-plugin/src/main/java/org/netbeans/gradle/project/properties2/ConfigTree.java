@@ -399,4 +399,37 @@ public final class ConfigTree {
         final ConfigTree other = (ConfigTree)obj;
         return Objects.equals(this.childTrees, other.childTrees);
     }
+
+    private static void appendIndent(StringBuilder result, int indent) {
+        final String indentStr = "  ";
+        for (int i = 0; i < indent; i++) {
+            result.append(indentStr);
+        }
+    }
+
+    private void toString(String prefix, int indent, StringBuilder result) {
+        appendIndent(result, indent);
+        result.append(prefix);
+        result.append("ConfigTree");
+        if (value != null) {
+            result.append(" (");
+            result.append(value);
+            result.append(")");
+        }
+
+        for (Map.Entry<ConfigKey, List<ConfigTree>> entry: childTrees.entrySet()) {
+            ConfigKey key = entry.getKey();
+            for (ConfigTree tree: entry.getValue()) {
+                result.append('\n');
+                toString(key.toString() + " -> ", indent + 1, result);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        toString("", 0, result);
+        return result.toString();
+    }
 }
