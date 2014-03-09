@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assume;
@@ -63,6 +65,13 @@ public class ConfigTreeTest {
         verifyTrivial(tree);
     }
 
+    private void verifyValueWithoutChildren(ConfigTree tree, String value) {
+        assertEquals("tree.hasValues", value != null, tree.hasValues());
+        verifyValue(tree, value);
+        verifyNoChildren(tree);
+        verifyTrivial(tree);
+    }
+
     @Test
     public void testEmptyConstant() {
         verifyEmpty(ConfigTree.EMPTY);
@@ -98,6 +107,19 @@ public class ConfigTreeTest {
         verifyNoChildren(tree);
     }
 
+    private static <K, E> E getSingle(Map<K, List<E>> map, K key) {
+        List<E> values = map.get(key);
+        if (values == null) {
+            throw new AssertionError("Expected to have key: " + key);
+        }
+
+        if (values.size() != 1) {
+            fail("Expected to have exactly one value for key " + key + " instead of " + values.size());
+        }
+
+        return values.get(0);
+    }
+
     @Test
     public void testBasicBuilder() {
         ConfigTree.Builder builder = new ConfigTree.Builder();
@@ -109,45 +131,56 @@ public class ConfigTreeTest {
         ConfigTree.Builder childChildBuilder = builder.getDeepChildBuilder("child-key1", "child-key2");
         childChildBuilder.setValue("deeper-value");
 
+        builder.addChildBuilder("list-key").setValue("list-value0");
+        builder.addChildBuilder("list-key").setValue("list-value1");
+
         ConfigTree tree = builder.create();
         verifyTrivial(tree);
         assertTrue(tree.hasValues());
         verifyValue(tree, "my-value");
 
-        Map<ConfigKey, ConfigTree> childTrees = tree.getChildTrees();
-        assertEquals(2, childTrees.size());
+        Map<ConfigKey, List<ConfigTree>> childTrees = tree.getChildTrees();
+        assertEquals(3, childTrees.size());
 
-        ConfigTree childTree1 = childTrees.get(new ConfigKey("child-key0", null));
-        assertTrue(childTree1.hasValues());
-        verifyTrivial(childTree1);
-        verifyValue(childTree1, "deep-value");
-        verifyNoChildren(childTree1);
+        List<ConfigTree> childList = childTrees.get(new ConfigKey("list-key", null));
+        assertEquals(2, childList.size());
+        verifyValueWithoutChildren(childList.get(0), "list-value0");
+        verifyValueWithoutChildren(childList.get(1), "list-value1");
 
-        ConfigTree childTree2 = childTrees.get(new ConfigKey("child-key1", null));
+        ConfigTree childTree1 = getSingle(childTrees, new ConfigKey("child-key0", null));
+        verifyValueWithoutChildren(childTree1, "deep-value");
+
+        ConfigTree childTree2 = getSingle(childTrees, new ConfigKey("child-key1", null));
         assertTrue(childTree2.hasValues());
         verifyTrivial(childTree2);
         verifyNoValue(childTree2);
 
-        Map<ConfigKey, ConfigTree> childChildTrees = childTree2.getChildTrees();
+        Map<ConfigKey, List<ConfigTree>> childChildTrees = childTree2.getChildTrees();
         assertEquals(1, childChildTrees.size());
 
-        ConfigTree childTree3 = childChildTrees.get(new ConfigKey("child-key2", null));
-        assertTrue(childTree3.hasValues());
-        verifyTrivial(childTree3);
-        verifyValue(childTree3, "deeper-value");
-        verifyNoChildren(childTree3);
+        ConfigTree childTree3 = getSingle(childChildTrees, new ConfigKey("child-key2", null));
+        verifyValueWithoutChildren(childTree3, "deeper-value");
     }
 
     private static void assertTreesEqual(ConfigTree expected, ConfigTree actual) {
         assertEquals(expected.getValue(null), actual.getValue(null));
 
-        Map<ConfigKey, ConfigTree> expectedChildren = expected.getChildTrees();
-        Map<ConfigKey, ConfigTree> actualChildren = actual.getChildTrees();
+        Map<ConfigKey, List<ConfigTree>> expectedChildren = expected.getChildTrees();
+        Map<ConfigKey, List<ConfigTree>> actualChildren = actual.getChildTrees();
         assertEquals("Children count", expectedChildren.size(), actualChildren.size());
 
-        for (Map.Entry<ConfigKey, ConfigTree> expectedEntry: expectedChildren.entrySet()) {
-            ConfigTree actualChild = actualChildren.get(expectedEntry.getKey());
-            assertTreesEqual(expectedEntry.getValue(), actualChild);
+        for (Map.Entry<ConfigKey, List<ConfigTree>> expectedEntry: expectedChildren.entrySet()) {
+            ConfigKey key = expectedEntry.getKey();
+
+            List<ConfigTree> expectedValues = expectedEntry.getValue();
+            List<ConfigTree> actualChild = actualChildren.get(key);
+            assertEquals("Children count for " + key, expectedValues.size(), actualChild.size());
+
+            Iterator<ConfigTree> expectedValuesItr = expectedValues.iterator();
+            Iterator<ConfigTree> actualChildItr = actualChild.iterator();
+            while (expectedValuesItr.hasNext()) {
+                assertTreesEqual(expectedValuesItr.next(), actualChildItr.next());
+            }
         }
     }
 

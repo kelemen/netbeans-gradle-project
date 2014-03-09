@@ -1,8 +1,10 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -10,11 +12,13 @@ import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class ConfigTree {
+    private static final int DEFAULT_LIST_SIZE = 10;
+
     public static final ConfigTree EMPTY = new Builder().create();
 
     public static final class Builder {
         private String value;
-        private Map<ConfigKey, TreeOrBuilder> childTrees;
+        private Map<ConfigKey, List<TreeOrBuilder>> childTrees;
         private ConfigTree cachedBuilt;
 
         public Builder(@Nonnull ConfigTree initialValue) {
@@ -23,12 +27,19 @@ public final class ConfigTree {
             value = initialValue.value;
 
             if (!initialValue.childTrees.isEmpty()) {
-                Map<ConfigKey, TreeOrBuilder> children
+                Map<ConfigKey, List<TreeOrBuilder>> children
                         = CollectionsEx.newHashMap(initialValue.childTrees.size());
                 childTrees = children;
 
-                for (Map.Entry<ConfigKey, ConfigTree> entry: initialValue.childTrees.entrySet()) {
-                    children.put(entry.getKey(), new TreeOrBuilder(entry.getValue()));
+                for (Map.Entry<ConfigKey, List<ConfigTree>> entry: initialValue.childTrees.entrySet()) {
+                    List<ConfigTree> entryValue = entry.getValue();
+
+                    List<TreeOrBuilder> valueList = createList(entryValue.size());
+                    children.put(entry.getKey(), valueList);
+
+                    for (ConfigTree child: entryValue) {
+                        valueList.add(new TreeOrBuilder(child));
+                    }
                 }
             }
         }
@@ -39,8 +50,35 @@ public final class ConfigTree {
             this.cachedBuilt = null;
         }
 
-        private Map<ConfigKey, TreeOrBuilder> getChildTrees() {
-            Map<ConfigKey, TreeOrBuilder> result = childTrees;
+        private static <E> List<E> createList() {
+            return createList(DEFAULT_LIST_SIZE);
+        }
+
+        private static <E> List<E> createList(int expectedSize) {
+            return new ArrayList<>(Math.max(expectedSize, DEFAULT_LIST_SIZE));
+        }
+
+        private static <K, E> List<E> getList(Map<K, List<E>> map, K key) {
+            List<E> result = map.get(key);
+            if (result == null) {
+                result = createList();
+                map.put(key, result);
+            }
+            return result;
+        }
+
+        private static <K, E> List<E> getEmptyList(Map<K, List<E>> map, K key) {
+            List<E> result = createList();
+            map.put(key, result);
+            return result;
+        }
+
+        private List<TreeOrBuilder> getChildTreeList(ConfigKey key) {
+            return getList(getChildTrees(), key);
+        }
+
+        private Map<ConfigKey, List<TreeOrBuilder>> getChildTrees() {
+            Map<ConfigKey, List<TreeOrBuilder>> result = childTrees;
             if (result == null) {
                 result = new HashMap<>();
                 childTrees = result;
@@ -58,7 +96,9 @@ public final class ConfigTree {
             ExceptionHelper.checkNotNullArgument(tree, "tree");
 
             cachedBuilt = null;
-            getChildTrees().put(key, new TreeOrBuilder(tree));
+
+            List<TreeOrBuilder> valueList = getEmptyList(getChildTrees(), key);
+            valueList.add(new TreeOrBuilder(tree));
         }
 
         public Builder getDeepChildBuilder(@Nonnull String... keyNames) {
@@ -90,18 +130,33 @@ public final class ConfigTree {
         }
 
         public Builder getChildBuilder(@Nonnull ConfigKey key) {
-            Map<ConfigKey, TreeOrBuilder> children = getChildTrees();
-            TreeOrBuilder result = children.get(key);
-            if (result == null) {
+            ExceptionHelper.checkNotNullArgument(key, "key");
+
+            List<TreeOrBuilder> valueList = getChildTreeList(key);
+            if (valueList.isEmpty()) {
                 cachedBuilt = null;
 
-                Builder builder = new Builder();
-                children.put(key, new TreeOrBuilder(builder));
-                return builder;
+                Builder result = new Builder();
+                valueList.add(new TreeOrBuilder(result));
+                return result;
             }
             else {
-                return result.getBuilder();
+                return valueList.get(0).getBuilder();
             }
+        }
+
+        public Builder addChildBuilder(@Nonnull String keyName) {
+            return addChildBuilder(new ConfigKey(keyName, null));
+        }
+
+        public Builder addChildBuilder(@Nonnull ConfigKey key) {
+            ExceptionHelper.checkNotNullArgument(key, "key");
+
+            cachedBuilt = null;
+
+            Builder result = new Builder();
+            getChildTreeList(key).add(new TreeOrBuilder(result));
+            return result;
         }
 
         public void detachChildTreeBuilders() {
@@ -109,9 +164,11 @@ public final class ConfigTree {
                 return;
             }
 
-            Map<ConfigKey, TreeOrBuilder> children = getChildTrees();
-            for (TreeOrBuilder child: children.values()) {
-                child.makeTree();
+            Map<ConfigKey, List<TreeOrBuilder>> children = childTrees;
+            for (List<TreeOrBuilder> valueList: children.values()) {
+                for (TreeOrBuilder child: valueList) {
+                    child.makeTree();
+                }
             }
 
             cachedBuilt = create();
@@ -125,18 +182,33 @@ public final class ConfigTree {
             return result;
         }
 
-        private Map<ConfigKey, ConfigTree> getChildTreesSnapshot() {
-            Map<ConfigKey, TreeOrBuilder> children = childTrees;
+        private Map<ConfigKey, List<ConfigTree>> getChildTreesSnapshot() {
+            Map<ConfigKey, List<TreeOrBuilder>> children = childTrees;
             int childTreeCount = children != null ? children.size() : 0;
             if (childTreeCount == 0) {
                 return Collections.emptyMap();
             }
 
-            Map<ConfigKey, ConfigTree> result = CollectionsEx.newHashMap(childTreeCount);
+            Map<ConfigKey, List<ConfigTree>> result = CollectionsEx.newHashMap(childTreeCount);
 
             if (children != null) {
-                for (Map.Entry<ConfigKey, TreeOrBuilder> entry: children.entrySet()) {
-                    result.put(entry.getKey(), entry.getValue().createTree());
+                for (Map.Entry<ConfigKey, List<TreeOrBuilder>> entry: children.entrySet()) {
+                    ConfigKey entryKey = entry.getKey();
+                    List<TreeOrBuilder> entryValue = entry.getValue();
+                    int entryValueSize = entryValue.size();
+
+                    if (entryValueSize == 1) {
+                        // A common special case
+                        ConfigTree child = entryValue.get(0).createTree();
+                        result.put(entryKey, Collections.singletonList(child));
+                    }
+                    else if (entryValueSize > 0) {
+                        List<ConfigTree> resultChild = new ArrayList<>(entryValueSize);
+                        for (TreeOrBuilder child: entryValue) {
+                            resultChild.add(child.createTree());
+                        }
+                        result.put(entryKey, Collections.unmodifiableList(resultChild));
+                    }
                 }
             }
 
@@ -145,20 +217,20 @@ public final class ConfigTree {
     }
 
     private final String value;
-    private final Map<ConfigKey, ConfigTree> childTrees;
+    private final Map<ConfigKey, List<ConfigTree>> childTrees;
 
     private ConfigTree(Builder builder) {
         this(builder.value, builder.getChildTreesSnapshot());
     }
 
-    private ConfigTree(String value, Map<ConfigKey, ConfigTree> childTrees) {
+    private ConfigTree(String value, Map<ConfigKey, List<ConfigTree>> childTrees) {
         this.value = value;
         this.childTrees = childTrees;
     }
 
     public static ConfigTree singleValue(String value) {
         return value != null
-                ? new ConfigTree(value, Collections.<ConfigKey, ConfigTree>emptyMap())
+                ? new ConfigTree(value, Collections.<ConfigKey, List<ConfigTree>>emptyMap())
                 : EMPTY;
     }
 
@@ -172,7 +244,7 @@ public final class ConfigTree {
     }
 
     @Nonnull
-    public Map<ConfigKey, ConfigTree> getChildTrees() {
+    public Map<ConfigKey, List<ConfigTree>> getChildTrees() {
         return childTrees;
     }
 
@@ -235,11 +307,19 @@ public final class ConfigTree {
     }
 
     @Nonnull
+    public List<ConfigTree> getChildTrees(ConfigKey key) {
+        ExceptionHelper.checkNotNullArgument(key, "key");
+
+        List<ConfigTree> result = childTrees.get(key);
+        return result != null ? result : Collections.<ConfigTree>emptyList();
+    }
+
+    @Nonnull
     public ConfigTree getChildTree(ConfigKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
-        ConfigTree result = childTrees.get(key);
-        return result != null ? result : EMPTY;
+        List<ConfigTree> result = childTrees.get(key);
+        return result != null ? result.get(0) : EMPTY;
     }
 
     private static final class TreeOrBuilder {
