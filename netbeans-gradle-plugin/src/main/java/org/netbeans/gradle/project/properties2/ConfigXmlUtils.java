@@ -84,18 +84,31 @@ final class ConfigXmlUtils {
         return result.toString();
     }
 
-    private static boolean isValidFirstElementChar(char ch) {
-        if (ch >= 'A' && ch <= 'Z') {
-            return true;
-        }
+    private static boolean isLowerCaseLetter(char ch) {
         return ch >= 'a' && ch <= 'z';
+    }
+
+    private static boolean isUpperCaseLetter(char ch) {
+        return ch >= 'A' && ch <= 'Z';
+    }
+
+    private static boolean isLetter(char ch) {
+        return isLowerCaseLetter(ch) || isUpperCaseLetter(ch);
+    }
+
+    private static boolean isDigit(char ch) {
+        return ch >= '0' && ch <= '9';
+    }
+
+    private static boolean isValidFirstElementChar(char ch) {
+        return isLetter(ch);
     }
 
     private static boolean isValidElementChar(char ch) {
         if (isValidElementChar(ch)) {
             return true;
         }
-        if (ch >= '0' && ch <= '9') {
+        if (isDigit(ch)) {
             return true;
         }
 
