@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties2;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -162,28 +161,6 @@ public class ConfigTreeTest {
         verifyValueWithoutChildren(childTree3, "deeper-value");
     }
 
-    private static void assertTreesEqual(ConfigTree expected, ConfigTree actual) {
-        assertEquals(expected.getValue(null), actual.getValue(null));
-
-        Map<ConfigKey, List<ConfigTree>> expectedChildren = expected.getChildTrees();
-        Map<ConfigKey, List<ConfigTree>> actualChildren = actual.getChildTrees();
-        assertEquals("Children count", expectedChildren.size(), actualChildren.size());
-
-        for (Map.Entry<ConfigKey, List<ConfigTree>> expectedEntry: expectedChildren.entrySet()) {
-            ConfigKey key = expectedEntry.getKey();
-
-            List<ConfigTree> expectedValues = expectedEntry.getValue();
-            List<ConfigTree> actualChild = actualChildren.get(key);
-            assertEquals("Children count for " + key, expectedValues.size(), actualChild.size());
-
-            Iterator<ConfigTree> expectedValuesItr = expectedValues.iterator();
-            Iterator<ConfigTree> actualChildItr = actualChild.iterator();
-            while (expectedValuesItr.hasNext()) {
-                assertTreesEqual(expectedValuesItr.next(), actualChildItr.next());
-            }
-        }
-    }
-
     private ConfigTree getSinglePath(String value, String... path) {
         assumeBasicBuilderWorks();
 
@@ -199,7 +176,7 @@ public class ConfigTreeTest {
         ConfigPath path = ConfigPath.fromKeys(new ConfigKey("key1", null), new ConfigKey("key2", null));
         ConfigTree.Builder builder = new ConfigTree.Builder();
         builder.getDeepChildBuilder(path).setValue("my-value");
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -208,7 +185,7 @@ public class ConfigTreeTest {
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
         builder.getDeepChildBuilder(new ConfigKey("key1", null), new ConfigKey("key2", null)).setValue("my-value");
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -219,7 +196,7 @@ public class ConfigTreeTest {
         builder.detachChildTreeBuilders();
 
         builder.getDeepChildBuilder("key1", "key2").setValue("my-value");
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -230,7 +207,7 @@ public class ConfigTreeTest {
         builder.detachChildTreeBuilders();
 
         builder.getChildBuilder("key1").setValue("my-value");
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -241,7 +218,7 @@ public class ConfigTreeTest {
         builder.detachChildTreeBuilders();
 
         builder.setChildTree(new ConfigKey("key1", null), expected.getChildTree("key1"));
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -252,7 +229,7 @@ public class ConfigTreeTest {
         builder.detachChildTreeBuilders();
 
         builder.setValue("my-value");
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
@@ -268,7 +245,7 @@ public class ConfigTreeTest {
         childBuilder.setValue("ignored-value1");
         childBuilder.getChildBuilder("ignored-key").setValue("ignored-value2");
 
-        assertTreesEqual(expected, builder.create());
+        assertEquals(expected, builder.create());
     }
 
     @Test
