@@ -26,18 +26,18 @@ public class ConfigTreeTest {
     }
 
     private void verifyTrivial(ConfigTree tree) {
-        assertSame(tree, tree.getDeepSubTree(ConfigPath.ROOT));
-        assertSame(tree, tree.getDeepSubTree(new String[0]));
-        assertSame(tree, tree.getDeepSubTree(new ConfigKey[0]));
+        assertSame(tree, tree.getDeepChildTree(ConfigPath.ROOT));
+        assertSame(tree, tree.getDeepChildTree(new String[0]));
+        assertSame(tree, tree.getDeepChildTree(new ConfigKey[0]));
     }
 
     private void verifyNoChildren(ConfigTree tree) {
-        assertTrue("tree.subTrees.isEmpty", tree.getSubTrees().isEmpty());
-        assertSame(ConfigTree.EMPTY, tree.getSubTree(new ConfigKey("key1", null)));
-        assertSame(ConfigTree.EMPTY, tree.getSubTree("key2"));
-        assertSame(ConfigTree.EMPTY, tree.getDeepSubTree("key1"));
-        assertSame(ConfigTree.EMPTY, tree.getDeepSubTree("key1", "key2"));
-        assertSame(ConfigTree.EMPTY, tree.getDeepSubTree(new ConfigKey("key1", null), new ConfigKey("key2", null)));
+        assertTrue("tree.childTrees.isEmpty", tree.getChildTrees().isEmpty());
+        assertSame(ConfigTree.EMPTY, tree.getChildTree(new ConfigKey("key1", null)));
+        assertSame(ConfigTree.EMPTY, tree.getChildTree("key2"));
+        assertSame(ConfigTree.EMPTY, tree.getDeepChildTree("key1"));
+        assertSame(ConfigTree.EMPTY, tree.getDeepChildTree("key1", "key2"));
+        assertSame(ConfigTree.EMPTY, tree.getDeepChildTree(new ConfigKey("key1", null), new ConfigKey("key2", null)));
     }
 
     private void verifyNoValue(ConfigTree tree) {
@@ -103,46 +103,46 @@ public class ConfigTreeTest {
         ConfigTree.Builder builder = new ConfigTree.Builder();
 
         builder.setValue("my-value");
-        ConfigTree.Builder subBuilder = builder.getSubBuilder("sub-key0");
-        subBuilder.setValue("deep-value");
+        ConfigTree.Builder childBuilder = builder.getChildBuilder("child-key0");
+        childBuilder.setValue("deep-value");
 
-        ConfigTree.Builder subSubBuilder = builder.getDeepSubBuilder("sub-key1", "sub-key2");
-        subSubBuilder.setValue("deeper-value");
+        ConfigTree.Builder childChildBuilder = builder.getDeepChildBuilder("child-key1", "child-key2");
+        childChildBuilder.setValue("deeper-value");
 
         ConfigTree tree = builder.create();
         verifyTrivial(tree);
         assertTrue(tree.hasValues());
         verifyValue(tree, "my-value");
 
-        Map<ConfigKey, ConfigTree> subTrees = tree.getSubTrees();
-        assertEquals(2, subTrees.size());
+        Map<ConfigKey, ConfigTree> childTrees = tree.getChildTrees();
+        assertEquals(2, childTrees.size());
 
-        ConfigTree subTree1 = subTrees.get(new ConfigKey("sub-key0", null));
-        assertTrue(subTree1.hasValues());
-        verifyTrivial(subTree1);
-        verifyValue(subTree1, "deep-value");
-        verifyNoChildren(subTree1);
+        ConfigTree childTree1 = childTrees.get(new ConfigKey("child-key0", null));
+        assertTrue(childTree1.hasValues());
+        verifyTrivial(childTree1);
+        verifyValue(childTree1, "deep-value");
+        verifyNoChildren(childTree1);
 
-        ConfigTree subTree2 = subTrees.get(new ConfigKey("sub-key1", null));
-        assertTrue(subTree2.hasValues());
-        verifyTrivial(subTree2);
-        verifyNoValue(subTree2);
+        ConfigTree childTree2 = childTrees.get(new ConfigKey("child-key1", null));
+        assertTrue(childTree2.hasValues());
+        verifyTrivial(childTree2);
+        verifyNoValue(childTree2);
 
-        Map<ConfigKey, ConfigTree> subSubTrees = subTree2.getSubTrees();
-        assertEquals(1, subSubTrees.size());
+        Map<ConfigKey, ConfigTree> childChildTrees = childTree2.getChildTrees();
+        assertEquals(1, childChildTrees.size());
 
-        ConfigTree subTree3 = subSubTrees.get(new ConfigKey("sub-key2", null));
-        assertTrue(subTree3.hasValues());
-        verifyTrivial(subTree3);
-        verifyValue(subTree3, "deeper-value");
-        verifyNoChildren(subTree3);
+        ConfigTree childTree3 = childChildTrees.get(new ConfigKey("child-key2", null));
+        assertTrue(childTree3.hasValues());
+        verifyTrivial(childTree3);
+        verifyValue(childTree3, "deeper-value");
+        verifyNoChildren(childTree3);
     }
 
     private static void assertTreesEqual(ConfigTree expected, ConfigTree actual) {
         assertEquals(expected.getValue(null), actual.getValue(null));
 
-        Map<ConfigKey, ConfigTree> expectedChildren = expected.getSubTrees();
-        Map<ConfigKey, ConfigTree> actualChildren = actual.getSubTrees();
+        Map<ConfigKey, ConfigTree> expectedChildren = expected.getChildTrees();
+        Map<ConfigKey, ConfigTree> actualChildren = actual.getChildTrees();
         assertEquals("Children count", expectedChildren.size(), actualChildren.size());
 
         for (Map.Entry<ConfigKey, ConfigTree> expectedEntry: expectedChildren.entrySet()) {
@@ -155,7 +155,7 @@ public class ConfigTreeTest {
         assumeBasicBuilderWorks();
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.getDeepSubBuilder(path).setValue(value);
+        builder.getDeepChildBuilder(path).setValue(value);
         return builder.create();
     }
 
@@ -165,7 +165,7 @@ public class ConfigTreeTest {
 
         ConfigPath path = ConfigPath.fromKeys(new ConfigKey("key1", null), new ConfigKey("key2", null));
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.getDeepSubBuilder(path).setValue("my-value");
+        builder.getDeepChildBuilder(path).setValue("my-value");
         assertTreesEqual(expected, builder.create());
     }
 
@@ -174,7 +174,7 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value", "key1", "key2");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.getDeepSubBuilder(new ConfigKey("key1", null), new ConfigKey("key2", null)).setValue("my-value");
+        builder.getDeepChildBuilder(new ConfigKey("key1", null), new ConfigKey("key2", null)).setValue("my-value");
         assertTreesEqual(expected, builder.create());
     }
 
@@ -183,9 +183,9 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value", "key1", "key2");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.detachSubTreeBuilders();
+        builder.detachChildTreeBuilders();
 
-        builder.getDeepSubBuilder("key1", "key2").setValue("my-value");
+        builder.getDeepChildBuilder("key1", "key2").setValue("my-value");
         assertTreesEqual(expected, builder.create());
     }
 
@@ -194,9 +194,9 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value", "key1");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.detachSubTreeBuilders();
+        builder.detachChildTreeBuilders();
 
-        builder.getSubBuilder("key1").setValue("my-value");
+        builder.getChildBuilder("key1").setValue("my-value");
         assertTreesEqual(expected, builder.create());
     }
 
@@ -205,9 +205,9 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value", "key1");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.detachSubTreeBuilders();
+        builder.detachChildTreeBuilders();
 
-        builder.setChildTree(new ConfigKey("key1", null), expected.getSubTree("key1"));
+        builder.setChildTree(new ConfigKey("key1", null), expected.getChildTree("key1"));
         assertTreesEqual(expected, builder.create());
     }
 
@@ -216,7 +216,7 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        builder.detachSubTreeBuilders();
+        builder.detachChildTreeBuilders();
 
         builder.setValue("my-value");
         assertTreesEqual(expected, builder.create());
@@ -227,13 +227,13 @@ public class ConfigTreeTest {
         ConfigTree expected = getSinglePath("my-value", "key1", "key2");
 
         ConfigTree.Builder builder = new ConfigTree.Builder();
-        ConfigTree.Builder subBuilder = builder.getDeepSubBuilder("key1", "key2");
-        subBuilder.setValue("my-value");
+        ConfigTree.Builder childBuilder = builder.getDeepChildBuilder("key1", "key2");
+        childBuilder.setValue("my-value");
 
-        builder.detachSubTreeBuilders();
+        builder.detachChildTreeBuilders();
 
-        subBuilder.setValue("ignored-value1");
-        subBuilder.getSubBuilder("ignored-key").setValue("ignored-value2");
+        childBuilder.setValue("ignored-value1");
+        childBuilder.getChildBuilder("ignored-key").setValue("ignored-value2");
 
         assertTreesEqual(expected, builder.create());
     }

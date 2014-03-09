@@ -178,7 +178,7 @@ final class ConfigXmlUtils {
 
             String attrName = fromElementName(attribute.getNodeName());
             String attrValue = attribute.getNodeValue();
-            result.getSubBuilder(attrName).setValue(attrValue);
+            result.getChildBuilder(attrName).setValue(attrValue);
         }
     }
 
@@ -196,10 +196,10 @@ final class ConfigXmlUtils {
                         fromElementName(elementChild.getNodeName()),
                         elementChild.getNamespaceURI());
 
-                ConfigTree.Builder subBuilder = result.getSubBuilder(elementKey);
-                String nodeValue = parseNode(elementChild, subBuilder);
+                ConfigTree.Builder childBuilder = result.getChildBuilder(elementKey);
+                String nodeValue = parseNode(elementChild, childBuilder);
                 if (nodeValue != null) {
-                    subBuilder.setValue(nodeValue);
+                    childBuilder.setValue(nodeValue);
                 }
 
                 addedChildren++;

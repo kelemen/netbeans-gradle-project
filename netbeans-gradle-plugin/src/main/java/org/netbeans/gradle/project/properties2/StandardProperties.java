@@ -11,8 +11,8 @@ public final class StandardProperties {
         return new PropertyKeyEncodingDef<PlatformId>() {
             @Override
             public PlatformId decode(ConfigTree config) {
-                ConfigTree name = config.getSubTree("target-platform-name");
-                ConfigTree version = config.getSubTree("target-platform");
+                ConfigTree name = config.getChildTree("target-platform-name");
+                ConfigTree version = config.getChildTree("target-platform");
 
                 return new PlatformId(
                         name.getValue(PlatformId.DEFAULT_NAME),
@@ -22,8 +22,8 @@ public final class StandardProperties {
             @Override
             public ConfigTree encode(PlatformId value) {
                 ConfigTree.Builder result = new ConfigTree.Builder();
-                result.getSubBuilder("target-platform-name").setValue(value.getName());
-                result.getSubBuilder("target-platform").setValue(value.getVersion());
+                result.getChildBuilder("target-platform-name").setValue(value.getName());
+                result.getChildBuilder("target-platform").setValue(value.getVersion());
                 return result.create();
             }
         };

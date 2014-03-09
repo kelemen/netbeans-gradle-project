@@ -166,36 +166,36 @@ public final class ProfileSettings {
         fireDocumentUpdate(ROOT_PATH);
     }
 
-    private static ConfigTree createSubTree(ConfigTree.Builder builer, ConfigPath path) {
-        ConfigTree.Builder subBuilder = builer.getDeepSubBuilder(path);
-        subBuilder.detachSubTreeBuilders();
-        return subBuilder.create();
+    private static ConfigTree createChildTree(ConfigTree.Builder builer, ConfigPath path) {
+        ConfigTree.Builder childBuilder = builer.getDeepChildBuilder(path);
+        childBuilder.detachChildTreeBuilders();
+        return childBuilder.create();
     }
 
-    private ConfigTree getSubConfig(ConfigPath path) {
+    private ConfigTree getChildConfig(ConfigPath path) {
         configLock.lock();
         try {
-            return createSubTree(currentConfig, path);
+            return createChildTree(currentConfig, path);
         } finally {
             configLock.unlock();
         }
     }
 
-    private ConfigTree getSubConfig(ConfigPath basePath, ConfigPath[] relPaths) {
+    private ConfigTree getChildConfig(ConfigPath basePath, ConfigPath[] relPaths) {
         if (relPaths.length == 1) {
             assert relPaths[0].getKeyCount() == 0;
 
             // Common case
-            return getSubConfig(basePath);
+            return getChildConfig(basePath);
         }
 
         ConfigTree.Builder result = new ConfigTree.Builder();
         configLock.lock();
         try {
-            ConfigTree.Builder baseBuilder = currentConfig.getDeepSubBuilder(basePath);
+            ConfigTree.Builder baseBuilder = currentConfig.getDeepChildBuilder(basePath);
             for (ConfigPath relPath: relPaths) {
-                ConfigTree subTree = createSubTree(baseBuilder, relPath);
-                setChildTree(baseBuilder, relPath, subTree);
+                ConfigTree childTree = createChildTree(baseBuilder, relPath);
+                setChildTree(baseBuilder, relPath, childTree);
             }
         } finally {
             configLock.unlock();
@@ -278,11 +278,11 @@ public final class ProfileSettings {
         int keyCount = path.getKeyCount();
         assert keyCount > 0;
 
-        ConfigTree.Builder subConfig = builder;
+        ConfigTree.Builder childConfig = builder;
         for (int i = 0; i < keyCount - 1; i++) {
-            subConfig = subConfig.getSubBuilder(path.getKeyAt(i));
+            childConfig = childConfig.getChildBuilder(path.getKeyAt(i));
         }
-        subConfig.setChildTree(path.getKeyAt(keyCount - 1), content);
+        childConfig.setChildTree(path.getKeyAt(keyCount - 1), content);
     }
 
     private <ValueKey> ValueKey getValueKeyFromCurrentConfig(
@@ -290,7 +290,7 @@ public final class ProfileSettings {
             ConfigPath[] relativePaths,
             PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
 
-        ConfigTree parentBasedConfig = getSubConfig(parent, relativePaths);
+        ConfigTree parentBasedConfig = getChildConfig(parent, relativePaths);
         return keyEncodingDef.decode(parentBasedConfig);
     }
 
@@ -366,7 +366,7 @@ public final class ProfileSettings {
                     ConfigPath relativePath = relativeConfigPaths[i];
                     ConfigPath path = configPaths[i];
 
-                    ConfigTree configTree = encodedValueKey.getDeepSubTree(relativePath);
+                    ConfigTree configTree = encodedValueKey.getDeepChildTree(relativePath);
                     updateConfigAtPath(path, configTree);
                 }
             } finally {
