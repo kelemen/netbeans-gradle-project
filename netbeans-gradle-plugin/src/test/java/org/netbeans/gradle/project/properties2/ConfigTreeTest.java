@@ -271,6 +271,14 @@ public class ConfigTreeTest {
         assertTreesEqual(expected, builder.create());
     }
 
+    @Test
+    public void testDoesntHaveValueWithDeepTree() {
+        ConfigTree tree = getSinglePath(null, "key1", "key2");
+        if (tree.hasValues()) {
+            fail("Not expected to have value: " + tree);
+        }
+    }
+
     private void verifyEquals(ConfigTree tree1, ConfigTree tree2) {
         if (!tree1.equals(tree2)) {
             fail("tree1.equals(tree2) must be true. Tree1 = " + tree1 + ", Tree2 = " + tree2);
