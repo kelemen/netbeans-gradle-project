@@ -270,4 +270,44 @@ public class ConfigTreeTest {
 
         assertTreesEqual(expected, builder.create());
     }
+
+    private void verifyEquals(ConfigTree tree1, ConfigTree tree2) {
+        if (!tree1.equals(tree2)) {
+            fail("tree1.equals(tree2) must be true. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+        }
+
+        if (!tree2.equals(tree1)) {
+            fail("tree2.equals(tree1) must be true. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+        }
+
+        if (tree1.hashCode() != tree2.hashCode()) {
+            fail("The hash code for equivalent trees must match. Tree1 = " + tree1 + ", Tree2 = " + tree2);
+        }
+    }
+
+    @Test
+    public void testEqualsForSame() {
+        ConfigTree.Builder builder = new ConfigTree.Builder();
+        builder.setValue("value-testEqualsForSame");
+        ConfigTree tree = builder.create();
+
+        verifyEquals(tree, tree);
+    }
+
+    @Test
+    public void testEqualsWithValueOnly() {
+        assumeBasicBuilderWorks();
+
+        String value = "value-testEqualsWithOnlyValues";
+        verifyEquals(getSinglePath(value), getSinglePath(value));
+    }
+
+    @Test
+    public void testEqualsWithDeepValue() {
+        assumeBasicBuilderWorks();
+
+        String value = "value-testEqualsWithOnlyValues";
+        String[] path = {"key1", "key2"};
+        verifyEquals(getSinglePath(value, path), getSinglePath(value, path));
+    }
 }
