@@ -10,7 +10,7 @@ import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class ConfigTree {
-    public static final ConfigTree EMPTY = singleValue(null);
+    public static final ConfigTree EMPTY = new Builder().create();
 
     public static final class Builder {
         private String value;
