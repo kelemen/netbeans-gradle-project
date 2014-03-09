@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.collections.CollectionsEx;
@@ -364,5 +365,23 @@ public final class ConfigTree {
             }
             return result;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 83 * hash + Objects.hashCode(value);
+        hash = 83 * hash + Objects.hashCode(childTrees);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (getClass() != obj.getClass()) return false;
+
+        final ConfigTree other = (ConfigTree)obj;
+        return Objects.equals(this.childTrees, other.childTrees);
     }
 }
