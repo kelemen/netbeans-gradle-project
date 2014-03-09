@@ -16,6 +16,7 @@ public final class ConfigTree {
         private final Map<ConfigKey, String> values;
         private Map<ConfigKey, ConfigTree> subTrees;
         private Map<ConfigKey, ConfigTree.Builder> subTreeBuilders;
+        private ConfigTree cachedBuilt;
 
         public Builder(@Nonnull ConfigTree initialValue) {
             this();
@@ -31,6 +32,7 @@ public final class ConfigTree {
             this.values = new HashMap<>();
             this.subTreeBuilders = null;
             this.subTrees = null;
+            this.cachedBuilt = null;
         }
 
         private Map<ConfigKey, ConfigTree.Builder> getSubTreeBuilders() {
@@ -59,6 +61,7 @@ public final class ConfigTree {
             ExceptionHelper.checkNotNullArgument(key, "key");
             ExceptionHelper.checkNotNullArgument(value, "value");
 
+            cachedBuilt = null;
             values.put(key, value);
         }
 
@@ -70,6 +73,7 @@ public final class ConfigTree {
                 subTreeBuilders.remove(key);
             }
 
+            cachedBuilt = null;
             getSubTrees().put(key, tree);
         }
 
@@ -105,6 +109,8 @@ public final class ConfigTree {
             Map<ConfigKey, Builder> childBuilders = getSubTreeBuilders();
             Builder result = childBuilders.get(key);
             if (result == null) {
+                cachedBuilt = null;
+
                 ConfigTree currentTree = subTrees.remove(key);
 
                 result = currentTree != null
@@ -128,10 +134,16 @@ public final class ConfigTree {
                 subTrees.put(key, tree);
             }
             subTreeBuilders = null;
+
+            cachedBuilt = create();
         }
 
         public ConfigTree create() {
-            return new ConfigTree(this);
+            ConfigTree result = cachedBuilt;
+            if (result == null) {
+                result = new ConfigTree(this);
+            }
+            return result;
         }
 
         private Map<ConfigKey, String> getValuesSnapshot() {
