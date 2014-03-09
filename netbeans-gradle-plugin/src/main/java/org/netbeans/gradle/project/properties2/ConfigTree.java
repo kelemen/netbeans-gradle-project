@@ -104,7 +104,9 @@ public final class ConfigTree {
             if (result == null) {
                 cachedBuilt = null;
 
-                ConfigTree currentTree = subTrees.remove(key);
+                ConfigTree currentTree = subTrees != null
+                        ? subTrees.remove(key)
+                        : null;
 
                 result = currentTree != null
                         ? new Builder(currentTree)
