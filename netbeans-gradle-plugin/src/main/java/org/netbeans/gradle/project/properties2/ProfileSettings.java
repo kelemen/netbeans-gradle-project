@@ -18,12 +18,8 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.EqualityComparator;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
@@ -36,7 +32,6 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -48,10 +43,6 @@ public final class ProfileSettings {
     // Must be FIFO
     private static final TaskExecutor EVENT_THREAD
             = SwingTaskExecutor.getStrictExecutor(false);
-
-    // Must be FIFO / ProfileSettings instance.
-    private static final MonitorableTaskExecutorService DOCUMENT_EVENT_THREAD
-            = NbTaskExecutors.newExecutor("Document-Change-Events", 1);
 
     private final ListenerManager<ConfigUpdateListener> configUpdateListeners;
     private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
@@ -143,12 +134,7 @@ public final class ProfileSettings {
     }
 
     private void fireDocumentUpdate(final Collection<ConfigPath> path) {
-        DOCUMENT_EVENT_THREAD.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) {
-                configUpdateListeners.onEvent(configUpdateDispatcher, path);
-            }
-        }, null);
+        configUpdateListeners.onEvent(configUpdateDispatcher, path);
     }
 
     private void loadFromDocument(final Document document) {
@@ -311,7 +297,6 @@ public final class ProfileSettings {
         private final PropertyValueDef<ValueKey, ValueType> valueDef;
         private final EqualityComparator<? super ValueKey> valueKeyEquality;
 
-        private final UpdateTaskExecutor valueUpdaterThread;
         private final UpdateTaskExecutor eventThread;
 
         private final PropertySourceProxy<ValueType> source;
@@ -338,7 +323,6 @@ public final class ProfileSettings {
                     this.keyEncodingDef);
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey));
 
-            this.valueUpdaterThread = new GenericUpdateTaskExecutor(DOCUMENT_EVENT_THREAD);
             this.eventThread = new GenericUpdateTaskExecutor(EVENT_THREAD);
 
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
@@ -383,12 +367,7 @@ public final class ProfileSettings {
                 return;
             }
 
-            valueUpdaterThread.execute(new Runnable() {
-                @Override
-                public void run() {
-                    updateConfigFromKey(valueKey);
-                }
-            });
+            updateConfigFromKey(valueKey);
         }
 
         @Override
