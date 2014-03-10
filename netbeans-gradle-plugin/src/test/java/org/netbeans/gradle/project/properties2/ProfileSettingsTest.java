@@ -172,7 +172,10 @@ public class ProfileSettingsTest {
 
     @Test
     public void testSetValueOfRootTextProperty() throws IOException {
-        testSetValueOfTextProperty("UTF-8", "ISO-8859-1", "source-encoding");
+        for (int i = 0; i < 100; i++) {
+            testSetValueOfTextProperty("UTF-8", "ISO-8859-1", "source-encoding");
+        }
+
         testSetValueOfTextProperty("j2se", "j2me", "target-platform-name");
         testSetValueOfTextProperty("1.7", "1.7", "target-platform");
         testSetValueOfTextProperty("1.7", "1.7", "source-level");
@@ -180,7 +183,9 @@ public class ProfileSettingsTest {
 
     @Test
     public void testSetValueOfDeepTextProperty() throws IOException {
-        testSetValueOfTextProperty("LF", "CRLF", "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
+        for (int i = 0; i < 100; i++) {
+            testSetValueOfTextProperty("LF", "CRLF", "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
+        }
     }
 
     @Test
