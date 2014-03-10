@@ -19,8 +19,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.jtrim.collections.EqualityComparator;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
@@ -30,7 +28,7 @@ import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
-import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -39,10 +37,6 @@ public final class ProfileSettings {
     private static final Logger LOGGER = Logger.getLogger(ProfileSettings.class.getName());
     private static final int FILE_STREAM_BUFFER_SIZE = 8 * 1024;
     private static final Set<ConfigPath> ROOT_PATH = Collections.singleton(ConfigPath.ROOT);
-
-    // Must be FIFO
-    private static final TaskExecutor EVENT_THREAD
-            = SwingTaskExecutor.getStrictExecutor(false);
 
     private final ListenerManager<ConfigUpdateListener> configUpdateListeners;
     private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
@@ -323,7 +317,7 @@ public final class ProfileSettings {
                     this.keyEncodingDef);
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey));
 
-            this.eventThread = new GenericUpdateTaskExecutor(EVENT_THREAD);
+            this.eventThread = new SwingUpdateTaskExecutor(false);
 
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
