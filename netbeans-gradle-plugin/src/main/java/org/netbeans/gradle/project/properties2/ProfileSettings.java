@@ -195,7 +195,7 @@ public final class ProfileSettings {
             ConfigTree.Builder baseBuilder = currentConfig.getDeepChildBuilder(basePath);
             for (ConfigPath relPath: relPaths) {
                 ConfigTree childTree = createChildTree(baseBuilder, relPath);
-                setChildTree(baseBuilder, relPath, childTree);
+                setChildTree(result, relPath, childTree);
             }
         } finally {
             configLock.unlock();
