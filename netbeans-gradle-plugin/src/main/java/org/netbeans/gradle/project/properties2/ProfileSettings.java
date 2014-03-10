@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -290,6 +291,7 @@ public final class ProfileSettings {
         private final PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
         private final PropertyValueDef<ValueKey, ValueType> valueDef;
         private final EqualityComparator<? super ValueKey> valueKeyEquality;
+        private final AtomicReference<ValueKey> lastValueKeyRef;
 
         private final UpdateTaskExecutor eventThread;
 
@@ -315,6 +317,7 @@ public final class ProfileSettings {
                     this.configParent,
                     this.relativeConfigPaths,
                     this.keyEncodingDef);
+            this.lastValueKeyRef = new AtomicReference<>(initialValueKey);
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey));
 
             this.eventThread = new SwingUpdateTaskExecutor(false);
@@ -392,9 +395,14 @@ public final class ProfileSettings {
         }
 
         private boolean updateSource(ValueKey valueKey) {
-            // TODO: Check if we really need to update.
-            source.replaceSource(valueDef.property(valueKey));
-            return true;
+            ValueKey prevValueKey = lastValueKeyRef.getAndSet(valueKey);
+            if (valueKeyEquality.equals(prevValueKey, valueKey)) {
+                return false;
+            }
+            else {
+                source.replaceSource(valueDef.property(valueKey));
+                return true;
+            }
         }
 
         private void updateFromConfig() {
