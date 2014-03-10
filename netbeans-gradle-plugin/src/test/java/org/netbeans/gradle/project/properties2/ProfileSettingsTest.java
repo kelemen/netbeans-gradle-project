@@ -206,6 +206,33 @@ public class ProfileSettingsTest {
     }
 
     @Test
+    public void testIntersectingMultiNodeProperties() throws IOException {
+        ProfileSettings settings = new ProfileSettings();
+        readFromSettings1(settings);
+
+        List<ConfigPath> configPaths1 = Arrays.asList(
+                getConfigPath("target-platform-name"),
+                getConfigPath("target-platform"));
+        List<ConfigPath> configPaths2 = Arrays.asList(
+                getConfigPath("target-platform-name"),
+                getConfigPath("source-level"));
+
+        MutableProperty<PlatformId> property1
+                = settings.getProperty(configPaths1, getTargetPlatformProfileDef());
+        MutableProperty<PlatformId> property2
+                = settings.getProperty(configPaths2, getTargetPlatformProfileDef());
+
+        PlatformId propert1Initial = new PlatformId("j2se", "1.7");
+        PlatformId propert2Initial = propert1Initial;
+
+        assertEquals(propert1Initial, property1.getValue());
+        assertEquals(propert2Initial, property2.getValue());
+
+        property1.setValue(new PlatformId("j2me", "1.5"));
+        assertEquals(new PlatformId("j2me", "1.7"), property2.getValue());
+    }
+
+    @Test
     public void testMultiNodeProperty() throws IOException {
         ProfileSettings settings = new ProfileSettings();
         readFromSettings1(settings);

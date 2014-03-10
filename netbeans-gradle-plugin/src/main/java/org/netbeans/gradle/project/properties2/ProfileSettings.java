@@ -134,6 +134,14 @@ public final class ProfileSettings {
         configUpdateListeners.onEvent(configUpdateDispatcher, path);
     }
 
+    private Object newConfigState() {
+        assert configLock.isHeldByCurrentThread();
+
+        Object newState = new Object();
+        configStateKey = newState;
+        return newState;
+    }
+
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
@@ -142,7 +150,7 @@ public final class ProfileSettings {
         configLock.lock();
         try {
             currentConfig = parsedDocument;
-            configStateKey = new Object();
+            newConfigState();
         } finally {
             configLock.unlock();
         }
@@ -336,31 +344,21 @@ public final class ProfileSettings {
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
 
-        private void updateConfigAtPath(ConfigPath path, ConfigTree content) {
-            assert configLock.isHeldByCurrentThread();
-
-            if (path.getKeyCount() == 0) {
-                currentConfig = new ConfigTree.Builder(content);
-            }
-            else {
-                setChildTree(currentConfig, path, content);
-            }
-        }
-
         private void updateConfigFromKey() {
             ValueWithStateKey<ValueKey> valueKey;
-            ValueWithStateKey<ValueKey> newValueKey = lastValueKeyRef.get();
+            ValueWithStateKey<ValueKey> newValueKey;
+
             do {
-                valueKey = newValueKey;
-                updateConfigFromKey(valueKey.value);
-                newValueKey = lastValueKeyRef.get();
-            } while (valueKey.stateKey != newValueKey.stateKey);
+                valueKey = lastValueKeyRef.get();
+                newValueKey = updateConfigFromKey(valueKey);
+            } while (!lastValueKeyRef.compareAndSet(valueKey, newValueKey));
         }
 
-        private void updateConfigFromKey(ValueKey valueKey) {
+        private ValueWithStateKey<ValueKey> updateConfigFromKey(ValueWithStateKey<ValueKey> valueKey) {
             // Should only be called by updateConfigFromKey()
 
-            ConfigTree encodedValueKey = keyEncodingDef.encode(valueKey);
+            ConfigTree encodedValueKey = keyEncodingDef.encode(valueKey.value);
+            Object newState;
 
             configLock.lock();
             try {
@@ -373,11 +371,25 @@ public final class ProfileSettings {
                     ConfigTree configTree = encodedValueKey.getDeepChildTree(relativePath);
                     updateConfigAtPath(path, configTree);
                 }
+
+                newState = newConfigState();
             } finally {
                 configLock.unlock();
             }
 
             fireDocumentUpdate(configPathsAsList);
+            return new ValueWithStateKey<>(newState, valueKey.value);
+        }
+
+        private void updateConfigAtPath(ConfigPath path, ConfigTree content) {
+            assert configLock.isHeldByCurrentThread();
+
+            if (path.getKeyCount() == 0) {
+                currentConfig = new ConfigTree.Builder(content);
+            }
+            else {
+                setChildTree(currentConfig, path, content);
+            }
         }
 
         private ValueWithStateKey<ValueKey> getUpToDateValueKey() {
@@ -423,8 +435,8 @@ public final class ProfileSettings {
         private boolean affectsThis(Collection<ConfigPath> changedPaths) {
             if (changedPaths == configPathsAsList) {
                 // This event is comming from us, so we won't update.
-                // This check is not necessary for correctness but to avoid
-                // unecessary reparsing of the property value.
+                // This is necessary for correctness to avoid infinite loop
+                // in updateConfigFromKey()
                 return false;
             }
 
