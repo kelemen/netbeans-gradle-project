@@ -42,4 +42,9 @@ public final class PlatformId {
         return Objects.equals(this.name, other.name)
                 && Objects.equals(this.version, other.version);
     }
+
+    @Override
+    public String toString() {
+        return "PlatformId{" + "name=" + name + ", version=" + version + '}';
+    }
 }
