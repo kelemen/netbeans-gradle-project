@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.OperationCanceledException;
+import org.jtrim.collections.Equality;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
@@ -89,7 +90,7 @@ public class ProfileSettingsTest {
         return result.create();
     }
 
-    private static PropertyDef<ConfigTree, String> getTextProfileDef() {
+    private static PropertyDef<ConfigTree, String> getTextProfileDef(boolean naturalEquals) {
         PropertyDef.Builder<ConfigTree, String> result = new PropertyDef.Builder<>();
         result.setValueDef(new PropertyValueDef<ConfigTree, String>() {
             @Override
@@ -108,6 +109,9 @@ public class ProfileSettingsTest {
                 return ConfigTree.singleValue(value);
             }
         });
+        if (!naturalEquals) {
+            result.setValueKeyEquality(Equality.referenceEquality());
+        }
         setSimpleEncodingDef(result);
 
         return result.create();
@@ -116,9 +120,16 @@ public class ProfileSettingsTest {
     private static MutableProperty<String> getTextProperty(
             ProfileSettings settings,
             String... keys) {
+        return getTextProperty(settings, true, keys);
+    }
+
+    private static MutableProperty<String> getTextProperty(
+            ProfileSettings settings,
+            boolean naturalEquals,
+            String... keys) {
 
         ConfigPath configPath = getConfigPath(keys);
-        return settings.getProperty(configPath, getTextProfileDef());
+        return settings.getProperty(configPath, getTextProfileDef(naturalEquals));
     }
 
     private static MutableProperty<ConfigTree> getProperty(
@@ -148,13 +159,25 @@ public class ProfileSettingsTest {
         assertTextNodePropertyValue(property, expectedValue);
     }
 
-    private void testSetValueOfTextProperty(String initialValue, String newValue, String... propertyPath) throws IOException {
+    private void testSetValueOfTextProperty(
+            String initialValue,
+            String newValue,
+            String... propertyPath) throws IOException {
+        testSetValueOfTextProperty(initialValue, newValue, true, propertyPath);
+    }
+
+    private void testSetValueOfTextProperty(
+            String initialValue,
+            String newValue,
+            boolean naturalEquals,
+            String... propertyPath) throws IOException {
+
         ProfileSettings settings = new ProfileSettings();
         readFromSettings1(settings);
 
         String propertyName = Arrays.toString(propertyPath);
 
-        MutableProperty<String> property = getTextProperty(settings, propertyPath);
+        MutableProperty<String> property = getTextProperty(settings, naturalEquals, propertyPath);
         assertEquals(propertyName, initialValue, property.getValue());
 
         WaitableListener documentListener = new WaitableListener();
@@ -168,6 +191,14 @@ public class ProfileSettingsTest {
 
         listener.waitForCall("Value change for text node.");
         documentListener.waitForCall("Document change for text node.");
+    }
+
+    @Test(timeout = 30000)
+    public void testSetValueOfRootTextPropertyWithReferenceComparison() throws IOException {
+        testSetValueOfTextProperty("UTF-8", "ISO-8859-1", false, "source-encoding");
+        testSetValueOfTextProperty("j2se", "j2me", false, "target-platform-name");
+        testSetValueOfTextProperty("1.7", "1.6", false, "target-platform");
+        testSetValueOfTextProperty("1.7", "1.8", false, "source-level");
     }
 
     @Test
@@ -186,6 +217,11 @@ public class ProfileSettingsTest {
         for (int i = 0; i < 100; i++) {
             testSetValueOfTextProperty("LF", "CRLF", "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
         }
+    }
+
+    @Test
+    public void testSetValueOfDeepTextPropertyWithReferenceComparison() throws IOException {
+        testSetValueOfTextProperty("LF", "CRLF", false, "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
     }
 
     private void testLoadFromFileLater(String expectedValue, String... propertyPath) throws IOException {
