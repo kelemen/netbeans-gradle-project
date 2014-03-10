@@ -177,8 +177,8 @@ public class ProfileSettingsTest {
         }
 
         testSetValueOfTextProperty("j2se", "j2me", "target-platform-name");
-        testSetValueOfTextProperty("1.7", "1.7", "target-platform");
-        testSetValueOfTextProperty("1.7", "1.7", "source-level");
+        testSetValueOfTextProperty("1.7", "1.6", "target-platform");
+        testSetValueOfTextProperty("1.7", "1.8", "source-level");
     }
 
     @Test
