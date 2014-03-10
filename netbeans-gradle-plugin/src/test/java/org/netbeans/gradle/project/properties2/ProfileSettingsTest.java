@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,53 +12,13 @@ import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class ProfileSettingsTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
-    private static String getResourcePath(String relPath) {
-        return ProfileSettingsTest.class.getPackage().getName().replace('.', '/') + "/" + relPath;
-    }
-
-    private static InputStream openResource(String relPath) throws IOException {
-        String absolutePath = getResourcePath(relPath);
-        ClassLoader classLoader = ProfileSettingsTest.class.getClassLoader();
-
-        URL url = classLoader.getResource(absolutePath);
-        if (url == null) {
-            throw new IOException("No URL for resource: " + absolutePath);
-        }
-
-        InputStream result = classLoader.getResourceAsStream(absolutePath);
-        if (result == null) {
-            throw new IOException("Failed to open resource: " + absolutePath);
-        }
-        return result;
-    }
-
     private static void readDocument(ProfileSettings settings, String configFileName) throws IOException {
-        try (InputStream input = openResource(configFileName)) {
+        try (InputStream input = TestResourceUtils.openResource(configFileName)) {
             settings.loadFromStream(input);
         }
     }
