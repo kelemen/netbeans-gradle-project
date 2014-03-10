@@ -188,6 +188,23 @@ public class ProfileSettingsTest {
         }
     }
 
+    private void testLoadFromFileLater(String expectedValue, String... propertyPath) throws IOException {
+        ProfileSettings settings = new ProfileSettings();
+
+        MutableProperty<String> property = getTextProperty(settings, propertyPath);
+        readFromSettings1(settings);
+
+        assertEquals(Arrays.toString(propertyPath), expectedValue, property.getValue());
+    }
+
+    @Test
+    public void testLoadFromFileLater() throws IOException {
+        testLoadFromFileLater("UTF-8","source-encoding");
+        testLoadFromFileLater("j2se", "target-platform-name");
+        testLoadFromFileLater("1.7", "target-platform");
+        testLoadFromFileLater("1.7", "source-level");
+    }
+
     @Test
     public void testMultiNodeProperty() throws IOException {
         ProfileSettings settings = new ProfileSettings();

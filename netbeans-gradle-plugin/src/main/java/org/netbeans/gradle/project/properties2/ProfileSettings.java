@@ -43,12 +43,14 @@ public final class ProfileSettings {
     private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
 
     private final ReentrantLock configLock;
+    private volatile Object configStateKey;
     private ConfigTree.Builder currentConfig;
 
     public ProfileSettings() {
         this.configLock = new ReentrantLock();
         this.currentConfig = new ConfigTree.Builder();
         this.configUpdateListeners = new CopyOnTriggerListenerManager<>();
+        this.configStateKey = new Object();
 
         this.configUpdateDispatcher = new EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>>() {
             @Override
@@ -140,6 +142,7 @@ public final class ProfileSettings {
         configLock.lock();
         try {
             currentConfig = parsedDocument;
+            configStateKey = new Object();
         } finally {
             configLock.unlock();
         }
@@ -153,16 +156,21 @@ public final class ProfileSettings {
         return childBuilder.create();
     }
 
-    private ConfigTree getChildConfig(ConfigPath path) {
+    private <Value> ValueWithStateKey<Value> withStateKey(Value value) {
+        assert configLock.isHeldByCurrentThread();
+        return new ValueWithStateKey<>(configStateKey, value);
+    }
+
+    private ValueWithStateKey<ConfigTree> getChildConfig(ConfigPath path) {
         configLock.lock();
         try {
-            return createChildTree(currentConfig, path);
+            return withStateKey(createChildTree(currentConfig, path));
         } finally {
             configLock.unlock();
         }
     }
 
-    private ConfigTree getChildConfig(ConfigPath basePath, ConfigPath[] relPaths) {
+    private ValueWithStateKey<ConfigTree> getChildConfig(ConfigPath basePath, ConfigPath[] relPaths) {
         if (relPaths.length == 1) {
             assert relPaths[0].getKeyCount() == 0;
 
@@ -170,9 +178,12 @@ public final class ProfileSettings {
             return getChildConfig(basePath);
         }
 
+        Object resultStateKey;
         ConfigTree.Builder result = new ConfigTree.Builder();
         configLock.lock();
         try {
+            resultStateKey = configStateKey;
+
             ConfigTree.Builder baseBuilder = currentConfig.getDeepChildBuilder(basePath);
             for (ConfigPath relPath: relPaths) {
                 ConfigTree childTree = createChildTree(baseBuilder, relPath);
@@ -182,7 +193,7 @@ public final class ProfileSettings {
             configLock.unlock();
         }
 
-        return result.create();
+        return new ValueWithStateKey<>(resultStateKey, result.create());
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
@@ -266,13 +277,13 @@ public final class ProfileSettings {
         childConfig.setChildTree(path.getKeyAt(keyCount - 1), content);
     }
 
-    private <ValueKey> ValueKey getValueKeyFromCurrentConfig(
+    private <ValueKey> ValueWithStateKey<ValueKey> getValueKeyFromCurrentConfig(
             ConfigPath parent,
             ConfigPath[] relativePaths,
             PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
 
-        ConfigTree parentBasedConfig = getChildConfig(parent, relativePaths);
-        return keyEncodingDef.decode(parentBasedConfig);
+        ValueWithStateKey<ConfigTree> parentBasedConfig = getChildConfig(parent, relativePaths);
+        return parentBasedConfig.withNewValue(keyEncodingDef.decode(parentBasedConfig.value));
     }
 
     private static interface ConfigUpdateListener {
@@ -291,7 +302,7 @@ public final class ProfileSettings {
         private final PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
         private final PropertyValueDef<ValueKey, ValueType> valueDef;
         private final EqualityComparator<? super ValueKey> valueKeyEquality;
-        private final AtomicReference<ValueKey> lastValueKeyRef;
+        private final AtomicReference<ValueWithStateKey<ValueKey>> lastValueKeyRef;
 
         private final UpdateTaskExecutor eventThread;
 
@@ -313,12 +324,12 @@ public final class ProfileSettings {
             this.valueDef = propertyDef.getValueDef();
             this.valueKeyEquality = propertyDef.getValueKeyEquality();
 
-            ValueKey initialValueKey = getValueKeyFromCurrentConfig(
+            ValueWithStateKey<ValueKey> initialValueKey = getValueKeyFromCurrentConfig(
                     this.configParent,
                     this.relativeConfigPaths,
                     this.keyEncodingDef);
             this.lastValueKeyRef = new AtomicReference<>(initialValueKey);
-            this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey));
+            this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey.value));
 
             this.eventThread = new SwingUpdateTaskExecutor(false);
 
@@ -336,7 +347,19 @@ public final class ProfileSettings {
             }
         }
 
+        private void updateConfigFromKey() {
+            ValueWithStateKey<ValueKey> valueKey;
+            ValueWithStateKey<ValueKey> newValueKey = lastValueKeyRef.get();
+            do {
+                valueKey = newValueKey;
+                updateConfigFromKey(valueKey.value);
+                newValueKey = lastValueKeyRef.get();
+            } while (valueKey.stateKey != newValueKey.stateKey);
+        }
+
         private void updateConfigFromKey(ValueKey valueKey) {
+            // Should only be called by updateConfigFromKey()
+
             ConfigTree encodedValueKey = keyEncodingDef.encode(valueKey);
 
             configLock.lock();
@@ -357,18 +380,43 @@ public final class ProfileSettings {
             fireDocumentUpdate(configPathsAsList);
         }
 
+        private ValueWithStateKey<ValueKey> getUpToDateValueKey() {
+            ValueWithStateKey<ValueKey> lastValueKey;
+            Object currentConfigStateKey;
+
+            while (true) {
+                lastValueKey = lastValueKeyRef.get();
+                currentConfigStateKey = configStateKey;
+
+                if (currentConfigStateKey == lastValueKey.stateKey) {
+                    // It is possible that there was a concurrent configuration
+                    // reload but in this case we can't decide if it came before
+                    // us or not, so we conveniently declare ourselves as the winner.
+
+                    return lastValueKey;
+                }
+                else {
+                    updateFromConfig();
+                }
+            }
+        }
+
         @Override
         public void setValue(final ValueType value) {
-            final ValueKey valueKey = valueDef.getKeyFromValue(value);
-            if (!updateSource(valueKey)) {
-                return;
-            }
+            ValueWithStateKey<ValueKey> lastValueKey = getUpToDateValueKey();
 
-            updateConfigFromKey(valueKey);
+            ValueKey valueKey = valueDef.getKeyFromValue(value);
+            if (updateSource(lastValueKey.withNewValue(valueKey))) {
+                updateConfigFromKey();
+            }
         }
 
         @Override
         public ValueType getValue() {
+            if (lastValueKeyRef.get().stateKey != configStateKey) {
+                updateFromConfig();
+            }
+
             return source.getValue();
         }
 
@@ -390,17 +438,17 @@ public final class ProfileSettings {
             return false;
         }
 
-        private ValueKey getValueKey() {
+        private ValueWithStateKey<ValueKey> getValueKey() {
             return getValueKeyFromCurrentConfig(configParent, relativeConfigPaths, keyEncodingDef);
         }
 
-        private boolean updateSource(ValueKey valueKey) {
-            ValueKey prevValueKey = lastValueKeyRef.getAndSet(valueKey);
-            if (valueKeyEquality.equals(prevValueKey, valueKey)) {
+        private boolean updateSource(ValueWithStateKey<ValueKey> valueKey) {
+            ValueWithStateKey<ValueKey> prevValueKey = lastValueKeyRef.getAndSet(valueKey);
+            if (valueKeyEquality.equals(prevValueKey.value, valueKey.value)) {
                 return false;
             }
             else {
-                source.replaceSource(valueDef.property(valueKey));
+                source.replaceSource(valueDef.property(valueKey.value));
                 return true;
             }
         }
@@ -435,6 +483,20 @@ public final class ProfileSettings {
         @Override
         public String toString() {
             return "Property{" + configPaths + '}';
+        }
+    }
+
+    private static final class ValueWithStateKey<Value> {
+        public final Object stateKey;
+        public final Value value;
+
+        public ValueWithStateKey(Object stateKey, Value valueKey) {
+            this.stateKey = stateKey;
+            this.value = valueKey;
+        }
+
+        public <NewValue> ValueWithStateKey<NewValue> withNewValue(NewValue newValue) {
+            return new ValueWithStateKey<>(stateKey, newValue);
         }
     }
 }
