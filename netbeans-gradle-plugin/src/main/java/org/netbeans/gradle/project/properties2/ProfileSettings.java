@@ -237,7 +237,7 @@ public final class ProfileSettings {
 
         ConfigPath[] result = new ConfigPath[paths.length];
         for (int i = 0; i < result.length; i++) {
-            List<ConfigKey> keys = paths[i].getKeys();
+            List<String> keys = paths[i].getKeys();
             result[i] = ConfigPath.fromKeys(keys.subList(removeCount, keys.size()));
         }
         return result;
@@ -258,11 +258,11 @@ public final class ProfileSettings {
             if (keyCount < minLength) minLength = keyCount;
         }
 
-        List<ConfigKey> result = new LinkedList<>();
+        List<String> result = new LinkedList<>();
 
         outerLoop:
         for (int keyIndex = 0; keyIndex < minLength; keyIndex++) {
-            ConfigKey key = paths[0].getKeyAt(keyIndex);
+            String key = paths[0].getKeyAt(keyIndex);
             for (int pathIndex = 1; pathIndex < paths.length; pathIndex++) {
                 if (!key.equals(paths[pathIndex].getKeyAt(keyIndex))) {
                     break outerLoop;

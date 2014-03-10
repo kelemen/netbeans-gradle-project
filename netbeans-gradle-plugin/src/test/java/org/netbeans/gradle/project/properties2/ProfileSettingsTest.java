@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -28,11 +27,7 @@ public class ProfileSettingsTest {
     }
 
     private static ConfigPath getConfigPath(String... keys) {
-        List<ConfigKey> configKeys = new ArrayList<>(keys.length);
-        for (String key: keys) {
-            configKeys.add(new ConfigKey(key, null));
-        }
-        return ConfigPath.fromKeys(configKeys);
+        return ConfigPath.fromKeys(Arrays.asList(keys));
     }
 
     private static <ValueKey, ValueType> MutableProperty<ValueType> getProperty(

@@ -203,9 +203,7 @@ final class ConfigXmlUtils {
             if (child instanceof Element) {
                 Element elementChild = (Element)child;
 
-                ConfigKey elementKey = new ConfigKey(
-                        fromElementName(elementChild.getNodeName()),
-                        elementChild.getNamespaceURI());
+                String elementKey = fromElementName(elementChild.getNodeName());
 
                 ConfigTree.Builder childBuilder = result.addChildBuilder(elementKey);
                 String nodeValue = parseNode(elementChild, childBuilder);
