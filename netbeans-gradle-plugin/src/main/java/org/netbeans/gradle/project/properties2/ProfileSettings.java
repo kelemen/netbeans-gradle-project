@@ -339,7 +339,7 @@ public final class ProfileSettings {
             this.lastValueKeyRef = new AtomicReference<>(initialValueKey);
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey.value));
 
-            this.eventThread = new SwingUpdateTaskExecutor(false);
+            this.eventThread = new SwingUpdateTaskExecutor(true);
 
             ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
