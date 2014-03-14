@@ -207,15 +207,19 @@ final class ConfigXmlUtils {
             Node attribute = attributes.item(i);
 
             String xmlAttrName = attribute.getNodeName();
+            String attrValue = attribute.getNodeValue();
+
             if (xmlAttrName.startsWith(KEYWORD_PREFIX)) {
                 switch (xmlAttrName) {
                     case KEYWORD_VALUE:
-                        result.setValue(attribute.getNodeValue());
+                        result.setValue(attrValue);
                         setValue = true;
                         break;
                     case KEYWORD_HAS_VALUE:
-                        result.setValue(null);
-                        setValue = true;
+                        if (STR_NO.equals(attrValue)) {
+                            result.setValue(null);
+                            setValue = true;
+                        }
                         break;
                     default:
                         LOGGER.log(Level.WARNING, "Unknown keyword in properties file: {0}", xmlAttrName);
@@ -224,7 +228,6 @@ final class ConfigXmlUtils {
             }
             else {
                 String attrName = fromElementName(xmlAttrName);
-                String attrValue = attribute.getNodeValue();
                 result.addChildBuilder(asAttributeName(attrName)).setValue(attrValue);
             }
         }
@@ -375,14 +378,14 @@ final class ConfigXmlUtils {
             if (value != null) {
                 parent.setTextContent(value);
             }
+            else {
+                parent.setAttribute(KEYWORD_HAS_VALUE, STR_NO);
+            }
             return;
         }
 
         if (value != null) {
             parent.setAttribute(KEYWORD_VALUE, value);
-        }
-        else {
-            parent.setAttribute(KEYWORD_HAS_VALUE, STR_NO);
         }
 
         Collections.sort(childEntries, new Comparator<NamedNode>() {
