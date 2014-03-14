@@ -123,7 +123,7 @@ final class ConfigXmlUtils {
     }
 
     private static boolean isValidElementChar(char ch) {
-        if (isValidElementChar(ch)) {
+        if (isValidFirstElementChar(ch)) {
             return true;
         }
         if (isDigit(ch)) {
