@@ -27,17 +27,14 @@ public class ConfigXmlUtilsTest {
         nameNode.addChildBuilder("#attr-must-exist").setValue(mustExist ? "yes" : "no");
     }
 
-    @Test
-    public void testSettings1() throws Exception {
-        ConfigTree parsedTree = ConfigXmlUtils.parseDocument(readFromResources("settings1.xml")).create();
+    private ConfigTree getExpectedSettings1Content() {
+        ConfigTree.Builder result = new ConfigTree.Builder();
+        result.addChildBuilder("source-encoding").setValue("UTF-8");
+        result.addChildBuilder("target-platform-name").setValue("j2se");
+        result.addChildBuilder("target-platform").setValue("1.7");
+        result.addChildBuilder("source-level").setValue("1.7");
 
-        ConfigTree.Builder expected = new ConfigTree.Builder();
-        expected.addChildBuilder("source-encoding").setValue("UTF-8");
-        expected.addChildBuilder("target-platform-name").setValue("j2se");
-        expected.addChildBuilder("target-platform").setValue("1.7");
-        expected.addChildBuilder("source-level").setValue("1.7");
-
-        ConfigTree.Builder commonTasks = expected.addChildBuilder("common-tasks");
+        ConfigTree.Builder commonTasks = result.addChildBuilder("common-tasks");
         ConfigTree.Builder customTask1 = commonTasks.addChildBuilder("task");
         customTask1.addChildBuilder("display-name").setValue("List tasks");
         customTask1.addChildBuilder("non-blocking").setValue("yes");
@@ -45,13 +42,13 @@ public class ConfigXmlUtilsTest {
         customTask1.addChildBuilder("task-jvm-args").setValue("");
         addTaskNames(customTask1, false, "tasks");
 
-        ConfigTree.Builder scriptPlatform = expected.addChildBuilder("script-platform");
+        ConfigTree.Builder scriptPlatform = result.addChildBuilder("script-platform");
         scriptPlatform.addChildBuilder("spec-name").setValue("j2se");
         scriptPlatform.addChildBuilder("spec-version").setValue("1.7");
 
-        expected.addChildBuilder("gradle-home").setValue("?VER=1.11");
+        result.addChildBuilder("gradle-home").setValue("?VER=1.11");
 
-        ConfigTree.Builder licenseHeader = expected.addChildBuilder("license-header");
+        ConfigTree.Builder licenseHeader = result.addChildBuilder("license-header");
         licenseHeader.addChildBuilder("name").setValue("my-license");
         licenseHeader.addChildBuilder("template").setValue("license2.txt");
 
@@ -59,7 +56,7 @@ public class ConfigXmlUtilsTest {
         licenseProperty.addChildBuilder("#attr-name").setValue("organization");
         licenseProperty.setValue("MyCompany");
 
-        ConfigTree.Builder builtInTasks = expected.addChildBuilder("built-in-tasks");
+        ConfigTree.Builder builtInTasks = result.addChildBuilder("built-in-tasks");
 
         ConfigTree.Builder builtInTask1 = builtInTasks.addChildBuilder("task");
         builtInTask1.addChildBuilder("display-name").setValue("build");
@@ -75,13 +72,19 @@ public class ConfigXmlUtilsTest {
         builtInTask2.addChildBuilder("task-args").setValue("");
         builtInTask2.addChildBuilder("task-jvm-args").setValue("");
 
-        ConfigTree.Builder auxiliary = expected.addChildBuilder("auxiliary");
+        ConfigTree.Builder auxiliary = result.addChildBuilder("auxiliary");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.enable").setValue("true");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.lf-kind").setValue("LF");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.use-global").setValue("true");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.use-project").setValue("false");
 
-        assertEquals(expected.create(), parsedTree);
+        return result.create();
+    }
+
+    @Test
+    public void testSettings1() throws Exception {
+        ConfigTree parsedTree = ConfigXmlUtils.parseDocument(readFromResources("settings1.xml")).create();
+        assertEquals(getExpectedSettings1Content(), parsedTree);
     }
 
 }
