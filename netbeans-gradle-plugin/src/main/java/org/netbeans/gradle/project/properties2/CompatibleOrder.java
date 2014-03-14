@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.properties2;
 
 final class CompatibleOrder extends AbstractFixedOrderNodeSorter {
-    public static final ConfigNodeSorter INSTANCE = new CompatibleOrder();
-
     private static final String[] ROOT_KEYS = {
         "source-encoding",
         "target-platform-name",
@@ -14,6 +12,7 @@ final class CompatibleOrder extends AbstractFixedOrderNodeSorter {
         "license-header",
         "built-in-tasks"
     };
+    public static final ConfigNodeSorter INSTANCE = new CompatibleOrder();
 
     private CompatibleOrder() {
         super(ROOT_KEYS);
@@ -34,14 +33,13 @@ final class CompatibleOrder extends AbstractFixedOrderNodeSorter {
     }
 
     private static final class TaskOrder extends AbstractFixedOrderNodeSorter {
-        public static final ConfigNodeSorter INSTANCE = new TaskOrder();
-
         private static final String[] TASK_KEYS = {
             "display-name",
             "non-blocking",
             "task-args",
             "task-jvm-args"
         };
+        public static final ConfigNodeSorter INSTANCE = new TaskOrder();
 
         public TaskOrder() {
             super(TASK_KEYS);
@@ -54,13 +52,12 @@ final class CompatibleOrder extends AbstractFixedOrderNodeSorter {
     }
 
     private static final class LicenseOrder extends AbstractFixedOrderNodeSorter {
-        public static final ConfigNodeSorter INSTANCE = new LicenseOrder();
-
         private static final String[] LICENSE_KEYS = {
             "name",
             "template",
             "property"
         };
+        public static final ConfigNodeSorter INSTANCE = new LicenseOrder();
 
         public LicenseOrder() {
             super(LICENSE_KEYS);
