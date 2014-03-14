@@ -134,7 +134,7 @@ final class XmlPropertyFormat {
             saveDocument(result, document);
 
             String fileOutput = output.toString(XML_ENCODING);
-            BufferedReader configContent = new BufferedReader(new StringReader(output.toString(XML_ENCODING)), 2048);
+            BufferedReader configContent = new BufferedReader(new StringReader(fileOutput), 2048);
 
             StringBuilder newFileStrContent = new StringBuilder(fileOutput.length());
             for (String line = configContent.readLine(); line != null; line = configContent.readLine()) {
