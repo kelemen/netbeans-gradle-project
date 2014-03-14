@@ -1,5 +1,15 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -8,9 +18,17 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 final class ConfigXmlUtils {
+    private static final Logger LOGGER = Logger.getLogger(ConfigXmlUtils.class.getName());
+
     private static final char ESCAPE_START_CHAR = '_';
     private static final char ESCAPE_END_CHAR = '.';
     private static final String EMPTY_ESCAPE = ESCAPE_START_CHAR + "" + ESCAPE_END_CHAR;
+
+    private static final String KEYWORD_PREFIX = "__";
+    private static final String KEYWORD_VALUE = KEYWORD_PREFIX + "value";
+    private static final String KEYWORD_HAS_VALUE = KEYWORD_PREFIX + "has-value";
+
+    private static final String STR_NO = "no";
 
     private static final String ATTR_PREFIX = "#attr-";
 
@@ -176,21 +194,41 @@ final class ConfigXmlUtils {
         return result.toString();
     }
 
-    private static void addAttributes(Element element, ConfigTree.Builder result) {
+    private static boolean addAttributes(Element element, ConfigTree.Builder result) {
         NamedNodeMap attributes = element.getAttributes();
         if (attributes == null) {
-            return;
+            return false;
         }
+
+        boolean setValue = false;
 
         int attributeCount = attributes.getLength();
         for (int i = 0; i < attributeCount; i++) {
             Node attribute = attributes.item(i);
 
-            // TODO: There will be special attributes later starting with "__".
-            String attrName = fromElementName(attribute.getNodeName());
-            String attrValue = attribute.getNodeValue();
-            result.addChildBuilder(asAttributeName(attrName)).setValue(attrValue);
+            String xmlAttrName = attribute.getNodeName();
+            if (xmlAttrName.startsWith(KEYWORD_PREFIX)) {
+                switch (xmlAttrName) {
+                    case KEYWORD_VALUE:
+                        result.setValue(attribute.getNodeValue());
+                        setValue = true;
+                        break;
+                    case KEYWORD_HAS_VALUE:
+                        result.setValue(null);
+                        setValue = true;
+                        break;
+                    default:
+                        LOGGER.log(Level.WARNING, "Unknown keyword in properties file: {0}", xmlAttrName);
+                        break;
+                }
+            }
+            else {
+                String attrName = fromElementName(xmlAttrName);
+                String attrValue = attribute.getNodeValue();
+                result.addChildBuilder(asAttributeName(attrName)).setValue(attrValue);
+            }
         }
+        return setValue;
     }
 
     private static int addChildren(Element element, ConfigTree.Builder result) {
@@ -222,10 +260,10 @@ final class ConfigXmlUtils {
         ExceptionHelper.checkNotNullArgument(root, "root");
         ExceptionHelper.checkNotNullArgument(result, "result");
 
-        addAttributes(root, result);
+        boolean setValue = addAttributes(root, result);
 
         int addedChildCount = addChildren(root, result);
-        if (addedChildCount == 0) {
+        if (!setValue && addedChildCount == 0) {
             return root.getTextContent();
         }
         else {
@@ -242,6 +280,158 @@ final class ConfigXmlUtils {
         }
 
         return result;
+    }
+
+    private static List<KeyValuePair> tryGetAttributeList(ConfigTree tree) {
+        List<KeyValuePair> attributes = null;
+        for (Map.Entry<String, List<ConfigTree>> entry: tree.getChildTrees().entrySet()) {
+            List<ConfigTree> childList = entry.getValue();
+            if (childList.size() != 1) {
+                continue;
+            }
+
+            ConfigTree child = childList.get(0);
+            if (!child.getChildTrees().isEmpty()) {
+                continue;
+            }
+
+            String key = entry.getKey();
+            if (!key.startsWith(ATTR_PREFIX)) {
+                continue;
+            }
+
+            if (attributes == null) {
+                attributes = new ArrayList<>(tree.getChildTrees().size());
+            }
+
+            // A childless ConfigTree should always have a value, this is
+            // something guaranteed by ConfigTree.
+            String value = child.getValue("");
+            attributes.add(new KeyValuePair(key, value));
+        }
+        return attributes;
+    }
+
+    private static Set<String> addAttributeChildrenToXml(
+            Element parent,
+            ConfigTree tree,
+            final ConfigNodeSorter nodeSorter) {
+
+        List<KeyValuePair> attributes = tryGetAttributeList(tree);
+        if (attributes == null) {
+            return Collections.emptySet();
+        }
+
+        // Despite that attributes are unordered, add them in a deterministic
+        // order, so that any sensible implementation will save them in the
+        // same order every time (avoiding unnecessary differences in the
+        // properties file).
+        Collections.sort(attributes, new Comparator<KeyValuePair>() {
+            @Override
+            public int compare(KeyValuePair o1, KeyValuePair o2) {
+                return nodeSorter.compare(o1.key, o1.key);
+            }
+        });
+
+        Set<String> result = CollectionsEx.newHashSet(attributes.size());
+        for (KeyValuePair keyValue: attributes) {
+            String key = keyValue.key;
+            result.add(key);
+
+            assert key.startsWith(ATTR_PREFIX);
+            String xmlKey = toElementName(key.substring(ATTR_PREFIX.length()));
+            parent.setAttribute(xmlKey, keyValue.value);
+        }
+        return result;
+    }
+
+    private static void addTreeToXml(
+            Document document,
+            Element parent,
+            ConfigTree tree,
+            final ConfigNodeSorter nodeSorter) {
+
+        Map<String, List<ConfigTree>> children = tree.getChildTrees();
+
+        String value = tree.getValue(null);
+        if (value != null) {
+            if (children.isEmpty()) {
+                parent.setTextContent(value);
+                return;
+            }
+        }
+
+        Set<String> attributeKeys = addAttributeChildrenToXml(parent, tree, nodeSorter);
+
+        List<NamedNode> childEntries = new ArrayList<>(children.size());
+        for (Map.Entry<String, List<ConfigTree>> entry: children.entrySet()) {
+            String key = entry.getKey();
+            if (!attributeKeys.contains(key)) {
+                childEntries.add(new NamedNode(key, entry.getValue()));
+            }
+        }
+
+        if (childEntries.isEmpty()) {
+            if (value != null) {
+                parent.setTextContent(value);
+            }
+            return;
+        }
+
+        if (value != null) {
+            parent.setAttribute(KEYWORD_VALUE, value);
+        }
+        else {
+            parent.setAttribute(KEYWORD_HAS_VALUE, STR_NO);
+        }
+
+        Collections.sort(childEntries, new Comparator<NamedNode>() {
+            @Override
+            public int compare(NamedNode o1, NamedNode o2) {
+                return nodeSorter.compare(o1.name, o2.name);
+            }
+        });
+
+        for (NamedNode child: childEntries) {
+            String xmlKey = toElementName(child.name);
+            Element childElement = document.createElement(xmlKey);
+            parent.appendChild(childElement);
+
+            ConfigNodeSorter childSorter = nodeSorter.getChildSorter(child.name);
+            for (ConfigTree childTree: child.trees) {
+                addTreeToXml(document, childElement, childTree, childSorter);
+            }
+        }
+    }
+
+    public static void addTree(Element parent, ConfigTree tree, ConfigNodeSorter nodeSorter) {
+        ExceptionHelper.checkNotNullArgument(parent, "parent");
+        ExceptionHelper.checkNotNullArgument(tree, "tree");
+        ExceptionHelper.checkNotNullArgument(nodeSorter, "nodeSorter");
+
+        Document document = parent.getOwnerDocument();
+        Objects.requireNonNull(document, "parent.getOwnerDocument()");
+        addTreeToXml(document, parent, tree, nodeSorter);
+    }
+
+    private static final class KeyValuePair {
+        public final String key;
+        public final String value;
+
+        public KeyValuePair(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private static final class NamedNode {
+        public final String name;
+        public final List<ConfigTree> trees;
+
+        public NamedNode(String name, List<ConfigTree> trees) {
+            this.name = name;
+            this.trees = trees;
+        }
     }
 
     private ConfigXmlUtils() {
