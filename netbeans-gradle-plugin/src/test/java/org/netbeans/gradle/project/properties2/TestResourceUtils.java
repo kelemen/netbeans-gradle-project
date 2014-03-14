@@ -14,19 +14,24 @@ final class TestResourceUtils {
         return TestResourceUtils.class.getPackage().getName().replace('.', '/') + "/" + relPath;
     }
 
-    public static String[] getResourceLines(String relPath, String encoding) throws IOException {
+    public static String[] readLines(Reader reader) throws IOException {
         List<String> lines = new LinkedList<>();
-        try (InputStream input = openResource(relPath);
-                Reader reader = new InputStreamReader(input, encoding);
-                LineNumberReader lineReader = new LineNumberReader(reader, 8 * 1024)) {
+        LineNumberReader lineReader = new LineNumberReader(reader, 8 * 1024);
 
-            String line = lineReader.readLine();
-            while (line != null) {
-                lines.add(line);
-                line = lineReader.readLine();
-            }
+        String line = lineReader.readLine();
+        while (line != null) {
+            lines.add(line);
+            line = lineReader.readLine();
         }
+
         return lines.toArray(new String[lines.size()]);
+    }
+
+    public static String[] getResourceLines(String relPath, String encoding) throws IOException {
+        try (InputStream input = openResource(relPath);
+                Reader reader = new InputStreamReader(input, encoding)) {
+            return readLines(reader);
+        }
     }
 
     public static InputStream openResource(String relPath) throws IOException {
