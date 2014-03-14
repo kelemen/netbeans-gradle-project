@@ -144,6 +144,18 @@ public final class ConfigTree {
             return result;
         }
 
+        public void removeChild(@Nonnull String key) {
+            ExceptionHelper.checkNotNullArgument(key, "key");
+
+            if (childTrees == null) {
+                return;
+            }
+
+            if (childTrees.remove(key) != null) {
+                cachedBuilt = null;
+            }
+        }
+
         public void detachChildTreeBuilders() {
             if (childTrees == null || childTrees.isEmpty()) {
                 return;
