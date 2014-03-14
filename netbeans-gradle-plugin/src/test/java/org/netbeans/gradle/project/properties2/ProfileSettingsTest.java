@@ -54,24 +54,6 @@ public class ProfileSettingsTest {
         });
     }
 
-    private static PropertyDef<ConfigTree, ConfigTree> getNodeProfileDef() {
-        PropertyDef.Builder<ConfigTree, ConfigTree> result = new PropertyDef.Builder<>();
-        result.setValueDef(new PropertyValueDef<ConfigTree, ConfigTree>() {
-            @Override
-            public PropertySource<ConfigTree> property(ConfigTree valueKey) {
-                return PropertyFactory.constSource(valueKey);
-            }
-
-            @Override
-            public ConfigTree getKeyFromValue(ConfigTree value) {
-                return value;
-            }
-        });
-        setSimpleEncodingDef(result);
-
-        return result.create();
-    }
-
     private static PropertyDef<PlatformId, PlatformId> getTargetPlatformProfileDef() {
         PropertyDef.Builder<PlatformId, PlatformId> result = new PropertyDef.Builder<>();
         result.setValueDef(new PropertyValueDef<PlatformId, PlatformId>() {
@@ -130,33 +112,6 @@ public class ProfileSettingsTest {
 
         ConfigPath configPath = getConfigPath(keys);
         return settings.getProperty(configPath, getTextProfileDef(naturalEquals));
-    }
-
-    private static MutableProperty<ConfigTree> getProperty(
-            ProfileSettings settings,
-            String... keys) {
-
-        ConfigPath configPath = getConfigPath(keys);
-        return settings.getProperty(configPath, getNodeProfileDef());
-    }
-
-    private static void assertTextNodePropertyValue(
-            MutableProperty<ConfigTree> property,
-            String expectedValue) {
-
-        ConfigTree value = property.getValue();
-
-        assertNotNull(property + " must have a value.", value);
-        assertEquals(property.toString(), expectedValue, value.getValue(null));
-    }
-
-    private static void assertTextNodePropertyValue(
-            ProfileSettings settings,
-            String propertyName,
-            String expectedValue) {
-
-        MutableProperty<ConfigTree> property = getProperty(settings, propertyName);
-        assertTextNodePropertyValue(property, expectedValue);
     }
 
     private void testSetValueOfTextProperty(
