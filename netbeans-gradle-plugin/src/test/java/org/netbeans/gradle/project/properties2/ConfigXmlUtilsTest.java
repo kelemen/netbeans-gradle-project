@@ -1,16 +1,31 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.io.InputStream;
+import java.io.StringWriter;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import static org.junit.Assert.*;
 
 public class ConfigXmlUtilsTest {
+    private static DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
+        return DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    }
+
     private static Document readFromResources(String relPath) throws Exception {
         try (InputStream input = TestResourceUtils.openResource(relPath)) {
-            return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(input);
+            return newDocumentBuilder().parse(input);
         }
     }
 
@@ -87,4 +102,39 @@ public class ConfigXmlUtilsTest {
         assertEquals(getExpectedSettings1Content(), parsedTree);
     }
 
+    private String saveXmlToString(Document document) throws Exception {
+        StringWriter output = new StringWriter(8 * 1024);
+        Result result = new StreamResult(output);
+
+        Source source = new DOMSource(document);
+
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        transformer.transform(source, result);
+        return output.toString();
+    }
+
+    @Test
+    public void testSaveAndParseForSettings1() throws Exception {
+        ConfigTree settings1 = getExpectedSettings1Content();
+
+        Document document = newDocumentBuilder().newDocument();
+        Element root = document.createElement("root");
+        document.appendChild(root);
+        ConfigXmlUtils.addTree(root, settings1, NaturalConfigNodeSorter.INSTANCE);
+
+        ConfigTree parsedTree = ConfigXmlUtils.parseDocument(document).create();
+
+        try {
+            assertEquals(settings1, parsedTree);
+        } catch (Throwable ex) {
+            System.err.println("Built XML: ");
+            System.err.println(saveXmlToString(document));
+
+            throw ex;
+        }
+    }
 }
