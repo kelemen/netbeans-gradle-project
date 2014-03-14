@@ -397,11 +397,11 @@ final class ConfigXmlUtils {
 
         for (NamedNode child: childEntries) {
             String xmlKey = toElementName(child.name);
-            Element childElement = document.createElement(xmlKey);
-            parent.appendChild(childElement);
-
             ConfigNodeSorter childSorter = nodeSorter.getChildSorter(child.name);
+
             for (ConfigTree childTree: child.trees) {
+                Element childElement = document.createElement(xmlKey);
+                parent.appendChild(childElement);
                 addTreeToXml(document, childElement, childTree, childSorter);
             }
         }
