@@ -1,5 +1,12 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,8 +20,18 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -23,6 +40,8 @@ import org.w3c.dom.NodeList;
 
 final class ConfigXmlUtils {
     private static final Logger LOGGER = Logger.getLogger(ConfigXmlUtils.class.getName());
+    private static final String XML_ENCODING = "UTF-8";
+    private static final int FILE_BUFFER_SIZE = 8 * 1024;
 
     private static final char ESCAPE_START_CHAR = '_';
     private static final char ESCAPE_END_CHAR = '.';
@@ -484,6 +503,104 @@ final class ConfigXmlUtils {
 
         for (Element auxElement: sortedAuxElements) {
             auxRoot.appendChild(document.importNode(auxElement, true));
+        }
+    }
+
+    private static boolean isLineEndingByte(byte ch) {
+        return ch == 13 || ch == 10;
+    }
+
+    private static String tryGetLineSeparator(Path file) {
+        if (!Files.isRegularFile(file)) {
+            return null;
+        }
+
+        // This method won't work with every encoding but we save properties
+        // file with UTF-8, with which this should be fine.
+        byte prevChar = 0;
+        byte[] buffer = new byte[FILE_BUFFER_SIZE];
+        try (InputStream input = Files.newInputStream(file)) {
+            int readCount = input.read(buffer);
+            while (readCount > 0) {
+                for (int i = 0; i < readCount; i++) {
+                    byte ch = buffer[i];
+                    if (isLineEndingByte(prevChar)) {
+                        switch (ch) {
+                            case 10:
+                                return prevChar == 13 ? "\r\n" : "\n";
+                            case 13:
+                                // \n\r is not valid, returning null is safer.
+                                return prevChar == 10 ? null : "\r";
+                            default:
+                                return Character.toString((char)prevChar);
+                        }
+                    }
+
+                    prevChar = ch;
+                }
+
+                input.read(buffer);
+            }
+
+            return isLineEndingByte(prevChar) ? Character.toString((char)prevChar) : null;
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO, "Failed to read config file for determining its line separator", ex);
+            return null;
+        }
+    }
+
+    private static void saveDocument(Result result, Document document) throws IOException {
+        Source source = new DOMSource(document);
+
+        try {
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, XML_ENCODING);
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            transformer.transform(source, result);
+        } catch (TransformerException ex) {
+            throw new IOException(ex);
+        }
+    }
+
+    public static void saveXmlTo(Project project, Document document, Path output) throws IOException {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
+        String lineSeparator = tryGetLineSeparator(output);
+        if (lineSeparator == null) {
+            lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);
+        }
+
+        saveXmlTo(document, output, lineSeparator);
+    }
+
+    public static void saveXmlTo(
+            Document document,
+            Path output,
+            String lineSeparator) throws IOException {
+        ExceptionHelper.checkNotNullArgument(document, "document");
+        ExceptionHelper.checkNotNullArgument(output, "output");
+
+        if (lineSeparator == null) {
+            Result result = new StreamResult(output.toFile());
+            saveDocument(result, document);
+        }
+        else {
+            StringWriter writer = new StringWriter(FILE_BUFFER_SIZE);
+            Result result = new StreamResult(writer);
+            saveDocument(result, document);
+
+            String fileOutput = writer.toString();
+            BufferedReader configContent = new BufferedReader(new StringReader(fileOutput));
+
+            StringBuilder newFileStrContent = new StringBuilder(fileOutput.length());
+            for (String line = configContent.readLine(); line != null; line = configContent.readLine()) {
+                newFileStrContent.append(line);
+                newFileStrContent.append(lineSeparator);
+            }
+
+            Files.write(output, newFileStrContent.toString().getBytes(XML_ENCODING));
         }
     }
 
