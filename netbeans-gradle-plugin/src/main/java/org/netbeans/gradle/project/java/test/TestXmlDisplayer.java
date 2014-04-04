@@ -283,6 +283,14 @@ public final class TestXmlDisplayer {
             testSuite = session.startTestSuite(suiteName);
         }
 
+        private Testcase tryGetTestCase(Attributes attributes, Status status) {
+            Testcase result = tryGetTestCase(attributes);
+            if (result != null) {
+                result.setStatus(status);
+            }
+            return result;
+        }
+
         private Testcase tryGetTestCase(Attributes attributes) {
             if (testSuite == null) {
                 LOGGER.warning("test suite has not been started but there is a test case to add.");
@@ -310,12 +318,10 @@ public final class TestXmlDisplayer {
         private void tryAddTestCase(String uri, String localName, String qName, Attributes attributes) {
             switch (qName) {
                 case "testcase":
-                    testcase = tryGetTestCase(attributes);
-                    testcase.setStatus(Status.PASSED);
+                    testcase = tryGetTestCase(attributes, Status.PASSED);
                     break;
                 case "ignored-testcase":
-                    testcase = tryGetTestCase(attributes);
-                    testcase.setStatus(Status.SKIPPED);
+                    testcase = tryGetTestCase(attributes, Status.SKIPPED);
                     break;
             }
         }
@@ -358,30 +364,30 @@ public final class TestXmlDisplayer {
             level++;
         }
 
-            @Override
-            public void endElement(String uri, String localName, String qName) throws SAXException {
-                level--;
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            level--;
 
-                switch (level) {
-                    case 1:
-                        testcase = null;
-                        break;
-                    case 2:
-                        if (failureContent != null && testcase != null) {
-                            Trouble trouble = new Trouble(error);
-                            trouble.setStackTrace(extractStackTrace(failureContent.toString()));
-                            testcase.setTrouble(trouble);
-                        }
-                        failureContent = null;
-                        break;
-                }
+            switch (level) {
+                case 1:
+                    testcase = null;
+                    break;
+                case 2:
+                    if (failureContent != null && testcase != null) {
+                        Trouble trouble = new Trouble(error);
+                        trouble.setStackTrace(extractStackTrace(failureContent.toString()));
+                        testcase.setTrouble(trouble);
+                    }
+                    failureContent = null;
+                    break;
             }
+        }
 
-            @Override
-            public void characters(char[] ch, int start, int length) throws SAXException {
-                if (failureContent != null) {
-                    failureContent.append(ch, start, length);
-                }
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            if (failureContent != null) {
+                failureContent.append(ch, start, length);
             }
+        }
     }
 }
