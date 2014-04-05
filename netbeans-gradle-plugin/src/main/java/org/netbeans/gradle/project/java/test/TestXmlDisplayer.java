@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.java.test;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -258,14 +259,21 @@ public final class TestXmlDisplayer {
 
         private int level;
         private NbGradleTestSuite testSuite;
+        private final List<Testcase> allTestcases;
+
+        private String stdout;
+        private String stderr;
         private long suiteTime;
         private boolean error;
         private Testcase testcase;
         private StringBuilder failureContent;
+        private boolean outputBuilderIsStdOut;
+        private StringBuilder outputBuilder;
 
         public TestXmlContentHandler(NbGradleTestSession session, File reportFile) {
             this.session = session;
             this.reportFile = reportFile;
+            this.allTestcases = new LinkedList<>();
 
             this.level = 0;
             this.testSuite = null;
@@ -273,6 +281,7 @@ public final class TestXmlDisplayer {
             this.error = false;
             this.testcase = null;
             this.failureContent = null;
+            this.outputBuilderIsStdOut = false;
         }
 
         private void startSuite(Attributes attributes) {
@@ -315,7 +324,7 @@ public final class TestXmlDisplayer {
             return result;
         }
 
-        private void tryAddTestCase(String uri, String localName, String qName, Attributes attributes) {
+        private boolean tryAddTestCase(String uri, String localName, String qName, Attributes attributes) {
             switch (qName) {
                 case "testcase":
                     testcase = tryGetTestCase(attributes, Status.PASSED);
@@ -323,6 +332,14 @@ public final class TestXmlDisplayer {
                 case "ignored-testcase":
                     testcase = tryGetTestCase(attributes, Status.SKIPPED);
                     break;
+            }
+
+            if (testcase != null) {
+                allTestcases.add(testcase);
+                return true;
+            }
+            else {
+                return false;
             }
         }
 
@@ -347,6 +364,19 @@ public final class TestXmlDisplayer {
             }
         }
 
+        private void tryStartOutput(String uri, String localName, String qName, Attributes attributes) {
+            switch (qName) {
+                case "system-out":
+                    outputBuilder = new StringBuilder();
+                    outputBuilderIsStdOut = true;
+                    break;
+                case "system-err":
+                    outputBuilder = new StringBuilder();
+                    outputBuilderIsStdOut = false;
+                    break;
+            }
+        }
+
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             switch (level) {
@@ -354,7 +384,9 @@ public final class TestXmlDisplayer {
                     startSuite(attributes);
                     break;
                 case 1:
-                    tryAddTestCase(uri, localName, qName, attributes);
+                    if (!tryAddTestCase(uri, localName, qName, attributes)) {
+                        tryStartOutput(uri, localName, qName, attributes);
+                    }
                     break;
                 case 2:
                     tryUpdateTestCase(uri, localName, qName, attributes);
@@ -371,6 +403,15 @@ public final class TestXmlDisplayer {
             switch (level) {
                 case 1:
                     testcase = null;
+                    if (outputBuilder != null) {
+                        if (outputBuilderIsStdOut) {
+                            stdout = outputBuilder.toString();
+                        }
+                        else {
+                            stderr = outputBuilder.toString();
+                        }
+                        outputBuilder = null;
+                    }
                     break;
                 case 2:
                     if (failureContent != null && testcase != null) {
@@ -383,11 +424,17 @@ public final class TestXmlDisplayer {
             }
         }
 
+        private static void tryAppend(char[] ch, int start, int length, StringBuilder... results) {
+            for (StringBuilder result: results) {
+                if (result != null) {
+                    result.append(ch, start, length);
+                }
+            }
+        }
+
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
-            if (failureContent != null) {
-                failureContent.append(ch, start, length);
-            }
+            tryAppend(ch, start, length, failureContent, outputBuilder);
         }
     }
 }
