@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ import org.netbeans.gradle.project.api.entry.SampleGradleProject;
 import org.netbeans.gradle.project.others.test.NbGradleTestManager;
 import org.netbeans.gradle.project.others.test.NbGradleTestSession;
 import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
 import org.netbeans.modules.gsf.testrunner.api.Status;
 import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
@@ -46,11 +49,13 @@ public class TestXmlDisplayerTest {
 
     @BeforeClass
     public static void setUpClass() throws IOException {
+        GlobalGradleSettings.setCleanMemoryPreference();
         sampleProject = EmptyProjectTest.createEmptyProject();
     }
 
     @AfterClass
     public static void tearDownClass() throws IOException {
+        GlobalGradleSettings.setDefaultPreference();
         // To ensure that it can be removed wait until loaded.
         sampleProject.loadProject(PROJECT_NAME).tryWaitForLoadedProject(3, TimeUnit.MINUTES);
         sampleProject.close();
@@ -129,7 +134,7 @@ public class TestXmlDisplayerTest {
         initTestResultsDir(rootProject, "test-results1.zip");
 
         ExpectedSession session1 = new ExpectedSession(rootProject);
-        ExpectedSuite suite1 = session1.addSuite("mypackage.MyIntegTest", 109);
+        ExpectedSuite suite1 = session1.addSuite("mypackage.MyIntegTest", 109, "HELLO1\nHELLO2\n", "");
 
         suite1.addFailed("testMyIntegrationFailure1", 3);
         suite1.addFailed("testMyIntegrationFailure2", 0);
@@ -249,6 +254,8 @@ public class TestXmlDisplayerTest {
         private final TestSession parent;
         private final String suiteName;
         private final AtomicBoolean closed;
+        private String stdOut;
+        private String stdErr;
 
         private final Collection<Testcase> testcases;
         private volatile long elapsedTimeInMillis;
@@ -260,6 +267,16 @@ public class TestXmlDisplayerTest {
             this.suiteName = suiteName;
             this.closed = new AtomicBoolean(false);
             this.testcases = new ConcurrentLinkedQueue<>();
+        }
+
+        @Override
+        public void setStdOut(String stdOut) {
+            this.stdOut = stdOut;
+        }
+
+        @Override
+        public void setStdErr(String stdErr) {
+            this.stdErr = stdErr;
         }
 
         @Override
@@ -285,6 +302,10 @@ public class TestXmlDisplayerTest {
             }
         }
 
+        private static List<String> safeToLines(String text) {
+            return text != null ? StringUtils.toLines(text) : Collections.<String>emptyList();
+        }
+
         private void verifySuite(ExpectedSuite expectedSuite) {
             assertNotNull("Expected suite with name " + suiteName, expectedSuite);
 
@@ -302,6 +323,9 @@ public class TestXmlDisplayerTest {
             assertEquals("suiteTimeMillis", expectedSuite.suiteTimeMillis, elapsedTimeInMillis);
             assertEquals("Testcase count", expectedSuite.verifiers.size(), testcases.size());
             assertTrue("closed", closed.get());
+
+            assertEquals("stdout", safeToLines(expectedSuite.stdOut), safeToLines(stdOut));
+            assertEquals("stderr", safeToLines(expectedSuite.stdErr), safeToLines(stdErr));
         }
     }
 
@@ -357,8 +381,8 @@ public class TestXmlDisplayerTest {
             this.suites = new HashMap<>();
         }
 
-        public ExpectedSuite addSuite(String suiteName, long suiteTimeMillis) {
-            ExpectedSuite suite = new ExpectedSuite(suiteName, suiteTimeMillis);
+        public ExpectedSuite addSuite(String suiteName, long suiteTimeMillis, String stdOut, String stdErr) {
+            ExpectedSuite suite = new ExpectedSuite(suiteName, suiteTimeMillis, stdOut, stdErr);
             suites.put(suite.getSuiteName(), suite);
 
             return suite;
@@ -370,10 +394,15 @@ public class TestXmlDisplayerTest {
         private final long suiteTimeMillis;
         private final Map<String, TestcaseVerifier> verifiers;
 
-        public ExpectedSuite(String suiteName, long suiteTimeMillis) {
+        private final String stdOut;
+        private final String stdErr;
+
+        public ExpectedSuite(String suiteName, long suiteTimeMillis, String stdOut, String stdErr) {
             this.suiteName = suiteName;
             this.verifiers = new HashMap<>();
             this.suiteTimeMillis = suiteTimeMillis;
+            this.stdOut = stdOut;
+            this.stdErr = stdErr;
         }
 
         public String getSuiteName() {
