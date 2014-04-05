@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,19 +95,6 @@ public final class GlobalGradleSettings {
 
     private static String withNS(String namespace, String name) {
         return namespace == null ? name : namespace + "." + name;
-    }
-
-    public void setAllToDefault() {
-        for (Field field: getClass().getDeclaredFields()) {
-            if (StringBasedProperty.class.isAssignableFrom(field.getType())) {
-                try {
-                    StringBasedProperty<?> property = (StringBasedProperty<?>)field.get(this);
-                    property.setValueFromString(null);
-                } catch (IllegalAccessException ex) {
-                    throw new AssertionError(ex);
-                }
-            }
-        }
     }
 
     public StringBasedProperty<Integer> gradleDaemonTimeoutSec() {

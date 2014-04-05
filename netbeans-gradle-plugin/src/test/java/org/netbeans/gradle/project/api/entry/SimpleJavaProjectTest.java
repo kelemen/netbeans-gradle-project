@@ -63,7 +63,7 @@ public class SimpleJavaProjectTest {
     public static void setUpClass() throws Exception {
         MockServices.setServices();
 
-        GlobalGradleSettings.getDefault().setAllToDefault();
+        GlobalGradleSettings.setCleanMemoryPreference();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
@@ -72,6 +72,7 @@ public class SimpleJavaProjectTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
+        GlobalGradleSettings.setDefaultPreference();
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 

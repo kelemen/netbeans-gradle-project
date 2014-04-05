@@ -34,7 +34,7 @@ public final class EmptyProjectTest {
     public static void setUpClass() throws Exception {
         MockServices.setServices(SingleModelExtensionQuery.class);
 
-        GlobalGradleSettings.getDefault().setAllToDefault();
+        GlobalGradleSettings.setCleanMemoryPreference();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
 
@@ -43,6 +43,8 @@ public final class EmptyProjectTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
+        GlobalGradleSettings.setDefaultPreference();
+
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 
