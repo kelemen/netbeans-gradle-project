@@ -139,6 +139,8 @@ public final class TestXmlDisplayer {
 
         NbGradleTestSuite testSuite = testXmlContentHandler.testSuite;
         if (testSuite != null) {
+            testSuite.setStdErr(testXmlContentHandler.stderr);
+            testSuite.setStdOut(testXmlContentHandler.stdout);
             testSuite.endSuite(testXmlContentHandler.suiteTime);
         }
     }
