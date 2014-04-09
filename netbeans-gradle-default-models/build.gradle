@@ -8,7 +8,7 @@ String gradleVersion = '1.11';
 List otherGradleVersions = ['1.8', '1.9', '1.10'];
 
 ext.scriptFile = { String fileName ->
-    return new File(new File(rootDir, 'common-scripts'), fileName);
+    return new File(new File(rootDir, 'gradle'), fileName);
 }
 
 def compilerOptions = [compileJava, compileTestJava]*.options;

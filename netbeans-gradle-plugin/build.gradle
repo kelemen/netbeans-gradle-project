@@ -1,0 +1,119 @@
+apply plugin: 'java'
+apply plugin: 'nbm'
+
+String netbeansVersion = 'RELEASE72'
+
+def javaVersion = 1.7
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+repositories {
+    mavenCentral()
+    maven { url 'http://bits.netbeans.org/maven2/' }
+    maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
+    maven { url 'http://dl.bintray.com/kelemen/maven' }
+}
+
+// sourceSets {
+//     main {
+//         java {
+//             srcDir 'src/main/resources'
+//         }
+//     }
+// }
+compileJava {
+//   doFirst {
+//     project.file("$project.buildDir/src/main/generated-sources").mkdirs()
+//   }
+//   options.compilerArgs = ['-s', "$project.buildDir/src/main/generated-sources"]
+  options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
+}
+
+nbm {
+    moduleName = 'org.netbeans.gradle.project'
+    // Module signing data
+    // keystore project.file('my_keystore')
+    // nbm_alias 'netbeansModule'
+    // storepass netbeansStorepass
+}
+
+def netbeansModule = { String groupName, String moduleName ->
+    return [
+	    group: groupName,
+		name: moduleName,
+		version: netbeansVersion
+	]
+}
+
+def netbeansApi = { String moduleName ->
+    return netbeansModule('org.netbeans.api', moduleName)
+}
+
+dependencies {
+    compile netbeansApi('org-netbeans-api-annotations-common')
+	compile netbeansApi('org-netbeans-api-debugger')
+	compile netbeansApi('org-netbeans-api-debugger-jpda')
+	compile netbeansApi('org-netbeans-api-java')
+	compile netbeansApi('org-netbeans-api-java-classpath')
+	compile netbeansApi('org-netbeans-api-progress')
+	compile netbeansApi('org-netbeans-core-multiview')
+	compile netbeansApi('org-netbeans-modules-editor-indent-project')
+	compile netbeansApi('org-netbeans-modules-java-platform')
+	compile netbeansApi('org-netbeans-modules-java-project')
+	compile netbeansApi('org-netbeans-modules-java-source')
+	compile netbeansApi('org-netbeans-modules-options-api')
+	compile netbeansApi('org-netbeans-modules-projectapi')
+	compile netbeansApi('org-netbeans-modules-projectuiapi')
+	compile netbeansApi('org-netbeans-modules-queries')
+	compile netbeansApi('org-openide-actions')
+	compile netbeansApi('org-openide-awt')
+	compile netbeansApi('org-openide-dialogs')
+	compile netbeansApi('org-openide-filesystems')
+	compile netbeansApi('org-openide-io')
+	compile netbeansApi('org-openide-loaders')
+	compile netbeansApi('org-openide-modules')
+	compile netbeansApi('org-openide-nodes')
+	compile netbeansApi('org-openide-text')
+	compile netbeansApi('org-openide-util')
+	compile netbeansApi('org-openide-util-lookup')
+	compile netbeansApi('org-openide-windows')
+	compile netbeansApi('org-netbeans-libs-javacapi')
+	compile netbeansApi('org-netbeans-modules-nbjunit')
+	compile netbeansApi('org-netbeans-libs-junit4')
+	compile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
+	compile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
+
+    compile 'org.slf4j:slf4j-api:1.7.2'
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile project(':netbeans-gradle-default-models')
+    // compile files(project.file('src/main/resources'))
+
+    compile 'org.gradle:gradle-tooling-api:1.11'
+    compile 'org.jtrim:jtrim-gui:1.7.2'
+    compile 'org.jtrim:jtrim-async:1.7.2'
+    compile 'org.jtrim:jtrim-core:1.7.2'
+    testCompile 'junit:junit:4.10'
+    testCompile 'com.google.guava:guava:14.0.1'
+    testCompile 'org.mockito:mockito-core:1.9.5'
+    // org.hamcrest:hamcrest-core:1.1
+    // org.objenesis:objenesis:1.0
+}
+
+// set netbeansInstallDir project property
+
+task run(type: Exec) {
+    dependsOn 'netbeans'
+    doFirst {
+        if (!project.hasProperty('netBeansInstallDir')) {
+            throw new GradleException("missing netBeansInstallDir property")
+        }
+        def confFile = project.file("${project.buildDir}/testuserdir/etc/netbeans.conf")
+        confFile.parentFile.mkdirs()
+        confFile.write "netbeans_extraclusters=\"${project.buildDir}/module\""
+    }
+
+    workingDir "${project.buildDir}"
+
+    //on windows:
+    commandLine netBeansInstallDir + '\\bin\\netbeans.exe', '--userdir', "${project.buildDir}\\testuserdir"
+}

@@ -1,0 +1,14 @@
+rootProject.name = 'netbeans-gradle-project';
+
+def subDirs = rootDir.listFiles(new FileFilter() {
+    public boolean accept(File file) {
+        return file.isDirectory();
+    }
+});
+
+subDirs.each { File dir ->
+    String dirName = dir.name;
+    if (dirName.toLowerCase(Locale.US) != "buildsrc") {
+        include dirName;
+    }
+}
