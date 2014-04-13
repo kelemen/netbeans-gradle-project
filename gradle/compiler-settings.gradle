@@ -17,7 +17,7 @@ ext.configureJavaCompilers = {int javaVersion ->
         }
         else {
             compileTasks*.doFirst {
-                logger.warn "Warning: jdk5Compiler property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
+                logger.warn "Warning: ${jdkProperty} property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
             }
         }
     }
