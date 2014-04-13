@@ -14,27 +14,27 @@ repositories {
     maven { url 'http://dl.bintray.com/kelemen/maven' }
 }
 
-// sourceSets {
-//     main {
-//         java {
-//             srcDir 'src/main/resources'
-//         }
-//     }
-// }
 compileJava {
-//   doFirst {
-//     project.file("$project.buildDir/src/main/generated-sources").mkdirs()
-//   }
-//   options.compilerArgs = ['-s', "$project.buildDir/src/main/generated-sources"]
   options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
 }
 
+def tryGetProperty = {String name, String defaultValue ->
+    if (!project.hasProperty(name)) {
+        return defaultValue;
+    }
+
+    return project.property(name)?.toString();
+}
+
 nbm {
-    moduleName = 'org.netbeans.gradle.project'
-    // Module signing data
-    // keystore project.file('my_keystore')
-    // nbm_alias 'netbeansModule'
-    // storepass netbeansStorepass
+    moduleName = 'org.netbeans.gradle.project';
+
+    def keyStoreFile = tryGetProperty('nbGradlePluginKeyStore', null);
+    if (keyStoreFile != null) {
+        keystore = project.file(keyStoreFile);
+        nbm_alias = tryGetProperty('nbGradlePluginKeyStoreUser', 'kelemen');
+        storepass = tryGetProperty('nbGradlePluginKeyStorePass', '');
+    }
 }
 
 def netbeansModule = { String groupName, String moduleName ->
@@ -86,7 +86,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.2'
     compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile project(':netbeans-gradle-default-models')
-    // compile files(project.file('src/main/resources'))
 
     compile 'org.gradle:gradle-tooling-api:1.11'
     compile 'org.jtrim:jtrim-gui:1.7.2'
@@ -95,8 +94,6 @@ dependencies {
     testCompile 'junit:junit:4.10'
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'
-    // org.hamcrest:hamcrest-core:1.1
-    // org.objenesis:objenesis:1.0
 }
 
 // set netbeansInstallDir project property
