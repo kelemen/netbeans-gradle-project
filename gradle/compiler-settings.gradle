@@ -1,10 +1,14 @@
 ext.configureJavaCompilers = {int javaVersion ->
+    def requiredVersion = JavaVersion.toVersion("1.${javaVersion}");
+
+    sourceCompatibility = requiredVersion
+    targetCompatibility = requiredVersion
+
     def compileTasks = tasks.withType(JavaCompile);
     def compilerOptions = compileTasks*.options;
     compilerOptions*.encoding = 'UTF-8';
     compilerOptions*.compilerArgs = ['-Xlint'];
 
-    def requiredVersion = JavaVersion.toVersion("1.${javaVersion}");
     if (JavaVersion.current() != requiredVersion) {
         String jdkProperty = "jdk${javaVersion}Compiler";
         if (project.hasProperty(jdkProperty)) {

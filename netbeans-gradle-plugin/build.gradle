@@ -1,11 +1,14 @@
 apply plugin: 'java'
 apply plugin: 'nbm'
 
-String netbeansVersion = 'RELEASE72'
+ext.scriptFile = { String fileName ->
+    return new File(new File(rootDir, 'gradle'), fileName);
+}
 
-def javaVersion = 1.7
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
+apply from: scriptFile('compiler-settings.gradle');
+configureJavaCompilers(7);
+
+String netbeansVersion = 'RELEASE72'
 
 repositories {
     mavenCentral()
