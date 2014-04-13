@@ -15,6 +15,7 @@ class NbmPluginExtension {
     File keystore
     String nbm_alias
     String storepass
+    List<String> requires = new LinkedList<>();
 
     private Configuration harnessConfiguration
 
@@ -25,6 +26,10 @@ class NbmPluginExtension {
 
     Configuration getHarnessConfiguration() {
         harnessConfiguration
+    }
+
+    void requires(String dependency) {
+        requires.add(dependency);
     }
 }
 

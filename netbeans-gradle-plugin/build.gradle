@@ -35,6 +35,9 @@ nbm {
         nbm_alias = tryGetProperty('nbGradlePluginKeyStoreUser', 'kelemen');
         storepass = tryGetProperty('nbGradlePluginKeyStorePass', '');
     }
+
+    requires('cnb.org.netbeans.modules.groovy.kit');
+    requires('cnb.org.netbeans.modules.java.j2seproject');
 }
 
 def netbeansModule = { String groupName, String moduleName ->
