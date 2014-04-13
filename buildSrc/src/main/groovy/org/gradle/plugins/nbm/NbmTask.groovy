@@ -51,7 +51,7 @@ class NbmTask extends ConventionTask {
             def signature = makenbm.createSignature()
             signature.keystore = netbeansExt().keystore
             signature.alias = netbeansExt().nbm_alias
-            signature.storepass = netbeansExt().nbm_alias
+            signature.storepass = netbeansExt().storepass
         }
         makenbm.execute()
     }
