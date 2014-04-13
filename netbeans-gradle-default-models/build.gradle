@@ -11,22 +11,8 @@ ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName);
 }
 
-def compileTasks = [compileJava, compileTestJava]
-def compilerOptions = compileTasks*.options;
-compilerOptions*.encoding = 'UTF-8';
-compilerOptions*.compilerArgs = ['-Xlint'];
-
-if (JavaVersion.current() != JavaVersion.VERSION_1_5) {
-    if (project.hasProperty('jdk5Compiler')) {
-        compilerOptions*.fork = true;
-        compilerOptions*.forkOptions*.executable = jdk5Compiler;
-    }
-    else {
-        compileTasks*.doFirst {
-            println "Warning: jdk5Compiler property is missing and not compiling with Java 5. Using ${JavaVersion.current()}";
-        }
-    }
-}
+apply from: scriptFile('compiler-settings.gradle');
+configureJavaCompilers(5);
 
 task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
     classifier = 'sources';

@@ -1,0 +1,21 @@
+ext.configureJavaCompilers = {int javaVersion ->
+    def compileTasks = tasks.withType(JavaCompile);
+    def compilerOptions = compileTasks*.options;
+    compilerOptions*.encoding = 'UTF-8';
+    compilerOptions*.compilerArgs = ['-Xlint'];
+
+    def requiredVersion = JavaVersion.toVersion("1.${javaVersion}");
+    if (JavaVersion.current() != requiredVersion) {
+        String jdkProperty = "jdk${javaVersion}Compiler";
+        if (project.hasProperty(jdkProperty)) {
+            compilerOptions*.fork = true;
+            compilerOptions*.forkOptions*.executable = project.property(jdkProperty).toString().trim();
+        }
+        else {
+            compileTasks*.doFirst {
+                logger.warn "Warning: jdk5Compiler property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
+            }
+        }
+    }
+
+}
