@@ -28,7 +28,7 @@ class NetBeansTask extends ConventionTask {
     private NbmPluginExtension netbeansExt() {
         project.extensions.nbm
     }
-
+    
     @Input
     File getInputModuleJarFile() {
         project.tasks.jar.archivePath
@@ -61,6 +61,7 @@ class NetBeansTask extends ConventionTask {
     @TaskAction
     void generate() {
         project.logger.info "NetBeansTask running"
+        // nbmFile.write "Version: ${getVersion()}"
         def moduleDir = getModuleBuildDir()
         if (!moduleDir.isDirectory()) {
             moduleDir.mkdirs()
