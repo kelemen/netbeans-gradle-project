@@ -12,9 +12,12 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.JavaCompile
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.Callable
 
 public class NbmPlugin implements Plugin<Project> {
@@ -26,6 +29,7 @@ public class NbmPlugin implements Plugin<Project> {
     private static final String MANIFEST_TASK = 'generateModuleManifest'
 
     void apply(Project project) {
+        project.apply plugin: 'java';
         project.logger.info "Registering deferred NBM plugin configuration..."
         project.plugins.withType(JavaPlugin) { configure(project) }
 
@@ -77,6 +81,47 @@ public class NbmPlugin implements Plugin<Project> {
         project.tasks.build.dependsOn(nbmTask)
 
         configureConfigurations(project.configurations)
+        addRunAndDebugTasks(project)
+    }
+
+    private void addRunTask(Project project, String taskName, boolean debug) {
+        project.task([type: Exec], taskName, {
+            dependsOn 'netbeans'
+
+            Path buildPath = project.buildDir.toPath()
+            Path testUserDir = buildPath.resolve('testuserdir')
+            if (project.hasProperty('netBeansExecutable')) {
+                doFirst {
+                    def confFile = testUserDir.resolve('etc').resolve('netbeans.conf')
+                    Files.createDirectories(confFile.parent)
+                    confFile.toFile().write "netbeans_extraclusters=\"${buildPath.resolve('module')}\""
+                }
+
+                workingDir project.buildDir
+
+                List args = new LinkedList()
+                args.addAll([ project.netBeansExecutable, '--userdir', testUserDir])
+
+                if (debug) {
+                    def nbmDebugPort = '5006'
+                    if (project.hasProperty(nbmDebugPort)) {
+                        nbmDebugPort = project.nbmDebugPort.trim()
+                    }
+                    args.add("-J-agentlib:jdwp=transport=dt_socket,server=y,address=${nbmDebugPort}")
+                }
+                commandLine args
+            }
+            else {
+                doFirst {
+                    throw new IllegalStateException('The property netBeansExecutable is not specified, you should define it in ~/.gradle/gradle.properties')
+                }
+            }
+        })
+    }
+
+    private void addRunAndDebugTasks(Project project) {
+        addRunTask(project, 'run', false)
+        addRunTask(project, 'debug', true)
     }
 
     public void configureConfigurations(ConfigurationContainer configurationContainer) {

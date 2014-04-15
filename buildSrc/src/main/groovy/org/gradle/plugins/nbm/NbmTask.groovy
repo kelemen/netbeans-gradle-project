@@ -12,6 +12,9 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 class NbmTask extends ConventionTask {
+    public NbmTask() {
+        outputs.upToDateWhen { false }
+    }
 
     @OutputFile
     File getOutputFile() {
@@ -40,18 +43,22 @@ class NbmTask extends ConventionTask {
             nbmDir.mkdirs()
         }
 
-        def moduleJarName = netbeansExt().moduleName.replace('.', '-')
+        NbmPluginExtension nbm = netbeansExt();
+
+        def moduleJarName = nbm.moduleName.replace('.', '-')
 
         def makenbm = antBuilder().antProject.createTask("makenbm")
         makenbm.productDir = project.tasks.netbeans.getModuleBuildDir()
         makenbm.file = nbmFile
         makenbm.module = "modules" + File.separator + moduleJarName + ".jar"
 
-        if (netbeansExt().keystore) {
+        NbmKeyStoreDef keyStore = nbm.keyStore
+        def keyStoreFile = EvaluateUtils.asPath(keyStore.keyStoreFile)
+        if (keyStoreFile != null) {
             def signature = makenbm.createSignature()
-            signature.keystore = netbeansExt().keystore
-            signature.alias = netbeansExt().nbm_alias
-            signature.storepass = netbeansExt().storepass
+            signature.keystore = keyStoreFile.toFile()
+            signature.alias = keyStore.username
+            signature.storepass = keyStore.password
         }
         makenbm.execute()
     }

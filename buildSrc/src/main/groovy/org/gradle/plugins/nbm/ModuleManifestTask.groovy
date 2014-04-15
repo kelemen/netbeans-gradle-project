@@ -11,22 +11,59 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import java.nio.file.Files
+import java.util.Date
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
+import java.text.SimpleDateFormat
 
 class ModuleManifestTask extends ConventionTask {
     @OutputFile
     File generatedManifestFile
 
+    public ModuleManifestTask() {
+        outputs.upToDateWhen { checkUpToDate() }
+    }
+
     private NbmPluginExtension netbeansExt() {
         project.extensions.nbm
     }
 
-    @TaskAction
-    void generate() {
-        def manifestFile = getGeneratedManifestFile()
-        project.logger.info "Generating NetBeans module manifest $generatedManifestFile"
+    public boolean checkUpToDate() {
+        byte[] actualBytes = tryGetCurrentGeneratedContent()
+        if (actualBytes == null) {
+            return false
+        }
+
+        def output = new ByteArrayOutputStream(4096)
+        getManifest().write(output)
+
+        byte[] expectedBytes = output.toByteArray()
+        return Arrays.equals(actualBytes, expectedBytes)
+    }
+
+    private byte[] tryGetCurrentGeneratedContent() {
+        def manifestFile = getGeneratedManifestFile().toPath()
+        if (!Files.isRegularFile(manifestFile)) {
+            return null
+        }
+
+        try {
+            return Files.readAllBytes(manifestFile)
+        } catch (IOException ex) {
+            return null;
+        }
+    }
+
+    private String getBuildDate() {
+        Date now = new Date(System.currentTimeMillis())
+        def format = new SimpleDateFormat("yyyyMMddHHmm")
+        return format.format(now)
+    }
+
+    private Map<String, String> getManifestEntries() {
+        Map<String, String> result = new HashMap<String, String>()
 
         Map<String, String> moduleDeps = new HashMap<>()
         def mainSourceSet = project.sourceSets.main
@@ -48,30 +85,87 @@ class ModuleManifestTask extends ConventionTask {
             }
         }
 
-        def manifest = new Manifest()
-        def mainAttributes = manifest.getMainAttributes()
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, '1.0')
-        mainAttributes.put(new Attributes.Name('OpenIDE-Module'), netbeansExt().moduleName)
-        if (netbeansExt().specificationVersion) {
-            mainAttributes.put(new Attributes.Name('OpenIDE-Module-Specification-Version'), netbeansExt().specificationVersion)
-        }
-        if (!moduleDeps.isEmpty()) {
-            mainAttributes.put(
-                    new Attributes.Name('OpenIDE-Module-Module-Dependencies'),
-                    moduleDeps.entrySet().collect { it.key + ' > ' + it.value }.join(', '))
-        }
+        result.put('Manifest-Version', '1.0')
+
         def classpath = computeClasspath()
         if (classpath != null && !classpath.isEmpty()) {
-            mainAttributes.put(new Attributes.Name('Class-Path'), classpath)
+            result.put('Class-Path', classpath)
         }
+
+        if (!moduleDeps.isEmpty()) {
+            result.put(
+                    'OpenIDE-Module-Module-Dependencies',
+                    moduleDeps.entrySet().collect { it.key + ' > ' + it.value }.join(', '))
+        }
+
+        result.put('Created-By', 'Gradle NBM plugin')
+        result.put('OpenIDE-Module-Build-Version', getBuildDate())
 
         def requires = netbeansExt().requires;
         if (!requires.isEmpty()) {
-            mainAttributes.put(new Attributes.Name('OpenIDE-Module-Requires'), requires.join(', '))
+            result.put('OpenIDE-Module-Requires', requires.join(', '))
         }
+
+        def localizingBundle = netbeansExt().localizingBundle
+        if (localizingBundle) {
+            result.put('OpenIDE-Module-Localizing-Bundle', localizingBundle)
+        }
+
+        String javacVersion = CompilerUtils.tryGetCompilerVersion(project.compileJava)
+        if (javacVersion) {
+            result.put('Build-Jdk', javacVersion)
+        }
+
+        result.put('OpenIDE-Module', netbeansExt().moduleName)
+
+        result.put('OpenIDE-Module-Implementation-Version', netbeansExt().implementationVersion)
+        result.put('OpenIDE-Module-Specification-Version', netbeansExt().specificationVersion)
+
+        def packageList = netbeansExt().friendPackages.packageList
+        if (!packageList.isEmpty()) {
+            Set packageListSet = new HashSet(packageList)
+            def packages = packageListSet.toArray()
+            Arrays.sort(packages) // because why not
+            result.put('OpenIDE-Module-Public-Packages', packages.join(', '))
+        }
+
+        def moduleInstall = netbeansExt().moduleInstall
+        if (moduleInstall) {
+            result.put('OpenIDE-Module-Install', moduleInstall.replace('.', '/') + '.class')
+        }
+
+        def customEntries = netbeansExt().manifest.getAllEntries()
+        customEntries.each { key, value ->
+            result.put(key, EvaluateUtils.asString(value))
+        }
+
+        return result
+    }
+
+    private Manifest getManifest() {
+        // TODO: It would be nice to output manifest entries in the order they
+        //   were specified.
+
+        def manifest = new Manifest()
+        def mainAttributes = manifest.getMainAttributes()
+
+        getManifestEntries().each { key, value ->
+            mainAttributes.put(new Attributes.Name(key), value)
+        }
+        return manifest
+    }
+
+    @TaskAction
+    void generate() {
+        def manifestFile = getGeneratedManifestFile()
+        project.logger.info "Generating NetBeans module manifest $manifestFile"
+
         def os = new FileOutputStream(manifestFile)
-        manifest.write(os)
-        os.close()
+        try {
+            getManifest().write(os)
+        } finally {
+            os.close()
+        }
     }
 
     private String computeClasspath() {
