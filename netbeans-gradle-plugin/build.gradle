@@ -20,7 +20,7 @@ repositories {
 }
 
 compileJava {
-  options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
+    options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
 }
 
 def tryGetProperty = {String name, String defaultValue ->
