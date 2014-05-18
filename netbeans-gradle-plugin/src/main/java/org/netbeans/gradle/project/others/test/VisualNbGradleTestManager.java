@@ -72,6 +72,8 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
     private static final class NbGradleTestSuiteImpl implements NbGradleTestSuite {
         private final Manager manager;
         private final TestSession session;
+        private String stdOut;
+        private String stdErr;
 
         public NbGradleTestSuiteImpl(Manager manager, TestSession session) {
             assert manager != null;
@@ -79,6 +81,9 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
 
             this.manager = manager;
             this.session = session;
+
+            this.stdErr = null;
+            this.stdOut = null;
         }
 
         @Override
@@ -89,9 +94,25 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
         }
 
         @Override
+        public void setStdOut(String stdOut) {
+            this.stdOut = stdOut;
+        }
+
+        @Override
+        public void setStdErr(String stdErr) {
+            this.stdErr = stdErr;
+        }
+
+        @Override
         public void endSuite(long elapsedTimeInMillis) {
             Report report = session.getReport(elapsedTimeInMillis);
             if (report != null) {
+                if (stdErr != null) {
+                    manager.displayOutput(session, stdErr, true);
+                }
+                if (stdOut != null) {
+                    manager.displayOutput(session, stdOut, false);
+                }
                 manager.displayReport(session, report, true);
             }
         }

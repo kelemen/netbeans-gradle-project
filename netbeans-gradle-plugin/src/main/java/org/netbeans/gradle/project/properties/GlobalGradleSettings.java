@@ -2,11 +2,17 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
@@ -27,6 +33,7 @@ public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
     private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
+    private static volatile BasicPreference PREFERENCE = new DefaultPreference();
 
     private final StringBasedProperty<GradleLocation> gradleLocation;
     private final StringBasedProperty<File> gradleUserHomeDir;
@@ -76,6 +83,15 @@ public final class GlobalGradleSettings {
         gradleDaemonTimeoutSec = new GlobalProperty<>(
                 withNS(namespace, "gradle-daemon-timeout-sec"),
                 new IntegerConverter(1, Integer.MAX_VALUE, null));
+    }
+
+    public static void setDefaultPreference() {
+        PREFERENCE = new DefaultPreference();
+    }
+
+    // Testing only
+    public static void setCleanMemoryPreference() {
+        PREFERENCE = new MemPreference();
     }
 
     private static String withNS(String namespace, String name) {
@@ -465,11 +481,6 @@ public final class GlobalGradleSettings {
             this.converter = converter;
         }
 
-        private static Preferences getPreferences() {
-            // Use GradleSettingsPanel.class for compatibility.
-            return NbPreferences.forModule(GradleSettingsPanel.class);
-        }
-
         @Override
         public void setValueFromSource(OldPropertySource<? extends ValueType> source) {
             // Currently we ignore if the value of "source" changes for global
@@ -498,7 +509,6 @@ public final class GlobalGradleSettings {
         public ListenerRef addChangeListener(final Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            final Preferences preferences = getPreferences();
             final PreferenceChangeListener changeListener = new PreferenceChangeListener() {
                 @Override
                 public void preferenceChange(PreferenceChangeEvent evt) {
@@ -511,7 +521,7 @@ public final class GlobalGradleSettings {
             return NbListenerRefs.fromRunnable(new Runnable() {
                 @Override
                 public void run() {
-                    preferences.removePreferenceChangeListener(changeListener);
+                    PREFERENCE.removePreferenceChangeListener(changeListener);
                 }
             });
         }
@@ -519,17 +529,132 @@ public final class GlobalGradleSettings {
         @Override
         public void setValueFromString(String strValue) {
             if (strValue != null) {
-                getPreferences().put(settingsName, strValue);
+                PREFERENCE.put(settingsName, strValue);
             }
             else {
-                getPreferences().remove(settingsName);
+                PREFERENCE.remove(settingsName);
             }
         }
 
         @Override
         public String getValueAsString() {
-            return getPreferences().get(settingsName, null);
+            return PREFERENCE.get(settingsName);
         }
+    }
+
+    private static final class DefaultPreference implements BasicPreference {
+        private static Preferences getPreferences() {
+            // Use GradleSettingsPanel.class for compatibility.
+            return NbPreferences.forModule(GradleSettingsPanel.class);
+        }
+
+        @Override
+        public void put(String key, String value) {
+            getPreferences().put(key, value);
+        }
+
+        @Override
+        public void remove(String key) {
+            getPreferences().remove(key);
+        }
+
+        @Override
+        public String get(String key) {
+            return getPreferences().get(key, null);
+        }
+
+        @Override
+        public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
+            getPreferences().addPreferenceChangeListener(pcl);
+        }
+
+        @Override
+        public void removePreferenceChangeListener(PreferenceChangeListener pcl) {
+            getPreferences().removePreferenceChangeListener(pcl);
+        }
+    }
+
+    private static final class MemPreference implements BasicPreference {
+        private final Map<String, String> values;
+        private final Lock listenersLock;
+        private final List<PreferenceChangeListener> listeners;
+
+        public MemPreference() {
+            this.values = new ConcurrentHashMap<>();
+            this.listeners = new LinkedList<>();
+            this.listenersLock = new ReentrantLock();
+        }
+
+        private void fireChangeListener(String key, String newValue) {
+            List<PreferenceChangeListener> listenersSnapshot;
+
+            listenersLock.lock();
+            try {
+                if (listeners.isEmpty()) {
+                    return;
+                }
+
+                listenersSnapshot = new ArrayList<>(listeners);
+            } finally {
+                listenersLock.unlock();
+            }
+
+            PreferenceChangeEvent evt = new PreferenceChangeEvent(Preferences.systemRoot(), key, newValue);
+            for (PreferenceChangeListener listener: listenersSnapshot) {
+                listener.preferenceChange(evt);
+            }
+        }
+
+        @Override
+        public void put(String key, String value) {
+            if (value != null) {
+                values.put(key, value);
+                fireChangeListener(key, value);
+            }
+            else {
+                remove(key);
+            }
+        }
+
+        @Override
+        public void remove(String key) {
+            values.remove(key);
+            fireChangeListener(key, null);
+        }
+
+        @Override
+        public String get(String key) {
+            return values.get(key);
+        }
+
+        @Override
+        public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
+            listenersLock.lock();
+            try {
+                listeners.add(0, pcl);
+            } finally {
+                listenersLock.unlock();
+            }
+        }
+
+        @Override
+        public void removePreferenceChangeListener(PreferenceChangeListener pcl) {
+            listenersLock.lock();
+            try {
+                listeners.remove(pcl);
+            } finally {
+                listenersLock.unlock();
+            }
+        }
+    }
+
+    private interface BasicPreference {
+        public void put(String key, String value);
+        public void remove(String key);
+        public String get(String key);
+
+        public void addPreferenceChangeListener(PreferenceChangeListener pcl);
+        public void removePreferenceChangeListener(PreferenceChangeListener pcl);
     }
 
     private GlobalGradleSettings() {

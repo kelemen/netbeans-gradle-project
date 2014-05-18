@@ -1,0 +1,154 @@
+apply plugin: 'nbm'
+
+ext.scriptFile = { String fileName ->
+    return new File(new File(rootDir, 'gradle'), fileName);
+}
+
+apply from: scriptFile('compiler-settings.gradle');
+configureJavaCompilers(7);
+
+group = 'com.github.kelemen';
+version = '1.3.0.0.1';
+
+String netbeansVersion = 'RELEASE72'
+
+repositories {
+    mavenCentral()
+    maven { url 'http://bits.netbeans.org/maven2/' }
+    maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
+    maven { url 'http://dl.bintray.com/kelemen/maven' }
+}
+
+compileJava {
+    options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
+}
+
+def tryGetProperty = {String name, String defaultValue ->
+    if (!project.hasProperty(name)) {
+        return defaultValue;
+    }
+
+    return project.property(name)?.toString();
+}
+
+nbm {
+    moduleName = 'org.netbeans.gradle.project';
+    moduleInstall = 'org.netbeans.gradle.project.NbGradleModuleInstall';
+    localizingBundle = 'org/netbeans/gradle/project/Bundle.properties';
+    friendPackages {
+        addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api';
+        add 'org.netbeans.gradle.model.api';
+
+        add 'org.gradle.api';
+        add 'org.gradle.api.artifacts';
+        add 'org.gradle.api.artifacts.dsl';
+        add 'org.gradle.api.artifacts.repositories';
+        add 'org.gradle.api.artifacts.result';
+        add 'org.gradle.api.component';
+        add 'org.gradle.api.execution';
+        add 'org.gradle.api.file';
+        add 'org.gradle.api.initialization';
+        add 'org.gradle.api.initialization.dsl';
+        add 'org.gradle.api.invocation';
+        add 'org.gradle.api.logging';
+        add 'org.gradle.api.plugins';
+        add 'org.gradle.api.resources';
+        add 'org.gradle.api.specs';
+        add 'org.gradle.api.tasks';
+        add 'org.gradle.api.tasks.util';
+        add 'org.gradle.tooling';
+        add 'org.gradle.tooling.exceptions';
+        add 'org.gradle.tooling.model';
+        add 'org.gradle.tooling.model.build';
+        add 'org.gradle.tooling.model.eclipse';
+        add 'org.gradle.tooling.model.gradle';
+        add 'org.gradle.tooling.model.idea';
+        add 'org.gradle.tooling.provider';
+        add 'org.gradle.tooling.provider.model';
+        add 'org.jtrim.access';
+        add 'org.jtrim.cache';
+        add 'org.jtrim.cancel';
+        add 'org.jtrim.collections';
+        add 'org.jtrim.concurrent';
+        add 'org.jtrim.concurrent.async';
+        add 'org.jtrim.concurrent.async.io';
+        add 'org.jtrim.event';
+        add 'org.jtrim.image';
+        add 'org.jtrim.image.async';
+        add 'org.jtrim.image.transform';
+        add 'org.jtrim.property';
+        add 'org.jtrim.property.swing';
+        add 'org.jtrim.swing.component';
+        add 'org.jtrim.swing.concurrent';
+        add 'org.jtrim.swing.concurrent.async';
+        add 'org.jtrim.utils';
+    }
+
+    requires('cnb.org.netbeans.modules.groovy.kit');
+    requires('cnb.org.netbeans.modules.java.j2seproject');
+
+    keyStore {
+        keyStoreFile = tryGetProperty('nbGradlePluginKeyStore', null);
+        username = tryGetProperty('nbGradlePluginKeyStoreUser', 'kelemen');
+        password = tryGetProperty('nbGradlePluginKeyStorePass', '');
+    }
+}
+
+def netbeansModule = { String groupName, String moduleName ->
+    return [
+        group: groupName,
+        name: moduleName,
+        version: netbeansVersion
+    ];
+}
+
+def netbeansApi = { String moduleName ->
+    return netbeansModule('org.netbeans.api', moduleName)
+}
+
+dependencies {
+    providedCompile netbeansApi('org-netbeans-api-annotations-common')
+    providedCompile netbeansApi('org-netbeans-api-debugger')
+    providedCompile netbeansApi('org-netbeans-api-debugger-jpda')
+    providedCompile netbeansApi('org-netbeans-api-java')
+    providedCompile netbeansApi('org-netbeans-api-java-classpath')
+    providedCompile netbeansApi('org-netbeans-api-progress')
+    providedCompile netbeansApi('org-netbeans-core-multiview')
+    providedCompile netbeansApi('org-netbeans-modules-editor-indent-project')
+    providedCompile netbeansApi('org-netbeans-modules-java-platform')
+    providedCompile netbeansApi('org-netbeans-modules-java-project')
+    providedCompile netbeansApi('org-netbeans-modules-java-source')
+    providedCompile netbeansApi('org-netbeans-modules-options-api')
+    providedCompile netbeansApi('org-netbeans-modules-projectapi')
+    providedCompile netbeansApi('org-netbeans-modules-projectuiapi')
+    providedCompile netbeansApi('org-netbeans-modules-queries')
+    providedCompile netbeansApi('org-openide-actions')
+    providedCompile netbeansApi('org-openide-awt')
+    providedCompile netbeansApi('org-openide-dialogs')
+    providedCompile netbeansApi('org-openide-filesystems')
+    providedCompile netbeansApi('org-openide-io')
+    providedCompile netbeansApi('org-openide-loaders')
+    providedCompile netbeansApi('org-openide-modules')
+    providedCompile netbeansApi('org-openide-nodes')
+    providedCompile netbeansApi('org-openide-text')
+    providedCompile netbeansApi('org-openide-util')
+    providedCompile netbeansApi('org-openide-util-lookup')
+    providedCompile netbeansApi('org-openide-windows')
+    providedCompile netbeansApi('org-netbeans-libs-javacapi')
+    providedCompile netbeansApi('org-netbeans-modules-nbjunit')
+    providedCompile netbeansApi('org-netbeans-libs-junit4')
+    providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
+    providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
+
+    compile 'org.slf4j:slf4j-api:1.7.2'
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile project(':netbeans-gradle-default-models')
+
+    compile 'org.gradle:gradle-tooling-api:1.11'
+    compile 'org.jtrim:jtrim-gui:1.7.2'
+    compile 'org.jtrim:jtrim-async:1.7.2'
+    compile 'org.jtrim:jtrim-core:1.7.2'
+    testCompile 'junit:junit:4.10'
+    testCompile 'com.google.guava:guava:14.0.1'
+    testCompile 'org.mockito:mockito-core:1.9.5'
+}

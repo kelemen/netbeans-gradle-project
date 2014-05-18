@@ -1,0 +1,23 @@
+apply plugin: 'groovy'
+
+def javaVersion = 1.7
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+def compileTasks = [compileJava, compileTestJava, compileGroovy, compileTestGroovy]
+compileTasks*.options*.encoding = 'UTF-8'
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile "org.gradle:gradle-tooling-api:1.11"
+    compile "org.codehaus.mojo:nbm-maven-harness:7.4"
+    runtime 'org.slf4j:slf4j-simple:1.7.5'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'http://repo.gradle.org/gradle/libs-releases-local'
+    }
+}

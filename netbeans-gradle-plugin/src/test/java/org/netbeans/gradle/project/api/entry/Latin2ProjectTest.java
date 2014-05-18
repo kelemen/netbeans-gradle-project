@@ -32,7 +32,7 @@ public class Latin2ProjectTest {
 
         MockServices.setServices();
 
-        GlobalGradleSettings.getDefault().setAllToDefault();
+        GlobalGradleSettings.setCleanMemoryPreference();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
         GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
         GlobalGradleSettings.getGradleJvmArgs().setValue(Arrays.asList("-Dfile.encoding=ISO-8859-2", "-Xmx128m"));
@@ -42,6 +42,7 @@ public class Latin2ProjectTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
+        GlobalGradleSettings.setDefaultPreference();
         GenericModelFetcher.setDefaultPrefixes();
 
         SampleGradleProject toClose = sampleProject;

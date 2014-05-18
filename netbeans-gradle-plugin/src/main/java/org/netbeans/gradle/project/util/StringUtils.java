@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
@@ -56,6 +58,27 @@ public final class StringUtils {
 
     public static String[] splitLines(String text) {
         return splitText(text, "\n\r");
+    }
+
+    public static List<String> toLines(String output) {
+        try {
+            return toLinesUnsafe(output);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static List<String> toLinesUnsafe(String output) throws IOException {
+        ExceptionHelper.checkNotNullArgument(output, "output");
+
+        List<String> lines = new LinkedList<>();
+        BufferedReader reader = new BufferedReader(new StringReader(output));
+        String line = reader.readLine();
+        while (line != null) {
+            lines.add(line);
+            line = reader.readLine();
+        }
+        return lines;
     }
 
     public static String[] splitBySpaces(String text) {

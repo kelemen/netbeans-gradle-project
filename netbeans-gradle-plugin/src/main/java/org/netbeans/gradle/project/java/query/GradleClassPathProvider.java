@@ -270,14 +270,18 @@ implements
         allSources = Collections.unmodifiableList(new ArrayList<>(sourceContainer));
     }
 
+    private static PathResourceImplementation toPathResource(File file) {
+        URL url = FileUtil.urlForArchiveOrDir(file);
+        return url != null ? ClassPathSupport.createResource(url) : null;
+    }
+
     public static List<PathResourceImplementation> getPathResources(Collection<File> files, Set<File> invalid) {
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
         for (File file: new LinkedHashSet<>(files)) {
-            URL url = FileUtil.urlForArchiveOrDir(file);
-
+            PathResourceImplementation pathResource = toPathResource(file);
             // Ignore invalid classpath entries
-            if (url != null) {
-                result.add(ClassPathSupport.createResource(url));
+            if (pathResource != null) {
+                result.add(pathResource);
             }
             else {
                 invalid.add(file);
@@ -293,6 +297,27 @@ implements
         classpathResources.put(classPathKey, Collections.unmodifiableList(paths));
     }
 
+    private void setClassPathResources(
+            ClassPathKey classPathKey,
+            List<PathResourceImplementation> paths1,
+            List<PathResourceImplementation> paths2) {
+        List<PathResourceImplementation> paths = new ArrayList<>(paths1.size() + paths2.size());
+        paths.addAll(paths1);
+        paths.addAll(paths2);
+        setClassPathResources(classPathKey, paths);
+    }
+
+    private static List<PathResourceImplementation> getBuildOutputDirsAsPathResources(JavaSourceSet sourceSet) {
+        JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+        PathResourceImplementation classesDir = toPathResource(outputDirs.getClassesDir());
+        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getClassesDir());
+
+        List<PathResourceImplementation> result = new ArrayList<>(2);
+        if (classesDir != null) result.add(classesDir);
+        if (resourcesDir != null) result.add(resourcesDir);
+        return result;
+    }
+
     private void loadPathResources(JavaSourceSet sourceSet, Set<File> invalid) {
         Set<File> compileCP = sourceSet.getClasspaths().getCompileClasspaths();
         setClassPathResources(
@@ -302,7 +327,8 @@ implements
         Set<File> runtimeCP = sourceSet.getClasspaths().getCompileClasspaths();
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.RUNTIME),
-                getPathResources(runtimeCP, invalid));
+                getPathResources(runtimeCP, invalid),
+                getBuildOutputDirsAsPathResources(sourceSet));
 
         List<File> sources = new LinkedList<>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
