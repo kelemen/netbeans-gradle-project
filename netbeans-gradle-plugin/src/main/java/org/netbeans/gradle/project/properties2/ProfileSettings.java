@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +22,7 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.gradle.jarjar.com.google.common.base.Objects;
 import org.jtrim.collections.EqualityComparator;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
@@ -32,13 +35,18 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public final class ProfileSettings {
     private static final Logger LOGGER = Logger.getLogger(ProfileSettings.class.getName());
     private static final int FILE_STREAM_BUFFER_SIZE = 8 * 1024;
     private static final Set<ConfigPath> ROOT_PATH = Collections.singleton(ConfigPath.ROOT);
+    private static final Document EXPORT_DOCUMENT = tryCreateDocument();
 
     private final ListenerManager<ConfigUpdateListener> configUpdateListeners;
     private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
@@ -46,12 +54,23 @@ public final class ProfileSettings {
     private final ReentrantLock configLock;
     private volatile Object configStateKey;
     private ConfigTree.Builder currentConfig;
+    private final Map<DomElementKey, Element> auxConfigs;
+
+    private static Document tryCreateDocument() {
+        try {
+            return DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        } catch (ParserConfigurationException ex) {
+            LOGGER.log(Level.SEVERE, "Cannot create document.", ex);
+            return null;
+        }
+    }
 
     public ProfileSettings() {
         this.configLock = new ReentrantLock();
         this.currentConfig = new ConfigTree.Builder();
         this.configUpdateListeners = new CopyOnTriggerListenerManager<>();
         this.configStateKey = new Object();
+        this.auxConfigs = new HashMap<>();
 
         this.configUpdateDispatcher = new EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>>() {
             @Override
@@ -143,13 +162,50 @@ public final class ProfileSettings {
         return newState;
     }
 
+    private static Node getChildByName(Element parent, String childName) {
+        NodeList children = parent.getChildNodes();
+        int childCount = children.getLength();
+        for (int i = 0; i < childCount; i++) {
+            Node child = children.item(i);
+            if (Objects.equal(child.getNodeName(), childName)) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private static List<Element> getAuxiliaryElements(Element parent) {
+        Node auxRoot = getChildByName(parent, "auxiliary");
+        if (auxRoot == null) {
+            return Collections.emptyList();
+        }
+
+        NodeList children = auxRoot.getChildNodes();
+        int childCount = children.getLength();
+        List<Element> result = new ArrayList<>(childCount);
+
+        for (int i = 0; i < childCount; i++) {
+            Node child = children.item(i);
+            if (child instanceof Element) {
+                result.add((Element)child);
+            }
+        }
+        return result;
+    }
+
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
         ConfigTree.Builder parsedDocument = ConfigXmlUtils.parseDocument(document);
+        List<Element> loadedAuxConfigs = getAuxiliaryElements(document.getDocumentElement());
 
         configLock.lock();
         try {
+            auxConfigs.clear();
+            for (Element entry: loadedAuxConfigs) {
+                auxConfigs.put(new DomElementKey(entry.getNodeName(), entry.getNamespaceURI()), entry);
+            }
+
             currentConfig = parsedDocument;
             newConfigState();
         } finally {
@@ -203,6 +259,20 @@ public final class ProfileSettings {
         }
 
         return new ValueWithStateKey<>(resultStateKey, result.create());
+    }
+
+    public Element getAuxConfigValue(DomElementKey key) {
+        ExceptionHelper.checkNotNullArgument(key, "key");
+
+        Element result;
+        configLock.lock();
+        try {
+            result = auxConfigs.get(key);
+        } finally {
+            configLock.unlock();
+        }
+
+        return result != null ? result : (Element)EXPORT_DOCUMENT.importNode(result, true);
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
