@@ -35,6 +35,7 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -148,6 +149,38 @@ public final class ProfileSettings {
         }
 
         loadFromDocument(document);
+    }
+
+    public void saveToFile(Project ownerProject, Path xmlFile) throws IOException {
+        ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
+        ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
+
+        ConfigTree configTree;
+        List<Element> auxConfigList;
+
+        configLock.lock();
+        try {
+            configTree = currentConfig.create();
+            auxConfigList = new ArrayList<>(auxConfigs.values());
+        } finally {
+            configLock.unlock();
+        }
+
+        Document document;
+        try {
+            document = ConfigXmlUtils.createXml(configTree);
+        } catch (ParserConfigurationException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        ConfigXmlUtils.addAuxiliary(document, auxConfigList.toArray(new Element[auxConfigList.size()]));
+
+        Path outputDir = xmlFile.getParent();
+        if (outputDir != null) {
+            Files.createDirectories(outputDir);
+        }
+        // TODO: Probably should pass the root project.
+        ConfigXmlUtils.saveXmlTo(ownerProject, document, xmlFile);
     }
 
     private void fireDocumentUpdate(final Collection<ConfigPath> path) {
