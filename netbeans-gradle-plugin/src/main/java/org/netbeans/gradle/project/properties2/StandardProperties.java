@@ -1,11 +1,93 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
+import org.jtrim.property.swing.SwingForwarderFactory;
+import org.jtrim.property.swing.SwingProperties;
+import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
+import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.openide.modules.SpecificationVersion;
 
 public final class StandardProperties {
     private static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
+
+    private static SwingPropertySource<JavaPlatform[], PropertyChangeListener> javaPlatforms() {
+        final JavaPlatformManager platformManager = JavaPlatformManager.getDefault();
+
+        return new SwingPropertySource<JavaPlatform[], PropertyChangeListener>() {
+            @Override
+            public JavaPlatform[] getValue() {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public void addChangeListener(PropertyChangeListener listener) {
+                platformManager.addPropertyChangeListener(listener);
+            }
+
+            @Override
+            public void removeChangeListener(PropertyChangeListener listener) {
+                platformManager.removePropertyChangeListener(listener);
+            }
+        };
+    }
+
+    private static PropertySource<JavaPlatform> javaPlatform(final PlatformId valueKey) {
+        if (valueKey == null) {
+            return PropertyFactory.constSource(JavaPlatform.getDefault());
+        }
+
+        PropertySource<JavaPlatform[]> javaPlatforms = SwingProperties.fromSwingSource(javaPlatforms(), new SwingForwarderFactory<PropertyChangeListener>() {
+            @Override
+            public PropertyChangeListener createForwarder(final Runnable listener) {
+                return new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
+                            listener.run();
+                        }
+                    }
+                };
+            }
+        });
+
+        return PropertyFactory.convert(javaPlatforms, new ValueConverter<JavaPlatform[], JavaPlatform>() {
+            @Override
+            public JavaPlatform convert(JavaPlatform[] input) {
+                return DefaultPropertySources.tryChooseFromPlatforms(valueKey.getName(), valueKey.getVersion(), input);
+            }
+        });
+    }
+
+    static PropertyValueDef<PlatformId, JavaPlatform> getTargetPlatformValueDef() {
+        return new PropertyValueDef<PlatformId, JavaPlatform>() {
+            @Override
+            public PropertySource<JavaPlatform> property(PlatformId valueKey) {
+                return javaPlatform(valueKey);
+            }
+
+            @Override
+            public PlatformId getKeyFromValue(JavaPlatform value) {
+                Specification specification = value != null
+                        ? value.getSpecification()
+                        : null;
+
+                if (specification == null) {
+                    return null;
+                }
+
+                String name = specification.getName();
+                String version = specification.getVersion().toString();
+                return new PlatformId(name, version);
+            }
+        };
+    }
 
     static PropertyKeyEncodingDef<PlatformId> getTargetPlatformEncodingDef() {
         return new PropertyKeyEncodingDef<PlatformId>() {
