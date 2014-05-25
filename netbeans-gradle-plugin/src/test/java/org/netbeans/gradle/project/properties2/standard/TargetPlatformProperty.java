@@ -27,7 +27,7 @@ public final class TargetPlatformProperty {
         return new SwingPropertySource<JavaPlatform[], PropertyChangeListener>() {
             @Override
             public JavaPlatform[] getValue() {
-                throw new UnsupportedOperationException("Not supported yet.");
+                return JavaPlatformManager.getDefault().getInstalledPlatforms();
             }
 
             @Override
