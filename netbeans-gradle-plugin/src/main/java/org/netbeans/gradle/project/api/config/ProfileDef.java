@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties2.ProfileKey;
 
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
@@ -38,8 +38,7 @@ import org.jtrim.utils.ExceptionHelper;
  * @see CustomProfileQuery
  */
 public final class ProfileDef {
-    private final String groupName;
-    private final String fileName;
+    private final ProfileKey profileKey;
     private final String displayName;
 
     /**
@@ -58,11 +57,8 @@ public final class ProfileDef {
             @Nullable String groupName,
             @Nonnull String fileName,
             @Nonnull String displayName) {
-        ExceptionHelper.checkNotNullArgument(fileName, "fileName");
-        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
 
-        this.groupName = groupName;
-        this.fileName = fileName;
+        this.profileKey = new ProfileKey(groupName, fileName);
         this.displayName = displayName;
     }
 
@@ -75,7 +71,7 @@ public final class ProfileDef {
      *   their own profiles.
      */
     public String getGroupName() {
-        return groupName;
+        return profileKey.getGroupName();
     }
 
     /**
@@ -86,7 +82,7 @@ public final class ProfileDef {
      *   This method never returns {@code null}.
      */
     public String getFileName() {
-        return fileName;
+        return profileKey.getFileName();
     }
 
     /**
@@ -106,10 +102,7 @@ public final class ProfileDef {
      */
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + (groupName != null ? groupName.hashCode() : 0);
-        hash = 67 * hash + fileName.hashCode();
-        return hash;
+        return 469 + profileKey.hashCode();
     }
 
     /**
@@ -133,10 +126,6 @@ public final class ProfileDef {
         if (getClass() != obj.getClass()) return false;
 
         final ProfileDef other = (ProfileDef)obj;
-        if ((this.groupName == null) ? (other.groupName != null) : !this.groupName.equals(other.groupName)) {
-            return false;
-        }
-
-        return this.fileName.equals(other.fileName);
+        return this.profileKey.equals(other.profileKey);
     }
 }
