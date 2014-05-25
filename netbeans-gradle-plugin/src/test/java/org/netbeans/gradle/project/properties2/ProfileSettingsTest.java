@@ -13,6 +13,7 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Test;
+import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
 import static org.junit.Assert.*;
 
@@ -67,7 +68,7 @@ public class ProfileSettingsTest {
                 return value;
             }
         });
-        result.setKeyEncodingDef(StandardProperties.getTargetPlatformEncodingDef());
+        result.setKeyEncodingDef(TargetPlatformProperty.getEncodingDef());
 
         return result.create();
     }

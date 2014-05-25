@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties2;
+package org.netbeans.gradle.project.properties2.standard;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -12,9 +12,13 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
+import org.netbeans.gradle.project.properties2.ConfigTree;
+import org.netbeans.gradle.project.properties2.PlatformId;
+import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.openide.modules.SpecificationVersion;
 
-public final class StandardProperties {
+public final class TargetPlatformProperty {
     private static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
 
     private static SwingPropertySource<JavaPlatform[], PropertyChangeListener> javaPlatforms() {
@@ -65,7 +69,7 @@ public final class StandardProperties {
         });
     }
 
-    static PropertyValueDef<PlatformId, JavaPlatform> getTargetPlatformValueDef() {
+    public static PropertyValueDef<PlatformId, JavaPlatform> getValueDef() {
         return new PropertyValueDef<PlatformId, JavaPlatform>() {
             @Override
             public PropertySource<JavaPlatform> property(PlatformId valueKey) {
@@ -89,7 +93,7 @@ public final class StandardProperties {
         };
     }
 
-    static PropertyKeyEncodingDef<PlatformId> getTargetPlatformEncodingDef() {
+    public static PropertyKeyEncodingDef<PlatformId> getEncodingDef() {
         return new PropertyKeyEncodingDef<PlatformId>() {
             @Override
             public PlatformId decode(ConfigTree config) {
@@ -130,7 +134,7 @@ public final class StandardProperties {
         return version.toString();
     }
 
-    private StandardProperties() {
+    private TargetPlatformProperty() {
         throw new AssertionError();
     }
 }
