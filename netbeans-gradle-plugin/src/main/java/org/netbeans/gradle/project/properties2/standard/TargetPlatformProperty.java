@@ -46,7 +46,7 @@ public final class TargetPlatformProperty {
 
     private static PropertySource<JavaPlatform> javaPlatform(final PlatformId valueKey) {
         if (valueKey == null) {
-            return PropertyFactory.constSource(JavaPlatform.getDefault());
+            return PropertyFactory.constSource(null);
         }
 
         PropertySource<JavaPlatform[]> javaPlatforms = SwingProperties.fromSwingSource(javaPlatforms(), new SwingForwarderFactory<PropertyChangeListener>() {
@@ -111,9 +111,11 @@ public final class TargetPlatformProperty {
                 ConfigTree name = config.getChildTree("target-platform-name");
                 ConfigTree version = config.getChildTree("target-platform");
 
-                return new PlatformId(
-                        name.getValue(PlatformId.DEFAULT_NAME),
-                        version.getValue(DEFAULT_PLATFORM_VERSION));
+                String versionStr = version.getValue(null);
+                if (versionStr == null) {
+                    return null;
+                }
+                return new PlatformId(name.getValue(PlatformId.DEFAULT_NAME), versionStr);
             }
 
             @Override
