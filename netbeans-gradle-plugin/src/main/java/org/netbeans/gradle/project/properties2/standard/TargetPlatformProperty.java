@@ -14,6 +14,7 @@ import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.PlatformId;
+import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.netbeans.gradle.project.properties2.ValueMerger;
@@ -22,6 +23,14 @@ import org.openide.modules.SpecificationVersion;
 
 public final class TargetPlatformProperty {
     private static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
+
+    public static PropertyDef<PlatformId, JavaPlatform> getPropertyDef() {
+        PropertyDef.Builder<PlatformId, JavaPlatform> result = new PropertyDef.Builder<>();
+        result.setKeyEncodingDef(getEncodingDef());
+        result.setValueDef(getValueDef());
+        result.setValueMerger(getValueMerger());
+        return result.create();
+    }
 
     private static SwingPropertySource<JavaPlatform[], PropertyChangeListener> javaPlatforms() {
         final JavaPlatformManager platformManager = JavaPlatformManager.getDefault();
