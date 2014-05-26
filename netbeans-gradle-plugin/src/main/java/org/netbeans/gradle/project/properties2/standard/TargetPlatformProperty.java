@@ -27,12 +27,15 @@ import org.openide.modules.SpecificationVersion;
 
 public final class TargetPlatformProperty {
     private static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
+    private static final String CONFIG_KEY_PLATFORM_NAME = "target-platform-name";
+    private static final String CONFIG_KEY_PLATFORM_VERSION = "target-platform";
+
     private static final PropertyDef<PlatformId, JavaPlatform> PROPERTY_DEF = createPropertyDef();
 
     public static PropertySource<JavaPlatform> getProperty(ProjectProfileSettings settings) {
         List<ConfigPath> paths = Arrays.asList(
-                ConfigPath.fromKeys("target-platform-name"),
-                ConfigPath.fromKeys("target-platform"));
+                ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_NAME),
+                ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_VERSION));
         return settings.getProperty(paths, getPropertyDef());
     }
 
@@ -133,8 +136,8 @@ public final class TargetPlatformProperty {
         return new PropertyKeyEncodingDef<PlatformId>() {
             @Override
             public PlatformId decode(ConfigTree config) {
-                ConfigTree name = config.getChildTree("target-platform-name");
-                ConfigTree version = config.getChildTree("target-platform");
+                ConfigTree name = config.getChildTree(CONFIG_KEY_PLATFORM_NAME);
+                ConfigTree version = config.getChildTree(CONFIG_KEY_PLATFORM_VERSION);
 
                 String versionStr = version.getValue(null);
                 if (versionStr == null) {
@@ -146,8 +149,8 @@ public final class TargetPlatformProperty {
             @Override
             public ConfigTree encode(PlatformId value) {
                 ConfigTree.Builder result = new ConfigTree.Builder();
-                result.getChildBuilder("target-platform-name").setValue(value.getName());
-                result.getChildBuilder("target-platform").setValue(value.getVersion());
+                result.getChildBuilder(CONFIG_KEY_PLATFORM_NAME).setValue(value.getName());
+                result.getChildBuilder(CONFIG_KEY_PLATFORM_VERSION).setValue(value.getVersion());
                 return result.create();
             }
         };
