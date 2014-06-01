@@ -289,6 +289,14 @@ public final class ConfigTree {
     }
 
     @Nonnull
+    public List<ConfigTree> getChildTrees(String key) {
+        ExceptionHelper.checkNotNullArgument(key, "key");
+
+        List<ConfigTree> result = childTrees.get(key);
+        return result != null ? result : Collections.<ConfigTree>emptyList();
+    }
+
+    @Nonnull
     public ConfigTree getChildTree(String key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
