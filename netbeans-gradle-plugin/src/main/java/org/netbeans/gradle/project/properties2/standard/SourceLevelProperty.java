@@ -4,10 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties2.ConfigPath;
-import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
-import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 
 
 public final class SourceLevelProperty {
@@ -25,24 +23,10 @@ public final class SourceLevelProperty {
 
     private static PropertyDef<String, String> createPropertyDef() {
         PropertyDef.Builder<String, String> result = new PropertyDef.Builder<>();
-        result.setKeyEncodingDef(getEncodingDef());
+        result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(CommonProperties.<String>getIdentityValueDef());
         result.setValueMerger(CommonProperties.<String>getParentIfNullValueMerger());
         return result.create();
-    }
-
-    private static PropertyKeyEncodingDef<String> getEncodingDef() {
-        return new PropertyKeyEncodingDef<String>() {
-            @Override
-            public String decode(ConfigTree config) {
-                return config.getValue(null);
-            }
-
-            @Override
-            public ConfigTree encode(String value) {
-                return ConfigTree.singleValue(value);
-            }
-        };
     }
 
     private SourceLevelProperty() {
