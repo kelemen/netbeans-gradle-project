@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.properties2.standard;
 
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.netbeans.gradle.project.properties2.ConfigTree;
+import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.netbeans.gradle.project.properties2.ValueMerger;
 import org.netbeans.gradle.project.properties2.ValueReference;
@@ -17,8 +19,8 @@ public final class CommonProperties {
         return (ValueMerger<T>)ParentIfNullValueMerger.INSTANCE;
     }
 
-    private CommonProperties() {
-        throw new AssertionError();
+    public static PropertyKeyEncodingDef<String> getIdentityKeyEncodingDef() {
+        return IdentityKeyEncodingDef.INSTANCE;
     }
 
     private enum ParentIfNullValueMerger implements ValueMerger<Object> {
@@ -42,5 +44,23 @@ public final class CommonProperties {
         public Object getKeyFromValue(Object value) {
             return value;
         }
+    }
+
+    private enum IdentityKeyEncodingDef implements PropertyKeyEncodingDef<String> {
+        INSTANCE;
+
+        @Override
+        public String decode(ConfigTree config) {
+            return config.getValue(null);
+        }
+
+        @Override
+        public ConfigTree encode(String value) {
+            return ConfigTree.singleValue(value);
+        }
+    }
+
+    private CommonProperties() {
+        throw new AssertionError();
     }
 }
