@@ -51,7 +51,7 @@ public final class SourceEncodingProperty {
 
             @Override
             public String getKeyFromValue(Charset value) {
-                throw new UnsupportedOperationException("Not supported yet.");
+                return value != null ? value.name() : null;
             }
         };
     }
