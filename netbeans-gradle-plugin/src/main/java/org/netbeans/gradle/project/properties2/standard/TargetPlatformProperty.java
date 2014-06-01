@@ -21,8 +21,6 @@ import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
-import org.netbeans.gradle.project.properties2.ValueMerger;
-import org.netbeans.gradle.project.properties2.ValueReference;
 import org.openide.modules.SpecificationVersion;
 
 public final class TargetPlatformProperty {
@@ -47,7 +45,7 @@ public final class TargetPlatformProperty {
         PropertyDef.Builder<PlatformId, JavaPlatform> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
-        result.setValueMerger(getValueMerger());
+        result.setValueMerger(CommonProperties.getParentIfNullValueMerger());
         return result.create();
     }
 
@@ -97,15 +95,6 @@ public final class TargetPlatformProperty {
                 return DefaultPropertySources.tryChooseFromPlatforms(valueKey.getName(), valueKey.getVersion(), input);
             }
         });
-    }
-
-    public static ValueMerger<JavaPlatform> getValueMerger() {
-        return new ValueMerger<JavaPlatform>() {
-            @Override
-            public JavaPlatform mergeValues(JavaPlatform child, ValueReference<JavaPlatform> parent) {
-                return child != null ? child : parent.getValue();
-            }
-        };
     }
 
     public static PropertyValueDef<PlatformId, JavaPlatform> getValueDef() {
