@@ -94,7 +94,9 @@ public final class BuildPlatformProperty {
 
             @Override
             public PlatformId getKeyFromValue(ProjectPlatform value) {
-                return new PlatformId(value.getName(), value.getVersion());
+                return value != null
+                        ? new PlatformId(value.getName(), value.getVersion())
+                        : null;
             }
         };
     }
