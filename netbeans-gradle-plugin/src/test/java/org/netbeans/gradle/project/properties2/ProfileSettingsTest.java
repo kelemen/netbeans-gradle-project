@@ -69,7 +69,7 @@ public class ProfileSettingsTest {
                 return value;
             }
         });
-        result.setKeyEncodingDef(TargetPlatformProperty.getEncodingDef());
+        result.setKeyEncodingDef(TargetPlatformProperty.getPropertyDef().getKeyEncodingDef());
 
         return result.create();
     }

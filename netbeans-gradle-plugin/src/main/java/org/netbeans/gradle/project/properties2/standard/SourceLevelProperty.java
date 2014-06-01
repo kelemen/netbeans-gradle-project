@@ -19,7 +19,7 @@ public final class SourceLevelProperty {
         return result.create();
     }
 
-    public static PropertyKeyEncodingDef<String> getEncodingDef() {
+    private static PropertyKeyEncodingDef<String> getEncodingDef() {
         return new PropertyKeyEncodingDef<String>() {
             @Override
             public String decode(ConfigTree config) {

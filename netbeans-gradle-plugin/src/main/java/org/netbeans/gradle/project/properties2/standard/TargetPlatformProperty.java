@@ -97,7 +97,7 @@ public final class TargetPlatformProperty {
         });
     }
 
-    public static PropertyValueDef<PlatformId, JavaPlatform> getValueDef() {
+    private static PropertyValueDef<PlatformId, JavaPlatform> getValueDef() {
         return new PropertyValueDef<PlatformId, JavaPlatform>() {
             @Override
             public PropertySource<JavaPlatform> property(PlatformId valueKey) {
@@ -121,7 +121,7 @@ public final class TargetPlatformProperty {
         };
     }
 
-    public static PropertyKeyEncodingDef<PlatformId> getEncodingDef() {
+    private static PropertyKeyEncodingDef<PlatformId> getEncodingDef() {
         return new PropertyKeyEncodingDef<PlatformId>() {
             @Override
             public PlatformId decode(ConfigTree config) {
