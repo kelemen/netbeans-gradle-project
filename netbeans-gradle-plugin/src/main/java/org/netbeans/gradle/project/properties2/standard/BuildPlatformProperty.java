@@ -103,7 +103,6 @@ public final class BuildPlatformProperty {
         PropertyDef.Builder<PlatformId, ProjectPlatform> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
-        result.setValueMerger(CommonProperties.<ProjectPlatform>getParentIfNullValueMerger());
         return result.create();
     }
 
