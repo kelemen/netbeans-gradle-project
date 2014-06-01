@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties2;
+package org.netbeans.gradle.project.properties2.standard;
 
 import java.util.Objects;
 import org.jtrim.utils.ExceptionHelper;

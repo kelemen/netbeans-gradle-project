@@ -14,6 +14,7 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.netbeans.gradle.project.properties2.standard.PlatformId;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
 import static org.junit.Assert.*;
