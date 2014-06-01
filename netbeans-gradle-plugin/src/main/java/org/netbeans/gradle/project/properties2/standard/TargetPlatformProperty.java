@@ -45,7 +45,7 @@ public final class TargetPlatformProperty {
         PropertyDef.Builder<PlatformId, JavaPlatform> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
-        result.setValueMerger(CommonProperties.getParentIfNullValueMerger());
+        result.setValueMerger(CommonProperties.<JavaPlatform>getParentIfNullValueMerger());
         return result.create();
     }
 

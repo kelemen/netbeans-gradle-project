@@ -2,43 +2,44 @@ package org.netbeans.gradle.project.properties2.standard;
 
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.netbeans.gradle.project.properties2.ValueMerger;
 import org.netbeans.gradle.project.properties2.ValueReference;
 
 public final class CommonProperties {
-    public static PropertyValueDef<String, String> getIdentityValueDef() {
-        return IdentityValueDef.INSTANCE;
+    @SuppressWarnings("unchecked")
+    public static <T> PropertyValueDef<T, T> getIdentityValueDef() {
+        return (PropertyValueDef<T, T>)IdentityValueDef.INSTANCE;
     }
 
-    public static ValueMerger<JavaPlatform> getParentIfNullValueMerger() {
-        return ParentIfNullValueMerger.INSTANCE;
+    @SuppressWarnings("unchecked")
+    public static <T> ValueMerger<T> getParentIfNullValueMerger() {
+        return (ValueMerger<T>)ParentIfNullValueMerger.INSTANCE;
     }
 
     private CommonProperties() {
         throw new AssertionError();
     }
 
-    private enum ParentIfNullValueMerger implements ValueMerger<JavaPlatform> {
+    private enum ParentIfNullValueMerger implements ValueMerger<Object> {
         INSTANCE;
 
         @Override
-        public JavaPlatform mergeValues(JavaPlatform child, ValueReference<JavaPlatform> parent) {
+        public Object mergeValues(Object child, ValueReference<Object> parent) {
             return child != null ? child : parent.getValue();
         }
     }
 
-    private enum IdentityValueDef implements PropertyValueDef<String, String> {
+    private enum IdentityValueDef implements PropertyValueDef<Object, Object> {
         INSTANCE;
 
         @Override
-        public PropertySource<String> property(String valueKey) {
+        public PropertySource<Object> property(Object valueKey) {
             return PropertyFactory.constSource(valueKey);
         }
 
         @Override
-        public String getKeyFromValue(String value) {
+        public Object getKeyFromValue(Object value) {
             return value;
         }
     }
