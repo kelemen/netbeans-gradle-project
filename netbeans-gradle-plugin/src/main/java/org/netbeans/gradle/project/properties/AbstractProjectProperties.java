@@ -1,23 +1,16 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties2.standard.GradleLocationProperty;
 import org.openide.modules.SpecificationVersion;
 
 public abstract class AbstractProjectProperties implements ProjectProperties {
-    private static final Logger LOGGER = Logger.getLogger(AbstractProjectProperties.class.getName());
-
     public static final String DEFAULT_SOURCE_LEVEL = "1.7";
     public static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
 
@@ -42,39 +35,7 @@ public abstract class AbstractProjectProperties implements ProjectProperties {
     }
 
     public static GradleLocation getGradleLocationFromString(String gradleLocation) {
-        ExceptionHelper.checkNotNullArgument(gradleLocation, "gradleLocation");
-
-        String location = gradleLocation.trim();
-        if (location.isEmpty()) {
-            return GradleLocationDefault.INSTANCE;
-        }
-
-        if (location.startsWith("?")) {
-            int sepIndex = location.indexOf('=');
-            if (sepIndex >= 0) {
-                String typeName = location.substring(1, sepIndex).trim();
-                String value = location.substring(sepIndex + 1, location.length()).trim();
-
-                if (GradleLocationDefault.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-                    return GradleLocationDefault.INSTANCE;
-                }
-                if (GradleLocationVersion.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-                    return new GradleLocationVersion(value);
-                }
-                if (GradleLocationDirectory.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-                    return new GradleLocationDirectory(new File(value));
-                }
-                if (GradleLocationDistribution.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-                    try {
-                        return new GradleLocationDistribution(new URI(value));
-                    } catch (URISyntaxException ex) {
-                        LOGGER.log(Level.INFO, "Invalid URI for Gradle distribution: " + value, ex);
-                    }
-                }
-            }
-        }
-
-        return new GradleLocationDirectory(new File(location));
+        return GradleLocationProperty.getGradleLocationFromString(gradleLocation);
     }
 
     public static String gradleLocationToString(GradleLocation gradleLocation) {
