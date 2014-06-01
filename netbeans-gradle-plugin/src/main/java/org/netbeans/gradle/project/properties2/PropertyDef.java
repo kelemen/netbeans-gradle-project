@@ -6,6 +6,7 @@ import org.jtrim.collections.EqualityComparator;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties2.standard.CommonProperties;
 
 public final class PropertyDef<ValueKey, ValueType> {
     public static final class Builder<ValueKey, ValueType> {
@@ -17,7 +18,7 @@ public final class PropertyDef<ValueKey, ValueType> {
         public Builder() {
             this.keyEncodingDef = NoOpKeyEncodingDef.getInstance();
             this.valueDef = NoOpValueDef.getInstance();
-            this.valueMerger = NoOpValueMerger.getInstance();
+            this.valueMerger = CommonProperties.getParentIfNullValueMerger();
             this.valueKeyEquality = Equality.naturalEquality();
         }
 
@@ -119,23 +120,6 @@ public final class PropertyDef<ValueKey, ValueType> {
         @Override
         public ValueKey getKeyFromValue(ValueType value) {
             return null;
-        }
-    }
-
-    private static final class NoOpValueMerger<ValueType>
-    implements
-            ValueMerger<ValueType> {
-
-        private static final ValueMerger<?> INSTANCE = new NoOpValueMerger<>();
-
-        @SuppressWarnings("unchecked")
-        public static <ValueType> ValueMerger<ValueType> getInstance() {
-            return (ValueMerger<ValueType>)INSTANCE;
-        }
-
-        @Override
-        public ValueType mergeValues(ValueType child, ValueReference<ValueType> parent) {
-            return child != null ? child : parent.getValue();
         }
     }
 }
