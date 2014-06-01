@@ -23,6 +23,24 @@ public final class CommonProperties {
         return IdentityKeyEncodingDef.INSTANCE;
     }
 
+    public static PropertyKeyEncodingDef<ConfigTree> getIdentityTreeKeyEncodingDef() {
+        return IdentityTreeKeyEncodingDef.INSTANCE;
+    }
+
+    private enum IdentityTreeKeyEncodingDef implements PropertyKeyEncodingDef<ConfigTree> {
+        INSTANCE;
+
+        @Override
+        public ConfigTree decode(ConfigTree config) {
+            return config;
+        }
+
+        @Override
+        public ConfigTree encode(ConfigTree value) {
+            return value;
+        }
+    }
+
     private enum ParentIfNullValueMerger implements ValueMerger<Object> {
         INSTANCE;
 
