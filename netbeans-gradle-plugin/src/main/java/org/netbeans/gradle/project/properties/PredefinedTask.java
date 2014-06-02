@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -37,6 +38,25 @@ public final class PredefinedTask {
         @Override
         public String toString() {
             return name + "[must exist=" + (mustExist ? "yes" : "no") + "]";
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 43 * hash + Objects.hashCode(this.name);
+            hash = 43 * hash + (this.mustExist ? 1 : 0);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (obj == this) return true;
+            if (getClass() != obj.getClass()) return false;
+
+            final Name other = (Name)obj;
+            return Objects.equals(this.name, other.name)
+                    && this.mustExist != other.mustExist;
         }
     }
 
@@ -196,5 +216,31 @@ public final class PredefinedTask {
                 + ", taskNames=" + taskNames
                 + ", arguments=" + arguments
                 + ", jvmArguments=" + jvmArguments + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 17 * hash + Objects.hashCode(this.displayName);
+        hash = 17 * hash + Objects.hashCode(this.taskNames);
+        hash = 17 * hash + Objects.hashCode(this.arguments);
+        hash = 17 * hash + Objects.hashCode(this.jvmArguments);
+        hash = 17 * hash + (this.nonBlocking ? 1 : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (getClass() != obj.getClass()) return false;
+
+        final PredefinedTask other = (PredefinedTask)obj;
+        return Objects.equals(this.displayName, other.displayName)
+                && Objects.equals(this.taskNames, other.taskNames)
+                && Objects.equals(this.taskNames, other.taskNames)
+                && Objects.equals(this.arguments, other.arguments)
+                && Objects.equals(this.jvmArguments, other.jvmArguments)
+                && this.nonBlocking == other.nonBlocking;
     }
 }
