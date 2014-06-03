@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jtrim.collections.CollectionsEx;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties2.ConfigPath;
@@ -11,11 +12,12 @@ import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.netbeans.gradle.project.properties2.ValueMerger;
 import org.netbeans.gradle.project.properties2.ValueReference;
 
 public final class CustomTasksProperty {
-    private static final PropertyDef<CustomTasks, CustomTasks> PROPERTY_DEF = createPropertyDef();
+    private static final PropertyDef<PredefinedTasks, CustomTasks> PROPERTY_DEF = createPropertyDef();
     private static final String CONFIG_KEY_COMMON_TASKS = "common-tasks";
     private static final String CONFIG_KEY_TASK = "task";
     private static final String CONFIG_KEY_DISPLAY_NAME = "display-name";
@@ -34,14 +36,14 @@ public final class CustomTasksProperty {
         return settings.getProperty(paths, getPropertyDef());
     }
 
-    public static PropertyDef<CustomTasks, CustomTasks> getPropertyDef() {
+    public static PropertyDef<PredefinedTasks, CustomTasks> getPropertyDef() {
         return PROPERTY_DEF;
     }
 
-    private static PropertyDef<CustomTasks, CustomTasks> createPropertyDef() {
-        PropertyDef.Builder<CustomTasks, CustomTasks> result = new PropertyDef.Builder<>();
+    private static PropertyDef<PredefinedTasks, CustomTasks> createPropertyDef() {
+        PropertyDef.Builder<PredefinedTasks, CustomTasks> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getKeyEncodingDef());
-        result.setValueDef(CommonProperties.<CustomTasks>getIdentityValueDef());
+        result.setValueDef(getValueDef());
         result.setValueMerger(getValueMerger());
         return result.create();
     }
@@ -97,8 +99,8 @@ public final class CustomTasksProperty {
         return result;
     }
 
-    private static CustomTasks decodeConfig(ConfigTree config) {
-        return new CustomTasks(decodeTaskList(config));
+    private static PredefinedTasks decodeConfig(ConfigTree config) {
+        return new PredefinedTasks(decodeTaskList(config));
     }
 
     private static void encodeTaskName(PredefinedTask.Name name, ConfigTree.Builder result) {
@@ -126,7 +128,7 @@ public final class CustomTasksProperty {
         encodeArgs(task.getJvmArguments(), result.getChildBuilder(CONFIG_KEY_JVM_ARGS));
     }
 
-    private static ConfigTree encodeConfig(CustomTasks tasks) {
+    private static ConfigTree encodeConfig(PredefinedTasks tasks) {
         ConfigTree.Builder result = new ConfigTree.Builder();
         for (PredefinedTask task: tasks.getTasks()) {
             ConfigTree.Builder taskBuilder = result.addChildBuilder(CONFIG_KEY_TASK);
@@ -135,15 +137,15 @@ public final class CustomTasksProperty {
         return result.create();
     }
 
-    private static PropertyKeyEncodingDef<CustomTasks> getKeyEncodingDef() {
-        return new PropertyKeyEncodingDef<CustomTasks>() {
+    private static PropertyKeyEncodingDef<PredefinedTasks> getKeyEncodingDef() {
+        return new PropertyKeyEncodingDef<PredefinedTasks>() {
             @Override
-            public CustomTasks decode(ConfigTree config) {
+            public PredefinedTasks decode(ConfigTree config) {
                 return decodeConfig(config);
             }
 
             @Override
-            public ConfigTree encode(CustomTasks value) {
+            public ConfigTree encode(PredefinedTasks value) {
                 return encodeConfig(value);
             }
         };
@@ -163,6 +165,20 @@ public final class CustomTasksProperty {
                 }
 
                 return new CustomTasks(CollectionsEx.viewConcatList(child.getTasks(), parentValue.getTasks()));
+            }
+        };
+    }
+
+    private static PropertyValueDef<PredefinedTasks, CustomTasks> getValueDef() {
+        return new PropertyValueDef<PredefinedTasks, CustomTasks>() {
+            @Override
+            public PropertySource<CustomTasks> property(PredefinedTasks valueKey) {
+                return PropertyFactory.constSource(valueKey != null ? new CustomTasks(valueKey) : null);
+            }
+
+            @Override
+            public PredefinedTasks getKeyFromValue(CustomTasks value) {
+                return value != null ? value.getPredefinedTasks() : null;
             }
         };
     }
