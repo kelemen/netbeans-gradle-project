@@ -89,7 +89,7 @@ public final class CustomTasksProperty {
     }
 
 
-    public static List<PredefinedTask> decodeTaskList(ConfigTree config) {
+    private static List<PredefinedTask> decodeTaskList(ConfigTree config) {
         List<ConfigTree> taskNodes = config.getChildTrees(CONFIG_KEY_TASK);
         List<PredefinedTask> result = new ArrayList<>(taskNodes.size());
 
@@ -137,7 +137,7 @@ public final class CustomTasksProperty {
         return result.create();
     }
 
-    private static PropertyKeyEncodingDef<PredefinedTasks> getKeyEncodingDef() {
+    public static PropertyKeyEncodingDef<PredefinedTasks> getKeyEncodingDef() {
         return new PropertyKeyEncodingDef<PredefinedTasks>() {
             @Override
             public PredefinedTasks decode(ConfigTree config) {
