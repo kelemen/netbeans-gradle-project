@@ -121,7 +121,7 @@ class ModuleManifestTask extends ConventionTask {
         result.put('OpenIDE-Module-Implementation-Version', netbeansExt().implementationVersion)
         result.put('OpenIDE-Module-Specification-Version', netbeansExt().specificationVersion)
 
-        def packageList = netbeansExt().friendPackages.packageList
+        def packageList = netbeansExt().friendPackages.packageListPattern
         if (!packageList.isEmpty()) {
             Set packageListSet = new HashSet(packageList)
             def packages = packageListSet.toArray()
