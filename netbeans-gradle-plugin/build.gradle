@@ -152,3 +152,10 @@ dependencies {
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'
 }
+
+task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
+    classifier = 'sources';
+    from sourceSets.main.allSource;
+}
+
+apply from: scriptFile('maven-publish.gradle');
