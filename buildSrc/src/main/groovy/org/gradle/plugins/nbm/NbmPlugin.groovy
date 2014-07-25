@@ -142,7 +142,7 @@ public class NbmPlugin implements Plugin<Project> {
     }
 
     private void setupPropertiesMerging(Project project) {
-        def mergeTask = project.tasks.add('mergeProperties', MergePropertiesTask)
+        def mergeTask = project.tasks.create('mergeProperties', MergePropertiesTask)
         project.tasks.findByName('jar').dependsOn(mergeTask)
         def generatedClasses = "${project.buildDir}/generated-resources/main"
         def generatedResources = "${project.buildDir}/generated-resources/resources"
