@@ -262,6 +262,23 @@ public final class AsyncGradleTask implements Runnable {
                 progress);
     }
 
+    private void runBuild(CancellationToken cancelToken, BuildLauncher buildLauncher) {
+        final DefaultCancellationTokenSource apiCancel = new DefaultCancellationTokenSource();
+        buildLauncher.withCancellationToken(apiCancel.token());
+
+        ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
+            @Override
+            public void run() {
+                apiCancel.cancel();
+            }
+        });
+        try {
+            buildLauncher.run();
+        } finally {
+            cancelListenerRef.unregister();
+        }
+    }
+
     // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgress(
             CancellationToken cancelToken,
@@ -330,20 +347,7 @@ public final class AsyncGradleTask implements Runnable {
                             io.getIo().select();
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
-                                final DefaultCancellationTokenSource apiCancel = new DefaultCancellationTokenSource();
-                                buildLauncher.withCancellationToken(apiCancel.token());
-
-                                ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        apiCancel.cancel();
-                                    }
-                                });
-                                try {
-                                    buildLauncher.run();
-                                } finally {
-                                    cancelListenerRef.unregister();
-                                }
+                                runBuild(cancelToken, buildLauncher);
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,
