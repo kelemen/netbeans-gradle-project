@@ -23,10 +23,12 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
@@ -328,7 +330,20 @@ public final class AsyncGradleTask implements Runnable {
                             io.getIo().select();
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
-                                buildLauncher.run();
+                                final DefaultCancellationTokenSource apiCancel = new DefaultCancellationTokenSource();
+                                buildLauncher.withCancellationToken(apiCancel.token());
+
+                                ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        apiCancel.cancel();
+                                    }
+                                });
+                                try {
+                                    buildLauncher.run();
+                                } finally {
+                                    cancelListenerRef.unregister();
+                                }
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,
