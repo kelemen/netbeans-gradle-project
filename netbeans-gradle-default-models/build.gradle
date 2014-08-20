@@ -3,7 +3,7 @@ apply plugin: 'java';
 group = 'com.github.kelemen';
 version = '1.3.1.0.1';
 
-String gradleVersion = '1.11';
+String gradleVersion = '2.1-rc-1';
 List otherGradleVersions = ['1.8', '1.9', '1.10'];
 
 ext.scriptFile = { String fileName ->
