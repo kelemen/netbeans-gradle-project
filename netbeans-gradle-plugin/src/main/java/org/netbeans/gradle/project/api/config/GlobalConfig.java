@@ -12,6 +12,9 @@ public final class GlobalConfig {
     private static final NbPropertySource<Boolean> SKIP_TESTS
             = new NbPropertySourceWrapper<>(GlobalGradleSettings.getSkipTests());
 
+    private static final NbPropertySource<Boolean> SKIP_CHECK
+            = new NbPropertySourceWrapper<>(GlobalGradleSettings.getSkipCheck());
+
     /**
      * Returns the property indicating if tests should be skipped when executing
      * tasks not directly related to testing (such as build). Extensions should
@@ -27,6 +30,11 @@ public final class GlobalConfig {
     @Nonnull
     public static NbPropertySource<Boolean> skipTests() {
         return SKIP_TESTS;
+    }
+
+    @Nonnull
+    public static NbPropertySource<Boolean> skipCheck() {
+      return SKIP_CHECK;
     }
 
     private GlobalConfig() {

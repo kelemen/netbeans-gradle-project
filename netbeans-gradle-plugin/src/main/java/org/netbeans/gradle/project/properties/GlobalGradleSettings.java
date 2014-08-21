@@ -39,6 +39,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<List<String>> gradleJvmArgs;
     private final StringBasedProperty<JavaPlatform> gradleJdk;
     private final StringBasedProperty<Boolean> skipTests;
+    private final StringBasedProperty<Boolean> skipCheck;
     private final StringBasedProperty<Integer> projectCacheSize;
     private final StringBasedProperty<Boolean> alwaysClearOutput;
     private final StringBasedProperty<Boolean> omitInitScript;
@@ -63,6 +64,9 @@ public final class GlobalGradleSettings {
                 JavaPlaformConverter.INSTANCE);
         skipTests = new GlobalProperty<>(
                 withNS(namespace, "skip-tests"),
+                new BooleanConverter(false));
+        skipCheck = new GlobalProperty<>(
+                withNS(namespace, "skip-check"),
                 new BooleanConverter(false));
         projectCacheSize = new GlobalProperty<>(
                 withNS(namespace, "project-cache-size"),
@@ -119,6 +123,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<Boolean> skipTests() {
         return skipTests;
+    }
+
+    public StringBasedProperty<Boolean> skipCheck() {
+        return skipCheck;
     }
 
     public StringBasedProperty<Integer> projectCacheSize() {
@@ -184,6 +192,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getSkipTests() {
         return getDefault().skipTests;
+    }
+
+    public static StringBasedProperty<Boolean> getSkipCheck() {
+        return getDefault().skipCheck;
     }
 
     public static StringBasedProperty<Integer> getProjectCacheSize() {
