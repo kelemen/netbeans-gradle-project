@@ -52,6 +52,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.BUILD,
             Arrays.asList("build"),
             Collections.<String>emptyList(),
+            true,
             true);
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -76,6 +77,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.BUILD,
             Arrays.asList("clean", "build"),
             Collections.<String>emptyList(),
+            true,
             true);
     private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -109,11 +111,13 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
+            true,
             true);
     private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("debug")),
             Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
+            true,
             true,
             attachDebugger());
     private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = blockingCommand(
@@ -384,7 +388,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             List<String> arguments,
             CustomCommandAdjuster... adjusters) {
 
-        return blockingCommand(taskKind, taskNames, arguments, false, adjusters);
+        return blockingCommand(taskKind, taskNames, arguments, false, false, adjusters);
     }
 
     private static CommandWithActions blockingCommand(
@@ -392,13 +396,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             List<String> taskNames,
             List<String> arguments,
             boolean skipTestsIfNeeded,
+            boolean skipCheckIfNeeded,
             CustomCommandAdjuster... adjusters) {
 
         GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setBlocking(true);
 
-        return new CommandWithActions(taskKind, commandBuilder.create(), adjusters, skipTestsIfNeeded);
+        return new CommandWithActions(taskKind, commandBuilder.create(), adjusters, skipTestsIfNeeded, skipCheckIfNeeded);
     }
 
     private static CommandWithActions nonBlockingCommand(
@@ -406,7 +411,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             List<String> taskNames,
             List<String> arguments,
             CustomCommandAdjuster... adjusters) {
-        return nonBlockingCommand(taskKind, taskNames, arguments, false, adjusters);
+        return nonBlockingCommand(taskKind, taskNames, arguments, false, false, adjusters);
     }
 
     private static CommandWithActions nonBlockingCommand(
@@ -414,13 +419,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             List<String> taskNames,
             List<String> arguments,
             boolean skipTestsIfNeeded,
+            boolean skipCheckIfNeeded,
             CustomCommandAdjuster... adjusters) {
 
         GradleCommandTemplate.Builder commandBuilder = new GradleCommandTemplate.Builder("", taskNames);
         commandBuilder.setArguments(arguments);
         commandBuilder.setBlocking(false);
 
-        return new CommandWithActions(taskKind, commandBuilder.create(), adjusters, skipTestsIfNeeded);
+        return new CommandWithActions(taskKind, commandBuilder.create(), adjusters, skipTestsIfNeeded, skipCheckIfNeeded);
     }
 
     private static CustomCommandActions createCustomActions(
@@ -441,26 +447,35 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         private final GradleCommandTemplate command;
         private final CustomCommandAdjuster[] customActions;
         private final boolean skipTestsIfNeeded;
+        private final boolean skipCheckIfNeeded;
 
         public CommandWithActions(
                 TaskKind taskKind,
                 GradleCommandTemplate command,
                 CustomCommandAdjuster[] customActions,
-                boolean skipTestIfNeeded) {
+                boolean skipTestIfNeeded,
+                boolean skipCheckIfNeeded) {
             this.taskKind = taskKind;
             this.command = command;
             this.customActions = customActions.clone();
             this.skipTestsIfNeeded = skipTestIfNeeded;
+            this.skipCheckIfNeeded = skipCheckIfNeeded;
         }
 
         public GradleCommandTemplate getCommand() {
-            if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()) {
+            if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()
+                    || skipCheckIfNeeded && GlobalConfig.skipCheck().getValue()) {
                 GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(command);
                 List<String> prevArguments = command.getArguments();
                 List<String> newArguments = new ArrayList<>(prevArguments.size() + 2);
                 newArguments.addAll(prevArguments);
                 newArguments.add("-x");
-                newArguments.add(TestTaskName.DEFAULT_TEST_TASK_NAME);
+                if (skipTestsIfNeeded) {
+                    newArguments.add(TestTaskName.DEFAULT_TEST_TASK_NAME);
+                }
+                if (skipCheckIfNeeded) {
+                    newArguments.add("check");
+                }
                 builder.setArguments(newArguments);
                 return builder.create();
             }
