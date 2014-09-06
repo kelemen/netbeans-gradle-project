@@ -2,14 +2,19 @@ package org.netbeans.gradle.project.api.entry;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeListener;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -17,10 +22,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
@@ -44,6 +52,7 @@ import org.netbeans.spi.project.ui.PrivilegedTemplates;
 import org.netbeans.spi.project.ui.RecommendedTemplates;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -61,7 +70,7 @@ public class SimpleJavaProjectTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        MockServices.setServices();
+        MockServices.setServices(CustomSourcesMergerExtDef.class);
 
         GlobalGradleSettings.setCleanMemoryPreference();
         GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
@@ -213,6 +222,26 @@ public class SimpleJavaProjectTest {
         checkExactlyOnce(lookup, NbGradleProject.class);
     }
 
+    private static SourceGroup findGroupByName(String name, SourceGroup[] groups) {
+        for (SourceGroup group: groups) {
+            if (name.equals(group.getName())) {
+                return group;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void testSourcesMerger() {
+        Lookup lookup = rootProject.getLookup();
+        Sources sources = lookup.lookup(Sources.class);
+        assertNotNull("sources", sources);
+
+        SourceGroup[] groups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        SourceGroup foundGroup = findGroupByName(CustomSourcesMergerExtDef.TEST_SRC_GROUP_NAME, groups);
+        assertNotNull("Must have the source groups merged.", foundGroup);
+    }
+
     @Test
     public void testExtensionQueriesAreNotOnLookup() {
         Lookup lookup = rootProject.getLookup();
@@ -271,5 +300,128 @@ public class SimpleJavaProjectTest {
                 verifyJavaDocActionIsAdded(root.getActions(true));
             }
         });
+    }
+
+    public static final class CustomSourcesMergerExtDef implements GradleProjectExtensionDef<Object> {
+        private static final String TEST_SRC_GROUP_NAME = "CustomSourcesMergerExtDef.Name";
+
+        @Override
+        public String getName() {
+            return CustomSourcesMergerExtDef.class.getName();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return CustomSourcesMergerExtDef.class.getSimpleName();
+        }
+
+        @Override
+        public Lookup getLookup() {
+            return Lookup.EMPTY;
+        }
+
+        @Override
+        public Class<Object> getModelType() {
+            return Object.class;
+        }
+
+        @Override
+        public ParsedModel<Object> parseModel(ModelLoadResult retrievedModels) {
+            return new ParsedModel<>(new Object());
+        }
+
+        private static SourceGroup getTestSourceGroup() {
+            return new SourceGroup() {
+
+                @Override
+                public FileObject getRootFolder() {
+                    return FileUtil.getConfigRoot();
+                }
+
+                @Override
+                public String getName() {
+                    return TEST_SRC_GROUP_NAME;
+                }
+
+                @Override
+                public String getDisplayName() {
+                    return "";
+                }
+
+                @Override
+                public Icon getIcon(boolean opened) {
+                    return NbIcons.getGradleIconAsIcon();
+                }
+
+                @Override
+                public boolean contains(FileObject file) {
+                    return false;
+                }
+
+                @Override
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
+                }
+
+                @Override
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
+                }
+            };
+        }
+
+        private static Sources getTestSources() {
+            return new Sources() {
+                @Override
+                public SourceGroup[] getSourceGroups(String type) {
+                    if (JavaProjectConstants.SOURCES_TYPE_JAVA.equals(type)) {
+                        return new SourceGroup[]{getTestSourceGroup()};
+                    }
+                    else {
+                        return new SourceGroup[0];
+                    }
+                }
+
+                @Override
+                public void addChangeListener(ChangeListener listener) {
+                }
+
+                @Override
+                public void removeChangeListener(ChangeListener listener) {
+                }
+            };
+        }
+
+        @Override
+        public GradleProjectExtension2<Object> createExtension(Project project) throws IOException {
+            return new GradleProjectExtension2<Object>() {
+                @Override
+                public Lookup getPermanentProjectLookup() {
+                    return Lookup.EMPTY;
+                }
+
+                @Override
+                public Lookup getProjectLookup() {
+                    return Lookups.singleton(getTestSources());
+                }
+
+                @Override
+                public Lookup getExtensionLookup() {
+                    return Lookup.EMPTY;
+                }
+
+                @Override
+                public void activateExtension(Object parsedModel) {
+                }
+
+                @Override
+                public void deactivateExtension() {
+                }
+            };
+        }
+
+        @Override
+        public Set<String> getSuppressedExtensions() {
+            return Collections.emptySet();
+        }
+
     }
 }

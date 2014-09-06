@@ -21,6 +21,7 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -60,6 +61,7 @@ import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
+import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -175,23 +177,43 @@ public final class NbGradleProject implements Project {
         combinedExtensionLookup.replaceLookups(extensionLookups);
     }
 
+    private static List<LookupProvider> moveToLookupProvider(List<Lookup> lookups) {
+        List<LookupProvider> result = new ArrayList<>(lookups.size());
+        for (Lookup lookup: lookups) {
+            result.add(moveToLookupProvider(lookup));
+        }
+        return result;
+    }
+
+    private static LookupProvider moveToLookupProvider(final Lookup lookup) {
+        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
+        return new LookupProvider() {
+            @Override
+            public Lookup createAdditionalLookup(Lookup baseContext) {
+                return lookup;
+            }
+        };
+    }
+
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
-        List<Lookup> allLookups = new ArrayList<>(extensions.size() + 2);
+        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 2);
 
         Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
 
-        allLookups.add(getDefaultLookup());
+
+        allLookupProviders.add(moveToLookupProvider(getDefaultLookup()));
         for (final NbGradleExtensionRef extension: extensions) {
             newExtensionNames.add(extension.getName());
-            allLookups.add(extension.getProjectLookup());
+            allLookupProviders.add(moveToLookupProvider(extension.getProjectLookup()));
         }
 
-        allLookups.addAll(getLookupsFromAnnotations());
+        allLookupProviders.addAll(moveToLookupProvider(getLookupsFromAnnotations()));
 
         this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
         this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
 
-        final Lookup combinedAllLookups = new ProxyLookup(allLookups.toArray(new Lookup[allLookups.size()]));
+        Lookup combinedLookupProviders = LookupProviderSupport.createCompositeLookup(Lookup.EMPTY, Lookups.fixed(allLookupProviders.toArray()));
+        final Lookup combinedAllLookups = new ProxyLookup(combinedLookupProviders);
         getMainLookup().replaceLookups(new ProjectLookupHack(new ProjectLookupHack.LookupContainer() {
             @Override
             public NbGradleProject getProject() {
