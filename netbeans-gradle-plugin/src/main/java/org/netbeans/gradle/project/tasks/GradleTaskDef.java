@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -46,6 +48,7 @@ public final class GradleTaskDef {
         private GradleTargetVerifier gradleTargetVerifier;
         private TaskVariableMap nonUserTaskVariables;
         private CommandExceptionHider commandExceptionHider;
+        private CancellationToken cancelToken;
 
         private boolean cleanOutput;
         private boolean nonBlocking;
@@ -65,6 +68,7 @@ public final class GradleTaskDef {
             this.gradleTargetVerifier = taskDef.getGradleTargetVerifier();
             this.nonUserTaskVariables = taskDef.getNonUserTaskVariables();
             this.commandExceptionHider = taskDef.getCommandExceptionHider();
+            this.cancelToken = taskDef.getCancelToken();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -92,10 +96,20 @@ public final class GradleTaskDef {
             this.gradleTargetVerifier = null;
             this.nonUserTaskVariables = EmptyTaskVarMap.INSTANCE;
             this.commandExceptionHider = NoOpExceptionHider.INSTANCE;
+            this.cancelToken = Cancellation.UNCANCELABLE_TOKEN;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
+        }
+
+        public CancellationToken getCancelToken() {
+            return cancelToken;
+        }
+
+        public void setCancelToken(CancellationToken cancelToken) {
+            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+            this.cancelToken = cancelToken;
         }
 
         public TaskVariableMap getNonUserTaskVariables() {
@@ -273,6 +287,7 @@ public final class GradleTaskDef {
     private final CommandExceptionHider commandExceptionHider;
     private final boolean nonBlocking;
     private final boolean cleanOutput;
+    private final CancellationToken cancelToken;
 
     private GradleTaskDef(Builder builder) {
         this.commandName = builder.getCommandName();
@@ -289,6 +304,11 @@ public final class GradleTaskDef {
         this.gradleTargetVerifier = builder.getGradleTargetVerifier();
         this.nonUserTaskVariables = builder.getNonUserTaskVariables();
         this.commandExceptionHider = builder.getCommandExceptionHider();
+        this.cancelToken = builder.getCancelToken();
+    }
+
+    public CancellationToken getCancelToken() {
+        return cancelToken;
     }
 
     private static String[] stringListToArray(List<String> list) {
@@ -539,6 +559,7 @@ public final class GradleTaskDef {
         GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
         addAdditionalArguments(project, actionContext, customActions, varReplaceMap, builder);
 
+        builder.setCancelToken(customActions.getCancelToken());
         builder.setNonUserTaskVariables(varReplaceMap);
 
         builder.setStdOutListener(outputProcessor(

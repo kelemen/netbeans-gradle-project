@@ -304,8 +304,20 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgress(
+            CancellationToken cancelToken,
+            ProgressHandle progress,
+            BuildExecutionItem buildItem) {
+
+        GradleTaskDef taksDef = buildItem.getProcessedTaskDef();
+        CancellationToken mergedToken = Cancellation.anyToken(
+                cancelToken,
+                taksDef.getCancelToken());
+        doGradleTasksWithProgressIgnoreTaskDefCancel(mergedToken, progress, buildItem);
+    }
+
+    // TODO: This method is extremly nasty and is in a dire need of refactoring.
+    private void doGradleTasksWithProgressIgnoreTaskDefCancel(
             CancellationToken cancelToken,
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
