@@ -26,7 +26,9 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
@@ -66,6 +68,8 @@ import org.openide.windows.OutputWriter;
 public final class AsyncGradleTask implements Runnable {
     private static final TaskExecutor TASK_EXECUTOR
             = NbTaskExecutors.newExecutor("Gradle-Task-Executor", Integer.MAX_VALUE);
+    private static final TaskExecutor CANCEL_EXECUTOR
+            = NbTaskExecutors.newExecutor("Gradle-Cancel-Executor", Integer.MAX_VALUE);
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -262,14 +266,26 @@ public final class AsyncGradleTask implements Runnable {
                 progress);
     }
 
+    private static void scheduleCancel(final DefaultCancellationTokenSource cancelSource) {
+        CANCEL_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws Exception {
+                cancelSource.cancel();
+            }
+        }, null);
+    }
+
     private void runBuild(CancellationToken cancelToken, BuildLauncher buildLauncher) {
-        final DefaultCancellationTokenSource apiCancel = new DefaultCancellationTokenSource();
-        buildLauncher.withCancellationToken(apiCancel.token());
+        // It is not possible to implement org.gradle.tooling.CancellationToken
+        // Attempting to do so will cause Gradle to throw a class cast exception
+        // somewhere.
+        final DefaultCancellationTokenSource cancelSource = new DefaultCancellationTokenSource();
+        buildLauncher.withCancellationToken(cancelSource.token());
 
         ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
             @Override
             public void run() {
-                apiCancel.cancel();
+                scheduleCancel(cancelSource);
             }
         });
         try {
