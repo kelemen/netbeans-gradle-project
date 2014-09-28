@@ -5,6 +5,8 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 
 /**
@@ -78,6 +80,7 @@ public final class CustomCommandActions {
         private GradleTargetVerifier gradleTargetVerifier;
         private ContextAwareGradleTargetVerifier contextAwareGradleTargetVerifier;
         private CommandExceptionHider commandExceptionHider;
+        private CancellationToken cancelToken;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -106,6 +109,22 @@ public final class CustomCommandActions {
             this.contextAwareCommandArguments = null;
             this.singleExecutionStdOutProcessor = null;
             this.singleExecutionStdErrProcessor = null;
+            this.cancelToken = Cancellation.UNCANCELABLE_TOKEN;
+        }
+
+        /**
+         * Sets a {@code CancellationToken} which might signal that the build
+         * is to be terminated without needing to complete.
+         * <P>
+         * The default value for this property never signals cancellation.
+         *
+         * @param cancelToken the {@code CancellationToken} signalling cancellation
+         *   when the build is to be terminated. This argument cannot be
+         *   {@code null}.
+         */
+        public void setCancelToken(@Nonnull CancellationToken cancelToken) {
+            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+            this.cancelToken = cancelToken;
         }
 
         /**
@@ -371,6 +390,7 @@ public final class CustomCommandActions {
     private final ContextAwareGradleTargetVerifier contextAwareGradleTargetVerifier;
     private final CommandExceptionHider commandExceptionHider;
     private final ContextAwareCommandArguments contextAwareCommandArguments;
+    private final CancellationToken cancelToken;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -385,6 +405,19 @@ public final class CustomCommandActions {
         this.contextAwareGradleTargetVerifier = builder.contextAwareGradleTargetVerifier;
         this.commandExceptionHider = builder.commandExceptionHider;
         this.contextAwareCommandArguments = builder.contextAwareCommandArguments;
+        this.cancelToken = builder.cancelToken;
+    }
+
+    /**
+     * Returns the {@code CancellationToken} which signals cancellation if the
+     * build is to be terminated without waiting to be completed.
+     *
+     * @return the {@code CancellationToken} which signals cancellation if the
+     *   build is to be terminated without waiting to be completed. This
+     *   method never returns {@code null}.
+     */
+    public CancellationToken getCancelToken() {
+        return cancelToken;
     }
 
     /**
