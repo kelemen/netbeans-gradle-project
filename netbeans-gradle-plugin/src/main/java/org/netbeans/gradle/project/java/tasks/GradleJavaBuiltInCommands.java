@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationSource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
@@ -336,11 +338,16 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
-    private static SingleExecutionOutputProcessor attachDebuggerListener(final JavaExtension javaExt) {
+    private static SingleExecutionOutputProcessor attachDebuggerListener(
+            final JavaExtension javaExt,
+            CustomCommandActions.Builder customActions) {
+        final CancellationSource cancel = Cancellation.createCancellationSource();
+        customActions.setCancelToken(cancel.getToken());
+
         return new SingleExecutionOutputProcessor() {
             @Override
             public TaskOutputProcessor startExecution(Project project) {
-                return new DebugTextListener(new AttacherListener(javaExt));
+                return new DebugTextListener(new AttacherListener(javaExt, cancel.getController()));
             }
         };
     }
@@ -349,7 +356,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new CustomCommandAdjuster() {
             @Override
             public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setSingleExecutionStdOutProcessor(attachDebuggerListener(javaExt));
+                customActions.setSingleExecutionStdOutProcessor(attachDebuggerListener(javaExt, customActions));
             }
         };
     }
