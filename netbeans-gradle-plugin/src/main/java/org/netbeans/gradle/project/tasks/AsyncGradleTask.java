@@ -290,6 +290,15 @@ public final class AsyncGradleTask implements Runnable {
         });
         try {
             buildLauncher.run();
+        } catch (Throwable ex) {
+            if (!cancelToken.isCanceled()) {
+                throw ex;
+            }
+            else {
+                // The exception is most likely due to cancellation.
+                // Report cancellation message?
+                LOGGER.log(Level.INFO, "Build has been canceled.", ex);
+            }
         } finally {
             cancelListenerRef.unregister();
         }
