@@ -21,8 +21,8 @@ public class GlobalGradleSettingsTest {
     public void tearDown() {
     }
 
-    private static <String> List<String> staticList(String... elements) {
-        return Collections.unmodifiableList(Arrays.asList(elements));
+    private static List<String> staticList(String... elements) {
+        return Collections.unmodifiableList(Arrays.asList(elements.clone()));
     }
 
     private static <T> void testGetAndSet(MutableProperty<T> property, T value) {
