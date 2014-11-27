@@ -356,6 +356,10 @@ public final class TestXmlDisplayer {
                         error = true;
                         testcase.setStatus(Status.ERROR);
                         break;
+                    case "skipped":
+                        error = false;
+                        testcase.setStatus(Status.SKIPPED);
+                        break;
                     default:
                         LOGGER.log(Level.WARNING, "Unexpected element in testcase: {0}", qName);
                         error = true;
