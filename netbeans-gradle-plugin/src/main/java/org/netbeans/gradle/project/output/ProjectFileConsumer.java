@@ -9,6 +9,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Utilities;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputListener;
 import org.openide.windows.OutputWriter;
 
@@ -64,7 +65,7 @@ public final class ProjectFileConsumer implements SmartOutputHandler.Consumer {
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
         String normalizedLine = line.replace(File.separatorChar, '/').toLowerCase(Locale.ROOT);
         int startIndex = normalizedLine.indexOf(normalizedPath);
         if (startIndex < 0) {

@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.awt.HtmlBrowser;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputEvent;
 import org.openide.windows.OutputListener;
 import org.openide.windows.OutputWriter;
@@ -42,7 +43,7 @@ public final class OutputUrlConsumer implements SmartOutputHandler.Consumer {
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
         for (String prefix: URL_PREFIXES) {
             final URL url = tryGetUrlWithPrefix(prefix, line);
             if (url != null) {

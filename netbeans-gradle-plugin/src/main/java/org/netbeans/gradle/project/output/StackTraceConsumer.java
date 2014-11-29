@@ -15,6 +15,7 @@ import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.URLMapper;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputListener;
 import org.openide.windows.OutputWriter;
 
@@ -119,7 +120,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
         OutputListener listener = matchStackTraceLine(line);
         if (listener != null) {
             output.println(line, listener, false);

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class BuildErrorConsumer implements SmartOutputHandler.Consumer {
@@ -13,7 +14,7 @@ public final class BuildErrorConsumer implements SmartOutputHandler.Consumer {
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
         if (consume) {
             return true;
         }

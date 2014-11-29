@@ -217,12 +217,15 @@ public final class AsyncGradleTask implements Runnable {
         errorConsumers.addAll(consumers);
         errorConsumers.add(new FileLineConsumer());
 
+        InputOutputWrapper io = tab.getIo();
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                tab.getIo().getOutRef(),
+                io.getIo(),
+                io.getOutRef(),
                 Arrays.asList(taskDef.getStdOutListener(project)),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                tab.getIo().getErrRef(),
+                io.getIo(),
+                io.getErrRef(),
                 Arrays.asList(taskDef.getStdErrListener(project)),
                 errorConsumers));
 

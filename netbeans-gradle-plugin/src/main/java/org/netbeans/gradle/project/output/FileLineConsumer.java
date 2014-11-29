@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputListener;
 import org.openide.windows.OutputWriter;
 
@@ -44,7 +45,7 @@ public final class FileLineConsumer implements SmartOutputHandler.Consumer {
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
         int sepIndex = line.indexOf(':');
         if (sepIndex < 0) {
             return false;
