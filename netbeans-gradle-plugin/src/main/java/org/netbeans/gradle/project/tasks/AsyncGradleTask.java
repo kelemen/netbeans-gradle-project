@@ -53,6 +53,7 @@ import org.netbeans.gradle.project.output.IOTabRef;
 import org.netbeans.gradle.project.output.IOTabs;
 import org.netbeans.gradle.project.output.InputOutputWrapper;
 import org.netbeans.gradle.project.output.LineOutputWriter;
+import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
@@ -204,18 +205,19 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher,
             TaskIOTab tab) {
 
-        List<SmartOutputHandler.Consumer> consumers = new LinkedList<>();
-        consumers.add(new StackTraceConsumer(project));
-        consumers.add(new OutputUrlConsumer());
-        consumers.add(new ProjectFileConsumer(project));
-
         List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<>();
-        outputConsumers.addAll(consumers);
+        outputConsumers.add(new OutputLinkPrinter(
+                new StackTraceConsumer(project),
+                new OutputUrlConsumer(),
+                new ProjectFileConsumer(project)));
 
         List<SmartOutputHandler.Consumer> errorConsumers = new LinkedList<>();
         errorConsumers.add(new BuildErrorConsumer());
-        errorConsumers.addAll(consumers);
-        errorConsumers.add(new FileLineConsumer());
+        errorConsumers.add(new OutputLinkPrinter(
+                new StackTraceConsumer(project),
+                new OutputUrlConsumer(),
+                new ProjectFileConsumer(project),
+                new FileLineConsumer()));
 
         InputOutputWrapper io = tab.getIo();
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(

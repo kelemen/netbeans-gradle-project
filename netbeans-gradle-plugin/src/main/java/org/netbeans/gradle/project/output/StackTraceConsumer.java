@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.output;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,11 +15,8 @@ import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.URLMapper;
-import org.openide.windows.InputOutput;
-import org.openide.windows.OutputListener;
-import org.openide.windows.OutputWriter;
 
-public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
+public final class StackTraceConsumer implements OutputLinkFinder {
     private static final Logger LOGGER = Logger.getLogger(StackTraceConsumer.class.getName());
 
     private static final Pattern LINE_PATTERN = Pattern.compile("(?:\\[catch\\])?\\sat (.*)\\((.*)\\.java\\:(\\d+)\\)");
@@ -69,9 +66,25 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
         return null;
     }
 
+    public ActionListener tryGetOpenEditorAction(String line) {
+        final OutputLinkDef linkDef = tryFindLink(line);
+        if (linkDef != null) {
+            return new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    linkDef.getAction().run();
+                }
+            };
+        }
+        else {
+            return null;
+        }
+    }
+
     // This method is based on
     // org.netbeans.modules.maven.api.output.OutputUtils.matchStackTraceLine
-    private OpenEditorOutputListener matchStackTraceLine(String line) {
+    @Override
+    public OutputLinkDef tryFindLink(String line) {
         Matcher match = LINE_PATTERN.matcher(line);
         if (!match.matches()) {
             return null;
@@ -103,7 +116,7 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
             if (sourceForBinary != null) {
                 OpenEditorOutputListener result = tryCreateLinkListener(sourceForBinary, path, lineNum);
                 if (result != null) {
-                    return result;
+                    return new OutputLinkDef(match.start(), match.end(), result);
                 }
             }
         }
@@ -112,22 +125,8 @@ public final class StackTraceConsumer implements SmartOutputHandler.Consumer {
         if (sourceForBinary == null) {
             return null;
         }
-        return tryCreateLinkListener(sourceForBinary, path, lineNum);
-    }
 
-    public ActionListener tryGetOpenEditorAction(String line) {
-        return matchStackTraceLine(line);
-    }
-
-    @Override
-    public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException {
-        OutputListener listener = matchStackTraceLine(line);
-        if (listener != null) {
-            output.println(line, listener, false);
-            return true;
-        }
-        else {
-            return false;
-        }
+        OpenEditorOutputListener result = tryCreateLinkListener(sourceForBinary, path, lineNum);
+        return result != null ? new OutputLinkDef(match.start(), match.end(), result) : null;
     }
 }
