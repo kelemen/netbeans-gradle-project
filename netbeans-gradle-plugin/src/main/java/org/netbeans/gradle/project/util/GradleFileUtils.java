@@ -26,6 +26,7 @@ public final class GradleFileUtils {
     public static final String POM_DIR_NAME = "pom";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
+    public static final String JAVADOC_CLASSIFIER = "-javadoc";
 
     public static final String SOURCES_SUFFIX = SOURCES_CLASSIFIER + ".jar";
 
@@ -100,6 +101,12 @@ public final class GradleFileUtils {
         String binFileName = binaryPath.getName();
         String binFileExt = binaryPath.getExt();
         return binFileName + SOURCES_CLASSIFIER + "." + binFileExt;
+    }
+
+    public static String binaryToJavadocName(FileObject binaryPath) {
+        String binFileName = binaryPath.getName();
+        String binFileExt = binaryPath.getExt();
+        return binFileName + JAVADOC_CLASSIFIER + "." + binFileExt;
     }
 
     public static String sourceToBinaryName(FileObject sourcePath) {
