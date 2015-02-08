@@ -3,8 +3,10 @@ package org.netbeans.gradle.project.query;
 import java.io.File;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
@@ -26,8 +28,23 @@ public final class GradleCacheSourceForBinaryQuery extends AbstractSourceForBina
         eventSource.init(CHANGES);
     }
 
+    private final NbFunction<FileObject, String> binaryToSourceName;
+
     public GradleCacheSourceForBinaryQuery() {
+        this(new NbFunction<FileObject, String>() {
+            @Override
+            public String call(FileObject arg) {
+                return GradleFileUtils.binaryToSourceName(arg);
+            }
+        });
     }
+
+    public GradleCacheSourceForBinaryQuery(NbFunction<FileObject, String> binaryToSourceName) {
+        ExceptionHelper.checkNotNullArgument(binaryToSourceName, "binaryToSourceName");
+
+        this.binaryToSourceName = binaryToSourceName;
+    }
+
 
     public static void notifyCacheChange() {
         SwingUtilities.invokeLater(new Runnable() {
@@ -65,7 +82,7 @@ public final class GradleCacheSourceForBinaryQuery extends AbstractSourceForBina
             return null;
         }
 
-        String sourceFileName = GradleFileUtils.binaryToSourceName(binaryRootObj);
+        String sourceFileName = binaryToSourceName.call(binaryRootObj);
 
         if (GradleFileUtils.isKnownBinaryDirName(binDir.getNameExt())) {
             final FileObject artifactRoot = binDir.getParent();
