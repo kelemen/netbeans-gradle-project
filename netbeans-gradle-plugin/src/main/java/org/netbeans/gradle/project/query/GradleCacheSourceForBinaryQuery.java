@@ -45,7 +45,6 @@ public final class GradleCacheSourceForBinaryQuery extends AbstractSourceForBina
         this.binaryToSourceName = binaryToSourceName;
     }
 
-
     public static void notifyCacheChange() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
