@@ -9,12 +9,11 @@ import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.java.queries.JavadocForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = JavadocForBinaryQueryImplementation.class)})
-public final class GradleCacheJavadocForBinaryQuery implements JavadocForBinaryQueryImplementation {
+public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery {
     private final GradleCacheSourceForBinaryQuery sourceForBinary;
     private final GradleCacheSourceForBinaryQuery javadocForBinary;
 
@@ -28,24 +27,19 @@ public final class GradleCacheJavadocForBinaryQuery implements JavadocForBinaryQ
         });
     }
 
-    private boolean hasSources(URL binaryRoot) {
-        File binaryRootFile = FileUtil.archiveOrDirForURL(binaryRoot);
-        if (binaryRootFile != null) {
-            SourceForBinaryQueryImplementation2.Result srcResult = sourceForBinary.tryFindSourceRoot(binaryRootFile);
-            return srcResult != null;
-        }
-        return false;
+    private boolean hasSources(File binaryRootFile) {
+        return sourceForBinary.tryFindSourceRoot(binaryRootFile) != null;
     }
 
     @Override
-    public JavadocForBinaryQuery.Result findJavadoc(URL binaryRoot) {
+    protected JavadocForBinaryQuery.Result tryFindJavadoc(File binaryRoot) {
         if (hasSources(binaryRoot)) {
             // TODO: Global settings should be added to allow prefer javadoc
             //       over sources.
             return null;
         }
 
-        final SourceForBinaryQueryImplementation2.Result result = javadocForBinary.findSourceRoots2(binaryRoot);
+        final SourceForBinaryQueryImplementation2.Result result = javadocForBinary.tryFindSourceRoot(binaryRoot);
         if (result == null) {
             return null;
         }
