@@ -14,12 +14,14 @@ import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = JavadocForBinaryQueryImplementation.class)})
 public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery {
-    private final GradleCacheSourceForBinaryQuery sourceForBinary;
-    private final GradleCacheSourceForBinaryQuery javadocForBinary;
+    private final GradleCacheByBinaryLookup sourceForBinary;
+    private final GradleCacheByBinaryLookup javadocForBinary;
 
     public GradleCacheJavadocForBinaryQuery() {
-        this.sourceForBinary = new GradleCacheSourceForBinaryQuery();
-        this.javadocForBinary = new GradleCacheSourceForBinaryQuery(new NbFunction<FileObject, String>() {
+        this.sourceForBinary = new GradleCacheByBinaryLookup(
+                GradleFileUtils.SOURCE_DIR_NAME,
+                GradleCacheSourceForBinaryQuery.binaryToSourceName());
+        this.javadocForBinary = new GradleCacheByBinaryLookup(GradleFileUtils.JAVADOC_DIR_NAME, new NbFunction<FileObject, String>() {
             @Override
             public String call(FileObject arg) {
                 return GradleFileUtils.binaryToJavadocName(arg);
@@ -28,7 +30,11 @@ public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBi
     }
 
     private boolean hasSources(File binaryRootFile) {
-        return sourceForBinary.tryFindSourceRoot(binaryRootFile) != null;
+        SourceForBinaryQueryImplementation2.Result result = sourceForBinary.tryFindEntryByBinary(binaryRootFile);
+        if (result == null) {
+            return false;
+        }
+        return result.getRoots().length > 0;
     }
 
     @Override
@@ -39,7 +45,7 @@ public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBi
             return null;
         }
 
-        final SourceForBinaryQueryImplementation2.Result result = javadocForBinary.tryFindSourceRoot(binaryRoot);
+        final SourceForBinaryQueryImplementation2.Result result = javadocForBinary.tryFindEntryByBinary(binaryRoot);
         if (result == null) {
             return null;
         }

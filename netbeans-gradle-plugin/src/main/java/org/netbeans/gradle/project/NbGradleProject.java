@@ -48,7 +48,7 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
-import org.netbeans.gradle.project.query.GradleCacheSourceForBinaryQuery;
+import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
@@ -362,7 +362,7 @@ public final class NbGradleProject implements Project {
         try {
             modelChanges.fireChange();
         } finally {
-            GradleCacheSourceForBinaryQuery.notifyCacheChange();
+            GradleCacheByBinaryLookup.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();
         }
     }

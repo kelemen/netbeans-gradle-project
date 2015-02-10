@@ -24,6 +24,7 @@ public final class GradleFileUtils {
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
+    public static final String JAVADOC_DIR_NAME = "javadoc";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
     public static final String JAVADOC_CLASSIFIER = "-javadoc";
