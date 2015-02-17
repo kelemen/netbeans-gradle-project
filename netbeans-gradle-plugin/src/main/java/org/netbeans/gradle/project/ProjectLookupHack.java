@@ -12,9 +12,12 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
+import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SubprojectProvider;
+import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -88,6 +91,9 @@ public final class ProjectLookupHack extends ProxyLookup {
 
             Lookup wrappedLookup = lookupContainer.getLookup();
             typeActions.put(ProjectInformation.class, wrappedLookup);
+            typeActions.put(ActionProvider.class, wrappedLookup);
+            typeActions.put(CustomizerProvider.class, wrappedLookup);
+            typeActions.put(NbGradleSingleProjectConfigProvider.class, wrappedLookup);
             typeActions.put(ProjectConfigurationProvider.class, wrappedLookup);
         }
 
