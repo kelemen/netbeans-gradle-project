@@ -13,6 +13,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
+import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
@@ -87,6 +88,7 @@ public final class ProjectLookupHack extends ProxyLookup {
 
             Lookup wrappedLookup = lookupContainer.getLookup();
             typeActions.put(ProjectInformation.class, wrappedLookup);
+            typeActions.put(ProjectConfigurationProvider.class, wrappedLookup);
         }
 
         private Lookup lookupForType(Class<?> type) {
