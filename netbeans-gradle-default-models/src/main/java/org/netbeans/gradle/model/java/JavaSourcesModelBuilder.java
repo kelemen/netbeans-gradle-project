@@ -343,7 +343,8 @@ implements
             Collection<? extends File> srcDirs = sourceDirectorySetMethods.getSrcDirs(sourceGroup);
             Set<String> excludes = sourceDirectorySetMethods.getExcludes(sourceGroup);
             Set<String> includes = sourceDirectorySetMethods.getIncludes(sourceGroup);
-            return new JavaSourceGroup(name, srcDirs, excludes, includes);
+            SourceIncludePatterns patterns = SourceIncludePatterns.create(excludes, includes);
+            return new JavaSourceGroup(name, srcDirs, patterns);
         }
 
         private JavaOutputDirs parseOutputDirs(Object outputDirs) throws Exception {

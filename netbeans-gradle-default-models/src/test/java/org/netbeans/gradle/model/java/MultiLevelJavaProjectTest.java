@@ -244,7 +244,7 @@ public class MultiLevelJavaProjectTest {
 
     private static void assertNoProblem(Throwable issue) {
         if (issue != null) {
-            Exceptions.throwUnchecked(issue);
+            throw Exceptions.throwUnchecked(issue);
         }
     }
 
@@ -375,8 +375,9 @@ public class MultiLevelJavaProjectTest {
                 JavaSourceGroup group = findSourceGroup(sourcesModel, JavaSourceSet.NAME_MAIN, JavaSourceGroupName.JAVA);
                 assertNotNull("apps:app1 must not have a main/java source group.", group);
 
-                assertEquals("includes", Collections.singleton("**"), group.getIncludes());
-                assertEquals("excludes", Collections.singleton("**/excluded/"), group.getExcludes());
+                SourceIncludePatterns patterns = group.getExcludePatterns();
+                assertEquals("includes", Collections.singleton("**"), patterns.getIncludePatterns());
+                assertEquals("excludes", Collections.singleton("**/excluded/"), patterns.getExcludePatterns());
             }
         });
     }

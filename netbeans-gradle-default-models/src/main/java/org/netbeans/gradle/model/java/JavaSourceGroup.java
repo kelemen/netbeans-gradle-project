@@ -3,7 +3,6 @@ package org.netbeans.gradle.model.java;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -24,8 +23,7 @@ public final class JavaSourceGroup implements Serializable {
     private final JavaSourceGroupName groupName;
     private final Set<File> sourceRoots;
 
-    private final Set<String> excludes;
-    private final Set<String> includes;
+    private final SourceIncludePatterns excludePatterns;
 
     /**
      * Creates a new {@code JavaSourceGroup} with the given properties.
@@ -40,7 +38,7 @@ public final class JavaSourceGroup implements Serializable {
      *   {@code null}
      */
     public JavaSourceGroup(JavaSourceGroupName groupName, Collection<? extends File> sourceRoots) {
-        this(groupName, sourceRoots, Collections.<String>emptySet(), Collections.<String>emptySet());
+        this(groupName, sourceRoots, SourceIncludePatterns.ALLOW_ALL);
     }
 
     /**
@@ -51,10 +49,9 @@ public final class JavaSourceGroup implements Serializable {
      * @param sourceRoots the set of source roots of this source group. This
      *   argument cannot be {@code null} and cannot contain {@code null}
      *   elements.
-     * @param excludes the exclude patterns to be excluded from this source
-     *   group. This argument cannot be {@code null}.
-     * @param includes the include patterns to be included in this source
-     *   group. This argument cannot be {@code null}.
+     * @param excludePatterns the exclude and include patterns used
+     *   to further exclude sources from this source group. This argument
+     *   cannot be {@code null}.
      *
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
@@ -62,20 +59,15 @@ public final class JavaSourceGroup implements Serializable {
     public JavaSourceGroup(
             JavaSourceGroupName groupName,
             Collection<? extends File> sourceRoots,
-            Collection<? extends String> excludes,
-            Collection<? extends String> includes) {
+            SourceIncludePatterns excludePatterns) {
         if (groupName == null) throw new NullPointerException("groupName");
+        if (excludePatterns == null) throw new NullPointerException("excludePatterns");
 
         this.groupName = groupName;
-        this.sourceRoots = copySet(sourceRoots);
-        this.excludes = copySet(excludes);
-        this.includes = copySet(includes);
+        this.sourceRoots = CollectionUtils.copyToLinkedHashSet(sourceRoots);
+        this.excludePatterns = excludePatterns;
 
         CollectionUtils.checkNoNullElements(this.sourceRoots, "sourceRoots");
-    }
-
-    private static <T> Set<T> copySet(Collection<? extends T> src) {
-        return CollectionUtils.copyToLinkedHashSet(src);
     }
 
     /**
@@ -119,24 +111,7 @@ public final class JavaSourceGroup implements Serializable {
      * @return the patterns of paths to be excluded from this source group.
      *   This method never returns {@code null}.
      */
-    public Set<String> getExcludes() {
-        // The null check is there for backward compatibility.
-        // That is, when this object was serialized with a previous version
-        // of this class.
-        return excludes != null ? excludes : Collections.<String>emptySet();
-    }
-
-    /**
-     * Returns the patterns of paths to be included in this source group.
-     * Include patterns are applied before exclude patterns.
-     *
-     * @return the patterns of paths to be included in this source group.
-     *   This method never returns {@code null}.
-     */
-    public Set<String> getIncludes() {
-        // The null check is there for backward compatibility.
-        // That is, when this object was serialized with a previous version
-        // of this class.
-        return includes != null ? includes : Collections.<String>emptySet();
+    public SourceIncludePatterns getExcludePatterns() {
+        return excludePatterns;
     }
 }

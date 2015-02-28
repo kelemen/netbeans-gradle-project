@@ -128,9 +128,7 @@ public final class NamedSourceRoot {
                             :  NbStrings.getOtherPackageCaption(displaySourceSetName + "/" + groupDisplayName);
                 }
 
-                Set<String> includes = sourceGroup.getIncludes();
-                Set<String> excludes = sourceGroup.getExcludes();
-                ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(excludes, includes);
+                ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
 
                 if (sourceRoots.size() == 1) {
                     result.add(new NamedSourceRoot(

@@ -6,50 +6,39 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
-import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.java.SourceIncludePatterns;
 import org.openide.filesystems.FileObject;
 
 public final class ExcludeIncludeRules implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static ExcludeIncludeRules ALLOW_ALL = new ExcludeIncludeRules(
-            Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+            SourceIncludePatterns.ALLOW_ALL);
 
-    private final Set<String> excludePatterns;
-    private final Set<String> includePatterns;
+    private final SourceIncludePatterns sourceIncludePatterns;
 
-    private ExcludeIncludeRules(Set<String> excludePatterns, Set<String> includePatterns) {
-        this.excludePatterns = CollectionUtils.copyToLinkedHashSet(excludePatterns);
-        this.includePatterns = CollectionUtils.copyToLinkedHashSet(includePatterns);
-
-        ExceptionHelper.checkNotNullElements(excludePatterns, "excludePatterns");
-        ExceptionHelper.checkNotNullElements(includePatterns, "includePatterns");
+    private ExcludeIncludeRules(SourceIncludePatterns sourceIncludePatterns) {
+        ExceptionHelper.checkNotNullArgument(sourceIncludePatterns, "sourceIncludePatterns");
+        this.sourceIncludePatterns = sourceIncludePatterns;
     }
 
-    public static ExcludeIncludeRules create(Set<String> excludePatterns, Set<String> includePatterns) {
-        if (excludePatterns.isEmpty() && includePatterns.isEmpty()) {
+    public static ExcludeIncludeRules create(SourceIncludePatterns sourceIncludePatterns) {
+        if (sourceIncludePatterns.isAllowAll()) {
             return ALLOW_ALL;
         }
 
-        return new ExcludeIncludeRules(excludePatterns, includePatterns);
+        return new ExcludeIncludeRules(sourceIncludePatterns);
     }
 
     public static ExcludeIncludeRules create(JavaSourceGroup sourceGroup) {
-        return create(sourceGroup.getExcludes(), sourceGroup.getIncludes());
+        return create(sourceGroup.getExcludePatterns());
     }
 
-    public Set<String> getExcludePatterns() {
-        return excludePatterns;
-    }
-
-    public Set<String> getIncludePatterns() {
-        return includePatterns;
+    public SourceIncludePatterns getSourceIncludePatterns() {
+        return sourceIncludePatterns;
     }
 
     public boolean isIncluded(Path rootPath, FileObject file) {
@@ -74,15 +63,14 @@ public final class ExcludeIncludeRules implements Serializable {
         return ExcludeInclude.includeFile(
                 file,
                 rootPath,
-                excludePatterns,
-                includePatterns);
+                sourceIncludePatterns.getExcludePatterns(),
+                sourceIncludePatterns.getIncludePatterns());
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 89 * hash + Objects.hashCode(this.excludePatterns);
-        hash = 89 * hash + Objects.hashCode(this.includePatterns);
+        hash = 89 * hash + Objects.hashCode(this.sourceIncludePatterns);
         return hash;
     }
 
@@ -93,8 +81,7 @@ public final class ExcludeIncludeRules implements Serializable {
         if (getClass() != obj.getClass()) return false;
 
         final ExcludeIncludeRules other = (ExcludeIncludeRules)obj;
-        return Objects.equals(this.excludePatterns, other.excludePatterns)
-                && Objects.equals(this.includePatterns, other.includePatterns);
+        return Objects.equals(this.sourceIncludePatterns, other.sourceIncludePatterns);
     }
 
     private Object writeReplace() {
@@ -108,16 +95,14 @@ public final class ExcludeIncludeRules implements Serializable {
     private static final class SerializedFormat implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final Set<String> excludePatterns;
-        private final Set<String> includePatterns;
+        private final SourceIncludePatterns sourceIncludePatterns;
 
         public SerializedFormat(ExcludeIncludeRules source) {
-            this.excludePatterns = source.excludePatterns;
-            this.includePatterns = source.includePatterns;
+            this.sourceIncludePatterns = source.sourceIncludePatterns;
         }
 
         private Object readResolve() throws ObjectStreamException {
-            return ExcludeIncludeRules.create(excludePatterns, includePatterns);
+            return ExcludeIncludeRules.create(sourceIncludePatterns);
         }
     }
 }

@@ -192,7 +192,8 @@ implements
             @SuppressWarnings("unchecked")
             Collection<? extends String> excludes = (Collection<? extends String>)getNonBoolProperty(sourceGroup, "excludes");
 
-            return new JavaSourceGroup(name, srcDirs, excludes, includes);
+            SourceIncludePatterns patterns = SourceIncludePatterns.create(excludes, includes);
+            return new JavaSourceGroup(name, srcDirs, patterns);
         }
 
         private JavaOutputDirs parseOutputDirs(Object outputDirs) {
