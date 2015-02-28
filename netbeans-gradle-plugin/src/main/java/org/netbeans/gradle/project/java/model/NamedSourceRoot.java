@@ -27,7 +27,16 @@ public final class NamedSourceRoot {
     private final String displayName;
     private final File root;
 
-    public NamedSourceRoot(JavaSourceGroupID groupID, String displayName, File root) {
+    private final Set<String> excludePatterns;
+    private final Set<String> includePatterns;
+
+    public NamedSourceRoot(
+            JavaSourceGroupID groupID,
+            String displayName,
+            File root,
+            Set<String> excludePatterns,
+            Set<String> includePatterns) {
+
         ExceptionHelper.checkNotNullArgument(groupID, "groupID");
         ExceptionHelper.checkNotNullArgument(displayName, "displayName");
         ExceptionHelper.checkNotNullArgument(root, "root");
@@ -35,6 +44,11 @@ public final class NamedSourceRoot {
         this.groupID = groupID;
         this.displayName = displayName;
         this.root = root;
+        this.excludePatterns = CollectionUtils.copyToLinkedHashSet(excludePatterns);
+        this.includePatterns = CollectionUtils.copyToLinkedHashSet(includePatterns);
+
+        ExceptionHelper.checkNotNullElements(excludePatterns, "excludePatterns");
+        ExceptionHelper.checkNotNullElements(includePatterns, "includePatterns");
     }
 
     public JavaSourceGroupID getGroupID() {
@@ -47,6 +61,14 @@ public final class NamedSourceRoot {
 
     public File getRoot() {
         return root;
+    }
+
+    public Set<String> getExcludePatterns() {
+        return excludePatterns;
+    }
+
+    public Set<String> getIncludePatterns() {
+        return includePatterns;
     }
 
     private static String displayNameOfSourceSet(String sourceSetName) {
@@ -114,13 +136,25 @@ public final class NamedSourceRoot {
                             :  NbStrings.getOtherPackageCaption(displaySourceSetName + "/" + groupDisplayName);
                 }
 
+                Set<String> includes = sourceGroup.getIncludes();
+                Set<String> excludes = sourceGroup.getExcludes();
                 if (sourceRoots.size() == 1) {
-                    result.add(new NamedSourceRoot(groupID, groupNamePrefix, sourceRoots.iterator().next()));
+                    result.add(new NamedSourceRoot(
+                            groupID,
+                            groupNamePrefix,
+                            sourceRoots.iterator().next(),
+                            excludes,
+                            includes));
                 }
                 else {
                     for (NamedFile root: nameSourceRoots(sourceRoots)) {
                         String rootName = NbStrings.getMultiRootSourceGroups(groupNamePrefix, root.getName());
-                        result.add(new NamedSourceRoot(groupID, rootName, root.getPath()));
+                        result.add(new NamedSourceRoot(
+                                groupID,
+                                rootName,
+                                root.getPath(),
+                                excludes,
+                                includes));
                     }
                 }
             }
@@ -274,6 +308,8 @@ public final class NamedSourceRoot {
         hash = 23 * hash + groupID.hashCode();
         hash = 23 * hash + displayName.hashCode();
         hash = 23 * hash + root.hashCode();
+        hash = 23 * hash + includePatterns.hashCode();
+        hash = 23 * hash + excludePatterns.hashCode();
         return hash;
     }
 
@@ -288,6 +324,12 @@ public final class NamedSourceRoot {
             return false;
         }
         if (!displayName.equals(other.displayName)) {
+            return false;
+        }
+        if (!includePatterns.equals(other.includePatterns)) {
+            return false;
+        }
+        if (!excludePatterns.equals(other.excludePatterns)) {
             return false;
         }
         return root.equals(other.root);

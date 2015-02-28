@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.util;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -140,6 +141,15 @@ public final class GradleFileUtils {
 
     public static FileObject getSrcDirOfGradle(FileObject gradleHome) {
         return gradleHome.getFileObject("src");
+    }
+
+    public static Path toPath(FileObject fileObj) {
+        File file = FileUtil.toFile(fileObj);
+        if (file == null) {
+            return null;
+        }
+
+        return file.toPath();
     }
 
     private GradleFileUtils() {

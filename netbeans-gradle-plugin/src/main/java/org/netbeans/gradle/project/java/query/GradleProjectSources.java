@@ -4,6 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -35,6 +36,8 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
+import org.netbeans.gradle.project.util.ExcludeInclude;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
@@ -75,7 +78,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(groupRoot, root.getDisplayName());
+                return new GradleSourceGroup(root, groupRoot);
             }
         }
         return null;
@@ -87,7 +90,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(groupRoot, root.getName());
+                return new GradleSourceGroup(null, groupRoot, root.getName());
             }
         }
         return null;
@@ -241,18 +244,38 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     }
 
     private static class GradleSourceGroup implements SourceGroup {
+        private final NamedSourceRoot parent;
         private final FileObject location;
         private final PropertyChangeSupport changes;
         private final String displayName;
 
+        private final AtomicReference<Path> locationPathRef;
+
         public GradleSourceGroup(FileObject location) {
-            this(location, NbStrings.getSrcPackageCaption());
+            this(null, location, NbStrings.getSrcPackageCaption());
         }
 
-        public GradleSourceGroup(FileObject location, String displayName) {
+        public GradleSourceGroup(NamedSourceRoot parent, FileObject location) {
+            this(parent, location, parent.getDisplayName());
+        }
+
+        public GradleSourceGroup(NamedSourceRoot parent, FileObject location, String displayName) {
+            this.parent = parent;
             this.location = location;
             this.displayName = displayName;
             this.changes = new PropertyChangeSupport(this);
+            this.locationPathRef = new AtomicReference<>(null);
+        }
+
+        public Path getRootPath() {
+            Path result = locationPathRef.get();
+            if (result == null) {
+                result = GradleFileUtils.toPath(location);
+                if (!locationPathRef.compareAndSet(null, result)) {
+                    result = locationPathRef.get();
+                }
+            }
+            return result;
         }
 
         @Override
@@ -276,6 +299,28 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             return null;
         }
 
+        private boolean rulesAllow(FileObject file) {
+            if (parent == null) {
+                return true;
+            }
+
+            Path path = GradleFileUtils.toPath(file);
+            if (path == null) {
+                return true;
+            }
+
+            Path rootPath = getRootPath();
+            if (rootPath == null) {
+                return true;
+            }
+
+            return ExcludeInclude.includeFile(
+                    path,
+                    rootPath,
+                    parent.getExcludePatterns(),
+                    parent.getIncludePatterns());
+        }
+
         @Override
         public boolean contains(FileObject file) {
             if (file == location) {
@@ -283,6 +328,10 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             }
 
             if (FileUtil.getRelativePath(location, file) == null) {
+                return false;
+            }
+
+            if (!rulesAllow(file)) {
                 return false;
             }
 
