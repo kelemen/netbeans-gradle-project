@@ -11,6 +11,14 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CollectionUtils {
+    public static <T> Set<T> copyToLinkedHashSet(Collection<? extends T> src) {
+        if (src.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(new LinkedHashSet<T>(src));
+    }
+
     public static void checkNoNullElements(Collection<?> collection, String name) {
         if (collection == null) throw new NullPointerException(name);
 
