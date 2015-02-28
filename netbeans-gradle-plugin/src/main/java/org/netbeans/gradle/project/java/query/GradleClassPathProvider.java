@@ -4,6 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,12 +42,15 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
+import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
+import org.netbeans.spi.java.classpath.FilteringPathResourceImplementation;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
+import org.netbeans.spi.java.classpath.support.PathResourceBase;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -178,9 +182,16 @@ implements
     }
 
     private boolean isInOneOf(File file, Collection<File> roots) {
+        return isInOneOf(file, roots, null);
+    }
+
+    private boolean isInOneOf(File file, Collection<File> roots, ExcludeIncludeRules excludeRules) {
         for (File root: roots) {
             if (NbFileUtils.isParentOrSame(root, file)) {
-                return true;
+                if (excludeRules == null) {
+                    return true;
+                }
+                return excludeRules.isIncluded(root.toPath(), file);
             }
         }
         return false;
@@ -205,6 +216,7 @@ implements
             }
 
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                ExcludeIncludeRules excludeRules = ExcludeIncludeRules.create(sourceGroup);
                 if (isInOneOf(file, sourceGroup.getSourceRoots())) {
                     return sourceSet;
                 }
@@ -275,10 +287,26 @@ implements
         return url != null ? ClassPathSupport.createResource(url) : null;
     }
 
-    public static List<PathResourceImplementation> getPathResources(Collection<File> files, Set<File> invalid) {
+    private static PathResourceImplementation toPathResource(File file, ExcludeIncludeRules includeRules) {
+        return ExcludeAwarePathResource.tryCreate(file, includeRules);
+    }
+
+    private static List<PathResourceImplementation> getPathResources(
+            Collection<File> files,
+            Set<File> invalid) {
+        return getPathResources(files, invalid, null);
+    }
+
+    private static List<PathResourceImplementation> getPathResources(
+            Collection<File> files,
+            Set<File> invalid,
+            ExcludeIncludeRules includeRules) {
+
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
         for (File file: new LinkedHashSet<>(files)) {
-            PathResourceImplementation pathResource = toPathResource(file);
+            PathResourceImplementation pathResource = includeRules != null
+                    ? toPathResource(file)
+                    : toPathResource(file, includeRules);
             // Ignore invalid classpath entries
             if (pathResource != null) {
                 result.add(pathResource);
@@ -330,14 +358,17 @@ implements
                 getPathResources(runtimeCP, invalid),
                 getBuildOutputDirsAsPathResources(sourceSet));
 
-        List<File> sources = new LinkedList<>();
+        List<PathResourceImplementation> sourcePaths = new LinkedList<>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-            sources.addAll(sourceGroup.getSourceRoots());
+            Set<File> sourceRoots = sourceGroup.getSourceRoots();
+            ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
+
+            sourcePaths.addAll(getPathResources(sourceRoots, invalid, includeRules));
         }
 
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.SOURCES),
-                getPathResources(sources, invalid));
+                sourcePaths);
     }
 
     private void loadBootClassPath() {
@@ -619,6 +650,54 @@ implements
         @Override
         public void removePropertyChangeListener(PropertyChangeListener listener) {
             changes.removePropertyChangeListener(listener);
+        }
+    }
+
+    private static final class ExcludeAwarePathResource
+    extends
+            PathResourceBase
+    implements
+            FilteringPathResourceImplementation {
+
+        private final Path root;
+        private final URL url;
+        private final ExcludeIncludeRules includeRules;
+
+        private ExcludeAwarePathResource(File root, URL rootUrl, ExcludeIncludeRules includeRules) {
+            this.root = root.toPath();
+            this.url = rootUrl;
+            this.includeRules = includeRules;
+        }
+
+        public static ExcludeAwarePathResource tryCreate(File root, ExcludeIncludeRules includeRules) {
+            URL url = FileUtil.urlForArchiveOrDir(root);
+            if (url == null) {
+                return null;
+            }
+
+            return new ExcludeAwarePathResource(root, url, includeRules);
+        }
+
+        @Override
+        public URL[] getRoots() {
+            return new URL[] {url};
+        }
+
+        @Override
+        public ClassPathImplementation getContent() {
+            return null;
+        }
+
+        @Override
+        public boolean includes(URL urlRoot, String resource) {
+            String normPath = resource.replace("/", root.getFileSystem().getSeparator());
+            Path resourcePath = root.resolve(normPath);
+            return includeRules.isIncluded(root, resourcePath);
+        }
+
+        @Override
+        public String toString () {
+            return "ExcludeAwarePathResource{" + url + "}";
         }
     }
 }
