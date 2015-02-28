@@ -37,6 +37,10 @@ public final class ExcludeIncludeRules implements Serializable {
         return create(sourceGroup.getExcludePatterns());
     }
 
+    public boolean isAllowAll() {
+        return sourceIncludePatterns.isAllowAll();
+    }
+
     public SourceIncludePatterns getSourceIncludePatterns() {
         return sourceIncludePatterns;
     }
@@ -44,6 +48,10 @@ public final class ExcludeIncludeRules implements Serializable {
     public boolean isIncluded(Path rootPath, FileObject file) {
         ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
         ExceptionHelper.checkNotNullArgument(file, "file");
+
+        if (isAllowAll()) {
+            return true;
+        }
 
         Path path = GradleFileUtils.toPath(file);
         return path != null ? isIncluded(rootPath, path) : true;
@@ -53,12 +61,20 @@ public final class ExcludeIncludeRules implements Serializable {
         ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
         ExceptionHelper.checkNotNullArgument(file, "file");
 
+        if (isAllowAll()) {
+            return true;
+        }
+
         return isIncluded(rootPath, file.toPath());
     }
 
     public boolean isIncluded(Path rootPath, Path file) {
         ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
         ExceptionHelper.checkNotNullArgument(file, "file");
+
+        if (isAllowAll()) {
+            return true;
+        }
 
         return ExcludeInclude.includeFile(
                 file,
