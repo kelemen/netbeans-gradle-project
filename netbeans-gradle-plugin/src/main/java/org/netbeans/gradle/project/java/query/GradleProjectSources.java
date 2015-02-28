@@ -36,7 +36,7 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.util.ExcludeInclude;
+import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -78,7 +78,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(root, groupRoot);
+                return new GradleSourceGroup(groupRoot, root.getDisplayName(), root.getIncludeRules());
             }
         }
         return null;
@@ -90,7 +90,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(null, groupRoot, root.getName());
+                return new GradleSourceGroup(groupRoot, root.getName());
             }
         }
         return null;
@@ -244,7 +244,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     }
 
     private static class GradleSourceGroup implements SourceGroup {
-        private final NamedSourceRoot parent;
+        private final ExcludeIncludeRules includeRules;
         private final FileObject location;
         private final PropertyChangeSupport changes;
         private final String displayName;
@@ -252,15 +252,15 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         private final AtomicReference<Path> locationPathRef;
 
         public GradleSourceGroup(FileObject location) {
-            this(null, location, NbStrings.getSrcPackageCaption());
+            this(location, NbStrings.getSrcPackageCaption());
         }
 
-        public GradleSourceGroup(NamedSourceRoot parent, FileObject location) {
-            this(parent, location, parent.getDisplayName());
+        public GradleSourceGroup(FileObject location, String displayName) {
+            this(location, displayName, ExcludeIncludeRules.ALLOW_ALL);
         }
 
-        public GradleSourceGroup(NamedSourceRoot parent, FileObject location, String displayName) {
-            this.parent = parent;
+        public GradleSourceGroup(FileObject location, String displayName, ExcludeIncludeRules includeRules) {
+            this.includeRules = includeRules;
             this.location = location;
             this.displayName = displayName;
             this.changes = new PropertyChangeSupport(this);
@@ -300,25 +300,12 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         }
 
         private boolean rulesAllow(FileObject file) {
-            if (parent == null) {
-                return true;
-            }
-
-            Path path = GradleFileUtils.toPath(file);
-            if (path == null) {
-                return true;
-            }
-
             Path rootPath = getRootPath();
             if (rootPath == null) {
                 return true;
             }
 
-            return ExcludeInclude.includeFile(
-                    path,
-                    rootPath,
-                    parent.getExcludePatterns(),
-                    parent.getIncludePatterns());
+            return includeRules.isIncluded(rootPath, file);
         }
 
         @Override
