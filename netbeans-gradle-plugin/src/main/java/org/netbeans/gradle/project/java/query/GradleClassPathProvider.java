@@ -255,10 +255,16 @@ implements
         }
     }
 
-    private static void addSourcesOfModule(NbJavaModule module, List<File> sources) {
+    private static void addSourcesOfModule(
+            NbJavaModule module,
+            List<PathResourceImplementation> result) {
+
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
-                sources.addAll(sourceGroup.getSourceRoots());
+                ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
+                Set<File> sourceRoots = sourceGroup.getSourceRoots();
+
+                result.addAll(getPathResources(sourceRoots, new HashSet<File>(), includeRules));
             }
         }
     }
@@ -267,7 +273,7 @@ implements
         NbJavaModel currentModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = currentModel.getMainModule();
 
-        List<File> sources = new LinkedList<>();
+        List<PathResourceImplementation> sources = new LinkedList<>();
         addSourcesOfModule(mainModule, sources);
 
         for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
@@ -277,9 +283,7 @@ implements
             }
         }
 
-        List<PathResourceImplementation> sourceContainer = getPathResources(sources, new HashSet<File>());
-
-        allSources = Collections.unmodifiableList(new ArrayList<>(sourceContainer));
+        allSources = Collections.unmodifiableList(new ArrayList<>(sources));
     }
 
     private static PathResourceImplementation toPathResource(File file) {
@@ -294,7 +298,7 @@ implements
     private static List<PathResourceImplementation> getPathResources(
             Collection<File> files,
             Set<File> invalid) {
-        return getPathResources(files, invalid, null);
+        return getPathResources(files, invalid, ExcludeIncludeRules.ALLOW_ALL);
     }
 
     private static List<PathResourceImplementation> getPathResources(
@@ -304,7 +308,7 @@ implements
 
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
         for (File file: new LinkedHashSet<>(files)) {
-            PathResourceImplementation pathResource = includeRules != null
+            PathResourceImplementation pathResource = includeRules.isAllowAll()
                     ? toPathResource(file)
                     : toPathResource(file, includeRules);
             // Ignore invalid classpath entries
