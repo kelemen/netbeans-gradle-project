@@ -25,6 +25,9 @@ public final class JavaSourceGroup implements Serializable {
     private final JavaSourceGroupName groupName;
     private final Set<File> sourceRoots;
 
+    private final Set<String> excludes;
+    private final Set<String> includes;
+
     /**
      * Creates a new {@code JavaSourceGroup} with the given properties.
      *
@@ -38,12 +41,46 @@ public final class JavaSourceGroup implements Serializable {
      *   {@code null}
      */
     public JavaSourceGroup(JavaSourceGroupName groupName, Collection<? extends File> sourceRoots) {
+        this(groupName, sourceRoots, Collections.<String>emptySet(), Collections.<String>emptySet());
+    }
+
+    /**
+     * Creates a new {@code JavaSourceGroup} with the given properties.
+     *
+     * @param groupName the name of these source roots representing the type of
+     *   sources they contain. This argument cannot be {@code null}.
+     * @param sourceRoots the set of source roots of this source group. This
+     *   argument cannot be {@code null} and cannot contain {@code null}
+     *   elements.
+     * @param excludes the exclude patterns to be excluded from this source
+     *   group. This argument cannot be {@code null}.
+     * @param includes the include patterns to be included in this source
+     *   group. This argument cannot be {@code null}.
+     *
+     * @throws NullPointerException thrown if any of the arguments is
+     *   {@code null}
+     */
+    public JavaSourceGroup(
+            JavaSourceGroupName groupName,
+            Collection<? extends File> sourceRoots,
+            Collection<? extends String> excludes,
+            Collection<? extends String> includes) {
         if (groupName == null) throw new NullPointerException("groupName");
 
         this.groupName = groupName;
-        this.sourceRoots = Collections.unmodifiableSet(new LinkedHashSet<File>(sourceRoots));
+        this.sourceRoots = copySet(sourceRoots);
+        this.excludes = copySet(excludes);
+        this.includes = copySet(includes);
 
         CollectionUtils.checkNoNullElements(this.sourceRoots, "sourceRoots");
+    }
+
+    private static <T> Set<T> copySet(Collection<? extends T> src) {
+        if (src.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(new LinkedHashSet<T>(src));
     }
 
     /**
@@ -78,5 +115,33 @@ public final class JavaSourceGroup implements Serializable {
      */
     public Set<File> getSourceRoots() {
         return sourceRoots;
+    }
+
+    /**
+     * Returns the patterns of paths to be excluded from this source group.
+     * Exclude patterns are applied after include patterns.
+     *
+     * @return the patterns of paths to be excluded from this source group.
+     *   This method never returns {@code null}.
+     */
+    public Set<String> getExcludes() {
+        // The null check is there for backward compatibility.
+        // That is, when this object was serialized with a previous version
+        // of this class.
+        return excludes != null ? excludes : Collections.<String>emptySet();
+    }
+
+    /**
+     * Returns the patterns of paths to be included in this source group.
+     * Include patterns are applied before exclude patterns.
+     *
+     * @return the patterns of paths to be included in this source group.
+     *   This method never returns {@code null}.
+     */
+    public Set<String> getIncludes() {
+        // The null check is there for backward compatibility.
+        // That is, when this object was serialized with a previous version
+        // of this class.
+        return includes != null ? includes : Collections.<String>emptySet();
     }
 }
