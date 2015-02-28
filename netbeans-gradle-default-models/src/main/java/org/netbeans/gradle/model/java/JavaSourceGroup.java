@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
@@ -76,11 +75,7 @@ public final class JavaSourceGroup implements Serializable {
     }
 
     private static <T> Set<T> copySet(Collection<? extends T> src) {
-        if (src.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        return Collections.unmodifiableSet(new LinkedHashSet<T>(src));
+        return CollectionUtils.copyToLinkedHashSet(src);
     }
 
     /**
