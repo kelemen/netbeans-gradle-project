@@ -89,7 +89,7 @@ public class NbmPlugin implements Plugin<Project> {
             dependsOn 'netbeans'
 
             Path buildPath = project.buildDir.toPath()
-            Path testUserDir = buildPath.resolve('testuserdir')
+            Path testUserDir = buildPath.resolve(NetBeansTask.TEST_USER_DIR_NAME)
             if (project.hasProperty('netBeansExecutable')) {
                 doFirst {
                     def confFile = testUserDir.resolve('etc').resolve('netbeans.conf')
