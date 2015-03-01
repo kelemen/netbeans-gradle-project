@@ -101,6 +101,7 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(SharabilityQueryImplementation2.class.getName(), wrappedLookup);
             typeActions.put("org.netbeans.modules.maven.NbMavenProjectImpl", wrappedLookup);
             typeActions.put("org.netbeans.modules.web.browser.spi.ProjectBrowserProvider", wrappedLookup);
+            typeActions.put("org.netbeans.spi.project.ui.ProjectProblemsProvider", wrappedLookup);
         }
 
         private Lookup lookupForType(Class<?> type) {
