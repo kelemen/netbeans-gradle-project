@@ -526,6 +526,10 @@ public final class GradleModelLoader {
             String gradleVersion = env.getGradle().getGradleVersion();
             GlobalErrorReporter.showIssue(NbStrings.getIssueWithGradle18Message(gradleVersion));
         }
+        else if (GradleVersions.VERSION_2_3.equals(version.getBaseVersion())) {
+            String gradleVersion = env.getGradle().getGradleVersion();
+            GlobalErrorReporter.showIssue(NbStrings.getIssueWithGradle23Message(gradleVersion));
+        }
     }
 
     private static NbModelLoader chooseModel(

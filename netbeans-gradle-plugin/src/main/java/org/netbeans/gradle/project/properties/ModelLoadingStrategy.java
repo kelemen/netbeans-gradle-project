@@ -20,6 +20,7 @@ public enum ModelLoadingStrategy {
             return false;
         }
 
-        return gradleVersion.compareTo(GradleVersions.VERSION_1_8_RC_1) >= 0;
+        return gradleVersion.compareTo(GradleVersions.VERSION_1_8_RC_1) >= 0
+                && !GradleVersions.VERSION_2_3.equals(gradleVersion.getBaseVersion());
     }
 }
