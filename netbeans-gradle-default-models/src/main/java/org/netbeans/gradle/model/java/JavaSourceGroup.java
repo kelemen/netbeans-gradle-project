@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.java;
 
 import java.io.File;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
@@ -112,6 +113,20 @@ public final class JavaSourceGroup implements Serializable {
      *   This method never returns {@code null}.
      */
     public SourceIncludePatterns getExcludePatterns() {
-        return excludePatterns;
+        // The null check is there for backward compatibility.
+        // That is, when this object was serialized with a previous version
+        // of this class.
+        return excludePatterns != null
+                ? excludePatterns
+                : SourceIncludePatterns.ALLOW_ALL;
+    }
+
+    private Object readResolve() throws ObjectStreamException {
+        // The null check is there for backward compatibility.
+        // That is, when this object was serialized with a previous version
+        // of this class.
+        return excludePatterns != null
+                ? this
+                : new JavaSourceGroup(groupName, sourceRoots);
     }
 }
