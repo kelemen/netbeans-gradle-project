@@ -28,7 +28,7 @@ class NetBeansTask extends ConventionTask {
     private NbmPluginExtension netbeansExt() {
         project.extensions.nbm
     }
-    
+
     @Input
     File getInputModuleJarFile() {
         project.tasks.jar.archivePath
