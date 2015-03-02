@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.query;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +23,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
-import org.netbeans.api.queries.SharabilityQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -318,14 +316,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                 return false;
             }
 
-            if (!rulesAllow(file)) {
-                return false;
-            }
-
-            URI f = file.toURI();
-
-            // else MIXED, UNKNOWN, or SHARABLE; or not a disk file
-            return f == null || SharabilityQuery.getSharability(f) != SharabilityQuery.Sharability.NOT_SHARABLE;
+            return rulesAllow(file);
         }
 
         @Override
