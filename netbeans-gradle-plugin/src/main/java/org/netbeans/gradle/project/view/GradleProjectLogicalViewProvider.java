@@ -768,6 +768,36 @@ implements
             this.lastUsedModel = null;
         }
 
+        private void addToMenu(JMenu rootMenu, List<GradleTaskTree> rootNodes) {
+            for (GradleTaskTree root: rootNodes) {
+                List<GradleTaskTree> children = root.getChildren();
+
+                JMenuItem toAdd;
+                if (children.isEmpty()) {
+                    toAdd = new JMenuItem(root.getCaption());
+                }
+                else {
+                    JMenu subMenu = new JMenu(root.getCaption());
+                    toAdd = subMenu;
+                    addToMenu(subMenu, children);
+                }
+
+                final GradleTaskID taskID = root.getTaskID();
+                if (taskID != null) {
+                    toAdd.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            GradleCommandTemplate.Builder command
+                                    = new GradleCommandTemplate.Builder("", Arrays.asList(taskID.getFullName()));
+
+                            executeCommandTemplate(project, command.create());
+                        }
+                    });
+                }
+
+                rootMenu.add(toAdd);
+            }
+        }
 
         public void updateMenuContent() {
             NbGradleModel projectModel = project.getAvailableModel();
@@ -780,19 +810,7 @@ implements
             Collection<GradleTaskID> tasks = projectModel.getMainProject().getTasks();
 
             menu.removeAll();
-            for (final GradleTaskID task: tasks) {
-                JMenuItem menuItem = new JMenuItem(task.getName());
-                menuItem.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        GradleCommandTemplate.Builder command
-                                = new GradleCommandTemplate.Builder("", Arrays.asList(task.getFullName()));
-
-                        executeCommandTemplate(project, command.create());
-                    }
-                });
-                menu.add(menuItem);
-            }
+            addToMenu(menu, GradleTaskTree.createTaskTree(tasks));
         }
     }
 
