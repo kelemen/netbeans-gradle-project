@@ -7,10 +7,6 @@ import org.netbeans.gradle.model.GradleTaskID;
 
 import static org.junit.Assert.*;
 
-/**
- *
- * @author Kelemen
- */
 public class GradleTaskTreeTest {
     private static List<GradleTaskID> toTaskIDs(String... taskNames) {
         List<GradleTaskID> result = new ArrayList<>(taskNames.length);
