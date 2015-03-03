@@ -188,6 +188,3 @@ Current Limitations
   The "Reload Project" action must be executed manually (from the project's
   popup menu). No automatic detection is done because reloading the project is
   slow (just like opening it).
-- Exclusion of directories from source sets are ignored. I don't see how it
-  is possible in NetBeans (efficiently) because you cannot create your own
-  ClassPath implementation.
