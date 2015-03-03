@@ -50,6 +50,37 @@ public class GradleTaskTreeTest {
         }
     }
 
+    @Test(timeout = 10000)
+    public void testNoInfiniteLoop1() {
+        List<GradleTaskID> taskIDs = toTaskIDs("A");
+
+        List<GradleTaskTree> nodes = GradleTaskTree.createTaskTree(0, taskIDs);
+        assertEquals("Node count", 1, nodes.size());
+
+        assertLeaf(nodes.get(0), "A");
+    }
+
+    @Test(timeout = 10000)
+    public void testNoInfiniteLoop2() {
+        List<GradleTaskID> taskIDs = toTaskIDs("A", "B");
+
+        List<GradleTaskTree> nodes = GradleTaskTree.createTaskTree(0, taskIDs);
+        assertEquals("Node count", 2, nodes.size());
+
+        assertLeaf(nodes.get(0), "A");
+        assertLeaf(nodes.get(1), "B");
+    }
+
+    @Test
+    public void testSingleTask() {
+        List<GradleTaskID> taskIDs = toTaskIDs("TASK");
+
+        List<GradleTaskTree> nodes = GradleTaskTree.createTaskTree(5, taskIDs);
+        assertEquals("Node count", 1, nodes.size());
+
+        assertLeaf(nodes.get(0), "TASK");
+    }
+
     @Test
     public void testUnderscoreSeparated() {
         List<GradleTaskID> taskIDs = toTaskIDs(

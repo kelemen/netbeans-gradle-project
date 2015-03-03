@@ -82,7 +82,8 @@ public final class GradleTaskTree {
             int taskLimit,
             int skipCharCount,
             Collection<GradleTaskID> taskIDs) {
-        if (taskIDs.size() <= taskLimit) {
+        int taskCount = taskIDs.size();
+        if (taskCount <= taskLimit || taskCount <= 1) {
             return toLeafs(taskIDs);
         }
 
