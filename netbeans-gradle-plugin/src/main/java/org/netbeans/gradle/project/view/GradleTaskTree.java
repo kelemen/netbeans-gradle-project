@@ -99,22 +99,33 @@ public final class GradleTaskTree {
             }
         }
 
-        List<GradleTaskTree> result = new ArrayList<>(splitTasks.size());
-        for (Map.Entry<String, List<GradleTaskID>> entry: splitTasks.entrySet()) {
-            GradleTaskTree subTree = createTaskTree(taskLimit, entry);
-            if (subTree != null) {
-                result.add(subTree);
+        int splitTasksSize = splitTasks.size();
+
+        if (splitTasksSize == 1) {
+            Map.Entry<String, List<GradleTaskID>> task
+                    = splitTasks.entrySet().iterator().next();
+
+            int nextSkipCharCount = task.getKey().length();
+            return createTaskTree(taskLimit, nextSkipCharCount, taskIDs);
+        }
+        else {
+            List<GradleTaskTree> result = new ArrayList<>(splitTasksSize);
+            for (Map.Entry<String, List<GradleTaskID>> entry: splitTasks.entrySet()) {
+                GradleTaskTree subTree = createTaskTree(taskLimit, entry);
+                if (subTree != null) {
+                    result.add(subTree);
+                }
             }
-        }
 
-        int resultSize = result.size();
-        if (resultSize > taskLimit) {
-            LOGGER.log(Level.INFO,
-                    "Number of tasks exceed the needed limit. Task count: {0}. Requested limit: {1}.",
-                    new Object[]{resultSize, taskLimit});
-        }
+            int resultSize = result.size();
+            if (resultSize > taskLimit) {
+                LOGGER.log(Level.INFO,
+                        "Number of tasks exceed the needed limit. Task count: {0}. Requested limit: {1}.",
+                        new Object[]{resultSize, taskLimit});
+            }
 
-        return result;
+            return result;
+        }
     }
 
     private static GradleTaskTree createTaskTree(

@@ -111,10 +111,13 @@ public class GradleTaskTreeTest {
                 "TASK__SUBA__B",
                 "TASK__SUBB__A",
                 "TASK__SUBB__B",
-                "TASK__SUBB__C");
+                "TASK__SUBB__C",
+                "OTHER");
 
         List<GradleTaskTree> nodes = GradleTaskTree.createTaskTree(3, taskIDs);
-        assertEquals("Node count", 1, nodes.size());
+        assertEquals("Node count", 2, nodes.size());
+
+        assertLeaf(nodes.get(1), "OTHER");
 
         GradleTaskTree subNode = nodes.get(0);
         assertEquals("caption", "TASK", subNode.getCaption());
@@ -129,5 +132,26 @@ public class GradleTaskTreeTest {
                 "TASK__SUBB__A",
                 "TASK__SUBB__B",
                 "TASK__SUBB__C");
+    }
+
+    @Test
+    public void testSingleLevelNoUnnecessaryIndirection() {
+        List<GradleTaskID> taskIDs = toTaskIDs(
+                "buildApp1",
+                "buildApp2",
+                "buildLib1",
+                "buildLib2",
+                "buildLib3");
+
+        List<GradleTaskTree> nodes = GradleTaskTree.createTaskTree(4, taskIDs);
+        assertEquals("Node count", 2, nodes.size());
+
+        assertTasks(nodes.get(0), "buildApp",
+                "buildApp1",
+                "buildApp2");
+        assertTasks(nodes.get(1), "buildLib",
+                "buildLib1",
+                "buildLib2",
+                "buildLib3");
     }
 }
