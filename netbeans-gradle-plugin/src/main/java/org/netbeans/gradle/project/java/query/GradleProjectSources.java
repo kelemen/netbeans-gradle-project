@@ -303,7 +303,11 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                 return true;
             }
 
-            return includeRules.isIncluded(rootPath, file);
+            boolean result = includeRules.isIncluded(rootPath, file);
+            // Directories are always allowed because otherwise
+            // package view might skip the entire directory, regardless that
+            // it might contain included sub directories.
+            return result || file.isFolder();
         }
 
         @Override
