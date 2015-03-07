@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,6 +23,7 @@ import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -237,6 +240,23 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<PlatformOrder> getPlatformPreferenceOrder() {
         return getDefault().platformPreferenceOrder;
+    }
+
+    public static List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
+        return filterIndistinguishable(Arrays.asList(platforms));
+    }
+
+    public static List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
+        List<JavaPlatform> result = new ArrayList<>(platforms.size());
+        Set<NameAndVersion> foundVersions = CollectionUtils.newHashSet(platforms.size());
+
+        for (JavaPlatform platform: orderPlatforms(platforms)) {
+            if (foundVersions.add(new NameAndVersion(platform))) {
+                result.add(platform);
+            }
+        }
+
+        return result;
     }
 
     public static List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
@@ -731,6 +751,35 @@ public final class GlobalGradleSettings {
 
         public void addPreferenceChangeListener(PreferenceChangeListener pcl);
         public void removePreferenceChangeListener(PreferenceChangeListener pcl);
+    }
+
+    private static final class NameAndVersion {
+        private final String name;
+        private final String version;
+
+        public NameAndVersion(JavaPlatform platform) {
+            JavaProjectPlatform projectPlatform = new JavaProjectPlatform(platform);
+            this.name = projectPlatform.getName();
+            this.version = projectPlatform.getVersion();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 97 * hash + Objects.hashCode(this.name);
+            hash = 97 * hash + Objects.hashCode(this.version);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final NameAndVersion other = (NameAndVersion)obj;
+            return Objects.equals(this.name, other.name)
+                    && Objects.equals(this.version, other.version);
+        }
     }
 
     private GlobalGradleSettings() {
