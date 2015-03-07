@@ -470,17 +470,18 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         }
 
         public GradleCommandTemplate getCommand() {
-            if (skipTestsIfNeeded && GlobalConfig.skipTests().getValue()
+            if ((skipTestsIfNeeded && GlobalConfig.skipTests().getValue())
                     || skipCheckIfNeeded && GlobalConfig.skipCheck().getValue()) {
                 GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(command);
                 List<String> prevArguments = command.getArguments();
-                List<String> newArguments = new ArrayList<>(prevArguments.size() + 2);
+                List<String> newArguments = new ArrayList<>(prevArguments.size() + 4);
                 newArguments.addAll(prevArguments);
-                newArguments.add("-x");
                 if (skipTestsIfNeeded) {
+                    newArguments.add("-x");
                     newArguments.add(TestTaskName.DEFAULT_TEST_TASK_NAME);
                 }
                 if (skipCheckIfNeeded) {
+                    newArguments.add("-x");
                     newArguments.add("check");
                 }
                 builder.setArguments(newArguments);
