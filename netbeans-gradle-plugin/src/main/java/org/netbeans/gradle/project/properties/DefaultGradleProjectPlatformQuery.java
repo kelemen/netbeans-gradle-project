@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -43,6 +45,17 @@ implements
         final JavaPlatformManager manager = JavaPlatformManager.getDefault();
         manager.addPropertyChangeListener(changeListener);
 
+        final StringBasedProperty<PlatformOrder> order
+                = GlobalGradleSettings.getPlatformPreferenceOrder();
+
+        final ChangeListener orderChangeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                listener.run();
+            }
+        };
+        order.addChangeListener(orderChangeListener);
+
         return new NbListenerRef() {
             private volatile boolean registered = true;
 
@@ -54,6 +67,7 @@ implements
             @Override
             public void unregister() {
                 manager.removePropertyChangeListener(changeListener);
+                order.removeChangeListener(orderChangeListener);
                 registered = false;
             }
         };

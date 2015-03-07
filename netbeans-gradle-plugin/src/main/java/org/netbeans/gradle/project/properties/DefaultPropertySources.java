@@ -215,6 +215,7 @@ public final class DefaultPropertySources {
             try {
                 boolean addedNow = !changes.hasListeners();
                 changes.addChangeListener(listener);
+                GlobalGradleSettings.getPlatformPreferenceOrder().addChangeListener(listener);
                 if (addedNow) {
                     JavaPlatformManager.getDefault().addPropertyChangeListener(changeForwarder);
                 }
@@ -232,6 +233,7 @@ public final class DefaultPropertySources {
                 }
 
                 changes.removeChangeListener(listener);
+                GlobalGradleSettings.getPlatformPreferenceOrder().removeChangeListener(listener);
                 if (!changes.hasListeners()) {
                     JavaPlatformManager.getDefault().removePropertyChangeListener(changeForwarder);
                 }
