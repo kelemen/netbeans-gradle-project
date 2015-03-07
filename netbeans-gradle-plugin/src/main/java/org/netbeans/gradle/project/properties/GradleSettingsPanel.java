@@ -231,6 +231,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jModelLoadStrategyLabel = new javax.swing.JLabel();
         jReadWikiButton = new javax.swing.JButton();
         jCompileOnSaveCheckbox = new javax.swing.JCheckBox();
+        jJavaPlatformOrderButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -285,6 +286,13 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jCompileOnSaveCheckbox, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jCompileOnSaveCheckbox.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jJavaPlatformOrderButton, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jJavaPlatformOrderButton.text")); // NOI18N
+        jJavaPlatformOrderButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jJavaPlatformOrderButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -310,7 +318,6 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jGradleVMArgsCaption)
-                            .addComponent(jReadWikiButton)
                             .addComponent(jSkipTestsCheck)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jProjectCacheSizeLabel)
@@ -323,14 +330,20 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jGradleUserHomeCaption)
                             .addComponent(jSkipCheckCheckBox)
                             .addComponent(jCompileOnSaveCheckbox))
-                        .addGap(0, 114, Short.MAX_VALUE)))
+                        .addGap(0, 114, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jReadWikiButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jJavaPlatformOrderButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jReadWikiButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jReadWikiButton)
+                    .addComponent(jJavaPlatformOrderButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradlePathCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -400,6 +413,10 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         HtmlBrowser.URLDisplayer.getDefault().showURLExternal(HELP_URL);
     }//GEN-LAST:event_jReadWikiButtonActionPerformed
 
+    private void jJavaPlatformOrderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jJavaPlatformOrderButtonActionPerformed
+        PlatformPriorityPanel.showDialog(this);
+    }//GEN-LAST:event_jJavaPlatformOrderButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
@@ -413,6 +430,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jGradleUserHomeCaption;
     private javax.swing.JTextField jGradleUserHomeEdit;
     private javax.swing.JLabel jGradleVMArgsCaption;
+    private javax.swing.JButton jJavaPlatformOrderButton;
     private javax.swing.JComboBox<JavaPlatformItem> jJdkCombo;
     private javax.swing.JComboBox<ModelLoadStrategyItem> jModelLoadStrategy;
     private javax.swing.JLabel jModelLoadStrategyLabel;

@@ -47,6 +47,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
     private final StringBasedProperty<Boolean> compileOnSave;
+    private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -90,6 +91,10 @@ public final class GlobalGradleSettings {
         compileOnSave = new GlobalProperty<>(
                 withNS(namespace, "compile-on-save"),
                 new BooleanConverter(false));
+        platformPreferenceOrder = new GlobalProperty<>(
+                withNS(namespace, "platform-pref-order"),
+                PlatformOrderConverter.INSTANCE
+        );
     }
 
     public static void setDefaultPreference() {
@@ -155,6 +160,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<Boolean> compileOnSave() {
         return compileOnSave;
+    }
+
+    public StringBasedProperty<PlatformOrder> platformPreferenceOrder() {
+        return platformPreferenceOrder;
     }
 
     public static GlobalGradleSettings getDefault() {
@@ -226,6 +235,19 @@ public final class GlobalGradleSettings {
         return getDefault().compileOnSave;
     }
 
+    public static StringBasedProperty<PlatformOrder> getPlatformPreferenceOrder() {
+        return getDefault().platformPreferenceOrder;
+    }
+
+    public static List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
+        return orderPlatforms(Arrays.asList(platforms));
+    }
+
+    public static List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
+        PlatformOrder order = getPlatformPreferenceOrder().getValue();
+        return order.orderPlatforms(platforms);
+    }
+
     public static FileObject getHomeFolder(JavaPlatform platform) {
         Collection<FileObject> installFolders = platform.getInstallFolders();
         int numberOfFolder = installFolders.size();
@@ -250,39 +272,63 @@ public final class GlobalGradleSettings {
         return getHomeFolder(platform);
     }
 
+    public static List<String> stringToStringList(String strValue) {
+        if (strValue == null || strValue.isEmpty()) {
+            return null;
+        }
+
+        return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
+    }
+
+    public static String stringListToString(Collection<String> value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+
+        int length = value.size() - 1;
+        for (String line: value) {
+            length += line.length();
+        }
+
+        StringBuilder result = new StringBuilder(length);
+        Iterator<String> valueItr = value.iterator();
+        // valueItr.next() should succeed since the list is not empty.
+        result.append(valueItr.next());
+
+        while (valueItr.hasNext()) {
+            result.append('\n');
+            result.append(valueItr.next());
+        }
+        return result.toString();
+    }
+
+    private enum PlatformOrderConverter implements ValueConverter<PlatformOrder> {
+        INSTANCE;
+
+        @Override
+        public PlatformOrder toValue(String strValue) {
+            return strValue != null
+                    ? PlatformOrder.fromStringFormat(strValue)
+                    : PlatformOrder.DEFAULT_ORDER;
+        }
+
+        @Override
+        public String toString(PlatformOrder value) {
+            return value != null ? value.toStringFormat() : null;
+        }
+    }
+
     private enum StringToStringListConverter implements ValueConverter<List<String>> {
         INSTANCE;
 
         @Override
         public List<String> toValue(String strValue) {
-            if (strValue == null || strValue.isEmpty()) {
-                return null;
-            }
-
-            return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
+            return stringToStringList(strValue);
         }
 
         @Override
         public String toString(List<String> value) {
-            if (value == null || value.isEmpty()) {
-                return null;
-            }
-
-            int length = value.size() - 1;
-            for (String line: value) {
-                length += line.length();
-            }
-
-            StringBuilder result = new StringBuilder(length);
-            Iterator<String> valueItr = value.iterator();
-            // valueItr.next() should succeed since the list is not empty.
-            result.append(valueItr.next());
-
-            while (valueItr.hasNext()) {
-                result.append('\n');
-                result.append(valueItr.next());
-            }
-            return result.toString();
+            return stringListToString(value);
         }
     }
 

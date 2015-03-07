@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -51,11 +53,18 @@ public final class DefaultPropertySources {
         return tryChooseFromPlatforms(specName, versionStr, JavaPlatformManager.getDefault().getInstalledPlatforms());
     }
 
-
     public static JavaPlatform tryChooseFromPlatforms(
             String specName,
             String versionStr,
             JavaPlatform[] platforms) {
+        List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.orderPlatforms(platforms);
+        return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
+    }
+
+    private static JavaPlatform tryChooseFromOrderedPlatforms(
+            String specName,
+            String versionStr,
+            Collection<JavaPlatform> platforms) {
 
         ExceptionHelper.checkNotNullArgument(specName, "specName");
         ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
