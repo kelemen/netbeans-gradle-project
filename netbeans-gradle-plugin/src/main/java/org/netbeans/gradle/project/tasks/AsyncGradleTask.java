@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,6 +45,7 @@ import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -77,10 +80,12 @@ public final class AsyncGradleTask implements Runnable {
     private final NbGradleProject project;
     private final GradleCommandSpecFactory taskDefFactroy;
     private final CommandCompleteListener listener;
+    private final Set<GradleActionProviderContext> actionContexts;
 
     public AsyncGradleTask(
             NbGradleProject project,
             GradleCommandSpecFactory taskDefFactroy,
+            Set<GradleActionProviderContext> actionContexts,
             CommandCompleteListener listener) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(taskDefFactroy, "taskDefFactroy");
@@ -89,6 +94,17 @@ public final class AsyncGradleTask implements Runnable {
         this.project = project;
         this.taskDefFactroy = taskDefFactroy;
         this.listener = listener;
+        this.actionContexts = copyEnumSet(actionContexts);
+
+        ExceptionHelper.checkNotNullElements(this.actionContexts, "actionContexts");
+    }
+
+    private static Set<GradleActionProviderContext> copyEnumSet(
+            Set<GradleActionProviderContext> src) {
+        Set<GradleActionProviderContext> result
+                = EnumSet.noneOf(GradleActionProviderContext.class);
+        result.addAll(src);
+        return result;
     }
 
     public NbGradleProject getProject() {
@@ -438,8 +454,10 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static void preSubmitGradleTask() {
-        LifecycleManager.getDefault().saveAll();
+    private void preSubmitGradleTask() {
+        if (!actionContexts.contains(GradleActionProviderContext.DONT_SAVE_FILES)) {
+            LifecycleManager.getDefault().saveAll();
+        }
     }
 
     private static void collectTaskVars(String[] strings, List<DisplayedTaskVariable> taskVars) {
@@ -574,7 +592,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
-        return new AsyncGradleTask(project, newFactory, listener);
+        return new AsyncGradleTask(project, newFactory, actionContexts, listener);
     }
 
     private static GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {

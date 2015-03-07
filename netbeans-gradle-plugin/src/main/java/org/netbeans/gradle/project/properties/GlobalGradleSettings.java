@@ -46,6 +46,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
+    private final StringBasedProperty<Boolean> compileOnSave;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -86,6 +87,9 @@ public final class GlobalGradleSettings {
         gradleDaemonTimeoutSec = new GlobalProperty<>(
                 withNS(namespace, "gradle-daemon-timeout-sec"),
                 new IntegerConverter(1, Integer.MAX_VALUE, null));
+        compileOnSave = new GlobalProperty<>(
+                withNS(namespace, "compile-on-save"),
+                new BooleanConverter(false));
     }
 
     public static void setDefaultPreference() {
@@ -147,6 +151,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy() {
         return modelLoadingStrategy;
+    }
+
+    public StringBasedProperty<Boolean> compileOnSave() {
+        return compileOnSave;
     }
 
     public static GlobalGradleSettings getDefault() {
@@ -212,6 +220,10 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getMayRelyOnJavaOfScript() {
         return getDefault().mayRelyOnJavaOfScript;
+    }
+
+    public static StringBasedProperty<Boolean> getCompileOnSave() {
+        return getDefault().compileOnSave;
     }
 
     public static FileObject getHomeFolder(JavaPlatform platform) {

@@ -112,6 +112,8 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-api-progress')
     providedCompile netbeansApi('org-netbeans-core-multiview')
     providedCompile netbeansApi('org-netbeans-modules-editor-indent-project')
+    providedCompile netbeansApi('org-netbeans-modules-editor-lib2')
+    providedCompile netbeansApi('org-netbeans-modules-parsing-api')
     providedCompile netbeansApi('org-netbeans-modules-java-platform')
     providedCompile netbeansApi('org-netbeans-modules-java-project')
     providedCompile netbeansApi('org-netbeans-modules-java-source')

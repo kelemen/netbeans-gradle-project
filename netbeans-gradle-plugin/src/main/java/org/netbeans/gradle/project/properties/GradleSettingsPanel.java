@@ -72,6 +72,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jReliableJavaVersionCheck.setSelected(GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue());
         jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
                 GlobalGradleSettings.getModelLoadingStrategy().getValue()));
+        jCompileOnSaveCheckbox.setSelected(GlobalGradleSettings.getCompileOnSave().getValue());
 
         File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -88,6 +89,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         GlobalGradleSettings.getMayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
         GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
         GlobalGradleSettings.getModelLoadingStrategy().setValue(getModelLoadingStrategy());
+        GlobalGradleSettings.getCompileOnSave().setValue(jCompileOnSaveCheckbox.isSelected());
     }
 
     private ModelLoadingStrategy getModelLoadingStrategy() {
@@ -228,6 +230,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
         jModelLoadStrategy = new javax.swing.JComboBox<ModelLoadStrategyItem>();
         jModelLoadStrategyLabel = new javax.swing.JLabel();
         jReadWikiButton = new javax.swing.JButton();
+        jCompileOnSaveCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -280,6 +283,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jCompileOnSaveCheckbox, org.openide.util.NbBundle.getMessage(GradleSettingsPanel.class, "GradleSettingsPanel.jCompileOnSaveCheckbox.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -316,7 +321,8 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jReliableJavaVersionCheck)
                             .addComponent(jGradleJdkCaption)
                             .addComponent(jGradleUserHomeCaption)
-                            .addComponent(jSkipCheckCheckBox))
+                            .addComponent(jSkipCheckCheckBox)
+                            .addComponent(jCompileOnSaveCheckbox))
                         .addGap(0, 114, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -363,7 +369,9 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jDontAddInitScriptCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jReliableJavaVersionCheck)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jCompileOnSaveCheckbox)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -396,6 +404,7 @@ public class GradleSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JButton jBrowsePathButton;
     private javax.swing.JButton jBrowseUserHomeDirButton;
+    private javax.swing.JCheckBox jCompileOnSaveCheckbox;
     private javax.swing.JCheckBox jDontAddInitScriptCheck;
     private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradleJdkCaption;
