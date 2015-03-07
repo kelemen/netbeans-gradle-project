@@ -11,7 +11,6 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JList;
-import javax.swing.JRootPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -30,8 +29,11 @@ import static org.jtrim.property.swing.AutoDisplayState.*;
 @SuppressWarnings("serial")
 public class PlatformPriorityPanel extends javax.swing.JPanel {
     private final DefaultListModel<PlatformItem> jPlatformListModel;
+    private boolean okPressed;
 
     public PlatformPriorityPanel() {
+        okPressed = false;
+
         initComponents();
 
         JavaPlatform[] platforms
@@ -49,18 +51,26 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         jPlatformList.setModel(jPlatformListModel);
     }
 
-    public static void showDialog(Component parent) {
+    public boolean isOkPressed() {
+        return okPressed;
+    }
+
+    public static boolean showDialog(Component parent) {
         String title = "Platform order";
         Window parentWindow = SwingUtilities.getWindowAncestor(parent);
         JDialog dlg = new JDialog(parentWindow, title, Dialog.ModalityType.DOCUMENT_MODAL);
 
         Container contentPane = dlg.getContentPane();
         contentPane.setLayout(new GridLayout(1, 1));
-        contentPane.add(new PlatformPriorityPanel());
+
+        PlatformPriorityPanel content = new PlatformPriorityPanel();
+        contentPane.add(content);
 
         dlg.pack();
         dlg.setLocationRelativeTo(parent);
         dlg.setVisible(true);
+
+        return content.okPressed;
     }
 
     private void moveElement(int step) {
@@ -279,6 +289,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         PlatformOrder newOrdere = new PlatformOrder(platforms);
         GlobalGradleSettings.getPlatformPreferenceOrder().setValue(newOrdere);
 
+        okPressed = true;
         closeWindow();
     }//GEN-LAST:event_jOkButtonActionPerformed
 
