@@ -129,10 +129,12 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jGradleHomeInherit.setSelected(properties.getGradleLocation().isDefault());
 
         JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();
+        fillScriptPlatformCombo();
         jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(currentScriptPlatform));
         jScriptPlatformInherit.setSelected(properties.getScriptPlatform().isDefault());
 
         ProjectPlatform currentPlatform = properties.getPlatform().getValue();
+        fillProjectPlatformCombo();
         jPlatformCombo.setSelectedItem(new ProjectPlatformComboItem(currentPlatform));
         jPlatformComboInherit.setSelected(properties.getPlatform().isDefault());
 
@@ -253,7 +255,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<JavaPlatformComboItem> comboItems = new LinkedList<>();
 
-        for (JavaPlatform platform: platforms) {
+        for (JavaPlatform platform: GlobalGradleSettings.filterIndistinguishable(platforms)) {
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
                 comboItems.add(new JavaPlatformComboItem(platform));
@@ -569,6 +571,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
     }
 
+    private void refreshPlatformCombos() {
+        loadSelectedProfile();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -599,6 +605,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jScriptPlatformCaption = new javax.swing.JLabel();
         jScriptPlatformCombo = new javax.swing.JComboBox<JavaPlatformComboItem>();
         jScriptPlatformInherit = new javax.swing.JCheckBox();
+        jPlatformPreferenceButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceEncodingCaption, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jSourceEncodingCaption.text")); // NOI18N
 
@@ -656,6 +663,13 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jScriptPlatformInherit, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jScriptPlatformInherit.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jPlatformPreferenceButton, org.openide.util.NbBundle.getMessage(ProjectPropertiesPanel.class, "ProjectPropertiesPanel.jPlatformPreferenceButton.text")); // NOI18N
+        jPlatformPreferenceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jPlatformPreferenceButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -676,10 +690,6 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                             .addComponent(jSourceEncodingCaption)
                             .addComponent(jPlatformCaption)
                             .addComponent(jSourceLevelCaption)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jManageTasksButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jManageBuiltInTasks))
                             .addComponent(jGradleHomeCaption)
                             .addComponent(jScriptPlatformCaption))
                         .addGap(0, 0, Short.MAX_VALUE))
@@ -696,7 +706,13 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                             .addComponent(jGradleHomeInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jScriptPlatformInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPlatformComboInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jSourceLevelComboInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jSourceLevelComboInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jManageTasksButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jManageBuiltInTasks)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPlatformPreferenceButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -741,7 +757,8 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jManageTasksButton)
-                    .addComponent(jManageBuiltInTasks))
+                    .addComponent(jManageBuiltInTasks)
+                    .addComponent(jPlatformPreferenceButton))
                 .addGap(0, 8, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -888,6 +905,12 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         });
     }//GEN-LAST:event_jManageBuiltInTasksActionPerformed
 
+    private void jPlatformPreferenceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPlatformPreferenceButtonActionPerformed
+        if (PlatformPriorityPanel.showDialog(this)) {
+            refreshPlatformCombos();
+        }
+    }//GEN-LAST:event_jPlatformPreferenceButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jAddProfileButton;
     private javax.swing.JLabel jGradleHomeCaption;
@@ -898,6 +921,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jPlatformCaption;
     private javax.swing.JComboBox<ProjectPlatformComboItem> jPlatformCombo;
     private javax.swing.JCheckBox jPlatformComboInherit;
+    private javax.swing.JButton jPlatformPreferenceButton;
     private javax.swing.JLabel jProfileCaption;
     private javax.swing.JComboBox<ProfileItem> jProfileCombo;
     private javax.swing.JButton jRemoveProfileButton;

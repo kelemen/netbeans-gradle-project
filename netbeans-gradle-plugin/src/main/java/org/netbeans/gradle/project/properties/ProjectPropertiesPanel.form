@@ -33,11 +33,6 @@
                           <Component id="jSourceEncodingCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jPlatformCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jSourceLevelCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jManageTasksButton" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jManageBuiltInTasks" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Component id="jGradleHomeCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jScriptPlatformCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -59,6 +54,13 @@
                           <Component id="jPlatformComboInherit" alignment="1" max="32767" attributes="0"/>
                           <Component id="jSourceLevelComboInherit" alignment="1" max="32767" attributes="0"/>
                       </Group>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jManageTasksButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jManageBuiltInTasks" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="jPlatformPreferenceButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -114,6 +116,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jManageTasksButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jManageBuiltInTasks" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jPlatformPreferenceButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="0" pref="8" max="32767" attributes="0"/>
           </Group>
@@ -298,6 +301,16 @@
           <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="ProjectPropertiesPanel.jScriptPlatformInherit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="jPlatformPreferenceButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="ProjectPropertiesPanel.jPlatformPreferenceButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jPlatformPreferenceButtonActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
