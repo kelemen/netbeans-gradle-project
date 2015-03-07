@@ -402,7 +402,9 @@ public final class AsyncGradleTask implements Runnable {
                             assert outputRef != null; // Avoid warning
 
                             InputOutputWrapper io = tab.getIo();
-                            io.getIo().select();
+                            if (!actionContexts.contains(GradleActionProviderContext.DONT_FOCUS_ON_OUTPUT)) {
+                                io.getIo().select();
+                            }
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
                                 runBuild(cancelToken, buildLauncher);

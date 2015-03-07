@@ -42,7 +42,9 @@ public final class CompileOnSaveAction implements OnSaveTask {
         }
         actionProvider.invokeAction(
                 JavaProjectConstants.COMMAND_DEBUG_FIX,
-                Lookups.fixed(srcFile, GradleActionProviderContext.DONT_SAVE_FILES));
+                Lookups.fixed(srcFile,
+                        GradleActionProviderContext.DONT_SAVE_FILES,
+                        GradleActionProviderContext.DONT_FOCUS_ON_OUTPUT));
     }
 
     private static boolean isGradleProject(Project project) {
