@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.UnregisteredListenerRef;
+import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -224,9 +225,9 @@ public final class DefaultProjectProperties extends AbstractProjectProperties {
     }
 
     private static final class WrappedUnmodifiableProperty<ValueType> extends UnmodifiableProperty<ValueType> {
-        private final OldMutableProperty<ValueType> wrapped;
+        private final MutableProperty<ValueType> wrapped;
 
-        public WrappedUnmodifiableProperty(String propertyName, OldMutableProperty<ValueType> wrapped) {
+        public WrappedUnmodifiableProperty(String propertyName, MutableProperty<ValueType> wrapped) {
             super(propertyName);
 
             ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");

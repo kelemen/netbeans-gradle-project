@@ -572,13 +572,6 @@ public final class GlobalGradleSettings {
         }
 
         @Override
-        public void setValueFromSource(OldPropertySource<? extends ValueType> source) {
-            // Currently we ignore if the value of "source" changes for global
-            // properties. This might need to be considered in the future.
-            setValue(source.getValue());
-        }
-
-        @Override
         public void setValue(ValueType value) {
             String strValue = converter.toString(value);
             setValueFromString(strValue);
@@ -587,12 +580,6 @@ public final class GlobalGradleSettings {
         @Override
         public ValueType getValue() {
             return converter.toValue(getValueAsString());
-        }
-
-        @Override
-        public boolean isDefault() {
-            String strValue = getValueAsString();
-            return strValue == null || strValue.isEmpty();
         }
 
         @Override
