@@ -4,16 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 import org.jtrim.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
-import org.openide.modules.SpecificationVersion;
 
 public final class TargetPlatformProperty {
-    private static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
     private static final String CONFIG_KEY_PLATFORM_NAME = "target-platform-name";
     private static final String CONFIG_KEY_PLATFORM_VERSION = "target-platform";
 
@@ -59,25 +56,6 @@ public final class TargetPlatformProperty {
                 return result.create();
             }
         };
-    }
-
-    private static String getDefaultPlatformVersion(String defaultVersion) {
-        JavaPlatform platform = JavaPlatform.getDefault();
-        if (platform == null) {
-            return defaultVersion;
-        }
-
-        Specification specification = platform.getSpecification();
-        if (specification == null) {
-            return defaultVersion;
-        }
-
-        SpecificationVersion version = specification.getVersion();
-        if (version == null) {
-            return defaultVersion;
-        }
-
-        return version.toString();
     }
 
     private TargetPlatformProperty() {

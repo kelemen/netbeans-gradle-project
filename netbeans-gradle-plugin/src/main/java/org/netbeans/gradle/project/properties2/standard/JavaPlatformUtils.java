@@ -20,8 +20,11 @@ import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.PlatformOrder;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
+import org.openide.modules.SpecificationVersion;
 
 public final class JavaPlatformUtils {
+    public static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
+
     private static final PropertySource<List<JavaPlatform>> JAVA_PLATFORMS
             = createJavaPlatforms();
 
@@ -124,6 +127,25 @@ public final class JavaPlatformUtils {
                         unordered.addChangeListener(listener));
             }
         };
+    }
+
+    private static String getDefaultPlatformVersion(String defaultVersion) {
+        JavaPlatform platform = JavaPlatform.getDefault();
+        if (platform == null) {
+            return defaultVersion;
+        }
+
+        Specification specification = platform.getSpecification();
+        if (specification == null) {
+            return defaultVersion;
+        }
+
+        SpecificationVersion version = specification.getVersion();
+        if (version == null) {
+            return defaultVersion;
+        }
+
+        return version.toString();
     }
 
     private JavaPlatformUtils() {
