@@ -7,19 +7,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventDispatcher;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -586,19 +586,12 @@ public final class GlobalGradleSettings {
         public ListenerRef addChangeListener(final Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            final PreferenceChangeListener changeListener = new PreferenceChangeListener() {
+            return PREFERENCE.addPreferenceChangeListener(new PreferenceChangeListener() {
                 @Override
                 public void preferenceChange(PreferenceChangeEvent evt) {
                     if (GlobalProperty.this.settingsName.equals(evt.getKey())) {
                         listener.run();
                     }
-                }
-            };
-
-            return NbListenerRefs.fromRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    PREFERENCE.removePreferenceChangeListener(changeListener);
                 }
             });
         }
@@ -641,45 +634,39 @@ public final class GlobalGradleSettings {
         }
 
         @Override
-        public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
-            getPreferences().addPreferenceChangeListener(pcl);
-        }
+        public ListenerRef addPreferenceChangeListener(final PreferenceChangeListener pcl) {
+            final Preferences preferences = getPreferences();
 
-        @Override
-        public void removePreferenceChangeListener(PreferenceChangeListener pcl) {
-            getPreferences().removePreferenceChangeListener(pcl);
+            // To be super safe, we could wrap the listener
+            preferences.addPreferenceChangeListener(pcl);
+            return NbListenerRefs.fromRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    preferences.removePreferenceChangeListener(pcl);
+                }
+            });
         }
     }
 
     private static final class MemPreference implements BasicPreference {
         private final Map<String, String> values;
-        private final Lock listenersLock;
-        private final List<PreferenceChangeListener> listeners;
+        private final ListenerManager<PreferenceChangeListener> listeners;
 
         public MemPreference() {
             this.values = new ConcurrentHashMap<>();
-            this.listeners = new LinkedList<>();
-            this.listenersLock = new ReentrantLock();
+            this.listeners = new CopyOnTriggerListenerManager<>();
         }
 
         private void fireChangeListener(String key, String newValue) {
-            List<PreferenceChangeListener> listenersSnapshot;
-
-            listenersLock.lock();
-            try {
-                if (listeners.isEmpty()) {
-                    return;
-                }
-
-                listenersSnapshot = new ArrayList<>(listeners);
-            } finally {
-                listenersLock.unlock();
-            }
-
             PreferenceChangeEvent evt = new PreferenceChangeEvent(Preferences.systemRoot(), key, newValue);
-            for (PreferenceChangeListener listener: listenersSnapshot) {
-                listener.preferenceChange(evt);
-            }
+
+            // In Java 8, it can be PreferenceChangeListener::preferenceChange
+            listeners.onEvent(new EventDispatcher<PreferenceChangeListener, PreferenceChangeEvent>() {
+                @Override
+                public void onEvent(PreferenceChangeListener eventListener, PreferenceChangeEvent arg) {
+                    eventListener.preferenceChange(arg);
+                }
+            }, evt);
         }
 
         @Override
@@ -705,23 +692,8 @@ public final class GlobalGradleSettings {
         }
 
         @Override
-        public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
-            listenersLock.lock();
-            try {
-                listeners.add(0, pcl);
-            } finally {
-                listenersLock.unlock();
-            }
-        }
-
-        @Override
-        public void removePreferenceChangeListener(PreferenceChangeListener pcl) {
-            listenersLock.lock();
-            try {
-                listeners.remove(pcl);
-            } finally {
-                listenersLock.unlock();
-            }
+        public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl) {
+            return listeners.registerListener(pcl);
         }
     }
 
@@ -730,8 +702,7 @@ public final class GlobalGradleSettings {
         public void remove(String key);
         public String get(String key);
 
-        public void addPreferenceChangeListener(PreferenceChangeListener pcl);
-        public void removePreferenceChangeListener(PreferenceChangeListener pcl);
+        public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl);
     }
 
     private static final class NameAndVersion {
