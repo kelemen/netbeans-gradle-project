@@ -2,18 +2,14 @@ package org.netbeans.gradle.project.properties2.standard;
 
 import java.util.Arrays;
 import java.util.List;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
-import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
-import org.netbeans.gradle.project.properties2.PropertyValueDef;
 import org.openide.modules.SpecificationVersion;
 
 public final class TargetPlatformProperty {
@@ -37,47 +33,8 @@ public final class TargetPlatformProperty {
     private static PropertyDef<PlatformId, JavaPlatform> createPropertyDef() {
         PropertyDef.Builder<PlatformId, JavaPlatform> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getEncodingDef());
-        result.setValueDef(getValueDef());
+        result.setValueDef(JavaPlatformUtils.getPlatformIdValueDef());
         return result.create();
-    }
-
-    private static PropertySource<JavaPlatform> javaPlatform(final PlatformId valueKey) {
-        if (valueKey == null) {
-            return PropertyFactory.constSource(null);
-        }
-
-        PropertySource<List<JavaPlatform>> javaPlatforms = JavaPlatformUtils.javaPlatforms();
-
-        return PropertyFactory.convert(javaPlatforms, new ValueConverter<List<JavaPlatform>, JavaPlatform>() {
-            @Override
-            public JavaPlatform convert(List<JavaPlatform> input) {
-                return DefaultPropertySources.tryChooseFromPlatforms(valueKey.getName(), valueKey.getVersion(), input);
-            }
-        });
-    }
-
-    private static PropertyValueDef<PlatformId, JavaPlatform> getValueDef() {
-        return new PropertyValueDef<PlatformId, JavaPlatform>() {
-            @Override
-            public PropertySource<JavaPlatform> property(PlatformId valueKey) {
-                return javaPlatform(valueKey);
-            }
-
-            @Override
-            public PlatformId getKeyFromValue(JavaPlatform value) {
-                Specification specification = value != null
-                        ? value.getSpecification()
-                        : null;
-
-                if (specification == null) {
-                    return null;
-                }
-
-                String name = specification.getName();
-                String version = specification.getVersion().toString();
-                return new PlatformId(name, version);
-            }
-        };
     }
 
     private static PropertyKeyEncodingDef<PlatformId> getEncodingDef() {
