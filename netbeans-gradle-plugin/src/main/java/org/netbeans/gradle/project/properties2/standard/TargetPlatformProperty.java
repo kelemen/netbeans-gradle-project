@@ -1,17 +1,11 @@
 package org.netbeans.gradle.project.properties2.standard;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
-import org.jtrim.property.swing.SwingForwarderFactory;
-import org.jtrim.property.swing.SwingProperties;
-import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties2.ConfigPath;
@@ -47,49 +41,16 @@ public final class TargetPlatformProperty {
         return result.create();
     }
 
-    private static SwingPropertySource<JavaPlatform[], PropertyChangeListener> javaPlatforms() {
-        final JavaPlatformManager platformManager = JavaPlatformManager.getDefault();
-
-        return new SwingPropertySource<JavaPlatform[], PropertyChangeListener>() {
-            @Override
-            public JavaPlatform[] getValue() {
-                return JavaPlatformManager.getDefault().getInstalledPlatforms();
-            }
-
-            @Override
-            public void addChangeListener(PropertyChangeListener listener) {
-                platformManager.addPropertyChangeListener(listener);
-            }
-
-            @Override
-            public void removeChangeListener(PropertyChangeListener listener) {
-                platformManager.removePropertyChangeListener(listener);
-            }
-        };
-    }
-
     private static PropertySource<JavaPlatform> javaPlatform(final PlatformId valueKey) {
         if (valueKey == null) {
             return PropertyFactory.constSource(null);
         }
 
-        PropertySource<JavaPlatform[]> javaPlatforms = SwingProperties.fromSwingSource(javaPlatforms(), new SwingForwarderFactory<PropertyChangeListener>() {
-            @Override
-            public PropertyChangeListener createForwarder(final Runnable listener) {
-                return new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
-                            listener.run();
-                        }
-                    }
-                };
-            }
-        });
+        PropertySource<List<JavaPlatform>> javaPlatforms = JavaPlatformUtils.javaPlatforms();
 
-        return PropertyFactory.convert(javaPlatforms, new ValueConverter<JavaPlatform[], JavaPlatform>() {
+        return PropertyFactory.convert(javaPlatforms, new ValueConverter<List<JavaPlatform>, JavaPlatform>() {
             @Override
-            public JavaPlatform convert(JavaPlatform[] input) {
+            public JavaPlatform convert(List<JavaPlatform> input) {
                 return DefaultPropertySources.tryChooseFromPlatforms(valueKey.getName(), valueKey.getVersion(), input);
             }
         });
