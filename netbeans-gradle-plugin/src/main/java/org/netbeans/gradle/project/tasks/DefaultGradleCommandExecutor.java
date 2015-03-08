@@ -1,10 +1,13 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.Collections;
+import java.util.Set;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.openide.util.Lookup;
@@ -36,7 +39,9 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
             }
         };
 
-        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, taskDefFactory, new CommandCompleteListener() {
+        Set<GradleActionProviderContext> actionContexts = Collections.emptySet();
+
+        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 try {

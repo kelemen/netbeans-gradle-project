@@ -1,6 +1,6 @@
 import org.gradle.tooling.provider.model.*
 
-private class DynamicGradleModelPlugin implements Plugin<Project> {
+class DynamicGradleModelPlugin implements Plugin<Project> {
     private final ToolingModelBuilderRegistry registry
 
     @javax.inject.Inject
@@ -53,7 +53,7 @@ private ClassLoader classLoaderFromClassPath(Collection<File> classPath, ClassLo
     return new URLClassLoader(urls.toArray(new URL[urls.size()]), parent);
 }
 
-private class CustomClassObjectInputStream extends ObjectInputStream {
+class CustomClassObjectInputStream extends ObjectInputStream {
     private final ClassLoader classLoader;
 
     public CustomClassObjectInputStream(ClassLoader classLoader, InputStream input) throws IOException {

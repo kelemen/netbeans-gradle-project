@@ -526,6 +526,10 @@ public final class GradleModelLoader {
             String gradleVersion = env.getGradle().getGradleVersion();
             GlobalErrorReporter.showIssue(NbStrings.getIssueWithGradle18Message(gradleVersion));
         }
+        else if (GradleVersions.VERSION_2_3.equals(version.getBaseVersion())) {
+            String gradleVersion = env.getGradle().getGradleVersion();
+            GlobalErrorReporter.showIssue(NbStrings.getIssueWithGradle23Message(gradleVersion));
+        }
     }
 
     private static NbModelLoader chooseModel(
@@ -535,14 +539,16 @@ public final class GradleModelLoader {
 
         GradleVersion version = gradleTarget.getGradleVersion();
 
+        NbModelLoader result;
         if (GlobalGradleSettings.getModelLoadingStrategy().getValue().canUse18Api(version)) {
-            LOGGER.log(Level.INFO, "Using model loader: {0}", NbGradle18ModelLoader.class.getSimpleName());
-            return new NbGradle18ModelLoader(setup, gradleTarget);
+            result = new NbGradle18ModelLoader(setup, gradleTarget);
         }
         else {
-            LOGGER.log(Level.INFO, "Using model loader: {0}", NbCompatibleModelLoader.class.getSimpleName());
-            return new NbCompatibleModelLoader(cachedModel, setup, gradleTarget);
+            result = new NbCompatibleModelLoader(cachedModel, setup, gradleTarget);
         }
+
+        LOGGER.log(Level.INFO, "Using model loader: {0}", result.getClass().getSimpleName());
+        return result;
     }
 
     public static NbGradleModel createEmptyModel(File projectDir) {

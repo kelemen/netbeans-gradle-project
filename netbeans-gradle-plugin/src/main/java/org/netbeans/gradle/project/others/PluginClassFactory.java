@@ -38,7 +38,15 @@ public final class PluginClassFactory {
 
     public ClassLoader tryGetModuleClassLoader() {
         ModuleInfo moduleInfo = tryGetModuleInfo();
-        return moduleInfo != null ? moduleInfo.getClassLoader() : null;
+        if (moduleInfo == null) {
+            return null;
+        }
+
+        try {
+            return moduleInfo.isEnabled() ? moduleInfo.getClassLoader() : null;
+        } catch (UnsupportedOperationException | IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     public Class<?> tryFindClass(String className) {

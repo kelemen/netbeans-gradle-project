@@ -51,6 +51,8 @@ class NbmTask extends ConventionTask {
         makenbm.productDir = project.tasks.netbeans.getModuleBuildDir()
         makenbm.file = nbmFile
         makenbm.module = "modules" + File.separator + moduleJarName + ".jar"
+        makenbm.moduleauthor = 'Attila Kelemen'
+        makenbm.createLicense().file = new File(project.projectDir, 'license.txt')
 
         NbmKeyStoreDef keyStore = nbm.keyStore
         def keyStoreFile = EvaluateUtils.asPath(keyStore.keyStoreFile)

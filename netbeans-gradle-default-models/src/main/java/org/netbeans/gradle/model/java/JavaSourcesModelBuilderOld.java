@@ -185,7 +185,15 @@ implements
         private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) {
             @SuppressWarnings("unchecked")
             Collection<? extends File> srcDirs = (Collection<? extends File>)getNonBoolProperty(sourceGroup, "srcDirs");
-            return new JavaSourceGroup(name, srcDirs);
+
+            @SuppressWarnings("unchecked")
+            Collection<? extends String> includes = (Collection<? extends String>)getNonBoolProperty(sourceGroup, "includes");
+
+            @SuppressWarnings("unchecked")
+            Collection<? extends String> excludes = (Collection<? extends String>)getNonBoolProperty(sourceGroup, "excludes");
+
+            SourceIncludePatterns patterns = SourceIncludePatterns.create(excludes, includes);
+            return new JavaSourceGroup(name, srcDirs, patterns);
         }
 
         private JavaOutputDirs parseOutputDirs(Object outputDirs) {

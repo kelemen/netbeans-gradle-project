@@ -422,6 +422,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.IssueWithGradle18Message", gradleVersion);
     }
 
+    public static String getIssueWithGradle23Message(String gradleVersion) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.IssueWithGradle23Message", gradleVersion);
+    }
+
     public static String getCreateSourceDirsAction() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateSourceDirsAction");
     }
@@ -429,7 +433,6 @@ public final class NbStrings {
     public static String getDeleteEmptySourceDirsAction() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DeleteEmptySourceDirsAction");
     }
-
 
     public static String getSourceDirsActionGroup() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SourceDirsActionGroup");

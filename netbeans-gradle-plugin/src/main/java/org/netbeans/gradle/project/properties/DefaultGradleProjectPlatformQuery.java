@@ -9,12 +9,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectPlatformQuery.class, position = 1000)
@@ -43,20 +45,18 @@ implements
         final JavaPlatformManager manager = JavaPlatformManager.getDefault();
         manager.addPropertyChangeListener(changeListener);
 
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
+        StringBasedProperty<PlatformOrder> order
+                = GlobalGradleSettings.getPlatformPreferenceOrder();
 
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
+        final ListenerRef orderListenerRef = order.addChangeListener(listener);
 
+        return NbListenerRefs.fromRunnable(new Runnable() {
             @Override
-            public void unregister() {
+            public void run() {
                 manager.removePropertyChangeListener(changeListener);
-                registered = false;
+                orderListenerRef.unregister();
             }
-        };
+        });
     }
 
     @Override
@@ -69,7 +69,7 @@ implements
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<ProjectPlatform> result = new ArrayList<>(platforms.length);
 
-        for (final JavaPlatform platform: platforms) {
+        for (JavaPlatform platform: GlobalGradleSettings.filterIndistinguishable(platforms)) {
             result.add(AbstractProjectPlatformSource.getJavaPlatform(platform));
         }
         return result;

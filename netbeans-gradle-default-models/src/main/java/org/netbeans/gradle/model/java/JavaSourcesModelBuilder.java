@@ -14,6 +14,7 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.gradleclasses.GradleClass;
 import org.netbeans.gradle.model.gradleclasses.GradleClasses;
 import org.netbeans.gradle.model.util.BuilderUtils;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.Exceptions;
 
 import static org.netbeans.gradle.model.util.ReflectionUtils.*;
@@ -79,10 +80,14 @@ implements
 
         private final GradleClass type;
         private final Method getSrcDirs;
+        private final Method getIncludes;
+        private final Method getExcludes;
 
         public SourceDirectorySetMethods(GradleClass type) throws Exception {
             this.type = type;
             this.getSrcDirs = type.getMethod("getSrcDirs");
+            this.getIncludes = type.getMethod("getIncludes");
+            this.getExcludes = type.getMethod("getExcludes");
         }
 
         public static SourceDirectorySetMethods getInstance(Project project) throws Exception {
@@ -99,6 +104,27 @@ implements
         @SuppressWarnings("unchecked")
         public Set<File> getSrcDirs(Object sourceDirectorySet) throws Exception {
             return (Set<File>)getSrcDirs.invoke(sourceDirectorySet);
+        }
+
+        private static Set<String> toSafeStringSet(Set<?> set) {
+            Set<String> result = CollectionUtils.newLinkedHashSet(set.size());
+            for (Object element: set) {
+                String strValue = element != null ? element.toString() : null;
+                if (strValue != null) {
+                    result.add(strValue);
+                }
+            }
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        public Set<String> getIncludes(Object sourceDirectorySet) throws Exception {
+            return toSafeStringSet((Set<?>)getIncludes.invoke(sourceDirectorySet));
+        }
+
+        @SuppressWarnings("unchecked")
+        public Set<String> getExcludes(Object sourceDirectorySet) throws Exception {
+            return toSafeStringSet((Set<?>)getExcludes.invoke(sourceDirectorySet));
         }
     }
 
@@ -315,7 +341,10 @@ implements
 
         private JavaSourceGroup parseSourceGroup(JavaSourceGroupName name, Object sourceGroup) throws Exception {
             Collection<? extends File> srcDirs = sourceDirectorySetMethods.getSrcDirs(sourceGroup);
-            return new JavaSourceGroup(name, srcDirs);
+            Set<String> excludes = sourceDirectorySetMethods.getExcludes(sourceGroup);
+            Set<String> includes = sourceDirectorySetMethods.getIncludes(sourceGroup);
+            SourceIncludePatterns patterns = SourceIncludePatterns.create(excludes, includes);
+            return new JavaSourceGroup(name, srcDirs, patterns);
         }
 
         private JavaOutputDirs parseOutputDirs(Object outputDirs) throws Exception {

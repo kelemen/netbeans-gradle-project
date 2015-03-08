@@ -1,16 +1,13 @@
 package org.netbeans.gradle.project.output;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.windows.OutputListener;
-import org.openide.windows.OutputWriter;
 
-public final class FileLineConsumer implements SmartOutputHandler.Consumer {
+public final class FileLineConsumer implements OutputLinkFinder {
     private static final Logger LOGGER = Logger.getLogger(FileLineConsumer.class.getName());
 
-    private static boolean printLink(String line, File file, String otherInfo, OutputWriter output) {
+    private static OutputLinkDef tryFindLink(String line, File file, String otherInfo) {
         int lineIndexSep = otherInfo.indexOf(':');
         int lineNumber = -1;
         if (lineIndexSep > 0) {
@@ -20,46 +17,45 @@ public final class FileLineConsumer implements SmartOutputHandler.Consumer {
             }
         }
 
-        OutputListener listener = OpenEditorOutputListener.tryCreateListener(file, lineNumber);
+        Runnable listener = OpenEditorOutputListener.tryCreateListener(file, lineNumber);
         if (listener == null) {
-            LOGGER.log(Level.WARNING, "File displayed in the output disapeared: {0}", file);
-            return false;
+            LOGGER.log(Level.WARNING, "File displayed in the output disappeared: {0}", file);
+            return null;
         }
 
-        try {
-            output.println(line, listener, false);
-        } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Error while printing line.", ex);
-            return false;
-        }
-        return true;
+        // TODO: Altough we expect the whole line to point to a line of a file
+        //       we should be more precise.
+        return new OutputLinkDef(0, line.length(), listener);
     }
 
-    private static boolean tryPrintLink(String line, int sepIndex, OutputWriter output) {
+    private OutputLinkDef tryFindLink(String line, int sepIndex) {
         File file = new File(line.substring(0, sepIndex).trim());
         if (file.isFile()) {
-            return printLink(line, file, line.substring(sepIndex + 1, line.length()), output);
+            return tryFindLink(line, file, line.substring(sepIndex + 1, line.length()));
         }
-        return false;
+        else {
+            return null;
+        }
     }
 
     @Override
-    public boolean tryConsumeLine(String line, OutputWriter output) throws IOException {
+    public OutputLinkDef tryFindLink(String line) {
         int sepIndex = line.indexOf(':');
         if (sepIndex < 0) {
-            return false;
+            return null;
         }
 
-        if (!tryPrintLink(line, sepIndex, output)) {
+        OutputLinkDef result = tryFindLink(line, sepIndex);
+        if (result == null) {
             // Look for another ":" because paths on Windows might contain one
             // in the path. E.g.: "C:\\file"
             sepIndex = line.indexOf(':', sepIndex + 1);
             if (sepIndex < 0) {
-                return false;
+                return null;
             }
 
-            return tryPrintLink(line, sepIndex, output);
+            return tryFindLink(line, sepIndex);
         }
-        return false;
+        return null;
     }
 }

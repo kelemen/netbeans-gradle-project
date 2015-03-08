@@ -89,7 +89,7 @@ public class NbmPlugin implements Plugin<Project> {
             dependsOn 'netbeans'
 
             Path buildPath = project.buildDir.toPath()
-            Path testUserDir = buildPath.resolve('testuserdir')
+            Path testUserDir = buildPath.resolve(NetBeansTask.TEST_USER_DIR_NAME)
             if (project.hasProperty('netBeansExecutable')) {
                 doFirst {
                     def confFile = testUserDir.resolve('etc').resolve('netbeans.conf')
@@ -142,7 +142,7 @@ public class NbmPlugin implements Plugin<Project> {
     }
 
     private void setupPropertiesMerging(Project project) {
-        def mergeTask = project.tasks.add('mergeProperties', MergePropertiesTask)
+        def mergeTask = project.tasks.create('mergeProperties', MergePropertiesTask)
         project.tasks.findByName('jar').dependsOn(mergeTask)
         def generatedClasses = "${project.buildDir}/generated-resources/main"
         def generatedResources = "${project.buildDir}/generated-resources/resources"

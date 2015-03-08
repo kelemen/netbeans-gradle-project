@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,10 +25,14 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.model.OperationInitializer;
@@ -39,6 +45,7 @@ import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -49,6 +56,7 @@ import org.netbeans.gradle.project.output.IOTabRef;
 import org.netbeans.gradle.project.output.IOTabs;
 import org.netbeans.gradle.project.output.InputOutputWrapper;
 import org.netbeans.gradle.project.output.LineOutputWriter;
+import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
@@ -64,16 +72,20 @@ import org.openide.windows.OutputWriter;
 public final class AsyncGradleTask implements Runnable {
     private static final TaskExecutor TASK_EXECUTOR
             = NbTaskExecutors.newExecutor("Gradle-Task-Executor", Integer.MAX_VALUE);
+    private static final TaskExecutor CANCEL_EXECUTOR
+            = NbTaskExecutors.newExecutor("Gradle-Cancel-Executor", Integer.MAX_VALUE);
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final NbGradleProject project;
     private final GradleCommandSpecFactory taskDefFactroy;
     private final CommandCompleteListener listener;
+    private final Set<GradleActionProviderContext> actionContexts;
 
     public AsyncGradleTask(
             NbGradleProject project,
             GradleCommandSpecFactory taskDefFactroy,
+            Set<GradleActionProviderContext> actionContexts,
             CommandCompleteListener listener) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(taskDefFactroy, "taskDefFactroy");
@@ -82,6 +94,17 @@ public final class AsyncGradleTask implements Runnable {
         this.project = project;
         this.taskDefFactroy = taskDefFactroy;
         this.listener = listener;
+        this.actionContexts = copyEnumSet(actionContexts);
+
+        ExceptionHelper.checkNotNullElements(this.actionContexts, "actionContexts");
+    }
+
+    private static Set<GradleActionProviderContext> copyEnumSet(
+            Set<GradleActionProviderContext> src) {
+        Set<GradleActionProviderContext> result
+                = EnumSet.noneOf(GradleActionProviderContext.class);
+        result.addAll(src);
+        return result;
     }
 
     public NbGradleProject getProject() {
@@ -198,25 +221,29 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher,
             TaskIOTab tab) {
 
-        List<SmartOutputHandler.Consumer> consumers = new LinkedList<>();
-        consumers.add(new StackTraceConsumer(project));
-        consumers.add(new OutputUrlConsumer());
-        consumers.add(new ProjectFileConsumer(project));
-
         List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<>();
-        outputConsumers.addAll(consumers);
+        outputConsumers.add(new OutputLinkPrinter(
+                new StackTraceConsumer(project),
+                new OutputUrlConsumer(),
+                new ProjectFileConsumer(project)));
 
         List<SmartOutputHandler.Consumer> errorConsumers = new LinkedList<>();
         errorConsumers.add(new BuildErrorConsumer());
-        errorConsumers.addAll(consumers);
-        errorConsumers.add(new FileLineConsumer());
+        errorConsumers.add(new OutputLinkPrinter(
+                new StackTraceConsumer(project),
+                new OutputUrlConsumer(),
+                new ProjectFileConsumer(project),
+                new FileLineConsumer()));
 
+        InputOutputWrapper io = tab.getIo();
         Writer forwardedStdOut = new LineOutputWriter(new SmartOutputHandler(
-                tab.getIo().getOutRef(),
+                io.getIo(),
+                io.getOutRef(),
                 Arrays.asList(taskDef.getStdOutListener(project)),
                 outputConsumers));
         Writer forwardedStdErr = new LineOutputWriter(new SmartOutputHandler(
-                tab.getIo().getErrRef(),
+                io.getIo(),
+                io.getErrRef(),
                 Arrays.asList(taskDef.getStdErrListener(project)),
                 errorConsumers));
 
@@ -260,8 +287,58 @@ public final class AsyncGradleTask implements Runnable {
                 progress);
     }
 
-    // TODO: This method is extremly nasty and is in a dire need of refactoring.
+    private static void scheduleCancel(final DefaultCancellationTokenSource cancelSource) {
+        CANCEL_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws Exception {
+                cancelSource.cancel();
+            }
+        }, null);
+    }
+
+    private void runBuild(CancellationToken cancelToken, BuildLauncher buildLauncher) {
+        // It is not possible to implement org.gradle.tooling.CancellationToken
+        // Attempting to do so will cause Gradle to throw a class cast exception
+        // somewhere.
+        final DefaultCancellationTokenSource cancelSource = new DefaultCancellationTokenSource();
+        buildLauncher.withCancellationToken(cancelSource.token());
+
+        ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
+            @Override
+            public void run() {
+                scheduleCancel(cancelSource);
+            }
+        });
+        try {
+            buildLauncher.run();
+        } catch (Throwable ex) {
+            if (!cancelToken.isCanceled()) {
+                throw ex;
+            }
+            else {
+                // The exception is most likely due to cancellation.
+                // Report cancellation message?
+                LOGGER.log(Level.INFO, "Build has been canceled.", ex);
+            }
+        } finally {
+            cancelListenerRef.unregister();
+        }
+    }
+
     private void doGradleTasksWithProgress(
+            CancellationToken cancelToken,
+            ProgressHandle progress,
+            BuildExecutionItem buildItem) {
+
+        GradleTaskDef taksDef = buildItem.getProcessedTaskDef();
+        CancellationToken mergedToken = Cancellation.anyToken(
+                cancelToken,
+                taksDef.getCancelToken());
+        doGradleTasksWithProgressIgnoreTaskDefCancel(mergedToken, progress, buildItem);
+    }
+
+    // TODO: This method is extremly nasty and is in a dire need of refactoring.
+    private void doGradleTasksWithProgressIgnoreTaskDefCancel(
             CancellationToken cancelToken,
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
@@ -325,10 +402,12 @@ public final class AsyncGradleTask implements Runnable {
                             assert outputRef != null; // Avoid warning
 
                             InputOutputWrapper io = tab.getIo();
-                            io.getIo().select();
+                            if (!actionContexts.contains(GradleActionProviderContext.DONT_FOCUS_ON_OUTPUT)) {
+                                io.getIo().select();
+                            }
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
-                                buildLauncher.run();
+                                runBuild(cancelToken, buildLauncher);
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,
@@ -377,8 +456,10 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static void preSubmitGradleTask() {
-        LifecycleManager.getDefault().saveAll();
+    private void preSubmitGradleTask() {
+        if (!actionContexts.contains(GradleActionProviderContext.DONT_SAVE_FILES)) {
+            LifecycleManager.getDefault().saveAll();
+        }
     }
 
     private static void collectTaskVars(String[] strings, List<DisplayedTaskVariable> taskVars) {
@@ -513,7 +594,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
-        return new AsyncGradleTask(project, newFactory, listener);
+        return new AsyncGradleTask(project, newFactory, actionContexts, listener);
     }
 
     private static GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {

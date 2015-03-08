@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
@@ -12,8 +14,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
@@ -21,7 +25,7 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -36,12 +40,18 @@ import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
+    private static final MonitorableTaskExecutorService ATTACH_EXECUTOR
+            = NbTaskExecutors.newExecutor("Debug-Attach-Executor", 1);
 
     private final JavaExtension javaExt;
+    private final CancellationController buildCancel;
 
-    public AttacherListener(JavaExtension javaExt) {
+    public AttacherListener(JavaExtension javaExt, CancellationController buildCancel) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        ExceptionHelper.checkNotNullArgument(buildCancel, "buildCancel");
+
         this.javaExt = javaExt;
+        this.buildCancel = buildCancel;
     }
 
     private static void addSourcesOfModule(NbJavaModule module, Set<FileObject> result) {
@@ -118,12 +128,20 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         services.put("jdksources", getJdkSources());
         services.put("sourcepath", getSources());
 
-        JPDADebugger.attach("127.0.0.1", port, new Object[]{services});
+        final JPDADebugger debugger = JPDADebugger.attach("127.0.0.1", port, new Object[]{services});
+        debugger.addPropertyChangeListener("state", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (debugger.getState() == JPDADebugger.STATE_DISCONNECTED) {
+                    buildCancel.cancel();
+                }
+            }
+        });
     }
 
     @Override
     public void onDebugeeListening(final int port) {
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        ATTACH_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 try {

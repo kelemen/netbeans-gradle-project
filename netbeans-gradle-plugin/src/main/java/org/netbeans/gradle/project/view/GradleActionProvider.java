@@ -1,7 +1,9 @@
 package org.netbeans.gradle.project.view;
 
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,6 +15,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.NbCommandString;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.OldMutableProperty;
@@ -246,7 +249,10 @@ public final class GradleActionProvider implements ActionProvider {
             }
         };
 
-        return GradleTasks.createAsyncGradleTask(project, taskDefFactory, new CommandCompleteListener() {
+        Set<GradleActionProviderContext> actionContexts = EnumSet.noneOf(GradleActionProviderContext.class);
+        actionContexts.addAll(appliedContext.lookupAll(GradleActionProviderContext.class));
+
+        return GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, new CommandCompleteListener() {
             @Override
             public void onComplete(Throwable error) {
                 try {

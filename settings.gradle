@@ -8,7 +8,7 @@ def subDirs = rootDir.listFiles(new FileFilter() {
 
 subDirs.each { File dir ->
     String dirName = dir.name;
-    if (dirName.toLowerCase(Locale.US) != "buildsrc") {
+    if (dirName.toLowerCase(Locale.US) != "buildsrc" && new File(dir, 'build.gradle').exists()) {
         include dirName;
     }
 }

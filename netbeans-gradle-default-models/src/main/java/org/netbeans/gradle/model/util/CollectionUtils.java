@@ -11,6 +11,14 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CollectionUtils {
+    public static <T> Set<T> copyToLinkedHashSet(Collection<? extends T> src) {
+        if (src.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(new LinkedHashSet<T>(src));
+    }
+
     public static void checkNoNullElements(Collection<?> collection, String name) {
         if (collection == null) throw new NullPointerException(name);
 
@@ -64,6 +72,9 @@ public final class CollectionUtils {
     }
 
     public static <K, V> Map<K, V> copyNullSafeHashMap(Map<? extends K, ? extends V> map) {
+        if (map.isEmpty()) {
+            return Collections.emptyMap();
+        }
         return Collections.unmodifiableMap(copyNullSafeMutableHashMap(map));
     }
 
@@ -78,10 +89,16 @@ public final class CollectionUtils {
     }
 
     public static <K, V> Map<K, V> copyNullSafeHashMapWithNullValues(Map<? extends K, ? extends V> map) {
+        if (map.isEmpty()) {
+            return Collections.emptyMap();
+        }
         return Collections.unmodifiableMap(copyNullSafeMutableHashMapWithNullValues(map));
     }
 
     public static <E> List<E> copyNullSafeList(Collection<? extends E> list) {
+        if (list.isEmpty()) {
+            return Collections.emptyList();
+        }
         return Collections.unmodifiableList(copyNullSafeMutableList(list));
     }
 

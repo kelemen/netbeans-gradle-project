@@ -1,6 +1,7 @@
 package org.gradle.plugins.nbm;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -81,6 +82,15 @@ public final class NbmFriendPackages {
         List<String> result = new LinkedList<>();
         for (PackageNameGenerator currentNames: packageList) {
             currentNames.findPackages(result);
+        }
+        return result;
+    }
+
+    public List<String> getPackageListPattern() {
+        List<String> packages = getPackageList();
+        List<String> result = new ArrayList<>(packages.size());
+        for (String packageName: packages) {
+            result.add(packageName + ".*");
         }
         return result;
     }

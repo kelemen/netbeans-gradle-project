@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,6 +24,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
@@ -40,12 +43,15 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<List<String>> gradleJvmArgs;
     private final StringBasedProperty<JavaPlatform> gradleJdk;
     private final StringBasedProperty<Boolean> skipTests;
+    private final StringBasedProperty<Boolean> skipCheck;
     private final StringBasedProperty<Integer> projectCacheSize;
     private final StringBasedProperty<Boolean> alwaysClearOutput;
     private final StringBasedProperty<Boolean> omitInitScript;
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
+    private final StringBasedProperty<Boolean> compileOnSave;
+    private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -65,6 +71,9 @@ public final class GlobalGradleSettings {
         skipTests = new GlobalProperty<>(
                 withNS(namespace, "skip-tests"),
                 new BooleanConverter(false));
+        skipCheck = new GlobalProperty<>(
+                withNS(namespace, "skip-check"),
+                new BooleanConverter(false));
         projectCacheSize = new GlobalProperty<>(
                 withNS(namespace, "project-cache-size"),
                 new IntegerConverter(1, Integer.MAX_VALUE, 100));
@@ -83,6 +92,13 @@ public final class GlobalGradleSettings {
         gradleDaemonTimeoutSec = new GlobalProperty<>(
                 withNS(namespace, "gradle-daemon-timeout-sec"),
                 new IntegerConverter(1, Integer.MAX_VALUE, null));
+        compileOnSave = new GlobalProperty<>(
+                withNS(namespace, "compile-on-save"),
+                new BooleanConverter(false));
+        platformPreferenceOrder = new GlobalProperty<>(
+                withNS(namespace, "platform-pref-order"),
+                PlatformOrderConverter.INSTANCE
+        );
     }
 
     public static void setDefaultPreference() {
@@ -135,6 +151,10 @@ public final class GlobalGradleSettings {
         return skipTests;
     }
 
+    public StringBasedProperty<Boolean> skipCheck() {
+        return skipCheck;
+    }
+
     public StringBasedProperty<Integer> projectCacheSize() {
         return projectCacheSize;
     }
@@ -153,6 +173,14 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy() {
         return modelLoadingStrategy;
+    }
+
+    public StringBasedProperty<Boolean> compileOnSave() {
+        return compileOnSave;
+    }
+
+    public StringBasedProperty<PlatformOrder> platformPreferenceOrder() {
+        return platformPreferenceOrder;
     }
 
     public static GlobalGradleSettings getDefault() {
@@ -200,6 +228,10 @@ public final class GlobalGradleSettings {
         return getDefault().skipTests;
     }
 
+    public static StringBasedProperty<Boolean> getSkipCheck() {
+        return getDefault().skipCheck;
+    }
+
     public static StringBasedProperty<Integer> getProjectCacheSize() {
         return getDefault().projectCacheSize;
     }
@@ -214,6 +246,40 @@ public final class GlobalGradleSettings {
 
     public static StringBasedProperty<Boolean> getMayRelyOnJavaOfScript() {
         return getDefault().mayRelyOnJavaOfScript;
+    }
+
+    public static StringBasedProperty<Boolean> getCompileOnSave() {
+        return getDefault().compileOnSave;
+    }
+
+    public static StringBasedProperty<PlatformOrder> getPlatformPreferenceOrder() {
+        return getDefault().platformPreferenceOrder;
+    }
+
+    public static List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
+        return filterIndistinguishable(Arrays.asList(platforms));
+    }
+
+    public static List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
+        List<JavaPlatform> result = new ArrayList<>(platforms.size());
+        Set<NameAndVersion> foundVersions = CollectionUtils.newHashSet(platforms.size());
+
+        for (JavaPlatform platform: orderPlatforms(platforms)) {
+            if (foundVersions.add(new NameAndVersion(platform))) {
+                result.add(platform);
+            }
+        }
+
+        return result;
+    }
+
+    public static List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
+        return orderPlatforms(Arrays.asList(platforms));
+    }
+
+    public static List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
+        PlatformOrder order = getPlatformPreferenceOrder().getValue();
+        return order.orderPlatforms(platforms);
     }
 
     public static FileObject getHomeFolder(JavaPlatform platform) {
@@ -240,39 +306,63 @@ public final class GlobalGradleSettings {
         return getHomeFolder(platform);
     }
 
+    public static List<String> stringToStringList(String strValue) {
+        if (strValue == null || strValue.isEmpty()) {
+            return null;
+        }
+
+        return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
+    }
+
+    public static String stringListToString(Collection<String> value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+
+        int length = value.size() - 1;
+        for (String line: value) {
+            length += line.length();
+        }
+
+        StringBuilder result = new StringBuilder(length);
+        Iterator<String> valueItr = value.iterator();
+        // valueItr.next() should succeed since the list is not empty.
+        result.append(valueItr.next());
+
+        while (valueItr.hasNext()) {
+            result.append('\n');
+            result.append(valueItr.next());
+        }
+        return result.toString();
+    }
+
+    private enum PlatformOrderConverter implements ValueConverter<PlatformOrder> {
+        INSTANCE;
+
+        @Override
+        public PlatformOrder toValue(String strValue) {
+            return strValue != null
+                    ? PlatformOrder.fromStringFormat(strValue)
+                    : PlatformOrder.DEFAULT_ORDER;
+        }
+
+        @Override
+        public String toString(PlatformOrder value) {
+            return value != null ? value.toStringFormat() : null;
+        }
+    }
+
     private enum StringToStringListConverter implements ValueConverter<List<String>> {
         INSTANCE;
 
         @Override
         public List<String> toValue(String strValue) {
-            if (strValue == null || strValue.isEmpty()) {
-                return null;
-            }
-
-            return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
+            return stringToStringList(strValue);
         }
 
         @Override
         public String toString(List<String> value) {
-            if (value == null || value.isEmpty()) {
-                return null;
-            }
-
-            int length = value.size() - 1;
-            for (String line: value) {
-                length += line.length();
-            }
-
-            StringBuilder result = new StringBuilder(length);
-            Iterator<String> valueItr = value.iterator();
-            // valueItr.next() should succeed since the list is not empty.
-            result.append(valueItr.next());
-
-            while (valueItr.hasNext()) {
-                result.append('\n');
-                result.append(valueItr.next());
-            }
-            return result.toString();
+            return stringListToString(value);
         }
     }
 
@@ -655,6 +745,35 @@ public final class GlobalGradleSettings {
 
         public void addPreferenceChangeListener(PreferenceChangeListener pcl);
         public void removePreferenceChangeListener(PreferenceChangeListener pcl);
+    }
+
+    private static final class NameAndVersion {
+        private final String name;
+        private final String version;
+
+        public NameAndVersion(JavaPlatform platform) {
+            JavaProjectPlatform projectPlatform = new JavaProjectPlatform(platform);
+            this.name = projectPlatform.getName();
+            this.version = projectPlatform.getVersion();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 97 * hash + Objects.hashCode(this.name);
+            hash = 97 * hash + Objects.hashCode(this.version);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final NameAndVersion other = (NameAndVersion)obj;
+            return Objects.equals(this.name, other.name)
+                    && Objects.equals(this.version, other.version);
+        }
     }
 
     private GlobalGradleSettings() {

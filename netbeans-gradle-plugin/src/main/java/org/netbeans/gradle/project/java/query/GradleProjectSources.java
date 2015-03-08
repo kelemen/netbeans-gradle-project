@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.java.query;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,7 +23,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
-import org.netbeans.api.queries.SharabilityQuery;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -35,6 +34,8 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
+import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.ChangeSupport;
@@ -75,7 +76,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         if (sourceDir.isDirectory()) {
             FileObject groupRoot = FileUtil.toFileObject(sourceDir);
             if (groupRoot != null) {
-                return new GradleSourceGroup(groupRoot, root.getDisplayName());
+                return new GradleSourceGroup(groupRoot, root.getDisplayName(), root.getIncludeRules());
             }
         }
         return null;
@@ -241,18 +242,38 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     }
 
     private static class GradleSourceGroup implements SourceGroup {
+        private final ExcludeIncludeRules includeRules;
         private final FileObject location;
         private final PropertyChangeSupport changes;
         private final String displayName;
+
+        private final AtomicReference<Path> locationPathRef;
 
         public GradleSourceGroup(FileObject location) {
             this(location, NbStrings.getSrcPackageCaption());
         }
 
         public GradleSourceGroup(FileObject location, String displayName) {
+            this(location, displayName, ExcludeIncludeRules.ALLOW_ALL);
+        }
+
+        public GradleSourceGroup(FileObject location, String displayName, ExcludeIncludeRules includeRules) {
+            this.includeRules = includeRules;
             this.location = location;
             this.displayName = displayName;
             this.changes = new PropertyChangeSupport(this);
+            this.locationPathRef = new AtomicReference<>(null);
+        }
+
+        public Path getRootPath() {
+            Path result = locationPathRef.get();
+            if (result == null) {
+                result = GradleFileUtils.toPath(location);
+                if (!locationPathRef.compareAndSet(null, result)) {
+                    result = locationPathRef.get();
+                }
+            }
+            return result;
         }
 
         @Override
@@ -276,6 +297,19 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             return null;
         }
 
+        private boolean rulesAllow(FileObject file) {
+            Path rootPath = getRootPath();
+            if (rootPath == null) {
+                return true;
+            }
+
+            boolean result = includeRules.isIncluded(rootPath, file);
+            // Directories are always allowed because otherwise
+            // package view might skip the entire directory, regardless that
+            // it might contain included sub directories.
+            return result || file.isFolder();
+        }
+
         @Override
         public boolean contains(FileObject file) {
             if (file == location) {
@@ -286,10 +320,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                 return false;
             }
 
-            URI f = file.toURI();
-
-            // else MIXED, UNKNOWN, or SHARABLE; or not a disk file
-            return f == null || SharabilityQuery.getSharability(f) != SharabilityQuery.Sharability.NOT_SHARABLE;
+            return rulesAllow(file);
         }
 
         @Override

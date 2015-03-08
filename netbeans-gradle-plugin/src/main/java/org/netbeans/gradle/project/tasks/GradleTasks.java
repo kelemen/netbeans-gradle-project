@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.CancellationToken;
@@ -7,6 +8,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 
 public final class GradleTasks {
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
@@ -32,28 +34,18 @@ public final class GradleTasks {
 
     public static Runnable createAsyncGradleTask(
             NbGradleProject project,
-            GradleTaskDefFactory taskDefFactory) {
-        return createAsyncGradleTaskFromSpec(project, toSpecFactory(taskDefFactory));
-    }
-
-    public static Runnable createAsyncGradleTask(
-            NbGradleProject project,
             GradleTaskDefFactory taskDefFactory,
+            Set<GradleActionProviderContext> actionContexts,
             CommandCompleteListener listener) {
-        return createAsyncGradleTaskFromSpec(project, toSpecFactory(taskDefFactory), listener);
-    }
-
-    public static Runnable createAsyncGradleTaskFromSpec(
-            NbGradleProject project,
-            GradleCommandSpecFactory taskDefFactory) {
-        return new AsyncGradleTask(project, taskDefFactory, projectTaskCompleteListener(project));
+        return createAsyncGradleTaskFromSpec(project, toSpecFactory(taskDefFactory), actionContexts, listener);
     }
 
     public static Runnable createAsyncGradleTaskFromSpec(
             NbGradleProject project,
             GradleCommandSpecFactory taskDefFactory,
+            Set<GradleActionProviderContext> actionContexts,
             CommandCompleteListener listener) {
-        return new AsyncGradleTask(project, taskDefFactory, listener);
+        return new AsyncGradleTask(project, taskDefFactory, actionContexts, listener);
     }
 
     public static CommandCompleteListener projectTaskCompleteListener(final NbGradleProject project) {

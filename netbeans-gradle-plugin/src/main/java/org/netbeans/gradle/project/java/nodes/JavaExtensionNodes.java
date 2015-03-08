@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
+import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -104,7 +105,7 @@ implements
             JavaSourceGroupName groupName = group.getGroupName();
             for (File root: group.getSourceRoots()) {
                 if (root.exists()) {
-                    ids.add(new SourceRootID(sourceSetName, groupName, root));
+                    ids.add(new SourceRootID(sourceSetName, groupName, root, ExcludeIncludeRules.create(group)));
                 }
             }
         }
@@ -191,7 +192,11 @@ implements
             }
 
             JavaSourceGroupID groupID = root.getGroupID();
-            result.add(new SourceRootID(groupID.getSourceSetName(), groupID.getGroupName(), root.getRoot()));
+            result.add(new SourceRootID(
+                    groupID.getSourceSetName(),
+                    groupID.getGroupName(),
+                    root.getRoot(),
+                    root.getIncludeRules()));
 
             toPopulate.add(new SingleNodeFactory() {
                 @Override
@@ -231,15 +236,23 @@ implements
         private final String sourceSetName;
         private final JavaSourceGroupName groupName;
         private final File sourceRoot;
+        private final ExcludeIncludeRules includeRules;
 
-        public SourceRootID(String sourceSetName, JavaSourceGroupName groupName, File sourceRoot) {
+        public SourceRootID(
+                String sourceSetName,
+                JavaSourceGroupName groupName,
+                File sourceRoot,
+                ExcludeIncludeRules includeRules) {
+
             assert sourceSetName != null;
             assert groupName != null;
             assert sourceRoot != null;
+            assert includeRules != null;
 
             this.sourceSetName = sourceSetName;
             this.groupName = groupName;
             this.sourceRoot = sourceRoot;
+            this.includeRules = includeRules;
         }
 
         @Override
@@ -248,6 +261,7 @@ implements
             hash = 67 * hash + sourceSetName.hashCode();
             hash = 67 * hash + groupName.hashCode();
             hash = 67 * hash + sourceRoot.hashCode();
+            hash = 67 * hash + includeRules.hashCode();
             return hash;
         }
 
@@ -263,6 +277,9 @@ implements
                 return false;
             }
             if (groupName != other.groupName) {
+                return false;
+            }
+            if (!includeRules.equals(other.includeRules)) {
                 return false;
             }
 

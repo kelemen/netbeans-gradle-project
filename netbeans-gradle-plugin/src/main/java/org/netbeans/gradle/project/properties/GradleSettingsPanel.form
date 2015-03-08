@@ -41,7 +41,6 @@
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jGradleVMArgsCaption" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jReadWikiButton" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jSkipTestsCheck" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jProjectCacheSizeLabel" min="-2" max="-2" attributes="0"/>
@@ -53,8 +52,15 @@
                           <Component id="jReliableJavaVersionCheck" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jGradleJdkCaption" min="-2" max="-2" attributes="0"/>
                           <Component id="jGradleUserHomeCaption" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jSkipCheckCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCompileOnSaveCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="114" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jReadWikiButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="jJavaPlatformOrderButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -65,7 +71,10 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jReadWikiButton" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jReadWikiButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jJavaPlatformOrderButton" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jGradlePathCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -95,7 +104,9 @@
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jSkipTestsCheck" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="jSkipCheckCheckBox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jProjectCacheSizeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jProjectCacheSize" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -106,6 +117,8 @@
               <Component id="jDontAddInitScriptCheck" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="jReliableJavaVersionCheck" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jCompileOnSaveCheckbox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -179,6 +192,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jSkipTestsCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jSkipCheckCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jSkipCheckCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -261,6 +281,23 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jReadWikiButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jCompileOnSaveCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jCompileOnSaveCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="jJavaPlatformOrderButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jJavaPlatformOrderButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jJavaPlatformOrderButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

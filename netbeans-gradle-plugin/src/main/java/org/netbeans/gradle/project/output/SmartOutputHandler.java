@@ -6,27 +6,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
+import org.openide.windows.InputOutput;
 import org.openide.windows.OutputWriter;
 
 public final class SmartOutputHandler implements LineOutputWriter.Handler {
     private static final Logger LOGGER = Logger.getLogger(SmartOutputHandler.class.getName());
 
     public static interface Consumer {
-        public boolean tryConsumeLine(String line, OutputWriter output) throws IOException;
+        public boolean tryConsumeLine(String line, InputOutput ioParent, OutputWriter output) throws IOException;
     }
 
+    private final InputOutput ioParent;
     private final OutputWriter output;
     private final TaskOutputProcessor[] visitors;
     private final Consumer[] processors;
 
     public SmartOutputHandler(
+            InputOutput ioParent,
             OutputWriter output,
             List<TaskOutputProcessor> visitors,
             List<Consumer> processors) {
+        ExceptionHelper.checkNotNullArgument(ioParent, "ioParent");
         ExceptionHelper.checkNotNullArgument(output, "output");
         ExceptionHelper.checkNotNullArgument(visitors, "visitors");
         ExceptionHelper.checkNotNullArgument(processors, "processors");
 
+        this.ioParent = ioParent;
         this.output = output;
         this.visitors = visitors.toArray(new TaskOutputProcessor[0]);
         this.processors = processors.toArray(new Consumer[0]);
@@ -50,7 +55,7 @@ public final class SmartOutputHandler implements LineOutputWriter.Handler {
 
         for (Consumer processor: processors) {
             try {
-                if (processor.tryConsumeLine(line, output)) {
+                if (processor.tryConsumeLine(line, ioParent, output)) {
                     return;
                 }
             } catch (Throwable ex) {

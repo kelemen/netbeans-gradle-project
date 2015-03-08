@@ -3,10 +3,12 @@ package org.netbeans.gradle.project.output;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
@@ -135,6 +137,7 @@ public final class IOTabs {
                 AsyncGradleTask newTask = new AsyncGradleTask(
                         task.getProject(),
                         adjust(task.getTaskDefFactroy(), template),
+                        Collections.<GradleActionProviderContext>emptySet(),
                         task.getListener());
                 newTask.run();
             }

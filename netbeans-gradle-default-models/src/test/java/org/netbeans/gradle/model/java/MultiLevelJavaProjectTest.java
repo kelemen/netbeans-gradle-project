@@ -244,7 +244,7 @@ public class MultiLevelJavaProjectTest {
 
     private static void assertNoProblem(Throwable issue) {
         if (issue != null) {
-            Exceptions.throwUnchecked(issue);
+            throw Exceptions.throwUnchecked(issue);
         }
     }
 
@@ -330,6 +330,56 @@ public class MultiLevelJavaProjectTest {
         testJavaSourcesModelForJavaProject("libs:lib3", sourcesOfLib3());
         testJavaSourcesModelForJavaProject("libs:lib3:lib1", sourcesOfLib3Lib1());
         testJavaSourcesModelForJavaProject("libs:lib3:lib2", sourcesOfLib3Lib2());
+    }
+
+    private static JavaSourceGroup findSourceGroup(JavaSourceSet sourceSet, JavaSourceGroupName name) {
+        for (JavaSourceGroup group: sourceSet.getSourceGroups()) {
+            if (name.equals(group.getGroupName())) {
+                return group;
+            }
+        }
+
+        return null;
+    }
+
+    private static JavaSourceSet findSourceSet(JavaSourcesModel sourcesModel, String name) {
+        for (JavaSourceSet sourceSet: sourcesModel.getSourceSets()) {
+            if (name.equals(sourceSet.getName())) {
+                return sourceSet;
+            }
+        }
+
+        return null;
+    }
+
+    private static JavaSourceGroup findSourceGroup(
+            JavaSourcesModel sourcesModel,
+            String setName,
+            JavaSourceGroupName groupName) {
+        JavaSourceSet sourceSet = findSourceSet(sourcesModel, setName);
+        if (sourceSet == null) {
+            return null;
+        }
+
+        return findSourceGroup(sourceSet, groupName);
+    }
+
+    @Test
+    public void testExcludeIncludePatterns() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JavaSourcesModel sourcesModel
+                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.ONLY_COMPILE);
+                assertNotNull("apps:app1 must have a JavaSourcesModel.", sourcesModel);
+
+                JavaSourceGroup group = findSourceGroup(sourcesModel, JavaSourceSet.NAME_MAIN, JavaSourceGroupName.JAVA);
+                assertNotNull("apps:app1 must not have a main/java source group.", group);
+
+                SourceIncludePatterns patterns = group.getExcludePatterns();
+                assertEquals("includes", Collections.singleton("**"), patterns.getIncludePatterns());
+                assertEquals("excludes", Collections.singleton("**/excluded/"), patterns.getExcludePatterns());
+            }
+        });
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.util;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,8 +25,10 @@ public final class GradleFileUtils {
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
+    public static final String JAVADOC_DIR_NAME = "javadoc";
     public static final String SOURCE_DIR_NAME = "source";
     public static final String SOURCES_CLASSIFIER = "-sources";
+    public static final String JAVADOC_CLASSIFIER = "-javadoc";
 
     public static final String SOURCES_SUFFIX = SOURCES_CLASSIFIER + ".jar";
 
@@ -97,6 +100,12 @@ public final class GradleFileUtils {
         return binFileName + SOURCES_CLASSIFIER + "." + binFileExt;
     }
 
+    public static String binaryToJavadocName(FileObject binaryPath) {
+        String binFileName = binaryPath.getName();
+        String binFileExt = binaryPath.getExt();
+        return binFileName + JAVADOC_CLASSIFIER + "." + binFileExt;
+    }
+
     public static String sourceToBinaryName(FileObject sourcePath) {
         String srcFileName = sourcePath.getName();
         if (!srcFileName.endsWith(SOURCES_CLASSIFIER)) {
@@ -127,6 +136,15 @@ public final class GradleFileUtils {
 
     public static FileObject getSrcDirOfGradle(FileObject gradleHome) {
         return gradleHome.getFileObject("src");
+    }
+
+    public static Path toPath(FileObject fileObj) {
+        File file = FileUtil.toFile(fileObj);
+        if (file == null) {
+            return null;
+        }
+
+        return file.toPath();
     }
 
     private GradleFileUtils() {

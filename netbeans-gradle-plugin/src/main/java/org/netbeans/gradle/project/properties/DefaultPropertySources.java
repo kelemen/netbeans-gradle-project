@@ -2,9 +2,12 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -45,11 +48,18 @@ public final class DefaultPropertySources {
         return tryChooseFromPlatforms(specName, versionStr, JavaPlatformManager.getDefault().getInstalledPlatforms());
     }
 
-
     public static JavaPlatform tryChooseFromPlatforms(
             String specName,
             String versionStr,
             JavaPlatform[] platforms) {
+        List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.orderPlatforms(platforms);
+        return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
+    }
+
+    private static JavaPlatform tryChooseFromOrderedPlatforms(
+            String specName,
+            String versionStr,
+            Collection<JavaPlatform> platforms) {
 
         ExceptionHelper.checkNotNullArgument(specName, "specName");
         ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
@@ -214,7 +224,9 @@ public final class DefaultPropertySources {
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            return installedPlatforms.addChangeListener(listener);
+            return ListenerRegistries.combineListenerRefs(
+                    GlobalGradleSettings.getPlatformPreferenceOrder().addChangeListener(listener),
+                    installedPlatforms.addChangeListener(listener));
         }
     }
 

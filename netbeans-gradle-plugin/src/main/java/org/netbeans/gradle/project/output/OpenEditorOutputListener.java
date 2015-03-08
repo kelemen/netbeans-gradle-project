@@ -15,7 +15,7 @@ import org.openide.text.Line;
 import org.openide.windows.OutputEvent;
 import org.openide.windows.OutputListener;
 
-public final class OpenEditorOutputListener implements OutputListener, ActionListener {
+public final class OpenEditorOutputListener implements OutputListener, ActionListener, Runnable {
     private static final Logger LOGGER = Logger.getLogger(OpenEditorOutputListener.class.getName());
 
     private final EditorCookie editor;
@@ -102,6 +102,11 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        openInEditor();
+    }
+
+    @Override
+    public void run() {
         openInEditor();
     }
 }
