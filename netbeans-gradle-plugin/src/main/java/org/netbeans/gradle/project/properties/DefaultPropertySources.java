@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -52,6 +53,13 @@ public final class DefaultPropertySources {
             String specName,
             String versionStr,
             JavaPlatform[] platforms) {
+        return tryChooseFromPlatforms(specName, versionStr, Arrays.asList(platforms));
+    }
+
+    public static JavaPlatform tryChooseFromPlatforms(
+            String specName,
+            String versionStr,
+            List<JavaPlatform> platforms) {
         List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.orderPlatforms(platforms);
         return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
     }
