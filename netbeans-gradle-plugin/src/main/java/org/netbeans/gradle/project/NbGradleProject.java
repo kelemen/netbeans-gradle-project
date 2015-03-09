@@ -248,12 +248,10 @@ public final class NbGradleProject implements Project {
         return getLookup().lookup(NbGradleSingleProjectConfigProvider.class).getActiveConfiguration();
     }
 
-    public void addProfileChangeListener(ChangeListener listener) {
-        getLookup().lookup(NbGradleSingleProjectConfigProvider.class).addActiveConfigChangeListener(listener);
-    }
-
-    public void removeProfileChangeListener(ChangeListener listener) {
-        getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeActiveConfigChangeListener(listener);
+    public ListenerRef addProfileChangeListener(Runnable listener) {
+        return getLookup()
+                .lookup(NbGradleSingleProjectConfigProvider.class)
+                .addActiveConfigChangeListener(listener);
     }
 
     public void displayError(String errorText, Throwable exception) {

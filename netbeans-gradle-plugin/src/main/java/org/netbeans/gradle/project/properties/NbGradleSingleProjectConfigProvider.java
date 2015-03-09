@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -147,11 +148,7 @@ implements
         return result;
     }
 
-    public void addActiveConfigChangeListener(ChangeListener listener) {
-        commonConfig.addActiveConfigChangeListener(listener);
-    }
-
-    public void removeActiveConfigChangeListener(ChangeListener listener) {
-        commonConfig.removeActiveConfigChangeListener(listener);
+    public ListenerRef addActiveConfigChangeListener(Runnable listener) {
+        return commonConfig.addActiveConfigChangeListener(listener);
     }
 }

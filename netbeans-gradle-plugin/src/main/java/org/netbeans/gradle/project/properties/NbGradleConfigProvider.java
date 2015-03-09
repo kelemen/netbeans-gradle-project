@@ -22,15 +22,17 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
-import org.openide.util.ChangeSupport;
 
 public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
@@ -43,7 +45,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
     private final File rootDirectory;
     private final PropertyChangeSupport changeSupport;
-    private final ChangeSupport activeConfigChanges;
+    private final ListenerManager<Runnable> activeConfigChangeListeners;
     private final AtomicReference<List<NbGradleConfiguration>> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
@@ -55,7 +57,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.rootDirectory = rootDirectory;
         this.hasBeenUsed = new AtomicBoolean(false);
         this.changeSupport = new PropertyChangeSupport(this);
-        this.activeConfigChanges = new ChangeSupport(this);
+        this.activeConfigChangeListeners = new CopyOnTriggerListenerManager<>();
         this.activeConfig = new AtomicReference<>(NbGradleConfiguration.DEFAULT_CONFIG);
         this.configs = new AtomicReference<>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
@@ -313,7 +315,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                 @Override
                 public void run() {
                     changeSupport.firePropertyChange(PROP_CONFIGURATION_ACTIVE, prevConfig, configuration);
-                    activeConfigChanges.fireChange();
+                    EventListeners.dispatchRunnable(activeConfigChangeListeners);
                 }
             });
         }
@@ -344,11 +346,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         changeSupport.removePropertyChangeListener(lst);
     }
 
-    public void addActiveConfigChangeListener(ChangeListener listener) {
-        activeConfigChanges.addChangeListener(listener);
-    }
-
-    public void removeActiveConfigChangeListener(ChangeListener listener) {
-        activeConfigChanges.removeChangeListener(listener);
+    public ListenerRef addActiveConfigChangeListener(Runnable listener) {
+        return activeConfigChangeListeners.registerListener(listener);
     }
 }

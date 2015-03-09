@@ -126,15 +126,20 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         if (properties == null) {
             properties = ProjectPropertiesManager.getProperties(project, loadedSignal);
             if (propertiesRef.compareAndSet(null, properties)) {
-                ChangeListener reloadTask = new ChangeListener() {
+                final Runnable reloadTask = new Runnable() {
                     @Override
-                    public void stateChanged(ChangeEvent e) {
+                    public void run() {
                         propertiesRef.set(ProjectPropertiesManager.getProperties(project, loadedSignal));
                         EventListeners.dispatchRunnable(changes);
                     }
                 };
 
-                project.addModelChangeListener(reloadTask);
+                project.addModelChangeListener(new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        reloadTask.run();
+                    }
+                });
                 project.addProfileChangeListener(reloadTask);
             }
 
