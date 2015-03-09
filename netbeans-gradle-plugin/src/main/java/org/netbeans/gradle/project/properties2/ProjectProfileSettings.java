@@ -3,6 +3,8 @@ package org.netbeans.gradle.project.properties2;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.property.MutableProperty;
@@ -22,11 +24,16 @@ public final class ProjectProfileSettings {
     private final ProfileSettingsKey key;
     private final ProfileSettings settings;
 
+    private volatile boolean loaded;
+    private final Lock loadLock;
+
     public ProjectProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
         this.key = key;
         this.settings = new ProfileSettings();
+        this.loadLock = new ReentrantLock();
+        this.loaded = false;
     }
 
     public ProfileSettingsKey getKey() {
@@ -59,14 +66,33 @@ public final class ProjectProfileSettings {
         return SettingsFiles.getProfileFile(gradleProject, key.getKey()).toPath();
     }
 
-    public void load() throws IOException {
-        Path profileFile = tryGetProfileFile();
-        if (profileFile == null) {
-            LOGGER.log(Level.WARNING, "Cannot find location to save the profile: {0}", key);
+    public void ensureLoaded() throws IOException {
+        if (loaded) {
             return;
         }
 
-        settings.loadFromFile(profileFile);
+        loadLock.lock();
+        try {
+            if (!loaded) {
+                load();
+            }
+        } finally {
+            loadLock.unlock();
+        }
+    }
+
+    public void load() throws IOException {
+        try {
+            Path profileFile = tryGetProfileFile();
+            if (profileFile == null) {
+                LOGGER.log(Level.WARNING, "Cannot find location to save the profile: {0}", key);
+                return;
+            }
+
+            settings.loadFromFile(profileFile);
+        } finally {
+            loaded = true;
+        }
     }
 
     public void save() throws IOException {
