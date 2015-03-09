@@ -1,10 +1,8 @@
 package org.netbeans.gradle.project.properties2.standard;
 
-import org.jtrim.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 
@@ -14,18 +12,12 @@ public final class ScriptPlatformProperty {
     private static final String GENERIC_PLATFORM_NAME_NODE = "spec-name";
     private static final String GENERIC_PLATFORM_VERSION_NODE = "spec-version";
 
-    private static final PropertyDef<PlatformId, JavaPlatform> PROPERTY_DEF = createPropertyDef();
-
-    public static PropertySource<JavaPlatform> getProperty(ProjectProfileSettings settings) {
-        return settings.getProperty(CONFIG_KEY_SCRIPT_PLATFORM, getPropertyDef());
-    }
-
-    public static PropertyDef<PlatformId, JavaPlatform> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+    public static final PropertyDef<PlatformId, JavaPlatform> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<PlatformId, JavaPlatform> createPropertyDef() {
-        PropertyDef.Builder<PlatformId, JavaPlatform> result = new PropertyDef.Builder<>();
+        PropertyDef.Builder<PlatformId, JavaPlatform> result
+                = new PropertyDef.Builder<>(CONFIG_KEY_SCRIPT_PLATFORM);
+
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(JavaPlatformUtils.getPlatformIdValueDef());
         return result.create();

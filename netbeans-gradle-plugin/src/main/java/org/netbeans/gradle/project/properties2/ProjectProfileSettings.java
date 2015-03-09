@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -114,11 +113,7 @@ public final class ProjectProfileSettings {
         return settings.getAuxConfigValue(key);
     }
 
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(ConfigPath configPath, PropertyDef<ValueKey, ValueType> propertyDef) {
-        return settings.getProperty(configPath, propertyDef);
-    }
-
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(Collection<ConfigPath> configPaths, PropertyDef<ValueKey, ValueType> propertyDef) {
-        return settings.getProperty(configPaths, propertyDef);
+    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
+        return settings.getProperty(propertyDef);
     }
 }

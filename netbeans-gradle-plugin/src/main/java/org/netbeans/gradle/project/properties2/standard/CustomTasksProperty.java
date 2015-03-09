@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties2.standard;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.property.PropertyFactory;
@@ -9,7 +8,6 @@ import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
@@ -17,7 +15,6 @@ import org.netbeans.gradle.project.properties2.ValueMerger;
 import org.netbeans.gradle.project.properties2.ValueReference;
 
 public final class CustomTasksProperty {
-    private static final PropertyDef<PredefinedTasks, CustomTasks> PROPERTY_DEF = createPropertyDef();
     private static final String CONFIG_KEY_COMMON_TASKS = "common-tasks";
     private static final String CONFIG_KEY_TASK = "task";
     private static final String CONFIG_KEY_DISPLAY_NAME = "display-name";
@@ -31,17 +28,11 @@ public final class CustomTasksProperty {
     private static final String VALUE_YES = "yes";
     private static final String VALUE_NO = "no";
 
-    public static PropertySource<CustomTasks> getProperty(ProjectProfileSettings settings) {
-        List<ConfigPath> paths = Arrays.asList(ConfigPath.fromKeys(CONFIG_KEY_COMMON_TASKS));
-        return settings.getProperty(paths, getPropertyDef());
-    }
-
-    public static PropertyDef<PredefinedTasks, CustomTasks> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+    public static final PropertyDef<PredefinedTasks, CustomTasks> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<PredefinedTasks, CustomTasks> createPropertyDef() {
-        PropertyDef.Builder<PredefinedTasks, CustomTasks> result = new PropertyDef.Builder<>();
+        PropertyDef.Builder<PredefinedTasks, CustomTasks> result
+                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_COMMON_TASKS));
         result.setKeyEncodingDef(getKeyEncodingDef());
         result.setValueDef(getValueDef());
         result.setValueMerger(getValueMerger());

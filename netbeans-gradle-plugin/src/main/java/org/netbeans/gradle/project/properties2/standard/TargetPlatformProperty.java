@@ -9,7 +9,6 @@ import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
@@ -19,21 +18,16 @@ public final class TargetPlatformProperty {
     private static final String CONFIG_KEY_PLATFORM_NAME = "target-platform-name";
     private static final String CONFIG_KEY_PLATFORM_VERSION = "target-platform";
 
-    private static final PropertyDef<PlatformId, ProjectPlatform> PROPERTY_DEF = createPropertyDef();
+    public static final PropertyDef<PlatformId, ProjectPlatform> PROPERTY_DEF = createPropertyDef();
 
-    public static PropertySource<ProjectPlatform> getProperty(ProjectProfileSettings settings) {
+    private static PropertyDef<PlatformId, ProjectPlatform> createPropertyDef() {
         List<ConfigPath> paths = Arrays.asList(
                 ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_NAME),
                 ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_VERSION));
-        return settings.getProperty(paths, getPropertyDef());
-    }
 
-    public static PropertyDef<PlatformId, ProjectPlatform> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+        PropertyDef.Builder<PlatformId, ProjectPlatform> result
+                = new PropertyDef.Builder<>(paths);
 
-    private static PropertyDef<PlatformId, ProjectPlatform> createPropertyDef() {
-        PropertyDef.Builder<PlatformId, ProjectPlatform> result = new PropertyDef.Builder<>();
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

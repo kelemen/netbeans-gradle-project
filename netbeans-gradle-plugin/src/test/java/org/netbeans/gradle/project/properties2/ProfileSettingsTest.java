@@ -3,6 +3,8 @@ package org.netbeans.gradle.project.properties2;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.jtrim.cancel.Cancellation;
@@ -34,15 +36,6 @@ public class ProfileSettingsTest {
         return ConfigPath.fromKeys(Arrays.asList(keys));
     }
 
-    private static <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
-            ProfileSettings settings,
-            PropertyDef<ValueKey, ValueType> propertyDef,
-            String... keys) {
-
-        ConfigPath configPath = getConfigPath(keys);
-        return settings.getProperty(configPath, propertyDef);
-    }
-
     private static void setSimpleEncodingDef(PropertyDef.Builder<ConfigTree, ?> result) {
         result.setKeyEncodingDef(new PropertyKeyEncodingDef<ConfigTree>() {
             @Override
@@ -57,8 +50,10 @@ public class ProfileSettingsTest {
         });
     }
 
-    private static PropertyDef<PlatformId, PlatformId> getTargetPlatformProfileDef() {
-        PropertyDef.Builder<PlatformId, PlatformId> result = new PropertyDef.Builder<>();
+    private static PropertyDef<PlatformId, PlatformId> getTargetPlatformProfileDef(
+            Collection<ConfigPath> configPaths) {
+
+        PropertyDef.Builder<PlatformId, PlatformId> result = new PropertyDef.Builder<>(configPaths);
         result.setValueDef(new PropertyValueDef<PlatformId, PlatformId>() {
             @Override
             public PropertySource<PlatformId> property(PlatformId valueKey) {
@@ -70,13 +65,15 @@ public class ProfileSettingsTest {
                 return value;
             }
         });
-        result.setKeyEncodingDef(TargetPlatformProperty.getPropertyDef().getKeyEncodingDef());
+        result.setKeyEncodingDef(TargetPlatformProperty.PROPERTY_DEF.getKeyEncodingDef());
 
         return result.create();
     }
 
-    private static PropertyDef<ConfigTree, String> getTextProfileDef(boolean naturalEquals) {
-        PropertyDef.Builder<ConfigTree, String> result = new PropertyDef.Builder<>();
+    private static PropertyDef<ConfigTree, String> getTextProfileDef(
+            Collection<ConfigPath> configPaths,
+            boolean naturalEquals) {
+        PropertyDef.Builder<ConfigTree, String> result = new PropertyDef.Builder<>(configPaths);
         result.setValueDef(new PropertyValueDef<ConfigTree, String>() {
             @Override
             public PropertySource<String> property(ConfigTree valueKey) {
@@ -114,7 +111,8 @@ public class ProfileSettingsTest {
             String... keys) {
 
         ConfigPath configPath = getConfigPath(keys);
-        return settings.getProperty(configPath, getTextProfileDef(naturalEquals));
+        Collection<ConfigPath> configPaths = Collections.singleton(configPath);
+        return settings.getProperty(getTextProfileDef(configPaths, naturalEquals));
     }
 
     private void testSetValueOfTextProperty(
@@ -214,9 +212,9 @@ public class ProfileSettingsTest {
                 getConfigPath("source-level"));
 
         MutableProperty<PlatformId> property1
-                = settings.getProperty(configPaths1, getTargetPlatformProfileDef());
+                = settings.getProperty(getTargetPlatformProfileDef(configPaths1));
         MutableProperty<PlatformId> property2
-                = settings.getProperty(configPaths2, getTargetPlatformProfileDef());
+                = settings.getProperty(getTargetPlatformProfileDef(configPaths2));
 
         PlatformId propert1Initial = new PlatformId("j2se", "1.7");
         PlatformId propert2Initial = propert1Initial;
@@ -238,7 +236,7 @@ public class ProfileSettingsTest {
                 getConfigPath("target-platform"));
 
         MutableProperty<PlatformId> property
-                = settings.getProperty(configPaths, getTargetPlatformProfileDef());
+                = settings.getProperty(getTargetPlatformProfileDef(configPaths));
 
         String propertyName = "TargetPlatform";
 

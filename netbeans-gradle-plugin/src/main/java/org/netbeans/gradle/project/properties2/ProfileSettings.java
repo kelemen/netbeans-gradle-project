@@ -309,18 +309,8 @@ public final class ProfileSettings {
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
-            ConfigPath configPath,
             PropertyDef<ValueKey, ValueType> propertyDef) {
-        return getProperty(Collections.singleton(configPath), propertyDef);
-    }
-
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
-            Collection<ConfigPath> configPaths,
-            PropertyDef<ValueKey, ValueType> propertyDef) {
-        ExceptionHelper.checkNotNullArgument(configPaths, "configPaths");
-        ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
-
-        return new DomTrackingProperty<>(configPaths, propertyDef);
+        return new DomTrackingProperty<>(propertyDef);
     }
 
     private static List<ConfigPath> copyPaths(Collection<ConfigPath> paths) {
@@ -420,14 +410,10 @@ public final class ProfileSettings {
 
         private final PropertySourceProxy<ValueType> source;
 
-        public DomTrackingProperty(
-                Collection<ConfigPath> configPaths,
-                PropertyDef<ValueKey, ValueType> propertyDef) {
-
-            ExceptionHelper.checkNotNullArgument(configPaths, "configPaths");
+        public DomTrackingProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
             ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-            this.configPathsAsList = copyPaths(configPaths);
+            this.configPathsAsList = copyPaths(propertyDef.getConfigPaths());
             this.configPaths = configPathsAsList.toArray(new ConfigPath[configPathsAsList.size()]);
             this.configParent = getCommonParent(this.configPaths);
             this.relativeConfigPaths = removeTopParents(configParent.getKeyCount(), this.configPaths);
@@ -444,8 +430,6 @@ public final class ProfileSettings {
             this.source = PropertyFactory.proxySource(valueDef.property(initialValueKey.value));
 
             this.eventThread = new SwingUpdateTaskExecutor(true);
-
-            ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
         }
 
         private void updateConfigFromKey() {

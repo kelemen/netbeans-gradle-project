@@ -2,7 +2,6 @@
 package org.netbeans.gradle.project.properties2.standard;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import org.jtrim.event.ListenerRef;
@@ -13,7 +12,6 @@ import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
@@ -21,19 +19,11 @@ import org.openide.util.Lookup;
 
 
 public final class BuildPlatformProperty {
-    private static final PropertyDef<PlatformId, ProjectPlatform> PROPERTY_DEF = createPropertyDef();
     private static final String CONFIG_KEY_SCRIPT_PLATFORM = "script-platform";
     private static final String CONFIG_KEY_SPEC_NAME = "spec-name";
     private static final String CONFIG_KEY_SPEC_VERSION = "spec-version";
 
-    public static PropertySource<ProjectPlatform> getProperty(ProjectProfileSettings settings) {
-        List<ConfigPath> paths = Arrays.asList(ConfigPath.fromKeys(CONFIG_KEY_SCRIPT_PLATFORM));
-        return settings.getProperty(paths, getPropertyDef());
-    }
-
-    public static PropertyDef<PlatformId, ProjectPlatform> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+    public static final PropertyDef<PlatformId, ProjectPlatform> PROPERTY_DEF = createPropertyDef();
 
     private static Collection<GradleProjectPlatformQuery> findOwnerQueries(String name) {
         GradleProjectPlatformQuery query = findOwnerQuery(name);
@@ -101,7 +91,9 @@ public final class BuildPlatformProperty {
     }
 
     private static PropertyDef<PlatformId, ProjectPlatform> createPropertyDef() {
-        PropertyDef.Builder<PlatformId, ProjectPlatform> result = new PropertyDef.Builder<>();
+        PropertyDef.Builder<PlatformId, ProjectPlatform> result
+                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_SCRIPT_PLATFORM));
+
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

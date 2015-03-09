@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties2.standard;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,12 +9,10 @@ import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
 
 public final class LicenseHeaderInfoProperty {
-    private static final PropertyDef<ConfigTree, LicenseHeaderInfo> PROPERTY_DEF = createPropertyDef();
     private static final String CONFIG_KEY_LICENSE_HEADER = "license-header";
     private static final String CONFIG_KEY_NAME = "name";
     private static final String CONFIG_KEY_FILE = "template";
@@ -23,17 +20,11 @@ public final class LicenseHeaderInfoProperty {
     private static final String CONFIG_KEY_PROPERTY_NAME = "#attr-name=";
     private static final String SAVE_FILE_NAME_SEPARATOR = "/";
 
-    public static PropertySource<LicenseHeaderInfo> getProperty(ProjectProfileSettings settings) {
-        List<ConfigPath> paths = Arrays.asList(ConfigPath.fromKeys(CONFIG_KEY_LICENSE_HEADER));
-        return settings.getProperty(paths, getPropertyDef());
-    }
-
-    public static PropertyDef<ConfigTree, LicenseHeaderInfo> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+    public static final PropertyDef<ConfigTree, LicenseHeaderInfo> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<ConfigTree, LicenseHeaderInfo> createPropertyDef() {
-        PropertyDef.Builder<ConfigTree, LicenseHeaderInfo> result = new PropertyDef.Builder<>();
+        PropertyDef.Builder<ConfigTree, LicenseHeaderInfo> result
+                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_LICENSE_HEADER));
         result.setKeyEncodingDef(CommonProperties.getIdentityTreeKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

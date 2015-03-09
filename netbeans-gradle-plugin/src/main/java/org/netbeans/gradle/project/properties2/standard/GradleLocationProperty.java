@@ -3,8 +3,6 @@ package org.netbeans.gradle.project.properties2.standard;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.property.PropertyFactory;
@@ -16,27 +14,19 @@ import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.GradleLocationDistribution;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
 import org.netbeans.gradle.project.properties2.ConfigPath;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
 
 public final class GradleLocationProperty {
     private static final Logger LOGGER = Logger.getLogger(GradleLocationProperty.class.getName());
 
-    private static final PropertyDef<String, GradleLocation> PROPERTY_DEF = createPropertyDef();
     private static final String CONFIG_KEY_SOURCE_ENCODING = "source-encoding";
 
-    public static PropertySource<GradleLocation> getProperty(ProjectProfileSettings settings) {
-        List<ConfigPath> paths = Arrays.asList(ConfigPath.fromKeys(CONFIG_KEY_SOURCE_ENCODING));
-        return settings.getProperty(paths, getPropertyDef());
-    }
-
-    public static PropertyDef<String, GradleLocation> getPropertyDef() {
-        return PROPERTY_DEF;
-    }
+    public static final PropertyDef<String, GradleLocation> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<String, GradleLocation> createPropertyDef() {
-        PropertyDef.Builder<String, GradleLocation> result = new PropertyDef.Builder<>();
+        PropertyDef.Builder<String, GradleLocation> result
+                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_SOURCE_ENCODING));
         result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

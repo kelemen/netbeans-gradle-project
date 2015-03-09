@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nonnull;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.collections.Equality;
 import org.jtrim.collections.EqualityComparator;
 import org.jtrim.property.PropertyFactory;
@@ -10,12 +14,21 @@ import org.netbeans.gradle.project.properties2.standard.CommonProperties;
 
 public final class PropertyDef<ValueKey, ValueType> {
     public static final class Builder<ValueKey, ValueType> {
+        private final List<ConfigPath> configPaths;
+
         private PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
         private PropertyValueDef<ValueKey, ValueType> valueDef;
         private ValueMerger<ValueType> valueMerger;
         private EqualityComparator<? super ValueKey> valueKeyEquality;
 
-        public Builder() {
+        public Builder(@Nonnull ConfigPath configPath) {
+            this(Collections.singleton(configPath));
+        }
+
+        public Builder(@Nonnull Collection<ConfigPath> configPaths) {
+            this.configPaths = CollectionsEx.readOnlyCopy(configPaths);
+            ExceptionHelper.checkNotNullElements(this.configPaths, "configPaths");
+
             this.keyEncodingDef = NoOpKeyEncodingDef.getInstance();
             this.valueDef = NoOpValueDef.getInstance();
             this.valueMerger = CommonProperties.getParentIfNullValueMerger();
@@ -47,6 +60,7 @@ public final class PropertyDef<ValueKey, ValueType> {
         }
     }
 
+    private final List<ConfigPath> configPaths;
     private final PropertyKeyEncodingDef<ValueKey> keyEncodingDef;
     private final PropertyValueDef<ValueKey, ValueType> valueDef;
     private final ValueMerger<ValueType> valueMerger;
@@ -57,6 +71,12 @@ public final class PropertyDef<ValueKey, ValueType> {
         this.valueDef = builder.valueDef;
         this.valueMerger = builder.valueMerger;
         this.valueKeyEquality = builder.valueKeyEquality;
+        this.configPaths = builder.configPaths;
+    }
+
+    @Nonnull
+    public List<ConfigPath> getConfigPaths() {
+        return configPaths;
     }
 
     @Nonnull
