@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties2;
 
+import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
@@ -18,6 +19,12 @@ public final class ProfileSettingsContainer {
 
     public static ProfileSettingsContainer getDefault() {
         return DEFAULT;
+    }
+
+    public ProjectProfileSettings getLoadedProfileSettings(ProfileSettingsKey key) throws IOException {
+        ProjectProfileSettings result = getProfileSettings(key);
+        result.ensureLoaded();
+        return result;
     }
 
     public ProjectProfileSettings getProfileSettings(ProfileSettingsKey key) {
