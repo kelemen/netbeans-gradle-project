@@ -15,19 +15,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -67,7 +67,6 @@ import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
@@ -89,7 +88,7 @@ public final class NbGradleProject implements Project {
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
-    private final ChangeSupport modelChanges;
+    private final ListenerManager<Runnable> modelChangeListeners;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectPropertiesProxy properties;
@@ -120,7 +119,7 @@ public final class NbGradleProject implements Project {
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<>(null);
-        this.modelChanges = new ChangeSupport(this);
+        this.modelChangeListeners = new CopyOnTriggerListenerManager<>();
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
@@ -290,31 +289,8 @@ public final class NbGradleProject implements Project {
         return projectInfoManager;
     }
 
-    public ListenerRef addModelChangeListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                listener.run();
-            }
-        };
-
-        addModelChangeListener(changeListener);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                removeModelChangeListener(changeListener);
-            }
-        });
-    }
-
-    public void addModelChangeListener(ChangeListener listener) {
-        modelChanges.addChangeListener(listener);
-    }
-
-    public void removeModelChangeListener(ChangeListener listener) {
-        modelChanges.removeChangeListener(listener);
+    public ListenerRef addModelChangeListener(Runnable listener) {
+        return modelChangeListeners.registerListener(listener);
     }
 
     public NbGradleModel getAvailableModel() {
@@ -379,7 +355,7 @@ public final class NbGradleProject implements Project {
         assert SwingUtilities.isEventDispatchThread();
 
         try {
-            modelChanges.fireChange();
+            EventListeners.dispatchRunnable(modelChangeListeners);
         } finally {
             GradleCacheByBinaryLookup.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();

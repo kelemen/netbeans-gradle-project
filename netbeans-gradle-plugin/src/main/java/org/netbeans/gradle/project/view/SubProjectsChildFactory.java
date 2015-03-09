@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -22,6 +20,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -33,9 +32,7 @@ import org.openide.util.lookup.Lookups;
 
 public final class SubProjectsChildFactory
 extends
-        ChildFactory.Detachable<SingleNodeFactory>
-implements
-        ChangeListener {
+        ChildFactory.Detachable<SingleNodeFactory> {
 
     private static final Logger LOGGER = Logger.getLogger(SubProjectsChildFactory.class.getName());
     private static final Collator STR_SMP = Collator.getInstance();
@@ -44,6 +41,7 @@ implements
     private final List<NbGradleProjectTree> subProjects;
     private final AtomicReference<NbGradleProjectTree> lastTree;
     private final boolean root;
+    private final ListenerRegistrations listenerRefs;
 
     public SubProjectsChildFactory(NbGradleProject project) {
         this(project, null, true);
@@ -58,6 +56,7 @@ implements
 
         this.root = root;
         this.project = project;
+        this.listenerRefs = new ListenerRegistrations();
         this.lastTree = new AtomicReference<>(null);
         if (subProjects != null) {
             this.subProjects = new ArrayList<>(subProjects);
@@ -77,15 +76,6 @@ implements
                 return STR_SMP.compare(o1.getProjectName(), o2.getProjectName());
             }
         });
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        NbGradleProjectTree newTree = project.getAvailableModel().getMainProject();
-        NbGradleProjectTree prevTree = lastTree.getAndSet(newTree);
-        if (hasRelevantDifferences(prevTree, newTree)) {
-            refresh(false);
-        }
     }
 
     private static boolean hasRelevantDifferences(NbGradleProjectTree tree1, NbGradleProjectTree tree2) {
@@ -134,18 +124,29 @@ implements
         return result;
     }
 
+    private void modelChanged() {
+        NbGradleProjectTree newTree = project.getAvailableModel().getMainProject();
+        NbGradleProjectTree prevTree = lastTree.getAndSet(newTree);
+        if (hasRelevantDifferences(prevTree, newTree)) {
+            refresh(false);
+        }
+    }
+
     @Override
     protected void addNotify() {
         if (root) {
-            project.addModelChangeListener(this);
+            listenerRefs.add(project.addModelChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    modelChanged();
+                }
+            }));
         }
     }
 
     @Override
     protected void removeNotify() {
-        if (root) {
-            project.removeModelChangeListener(this);
-        }
+        listenerRefs.unregisterAll();
     }
 
     @Override

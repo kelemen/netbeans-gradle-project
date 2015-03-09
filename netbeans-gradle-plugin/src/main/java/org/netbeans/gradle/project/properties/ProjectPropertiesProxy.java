@@ -8,8 +8,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.CopyOnTriggerListenerManager;
@@ -126,7 +124,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
         if (properties == null) {
             properties = ProjectPropertiesManager.getProperties(project, loadedSignal);
             if (propertiesRef.compareAndSet(null, properties)) {
-                final Runnable reloadTask = new Runnable() {
+                Runnable reloadTask = new Runnable() {
                     @Override
                     public void run() {
                         propertiesRef.set(ProjectPropertiesManager.getProperties(project, loadedSignal));
@@ -134,12 +132,7 @@ public final class ProjectPropertiesProxy extends AbstractProjectProperties {
                     }
                 };
 
-                project.addModelChangeListener(new ChangeListener() {
-                    @Override
-                    public void stateChanged(ChangeEvent e) {
-                        reloadTask.run();
-                    }
-                });
+                project.addModelChangeListener(reloadTask);
                 project.addProfileChangeListener(reloadTask);
             }
 

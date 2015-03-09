@@ -8,8 +8,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -65,9 +63,9 @@ implements
 
     @Override
     public void onInitProject() {
-        project.addModelChangeListener(new ChangeListener() {
+        project.addModelChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 updateExtensionProfiles();
             }
         });

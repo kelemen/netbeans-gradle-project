@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -21,6 +19,7 @@ import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -61,29 +60,29 @@ public final class BuildScriptsNode extends AbstractNode {
 
     private static class BuildScriptChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory>
-    implements
-            ChangeListener {
+            ChildFactory.Detachable<SingleNodeFactory> {
         private final NbGradleProject project;
+        private final ListenerRegistrations listenerRefs;
 
         public BuildScriptChildFactory(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
             this.project = project;
-        }
-
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            refresh(false);
+            this.listenerRefs = new ListenerRegistrations();
         }
 
         @Override
         protected void addNotify() {
-            project.addModelChangeListener(this);
+            listenerRefs.add(project.addModelChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    refresh(false);
+                }
+            }));
         }
 
         @Override
         protected void removeNotify() {
-            project.removeModelChangeListener(this);
+            listenerRefs.unregisterAll();
         }
 
         private void addFileObject(

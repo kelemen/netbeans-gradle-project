@@ -166,20 +166,19 @@ implements
                 result.fireInfoChangeEvent();
             }
         };
-        final ChangeListener modelListener = new ChangeListener() {
+
+        final ListenerRef modelListenerRef = project.addModelChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 result.fireModelChange();
             }
-        };
-
-        project.addModelChangeListener(modelListener);
+        });
         project.getProjectInfoManager().addChangeListener(infoChangeListener);
         result.addNodeListener(new NodeAdapter(){
             @Override
             public void nodeDestroyed(NodeEvent ev) {
                 project.getProjectInfoManager().removeChangeListener(infoChangeListener);
-                project.removeModelChangeListener(modelListener);
+                modelListenerRef.unregister();
             }
         });
 

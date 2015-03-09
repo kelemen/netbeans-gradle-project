@@ -12,8 +12,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -27,6 +25,7 @@ import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.ChildFactory;
@@ -44,7 +43,7 @@ extends
     private final GradleProjectLogicalViewProvider parent;
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
     private final AtomicBoolean lastHasSubprojects;
-    private final List<ListenerRef> listenerRegistrations;
+    private final ListenerRegistrations listenerRefs;
     private volatile boolean enableRefresh;
     private final AtomicBoolean hasPreventedRefresh;
 
@@ -56,7 +55,7 @@ extends
         this.parent = parent;
         this.nodeExtensionsRef = new AtomicReference<>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
-        this.listenerRegistrations = new LinkedList<>();
+        this.listenerRefs = new ListenerRegistrations();
 
         this.enableRefresh = true;
         this.hasPreventedRefresh = new AtomicBoolean(false);
@@ -147,10 +146,6 @@ extends
 
     @Override
     protected void addNotify() {
-        listenerRegistrations.add(registerParentRefreshRequest());
-        listenerRegistrations.add(registerModelRefreshListener());
-
-        lastHasSubprojects.set(hasSubProjects());
         final Runnable simpleChangeListener = new Runnable() {
             @Override
             public void run() {
@@ -158,41 +153,38 @@ extends
             }
         };
 
-        List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
-
-        for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
-            listenerRegistrations.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
-        }
-
-        final ChangeListener changeListener = new ChangeListener() {
+        listenerRefs.add(project.addModelChangeListener(new Runnable() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void run() {
                 NodeExtensions newNodeExtensions
                         = NodeExtensions.create(getExtensionNodes(), simpleChangeListener);
 
                 updateNodesIfNeeded(newNodeExtensions);
             }
-        };
-        project.addModelChangeListener(changeListener);
+        }));
 
-        listenerRegistrations.add(0, NbListenerRefs.fromRunnable(new Runnable() {
+        listenerRefs.add(NbListenerRefs.fromRunnable(new Runnable() {
             @Override
             public void run() {
-                project.removeModelChangeListener(changeListener);
-
                 tryReplaceNodeExtensionAndClose(null);
             }
         }));
+
+        listenerRefs.add(registerParentRefreshRequest());
+        listenerRefs.add(registerModelRefreshListener());
+
+        lastHasSubprojects.set(hasSubProjects());
+
+        List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
+
+        for (GradleProjectExtensionNodes singleExtensionNodes: extensionNodes) {
+            listenerRefs.add(singleExtensionNodes.addNodeChangeListener(simpleChangeListener));
+        }
     }
 
     @Override
     protected void removeNotify() {
-        Collection<ListenerRef> toUnregister = new ArrayList<>(listenerRegistrations);
-        listenerRegistrations.clear();
-
-        for (ListenerRef listenerRef: toUnregister) {
-            listenerRef.unregister();
-        }
+        listenerRefs.unregisterAll();
     }
 
     @Override
