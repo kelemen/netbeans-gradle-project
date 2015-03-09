@@ -160,12 +160,6 @@ implements
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
-        final ChangeListener infoChangeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                result.fireInfoChangeEvent();
-            }
-        };
 
         final ListenerRef modelListenerRef = project.addModelChangeListener(new Runnable() {
             @Override
@@ -173,11 +167,16 @@ implements
                 result.fireModelChange();
             }
         });
-        project.getProjectInfoManager().addChangeListener(infoChangeListener);
+        final ListenerRef infoListenerRef = project.getProjectInfoManager().addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                result.fireInfoChangeEvent();
+            }
+        });
         result.addNodeListener(new NodeAdapter(){
             @Override
             public void nodeDestroyed(NodeEvent ev) {
-                project.getProjectInfoManager().removeChangeListener(infoChangeListener);
+                infoListenerRef.unregister();
                 modelListenerRef.unregister();
             }
         });

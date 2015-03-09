@@ -8,28 +8,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeListener;
-import org.openide.util.ChangeSupport;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
 
 public final class ProjectInfoManager {
     private final Lock mainLock;
     private final Map<InfoKey, ProjectInfo> informations;
-    private final ChangeSupport changes;
+    private final ListenerManager<Runnable> changeListeners;
     private final AtomicBoolean hasUnprocessedChangeEvent;
 
     public ProjectInfoManager() {
         this.mainLock = new ReentrantLock();
         this.informations = new HashMap<>();
-        this.changes = new ChangeSupport(this);
+        this.changeListeners = new CopyOnTriggerListenerManager<>();
         this.hasUnprocessedChangeEvent = new AtomicBoolean(false);
     }
 
-    public void addChangeListener(ChangeListener listener) {
-        changes.addChangeListener(listener);
-    }
-
-    public void removeChangeListener(ChangeListener listener) {
-        changes.removeChangeListener(listener);
+    public ListenerRef addChangeListener(Runnable listener) {
+        return changeListeners.registerListener(listener);
     }
 
     private void fireChange() {
@@ -38,7 +36,7 @@ public final class ProjectInfoManager {
                 @Override
                 public void run() {
                     hasUnprocessedChangeEvent.set(false);
-                    changes.fireChange();
+                    EventListeners.dispatchRunnable(changeListeners);
                 }
             });
         }
