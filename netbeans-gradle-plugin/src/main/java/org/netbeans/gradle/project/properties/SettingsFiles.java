@@ -97,6 +97,10 @@ public final class SettingsFiles {
         }
     }
 
+    public static File[] getFilesForProfile(File rootDir, ProfileDef profileDef) {
+        return getFilesForProfile(rootDir, ProfileKey.fromProfileDef(profileDef));
+    }
+
     public static File[] getFilesForProfile(File rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
