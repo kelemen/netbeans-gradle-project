@@ -4,10 +4,15 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.ProfileDef;
 
 public final class ProfileKey {
     private final String groupName;
     private final String fileName;
+
+    public ProfileKey(@Nonnull ProfileDef profileDef) {
+        this(profileDef.getGroupName(), profileDef.getFileName());
+    }
 
     public ProfileKey(@Nullable String groupName, @Nonnull String fileName) {
         ExceptionHelper.checkNotNullArgument(fileName, "fileName");
