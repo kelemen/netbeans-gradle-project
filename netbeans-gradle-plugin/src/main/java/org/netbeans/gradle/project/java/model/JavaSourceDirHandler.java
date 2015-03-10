@@ -4,51 +4,27 @@ import java.io.File;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.openide.util.ChangeSupport;
 
 public final class JavaSourceDirHandler {
     private static final Logger LOGGER = Logger.getLogger(JavaSourceDirHandler.class.getName());
 
     private final JavaExtension javaExt;
-    private final ChangeSupport dirsCreated;
+    private final ListenerManager<Runnable> dirsCreatedListeners;
 
     public JavaSourceDirHandler(JavaExtension javaExt) {
         this.javaExt = javaExt;
-        this.dirsCreated = new ChangeSupport(this);
+        this.dirsCreatedListeners = new CopyOnTriggerListenerManager<>();
     }
 
-    public NbListenerRef addDirsCreatedListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final ChangeListener listenerWrapper = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                listener.run();
-            }
-        };
-
-        dirsCreated.addChangeListener(listenerWrapper);
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
-
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
-
-            @Override
-            public void unregister() {
-                dirsCreated.removeChangeListener(listenerWrapper);
-                registered = false;
-            }
-        };
+    public ListenerRef addDirsCreatedListener(Runnable listener) {
+        return dirsCreatedListeners.registerListener(listener);
     }
 
     private static boolean createDir(File dir) {
@@ -111,6 +87,10 @@ public final class JavaSourceDirHandler {
         return deleted;
     }
 
+    private void fireDirsCreated() {
+        EventListeners.dispatchRunnable(dirsCreatedListeners);
+    }
+
     public void deleteEmptyDirectories() {
         NbJavaModule module = javaExt.getCurrentModel().getMainModule();
         boolean changed = false;
@@ -124,7 +104,7 @@ public final class JavaSourceDirHandler {
             }
         } finally {
             if (changed) {
-                dirsCreated.fireChange();
+                fireDirsCreated();
             }
         }
     }
@@ -149,7 +129,7 @@ public final class JavaSourceDirHandler {
             }
         } finally {
             if (changed) {
-                dirsCreated.fireChange();
+                fireDirsCreated();
             }
         }
     }
