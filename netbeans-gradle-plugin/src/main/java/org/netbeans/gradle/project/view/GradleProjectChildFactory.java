@@ -84,7 +84,7 @@ extends
         return !getShownModule().getMainProject().getChildren().isEmpty();
     }
 
-    private NbListenerRef registerParentRefreshRequest() {
+    private ListenerRef registerParentRefreshRequest() {
         return parent.addRefreshRequestListeners(new Runnable() {
             @Override
             public void run() {

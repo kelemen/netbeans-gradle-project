@@ -23,12 +23,11 @@ import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
+import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
@@ -39,8 +38,6 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
@@ -71,7 +68,6 @@ import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
-import org.openide.util.ChangeSupport;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
@@ -87,37 +83,22 @@ implements
 
     private final ListenerManager<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
-    private final ChangeSupport refreshRequestListeners;
+    private final ListenerManager<Runnable> refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
-        this.refreshRequestListeners = new ChangeSupport(this);
+        this.refreshRequestListeners = new CopyOnTriggerListenerManager<>();
     }
 
     public void refreshProjectNode() {
-        refreshRequestListeners.fireChange();
+        EventListeners.dispatchRunnable(refreshRequestListeners);
     }
 
-    public NbListenerRef addRefreshRequestListeners(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final ChangeListener wrapperListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                listener.run();
-            }
-        };
-
-        refreshRequestListeners.addChangeListener(wrapperListener);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                refreshRequestListeners.removeChangeListener(wrapperListener);
-            }
-        });
+    public ListenerRef addRefreshRequestListeners(Runnable listener) {
+        return refreshRequestListeners.registerListener(listener);
     }
 
     public ListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
