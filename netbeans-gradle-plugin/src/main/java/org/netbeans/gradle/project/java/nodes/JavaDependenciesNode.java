@@ -19,8 +19,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
@@ -40,6 +38,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.tasks.DaemonTaskDef;
 import org.netbeans.gradle.project.tasks.DownloadSourcesTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -98,28 +97,18 @@ public final class JavaDependenciesNode extends AbstractNode {
 
     private static class DependenciesChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory>
-    implements
-            ChangeListener {
+            ChildFactory.Detachable<SingleNodeFactory> {
 
         private final JavaExtension javaExt;
         private final AtomicReference<NbJavaModule> lastModule;
+        private final ListenerRegistrations listenerRefs;
 
         public DependenciesChildFactory(JavaExtension javaExt) {
             ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
             this.javaExt = javaExt;
             this.lastModule = new AtomicReference<>(null);
-        }
-
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            NbJavaModule newModule = javaExt.getCurrentModel().getMainModule();
-            NbJavaModule prevModule = lastModule.getAndSet(newModule);
-
-            if (hasRelevantDifferences(newModule, prevModule)) {
-                refresh(false);
-            }
+            this.listenerRefs = new ListenerRegistrations();
         }
 
         private static boolean hasRelevantDifferences(NbJavaModule module1, NbJavaModule module2) {
@@ -168,15 +157,29 @@ public final class JavaDependenciesNode extends AbstractNode {
             return result;
         }
 
+        private void modelChanged() {
+            NbJavaModule newModule = javaExt.getCurrentModel().getMainModule();
+            NbJavaModule prevModule = lastModule.getAndSet(newModule);
+
+            if (hasRelevantDifferences(newModule, prevModule)) {
+                refresh(false);
+            }
+        }
+
         @Override
         protected void addNotify() {
             lastModule.set(javaExt.getCurrentModel().getMainModule());
-            javaExt.addModelChangeListener(this);
+            listenerRefs.add(javaExt.addModelChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    modelChanged();
+                }
+            }));
         }
 
         @Override
         protected void removeNotify() {
-            javaExt.removeModelChangeListener(this);
+            listenerRefs.unregisterAll();
         }
 
         private void addDependencyGroup(
