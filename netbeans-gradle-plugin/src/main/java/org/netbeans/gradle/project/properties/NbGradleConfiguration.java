@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.netbeans.spi.project.ProjectConfiguration;
 
 public final class NbGradleConfiguration implements ProjectConfiguration {
@@ -41,6 +42,16 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
 
     public static void sortProfiles(List<NbGradleConfiguration> profileList) {
         Collections.sort(profileList, ALPHABETICAL_ORDER);
+    }
+
+    public ProfileKey getProfileKey() {
+        if (profileDef == null) {
+            return null;
+        }
+
+        return new ProfileKey(
+                profileDef.getGroupName(),
+                profileDef.getFileName());
     }
 
     public ProfileDef getProfileDef() {
