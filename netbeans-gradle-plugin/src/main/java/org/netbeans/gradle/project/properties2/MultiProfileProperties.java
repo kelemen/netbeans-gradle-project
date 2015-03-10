@@ -17,9 +17,7 @@ import org.jtrim.utils.ExceptionHelper;
 public final class MultiProfileProperties {
     private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettings;
 
-    private MultiProfileProperties(ProfileSettingsContainer settingsContainer) {
-        ExceptionHelper.checkNotNullArgument(settingsContainer, "settingsContainer");
-
+    public MultiProfileProperties() {
         this.currentProfileSettings = PropertyFactory.memPropertyConcurrent(
                 Collections.<ProjectProfileSettings>emptyList(),
                 SwingTaskExecutor.getStrictExecutor(false));
