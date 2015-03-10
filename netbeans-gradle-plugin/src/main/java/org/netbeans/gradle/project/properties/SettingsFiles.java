@@ -2,18 +2,28 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties2.ProfileKey;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 
 public final class SettingsFiles {
+    private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
+
     private static final String SETTINGS_FILENAME = ".nb-gradle-properties";
     private static final String PROFILE_FILE_NAME_SUFFIX = ".profile";
     private static final String SETTINGS_DIR_NAME = ".nb-gradle";
@@ -21,39 +31,43 @@ public final class SettingsFiles {
     private static final String PRIVATE_SETTINGS_DIR = "private";
     private static final String CACHE_DIR = "cache";
 
-    public static File getPrivateSettingsDir(File rootDir) {
-        return new File(getSettingsDir(rootDir), PRIVATE_SETTINGS_DIR);
+    public static Path getPrivateSettingsDir(Path rootDir) {
+        return getSettingsDir(rootDir).resolve(PRIVATE_SETTINGS_DIR);
     }
 
-    public static File getCacheDir(File rootDir) {
-        return new File(getPrivateSettingsDir(rootDir), CACHE_DIR);
+    public static Path getCacheDir(Path rootDir) {
+        return getPrivateSettingsDir(rootDir).resolve(CACHE_DIR);
     }
 
-    public static Collection<ProfileDef> getAvailableProfiles(File rootDir) {
-        File profileDir = getProfileDirectory(rootDir);
-        if (!profileDir.isDirectory()) {
+    public static Collection<ProfileDef> getAvailableProfiles(Path rootDir) {
+        Path profileDir = getProfileDirectory(rootDir);
+        if (!Files.isDirectory(profileDir)) {
             return Collections.emptySet();
         }
 
-        File[] profileFiles = profileDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase(Locale.ROOT).endsWith(PROFILE_FILE_NAME_SUFFIX);
-            }
-        });
+        List<ProfileDef> result = new LinkedList<>();
+        try (DirectoryStream<Path> profileDirContent = Files.newDirectoryStream(profileDir)) {
+            int suffixLength = PROFILE_FILE_NAME_SUFFIX.length();
+            for (Path file: profileDirContent) {
+                if (!Files.isRegularFile(file)) {
+                    continue;
+                }
 
-        if (profileFiles == null) {
-            return Collections.emptySet();
-        }
+                String fileName = file.getFileName().toString();
+                String normFileName = fileName.toLowerCase(Locale.ROOT);
+                if (!normFileName.endsWith(PROFILE_FILE_NAME_SUFFIX)) {
+                    continue;
+                }
 
-        List<ProfileDef> result = new ArrayList<>(profileFiles.length);
-        int suffixLength = PROFILE_FILE_NAME_SUFFIX.length();
-        for (File profileFile: profileFiles) {
-            String fileName = profileFile.getName();
-            if (fileName.length() >= suffixLength) {
-                String profileName = fileName.substring(0, fileName.length() - suffixLength);
-                result.add(new ProfileDef(null, fileName, profileName));
+                // This should hold, but check it just in case I don't know
+                // something about weird case issues.
+                if (fileName.length() >= suffixLength) {
+                    String profileName = fileName.substring(0, fileName.length() - suffixLength);
+                    result.add(new ProfileDef(null, fileName, profileName));
+                }
             }
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO, "Cannot list profile directory: " + profileDir, ex);
         }
         return result;
     }
@@ -71,71 +85,71 @@ public final class SettingsFiles {
         return getAvailableProfiles(getRootDirectory(project));
     }
 
-    private static File getSettingsDir(File rootDir) {
+    private static Path getSettingsDir(Path rootDir) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
-        return new File(rootDir, SETTINGS_DIR_NAME);
+        return rootDir.resolve(SETTINGS_DIR_NAME);
     }
 
-    private static File getProfileDirectory(File rootDir) {
-        return new File(getSettingsDir(rootDir), PROFILE_DIRECTORY);
+    private static Path getProfileDirectory(Path rootDir) {
+        return getSettingsDir(rootDir).resolve(PROFILE_DIRECTORY);
     }
 
-    public static File getProfileFile(File rootDir, ProfileKey profileKey) {
+    public static Path getProfileFile(Path rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
         if (profileKey != null) {
-            File profileFileDir = getProfileDirectory(rootDir);
+            Path profileFileDir = getProfileDirectory(rootDir);
             String group = profileKey.getGroupName();
             if (group != null) {
-                profileFileDir = new File(profileFileDir, group);
+                profileFileDir = profileFileDir.resolve(group);
             }
 
-            return new File(profileFileDir, profileKey.getFileName());
+            return profileFileDir.resolve(profileKey.getFileName());
         }
         else {
-            return new File(rootDir, SETTINGS_FILENAME);
+            return rootDir.resolve(SETTINGS_FILENAME);
         }
     }
 
-    public static File[] getFilesForProfile(File rootDir, ProfileDef profileDef) {
+    public static Path[] getFilesForProfile(Path rootDir, ProfileDef profileDef) {
         return getFilesForProfile(rootDir, ProfileKey.fromProfileDef(profileDef));
     }
 
-    public static File[] getFilesForProfile(File rootDir, ProfileKey profileKey) {
+    public static Path[] getFilesForProfile(Path rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
-        File mainFile = new File(rootDir, SETTINGS_FILENAME);
+        Path mainFile = rootDir.resolve(SETTINGS_FILENAME);
 
         if (profileKey == null) {
-            return new File[]{mainFile};
+            return new Path[]{mainFile};
         }
         else {
-            File profileFile = getProfileFile(rootDir, profileKey);
-            return new File[]{profileFile, mainFile};
+            Path profileFile = getProfileFile(rootDir, profileKey);
+            return new Path[]{profileFile, mainFile};
         }
     }
 
-    public static File getProfileFile(NbGradleProject project, ProfileKey profileKey) {
+    public static Path getProfileFile(NbGradleProject project, ProfileKey profileKey) {
         return getProfileFile(getRootDirectory(project), profileKey);
     }
 
-    public static File getProfileFile(NbGradleProject project, ProfileDef profileDef) {
+    public static Path getProfileFile(NbGradleProject project, ProfileDef profileDef) {
         return getProfileFile(project, ProfileKey.fromProfileDef(profileDef));
     }
 
-    public static File[] getFilesForProfile(NbGradleProject project, ProfileKey profileKey) {
+    public static Path[] getFilesForProfile(NbGradleProject project, ProfileKey profileKey) {
         return getFilesForProfile(getRootDirectory(project), profileKey);
     }
 
-    public static File[] getFilesForProfile(NbGradleProject project, ProfileDef profileDef) {
+    public static Path[] getFilesForProfile(NbGradleProject project, ProfileDef profileDef) {
         return getFilesForProfile(project, ProfileKey.fromProfileDef(profileDef));
     }
 
-    public static File[] getFilesForProject(NbGradleProject project) {
+    public static Path[] getFilesForProject(NbGradleProject project) {
         return getFilesForProfile(project, project.getCurrentProfile().getProfileDef());
     }
 
-    public static File getRootDirectory(NbGradleProject project) {
+    public static Path getRootDirectory(NbGradleProject project) {
         NbGradleModel model = project.getAvailableModel();
         File settingsFile = model.getSettingsFile();
         File dir = settingsFile != null
@@ -145,7 +159,7 @@ public final class SettingsFiles {
             dir = project.getProjectDirectoryAsFile();
         }
 
-        return dir;
+        return dir.toPath();
     }
 
     private SettingsFiles() {

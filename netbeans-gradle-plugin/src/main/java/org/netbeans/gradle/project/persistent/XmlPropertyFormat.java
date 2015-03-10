@@ -1,15 +1,19 @@
 package org.netbeans.gradle.project.persistent;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -107,26 +111,20 @@ final class XmlPropertyFormat {
         return element;
     }
 
-    private static void writeBytesToFile(File outputFile, byte[] content) throws IOException {
-        try (OutputStream output = new FileOutputStream(outputFile)) {
-            output.write(content);
-        }
-    }
-
-    private static void saveDocument(NbGradleProject project, File propertyfile, Document document) throws TransformerException, IOException {
-        File dir = propertyfile.getParentFile();
+    private static void saveDocument(NbGradleProject project, Path propertyfile, Document document) throws TransformerException, IOException {
+        Path dir = propertyfile.getParent();
         if (dir != null) {
-            if (!dir.mkdirs()) {
-                if (!dir.isDirectory()) {
-                    LOGGER.log(Level.WARNING, "Cannot create directory: {0}", dir);
-                }
-            }
+            Files.createDirectories(dir);
         }
 
         String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);
         if (lineSeparator == null) {
-            Result result = new StreamResult(propertyfile);
-            saveDocument(result, document);
+
+            try (OutputStream fileOutput = Files.newOutputStream(propertyfile);
+                    OutputStream output = new BufferedOutputStream(fileOutput, 8 * 1024)) {
+                Result result = new StreamResult(output);
+                saveDocument(result, document);
+            }
         }
         else {
             ByteArrayOutputStream output = new ByteArrayOutputStream(2048);
@@ -142,7 +140,7 @@ final class XmlPropertyFormat {
                 newFileStrContent.append(lineSeparator);
             }
 
-            writeBytesToFile(propertyfile, newFileStrContent.toString().getBytes(XML_ENCODING));
+            Files.write(propertyfile, newFileStrContent.toString().getBytes(XML_ENCODING));
         }
     }
 
@@ -289,7 +287,7 @@ final class XmlPropertyFormat {
         }
     }
 
-    public static void saveToXml(NbGradleProject project, File propertyfile, PropertiesSnapshot snapshot) {
+    public static void saveToXml(NbGradleProject project, Path propertyfile, PropertiesSnapshot snapshot) {
         ExceptionHelper.checkNotNullArgument(propertyfile, "propertyfile");
         ExceptionHelper.checkNotNullArgument(snapshot, "snapshot");
 
@@ -563,7 +561,7 @@ final class XmlPropertyFormat {
         return result;
     }
 
-    public static PropertiesSnapshot readFromXml(File propertiesFile) {
+    public static PropertiesSnapshot readFromXml(Path propertiesFile) {
         LOGGER.log(Level.INFO, "Loading project properties from {0}", propertiesFile);
 
         PropertiesSnapshot.Builder result = new PropertiesSnapshot.Builder();
@@ -578,11 +576,14 @@ final class XmlPropertyFormat {
 
         Document document;
         try {
-            if (!propertiesFile.exists()) {
+            if (!Files.isRegularFile(propertiesFile)) {
                 return result.create();
             }
 
-            document = builder.parse(propertiesFile);
+            try (InputStream fileInput = Files.newInputStream(propertiesFile);
+                    InputStream input = new BufferedInputStream(fileInput, 8  * 1024)) {
+                document = builder.parse(input);
+            }
         } catch (SAXException ex) {
             LOGGER.log(Level.INFO, "Failed to parse the property file.", ex);
             return result.create();

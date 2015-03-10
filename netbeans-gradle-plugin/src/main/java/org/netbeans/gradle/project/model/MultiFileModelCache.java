@@ -1,14 +1,15 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
-import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache implements PersistentModelCache {
@@ -25,14 +26,14 @@ public final class MultiFileModelCache implements PersistentModelCache {
     @Override
     public NbGradleModel tryGetModel(NbGradleProject project) throws IOException {
         NbGradleModel currentModel = project.getAvailableModel();
-        File cacheFilePath = getCacheFilePath(currentModel, getMD5());
+        Path cacheFilePath = getCacheFilePath(currentModel, getMD5());
 
-        if (!cacheFilePath.isFile()) {
+        if (!Files.isRegularFile(cacheFilePath)) {
             return null;
         }
 
         SerializedNbGradleModels serializedModel
-                = (SerializedNbGradleModels)SerializationUtils.deserializeFile(cacheFilePath);
+                = (SerializedNbGradleModels)SerializationUtils2.deserializeFile(cacheFilePath);
         return serializedModel != null
                 ? serializedModel.deserializeModel(project)
                 : null;
@@ -65,9 +66,10 @@ public final class MultiFileModelCache implements PersistentModelCache {
         return limitLength(model.getProjectDir().getName(), 16) + "-" + keyHash;
     }
 
-    private static File getCacheFilePath(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
+    private static Path getCacheFilePath(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
         String fileName = getCacheFileName(model, hashCalculator);
-        return new File(SettingsFiles.getCacheDir(model.getRootProjectDir()), fileName);
+
+        return SettingsFiles.getCacheDir(model.getRootProjectDir().toPath()).resolve(fileName);
     }
 
     private void saveGradleModel(
@@ -75,13 +77,13 @@ public final class MultiFileModelCache implements PersistentModelCache {
             SerializedNbGradleModels model,
             MessageDigest hashCalculator) throws IOException {
 
-        File cacheFilePath = getCacheFilePath(sourceModel, hashCalculator);
+        Path cacheFilePath = getCacheFilePath(sourceModel, hashCalculator);
 
-        File cacheDir = cacheFilePath.getParentFile();
+        Path cacheDir = cacheFilePath.getParent();
         if (cacheDir != null) {
-            cacheDir.mkdirs();
+            Files.createDirectories(cacheDir);
         }
 
-        SerializationUtils.serializeToFile(cacheFilePath, model);
+        SerializationUtils2.serializeToFile(cacheFilePath, model);
     }
 }

@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -399,7 +400,7 @@ public final class NbGradleProject implements Project {
             return ProjectPropertiesManager.getPropertySourceForProject(this, profileDef).load(onLoadTask);
         }
         else {
-            File profileFile = SettingsFiles.getProfileFile(this, profileDef);
+            Path profileFile = SettingsFiles.getProfileFile(this, profileDef);
             return ProjectPropertiesManager.getFilePropertySource(this, profileFile).load(onLoadTask);
         }
     }

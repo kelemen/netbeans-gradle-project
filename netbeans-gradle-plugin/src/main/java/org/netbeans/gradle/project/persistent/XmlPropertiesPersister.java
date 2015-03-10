@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.persistent;
 
-import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +34,9 @@ import org.netbeans.gradle.project.properties.PropertiesSnapshot;
 public final class XmlPropertiesPersister implements PropertiesPersister {
     private static final Logger LOGGER = Logger.getLogger(XmlPropertiesPersister.class.getName());
 
-    private final File propertiesFile;
+    private final Path propertiesFile;
 
-    public XmlPropertiesPersister(File propertiesFile) {
+    public XmlPropertiesPersister(Path propertiesFile) {
         ExceptionHelper.checkNotNullArgument(propertiesFile, "propertiesFile");
 
         this.propertiesFile = propertiesFile;

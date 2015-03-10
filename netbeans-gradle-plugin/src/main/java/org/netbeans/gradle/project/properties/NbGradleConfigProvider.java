@@ -2,12 +2,9 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +29,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 
 public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
@@ -40,10 +38,10 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private static final String LAST_PROFILE_FILE = "last-profile";
 
     private static final Lock CONFIG_PROVIDERS_LOCK = new ReentrantLock();
-    private static final Map<File, NbGradleConfigProvider> CONFIG_PROVIDERS
+    private static final Map<Path, NbGradleConfigProvider> CONFIG_PROVIDERS
             = new WeakValueHashMap<>();
 
-    private final File rootDirectory;
+    private final Path rootDirectory;
     private final PropertyChangeSupport changeSupport;
     private final ListenerManager<Runnable> activeConfigChangeListeners;
     private final AtomicReference<List<NbGradleConfiguration>> configs;
@@ -51,7 +49,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final AtomicBoolean hasBeenUsed;
     private volatile boolean hasActiveBeenSet;
 
-    private NbGradleConfigProvider(File rootDirectory) {
+    private NbGradleConfigProvider(Path rootDirectory) {
         ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
 
         this.rootDirectory = rootDirectory;
@@ -65,7 +63,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
-        File rootDir = SettingsFiles.getRootDirectory(project);
+        Path rootDir = SettingsFiles.getRootDirectory(project);
 
         // TODO: Add configurations from enabled extensions.
         //   NbGradleConfigProvider is needed to be wrapped for this.
@@ -119,13 +117,11 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
         NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void execute(CancellationToken cancelToken) {
+            public void execute(CancellationToken cancelToken) throws IOException {
                 removeFromConfig(config);
-                File profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
-                if (profileFile.isFile()) {
-                    if (!profileFile.delete()) {
-                        LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
-                    }
+                Path profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
+                if (!Files.deleteIfExists(profileFile)) {
+                    LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
                 }
 
                 executeOnEdt(new Runnable() {
@@ -192,21 +188,19 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return configs.get();
     }
 
-    private File getLastProfileFile() {
-        return new File(SettingsFiles.getPrivateSettingsDir(rootDirectory), LAST_PROFILE_FILE);
+    private Path getLastProfileFile() {
+        return SettingsFiles.getPrivateSettingsDir(rootDirectory).resolve(LAST_PROFILE_FILE);
     }
 
     private void readAndUpdateDefaultProfile() {
-        File lastProfileFile = getLastProfileFile();
-        if (!lastProfileFile.isFile()) {
+        Path lastProfileFile = getLastProfileFile();
+        if (!Files.isRegularFile(lastProfileFile)) {
             return;
         }
 
         SavedProfileDef savedDef;
         try {
-            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(lastProfileFile))) {
-                savedDef = (SavedProfileDef)input.readObject();
-            }
+            savedDef = (SavedProfileDef)SerializationUtils2.deserializeFile(lastProfileFile);
         } catch (Exception ex) {
             LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);
             return;
@@ -226,16 +220,16 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         }
     }
 
-    private void saveActiveProfileNow() {
+    private void saveActiveProfileNow() throws IOException {
         assert NbGradleProject.PROJECT_PROCESSOR.isExecutingInThis();
 
-        File lastProfileFile = getLastProfileFile();
+        Path lastProfileFile = getLastProfileFile();
 
         NbGradleConfiguration config = activeConfig.get();
         if (config != null) {
             ProfileDef profileDef = config.getProfileDef();
             if (profileDef == null) {
-                if (!lastProfileFile.delete()) {
+                if (!Files.deleteIfExists(lastProfileFile)) {
                     LOGGER.log(Level.FINE, "Last profile file could not be deleted: {0}", lastProfileFile);
                 }
                 return;
@@ -244,14 +238,12 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             SavedProfileDef savedDef = new SavedProfileDef(profileDef);
 
             try {
-                File parentFile = lastProfileFile.getParentFile();
+                Path parentFile = lastProfileFile.getParent();
                 if (parentFile != null) {
-                    parentFile.mkdirs();
+                    Files.createDirectories(parentFile);
                 }
-                try (FileOutputStream fileOutput = new FileOutputStream(lastProfileFile);
-                        ObjectOutputStream output = new ObjectOutputStream(fileOutput)) {
-                    output.writeObject(savedDef);
-                }
+
+                SerializationUtils2.serializeToFile(lastProfileFile, savedDef);
             } catch (IOException ex) {
                 LOGGER.log(Level.WARNING, "Failed to read last profile.", ex);
             }
@@ -261,7 +253,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private void saveActiveProfile() {
         NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void execute(CancellationToken cancelToken) {
+            public void execute(CancellationToken cancelToken) throws IOException {
                 saveActiveProfileNow();
             }
         }, null);

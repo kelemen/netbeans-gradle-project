@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -95,19 +96,19 @@ public final class ProjectPropertiesManager {
         return new NbCurrentProfileProjectPropertySource(project);
     }
 
-    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, File... propertiesFiles) {
+    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, Path... propertiesFiles) {
         return getFilesPropertySource(project, Arrays.asList(propertiesFiles));
     }
 
-    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, List<File> propertiesFiles) {
+    public static ProjectPropertySource getFilesPropertySource(NbGradleProject project, List<Path> propertiesFiles) {
         List<ProjectPropertySource> sources = new ArrayList<>();
-        for (File propertyFile: propertiesFiles) {
+        for (Path propertyFile: propertiesFiles) {
             sources.add(getFilePropertySource(project, propertyFile));
         }
         return combineSources(sources);
     }
 
-    public static ProjectPropertySource getFilePropertySource(NbGradleProject project, final File propertiesFile) {
+    public static ProjectPropertySource getFilePropertySource(NbGradleProject project, Path propertiesFile) {
         return new FileProjectPropertySource(project, propertiesFile);
     }
 
@@ -128,7 +129,7 @@ public final class ProjectPropertiesManager {
 
     private static CachedProperties loadPropertiesAlways(
             final NbGradleProject project,
-            File propertiesFile) {
+            Path propertiesFile) {
 
         final CachedProperties result = new CachedProperties(new MemProjectProperties());
         final PropertiesPersister persister = new XmlPropertiesPersister(propertiesFile);
@@ -152,9 +153,9 @@ public final class ProjectPropertiesManager {
 
     private static class FileProjectPropertySource implements ProjectPropertySource {
         private final NbGradleProject project;
-        private final File propertiesFile;
+        private final Path propertiesFile;
 
-        public FileProjectPropertySource(NbGradleProject project, File propertiesFile) {
+        public FileProjectPropertySource(NbGradleProject project, Path propertiesFile) {
             ExceptionHelper.checkNotNullArgument(propertiesFile, "propertiesFile");
             this.project = project;
             this.propertiesFile = propertiesFile;
@@ -308,7 +309,7 @@ public final class ProjectPropertiesManager {
     }
 
     private static ProjectPropertySource filesWithDefault(
-            NbGradleProject project, File[] files, ProjectPropertySource defaultSource) {
+            NbGradleProject project, Path[] files, ProjectPropertySource defaultSource) {
 
         ProjectPropertySource[] sources = new ProjectPropertySource[files.length + 1];
         for (int i = 0; i < files.length; i++) {
@@ -334,7 +335,7 @@ public final class ProjectPropertiesManager {
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
-            File[] files = SettingsFiles.getFilesForProfile(project, profileDef);
+            Path[] files = SettingsFiles.getFilesForProfile(project, profileDef);
             return filesWithDefault(project, files, defaultSource).load(onLoadTask);
         }
 
@@ -372,7 +373,7 @@ public final class ProjectPropertiesManager {
 
         @Override
         public ProjectProperties load(final PropertiesLoadListener onLoadTask) {
-            File[] files = SettingsFiles.getFilesForProject(project);
+            Path[] files = SettingsFiles.getFilesForProject(project);
             return filesWithDefault(project, files, defaultSource).load(onLoadTask);
         }
 

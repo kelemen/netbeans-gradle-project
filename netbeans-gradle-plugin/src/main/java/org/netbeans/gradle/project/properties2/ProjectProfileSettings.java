@@ -62,7 +62,7 @@ public final class ProjectProfileSettings {
             return null;
         }
 
-        return SettingsFiles.getProfileFile(gradleProject, key.getKey()).toPath();
+        return SettingsFiles.getProfileFile(gradleProject, key.getKey());
     }
 
     public void ensureLoaded() throws IOException {

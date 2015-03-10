@@ -2,24 +2,23 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.SerializationUtils2;
 
 public final class SingleFileModelCache implements PersistentModelCache {
-    private static final Logger LOGGER = Logger.getLogger(SingleFileModelCache.class.getName());
-
     @Override
     public NbGradleModel tryGetModel(NbGradleProject project) throws IOException {
         NbGradleModel model = project.getAvailableModel();
-        File rootDir = model.getRootProjectDir();
+        Path rootDir = model.getRootProjectDir().toPath();
 
         Map<String, SerializedNbGradleModels> allModels = tryReadFromCache(rootDir);
         if (allModels == null) {
@@ -39,7 +38,7 @@ public final class SingleFileModelCache implements PersistentModelCache {
             return;
         }
 
-        File rootDir = models.iterator().next().getRootProjectDir();
+        Path rootDir = models.iterator().next().getRootProjectDir().toPath();
 
         Map<String, SerializedNbGradleModels> cachedModels = readFromCache(rootDir);
         Map<String, SerializedNbGradleModels> updatedModels = CollectionUtils.newHashMap(cachedModels.size() + models.size());
@@ -47,7 +46,7 @@ public final class SingleFileModelCache implements PersistentModelCache {
 
         List<NbGradleModel> remainingModels = new LinkedList<>();
         for (NbGradleModel model: models) {
-            if (!rootDir.equals(model.getRootProjectDir())) {
+            if (!rootDir.equals(model.getRootProjectDir().toPath())) {
                 remainingModels.add(model);
                 continue;
             }
@@ -56,35 +55,35 @@ public final class SingleFileModelCache implements PersistentModelCache {
             updatedModels.put(getCacheKey(model), serializedModel);
         }
 
-        File cacheFile = getCacheFile(rootDir);
-        File cacheDir = cacheFile.getParentFile();
+        Path cacheFile = getCacheFile(rootDir);
+        Path cacheDir = cacheFile.getParent();
         if (cacheDir != null) {
-            cacheDir.mkdirs();
+            Files.createDirectories(cacheDir);
         }
-        SerializationUtils.serializeToFile(cacheFile, updatedModels);
+        SerializationUtils2.serializeToFile(cacheFile, updatedModels);
 
         saveGradleModels(remainingModels);
     }
 
-    private static Map<String, SerializedNbGradleModels> tryReadFromCache(File rootDir) throws IOException {
-        File cacheFile = getCacheFile(rootDir);
-        if (!cacheFile.isFile()) {
+    private static Map<String, SerializedNbGradleModels> tryReadFromCache(Path rootDir) throws IOException {
+        Path cacheFile = getCacheFile(rootDir);
+        if (!Files.isRegularFile(cacheFile)) {
             return null;
         }
 
         @SuppressWarnings("unchecked")
         Map<String, SerializedNbGradleModels> result
-                = (Map<String, SerializedNbGradleModels>)SerializationUtils.deserializeFile(cacheFile);
+                = (Map<String, SerializedNbGradleModels>)SerializationUtils2.deserializeFile(cacheFile);
         return result;
     }
 
-    private static Map<String, SerializedNbGradleModels> readFromCache(File rootDir) throws IOException {
+    private static Map<String, SerializedNbGradleModels> readFromCache(Path rootDir) throws IOException {
         Map<String, SerializedNbGradleModels> result = tryReadFromCache(rootDir);
         return result != null ? result : Collections.<String, SerializedNbGradleModels>emptyMap();
     }
 
-    private static File getCacheFile(File rootDir) {
-        return new File(SettingsFiles.getCacheDir(rootDir), "project-cache");
+    private static Path getCacheFile(Path rootDir) {
+        return SettingsFiles.getCacheDir(rootDir).resolve("project-cache");
     }
 
     public static String getCacheKey(NbGradleModel model) throws IOException {
