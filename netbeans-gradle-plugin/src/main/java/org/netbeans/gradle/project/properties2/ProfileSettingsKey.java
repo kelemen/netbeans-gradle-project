@@ -5,6 +5,7 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 
 public final class ProfileSettingsKey {
     private final Path projectDir;
@@ -15,6 +16,11 @@ public final class ProfileSettingsKey {
 
         this.projectDir = projectDir;
         this.key = key;
+    }
+
+    @Nonnull
+    public Path getProfileFile() {
+        return SettingsFiles.getProfileFile(projectDir, key);
     }
 
     @Nonnull
