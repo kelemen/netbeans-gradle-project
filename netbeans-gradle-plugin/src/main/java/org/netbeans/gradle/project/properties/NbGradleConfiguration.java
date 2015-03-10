@@ -45,7 +45,7 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
     }
 
     public ProfileKey getProfileKey() {
-        return profileDef != null ? new ProfileKey(profileDef) : null;
+        return ProfileKey.fromProfileDef(profileDef);
     }
 
     public ProfileDef getProfileDef() {
