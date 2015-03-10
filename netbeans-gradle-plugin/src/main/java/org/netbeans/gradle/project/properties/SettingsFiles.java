@@ -80,48 +80,51 @@ public final class SettingsFiles {
         return new File(getSettingsDir(rootDir), PROFILE_DIRECTORY);
     }
 
-    public static File getProfileFile(File rootDir, ProfileDef profileDef) {
+    public static File getProfileFile(File rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
-        if (profileDef != null) {
+        if (profileKey != null) {
             File profileFileDir = getProfileDirectory(rootDir);
-            String group = profileDef.getGroupName();
+            String group = profileKey.getGroupName();
             if (group != null) {
                 profileFileDir = new File(profileFileDir, group);
             }
 
-            return new File(profileFileDir, profileDef.getFileName());
+            return new File(profileFileDir, profileKey.getFileName());
         }
         else {
             return new File(rootDir, SETTINGS_FILENAME);
         }
     }
 
-    public static File[] getFilesForProfile(File rootDir, ProfileDef profileDef) {
+    public static File[] getFilesForProfile(File rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
         File mainFile = new File(rootDir, SETTINGS_FILENAME);
 
-        if (profileDef == null) {
+        if (profileKey == null) {
             return new File[]{mainFile};
         }
         else {
-            File profileFile = getProfileFile(rootDir, profileDef);
+            File profileFile = getProfileFile(rootDir, profileKey);
             return new File[]{profileFile, mainFile};
         }
     }
 
     public static File getProfileFile(NbGradleProject project, ProfileKey profileKey) {
-        // TODO: Call should be the other way around
-        return getProfileFile(project, new ProfileDef(profileKey.getGroupName(), profileKey.getFileName(), ""));
+        return getProfileFile(getRootDirectory(project), profileKey);
     }
 
     public static File getProfileFile(NbGradleProject project, ProfileDef profileDef) {
-        return getProfileFile(getRootDirectory(project), profileDef);
+        return getProfileFile(project, ProfileKey.fromProfileDef(profileDef));
+    }
+
+    public static File[] getFilesForProfile(NbGradleProject project, ProfileKey profileKey) {
+        return getFilesForProfile(getRootDirectory(project), profileKey);
     }
 
     public static File[] getFilesForProfile(NbGradleProject project, ProfileDef profileDef) {
-        return getFilesForProfile(getRootDirectory(project), profileDef);
+        return getFilesForProfile(project, ProfileKey.fromProfileDef(profileDef));
     }
 
     public static File[] getFilesForProject(NbGradleProject project) {
