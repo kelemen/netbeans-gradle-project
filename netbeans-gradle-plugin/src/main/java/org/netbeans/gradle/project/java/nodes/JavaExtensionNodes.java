@@ -7,8 +7,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -16,6 +17,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -33,7 +35,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.ChangeSupport;
 
 @ManualRefreshedNodes
 public final class JavaExtensionNodes
@@ -42,22 +43,26 @@ implements
         JavaModelChangeListener {
 
     private final JavaExtension javaExt;
-    private final ChangeSupport nodeChanges;
+    private final ListenerManager<Runnable> nodeChangeListeners;
     private final AtomicReference<NodesDescription> lastDisplayed;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-        this.nodeChanges = new ChangeSupport(this);
+        this.nodeChangeListeners = new CopyOnTriggerListenerManager<>();
         this.lastDisplayed = new AtomicReference<>(null);
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
             @Override
             public void run() {
-                nodeChanges.fireChange();
+                fireNodeChangeEvent();
             }
         });
+    }
+
+    private void fireNodeChangeEvent() {
+        EventListeners.dispatchRunnable(nodeChangeListeners);
     }
 
     @Override
@@ -75,7 +80,7 @@ implements
         } while (currentNodes != lastDisplayed.get());
 
         if (hasChanged) {
-            nodeChanges.fireChange();
+            fireNodeChangeEvent();
         }
     }
 
@@ -112,31 +117,8 @@ implements
     }
 
     @Override
-    public NbListenerRef addNodeChangeListener(final Runnable listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final ChangeListener listenerWrapper = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                listener.run();
-            }
-        };
-
-        nodeChanges.addChangeListener(listenerWrapper);
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
-
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
-
-            @Override
-            public void unregister() {
-                nodeChanges.removeChangeListener(listenerWrapper);
-                registered = false;
-            }
-        };
+    public NbListenerRef addNodeChangeListener(Runnable listener) {
+        return NbListenerRefs.asNbRef(nodeChangeListeners.registerListener(listener));
     }
 
     private Set<NbListedDir> addListedDirs(List<SingleNodeFactory> toPopulate) {
