@@ -1,6 +1,9 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -16,6 +19,23 @@ public final class ProfileSettingsKey {
 
         this.projectDir = projectDir;
         this.key = key;
+    }
+
+    @Nonnull
+    public ProfileSettingsKey getDefaultProfile() {
+        return key != null
+                ? new ProfileSettingsKey(projectDir, null)
+                : this;
+    }
+
+    @Nonnull
+    public List<ProfileSettingsKey> getWithFallbacks() {
+        if (key == null) {
+            return Collections.singletonList(this);
+        }
+        else {
+            return Arrays.asList(this, getDefaultProfile());
+        }
     }
 
     @Nonnull
