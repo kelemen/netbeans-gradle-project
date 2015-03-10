@@ -21,6 +21,10 @@ public final class ProfileKey {
         this.fileName = fileName;
     }
 
+    public static ProfileKey fromProfileDef(ProfileDef profileDef) {
+        return profileDef != null ? new ProfileKey(profileDef) : null;
+    }
+
     public String getGroupName() {
         return groupName;
     }
