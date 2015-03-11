@@ -50,6 +50,8 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
@@ -244,14 +246,17 @@ public final class NbGradleProject implements Project {
         return combinedExtensionLookup;
     }
 
+    private NbGradleSingleProjectConfigProvider getConfigProvider() {
+        // TODO: Cache this value
+        return getLookup().lookup(NbGradleSingleProjectConfigProvider.class);
+    }
+
     public NbGradleConfiguration getCurrentProfile() {
-        return getLookup().lookup(NbGradleSingleProjectConfigProvider.class).getActiveConfiguration();
+        return getConfigProvider().getActiveConfiguration();
     }
 
     public ListenerRef addProfileChangeListener(Runnable listener) {
-        return getLookup()
-                .lookup(NbGradleSingleProjectConfigProvider.class)
-                .addActiveConfigChangeListener(listener);
+        return getConfigProvider().addActiveConfigChangeListener(listener);
     }
 
     public void displayError(String errorText, Throwable exception) {
@@ -380,6 +385,14 @@ public final class NbGradleProject implements Project {
                 GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
             }
         });
+    }
+
+    public ActiveSettingsQuery getActiveSettingsQuery() {
+        return getConfigProvider().getActiveSettingsQuery();
+    }
+
+    public ProfileSettingsContainer getProfileSettingsContainer() {
+        return getConfigProvider().getProfileSettingsContainer();
     }
 
     public ProjectProperties getProperties() {
