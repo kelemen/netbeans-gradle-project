@@ -2,15 +2,20 @@ package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.TaskExecutorService;
+import org.jtrim.concurrent.TaskFuture;
+import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.openide.filesystems.FileObject;
@@ -19,20 +24,21 @@ import org.w3c.dom.Element;
 
 public final class ProjectProfileSettings {
     private static final Logger LOGGER = Logger.getLogger(ProjectProfileSettings.class.getName());
+    // Should be single threaded to avoid unnecessary multiple load.
+    private static final TaskExecutorService SAVE_LOAD_EXECUTOR
+            = NbTaskExecutors.newExecutor("Profile-I/O", 1);
 
     private final ProfileSettingsKey key;
     private final ProfileSettings settings;
 
-    private volatile boolean loaded;
-    private final Lock loadLock;
+    private final WaitableSignal loadedOnceSignal;
 
     public ProjectProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
         this.key = key;
         this.settings = new ProfileSettings();
-        this.loadLock = new ReentrantLock();
-        this.loaded = false;
+        this.loadedOnceSignal = new WaitableSignal();
     }
 
     public ProfileSettingsKey getKey() {
@@ -65,22 +71,47 @@ public final class ProjectProfileSettings {
         return SettingsFiles.getProfileFile(gradleProject, key.getKey());
     }
 
-    public void ensureLoaded() throws IOException {
-        if (loaded) {
+    public void ensureLoaded() {
+        if (loadedOnceSignal.isSignaled()) {
             return;
         }
 
-        loadLock.lock();
-        try {
-            if (!loaded) {
-                load();
+        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws IOException {
+                if (!loadedOnceSignal.isSignaled()) {
+                    loadNow();
+                }
             }
-        } finally {
-            loadLock.unlock();
-        }
+        }, null);
     }
 
-    public void load() throws IOException {
+    public void ensureLoadedAndWait() {
+        ensureLoaded();
+        loadedOnceSignal.waitSignal(Cancellation.UNCANCELABLE_TOKEN);
+    }
+
+    public void loadEventually() {
+        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws IOException {
+                loadNow();
+            }
+        }, null);
+    }
+
+    public void loadAndWait() {
+        TaskFuture<?> loadFuture = SAVE_LOAD_EXECUTOR.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws IOException {
+                loadNow();
+            }
+        }, null);
+
+        loadFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
+    }
+
+    private void loadNow() throws IOException {
         try {
             Path profileFile = tryGetProfileFile();
             if (profileFile == null) {
@@ -90,11 +121,31 @@ public final class ProjectProfileSettings {
 
             settings.loadFromFile(profileFile);
         } finally {
-            loaded = true;
+            loadedOnceSignal.signal();
         }
     }
 
-    public void save() throws IOException {
+    public void saveEventually() {
+        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws IOException {
+                saveNow();
+            }
+        }, null);
+    }
+
+    public void saveAndWait() {
+        TaskFuture<?> saveFuture = SAVE_LOAD_EXECUTOR.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            @Override
+            public void execute(CancellationToken cancelToken) throws IOException {
+                saveNow();
+            }
+        }, null);
+
+        saveFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
+    }
+
+    private void saveNow() throws IOException {
         Project project = tryGetProject();
         if (project == null) {
             LOGGER.log(Level.WARNING, "No project in {0}", key.getProjectDir());
