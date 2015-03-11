@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
+import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
+import org.jtrim.event.OneShotListenerManager;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -16,15 +19,30 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Element;
 
-public final class MultiProfileProperties {
+public final class MultiProfileProperties implements ActiveSettingsQuery {
     private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettings;
+    private final WaitableSignal loadedOnceSignal;
+    private final OneShotListenerManager<Runnable, Void> loadedOnceListeners;
 
     public MultiProfileProperties() {
         this.currentProfileSettings = PropertyFactory.memPropertyConcurrent(
                 Collections.<ProjectProfileSettings>emptyList(),
                 SwingTaskExecutor.getStrictExecutor(false));
+        this.loadedOnceSignal = new WaitableSignal();
+        this.loadedOnceListeners = new OneShotListenerManager<>();
     }
 
+    @Override
+    public void waitForLoadedOnce(CancellationToken cancelToken) {
+        loadedOnceSignal.waitSignal(cancelToken);
+    }
+
+    @Override
+    public ListenerRef notifyWhenLoadedOnce(Runnable listener) {
+        return loadedOnceListeners.registerOrNotifyListener(listener);
+    }
+
+    @Override
     public Element getAuxConfigValue(DomElementKey key) {
         for (ProjectProfileSettings settings: currentProfileSettings.getValue()) {
             Element result = settings.getAuxConfigValue(key);
@@ -98,6 +116,7 @@ public final class MultiProfileProperties {
         };
     }
 
+    @Override
     public <ValueType> AcquiredPropertySource<ValueType> acquireProperty(
             final PropertyDef<?, ValueType> propertyDef) {
 
