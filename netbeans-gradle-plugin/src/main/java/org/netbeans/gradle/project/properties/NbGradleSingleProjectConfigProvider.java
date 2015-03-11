@@ -15,6 +15,8 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 
@@ -42,6 +44,14 @@ implements
         return new NbGradleSingleProjectConfigProvider(
                 project,
                 NbGradleConfigProvider.getConfigProvider(project));
+    }
+
+    public ActiveSettingsQuery getActiveSettingsQuery() {
+        return commonConfig.getActiveSettingsQuery();
+    }
+
+    public ProfileSettingsContainer getProfileSettingsContainer() {
+        return commonConfig.getProfileSettingsContainer();
     }
 
     private void updateExtensionProfiles() {
