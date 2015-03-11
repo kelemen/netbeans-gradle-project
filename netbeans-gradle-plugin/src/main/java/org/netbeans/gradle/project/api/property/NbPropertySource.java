@@ -12,10 +12,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  * For example, the value of the property can be derived from the content of a
  * file and might get updated after the content of that file changes.
  * <P>
- * Note that this interface defines the same methods as the
- * {@code org.jtrim.property.PropertySource} (of the <I>JTrim</I> library)
- * interface with exactly the same contract. This is so, that later
- * (in NetBeans 7.4) this interface can extend from the interface of <I>JTrim</I>.
+ * This interface exists for backward compatibilty reasons only, you
+ * should use {@code org.jtrim.property.PropertySource} instead.
  *
  * <h3>Thread safety</h3>
  * Instances of this interface are required to be completely thread-safe
