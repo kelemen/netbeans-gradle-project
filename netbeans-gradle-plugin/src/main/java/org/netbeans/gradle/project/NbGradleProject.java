@@ -50,6 +50,7 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.properties2.AcquiredCommonProperties;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -387,6 +388,10 @@ public final class NbGradleProject implements Project {
         });
     }
 
+    public AcquiredCommonProperties getCommonProperties() {
+        return getLookup().lookup(AcquiredCommonProperties.class);
+    }
+
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
         return getConfigProvider().getActiveSettingsQuery();
     }
@@ -454,11 +459,16 @@ public final class NbGradleProject implements Project {
         Lookup result = defaultLookupRef.get();
         if (result == null) {
             GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
+            NbGradleSingleProjectConfigProvider configProvider = NbGradleSingleProjectConfigProvider.create(this);
+
+            AcquiredCommonProperties commonProperties
+                    = new AcquiredCommonProperties(configProvider.getActiveSettingsQuery());
 
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
                 state, //allow outside code to mark the project as needing saving
-                NbGradleSingleProjectConfigProvider.create(this),
+                configProvider,
+                commonProperties,
                 new GradleProjectInformation(this),
                 new GradleProjectLogicalViewProvider(this),
                 new GradleActionProvider(this),
