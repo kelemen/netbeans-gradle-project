@@ -30,14 +30,14 @@ public final class AcquiredCommonProperties {
     private final PropertySource<ProjectPlatform> targetPlatform;
 
     public AcquiredCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
-        builtInTasks = acquire(activeSettingsQuery, BuiltInTasksProperty.PROPERTY_DEF);
-        commonTasks = acquire(activeSettingsQuery, CommonTasksProperty.PROPERTY_DEF);
-        customTasks = acquire(activeSettingsQuery, CustomTasksProperty.PROPERTY_DEF);
-        gradleLocation = acquire(activeSettingsQuery, GradleLocationProperty.PROPERTY_DEF);
-        licenseHeaderInfo = acquire(activeSettingsQuery, LicenseHeaderInfoProperty.PROPERTY_DEF);
-        scriptPlatform = acquire(activeSettingsQuery, ScriptPlatformProperty.PROPERTY_DEF);
-        sourceEncoding = acquire(activeSettingsQuery, SourceEncodingProperty.PROPERTY_DEF);
-        targetPlatform = acquire(activeSettingsQuery, TargetPlatformProperty.PROPERTY_DEF);
+        builtInTasks = get(activeSettingsQuery, BuiltInTasksProperty.PROPERTY_DEF);
+        commonTasks = get(activeSettingsQuery, CommonTasksProperty.PROPERTY_DEF);
+        customTasks = get(activeSettingsQuery, CustomTasksProperty.PROPERTY_DEF);
+        gradleLocation = get(activeSettingsQuery, GradleLocationProperty.PROPERTY_DEF);
+        licenseHeaderInfo = get(activeSettingsQuery, LicenseHeaderInfoProperty.PROPERTY_DEF);
+        scriptPlatform = get(activeSettingsQuery, ScriptPlatformProperty.PROPERTY_DEF);
+        sourceEncoding = get(activeSettingsQuery, SourceEncodingProperty.PROPERTY_DEF);
+        targetPlatform = get(activeSettingsQuery, TargetPlatformProperty.PROPERTY_DEF);
     }
 
     public PropertySource<BuiltInTasks> getBuiltInTasks() {
@@ -72,11 +72,10 @@ public final class AcquiredCommonProperties {
         return targetPlatform;
     }
 
-    private <ValueType> PropertySource<ValueType> acquire(
+    private static <ValueType> PropertySource<ValueType> get(
             ActiveSettingsQuery activeSettingsQuery,
             PropertyDef<?, ValueType> propertyDef) {
 
-        AcquiredPropertySource<ValueType> result = activeSettingsQuery.acquireProperty(propertyDef);
-        return PropertyFactory.protectedView(result);
+        return activeSettingsQuery.getProperty(propertyDef);
     }
 }

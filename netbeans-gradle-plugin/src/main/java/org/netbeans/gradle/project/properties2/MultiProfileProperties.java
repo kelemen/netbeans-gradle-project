@@ -4,19 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.OneShotListenerManager;
+import org.jtrim.event.SimpleListenerRegistry;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Element;
 
@@ -61,117 +63,142 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         currentProfileSettings.setValue(settingsCopy);
     }
 
-    private static <ValueType> ValueType mergeProperties(
-            final ValueMerger<ValueType> valueMerger,
-            final int propertyIndex,
-            final List<PropertySource<ValueType>> properties) {
+    private static <ValueType> ValueType mergePropertyValues(
+            PropertyDef<?, ValueType> propertyDef,
+            List<ProjectProfileSettings> settings) {
+        return mergePropertyValues(propertyDef, 0, settings);
+    }
 
-        assert properties instanceof RandomAccess;
+    private static <ValueType> ValueType mergePropertyValues(
+            final PropertyDef<?, ValueType> propertyDef,
+            final int settingsIndex,
+            final List<ProjectProfileSettings> settings) {
 
-        int propertiesCount = properties.size() - propertyIndex;
+        assert settings instanceof RandomAccess;
+
+        int propertiesCount = settings.size() - settingsIndex;
         if (propertiesCount <= 0) {
             return null;
         }
 
-        ValueType childValue = properties.get(propertyIndex).getValue();
+        ProjectProfileSettings currentSettings = settings.get(settingsIndex);
+        ValueType childValue = currentSettings.getProperty(propertyDef).getValue();
         if (propertiesCount <= 1) {
             return childValue;
         }
 
-        return valueMerger.mergeValues(childValue, new ValueReference<ValueType>() {
+        return propertyDef.getValueMerger().mergeValues(childValue, new ValueReference<ValueType>() {
             @Override
             public ValueType getValue() {
-                return mergeProperties(valueMerger, propertyIndex + 1, properties);
+                return mergePropertyValues(propertyDef, settingsIndex + 1, settings);
             }
         });
     }
 
-    private static <ValueType> ValueType mergeProperties(
-            ValueMerger<ValueType> valueMerger,
-            List<PropertySource<ValueType>> properties) {
-        return mergeProperties(valueMerger, 0, properties);
-    }
-
-    private <ValueType> PropertySource<ValueType> mergedProperties(PropertyDef<?, ValueType> propertyDef) {
-        List<ProjectProfileSettings> allSettings = currentProfileSettings.getValue();
-        final List<PropertySource<ValueType>> properties = new ArrayList<>(allSettings.size());
-        for (ProjectProfileSettings settings: allSettings) {
-            properties.add(settings.getProperty(propertyDef));
-        }
-
-        final ValueMerger<ValueType> valueMerger = propertyDef.getValueMerger();
-        return new PropertySource<ValueType>() {
-            @Override
-            public ValueType getValue() {
-                return mergeProperties(valueMerger, properties);
-            }
-
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                List<ListenerRef> refs = new ArrayList<>(properties.size());
-                for (PropertySource<?> property: properties) {
-                    refs.add(property.addChangeListener(listener));
-                }
-                return ListenerRegistries.combineListenerRefs(refs);
-            }
-        };
-    }
-
     @Override
-    public <ValueType> AcquiredPropertySource<ValueType> acquireProperty(
+    public <ValueType> PropertySource<ValueType> getProperty(
             final PropertyDef<?, ValueType> propertyDef) {
 
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        final PropertySourceProxy<ValueType> result
-                = PropertyFactory.proxySource(PropertyFactory.<ValueType>constSource(null));
-
-        final ListenerRef profileRef = currentProfileSettings.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                result.replaceSource(mergedProperties(propertyDef));
-            }
-        });
-        result.replaceSource(mergedProperties(propertyDef));
-
-        return new AcquiredPropertySourceImpl<>(result, profileRef);
+        return new ProjectPropertyProxy<>(propertyDef, currentProfileSettings);
     }
 
-    private static class AcquiredPropertySourceImpl<ValueType>
+    private static SimpleListenerRegistry<Runnable> asListenerRegistry(final PropertySource<?> property) {
+        return new SimpleListenerRegistry<Runnable>() {
+            @Override
+            public ListenerRef registerListener(Runnable listener) {
+                return property.addChangeListener(listener);
+            }
+        };
+    }
+
+    private static class ProjectPropertyProxy<ValueType>
     implements
-            AcquiredPropertySource<ValueType> {
+            PropertySource<ValueType> {
 
-        private final PropertySourceProxy<ValueType> result;
-        private final ListenerRef profileRef;
-        private final AtomicBoolean closed;
+        private final PropertyDef<?, ValueType> propertyDef;
+        private final PropertySource<List<ProjectProfileSettings>> currentProfileSettings;
 
-        public AcquiredPropertySourceImpl(PropertySourceProxy<ValueType> result, ListenerRef profileRef) {
-            this.result = result;
-            this.profileRef = profileRef;
-            this.closed = new AtomicBoolean(false);
+        public ProjectPropertyProxy(
+                PropertyDef<?, ValueType> propertyDef,
+                PropertySource<List<ProjectProfileSettings>> currentProfileSettings) {
+
+            this.propertyDef = propertyDef;
+            this.currentProfileSettings = currentProfileSettings;
         }
+
 
         @Override
         public ValueType getValue() {
-            return result.getValue();
+            return mergePropertyValues(propertyDef, currentProfileSettings.getValue());
         }
 
-        @Override
-        public ListenerRef addChangeListener(Runnable listener) {
-            return result.addChangeListener(listener);
-        }
-
-        @Override
-        public void close() {
-            if (!closed.getAndSet(true)) {
-                profileRef.unregister();
+        private void registerWithSubListener(Runnable listener, AtomicReference<ListenerRef> subListenerRef) {
+            SimpleListenerRegistry<Runnable> mergedListeners = mergedPropertyListener(propertyDef);
+            ListenerRef newRef = mergedListeners.registerListener(listener);
+            ListenerRef prevRef = subListenerRef.getAndSet(newRef);
+            if (prevRef != null) {
+                prevRef.unregister();
+            }
+            else {
+                subListenerRef.compareAndSet(newRef, null);
+                newRef.unregister();
             }
         }
 
         @Override
-        protected void finalize() throws Throwable {
-            close();
-            super.finalize();
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+            final AtomicReference<ListenerRef> subListenerRef
+                    = new AtomicReference<ListenerRef>(UnregisteredListenerRef.INSTANCE);
+            // subListenerRef.get() == null means that the the client
+            // unregistered its listener and therefore, we must no longer
+            // register listeners. That is, once this property is null, we may
+            // never set it.
+
+            final ListenerRef listenerRef = currentProfileSettings.addChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    registerWithSubListener(listener, subListenerRef);
+                    listener.run();
+                }
+            });
+
+            registerWithSubListener(listener, subListenerRef);
+
+            return NbListenerRefs.fromRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    listenerRef.unregister();
+                    ListenerRef subRef = subListenerRef.getAndSet(null);
+                    if (subRef != null) {
+                        subRef.unregister();
+                    }
+                }
+            });
+        }
+
+        private SimpleListenerRegistry<Runnable> mergedPropertyListener(final PropertyDef<?, ValueType> propertyDef) {
+            final List<ProjectProfileSettings> allSettings = currentProfileSettings.getValue();
+            // Minor optimization for the default case
+            if (allSettings.size() == 1) {
+                MutableProperty<ValueType> property = allSettings.get(0).getProperty(propertyDef);
+                return asListenerRegistry(property);
+            }
+
+            return new SimpleListenerRegistry<Runnable>() {
+                @Override
+                public ListenerRef registerListener(Runnable listener) {
+                    List<ListenerRef> refs = new ArrayList<>(allSettings.size());
+                    for (ProjectProfileSettings settings: allSettings) {
+                        MutableProperty<ValueType> property = settings.getProperty(propertyDef);
+                        refs.add(property.addChangeListener(listener));
+                    }
+                    return ListenerRegistries.combineListenerRefs(refs);
+                }
+            };
         }
     }
 }
