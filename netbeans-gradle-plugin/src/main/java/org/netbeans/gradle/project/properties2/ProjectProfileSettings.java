@@ -92,6 +92,10 @@ public final class ProjectProfileSettings {
         return loadedListeners.registerOrNotifyListener(onLoaded);
     }
 
+    public boolean isLoadedOnce() {
+        return loadedOnceSignal.isSignaled();
+    }
+
     public void ensureLoaded() {
         if (loadedOnceSignal.isSignaled()) {
             return;
