@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties2;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,26 +23,28 @@ public final class ProfileSettingsContainer {
         return DEFAULT;
     }
 
-    public ProjectProfileSettings getLoadedProfileSettings(ProfileSettingsKey key) throws IOException {
-        ProjectProfileSettings result = getProfileSettings(key);
-        result.ensureLoaded();
-        return result;
-    }
-
     public ProjectProfileSettings getProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
+        ProjectProfileSettings result;
+        boolean loadNow = false;
+
         mainLock.lock();
         try {
-            ProjectProfileSettings result = loaded.get(key);
+            result = loaded.get(key);
             if (result == null) {
                 result = new ProjectProfileSettings(key);
+                loadNow = true;
                 loaded.put(key, result);
             }
-            return result;
         } finally {
             mainLock.unlock();
         }
+
+        if (loadNow) {
+            result.ensureLoaded();
+        }
+        return result;
     }
 
     public List<ProjectProfileSettings> getAllProfileSettings(Collection<ProfileSettingsKey> keys) {
