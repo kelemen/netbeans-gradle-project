@@ -29,6 +29,11 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.properties2.MultiProfileProperties;
+import org.netbeans.gradle.project.properties2.ProfileKey;
+import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
+import org.netbeans.gradle.project.properties2.ProfileSettingsKey;
+import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 
@@ -49,6 +54,9 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final AtomicBoolean hasBeenUsed;
     private volatile boolean hasActiveBeenSet;
 
+    private final MultiProfileProperties multiProfileProperties;
+    private final ProfileSettingsContainer settingsContainer;
+
     private NbGradleConfigProvider(Path rootDirectory) {
         ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
 
@@ -60,6 +68,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.configs = new AtomicReference<>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
         this.hasActiveBeenSet = false;
+        this.multiProfileProperties = new MultiProfileProperties();
+        this.settingsContainer = ProfileSettingsContainer.getDefault();
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
@@ -292,6 +302,13 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return activeConfig.get();
     }
 
+    private void updateByKey(ProfileKey profileKey) {
+        ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
+        List<ProjectProfileSettings> profileSettings
+                = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
+        multiProfileProperties.setProfileSettings(profileSettings);
+    }
+
     @Override
     public void setActiveConfiguration(final NbGradleConfiguration configuration) {
         if (configuration == null) {
@@ -303,6 +320,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
 
         final NbGradleConfiguration prevConfig = activeConfig.getAndSet(configuration);
         if (!prevConfig.equals(configuration)) {
+            updateByKey(configuration.getProfileKey());
+
             executeOnEdt(new Runnable() {
                 @Override
                 public void run() {

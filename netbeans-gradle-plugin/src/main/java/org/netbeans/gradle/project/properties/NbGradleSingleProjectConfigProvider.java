@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,11 +15,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.properties2.MultiProfileProperties;
-import org.netbeans.gradle.project.properties2.ProfileKey;
-import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
-import org.netbeans.gradle.project.properties2.ProfileSettingsKey;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 
@@ -31,8 +25,6 @@ implements
 
     private final NbGradleProject project;
     private final NbGradleConfigProvider commonConfig;
-    private final MultiProfileProperties multiProfileProperties;
-    private final ProfileSettingsContainer settingsContainer;
     private volatile Set<NbGradleConfiguration> extensionProfiles;
 
     private NbGradleSingleProjectConfigProvider(
@@ -44,8 +36,6 @@ implements
         this.project = project;
         this.commonConfig = multiProjectProvider;
         this.extensionProfiles = Collections.emptySet();
-        this.multiProfileProperties = new MultiProfileProperties();
-        this.settingsContainer = ProfileSettingsContainer.getDefault();
     }
 
     public static NbGradleSingleProjectConfigProvider create(NbGradleProject project) {
@@ -107,15 +97,6 @@ implements
     @Override
     public void setActiveConfiguration(NbGradleConfiguration configuration) throws IOException {
         commonConfig.setActiveConfiguration(configuration);
-        if (configuration != null) {
-            Path projectDir = project.getProjectDirectoryAsFile().toPath();
-
-            ProfileKey profileKey = configuration.getProfileKey();
-            ProfileSettingsKey key = new ProfileSettingsKey(projectDir, profileKey);
-            List<ProjectProfileSettings> profileSettings
-                    = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
-            multiProfileProperties.setProfileSettings(profileSettings);
-        }
     }
 
     private CustomizerProvider getCustomizerProvider() {
