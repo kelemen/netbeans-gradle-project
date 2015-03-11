@@ -305,7 +305,9 @@ public final class ProfileSettings {
             configLock.unlock();
         }
 
-        return result != null ? result : (Element)EXPORT_DOCUMENT.importNode(result, true);
+        return result != null
+                ? (Element)EXPORT_DOCUMENT.importNode(result, true)
+                : null;
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
