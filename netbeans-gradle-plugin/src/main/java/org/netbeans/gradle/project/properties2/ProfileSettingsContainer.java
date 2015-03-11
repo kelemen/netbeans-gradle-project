@@ -1,6 +1,9 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
@@ -41,5 +44,13 @@ public final class ProfileSettingsContainer {
         } finally {
             mainLock.unlock();
         }
+    }
+
+    public List<ProjectProfileSettings> getAllProfileSettings(Collection<ProfileSettingsKey> keys) {
+        List<ProjectProfileSettings> result = new ArrayList<>(keys.size());
+        for (ProfileSettingsKey key: keys) {
+            result.add(getProfileSettings(key));
+        }
+        return result;
     }
 }
