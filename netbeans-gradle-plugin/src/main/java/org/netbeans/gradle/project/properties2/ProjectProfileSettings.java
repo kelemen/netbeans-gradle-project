@@ -9,8 +9,13 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.TaskFuture;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.OneShotListenerManager;
 import org.jtrim.property.MutableProperty;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
@@ -32,6 +37,9 @@ public final class ProjectProfileSettings {
     private final ProfileSettings settings;
 
     private final WaitableSignal loadedOnceSignal;
+    private final UpdateTaskExecutor loadedListenersExecutor;
+    private final Runnable loadedListenersDispatcher;
+    private final OneShotListenerManager<Runnable, Void> loadedListeners;
 
     public ProjectProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
@@ -39,6 +47,14 @@ public final class ProjectProfileSettings {
         this.key = key;
         this.settings = new ProfileSettings();
         this.loadedOnceSignal = new WaitableSignal();
+        this.loadedListeners = new OneShotListenerManager<>();
+        this.loadedListenersExecutor = new SwingUpdateTaskExecutor();
+        this.loadedListenersDispatcher = new Runnable() {
+            @Override
+            public void run() {
+                EventListeners.dispatchRunnable(loadedListeners);
+            }
+        };
     }
 
     public ProfileSettingsKey getKey() {
@@ -69,6 +85,11 @@ public final class ProjectProfileSettings {
         }
 
         return SettingsFiles.getProfileFile(gradleProject, key.getKey());
+    }
+
+    public ListenerRef notifyWhenLoaded(Runnable onLoaded) {
+        ensureLoaded();
+        return loadedListeners.registerOrNotifyListener(onLoaded);
     }
 
     public void ensureLoaded() {
@@ -111,6 +132,11 @@ public final class ProjectProfileSettings {
         loadFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
     }
 
+    private void setLoadedOnce() {
+        loadedOnceSignal.signal();
+        loadedListenersExecutor.execute(loadedListenersDispatcher);
+    }
+
     private void loadNow() throws IOException {
         try {
             Path profileFile = tryGetProfileFile();
@@ -121,7 +147,7 @@ public final class ProjectProfileSettings {
 
             settings.loadFromFile(profileFile);
         } finally {
-            loadedOnceSignal.signal();
+            setLoadedOnce();
         }
     }
 
