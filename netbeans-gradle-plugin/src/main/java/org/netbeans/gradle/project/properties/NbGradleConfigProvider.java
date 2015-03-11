@@ -87,9 +87,6 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
         Path rootDir = SettingsFiles.getRootDirectory(project);
 
-        // TODO: Add configurations from enabled extensions.
-        //   NbGradleConfigProvider is needed to be wrapped for this.
-
         CONFIG_PROVIDERS_LOCK.lock();
         try {
             NbGradleConfigProvider result = CONFIG_PROVIDERS.get(rootDir);
