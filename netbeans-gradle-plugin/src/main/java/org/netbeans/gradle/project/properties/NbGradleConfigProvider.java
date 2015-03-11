@@ -22,12 +22,16 @@ import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.GenericUpdateTaskExecutor;
+import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.properties2.MultiProfileProperties;
 import org.netbeans.gradle.project.properties2.ProfileKey;
@@ -39,6 +43,10 @@ import org.netbeans.spi.project.ProjectConfigurationProvider;
 
 public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
+
+    // Must be FIFO executor
+    private static final TaskExecutor PROFILE_APPLIER_EXECUTOR
+            = NbTaskExecutors.newExecutor("Profile-applier", 1);
 
     private static final String LAST_PROFILE_FILE = "last-profile";
 
@@ -57,6 +65,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     private final MultiProfileProperties multiProfileProperties;
     private final ProfileSettingsContainer settingsContainer;
 
+    private final UpdateTaskExecutor profileApplierExecutor;
+
     private NbGradleConfigProvider(Path rootDirectory) {
         ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
 
@@ -70,6 +80,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         this.hasActiveBeenSet = false;
         this.multiProfileProperties = new MultiProfileProperties();
         this.settingsContainer = ProfileSettingsContainer.getDefault();
+        this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
@@ -304,11 +315,25 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return activeConfig.get();
     }
 
+    private static boolean loadAll(List<ProjectProfileSettings> profiles) {
+        for (ProjectProfileSettings profile: profiles) {
+            profile.ensureLoadedAndWait();
+        }
+        return true;
+    }
+
     private void updateByKey(ProfileKey profileKey) {
         ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
-        List<ProjectProfileSettings> profileSettings
+        final List<ProjectProfileSettings> profileSettings
                 = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
-        multiProfileProperties.setProfileSettings(profileSettings);
+
+        profileApplierExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                loadAll(profileSettings);
+                multiProfileProperties.setProfileSettings(profileSettings);
+            }
+        });
     }
 
     @Override
