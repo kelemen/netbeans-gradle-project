@@ -19,7 +19,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Element;
 
-public final class MultiProfileProperties implements ActiveSettingsQuery {
+public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettings;
     private final WaitableSignal loadedOnceSignal;
     private final OneShotListenerManager<Runnable, Void> loadedOnceListeners;

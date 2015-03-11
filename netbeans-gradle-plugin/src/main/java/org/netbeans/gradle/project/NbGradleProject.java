@@ -50,7 +50,7 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
@@ -387,7 +387,7 @@ public final class NbGradleProject implements Project {
         });
     }
 
-    public ActiveSettingsQuery getActiveSettingsQuery() {
+    public ActiveSettingsQueryEx getActiveSettingsQuery() {
         return getConfigProvider().getActiveSettingsQuery();
     }
 
