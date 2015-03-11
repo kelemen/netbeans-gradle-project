@@ -134,12 +134,8 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
                     LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
                 }
 
-                executeOnEdt(new Runnable() {
-                    @Override
-                    public void run() {
-                        changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
-                    }
-                });
+                fireConfigurationListChange();
+
             }
         }, null);
     }
@@ -149,7 +145,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             @Override
             public void run() {
                 addToConfig(Collections.singleton(config));
-                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+                fireConfigurationListChange();
             }
         });
     }
@@ -189,12 +185,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             setActiveConfiguration(NbGradleConfiguration.DEFAULT_CONFIG);
         }
 
-        executeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
-            }
-        });
+        fireConfigurationListChange();
         return configs.get();
     }
 
@@ -281,6 +272,17 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         }
     }
 
+    private void fireActiveConfigurationListChange(final NbGradleConfiguration prevConfig) {
+        executeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+                NbGradleConfiguration newConfig = activeConfig.get();
+                changeSupport.firePropertyChange(PROP_CONFIGURATION_ACTIVE, prevConfig, newConfig);
+                EventListeners.dispatchRunnable(activeConfigChangeListeners);
+            }
+        });
+    }
+
     public void fireConfigurationListChange() {
         executeOnEdt(new Runnable() {
             @Override
@@ -322,13 +324,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         if (!prevConfig.equals(configuration)) {
             updateByKey(configuration.getProfileKey());
 
-            executeOnEdt(new Runnable() {
-                @Override
-                public void run() {
-                    changeSupport.firePropertyChange(PROP_CONFIGURATION_ACTIVE, prevConfig, configuration);
-                    EventListeners.dispatchRunnable(activeConfigChangeListeners);
-                }
-            });
+            fireActiveConfigurationListChange(prevConfig);
         }
         saveActiveProfile();
     }
