@@ -13,6 +13,8 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties.DomElementKey;
+import org.w3c.dom.Element;
 
 public final class MultiProfileProperties {
     private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettings;
@@ -21,6 +23,16 @@ public final class MultiProfileProperties {
         this.currentProfileSettings = PropertyFactory.memPropertyConcurrent(
                 Collections.<ProjectProfileSettings>emptyList(),
                 SwingTaskExecutor.getStrictExecutor(false));
+    }
+
+    public Element getAuxConfigValue(DomElementKey key) {
+        for (ProjectProfileSettings settings: currentProfileSettings.getValue()) {
+            Element result = settings.getAuxConfigValue(key);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 
     public void setProfileSettings(List<? extends ProjectProfileSettings> newSettings) {
