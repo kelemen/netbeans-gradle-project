@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.concurrent.WaitableSignal;
@@ -133,21 +134,44 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         });
         result.replaceSource(mergedProperties(propertyDef));
 
-        return new AcquiredPropertySource<ValueType>() {
-            @Override
-            public ValueType getValue() {
-                return result.getValue();
-            }
+        return new AcquiredPropertySourceImpl<>(result, profileRef);
+    }
 
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                return result.addChangeListener(listener);
-            }
+    private static class AcquiredPropertySourceImpl<ValueType>
+    implements
+            AcquiredPropertySource<ValueType> {
 
-            @Override
-            public void close() {
+        private final PropertySourceProxy<ValueType> result;
+        private final ListenerRef profileRef;
+        private final AtomicBoolean closed;
+
+        public AcquiredPropertySourceImpl(PropertySourceProxy<ValueType> result, ListenerRef profileRef) {
+            this.result = result;
+            this.profileRef = profileRef;
+            this.closed = new AtomicBoolean(false);
+        }
+
+        @Override
+        public ValueType getValue() {
+            return result.getValue();
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return result.addChangeListener(listener);
+        }
+
+        @Override
+        public void close() {
+            if (!closed.getAndSet(true)) {
                 profileRef.unregister();
             }
-        };
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            close();
+            super.finalize();
+        }
     }
 }
