@@ -33,6 +33,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties2.MultiProfileProperties;
 import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
@@ -100,6 +101,14 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         } finally {
             CONFIG_PROVIDERS_LOCK.unlock();
         }
+    }
+
+    public ActiveSettingsQuery getActiveSettingsQuery() {
+        return multiProfileProperties;
+    }
+
+    public ProfileSettingsContainer getProfileSettingsContainer() {
+        return settingsContainer;
     }
 
     private void removeFromConfig(NbGradleConfiguration config) {
