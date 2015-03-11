@@ -48,6 +48,8 @@ public final class ProfileSettingsContainer {
     }
 
     public List<ProjectProfileSettings> getAllProfileSettings(Collection<ProfileSettingsKey> keys) {
+        ExceptionHelper.checkNotNullElements(keys, "keys");
+
         List<ProjectProfileSettings> result = new ArrayList<>(keys.size());
         for (ProfileSettingsKey key: keys) {
             result.add(getProfileSettings(key));
