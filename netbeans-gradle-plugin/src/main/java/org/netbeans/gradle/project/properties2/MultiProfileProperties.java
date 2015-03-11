@@ -98,8 +98,8 @@ public final class MultiProfileProperties {
         };
     }
 
-    public <ValueKey, ValueType> AcquiredPropertySource<ValueType> acquireProperty(
-            final PropertyDef<ValueKey, ValueType> propertyDef) {
+    public <ValueType> AcquiredPropertySource<ValueType> acquireProperty(
+            final PropertyDef<?, ValueType> propertyDef) {
 
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
