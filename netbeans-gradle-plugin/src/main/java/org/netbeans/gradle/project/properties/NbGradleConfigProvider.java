@@ -92,6 +92,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             NbGradleConfigProvider result = CONFIG_PROVIDERS.get(rootDir);
             if (result == null) {
                 result = new NbGradleConfigProvider(rootDir);
+                result.updateByKey(result.activeConfig.get().getProfileKey());
                 CONFIG_PROVIDERS.put(rootDir, result);
             }
             return result;
@@ -328,17 +329,24 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return true;
     }
 
+    private void updateByKeyNow(ProfileKey profileKey) {
+        ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
+        List<ProjectProfileSettings> profileSettings
+                = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
+        loadAll(profileSettings);
+        multiProfileProperties.setProfileSettings(profileSettings);
+    }
+
     private void updateByKey(final ProfileKey profileKey) {
         assert profileKey != null;
+
+        // Warning: This method gets called under CONFIG_PROVIDERS_LOCK.
+        //          Avoid calling alien code.
 
         profileApplierExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
-                List<ProjectProfileSettings> profileSettings
-                        = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
-                loadAll(profileSettings);
-                multiProfileProperties.setProfileSettings(profileSettings);
+                updateByKeyNow(profileKey);
             }
         });
     }
