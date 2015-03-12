@@ -58,7 +58,9 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     public void setProfileSettings(List<? extends ProjectProfileSettings> newSettings) {
         List<ProjectProfileSettings> settingsCopy = CollectionsEx.readOnlyCopy(newSettings);
+
         ExceptionHelper.checkNotNullElements(settingsCopy, "newSettings");
+        ExceptionHelper.checkArgumentInRange(settingsCopy.size(), 1, Integer.MAX_VALUE, "newSettings.size()");
 
         currentProfileSettings.setValue(settingsCopy);
     }
