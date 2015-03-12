@@ -328,14 +328,15 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         return true;
     }
 
-    private void updateByKey(ProfileKey profileKey) {
-        ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
-        final List<ProjectProfileSettings> profileSettings
-                = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
+    private void updateByKey(final ProfileKey profileKey) {
+        assert profileKey != null;
 
         profileApplierExecutor.execute(new Runnable() {
             @Override
             public void run() {
+                ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
+                List<ProjectProfileSettings> profileSettings
+                        = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
                 loadAll(profileSettings);
                 multiProfileProperties.setProfileSettings(profileSettings);
             }
