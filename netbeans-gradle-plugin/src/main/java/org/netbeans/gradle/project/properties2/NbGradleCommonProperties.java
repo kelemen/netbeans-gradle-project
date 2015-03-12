@@ -19,14 +19,14 @@ import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
 public final class NbGradleCommonProperties {
-    private final PropertySource<BuiltInTasks> builtInTasks;
-    private final PropertySource<PredefinedTasks> commonTasks;
-    private final PropertySource<CustomTasks> customTasks;
-    private final PropertySource<GradleLocation> gradleLocation;
-    private final PropertySource<LicenseHeaderInfo> licenseHeaderInfo;
-    private final PropertySource<JavaPlatform> scriptPlatform;
-    private final PropertySource<Charset> sourceEncoding;
-    private final PropertySource<ProjectPlatform> targetPlatform;
+    private final PropertyReference<BuiltInTasks> builtInTasks;
+    private final PropertyReference<PredefinedTasks> commonTasks;
+    private final PropertyReference<CustomTasks> customTasks;
+    private final PropertyReference<GradleLocation> gradleLocation;
+    private final PropertyReference<LicenseHeaderInfo> licenseHeaderInfo;
+    private final PropertyReference<JavaPlatform> scriptPlatform;
+    private final PropertyReference<Charset> sourceEncoding;
+    private final PropertyReference<ProjectPlatform> targetPlatform;
 
     public NbGradleCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
         builtInTasks = get(activeSettingsQuery, BuiltInTasksProperty.PROPERTY_DEF);
@@ -39,42 +39,42 @@ public final class NbGradleCommonProperties {
         targetPlatform = get(activeSettingsQuery, TargetPlatformProperty.PROPERTY_DEF);
     }
 
-    public PropertySource<BuiltInTasks> getBuiltInTasks() {
+    public PropertyReference<BuiltInTasks> builtInTasks() {
         return builtInTasks;
     }
 
-    public PropertySource<PredefinedTasks> getCommonTasks() {
+    public PropertyReference<PredefinedTasks> commonTasks() {
         return commonTasks;
     }
 
-    public PropertySource<CustomTasks> getCustomTasks() {
+    public PropertyReference<CustomTasks> customTasks() {
         return customTasks;
     }
 
-    public PropertySource<GradleLocation> getGradleLocation() {
+    public PropertyReference<GradleLocation> gradleLocation() {
         return gradleLocation;
     }
 
-    public PropertySource<LicenseHeaderInfo> getLicenseHeaderInfo() {
+    public PropertyReference<LicenseHeaderInfo> licenseHeaderInfo() {
         return licenseHeaderInfo;
     }
 
-    public PropertySource<JavaPlatform> getScriptPlatform() {
+    public PropertyReference<JavaPlatform> scriptPlatform() {
         return scriptPlatform;
     }
 
-    public PropertySource<Charset> getSourceEncoding() {
+    public PropertyReference<Charset> sourceEncoding() {
         return sourceEncoding;
     }
 
-    public PropertySource<ProjectPlatform> getTargetPlatform() {
+    public PropertyReference<ProjectPlatform> targetPlatform() {
         return targetPlatform;
     }
 
-    private static <ValueType> PropertySource<ValueType> get(
+    private static <ValueType> PropertyReference<ValueType> get(
             ActiveSettingsQuery activeSettingsQuery,
             PropertyDef<?, ValueType> propertyDef) {
 
-        return activeSettingsQuery.getProperty(propertyDef);
+        return new PropertyReference<>(propertyDef, activeSettingsQuery);
     }
 }
