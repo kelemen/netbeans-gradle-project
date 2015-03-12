@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.nio.charset.Charset;
-import org.jtrim.property.PropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.GradleLocation;
