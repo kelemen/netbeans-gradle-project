@@ -50,7 +50,7 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
 import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
 import org.netbeans.gradle.project.properties.PropertiesLoadListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.properties2.AcquiredCommonProperties;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -388,8 +388,8 @@ public final class NbGradleProject implements Project {
         });
     }
 
-    public AcquiredCommonProperties getCommonProperties() {
-        return getLookup().lookup(AcquiredCommonProperties.class);
+    public NbGradleCommonProperties getCommonProperties() {
+        return getLookup().lookup(NbGradleCommonProperties.class);
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -461,8 +461,8 @@ public final class NbGradleProject implements Project {
             GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
             NbGradleSingleProjectConfigProvider configProvider = NbGradleSingleProjectConfigProvider.create(this);
 
-            AcquiredCommonProperties commonProperties
-                    = new AcquiredCommonProperties(configProvider.getActiveSettingsQuery());
+            NbGradleCommonProperties commonProperties
+                    = new NbGradleCommonProperties(configProvider.getActiveSettingsQuery());
 
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,

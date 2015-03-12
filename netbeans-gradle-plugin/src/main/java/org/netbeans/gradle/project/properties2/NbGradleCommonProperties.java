@@ -18,7 +18,7 @@ import org.netbeans.gradle.project.properties2.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
-public final class AcquiredCommonProperties {
+public final class NbGradleCommonProperties {
     private final PropertySource<BuiltInTasks> builtInTasks;
     private final PropertySource<PredefinedTasks> commonTasks;
     private final PropertySource<CustomTasks> customTasks;
@@ -28,7 +28,7 @@ public final class AcquiredCommonProperties {
     private final PropertySource<Charset> sourceEncoding;
     private final PropertySource<ProjectPlatform> targetPlatform;
 
-    public AcquiredCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
+    public NbGradleCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
         builtInTasks = get(activeSettingsQuery, BuiltInTasksProperty.PROPERTY_DEF);
         commonTasks = get(activeSettingsQuery, CommonTasksProperty.PROPERTY_DEF);
         customTasks = get(activeSettingsQuery, CustomTasksProperty.PROPERTY_DEF);
