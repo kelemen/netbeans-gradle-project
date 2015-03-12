@@ -29,14 +29,14 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<ProjectPlatform> targetPlatform;
 
     public NbGradleCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
-        builtInTasks = get(activeSettingsQuery, BuiltInTasksProperty.PROPERTY_DEF);
-        commonTasks = get(activeSettingsQuery, CommonTasksProperty.PROPERTY_DEF);
-        customTasks = get(activeSettingsQuery, CustomTasksProperty.PROPERTY_DEF);
-        gradleLocation = get(activeSettingsQuery, GradleLocationProperty.PROPERTY_DEF);
-        licenseHeaderInfo = get(activeSettingsQuery, LicenseHeaderInfoProperty.PROPERTY_DEF);
-        scriptPlatform = get(activeSettingsQuery, ScriptPlatformProperty.PROPERTY_DEF);
-        sourceEncoding = get(activeSettingsQuery, SourceEncodingProperty.PROPERTY_DEF);
-        targetPlatform = get(activeSettingsQuery, TargetPlatformProperty.PROPERTY_DEF);
+        builtInTasks = get(BuiltInTasksProperty.PROPERTY_DEF, activeSettingsQuery);
+        commonTasks = get(CommonTasksProperty.PROPERTY_DEF, activeSettingsQuery);
+        customTasks = get(CustomTasksProperty.PROPERTY_DEF, activeSettingsQuery);
+        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, activeSettingsQuery);
+        licenseHeaderInfo = get(LicenseHeaderInfoProperty.PROPERTY_DEF, activeSettingsQuery);
+        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, activeSettingsQuery);
+        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, activeSettingsQuery);
+        targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, activeSettingsQuery);
     }
 
     public PropertyReference<BuiltInTasks> builtInTasks() {
@@ -72,8 +72,8 @@ public final class NbGradleCommonProperties {
     }
 
     private static <ValueType> PropertyReference<ValueType> get(
-            ActiveSettingsQuery activeSettingsQuery,
-            PropertyDef<?, ValueType> propertyDef) {
+            PropertyDef<?, ValueType> propertyDef,
+            ActiveSettingsQuery activeSettingsQuery) {
 
         return new PropertyReference<>(propertyDef, activeSettingsQuery);
     }
