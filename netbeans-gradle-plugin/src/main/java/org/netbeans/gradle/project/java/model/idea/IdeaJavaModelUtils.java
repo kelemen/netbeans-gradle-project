@@ -41,7 +41,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
@@ -101,7 +101,7 @@ public final class IdeaJavaModelUtils {
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
         String name = projectDir.getName();
-        String level = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+        String level = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
         GenericProjectProperties properties = new GenericProjectProperties(name, name, projectDir);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
@@ -318,7 +318,7 @@ public final class IdeaJavaModelUtils {
 
         List<JavaSourceSet> sourceSets = parseSourceSets(module, moduleDir, cache);
 
-        String defaultLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+        String defaultLevel = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
         String sourceLevel = module.getProject().getLanguageLevel().getLevel();
         sourceLevel = sourceLevel != null

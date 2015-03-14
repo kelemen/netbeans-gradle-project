@@ -17,7 +17,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -54,7 +54,7 @@ implements
             File projectDir,
             GradleSingleProjectConfig config) throws IOException {
         String mainClass = config.getMainClass();
-        String sourceLevel = AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+        String sourceLevel = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
 
         Map<String, String> varReplaceMap = new HashMap<>();
         varReplaceMap.put("${MAIN_CLASS}", StringUtils.emptyForNull(mainClass));
@@ -111,7 +111,7 @@ implements
         c.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, 0);
         c.putClientProperty(WizardDescriptor.PROP_CONTENT_DATA, new String[] {"Name and Location"});
         c.setName("Name and Location");
-        
+
     }
 
     @Override

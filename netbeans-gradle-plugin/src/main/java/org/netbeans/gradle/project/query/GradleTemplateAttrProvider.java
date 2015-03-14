@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.properties.DefaultProjectProperties;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
+import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.CreateFromTemplateAttributesProvider;
@@ -43,7 +43,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
         FileEncodingQueryImplementation enc = project.getLookup().lookup(FileEncodingQueryImplementation.class);
         Charset encoding = enc.getEncoding(target.getPrimaryFile());
         if (encoding == null) {
-            encoding = DefaultProjectProperties.DEFAULT_SOURCE_ENCODING;
+            encoding = SourceEncodingProperty.DEFAULT_SOURCE_ENCODING;
         }
 
         values.put("encoding", encoding.name());

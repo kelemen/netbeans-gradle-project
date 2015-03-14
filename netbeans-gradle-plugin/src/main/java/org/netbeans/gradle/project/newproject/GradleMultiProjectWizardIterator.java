@@ -17,7 +17,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.properties.AbstractProjectProperties;
+import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -71,7 +71,7 @@ implements
         Map<String, String> varReplaceMap = new HashMap<>();
         varReplaceMap.put("${MAVEN_GROUP}", config.getMavenGroupId());
         varReplaceMap.put("${MAVEN_VERSION}", config.getMavenVersion());
-        varReplaceMap.put("${SOURCE_LEVEL}", AbstractProjectProperties.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
+        varReplaceMap.put("${SOURCE_LEVEL}", SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault()));
 
         NewProjectUtils.copyTemplateFile(
                 MULTI_PROJECT_COMMON_GRADLE,

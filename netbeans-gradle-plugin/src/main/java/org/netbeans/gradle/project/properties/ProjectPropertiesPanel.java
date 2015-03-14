@@ -49,7 +49,9 @@ import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.netbeans.gradle.project.properties2.PropertyReference;
 import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
+import org.netbeans.gradle.project.properties2.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
+import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
@@ -147,7 +149,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 jGradleHomeInherit);
 
         if (gradleLocation != null) {
-            String gradleHome = AbstractProjectProperties.gradleLocationToString(gradleLocation);
+            String gradleHome = GradleLocationProperty.gradleLocationToString(gradleLocation);
             jGradleHomeEdit.setText(gradleHome);
         }
     }
@@ -398,7 +400,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         String gradleHomeStr = jGradleHomeEdit.getText().trim();
-        GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
+        GradleLocation gradleHome = GradleLocationProperty.getGradleLocationFromString(gradleHomeStr);
         storedValues.gradleLocation = jGradleHomeInherit.isSelected() ? null : gradleHome;
 
         JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
@@ -431,7 +433,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         try {
             return Charset.forName(jSourceEncoding.getText().trim());
         } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
-            return MemProjectProperties.DEFAULT_SOURCE_ENCODING;
+            return SourceEncodingProperty.DEFAULT_SOURCE_ENCODING;
         }
     }
 

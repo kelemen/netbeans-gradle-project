@@ -17,6 +17,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.properties2.standard.JavaPlatformUtils;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectPlatformQuery.class, position = 1000)
@@ -70,16 +71,16 @@ implements
         List<ProjectPlatform> result = new ArrayList<>(platforms.length);
 
         for (JavaPlatform platform: GlobalGradleSettings.filterIndistinguishable(platforms)) {
-            result.add(AbstractProjectPlatformSource.getJavaPlatform(platform));
+            result.add(JavaPlatformUtils.getJavaPlatform(platform));
         }
         return result;
     }
 
     @Override
     public ProjectPlatform tryFindPlatformByName(String name, String version) {
-        JavaPlatform platform = DefaultPropertySources.tryFindPlatform(name, version);
+        JavaPlatform platform = JavaPlatformUtils.tryFindPlatform(name, version);
         return platform != null
-                ? AbstractProjectPlatformSource.getJavaPlatform(platform)
+                ? JavaPlatformUtils.getJavaPlatform(platform)
                 : null;
     }
 

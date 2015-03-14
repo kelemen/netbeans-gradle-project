@@ -11,8 +11,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.AbstractProjectPlatformSource;
-import org.netbeans.gradle.project.properties.DefaultPropertySources;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
@@ -53,7 +51,7 @@ public final class TargetPlatformProperty {
         // NetBeans. We will never request the value of this property
         // source, so the actual parameters do not matter.
         final PropertySource<?> platformListHelper
-                = DefaultPropertySources.findPlatformSource("j2se", "1.3", true);
+                = JavaPlatformUtils.findPlatformSource("j2se", "1.3");
         return new PropertySource<ProjectPlatform>() {
             @Override
             public ProjectPlatform getValue() {
@@ -63,7 +61,7 @@ public final class TargetPlatformProperty {
                         return platform;
                     }
                 }
-                return AbstractProjectPlatformSource.getDefaultPlatform();
+                return JavaPlatformUtils.getDefaultPlatform();
             }
 
             @Override

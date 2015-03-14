@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
@@ -17,15 +16,6 @@ implements
         this.source = source;
     }
 
-    public NbPropertySourceWrapper(OldPropertySource<ValueType> source) {
-        ExceptionHelper.checkNotNullArgument(source, "source");
-        this.source = source;
-    }
-
-    public NbPropertySourceWrapper(OldMutableProperty<ValueType> property) {
-        this(new PropertySourceWrapper<>(property));
-    }
-
     @Override
     public ValueType getValue() {
         return source.getValue();
@@ -34,29 +24,5 @@ implements
     @Override
     public NbListenerRef addChangeListener(Runnable listener) {
         return NbListenerRefs.asNbRef(source.addChangeListener(listener));
-    }
-
-    private static class PropertySourceWrapper<ValueType> implements OldPropertySource<ValueType> {
-        private final OldMutableProperty<ValueType> property;
-
-        public PropertySourceWrapper(OldMutableProperty<ValueType> property) {
-            ExceptionHelper.checkNotNullArgument(property, "property");
-            this.property = property;
-        }
-
-        @Override
-        public ValueType getValue() {
-            return property.getValue();
-        }
-
-        @Override
-        public boolean isDefault() {
-            return property.isDefault();
-        }
-
-        @Override
-        public ListenerRef addChangeListener(Runnable listener) {
-            return property.addChangeListener(listener);
-        }
     }
 }
