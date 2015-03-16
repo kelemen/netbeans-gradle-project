@@ -25,8 +25,6 @@ import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
 public final class NbGradleCommonProperties {
-    private static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
-
     private final NbGradleProject ownerProject;
     private final ActiveSettingsQuery activeSettingsQuery;
 
@@ -51,11 +49,18 @@ public final class NbGradleCommonProperties {
         builtInTasks = get(BuiltInTasksProperty.PROPERTY_DEF, BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
         customTasks = get(CustomTasksProperty.PROPERTY_DEF, PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
         gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, GlobalGradleSettings.getGradleHome());
-        licenseHeaderInfo = get(LicenseHeaderInfoProperty.PROPERTY_DEF); // null default value
+        licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
         scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, GlobalGradleSettings.getGradleJdk());
-        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(DEFAULT_SOURCE_ENCODING));
+        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
         targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
+    }
+
+    public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
+        return new PropertyReference<>(
+                LicenseHeaderInfoProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.<LicenseHeaderInfo>constSource(null));
     }
 
     public Project getOwnerProject() {
@@ -72,17 +77,6 @@ public final class NbGradleCommonProperties {
 
     public ListenerRef afterLoaded(Runnable listener) {
         return activeSettingsQuery.notifyWhenLoadedOnce(listener);
-    }
-
-    public boolean trySaveEventually() {
-        ProjectProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
-        if (settings != null) {
-            settings.saveEventually();
-            return true;
-        }
-        else {
-            return false;
-        }
     }
 
     public PropertyReference<BuiltInTasks> builtInTasks() {
@@ -115,11 +109,6 @@ public final class NbGradleCommonProperties {
 
     public PropertyReference<String> sourceLevel() {
         return sourceLevel;
-    }
-
-    private <ValueType> PropertyReference<ValueType> get(
-            PropertyDef<?, ValueType> propertyDef) {
-        return get(propertyDef, PropertyFactory.<ValueType>constSource(null));
     }
 
     private <ValueType> PropertyReference<ValueType> get(

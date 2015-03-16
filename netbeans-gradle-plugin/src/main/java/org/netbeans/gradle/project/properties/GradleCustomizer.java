@@ -122,10 +122,10 @@ public final class GradleCustomizer implements CustomizerProvider {
     implements
             ProjectCustomizer.CompositeCategoryProvider {
 
-        private final ProjectPropertiesPanel panel;
+        private final ProfileBasedPanel panel;
 
         public MainCustomizer(NbGradleProject project) {
-            this.panel = new ProjectPropertiesPanel(project);
+            this.panel = CommonProjectPropertiesPanel.createProfileBasedPanel(project);
         }
 
         @Override

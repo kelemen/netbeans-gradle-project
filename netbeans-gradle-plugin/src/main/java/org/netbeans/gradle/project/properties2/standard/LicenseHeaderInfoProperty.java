@@ -76,6 +76,10 @@ public final class LicenseHeaderInfoProperty {
     }
 
     private static LicenseHeaderInfo readLicenseHeader(ConfigTree licenseNode) {
+        if (licenseNode == null) {
+            return null;
+        }
+
         String name = licenseNode.getChildTree(CONFIG_KEY_NAME).getValue(null);
         if (name == null) {
             return null;

@@ -208,7 +208,11 @@ public final class ProfileSettings {
     }
 
     private static List<Element> getAuxiliaryElements(Element parent) {
-        Node auxRoot = getChildByName(parent, "auxiliary");
+        if (parent == null) {
+            return Collections.emptyList();
+        }
+
+        Node auxRoot = getChildByName(parent, ConfigXmlUtils.AUXILIARY_NODE_NAME);
         if (auxRoot == null) {
             return Collections.emptyList();
         }
@@ -229,7 +233,7 @@ public final class ProfileSettings {
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
-        ConfigTree.Builder parsedDocument = ConfigXmlUtils.parseDocument(document);
+        ConfigTree.Builder parsedDocument = ConfigXmlUtils.parseDocument(document, ConfigXmlUtils.AUXILIARY_NODE_NAME);
         List<Element> loadedAuxConfigs = getAuxiliaryElements(document.getDocumentElement());
 
         configLock.lock();

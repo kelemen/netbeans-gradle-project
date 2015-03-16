@@ -48,7 +48,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     private ProjectProfileSettings getPrivateProperties() {
         ProjectProfileSettings result = privateConfigRef.get();
         if (result == null) {
-            result = getSharedProperties(project);
+            result = getPrivateProperties(project);
             if (!privateConfigRef.compareAndSet(null, result)) {
                 result = privateConfigRef.get();
             }
@@ -72,7 +72,6 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     public void putConfigurationFragment(Element fragment, boolean shared) throws IllegalArgumentException {
         ProjectProfileSettings config = getConfig(shared);
         config.setAuxConfigValue(keyFromElement(fragment), fragment);
-        config.saveEventually();
     }
 
     @Override
@@ -82,9 +81,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
             boolean shared) throws IllegalArgumentException {
 
         ProjectProfileSettings config = getConfig(shared);
-        boolean result = config.setAuxConfigValue(new DomElementKey(elementName, namespace), null);
-        config.saveEventually();
-        return result;
+        return config.setAuxConfigValue(new DomElementKey(elementName, namespace), null);
     }
 
     private static DomElementKey keyFromElement(Element fragment) {

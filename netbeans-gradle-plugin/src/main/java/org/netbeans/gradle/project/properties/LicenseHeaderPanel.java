@@ -79,7 +79,6 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
     public void save() {
         // FIXME: We should wait until loaded.
         properties.licenseHeaderInfo().trySetValue(getLicenseHeaderInfo());
-        properties.trySaveEventually();
     }
 
     private LicenseHeaderInfo getLicenseHeaderInfo() {

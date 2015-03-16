@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +41,9 @@ import org.w3c.dom.NodeList;
 
 final class ConfigXmlUtils {
     private static final Logger LOGGER = Logger.getLogger(ConfigXmlUtils.class.getName());
+
+    public static final String AUXILIARY_NODE_NAME = "auxiliary";
+
     private static final String XML_ENCODING = "UTF-8";
     private static final int FILE_BUFFER_SIZE = 8 * 1024;
 
@@ -257,7 +261,7 @@ final class ConfigXmlUtils {
         return setValue;
     }
 
-    private static int addChildren(Element element, ConfigTree.Builder result) {
+    private static int addChildren(Element element, Set<String> excludedNames, ConfigTree.Builder result) {
         NodeList childNodes = element.getChildNodes();
 
         int addedChildren = 0;
@@ -267,10 +271,15 @@ final class ConfigXmlUtils {
             if (child instanceof Element) {
                 Element elementChild = (Element)child;
 
+                String rawNodeName = elementChild.getNodeName();
+                if (excludedNames.contains(rawNodeName)) {
+                    continue;
+                }
+
                 String elementKey = fromElementName(elementChild.getNodeName());
 
                 ConfigTree.Builder childBuilder = result.addChildBuilder(elementKey);
-                String nodeValue = parseNode(elementChild, childBuilder);
+                String nodeValue = parseNode(elementChild, Collections.<String>emptySet(), childBuilder);
                 if (nodeValue != null) {
                     childBuilder.setValue(nodeValue);
                 }
@@ -282,13 +291,13 @@ final class ConfigXmlUtils {
         return addedChildren;
     }
 
-    private static String parseNode(Element root, ConfigTree.Builder result) {
+    private static String parseNode(Element root, Set<String> excludedNames, ConfigTree.Builder result) {
         ExceptionHelper.checkNotNullArgument(root, "root");
         ExceptionHelper.checkNotNullArgument(result, "result");
 
         boolean setValue = addAttributes(root, result);
 
-        int addedChildCount = addChildren(root, result);
+        int addedChildCount = addChildren(root, excludedNames, result);
         if (!setValue && addedChildCount == 0) {
             return root.getTextContent();
         }
@@ -297,12 +306,12 @@ final class ConfigXmlUtils {
         }
     }
 
-    public static ConfigTree.Builder parseDocument(Document document) {
+    public static ConfigTree.Builder parseDocument(Document document, String... excludedNames) {
         ConfigTree.Builder result = new ConfigTree.Builder();
 
         Element root = document.getDocumentElement();
         if (root != null) {
-            parseNode(root, result);
+            parseNode(root, new HashSet<>(Arrays.asList(excludedNames)), result);
         }
 
         return result;
@@ -498,7 +507,7 @@ final class ConfigXmlUtils {
             }
         });
 
-        Element auxRoot = document.createElement("auxiliary");
+        Element auxRoot = document.createElement(AUXILIARY_NODE_NAME);
         root.appendChild(auxRoot);
 
         for (Element auxElement: sortedAuxElements) {

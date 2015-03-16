@@ -460,8 +460,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProjectProfileSettings getPrivateProfile() {
-        ProfileSettingsKey key = getProjectProfileKey(getPrivateProfileKey());
-        return getProfileSettingsContainer().getProfileSettings(key);
+        return getPropertiesForProfile(getPrivateProfileKey());
     }
 
     @Nonnull

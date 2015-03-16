@@ -15,9 +15,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
@@ -95,31 +93,11 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
     private void setupEnableDisable() {
         PropertySource<Integer> selectedIndex = selectedIndexProperty(jPlatformList);
 
-        addSwingStateListener(greaterThanOrEqual(selectedIndex, 1),
+        addSwingStateListener(NbProperties.greaterThanOrEqual(selectedIndex, 1),
                 componentDisabler(jMoveUpButton));
 
-        addSwingStateListener(between(selectedIndex, 0, jPlatformListModel.size() - 2),
+        addSwingStateListener(NbProperties.between(selectedIndex, 0, jPlatformListModel.size() - 2),
                 componentDisabler(jMoveDownButton));
-    }
-
-    private static org.jtrim.property.PropertySource<Boolean> between(
-            final org.jtrim.property.PropertySource<Integer> wrapped,
-            final int minValue,
-            final int maxValue) {
-
-        return PropertyFactory.convert(wrapped, new ValueConverter<Integer, Boolean>() {
-            @Override
-            public Boolean convert(Integer input) {
-                if (input == null) return null;
-                return input <= maxValue && input >= minValue;
-            }
-        });
-    }
-
-    private static org.jtrim.property.PropertySource<Boolean> greaterThanOrEqual(
-            final org.jtrim.property.PropertySource<Integer> wrapped,
-            final int value) {
-        return between(wrapped, value, Integer.MAX_VALUE);
     }
 
     private static org.jtrim.property.PropertySource<Integer> selectedIndexProperty(JList<?> list) {

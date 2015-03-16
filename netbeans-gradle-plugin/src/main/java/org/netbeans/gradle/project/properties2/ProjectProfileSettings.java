@@ -160,24 +160,13 @@ public final class ProjectProfileSettings {
         }
     }
 
-    public void saveEventually() {
+    private void saveEventually() {
         saveExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 saveNow();
             }
         });
-    }
-
-    public void saveAndWait() {
-        TaskFuture<?> saveFuture = SAVE_LOAD_EXECUTOR.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
-                saveNow();
-            }
-        }, null);
-
-        saveFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
     }
 
     private void saveNow() {
@@ -208,11 +197,30 @@ public final class ProjectProfileSettings {
     }
 
     public boolean setAuxConfigValue(DomElementKey key, Element value) {
-        return settings.setAuxConfigValue(key, value);
+        boolean result = settings.setAuxConfigValue(key, value);
+        saveEventually();
+        return result;
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
-        return settings.getProperty(propertyDef);
+        final MutableProperty<ValueType> result = settings.getProperty(propertyDef);
+        return new MutableProperty<ValueType>() {
+            @Override
+            public void setValue(ValueType value) {
+                result.setValue(value);
+                saveEventually();
+            }
+
+            @Override
+            public ValueType getValue() {
+                return result.getValue();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return result.addChangeListener(listener);
+            }
+        };
     }
 
     public Collection<DomElementKey> getAuxConfigKeys() {

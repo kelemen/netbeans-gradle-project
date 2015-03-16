@@ -483,6 +483,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.JumpToSource");
     }
 
+    public static String getLoading() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Loading");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

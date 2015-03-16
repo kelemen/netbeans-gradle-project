@@ -536,7 +536,6 @@ implements
                     newTasks.add(newTaskDef);
 
                     commonTasks.setValue(new PredefinedTasks(newTasks));
-                    profile.saveEventually();
                 }
             });
         }

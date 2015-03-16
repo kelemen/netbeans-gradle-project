@@ -376,8 +376,6 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             commonProperties.targetPlatform().trySetValue(src.targetPlatform);
             commonProperties.sourceEncoding().trySetValue(src.sourceEncoding);
             commonProperties.sourceLevel().trySetValue(src.sourceLevel);
-
-            commonProperties.trySaveEventually();
         }
     }
 

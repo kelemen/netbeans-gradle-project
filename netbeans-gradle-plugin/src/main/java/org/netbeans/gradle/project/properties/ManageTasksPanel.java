@@ -130,7 +130,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         }
 
         properties.customTasks().trySetValue(new PredefinedTasks(newTasks));
-        properties.trySaveEventually();
     }
 
     private void updateShownInList() {
