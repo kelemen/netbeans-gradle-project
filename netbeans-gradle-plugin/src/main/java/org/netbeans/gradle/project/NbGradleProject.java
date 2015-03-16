@@ -445,10 +445,6 @@ public final class NbGradleProject implements Project {
         return getConfigProvider().getProfileSettingsContainer();
     }
 
-    public static ProfileKey getPrivateProfileKey() {
-        return new ProfileKey("private", "aux-config");
-    }
-
     public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
         Path rootProjectDir = getCurrentModel().getRootProjectDir().toPath();
         return new ProfileSettingsKey(rootProjectDir, profileKey);
@@ -460,7 +456,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProjectProfileSettings getPrivateProfile() {
-        return getPropertiesForProfile(getPrivateProfileKey());
+        return getPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
     }
 
     @Nonnull

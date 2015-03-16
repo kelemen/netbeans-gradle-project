@@ -7,6 +7,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 
 public final class ProfileKey {
+    public static final ProfileKey PRIVATE_PROFILE = new ProfileKey("private", "aux-config");
+
     private final String groupName;
     private final String fileName;
 
