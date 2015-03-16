@@ -30,6 +30,7 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -48,8 +49,11 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
-import org.netbeans.gradle.project.properties.OldMutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
+import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
@@ -513,12 +517,28 @@ implements
                 newTaskDef = createTaskDef(actionPanel, displayName, false);
             }
 
-            OldMutableProperty<List<PredefinedTask>> commonTasks = project.getProperties().getCommonTasks();
-
-            List<PredefinedTask> newTasks = new LinkedList<>(commonTasks.getValue());
-            newTasks.add(newTaskDef);
-            commonTasks.setValue(newTasks);
+            addNewCommonTaskTask(newTaskDef);
             return displayName;
+        }
+
+        private void addNewCommonTaskTask(final PredefinedTask newTaskDef) {
+            final ActiveSettingsQueryEx activeSettings = project.getActiveSettingsQuery();
+            activeSettings.notifyWhenLoadedOnce(new Runnable() {
+                @Override
+                public void run() {
+                    ProjectProfileSettings profile = activeSettings.currentProfileSettings().getValue();
+                    NbGradleCommonProperties commonProperties = project.getCommonProperties();
+
+                    MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().forProfile(profile);
+
+                    List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
+                    List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);
+                    newTasks.add(newTaskDef);
+
+                    commonTasks.setValue(new PredefinedTasks(newTasks));
+                    profile.saveEventually();
+                }
+            });
         }
 
         @Override
@@ -630,7 +650,7 @@ implements
 
         private final NbGradleProject project;
         private final JMenu menu;
-        private List<PredefinedTask> lastUsedTasks;
+        private PredefinedTasks lastUsedTasks;
         private NbGradleModel lastUsedModule;
 
         public CustomTasksMenuBuilder(NbGradleProject project, JMenu menu) {
@@ -645,7 +665,7 @@ implements
 
 
         public void updateMenuContent() {
-            List<PredefinedTask> commonTasks = project.getProperties().getCommonTasks().getValue();
+            PredefinedTasks commonTasks = project.getCommonProperties().customTasks().getActiveValue();
             NbGradleModel mainModule = project.getAvailableModel();
             if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
                 return;
@@ -654,8 +674,8 @@ implements
             lastUsedTasks = commonTasks;
             lastUsedModule = mainModule;
 
-            commonTasks = new ArrayList<>(commonTasks);
-            Collections.sort(commonTasks, new Comparator<PredefinedTask>() {
+            List<PredefinedTask> commonTasksList = new ArrayList<>(commonTasks.getTasks());
+            Collections.sort(commonTasksList, new Comparator<PredefinedTask>() {
                 @Override
                 public int compare(PredefinedTask o1, PredefinedTask o2) {
                     String name1 = o1.getDisplayName();
@@ -668,7 +688,7 @@ implements
             menu.removeAll();
 
             TaskVariableMap varReplaceMap = project.getVarReplaceMap(Lookup.EMPTY);
-            for (final PredefinedTask task: commonTasks) {
+            for (final PredefinedTask task: commonTasksList) {
                 if (!task.isTasksExistsIfRequired(project, varReplaceMap)) {
                     continue;
                 }

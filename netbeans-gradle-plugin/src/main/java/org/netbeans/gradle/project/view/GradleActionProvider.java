@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.WaitableSignal;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
@@ -18,10 +17,9 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.NbCommandString;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
-import org.netbeans.gradle.project.properties.OldMutableProperty;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.properties.ProjectProperties;
-import org.netbeans.gradle.project.properties.PropertiesLoadListener;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 import org.netbeans.gradle.project.tasks.GradleTaskDefFactory;
 import org.netbeans.gradle.project.tasks.GradleTasks;
@@ -88,24 +86,15 @@ public final class GradleActionProvider implements ActionProvider {
         }
     }
 
-    private ProjectProperties getLoadedProperties(CancellationToken cancelToken, NbGradleConfiguration config) {
+    private NbGradleCommonProperties getLoadedCommonProperties(CancellationToken cancelToken, NbGradleConfiguration config) {
         checkNotEdt();
 
-        ProjectProperties properties;
-        if (config == null) {
-            properties = project.getLoadedProperties(cancelToken);
-        }
-        else {
-            final WaitableSignal loadedSignal = new WaitableSignal();
-            properties = project.getPropertiesForProfile(config.getProfileDef(), true, new PropertiesLoadListener() {
-                @Override
-                public void loadedProperties(ProjectProperties properties) {
-                    loadedSignal.signal();
-                }
-            });
-            loadedSignal.waitSignal(cancelToken);
-        }
-        return properties;
+        NbGradleCommonProperties result = config != null
+                    ? project.loadCommonPropertiesForProfile(config.getProfileKey())
+                    : project.getCommonProperties();
+
+        result.waitForLoadedOnce(cancelToken);
+        return result;
     }
 
     private CustomCommandActions getCommandActions(NbGradleConfiguration config, String command) {
@@ -218,13 +207,15 @@ public final class GradleActionProvider implements ActionProvider {
 
             @Override
             public GradleTaskDef tryCreateTaskDef(CancellationToken cancelToken) throws Exception {
-                ProjectProperties properties = getLoadedProperties(cancelToken, appliedConfig);
-                OldMutableProperty<PredefinedTask> builtInTask = properties.tryGetBuiltInTask(command);
-                if (builtInTask == null) {
+                NbGradleCommonProperties properties = getLoadedCommonProperties(cancelToken, appliedConfig);
+
+                BuiltInTasks builtInTasks = properties.builtInTasks().getActiveValue();
+                if (builtInTasks == null) {
+                    LOGGER.log(Level.SEVERE, "Internal error: BuiltInTasks property is null.");
                     return null;
                 }
 
-                final PredefinedTask task = builtInTask.getValue();
+                final PredefinedTask task = builtInTasks.tryGetByCommand(command);
                 if (task == null) {
                     LOGGER.log(Level.WARNING, "Property returns null for built-in command: {0}", command);
                     return null;

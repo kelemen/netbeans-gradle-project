@@ -20,13 +20,13 @@ import org.netbeans.gradle.project.properties2.PropertyValueDef;
 public final class GradleLocationProperty {
     private static final Logger LOGGER = Logger.getLogger(GradleLocationProperty.class.getName());
 
-    private static final String CONFIG_KEY_SOURCE_ENCODING = "source-encoding";
+    private static final String CONFIG_KEY_GRADLE_LOCATION = "gradle-home";
 
     public static final PropertyDef<String, GradleLocation> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<String, GradleLocation> createPropertyDef() {
         PropertyDef.Builder<String, GradleLocation> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_SOURCE_ENCODING));
+                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_GRADLE_LOCATION));
         result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

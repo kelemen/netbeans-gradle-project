@@ -23,6 +23,11 @@ import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.PropertyReference;
+import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
+import org.netbeans.gradle.project.properties2.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
@@ -32,17 +37,14 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     private static final Collator STR_CMP = Collator.getInstance();
 
     private final NbGradleProject project;
-    private final ProjectProperties projectProperties;
+    private final NbGradleCommonProperties commonProperties;
     private final CustomActionPanel jActionPanel;
     private BuiltInTaskItem lastShownItem;
     private final Map<String, SavedTask> toSaveTasks;
 
-    /**
-     * Creates new form ManageBuiltInTasksPanel
-     */
-    public ManageBuiltInTasksPanel(NbGradleProject project, ProjectProperties properties) {
+    public ManageBuiltInTasksPanel(NbGradleProject project, ActiveSettingsQuery settings) {
         this.project = project;
-        this.projectProperties = properties;
+        this.commonProperties = new NbGradleCommonProperties(project, settings);
         lastShownItem = null;
         toSaveTasks = new HashMap<>();
 
@@ -92,7 +94,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     }
 
     private void fillTaskCombo() {
-        Set<String> commands = projectProperties.getKnownBuiltInCommands();
+        Set<String> commands = project.getMergedCommandQuery().getSupportedCommands();
         List<BuiltInTaskItem> items = new ArrayList<>(commands.size());
         for (String command: commands) {
             items.add(new BuiltInTaskItem(command, getDisplayNameOfCommand(command)));
@@ -122,19 +124,27 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         return null;
     }
 
-    private OldMutableProperty<PredefinedTask> getTaskProperty(BuiltInTaskItem item) {
+    private PredefinedTask tryGetValueWithoutFallback(BuiltInTaskItem item) {
         if (item == null) {
             return null;
         }
-        return projectProperties.tryGetBuiltInTask(item.getCommand());
+
+        BuiltInTasks builtInTasks = commonProperties.builtInTasks().tryGetValueWithoutFallback();
+        return builtInTasks != null ? builtInTasks.tryGetByCommand(item.command) : null;
+    }
+
+    private PredefinedTask tryGetActiveValue(BuiltInTaskItem item) {
+        if (item == null) {
+            return null;
+        }
+
+        BuiltInTasks builtInTasks = commonProperties.builtInTasks().getActiveValue();
+        return builtInTasks != null ? builtInTasks.tryGetByCommand(item.command) : null;
     }
 
     private PredefinedTask getCurrentValue(String command) {
-        OldMutableProperty<PredefinedTask> property = projectProperties.tryGetBuiltInTask(command);
-        PredefinedTask result = null;
-        if (property != null) {
-            result = property.getValue();
-        }
+        BuiltInTasks builtInTasks = commonProperties.builtInTasks().getActiveValue();
+        PredefinedTask result = builtInTasks != null ? builtInTasks.tryGetByCommand(command) : null;
 
         if (result == null) {
             result = new PredefinedTask(command,
@@ -203,9 +213,8 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
             defaultValue = savedTask.isInherited();
         }
         else {
-            OldMutableProperty<PredefinedTask> taskProperty = getTaskProperty(selectedItem);
-            task = taskProperty != null ? taskProperty.getValue() : null;
-            defaultValue = taskProperty != null ? taskProperty.isDefault() : false;
+            task = tryGetActiveValue(selectedItem);
+            defaultValue = tryGetValueWithoutFallback(selectedItem) == null;
         }
 
         if (task == null) {
@@ -222,26 +231,20 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         setEnabledDisabledState();
     }
 
-    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<>(value, defaultValue);
-    }
-
     public void saveModifiedTasks() {
         saveLastShown();
 
+        PropertyReference<BuiltInTasks> builtInTasks = commonProperties.builtInTasks();
+
+        List<PredefinedTask> newValues = new ArrayList<>(toSaveTasks.size());
         for (SavedTask task: toSaveTasks.values()) {
-            String command = task.getCommand();
-            OldMutableProperty<PredefinedTask> taskProperty = projectProperties.tryGetBuiltInTask(command);
-            if (taskProperty != null) {
-                if (task.isInherited()) {
-                    PredefinedTask defaultTask = getCurrentValue(command);
-                    taskProperty.setValueFromSource(asConst(defaultTask, true));
-                }
-                else {
-                    taskProperty.setValueFromSource(asConst(task.getTaskDef(), false));
-                }
+            PredefinedTask taskDef = task.taskDef;
+            if (!task.inherited && taskDef != null) {
+                newValues.add(taskDef);
             }
         }
+
+        builtInTasks.trySetValue(BuiltInTasksProperty.createValue(newValues));
     }
 
     private static class SavedTask {

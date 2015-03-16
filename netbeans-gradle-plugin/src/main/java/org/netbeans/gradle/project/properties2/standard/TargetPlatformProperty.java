@@ -3,15 +3,24 @@ package org.netbeans.gradle.project.properties2.standard;
 import java.util.Arrays;
 import java.util.List;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.properties.AbstractProjectPlatformSource;
+import org.netbeans.gradle.project.properties.DefaultPropertySources;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
 import org.netbeans.gradle.project.properties2.PropertyDef;
 import org.netbeans.gradle.project.properties2.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties2.PropertyValueDef;
+import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
+import org.netbeans.gradle.project.util.CachedLookupValue;
 import org.openide.util.Lookup;
 
 public final class TargetPlatformProperty {
@@ -31,6 +40,48 @@ public final class TargetPlatformProperty {
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();
+    }
+
+    public static PropertySource<ProjectPlatform> defaultValue(
+            final NbGradleProject project) {
+
+        final CachedLookupValue<JavaExtension> javaExtRef
+                = new CachedLookupValue<>(project, JavaExtension.class);
+
+        // This is here only to register and remove listeners because
+        // it can detect changes in the list of platforms defined in
+        // NetBeans. We will never request the value of this property
+        // source, so the actual parameters do not matter.
+        final PropertySource<?> platformListHelper
+                = DefaultPropertySources.findPlatformSource("j2se", "1.3", true);
+        return new PropertySource<ProjectPlatform>() {
+            @Override
+            public ProjectPlatform getValue() {
+                if (SourceLevelProperty.isReliableJavaVersion(javaExtRef.get())) {
+                    ProjectPlatform platform = tryGetScriptPlatform(project);
+                    if (platform != null) {
+                        return platform;
+                    }
+                }
+                return AbstractProjectPlatformSource.getDefaultPlatform();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+                ListenerRef ref1 = GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                ListenerRef ref2 = project.addModelChangeListener(listener);
+                ListenerRef ref3 = platformListHelper.addChangeListener(listener);
+
+                return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
+            }
+        };
+    }
+
+    private static ProjectPlatform tryGetScriptPlatform(NbGradleProject project) {
+        J2SEPlatformFromScriptQuery query = SourceLevelProperty.tryGetPlatformScriptQuery(project);
+        return query != null ? query.getPlatform(): null;
     }
 
     private static GradleProjectPlatformQuery findOwnerQuery(String name) {

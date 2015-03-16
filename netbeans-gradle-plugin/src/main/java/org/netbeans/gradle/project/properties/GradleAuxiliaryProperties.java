@@ -1,4 +1,3 @@
-
 package org.netbeans.gradle.project.properties;
 
 import java.util.LinkedList;
@@ -63,7 +62,9 @@ public final class GradleAuxiliaryProperties implements AuxiliaryProperties {
     public Iterable<String> listKeys(boolean shared) {
         List<String> result = new LinkedList<>();
         for (DomElementKey key: config.getConfigElements(shared)) {
-            result.add(key.getName());
+            if (key.getNamespace() == null) {
+                result.add(key.getName());
+            }
         }
         return result;
     }

@@ -1,52 +1,95 @@
 package org.netbeans.gradle.project.properties2;
 
 import java.nio.charset.Charset;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties2.standard.BuiltInTasksProperty;
-import org.netbeans.gradle.project.properties2.standard.CommonTasksProperty;
-import org.netbeans.gradle.project.properties2.standard.CustomTasks;
 import org.netbeans.gradle.project.properties2.standard.CustomTasksProperty;
 import org.netbeans.gradle.project.properties2.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.properties2.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties2.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
+import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
 public final class NbGradleCommonProperties {
+    private static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
+
+    private final NbGradleProject ownerProject;
+    private final ActiveSettingsQuery activeSettingsQuery;
+
     private final PropertyReference<BuiltInTasks> builtInTasks;
-    private final PropertyReference<PredefinedTasks> commonTasks;
-    private final PropertyReference<CustomTasks> customTasks;
+    private final PropertyReference<PredefinedTasks> customTasks;
     private final PropertyReference<GradleLocation> gradleLocation;
     private final PropertyReference<LicenseHeaderInfo> licenseHeaderInfo;
     private final PropertyReference<JavaPlatform> scriptPlatform;
     private final PropertyReference<Charset> sourceEncoding;
     private final PropertyReference<ProjectPlatform> targetPlatform;
+    private final PropertyReference<String> sourceLevel;
 
-    public NbGradleCommonProperties(ActiveSettingsQuery activeSettingsQuery) {
-        builtInTasks = get(BuiltInTasksProperty.PROPERTY_DEF, activeSettingsQuery);
-        commonTasks = get(CommonTasksProperty.PROPERTY_DEF, activeSettingsQuery);
-        customTasks = get(CustomTasksProperty.PROPERTY_DEF, activeSettingsQuery);
-        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, activeSettingsQuery);
-        licenseHeaderInfo = get(LicenseHeaderInfoProperty.PROPERTY_DEF, activeSettingsQuery);
-        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, activeSettingsQuery);
-        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, activeSettingsQuery);
-        targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, activeSettingsQuery);
+    public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
+        ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
+        ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
+
+        this.ownerProject = ownerProject;
+        this.activeSettingsQuery = activeSettingsQuery;
+
+        // Warning: "get" uses the fields set above.
+
+        builtInTasks = get(BuiltInTasksProperty.PROPERTY_DEF, BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
+        customTasks = get(CustomTasksProperty.PROPERTY_DEF, PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
+        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, GlobalGradleSettings.getGradleHome());
+        licenseHeaderInfo = get(LicenseHeaderInfoProperty.PROPERTY_DEF); // null default value
+        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, GlobalGradleSettings.getGradleJdk());
+        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(DEFAULT_SOURCE_ENCODING));
+        targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
+        sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
+    }
+
+    public Project getOwnerProject() {
+        return ownerProject;
+    }
+
+    public ActiveSettingsQuery getActiveSettingsQuery() {
+        return activeSettingsQuery;
+    }
+
+    public void waitForLoadedOnce(CancellationToken cancelToken) {
+        activeSettingsQuery.waitForLoadedOnce(cancelToken);
+    }
+
+    public ListenerRef afterLoaded(Runnable listener) {
+        return activeSettingsQuery.notifyWhenLoadedOnce(listener);
+    }
+
+    public boolean trySaveEventually() {
+        ProjectProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
+        if (settings != null) {
+            settings.saveEventually();
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public PropertyReference<BuiltInTasks> builtInTasks() {
         return builtInTasks;
     }
 
-    public PropertyReference<PredefinedTasks> commonTasks() {
-        return commonTasks;
-    }
-
-    public PropertyReference<CustomTasks> customTasks() {
+    public PropertyReference<PredefinedTasks> customTasks() {
         return customTasks;
     }
 
@@ -70,10 +113,19 @@ public final class NbGradleCommonProperties {
         return targetPlatform;
     }
 
-    private static <ValueType> PropertyReference<ValueType> get(
-            PropertyDef<?, ValueType> propertyDef,
-            ActiveSettingsQuery activeSettingsQuery) {
+    public PropertyReference<String> sourceLevel() {
+        return sourceLevel;
+    }
 
-        return new PropertyReference<>(propertyDef, activeSettingsQuery);
+    private <ValueType> PropertyReference<ValueType> get(
+            PropertyDef<?, ValueType> propertyDef) {
+        return get(propertyDef, PropertyFactory.<ValueType>constSource(null));
+    }
+
+    private <ValueType> PropertyReference<ValueType> get(
+            PropertyDef<?, ValueType> propertyDef,
+            PropertySource<? extends ValueType> defaultValue) {
+
+        return new PropertyReference<>(propertyDef, activeSettingsQuery, defaultValue);
     }
 }

@@ -2,11 +2,13 @@ package org.netbeans.gradle.project.properties2;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.TaskFuture;
 import org.jtrim.concurrent.UpdateTaskExecutor;
@@ -41,6 +43,8 @@ public final class ProjectProfileSettings {
     private final Runnable loadedListenersDispatcher;
     private final OneShotListenerManager<Runnable, Void> loadedListeners;
 
+    private final UpdateTaskExecutor saveExecutor;
+
     public ProjectProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
@@ -55,6 +59,7 @@ public final class ProjectProfileSettings {
                 EventListeners.dispatchRunnable(loadedListeners);
             }
         };
+        this.saveExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
     }
 
     public ProfileSettingsKey getKey() {
@@ -156,12 +161,12 @@ public final class ProjectProfileSettings {
     }
 
     public void saveEventually() {
-        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        saveExecutor.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
+            public void run() {
                 saveNow();
             }
-        }, null);
+        });
     }
 
     public void saveAndWait() {
@@ -175,7 +180,15 @@ public final class ProjectProfileSettings {
         saveFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
     }
 
-    private void saveNow() throws IOException {
+    private void saveNow() {
+        try {
+            saveNowUnsafe();
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Failed to save the properties.", ex);
+        }
+    }
+
+    private void saveNowUnsafe() throws IOException {
         Project project = tryGetProject();
         if (project == null) {
             LOGGER.log(Level.WARNING, "No project in {0}", key.getProjectDir());
@@ -194,7 +207,15 @@ public final class ProjectProfileSettings {
         return settings.getAuxConfigValue(key);
     }
 
+    public boolean setAuxConfigValue(DomElementKey key, Element value) {
+        return settings.setAuxConfigValue(key, value);
+    }
+
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
         return settings.getProperty(propertyDef);
+    }
+
+    public Collection<DomElementKey> getAuxConfigKeys() {
+        return settings.getAuxConfigKeys();
     }
 }

@@ -27,7 +27,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
     public Map<String, ?> attributesFor(DataObject template, DataFolder target, String name) {
         Map<String, Object> values = new TreeMap<>();
 
-        LicenseHeaderInfo licenseHeader = project.getProperties().getLicenseHeader().getValue();
+        LicenseHeaderInfo licenseHeader = project.getCommonProperties().licenseHeaderInfo().getActiveValue();
         if (licenseHeader != null) {
             String licenseName = licenseHeader.getPrivateLicenseName(project);
             String fileName = "license-" + licenseName + ".txt";

@@ -12,6 +12,8 @@ import org.netbeans.gradle.project.properties2.PropertyValueDef;
 public final class SourceEncodingProperty {
     private static final Logger LOGGER = Logger.getLogger(SourceEncodingProperty.class.getName());
 
+    public static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
+
     private static final String CONFIG_KEY_SOURCE_ENCODING = "source-encoding";
 
     public static final PropertyDef<String, Charset> PROPERTY_DEF = createPropertyDef();

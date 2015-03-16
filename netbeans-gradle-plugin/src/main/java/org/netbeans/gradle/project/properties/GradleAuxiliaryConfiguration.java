@@ -1,78 +1,98 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
 
 public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguration {
-    private final SingleStoreAuxConfig sharedConfig;
-    private final SingleStoreAuxConfig privateConfig;
+    private final NbGradleProject project;
+    private final AtomicReference<ProjectProfileSettings> sharedConfigRef;
+    private final AtomicReference<ProjectProfileSettings> privateConfigRef;
 
-    public GradleAuxiliaryConfiguration(final NbGradleProject project) {
+    public GradleAuxiliaryConfiguration(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        this.sharedConfig = new SingleStoreAuxConfig(
-                new ProjectPropertiesStorage(getSharedProperties(project)));
-        this.privateConfig = new SingleStoreAuxConfig(
-                new ProjectPropertiesStorage(getPrivateProperties(project)));
+        this.project = project;
+
+        // This object is created before the lookup of the project is created
+        // and therefore we cannot yet request the profiles because the profile
+        // retrieval requires the lookup to be laready built.
+        this.sharedConfigRef = new AtomicReference<>(null);
+        this.privateConfigRef = new AtomicReference<>(null);
     }
 
-    private static ProjectProperties getSharedProperties(NbGradleProject project) {
-        return project.getPropertiesForProfile(null, false, null);
+    private static ProjectProfileSettings getSharedProperties(NbGradleProject project) {
+        return project.getPropertiesForProfile(null);
     }
 
-    private static ProjectProperties getPrivateProperties(NbGradleProject project) {
-        return project.getPrivateProperties();
+    private static ProjectProfileSettings getPrivateProperties(NbGradleProject project) {
+        return project.getPrivateProfile();
     }
 
-    private SingleStoreAuxConfig getConfig(boolean shared) {
-        return shared ? sharedConfig : privateConfig;
+    private ProjectProfileSettings getSharedProperties() {
+        ProjectProfileSettings result = sharedConfigRef.get();
+        if (result == null) {
+            result = getSharedProperties(project);
+            if (!sharedConfigRef.compareAndSet(null, result)) {
+                result = sharedConfigRef.get();
+            }
+        }
+
+        return result;
+    }
+
+    private ProjectProfileSettings getPrivateProperties() {
+        ProjectProfileSettings result = privateConfigRef.get();
+        if (result == null) {
+            result = getSharedProperties(project);
+            if (!privateConfigRef.compareAndSet(null, result)) {
+                result = privateConfigRef.get();
+            }
+        }
+
+        return result;
+    }
+
+    private ProjectProfileSettings getConfig(boolean shared) {
+        ProjectProfileSettings result = shared ? getSharedProperties() : getPrivateProperties();
+        result.ensureLoadedAndWait();
+        return result;
     }
 
     @Override
     public Element getConfigurationFragment(String elementName, String namespace, boolean shared) {
-        return getConfig(shared).getConfigurationFragment(elementName, namespace);
+        return getConfig(shared).getAuxConfigValue(new DomElementKey(elementName, namespace));
     }
 
     @Override
     public void putConfigurationFragment(Element fragment, boolean shared) throws IllegalArgumentException {
-        getConfig(shared).putConfigurationFragment(fragment);
+        ProjectProfileSettings config = getConfig(shared);
+        config.setAuxConfigValue(keyFromElement(fragment), fragment);
+        config.saveEventually();
     }
 
     @Override
     public boolean removeConfigurationFragment(
-            final String elementName,
-            final String namespace,
+            String elementName,
+            String namespace,
             boolean shared) throws IllegalArgumentException {
 
-        return getConfig(shared).removeConfigurationFragment(elementName, namespace);
+        ProjectProfileSettings config = getConfig(shared);
+        boolean result = config.setAuxConfigValue(new DomElementKey(elementName, namespace), null);
+        config.saveEventually();
+        return result;
+    }
+
+    private static DomElementKey keyFromElement(Element fragment) {
+        ExceptionHelper.checkNotNullArgument(fragment, "fragment");
+        return new DomElementKey(fragment.getTagName(), fragment.getNamespaceURI());
     }
 
     public Collection<DomElementKey> getConfigElements(boolean shared) {
-        return getConfig(shared).getConfigElements();
-    }
-
-    private static final class ProjectPropertiesStorage
-    implements
-            SingleStoreAuxConfig.AuxConfigStorage {
-
-        private final ProjectProperties properties;
-
-        public ProjectPropertiesStorage(ProjectProperties properties) {
-            ExceptionHelper.checkNotNullArgument(properties, "properties");
-            this.properties = properties;
-        }
-
-        @Override
-        public AuxConfigProperty getAuxConfig(String elementName, String namespace) {
-            return properties.getAuxConfig(elementName, namespace);
-        }
-
-        @Override
-        public Collection<AuxConfigProperty> getAllAuxConfigs() {
-            return properties.getAllAuxConfigs();
-        }
+        return getConfig(shared).getAuxConfigKeys();
     }
 }

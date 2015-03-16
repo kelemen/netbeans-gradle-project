@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.jtrim.property.MutableProperty;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,11 +26,11 @@ public class GlobalGradleSettingsTest {
         return Collections.unmodifiableList(Arrays.asList(elements.clone()));
     }
 
-    private static <T> void testGetAndSet(OldMutableProperty<T> property, T value) {
+    private static <T> void testGetAndSet(MutableProperty<T> property, T value) {
         testGetAndSet(property, value, value);
     }
 
-    private static <T> void testGetAndSet(OldMutableProperty<T> property, T value, T expected) {
+    private static <T> void testGetAndSet(MutableProperty<T> property, T value, T expected) {
         property.setValue(value);
         assertEquals(expected, property.getValue());
     }

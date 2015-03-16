@@ -1,15 +1,18 @@
 package org.netbeans.gradle.project.properties2.standard;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 
 public final class PredefinedTasks {
+    public static final PredefinedTasks NO_TASKS = new PredefinedTasks(Collections.<PredefinedTask>emptyList());
+
     private final List<PredefinedTask> tasks;
 
-    public PredefinedTasks(Collection<PredefinedTask> tasks) {
+    public PredefinedTasks(Collection<? extends PredefinedTask> tasks) {
         this.tasks = CollectionUtils.copyNullSafeList(tasks);
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,10 +25,11 @@ import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
@@ -42,17 +44,18 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
+import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
-import org.netbeans.gradle.project.properties.ProjectProperties;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
-import org.netbeans.gradle.project.properties.ProjectPropertiesManager;
-import org.netbeans.gradle.project.properties.ProjectPropertiesProxy;
-import org.netbeans.gradle.project.properties.PropertiesLoadListener;
-import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQueryListener;
+import org.netbeans.gradle.project.properties2.MultiProfileProperties;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
+import org.netbeans.gradle.project.properties2.ProfileSettingsKey;
+import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
@@ -95,7 +98,6 @@ public final class NbGradleProject implements Project {
     private final ListenerManager<Runnable> modelChangeListeners;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
-    private final ProjectPropertiesProxy properties;
     private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
@@ -117,7 +119,6 @@ public final class NbGradleProject implements Project {
         this.mergedCommandQueryRef = new AtomicReference<>(null);
         this.state = state;
         this.defaultLookupRef = new AtomicReference<>(null);
-        this.properties = new ProjectPropertiesProxy(this);
         this.projectInfoManager = new ProjectInfoManager();
         this.combinedExtensionLookup = new DynamicLookup();
 
@@ -311,7 +312,7 @@ public final class NbGradleProject implements Project {
     public void tryUpdateFromCache(NbGradleModel baseModel) {
         // In this case we don't yet requested a model, so there is little
         // reason to do anything now: Be lazy!
-        if (!hasModelBeenLoaded.get() || properties.isLoaded()) {
+        if (!hasModelBeenLoaded.get()) {
             return;
         }
 
@@ -380,16 +381,60 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        getPropertiesForProfile(getCurrentProfile().getProfileDef(), true, new PropertiesLoadListener() {
-            @Override
-            public void loadedProperties(ProjectProperties properties) {
-                GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
-            }
-        });
+        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
     }
 
     public NbGradleCommonProperties getCommonProperties() {
         return getLookup().lookup(NbGradleCommonProperties.class);
+    }
+
+    public NbGradleCommonProperties loadCommonPropertiesForProfile(ProfileKey profileKey) {
+        ActiveSettingsQueryEx settings = loadActiveSettingsForProfile(profileKey);
+        return new NbGradleCommonProperties(this, settings);
+    }
+
+    private List<ProjectProfileSettings> getUnloadedProjectProfileSettingsForProfile(ProfileKey profileKey) {
+        List<ProfileSettingsKey> keys = getProjectProfileKey(profileKey).getWithFallbacks();
+        return getConfigProvider().getProfileSettingsContainer().getAllProfileSettings(keys);
+    }
+
+    public ActiveSettingsQueryEx loadActiveSettingsForProfile(ProfileKey profileKey) {
+        List<ProjectProfileSettings> settings = getUnloadedProjectProfileSettingsForProfile(profileKey);
+        for (ProjectProfileSettings current: settings) {
+            current.ensureLoadedAndWait();
+        }
+
+        MultiProfileProperties result = new MultiProfileProperties();
+        result.setProfileSettings(settings);
+        return result;
+    }
+
+    public ListenerRef loadActiveSettingsForProfile(ProfileKey profileKey, final ActiveSettingsQueryListener listener) {
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+        final List<ProjectProfileSettings> settings = getUnloadedProjectProfileSettingsForProfile(profileKey);
+        final AtomicInteger requiredCallCount = new AtomicInteger(settings.size());
+
+        final MultiProfileProperties result = new MultiProfileProperties();
+        Runnable listenerForwarder = new Runnable() {
+            @Override
+            public void run() {
+                if (requiredCallCount.decrementAndGet() == 0) {
+                    result.setProfileSettings(settings);
+                    listener.onLoad(result);
+                }
+            }
+        };
+
+        List<ListenerRef> resultRefs = new ArrayList<>(settings.size());
+        for (ProjectProfileSettings current: settings) {
+            resultRefs.add(current.notifyWhenLoaded(listenerForwarder));
+        }
+        return ListenerRegistries.combineListenerRefs(resultRefs);
+    }
+
+    public ProjectProfileSettings getUnloadedProfileSettings(ProfileKey profileKey) {
+        return getProfileSettingsContainer().getProfileSettings(getProjectProfileKey(profileKey));
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -400,32 +445,23 @@ public final class NbGradleProject implements Project {
         return getConfigProvider().getProfileSettingsContainer();
     }
 
-    public ProjectProperties getProperties() {
-        return properties;
+    public static ProfileKey getPrivateProfileKey() {
+        return new ProfileKey("private", "aux-config");
     }
 
-    public ProjectProperties getPrivateProperties() {
-        ProfileDef privateDef = new ProfileDef("private", "aux-config", "Private profiles");
-        return getPropertiesForProfile(privateDef, false, null);
+    public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
+        Path rootProjectDir = getCurrentModel().getRootProjectDir().toPath();
+        return new ProfileSettingsKey(rootProjectDir, profileKey);
     }
 
-    public ProjectProperties getPropertiesForProfile(
-            ProfileDef profileDef,
-            boolean useInheritance,
-            PropertiesLoadListener onLoadTask) {
-
-        if (useInheritance) {
-            return ProjectPropertiesManager.getPropertySourceForProject(this, profileDef).load(onLoadTask);
-        }
-        else {
-            Path profileFile = SettingsFiles.getProfileFile(this, profileDef);
-            return ProjectPropertiesManager.getFilePropertySource(this, profileFile).load(onLoadTask);
-        }
+    public ProjectProfileSettings getPropertiesForProfile(ProfileKey profileKey) {
+        ProfileSettingsKey key = getProjectProfileKey(profileKey);
+        return getProfileSettingsContainer().getProfileSettings(key);
     }
 
-    public ProjectProperties getLoadedProperties(CancellationToken cancelToken) {
-        properties.waitForLoaded(cancelToken);
-        return properties;
+    public ProjectProfileSettings getPrivateProfile() {
+        ProfileSettingsKey key = getProjectProfileKey(getPrivateProfileKey());
+        return getProfileSettingsContainer().getProfileSettings(key);
     }
 
     @Nonnull
@@ -462,7 +498,7 @@ public final class NbGradleProject implements Project {
             NbGradleSingleProjectConfigProvider configProvider = NbGradleSingleProjectConfigProvider.create(this);
 
             NbGradleCommonProperties commonProperties
-                    = new NbGradleCommonProperties(configProvider.getActiveSettingsQuery());
+                    = new NbGradleCommonProperties(this, configProvider.getActiveSettingsQuery());
 
             Lookup newLookup = Lookups.fixed(new Object[] {
                 this,
@@ -480,10 +516,10 @@ public final class NbGradleProject implements Project {
                 new GradleAuxiliaryProperties(auxConfig),
                 new GradleTemplateAttrProvider(this),
                 new DefaultGradleCommandExecutor(this),
-                ProjectPropertiesApi.buildPlatform(getProperties().getPlatform()),
-                ProjectPropertiesApi.scriptPlatform(getProperties().getScriptPlatform()),
-                ProjectPropertiesApi.sourceEncoding(getProperties().getSourceEncoding()),
-                ProjectPropertiesApi.sourceLevel(getProperties().getSourceLevel()),
+                ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()),
+                ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()),
+                ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()),
+                ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()),
                 new ProjectInfoManager(),
 
                 // FileOwnerQueryImplementation cannot be added to the project's
@@ -570,7 +606,7 @@ public final class NbGradleProject implements Project {
 
             licenseRef = LICENSE_MANAGER.registerLicense(
                     NbGradleProject.this,
-                    getProperties().getLicenseHeader().getValue());
+                    getCommonProperties().licenseHeaderInfo().getActiveValue());
         }
 
         public void registerLicense() {
@@ -589,7 +625,8 @@ public final class NbGradleProject implements Project {
             GradleModelLoader.addModelLoadedListener(modelLoadListener);
             reloadProject(true);
 
-            ListenerRef newRef = properties.getLicenseHeader().addChangeListener(new Runnable() {
+            PropertySource<LicenseHeaderInfo> licenseHeaderInfo = getCommonProperties().licenseHeaderInfo().getActiveSource();
+            ListenerRef newRef = licenseHeaderInfo.addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     registerLicense();

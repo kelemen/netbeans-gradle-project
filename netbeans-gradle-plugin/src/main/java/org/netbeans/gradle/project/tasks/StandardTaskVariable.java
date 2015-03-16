@@ -10,6 +10,7 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.test.SpecificTestClass;
@@ -75,7 +76,8 @@ public enum StandardTaskVariable {
     PLATFORM_DIR("platform-dir", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            FileObject rootFolder = project.getProperties().getPlatform().getValue().getRootFolder();
+            ProjectPlatform targetPlatform = project.getCommonProperties().targetPlatform().getActiveValue();
+            FileObject rootFolder = targetPlatform != null ? targetPlatform.getRootFolder() : null;
             return new VariableValue(rootFolder != null
                     ? FileUtil.getFileDisplayName(rootFolder)
                     : null);

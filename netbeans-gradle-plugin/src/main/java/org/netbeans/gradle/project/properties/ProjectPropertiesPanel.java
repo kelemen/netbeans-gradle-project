@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -42,6 +43,13 @@ import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQueryListener;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.ProfileKey;
+import org.netbeans.gradle.project.properties2.PropertyReference;
+import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
+import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
@@ -52,7 +60,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
     private static final Logger LOGGER = Logger.getLogger(ProjectPropertiesPanel.class.getName());
 
     private ProfileItem currentlyShownProfile;
-    private final Map<ProfileItem, ProjectProperties> storeForProperties;
+    private final Map<ProfileItem, StoredValues> storeForProperties;
     private final AtomicInteger profileChangeLock;
     private final NbGradleProject project;
 
@@ -124,26 +132,75 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         });
     }
 
-    private void initFromProperties(ProjectProperties properties) {
-        String gradleHome = AbstractProjectProperties.gradleLocationToString(properties.getGradleLocation().getValue());
-        jGradleHomeEdit.setText(gradleHome);
-        jGradleHomeInherit.setSelected(properties.getGradleLocation().isDefault());
+    private void initFromProperties(StoredValues values) {
+        initGradleLocation(values);
+        initScriptPlatform(values);
+        initTargetPlatform(values);
+        initSourceEncoding(values);
+        initSourceLevel(values);
+    }
 
-        JavaPlatform currentScriptPlatform = properties.getScriptPlatform().getValue();
+    private void initGradleLocation(StoredValues values) {
+        GradleLocation gradleLocation = setInheritAndGetValue(
+                values.gradleLocation,
+                values.commonProperties.gradleLocation(),
+                jGradleHomeInherit);
+
+        if (gradleLocation != null) {
+            String gradleHome = AbstractProjectProperties.gradleLocationToString(gradleLocation);
+            jGradleHomeEdit.setText(gradleHome);
+        }
+    }
+
+    private void initScriptPlatform(StoredValues values) {
+        JavaPlatform scriptPlatform = setInheritAndGetValue(
+                values.scriptPlatform,
+                values.commonProperties.scriptPlatform(),
+                jScriptPlatformInherit);
+
         fillScriptPlatformCombo();
-        jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(currentScriptPlatform));
-        jScriptPlatformInherit.setSelected(properties.getScriptPlatform().isDefault());
+        if (scriptPlatform != null) {
+            jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(scriptPlatform));
+        }
+    }
 
-        ProjectPlatform currentPlatform = properties.getPlatform().getValue();
+    private void initTargetPlatform(StoredValues values) {
+        ProjectPlatform targetPlatform = setInheritAndGetValue(
+                values.targetPlatform,
+                values.commonProperties.targetPlatform(),
+                jPlatformComboInherit);
         fillProjectPlatformCombo();
-        jPlatformCombo.setSelectedItem(new ProjectPlatformComboItem(currentPlatform));
-        jPlatformComboInherit.setSelected(properties.getPlatform().isDefault());
+        if (targetPlatform != null) {
+            jPlatformCombo.setSelectedItem(new ProjectPlatformComboItem(targetPlatform));
+        }
+    }
 
-        jSourceEncoding.setText(properties.getSourceEncoding().getValue().name());
-        jSourceEncodingInherit.setSelected(properties.getSourceEncoding().isDefault());
+    private void initSourceEncoding(StoredValues values) {
+        Charset encoding = setInheritAndGetValue(
+                values.sourceEncoding,
+                values.commonProperties.sourceEncoding(),
+                jSourceEncodingInherit);
+        if (encoding != null) {
+            jSourceEncoding.setText(encoding.name());
+        }
+    }
 
-        jSourceLevelCombo.setSelectedItem(properties.getSourceLevel().getValue());
-        jSourceLevelComboInherit.setSelected(properties.getSourceLevel().isDefault());
+    private void initSourceLevel(StoredValues values) {
+        String sourceLevel = setInheritAndGetValue(
+                values.sourceLevel,
+                values.commonProperties.sourceLevel(),
+                jSourceLevelComboInherit);
+        if (sourceLevel != null) {
+            jSourceLevelCombo.setSelectedItem(sourceLevel);
+        }
+    }
+
+    private static <Value> Value setInheritAndGetValue(
+            Value value,
+            PropertyReference<? extends Value> valueWitFallbacks,
+            JCheckBox inheritCheck) {
+        inheritCheck.setSelected(value == null);
+        return value != null ? value : valueWitFallbacks.getActiveValue();
     }
 
     private void sortProfileComboItems() {
@@ -191,7 +248,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         // If we already have a store for the properties then we should have
         // already edited it.
-        ProjectProperties storedProperties = storeForProperties.get(selected);
+        StoredValues storedProperties = storeForProperties.get(selected);
         if (storedProperties != null) {
             currentlyShownProfile = selected;
             initFromProperties(storedProperties);
@@ -199,15 +256,15 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
 
         final PanelLockRef lock = lockPanel();
-        project.getPropertiesForProfile(selected.getProfileDef(), true, new PropertiesLoadListener() {
+        project.loadActiveSettingsForProfile(selected.getProfileKey(), new ActiveSettingsQueryListener() {
             @Override
-            public void loadedProperties(final ProjectProperties properties) {
+            public void onLoad(final ActiveSettingsQuery settings) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             currentlyShownProfile = selected;
-                            initFromProperties(properties);
+                            initFromProperties(new StoredValues(project, settings));
                         } finally {
                             lock.release();
                         }
@@ -305,25 +362,20 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         jSourceLevelCombo.setEnabled(!jSourceLevelComboInherit.isSelected());
     }
 
-    private static <ValueType> OldPropertySource<ValueType> asConst(ValueType value, boolean defaultValue) {
-        return new ConstPropertySource<>(value, defaultValue);
-    }
-
-    private static <ValueType> void copyProperty(OldMutableProperty<ValueType> src, OldMutableProperty<ValueType> dest) {
-        dest.setValueFromSource(asConst(src.getValue(), src.isDefault()));
-    }
-
     public void saveProperties() {
         saveShownProfile();
-        for (Map.Entry<ProfileItem, ProjectProperties> entry: storeForProperties.entrySet()) {
-            ProjectProperties src = entry.getValue();
-            ProjectProperties dest = project.getPropertiesForProfile(entry.getKey().getProfileDef(), false, null);
+        for (Map.Entry<ProfileItem, StoredValues> entry: storeForProperties.entrySet()) {
+            StoredValues src = entry.getValue();
 
-            copyProperty(src.getScriptPlatform(), dest.getScriptPlatform());
-            copyProperty(src.getGradleLocation(), dest.getGradleLocation());
-            copyProperty(src.getPlatform(), dest.getPlatform());
-            copyProperty(src.getSourceEncoding(), dest.getSourceEncoding());
-            copyProperty(src.getSourceLevel(), dest.getSourceLevel());
+            NbGradleCommonProperties commonProperties = src.commonProperties;
+
+            commonProperties.scriptPlatform().trySetValue(src.scriptPlatform);
+            commonProperties.gradleLocation().trySetValue(src.gradleLocation);
+            commonProperties.targetPlatform().trySetValue(src.targetPlatform);
+            commonProperties.sourceEncoding().trySetValue(src.sourceEncoding);
+            commonProperties.sourceLevel().trySetValue(src.sourceLevel);
+
+            commonProperties.trySaveEventually();
         }
     }
 
@@ -338,29 +390,31 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
             return;
         }
 
-        ProjectProperties properties = getStoreForShownProfile();
-        if (properties == null) {
+        StoredValues storedValues = getStoreForShownProfile();
+        if (storedValues == null) {
+            // This should never happen because if we are not in the process of loading a profile,
+            // we must have already been set the StoredValues for this profile.
             return;
         }
 
         String gradleHomeStr = jGradleHomeEdit.getText().trim();
         GradleLocation gradleHome = AbstractProjectProperties.getGradleLocationFromString(gradleHomeStr);
-        properties.getGradleLocation().setValueFromSource(asConst(gradleHome, jGradleHomeInherit.isSelected()));
+        storedValues.gradleLocation = jGradleHomeInherit.isSelected() ? null : gradleHome;
 
         JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
         if (selectedScriptPlatform != null) {
-            properties.getScriptPlatform().setValueFromSource(asConst(selectedScriptPlatform.getPlatform(), jScriptPlatformInherit.isSelected()));
+            storedValues.scriptPlatform = jScriptPlatformInherit.isSelected() ? null : selectedScriptPlatform.getPlatform();
         }
 
         ProjectPlatformComboItem selected = (ProjectPlatformComboItem)jPlatformCombo.getSelectedItem();
         if (selected != null) {
-            properties.getPlatform().setValueFromSource(asConst(selected.getPlatform(), jPlatformComboInherit.isSelected()));
+            storedValues.targetPlatform = jPlatformComboInherit.isSelected() ? null : selected.getPlatform();
         }
 
         String charsetName = jSourceEncoding.getText().trim();
         try {
             Charset newEncoding = Charset.forName(charsetName);
-            properties.getSourceEncoding().setValueFromSource(asConst(newEncoding, jSourceEncodingInherit.isSelected()));
+            storedValues.sourceEncoding = jSourceEncodingInherit.isSelected() ? null : newEncoding;
         } catch (IllegalCharsetNameException ex) {
             LOGGER.log(Level.INFO, "Illegal character set: " + charsetName, ex);
         } catch (UnsupportedCharsetException ex) {
@@ -369,7 +423,7 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
         String sourceLevel = (String)jSourceLevelCombo.getSelectedItem();
         if (sourceLevel != null) {
-            properties.getSourceLevel().setValueFromSource(asConst(sourceLevel, jSourceLevelComboInherit.isSelected()));
+            storedValues.sourceLevel = jSourceLevelComboInherit.isSelected() ? null : sourceLevel;
         }
     }
 
@@ -456,28 +510,23 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    private void getSelectedProperties(boolean useInheritance, PropertiesLoadListener listener) {
+    private void getSelectedProperties(ActiveSettingsQueryListener listener) {
         ProfileItem selectedProfile = getSelectedProfile();
         if (selectedProfile == null) {
             LOGGER.warning("No selected profile while clicking the manage tasks button.");
             return;
         }
 
-        project.getPropertiesForProfile(selectedProfile.getProfileDef(), useInheritance, listener);
+        project.loadActiveSettingsForProfile(selectedProfile.getProfileKey(), listener);
     }
 
-    private ProjectProperties getStoreForShownProfile() {
+    private StoredValues getStoreForShownProfile() {
         ProfileItem profile = currentlyShownProfile;
         if (profile == null) {
             return null;
         }
 
-        ProjectProperties properties = storeForProperties.get(profile);
-        if (properties == null) {
-            properties = new MemProjectProperties();
-            storeForProperties.put(profile, properties);
-        }
-        return properties;
+        return storeForProperties.get(profile);
     }
 
     private static class ProfileItem {
@@ -486,6 +535,10 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         public ProfileItem(NbGradleConfiguration config) {
             ExceptionHelper.checkNotNullArgument(config, "config");
             this.config = config;
+        }
+
+        public ProfileKey getProfileKey() {
+            return config.getProfileKey();
         }
 
         public ProfileDef getProfileDef() {
@@ -529,9 +582,9 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    private void displayManageTasksPanel(String profileName, ProjectProperties properties) {
-        ManageTasksPanel panel = new ManageTasksPanel();
-        panel.initSettings(properties);
+    private void displayManageTasksPanel(String profileName, ActiveSettingsQuery settings) {
+        ManageTasksPanel panel = new ManageTasksPanel(project);
+        panel.initSettings(settings);
 
         DialogDescriptor dlgDescriptor = new DialogDescriptor(
                 panel,
@@ -547,12 +600,12 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
         dlg.setVisible(true);
 
         if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
-            panel.saveTasks(properties);
+            panel.saveTasks(settings);
         }
     }
 
-    private void displayManageBuiltInTasksPanel(String profileName, ProjectProperties properties) {
-        ManageBuiltInTasksPanel panel = new ManageBuiltInTasksPanel(project, properties);
+    private void displayManageBuiltInTasksPanel(String profileName, ActiveSettingsQuery settings) {
+        ManageBuiltInTasksPanel panel = new ManageBuiltInTasksPanel(project, settings);
 
         DialogDescriptor dlgDescriptor = new DialogDescriptor(
                 panel,
@@ -574,6 +627,36 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
 
     private void refreshPlatformCombos() {
         loadSelectedProfile();
+    }
+
+    private static final class StoredValues {
+        public NbGradleCommonProperties commonProperties;
+
+        public BuiltInTasks builtInTasks;
+        public PredefinedTasks customTasks;
+        public GradleLocation gradleLocation;
+        public LicenseHeaderInfo licenseHeaderInfo;
+        public JavaPlatform scriptPlatform;
+        public Charset sourceEncoding;
+        public ProjectPlatform targetPlatform;
+        public String sourceLevel;
+
+        public StoredValues(NbGradleProject ownerProject, ActiveSettingsQuery settings) {
+            this(new NbGradleCommonProperties(ownerProject, settings));
+        }
+
+        public StoredValues(NbGradleCommonProperties commonProperties) {
+            this.commonProperties = commonProperties;
+
+            this.builtInTasks = commonProperties.builtInTasks().tryGetValueWithoutFallback();
+            this.customTasks = commonProperties.customTasks().tryGetValueWithoutFallback();
+            this.gradleLocation = commonProperties.gradleLocation().tryGetValueWithoutFallback();
+            this.licenseHeaderInfo = commonProperties.licenseHeaderInfo().tryGetValueWithoutFallback();
+            this.scriptPlatform = commonProperties.scriptPlatform().tryGetValueWithoutFallback();
+            this.sourceEncoding = commonProperties.sourceEncoding().tryGetValueWithoutFallback();
+            this.targetPlatform = commonProperties.targetPlatform().tryGetValueWithoutFallback();
+            this.sourceLevel = commonProperties.sourceLevel().tryGetValueWithoutFallback();
+        }
     }
 
     /**
@@ -770,18 +853,18 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 ? selectedProfile.toString()
                 : "";
 
-        getSelectedProperties(false, new PropertiesLoadListener() {
+        getSelectedProperties(new ActiveSettingsQueryListener() {
             @Override
-            public void loadedProperties(final ProjectProperties properties) {
+            public void onLoad(final ActiveSettingsQuery settings) {
                 if (SwingUtilities.isEventDispatchThread()) {
-                    displayManageTasksPanel(profileName, properties);
+                    displayManageTasksPanel(profileName, settings);
                     return;
                 }
 
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        displayManageTasksPanel(profileName, properties);
+                        displayManageTasksPanel(profileName, settings);
                     }
                 });
             }
@@ -888,18 +971,18 @@ public class ProjectPropertiesPanel extends javax.swing.JPanel {
                 ? selectedProfile.toString()
                 : "";
 
-        getSelectedProperties(true, new PropertiesLoadListener() {
+        getSelectedProperties(new ActiveSettingsQueryListener() {
             @Override
-            public void loadedProperties(final ProjectProperties properties) {
+            public void onLoad(final ActiveSettingsQuery settings) {
                 if (SwingUtilities.isEventDispatchThread()) {
-                    displayManageBuiltInTasksPanel(profileName, properties);
+                    displayManageBuiltInTasksPanel(profileName, settings);
                     return;
                 }
 
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        displayManageBuiltInTasksPanel(profileName, properties);
+                        displayManageBuiltInTasksPanel(profileName, settings);
                     }
                 });
             }

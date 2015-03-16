@@ -294,6 +294,15 @@ public final class ProfileSettings {
         return new ValueWithStateKey<>(resultStateKey, result.create());
     }
 
+    public Collection<DomElementKey> getAuxConfigKeys() {
+        configLock.lock();
+        try {
+            return new ArrayList<>(auxConfigs.keySet());
+        } finally {
+            configLock.unlock();
+        }
+    }
+
     public Element getAuxConfigValue(DomElementKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
@@ -308,6 +317,27 @@ public final class ProfileSettings {
         return result != null
                 ? (Element)EXPORT_DOCUMENT.importNode(result, true)
                 : null;
+    }
+
+    public boolean setAuxConfigValue(DomElementKey key, Element value) {
+        ExceptionHelper.checkNotNullArgument(key, "key");
+
+        Element toAdd = value != null
+                ? (Element)EXPORT_DOCUMENT.importNode(value, true)
+                : null;
+
+        configLock.lock();
+        try {
+            if (toAdd == null) {
+                return auxConfigs.remove(key) != null;
+            }
+            else {
+                auxConfigs.put(key, value);
+                return true;
+            }
+        } finally {
+            configLock.unlock();
+        }
     }
 
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(

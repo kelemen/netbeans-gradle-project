@@ -2,8 +2,11 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.SwingUtilities;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.openide.filesystems.FileChooserBuilder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -17,11 +20,9 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
     private final NbGradleProject project;
-    private final ProjectProperties properties;
+    private final AtomicBoolean loadRequested;
+    private final NbGradleCommonProperties properties;
 
-    /**
-     * Creates new form LicenseHeaderPanel
-     */
     public LicenseHeaderPanel(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
@@ -29,10 +30,22 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        this.properties = loadFromProperties();
+        // FIXME: Keep this component disabled until, thep properties were not loaded.
+        this.loadRequested = new AtomicBoolean(false);
+        this.properties = project.getCommonProperties();
     }
 
-    private void displayValues(LicenseHeaderInfo info) {
+    private void displayValues(final LicenseHeaderInfo info) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    displayValues(info);
+                }
+            });
+            return;
+        }
+
         if (info == null) {
             jLicenseNameEdit.setText("");
             jLicenseTemplateEdit.setText("");
@@ -49,17 +62,24 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         }
     }
 
-    private ProjectProperties loadFromProperties() {
-        return project.getPropertiesForProfile(null, false, new PropertiesLoadListener() {
+    public void loadContent() {
+        if (!loadRequested.compareAndSet(false, true)) {
+            return;
+        }
+
+        properties.afterLoaded(new Runnable() {
             @Override
-            public void loadedProperties(ProjectProperties properties) {
-                displayValues(properties.getLicenseHeader().getValue());
+            public void run() {
+                LicenseHeaderInfo licenseInfo = properties.licenseHeaderInfo().tryGetValueWithoutFallback();
+                displayValues(licenseInfo);
             }
         });
     }
 
     public void save() {
-        properties.getLicenseHeader().setValue(getLicenseHeaderInfo());
+        // FIXME: We should wait until loaded.
+        properties.licenseHeaderInfo().trySetValue(getLicenseHeaderInfo());
+        properties.trySaveEventually();
     }
 
     private LicenseHeaderInfo getLicenseHeaderInfo() {

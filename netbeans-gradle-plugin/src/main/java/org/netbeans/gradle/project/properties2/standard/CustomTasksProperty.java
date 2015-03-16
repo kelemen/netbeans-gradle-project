@@ -3,8 +3,6 @@ package org.netbeans.gradle.project.properties2.standard;
 import java.util.ArrayList;
 import java.util.List;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties2.ConfigPath;
 import org.netbeans.gradle.project.properties2.ConfigTree;
@@ -28,10 +26,10 @@ public final class CustomTasksProperty {
     private static final String VALUE_YES = "yes";
     private static final String VALUE_NO = "no";
 
-    public static final PropertyDef<PredefinedTasks, CustomTasks> PROPERTY_DEF = createPropertyDef();
+    public static final PropertyDef<PredefinedTasks, PredefinedTasks> PROPERTY_DEF = createPropertyDef();
 
-    private static PropertyDef<PredefinedTasks, CustomTasks> createPropertyDef() {
-        PropertyDef.Builder<PredefinedTasks, CustomTasks> result
+    private static PropertyDef<PredefinedTasks, PredefinedTasks> createPropertyDef() {
+        PropertyDef.Builder<PredefinedTasks, PredefinedTasks> result
                 = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_COMMON_TASKS));
         result.setKeyEncodingDef(getKeyEncodingDef());
         result.setValueDef(getValueDef());
@@ -45,6 +43,10 @@ public final class CustomTasksProperty {
 
     private static boolean getBooleanValueDefaultFalse(ConfigTree config) {
         return VALUE_YES.equalsIgnoreCase(config.getValue(""));
+    }
+
+    private static PropertyValueDef<PredefinedTasks, PredefinedTasks> getValueDef() {
+        return CommonProperties.getIdentityValueDef();
     }
 
     private static PredefinedTask.Name decodeName(ConfigTree nameNode) {
@@ -142,34 +144,23 @@ public final class CustomTasksProperty {
         };
     }
 
-    private static ValueMerger<CustomTasks> getValueMerger() {
-        return new ValueMerger<CustomTasks>() {
+    private static ValueMerger<PredefinedTasks> getValueMerger() {
+        return new ValueMerger<PredefinedTasks>() {
             @Override
-            public CustomTasks mergeValues(CustomTasks child, ValueReference<CustomTasks> parent) {
+            public PredefinedTasks mergeValues(PredefinedTasks child, ValueReference<PredefinedTasks> parent) {
                 if (child == null) {
                     return parent.getValue();
                 }
 
-                CustomTasks parentValue = parent.getValue();
+                PredefinedTasks parentValue = parent.getValue();
                 if (parentValue == null) {
                     return child;
                 }
 
-                return new CustomTasks(CollectionsEx.viewConcatList(child.getTasks(), parentValue.getTasks()));
-            }
-        };
-    }
+                List<PredefinedTask> tasks1 = child.getTasks();
+                List<PredefinedTask> tasks2 = child.getTasks();
 
-    private static PropertyValueDef<PredefinedTasks, CustomTasks> getValueDef() {
-        return new PropertyValueDef<PredefinedTasks, CustomTasks>() {
-            @Override
-            public PropertySource<CustomTasks> property(PredefinedTasks valueKey) {
-                return PropertyFactory.constSource(valueKey != null ? new CustomTasks(valueKey) : null);
-            }
-
-            @Override
-            public PredefinedTasks getKeyFromValue(CustomTasks value) {
-                return value != null ? value.getPredefinedTasks() : null;
+                return new PredefinedTasks(CollectionsEx.viewConcatList(tasks1, tasks2));
             }
         };
     }

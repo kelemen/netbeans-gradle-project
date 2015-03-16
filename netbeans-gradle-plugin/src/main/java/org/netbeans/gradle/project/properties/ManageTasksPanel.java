@@ -12,7 +12,11 @@ import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -21,13 +25,14 @@ import org.openide.DialogDisplayer;
 public class ManageTasksPanel extends javax.swing.JPanel {
     private static final Collator STR_CMP = Collator.getInstance();
 
+    private final NbGradleProject project;
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
-    /**
-     * Creates new form ManageTasksPanel
-     */
-    public ManageTasksPanel() {
+    public ManageTasksPanel(NbGradleProject project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        this.project = project;
+
         initComponents();
 
         jActionPanel = new CustomActionPanel();
@@ -109,8 +114,8 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 jActionPanel.isNonBlocking());
     }
 
-    public void saveTasks(ProjectProperties properties) {
-        ExceptionHelper.checkNotNullArgument(properties, "properties");
+    public void saveTasks(ActiveSettingsQuery settings) {
+        NbGradleCommonProperties properties = new NbGradleCommonProperties(project, settings);
 
         updateShownInList();
 
@@ -123,7 +128,9 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             PredefinedTaskItem current = listedTasks.getElementAt(i);
             newTasks.add(current.getTask());
         }
-        properties.getCommonTasks().setValue(newTasks);
+
+        properties.customTasks().trySetValue(new PredefinedTasks(newTasks));
+        properties.trySaveEventually();
     }
 
     private void updateShownInList() {
@@ -163,15 +170,18 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jMustExistCheck.setSelected(selected.isMustExist());
     }
 
-    public void initSettings(ProjectProperties properties) {
-        List<PredefinedTask> commonTasks = properties.getCommonTasks().getValue();
+    public void initSettings(ActiveSettingsQuery settings) {
+        NbGradleCommonProperties commonProperties = new NbGradleCommonProperties(project, settings);
+        PredefinedTasks commonTasks = commonProperties.customTasks().tryGetValueWithoutFallback();
 
         DefaultListModel<PredefinedTaskItem> listModel = getModelOfTaskList();
         listModel.clear();
-        for (PredefinedTask task: commonTasks) {
-            listModel.addElement(new PredefinedTaskItem(task));
+        if (commonTasks != null) {
+            for (PredefinedTask task: commonTasks.getTasks()) {
+                listModel.addElement(new PredefinedTaskItem(task));
+            }
+            sortTasks();
         }
-        sortTasks();
     }
 
     private static class PredefinedTaskItem {

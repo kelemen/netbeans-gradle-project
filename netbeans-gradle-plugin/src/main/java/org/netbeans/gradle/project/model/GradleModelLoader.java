@@ -50,7 +50,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
-import org.netbeans.gradle.project.properties.ProjectProperties;
+import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
@@ -159,16 +159,10 @@ public final class GradleModelLoader {
             result.useGradleUserHomeDir(gradleUserHome);
         }
 
-        GradleLocation gradleLocation;
-        ProjectProperties projectProperties = gradleProject.getLoadedProperties(cancelToken);
-        if (projectProperties == null) {
-            LOGGER.warning("Could not wait for retrieving the project properties. Using the globally defined one");
-            gradleLocation = GlobalGradleSettings.getGradleHome().getValue();
-        }
-        else {
-            gradleLocation = projectProperties.getGradleLocation().getValue();
-        }
+        NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
+        commonProperties.waitForLoadedOnce(cancelToken);
 
+        GradleLocation gradleLocation = commonProperties.gradleLocation().getActiveValue();
         gradleLocation.applyLocation(gradleProject, new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
@@ -395,7 +389,7 @@ public final class GradleModelLoader {
         NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
 
         return gradleProject != null
-                ? gradleProject.getProperties().getScriptPlatform().getValue()
+                ? gradleProject.getCommonProperties().scriptPlatform().getActiveValue()
                 : null;
     }
 

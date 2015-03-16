@@ -7,7 +7,11 @@ import java.util.RandomAccess;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.OneShotListenerManager;
@@ -17,22 +21,49 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
-    private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettings;
+    private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettingsList;
     private final WaitableSignal loadedOnceSignal;
     private final OneShotListenerManager<Runnable, Void> loadedOnceListeners;
 
+    private final PropertySource<ProjectProfileSettings> currentProfileSettings;
+    private final ListenerManager<Runnable> currentProfileChangeListeners;
+
+    private final UpdateTaskExecutor loadedOnceEventExecutor;
+    private final Runnable loadedOnceEventFirer;
+
     public MultiProfileProperties() {
-        this.currentProfileSettings = PropertyFactory.memPropertyConcurrent(
+        this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
                 Collections.<ProjectProfileSettings>emptyList(),
                 SwingTaskExecutor.getStrictExecutor(false));
         this.loadedOnceSignal = new WaitableSignal();
         this.loadedOnceListeners = new OneShotListenerManager<>();
+        this.loadedOnceEventExecutor = new SwingUpdateTaskExecutor(false);
+        this.loadedOnceEventFirer = new Runnable() {
+            @Override
+            public void run() {
+                EventListeners.dispatchRunnable(loadedOnceListeners);
+            }
+        };
+
+        this.currentProfileChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.currentProfileSettings = new PropertySource<ProjectProfileSettings>() {
+            @Override
+            public ProjectProfileSettings getValue() {
+                return tryGetCurrentProfileSettings();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return currentProfileChangeListeners.registerListener(listener);
+            }
+        };
     }
 
     @Override
@@ -47,7 +78,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     @Override
     public Element getAuxConfigValue(DomElementKey key) {
-        for (ProjectProfileSettings settings: currentProfileSettings.getValue()) {
+        for (ProjectProfileSettings settings: currentProfileSettingsList.getValue()) {
             Element result = settings.getAuxConfigValue(key);
             if (result != null) {
                 return result;
@@ -56,10 +87,14 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         return null;
     }
 
-    @Override
-    public ProjectProfileSettings tryGetCurrentProfileSettings() {
-        List<ProjectProfileSettings> allProfileSettings = currentProfileSettings.getValue();
+    private ProjectProfileSettings tryGetCurrentProfileSettings() {
+        List<ProjectProfileSettings> allProfileSettings = currentProfileSettingsList.getValue();
         return allProfileSettings.isEmpty() ? null : allProfileSettings.get(0);
+    }
+
+    @Override
+    public PropertySource<ProjectProfileSettings> currentProfileSettings() {
+        return currentProfileSettings;
     }
 
     public void setProfileSettings(List<? extends ProjectProfileSettings> newSettings) {
@@ -68,7 +103,11 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         ExceptionHelper.checkNotNullElements(settingsCopy, "newSettings");
         ExceptionHelper.checkArgumentInRange(settingsCopy.size(), 1, Integer.MAX_VALUE, "newSettings.size()");
 
-        currentProfileSettings.setValue(settingsCopy);
+        currentProfileSettingsList.setValue(settingsCopy);
+
+        loadedOnceSignal.signal();
+        loadedOnceEventExecutor.execute(loadedOnceEventFirer);
+        EventListeners.dispatchRunnable(currentProfileChangeListeners);
     }
 
     private static <ValueType> ValueType mergePropertyValues(
@@ -109,7 +148,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        return new ProjectPropertyProxy<>(propertyDef, currentProfileSettings);
+        return new ProjectPropertyProxy<>(propertyDef, currentProfileSettingsList);
     }
 
     private static SimpleListenerRegistry<Runnable> asListenerRegistry(final PropertySource<?> property) {
