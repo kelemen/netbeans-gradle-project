@@ -24,11 +24,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
-import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties2.PropertyReference;
-import org.netbeans.gradle.project.properties2.standard.BuiltInTasks;
-import org.netbeans.gradle.project.properties2.standard.BuiltInTasksProperty;
+import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
+import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 

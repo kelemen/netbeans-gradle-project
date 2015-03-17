@@ -7,7 +7,7 @@ import java.util.TreeMap;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
-import org.netbeans.gradle.project.properties2.standard.SourceEncodingProperty;
+import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.CreateFromTemplateAttributesProvider;

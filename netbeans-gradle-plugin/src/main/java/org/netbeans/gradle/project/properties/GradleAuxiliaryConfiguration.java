@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
 

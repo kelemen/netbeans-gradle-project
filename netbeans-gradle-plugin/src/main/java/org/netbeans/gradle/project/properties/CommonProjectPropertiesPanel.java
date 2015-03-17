@@ -21,10 +21,7 @@ import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
-import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties2.PropertyReference;
-import org.netbeans.gradle.project.properties2.standard.GradleLocationProperty;
+import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 

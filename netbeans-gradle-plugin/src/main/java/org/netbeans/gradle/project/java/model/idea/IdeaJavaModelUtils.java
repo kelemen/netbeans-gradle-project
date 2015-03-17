@@ -41,7 +41,7 @@ import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
-import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;

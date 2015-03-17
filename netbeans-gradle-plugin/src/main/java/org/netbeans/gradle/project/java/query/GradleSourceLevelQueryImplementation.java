@@ -5,7 +5,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

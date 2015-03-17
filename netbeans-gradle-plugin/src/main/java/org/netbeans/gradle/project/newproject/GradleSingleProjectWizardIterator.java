@@ -17,7 +17,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.properties2.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;

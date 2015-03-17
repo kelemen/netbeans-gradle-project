@@ -36,9 +36,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQueryListener;
-import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 

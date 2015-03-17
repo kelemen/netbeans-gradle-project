@@ -33,12 +33,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
-import org.netbeans.gradle.project.properties2.MultiProfileProperties;
-import org.netbeans.gradle.project.properties2.ProfileKey;
-import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
-import org.netbeans.gradle.project.properties2.ProfileSettingsKey;
-import org.netbeans.gradle.project.properties2.ProjectProfileSettings;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 

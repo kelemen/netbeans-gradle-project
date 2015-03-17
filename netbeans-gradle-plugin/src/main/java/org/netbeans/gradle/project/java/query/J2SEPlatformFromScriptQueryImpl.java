@@ -4,7 +4,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties2.standard.JavaPlatformUtils;
+import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.openide.util.Lookup;
 

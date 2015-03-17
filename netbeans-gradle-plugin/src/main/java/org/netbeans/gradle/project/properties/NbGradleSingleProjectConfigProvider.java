@@ -15,8 +15,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.properties2.ActiveSettingsQueryEx;
-import org.netbeans.gradle.project.properties2.ProfileSettingsContainer;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 

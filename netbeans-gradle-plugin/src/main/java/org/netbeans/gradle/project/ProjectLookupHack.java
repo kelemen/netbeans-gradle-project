@@ -14,7 +14,7 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
-import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ProjectConfigurationProvider;

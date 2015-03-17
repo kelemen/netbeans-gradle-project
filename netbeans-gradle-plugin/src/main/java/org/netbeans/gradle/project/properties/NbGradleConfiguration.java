@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ProfileDef;
-import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.netbeans.spi.project.ProjectConfiguration;
 
 public final class NbGradleConfiguration implements ProjectConfiguration {
