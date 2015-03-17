@@ -339,8 +339,6 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
     }
 
     private void updateByKey(final ProfileKey profileKey) {
-        assert profileKey != null;
-
         // Warning: This method gets called under CONFIG_PROVIDERS_LOCK.
         //          Avoid calling alien code.
 
