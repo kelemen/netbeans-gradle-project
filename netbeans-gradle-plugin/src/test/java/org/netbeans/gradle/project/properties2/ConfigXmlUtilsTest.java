@@ -111,6 +111,9 @@ public class ConfigXmlUtilsTest {
             builtInTask2.addChildBuilder("task-jvm-args").setValue("");
         }
 
+        ConfigTree.Builder customGroup = result.addChildBuilder("custom-group");
+        customGroup.addChildBuilder("custom-node").setValue("Value0");
+
         ConfigTree.Builder auxiliary = result.addChildBuilder("auxiliary");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.enable").setValue("true");
         auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.lf-kind").setValue("LF");

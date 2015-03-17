@@ -47,6 +47,9 @@
       <task-jvm-args/>
     </task>
   </built-in-tasks>
+  <custom-group>
+    <custom-node>Value0</custom-node>
+  </custom-group>
   <auxiliary>
     <com-junichi11-netbeans-changelf.enable>true</com-junichi11-netbeans-changelf.enable>
     <com-junichi11-netbeans-changelf.lf-kind>LF</com-junichi11-netbeans-changelf.lf-kind>

@@ -171,13 +171,13 @@ public class ProfileSettingsTest {
     @Test
     public void testSetValueOfDeepTextProperty() throws IOException {
         for (int i = 0; i < 100; i++) {
-            testSetValueOfTextProperty("LF", "CRLF", "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
+            testSetValueOfTextProperty("Value0", "Value1", "custom-group", "custom-node");
         }
     }
 
     @Test
     public void testSetValueOfDeepTextPropertyWithReferenceComparison() throws IOException {
-        testSetValueOfTextProperty("LF", "CRLF", false, "auxiliary", "com-junichi11-netbeans-changelf.lf-kind");
+        testSetValueOfTextProperty("Value0", "Value1", false, "custom-group", "custom-node");
     }
 
     private void testLoadFromFileLater(String expectedValue, String... propertyPath) throws IOException {
