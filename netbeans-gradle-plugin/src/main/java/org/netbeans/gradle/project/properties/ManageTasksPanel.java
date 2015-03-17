@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.PropertyReference;
 import org.netbeans.gradle.project.properties2.standard.PredefinedTasks;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
@@ -25,14 +26,10 @@ import org.openide.DialogDisplayer;
 public class ManageTasksPanel extends javax.swing.JPanel {
     private static final Collator STR_CMP = Collator.getInstance();
 
-    private final NbGradleProject project;
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
-    public ManageTasksPanel(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
-
+    private ManageTasksPanel() {
         initComponents();
 
         jActionPanel = new CustomActionPanel();
@@ -44,6 +41,18 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 showSelected();
+            }
+        });
+    }
+
+    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
+        final ManageTasksPanel customPanel = new ManageTasksPanel();
+        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
+            @Override
+            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
+                return customPanel.new PropertyValues(profileQuery);
             }
         });
     }
@@ -114,24 +123,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 jActionPanel.isNonBlocking());
     }
 
-    public void saveTasks(ActiveSettingsQuery settings) {
-        NbGradleCommonProperties properties = new NbGradleCommonProperties(project, settings);
-
-        updateShownInList();
-
-        DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
-        int elementCount = listedTasks.getSize();
-
-        List<PredefinedTask> newTasks = new ArrayList<>(elementCount);
-        for (int i = 0; i < elementCount; i++) {
-            @SuppressWarnings("unchecked")
-            PredefinedTaskItem current = listedTasks.getElementAt(i);
-            newTasks.add(current.getTask());
-        }
-
-        properties.customTasks().trySetValue(new PredefinedTasks(newTasks));
-    }
-
     private void updateShownInList() {
         PredefinedTask newTaskDef = getShownTask();
         if (newTaskDef == null) {
@@ -169,20 +160,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jMustExistCheck.setSelected(selected.isMustExist());
     }
 
-    public void initSettings(ActiveSettingsQuery settings) {
-        NbGradleCommonProperties commonProperties = new NbGradleCommonProperties(project, settings);
-        PredefinedTasks commonTasks = commonProperties.customTasks().tryGetValueWithoutFallback();
-
-        DefaultListModel<PredefinedTaskItem> listModel = getModelOfTaskList();
-        listModel.clear();
-        if (commonTasks != null) {
-            for (PredefinedTask task: commonTasks.getTasks()) {
-                listModel.addElement(new PredefinedTaskItem(task));
-            }
-            sortTasks();
-        }
-    }
-
     private static class PredefinedTaskItem {
         private final PredefinedTask task;
 
@@ -207,6 +184,52 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         @Override
         public String toString() {
             return task.getDisplayName();
+        }
+    }
+
+    private final class PropertyValues implements ProfileValuesEditor {
+        public final PropertyReference<PredefinedTasks> customTasksRef;
+        private PredefinedTasks currentTasks;
+
+        public PropertyValues(ActiveSettingsQuery settings) {
+            this.customTasksRef = NbGradleCommonProperties.customTasks(settings);
+            this.currentTasks = customTasksRef.tryGetValueWithoutFallback();
+        }
+
+        @Override
+        public void displayValues() {
+            PredefinedTasks customTasks = currentTasks;
+
+            DefaultListModel<PredefinedTaskItem> listModel = getModelOfTaskList();
+            listModel.clear();
+            if (customTasks != null) {
+                for (PredefinedTask task: customTasks.getTasks()) {
+                    listModel.addElement(new PredefinedTaskItem(task));
+                }
+                sortTasks();
+            }
+        }
+
+        @Override
+        public void readFromGui() {
+            updateShownInList();
+
+            DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
+            int elementCount = listedTasks.getSize();
+
+            List<PredefinedTask> newTasks = new ArrayList<>(elementCount);
+            for (int i = 0; i < elementCount; i++) {
+                @SuppressWarnings("unchecked")
+                PredefinedTaskItem current = listedTasks.getElementAt(i);
+                newTasks.add(current.getTask());
+            }
+
+            currentTasks = new PredefinedTasks(newTasks);
+        }
+
+        @Override
+        public void applyValues() {
+            customTasksRef.trySetValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
         }
     }
 

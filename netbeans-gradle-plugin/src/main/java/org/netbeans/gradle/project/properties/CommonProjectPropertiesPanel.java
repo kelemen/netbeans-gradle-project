@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.awt.Dialog;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -20,15 +19,12 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties2.PropertyReference;
 import org.netbeans.gradle.project.properties2.standard.GradleLocationProperty;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
@@ -36,16 +32,9 @@ import org.openide.util.Lookup;
 public class CommonProjectPropertiesPanel extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(CommonProjectPropertiesPanel.class.getName());
 
-    private final NbGradleProject project;
-    private String currentProfileName;
-    private ActiveSettingsQuery currentSettings;
     private PropertyValues currentValues;
 
-    private CommonProjectPropertiesPanel(NbGradleProject project) {
-        this.project = project;
-        this.currentSettings = null;
-        this.currentProfileName = null;
-
+    private CommonProjectPropertiesPanel() {
         initComponents();
 
         setupEnableDisable();
@@ -54,14 +43,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
     public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        final CommonProjectPropertiesPanel customPanel = new CommonProjectPropertiesPanel(project);
+        final CommonProjectPropertiesPanel customPanel = new CommonProjectPropertiesPanel();
         return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
             @Override
             public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
                 PropertyValues currentValues = customPanel.new PropertyValues(project, profileQuery);
-
-                customPanel.currentProfileName = displayName;
-                customPanel.currentSettings = profileQuery;
                 customPanel.currentValues = currentValues;
 
                 return currentValues;
@@ -124,28 +110,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
 
         jScriptPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new JavaPlatformComboItem[comboItems.size()])));
-    }
-
-    private void displayManageTasksPanel(String profileName, ActiveSettingsQuery settings) {
-        ManageTasksPanel panel = new ManageTasksPanel(project);
-        panel.initSettings(settings);
-
-        DialogDescriptor dlgDescriptor = new DialogDescriptor(
-                panel,
-                NbStrings.getManageTasksDlgTitle(profileName),
-                true,
-                new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
-                DialogDescriptor.OK_OPTION,
-                DialogDescriptor.BOTTOM_ALIGN,
-                null,
-                null);
-        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
-        dlg.pack();
-        dlg.setVisible(true);
-
-        if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
-            panel.saveTasks(settings);
-        }
     }
 
     private final class PropertyValues implements ProfileValuesEditor {
@@ -374,7 +338,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jSourceEncoding = new javax.swing.JTextField();
         jPlatformCombo = new javax.swing.JComboBox<ProjectPlatformComboItem>();
         jGradleHomeCaption = new javax.swing.JLabel();
-        jManageTasksButton = new javax.swing.JButton();
         jSourceEncodingCaption = new javax.swing.JLabel();
         jTargetPlatformCaption = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
@@ -404,13 +367,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jSourceEncoding.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceEncoding.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleHomeCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeCaption.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jManageTasksButton, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jManageTasksButton.text")); // NOI18N
-        jManageTasksButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jManageTasksButtonActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceEncodingCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceEncodingCaption.text")); // NOI18N
 
@@ -442,8 +398,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                             .addComponent(jPlatformComboInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jSourceLevelComboInherit, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jManageTasksButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jPlatformPreferenceButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -489,9 +444,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                     .addComponent(jSourceLevelCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jSourceLevelComboInherit))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jManageTasksButton)
-                    .addComponent(jPlatformPreferenceButton))
+                .addComponent(jPlatformPreferenceButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -504,21 +457,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
     }//GEN-LAST:event_jPlatformPreferenceButtonActionPerformed
 
-    private void jManageTasksButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jManageTasksButtonActionPerformed
-        currentSettings.currentProfileSettings().getValue().getKey();
-
-        if (currentSettings != null && currentProfileName != null) {
-            displayManageTasksPanel(currentProfileName, currentSettings);
-        }
-    }//GEN-LAST:event_jManageTasksButtonActionPerformed
-
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jGradleHomeCaption;
     private javax.swing.JTextField jGradleHomeEdit;
     private javax.swing.JCheckBox jGradleHomeInherit;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JButton jManageTasksButton;
     private javax.swing.JComboBox<ProjectPlatformComboItem> jPlatformCombo;
     private javax.swing.JCheckBox jPlatformComboInherit;
     private javax.swing.JButton jPlatformPreferenceButton;
