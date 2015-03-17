@@ -2,11 +2,11 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.SwingUtilities;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties2.PropertyReference;
 import org.openide.filesystems.FileChooserBuilder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -20,32 +20,26 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
     private final NbGradleProject project;
-    private final AtomicBoolean loadRequested;
-    private final NbGradleCommonProperties properties;
 
-    public LicenseHeaderPanel(NbGradleProject project) {
+    private LicenseHeaderPanel(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.project = project;
 
         initComponents();
-
-        // FIXME: Keep this component disabled until, thep properties were not loaded.
-        this.loadRequested = new AtomicBoolean(false);
-        this.properties = project.getCommonProperties();
     }
 
-    private void displayValues(final LicenseHeaderInfo info) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    displayValues(info);
-                }
-            });
-            return;
-        }
+    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
+        final LicenseHeaderPanel customPanel = new LicenseHeaderPanel(project);
+        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
+            @Override
+            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
+                return customPanel.new PropertyValues(profileQuery);
+            }
+        });
+    }
 
+    private void displayLicenseHeaderInfo(final LicenseHeaderInfo info) {
         if (info == null) {
             jLicenseNameEdit.setText("");
             jLicenseTemplateEdit.setText("");
@@ -60,25 +54,6 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
             File licenseTemplate = info.getLicenseTemplateFile();
             jLicenseTemplateEdit.setText(licenseTemplate != null ? licenseTemplate.getPath() : "");
         }
-    }
-
-    public void loadContent() {
-        if (!loadRequested.compareAndSet(false, true)) {
-            return;
-        }
-
-        properties.afterLoaded(new Runnable() {
-            @Override
-            public void run() {
-                LicenseHeaderInfo licenseInfo = properties.licenseHeaderInfo().tryGetValueWithoutFallback();
-                displayValues(licenseInfo);
-            }
-        });
-    }
-
-    public void save() {
-        // FIXME: We should wait until loaded.
-        properties.licenseHeaderInfo().trySetValue(getLicenseHeaderInfo());
     }
 
     private LicenseHeaderInfo getLicenseHeaderInfo() {
@@ -96,6 +71,31 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
                 name,
                 Collections.singletonMap(ORGANIZATION_PROPERTY_NAME, organization),
                 templateFile);
+    }
+
+    private final class PropertyValues implements ProfileValuesEditor {
+        public final PropertyReference<LicenseHeaderInfo> licenseHeaderInfoRef;
+        private LicenseHeaderInfo currentInfo;
+
+        public PropertyValues(ActiveSettingsQuery settings) {
+            this.licenseHeaderInfoRef = NbGradleCommonProperties.licenseHeaderInfo(settings);
+            this.currentInfo = licenseHeaderInfoRef.tryGetValueWithoutFallback();
+        }
+
+        @Override
+        public void displayValues() {
+            displayLicenseHeaderInfo(currentInfo);
+        }
+
+        @Override
+        public void readFromGui() {
+            currentInfo = getLicenseHeaderInfo();
+        }
+
+        @Override
+        public void applyValues() {
+            licenseHeaderInfoRef.trySetValue(currentInfo);
+        }
     }
 
     /**

@@ -216,10 +216,10 @@ public final class GradleCustomizer implements CustomizerProvider {
     implements
             ProjectCustomizer.CompositeCategoryProvider {
 
-        private final LicenseHeaderPanel panel;
+        private final ProfileBasedPanel panel;
 
         public LicenseCustomizer(NbGradleProject project) {
-            this.panel = new LicenseHeaderPanel(project);
+            this.panel = LicenseHeaderPanel.createProfileBasedPanel(project);
         }
 
         @Override
@@ -235,7 +235,7 @@ public final class GradleCustomizer implements CustomizerProvider {
             category.setOkButtonListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    panel.save();
+                    panel.saveProperties();
                 }
             });
             return panel;
