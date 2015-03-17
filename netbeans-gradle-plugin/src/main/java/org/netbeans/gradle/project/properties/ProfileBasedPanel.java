@@ -26,6 +26,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -37,7 +38,10 @@ import org.netbeans.gradle.project.properties2.ProfileKey;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
+import static org.jtrim.property.BoolProperties.*;
+import static org.jtrim.property.PropertyFactory.*;
 import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.jtrim.property.swing.SwingProperties.*;
 import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
@@ -99,9 +103,21 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         }
     }
 
+    private PropertySource<ProfileKey> selectedProfileKey() {
+        return convert(comboBoxSelection(jProfileCombo), new ValueConverter<ProfileItem, ProfileKey>() {
+            @Override
+            public ProfileKey convert(ProfileItem input) {
+                return input != null ? input.getProfileKey() : null;
+            }
+        });
+    }
+
     private void setupEnableDisable() {
         addSwingStateListener(lessThanOrEqual(profileLoadCounter, 0),
                 glassPaneSwitcher(customPanelLayer, GlassPanes.delayedLoadingPanel(NbStrings.getLoading())));
+
+        addSwingStateListener(not(isNull(selectedProfileKey())),
+                componentDisabler(jRemoveProfileButton));
     }
 
     private void fetchProfilesAndSelect() {
