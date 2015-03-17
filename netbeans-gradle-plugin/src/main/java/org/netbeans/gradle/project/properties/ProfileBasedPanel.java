@@ -79,9 +79,9 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         initComponents();
 
         final JScrollPane customPanelScroller = new JScrollPane(customPanelLayer);
-        customPanelScroller.addComponentListener(new ComponentAdapter() {
+        final Runnable layerSizeUpdater = new Runnable() {
             @Override
-            public void componentResized(ComponentEvent e) {
+            public void run() {
                 Dimension containerSize = customPanelScroller.getViewport().getExtentSize();
                 int containerWidth = containerSize.width;
                 int containerHeight = containerSize.height;
@@ -95,7 +95,14 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
                 customPanelLayer.setPreferredSize(new Dimension(width, height));
             }
+        };
+        customPanelScroller.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                layerSizeUpdater.run();
+            }
         });
+        layerSizeUpdater.run();
 
         jCustomPanelContainer.add(customPanelScroller);
         jProfileCombo.addItemListener(new ItemListener() {
