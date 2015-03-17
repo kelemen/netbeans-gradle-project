@@ -22,6 +22,11 @@ final class CompatibleRootNodeProperty extends AbstractFixedOrderNodeProperty {
     }
 
     @Override
+    public boolean ignoreValue() {
+        return true;
+    }
+
+    @Override
     public ConfigNodeProperty getChildSorter(String keyName) {
         switch (keyName) {
             case "common-tasks":
