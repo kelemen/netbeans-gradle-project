@@ -93,6 +93,7 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(ClassPathProvider.class.getName(), Lookups.singleton(new UnimportantRootClassPathProvider()));
 
             Lookup wrappedLookup = lookupContainer.getLookup();
+            typeActions.put(NbGradleProject.class.getName(), wrappedLookup);
             typeActions.put(ProjectInformation.class.getName(), wrappedLookup);
             typeActions.put(ActionProvider.class.getName(), wrappedLookup);
             typeActions.put(CustomizerProvider.class.getName(), wrappedLookup);
