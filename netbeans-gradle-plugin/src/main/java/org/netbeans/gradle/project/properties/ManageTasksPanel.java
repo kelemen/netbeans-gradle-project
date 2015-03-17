@@ -32,7 +32,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     private ManageTasksPanel() {
         initComponents();
 
-        jActionPanel = new CustomActionPanel();
+        jActionPanel = new CustomActionPanel(true, true);
         jTaskSettingsHolder.add(jActionPanel);
         currentlyShown = null;
 
@@ -101,7 +101,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             return null;
         }
 
-        boolean mustExist = jMustExistCheck.isSelected();
+        boolean mustExist = jActionPanel.isTasksMustExist();
         String[] rawTaskNames = jActionPanel.getTasks();
 
         List<PredefinedTask.Name> names;
@@ -157,7 +157,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         currentlyShown = selected;
         jActionPanel.updatePanel(selected.getTask());
-        jMustExistCheck.setSelected(selected.isMustExist());
     }
 
     private static class PredefinedTaskItem {
@@ -247,7 +246,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         jTasksCaption = new javax.swing.JLabel();
         jTaskSettingsHolder = new javax.swing.JPanel();
         jAddNewButton = new javax.swing.JButton();
-        jMustExistCheck = new javax.swing.JCheckBox();
         jRemoveButton = new javax.swing.JButton();
 
         jDefinedTasks.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -263,8 +261,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                 jAddNewButtonActionPerformed(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jMustExistCheck, org.openide.util.NbBundle.getMessage(ManageTasksPanel.class, "ManageTasksPanel.jMustExistCheck.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jRemoveButton, org.openide.util.NbBundle.getMessage(ManageTasksPanel.class, "ManageTasksPanel.jRemoveButton.text")); // NOI18N
         jRemoveButton.addActionListener(new java.awt.event.ActionListener() {
@@ -288,9 +284,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                             .addComponent(jAddNewButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jRemoveButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jTasksCaption)
-                            .addComponent(jMustExistCheck))
+                        .addComponent(jTasksCaption)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -307,9 +301,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jRemoveButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jMustExistCheck)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTaskSettingsHolder, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                .addComponent(jTaskSettingsHolder, javax.swing.GroupLayout.DEFAULT_SIZE, 219, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -367,7 +359,6 @@ public class ManageTasksPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jAddNewButton;
     private javax.swing.JList<PredefinedTaskItem> jDefinedTasks;
-    private javax.swing.JCheckBox jMustExistCheck;
     private javax.swing.JButton jRemoveButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel jTaskSettingsHolder;

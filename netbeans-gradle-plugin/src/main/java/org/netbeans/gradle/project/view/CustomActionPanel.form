@@ -24,7 +24,11 @@
                   <Component id="jTasksEdit" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jNonBlockingCheck" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jNonBlockingCheck" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jMustExistCheck" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <Component id="jTasksCaption" min="-2" max="-2" attributes="0"/>
                           <Component id="jArgsCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jJvmArgsCaption" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -52,7 +56,10 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane2" min="-2" pref="133" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jNonBlockingCheck" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jNonBlockingCheck" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jMustExistCheck" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -127,6 +134,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/netbeans/gradle/project/view/Bundle.properties" key="CustomActionPanel.jNonBlockingCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jMustExistCheck">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/view/Bundle.properties" key="CustomActionPanel.jMustExistCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

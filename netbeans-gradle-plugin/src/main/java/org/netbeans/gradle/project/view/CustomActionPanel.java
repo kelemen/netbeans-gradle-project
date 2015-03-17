@@ -17,19 +17,38 @@ public class CustomActionPanel extends javax.swing.JPanel {
     }
 
     public CustomActionPanel(boolean showNonBlockingCheckBox) {
+        this(showNonBlockingCheckBox, false);
+    }
+
+    public CustomActionPanel(boolean showNonBlockingCheckBox, boolean showTaskMustExistCheckBox) {
         initComponents();
 
         if (!showNonBlockingCheckBox) {
             jNonBlockingCheck.setVisible(false);
         }
+        if (!showTaskMustExistCheckBox) {
+            jMustExistCheck.setVisible(false);
+        }
+    }
+
+    public void setNonBlocking(boolean value) {
+        jNonBlockingCheck.setSelected(value);
+    }
+
+    public void setTasksMustExist(boolean value) {
+        jMustExistCheck.setSelected(value);
     }
 
     public void updatePanel(PredefinedTask task) {
         StringBuilder tasks = new StringBuilder(1024);
 
+        boolean mustExist = false;
         for (PredefinedTask.Name name: task.getTaskNames()) {
             tasks.append(name.getName());
             tasks.append(' ');
+            if (name.isMustExist()) {
+                mustExist = true;
+            }
         }
         jTasksEdit.setText(tasks.toString());
 
@@ -47,6 +66,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
         }
         jJvmArgsTextArea.setText(jvmArguments.toString());
         jNonBlockingCheck.setSelected(task.isNonBlocking());
+        jMustExistCheck.setSelected(mustExist);
     }
 
     public GradleCommandTemplate tryGetGradleCommand(String displayName) {
@@ -150,6 +170,10 @@ public class CustomActionPanel extends javax.swing.JPanel {
         return jNonBlockingCheck.isSelected();
     }
 
+    public boolean isTasksMustExist() {
+        return jMustExistCheck.isSelected();
+    }
+
     private void traverseWithTab(JTextArea textArea, KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.VK_TAB) {
             boolean forward = (event.getModifiersEx() & KeyEvent.SHIFT_DOWN_MASK) == 0;
@@ -181,6 +205,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         jJvmArgsTextArea = new javax.swing.JTextArea();
         jNonBlockingCheck = new javax.swing.JCheckBox();
+        jMustExistCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jTasksCaption, org.openide.util.NbBundle.getMessage(CustomActionPanel.class, "CustomActionPanel.jTasksCaption.text")); // NOI18N
 
@@ -210,6 +235,8 @@ public class CustomActionPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jNonBlockingCheck, org.openide.util.NbBundle.getMessage(CustomActionPanel.class, "CustomActionPanel.jNonBlockingCheck.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jMustExistCheck, org.openide.util.NbBundle.getMessage(CustomActionPanel.class, "CustomActionPanel.jMustExistCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -222,7 +249,10 @@ public class CustomActionPanel extends javax.swing.JPanel {
                     .addComponent(jTasksEdit)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jNonBlockingCheck)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jNonBlockingCheck)
+                                .addGap(18, 18, 18)
+                                .addComponent(jMustExistCheck))
                             .addComponent(jTasksCaption)
                             .addComponent(jArgsCaption)
                             .addComponent(jJvmArgsCaption))
@@ -245,7 +275,9 @@ public class CustomActionPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jNonBlockingCheck)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jNonBlockingCheck)
+                    .addComponent(jMustExistCheck))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -263,6 +295,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
     private javax.swing.JTextArea jArgsTextArea;
     private javax.swing.JLabel jJvmArgsCaption;
     private javax.swing.JTextArea jJvmArgsTextArea;
+    private javax.swing.JCheckBox jMustExistCheck;
     private javax.swing.JCheckBox jNonBlockingCheck;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
