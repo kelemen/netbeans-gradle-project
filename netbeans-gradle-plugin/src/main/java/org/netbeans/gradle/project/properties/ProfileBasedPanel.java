@@ -19,6 +19,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
 import javax.swing.JLayer;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.jtrim.cancel.Cancellation;
@@ -73,7 +74,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        jCusomPanelContainer.add(customPanelLayer);
+        jCusomPanelContainer.add(new JScrollPane(customPanelLayer));
         jProfileCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
