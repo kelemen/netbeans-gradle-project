@@ -24,8 +24,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
-import org.netbeans.gradle.project.properties.DomElementKey;
-import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.w3c.dom.Element;

@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.WeakValueHashMap;
 
 public final class ProfileSettingsContainer {
     private static final AtomicReference<ProfileSettingsContainer> DEFAULT_REF = new AtomicReference<>(null);

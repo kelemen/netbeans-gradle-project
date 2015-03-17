@@ -24,8 +24,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.PlatformOrder;
-import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
+import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaPlatformUtils {

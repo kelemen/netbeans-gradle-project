@@ -8,12 +8,12 @@ import java.util.logging.Logger;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.GradleLocationDistribution;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
-import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 

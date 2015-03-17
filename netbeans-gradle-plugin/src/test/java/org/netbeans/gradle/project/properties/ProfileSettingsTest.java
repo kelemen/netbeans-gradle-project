@@ -16,7 +16,6 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties.standard.PlatformId;
 import org.netbeans.gradle.project.properties.standard.TargetPlatformProperty;
