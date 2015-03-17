@@ -17,7 +17,7 @@ public final class LicenseHeaderInfoProperty {
     private static final String CONFIG_KEY_NAME = "name";
     private static final String CONFIG_KEY_FILE = "template";
     private static final String CONFIG_KEY_PROPERTY = "property";
-    private static final String CONFIG_KEY_PROPERTY_NAME = "#attr-name=";
+    private static final String CONFIG_KEY_PROPERTY_NAME = "#attr-name";
     private static final String SAVE_FILE_NAME_SEPARATOR = "/";
 
     public static final PropertyDef<ConfigTree, LicenseHeaderInfo> PROPERTY_DEF = createPropertyDef();
