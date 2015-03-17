@@ -158,7 +158,7 @@ public final class CustomTasksProperty {
                 }
 
                 List<PredefinedTask> tasks1 = child.getTasks();
-                List<PredefinedTask> tasks2 = child.getTasks();
+                List<PredefinedTask> tasks2 = parentValue.getTasks();
 
                 return new PredefinedTasks(CollectionsEx.viewConcatList(tasks1, tasks2));
             }
