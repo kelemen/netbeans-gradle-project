@@ -148,27 +148,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
     }
 
-    private void displayManageBuiltInTasksPanel(String profileName, ActiveSettingsQuery settings) {
-        ManageBuiltInTasksPanel panel = new ManageBuiltInTasksPanel(project, settings);
-
-        DialogDescriptor dlgDescriptor = new DialogDescriptor(
-                panel,
-                NbStrings.getManageBuiltInTasksDlgTitle(profileName),
-                true,
-                new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
-                DialogDescriptor.OK_OPTION,
-                DialogDescriptor.BOTTOM_ALIGN,
-                null,
-                null);
-        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
-        dlg.pack();
-        dlg.setVisible(true);
-
-        if (DialogDescriptor.OK_OPTION == dlgDescriptor.getValue()) {
-            panel.saveModifiedTasks();
-        }
-    }
-
     private final class PropertyValues implements ProfileValuesEditor {
         public NbGradleCommonProperties commonProperties;
 
@@ -394,7 +373,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jPlatformPreferenceButton = new javax.swing.JButton();
         jSourceEncoding = new javax.swing.JTextField();
         jPlatformCombo = new javax.swing.JComboBox<ProjectPlatformComboItem>();
-        jManageBuiltInTasks = new javax.swing.JButton();
         jGradleHomeCaption = new javax.swing.JLabel();
         jManageTasksButton = new javax.swing.JButton();
         jSourceEncodingCaption = new javax.swing.JLabel();
@@ -424,13 +402,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
         });
 
         jSourceEncoding.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceEncoding.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jManageBuiltInTasks, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jManageBuiltInTasks.text")); // NOI18N
-        jManageBuiltInTasks.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jManageBuiltInTasksActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleHomeCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeCaption.text")); // NOI18N
 
@@ -472,9 +443,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                             .addComponent(jSourceLevelComboInherit, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jManageTasksButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jManageBuiltInTasks)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 98, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPlatformPreferenceButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -483,7 +452,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                             .addComponent(jTargetPlatformCaption)
                             .addComponent(jLabel1)
                             .addComponent(jSourceLevelCaption))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 139, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -522,7 +491,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jManageTasksButton)
-                    .addComponent(jManageBuiltInTasks)
                     .addComponent(jPlatformPreferenceButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -535,12 +503,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
             }
         }
     }//GEN-LAST:event_jPlatformPreferenceButtonActionPerformed
-
-    private void jManageBuiltInTasksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jManageBuiltInTasksActionPerformed
-        if (currentSettings != null && currentProfileName != null) {
-            displayManageBuiltInTasksPanel(currentProfileName, currentSettings);
-        }
-    }//GEN-LAST:event_jManageBuiltInTasksActionPerformed
 
     private void jManageTasksButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jManageTasksButtonActionPerformed
         currentSettings.currentProfileSettings().getValue().getKey();
@@ -556,7 +518,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private javax.swing.JTextField jGradleHomeEdit;
     private javax.swing.JCheckBox jGradleHomeInherit;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JButton jManageBuiltInTasks;
     private javax.swing.JButton jManageTasksButton;
     private javax.swing.JComboBox<ProjectPlatformComboItem> jPlatformCombo;
     private javax.swing.JCheckBox jPlatformComboInherit;

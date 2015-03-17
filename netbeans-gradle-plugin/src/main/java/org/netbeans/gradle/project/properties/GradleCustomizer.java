@@ -27,6 +27,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
 
     private static final String GRADLE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle";
+    private static final String BUILT_IN_TASKS_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-built-in-commands";
     private static final String LICENSE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-license";
 
     private final NbGradleProject project;
@@ -57,6 +58,7 @@ public final class GradleCustomizer implements CustomizerProvider {
                 = new ArrayList<>(externalCategories.length + 2);
 
         allCategoriesList.add(new MainCustomizer(project));
+        allCategoriesList.add(new BuiltInTasksCustomizer(project));
         allCategoriesList.add(new LicenseCustomizer(project));
         allCategoriesList.addAll(project
                 .getCombinedExtensionLookup()
@@ -133,6 +135,36 @@ public final class GradleCustomizer implements CustomizerProvider {
             return ProjectCustomizer.Category.create(
                     GRADLE_CATEGORY_NAME,
                     NbStrings.getGradleProjectCategoryName(),
+                    null);
+        }
+
+        @Override
+        public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
+            category.setOkButtonListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    panel.saveProperties();
+                }
+            });
+            return panel;
+        }
+    }
+
+    private static final class BuiltInTasksCustomizer
+    implements
+            ProjectCustomizer.CompositeCategoryProvider {
+
+        private final ProfileBasedPanel panel;
+
+        public BuiltInTasksCustomizer(NbGradleProject project) {
+            this.panel = ManageBuiltInTasksPanel.createProfileBasedPanel(project);
+        }
+
+        @Override
+        public ProjectCustomizer.Category createCategory(Lookup context) {
+            return ProjectCustomizer.Category.create(
+                    BUILT_IN_TASKS_CATEGORY_NAME,
+                    "Built-in commands",
                     null);
         }
 

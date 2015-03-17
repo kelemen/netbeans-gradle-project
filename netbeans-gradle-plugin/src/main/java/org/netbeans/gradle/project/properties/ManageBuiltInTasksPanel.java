@@ -22,6 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties2.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties2.NbGradleCommonProperties;
@@ -37,16 +38,16 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     private static final Collator STR_CMP = Collator.getInstance();
 
     private final NbGradleProject project;
-    private final NbGradleCommonProperties commonProperties;
     private final CustomActionPanel jActionPanel;
     private BuiltInTaskItem lastShownItem;
     private final Map<String, SavedTask> toSaveTasks;
+    private PropertyValues currentEditor;
 
-    public ManageBuiltInTasksPanel(NbGradleProject project, ActiveSettingsQuery settings) {
+    private ManageBuiltInTasksPanel(NbGradleProject project) {
         this.project = project;
-        this.commonProperties = new NbGradleCommonProperties(project, settings);
-        lastShownItem = null;
-        toSaveTasks = new HashMap<>();
+        this.lastShownItem = null;
+        this.toSaveTasks = new HashMap<>();
+        this.currentEditor = null;
 
         initComponents();
         jActionPanel = new CustomActionPanel();
@@ -68,6 +69,21 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
             }
         });
         showSelectedItem();
+    }
+
+    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
+        final ManageBuiltInTasksPanel customPanel = new ManageBuiltInTasksPanel(project);
+        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
+            @Override
+            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
+                PropertyValues currentEditor = customPanel.new PropertyValues(project, profileQuery);
+                customPanel.currentEditor = currentEditor;
+
+                return currentEditor;
+            }
+        });
     }
 
     private void setEnableChildrenRecursive(Component component, boolean enabled) {
@@ -124,26 +140,36 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         return null;
     }
 
+    private PropertyReference<BuiltInTasks> tryGetPropertyRef() {
+        return currentEditor != null ? currentEditor.builtInTasksRef : null;
+    }
+
     private PredefinedTask tryGetValueWithoutFallback(BuiltInTaskItem item) {
-        if (item == null) {
+        PropertyReference<BuiltInTasks> propertyRef = tryGetPropertyRef();
+
+        if (item == null || propertyRef == null) {
             return null;
         }
 
-        BuiltInTasks builtInTasks = commonProperties.builtInTasks().tryGetValueWithoutFallback();
+        BuiltInTasks builtInTasks = propertyRef.tryGetValueWithoutFallback();
         return builtInTasks != null ? builtInTasks.tryGetByCommand(item.command) : null;
     }
 
     private PredefinedTask tryGetActiveValue(BuiltInTaskItem item) {
-        if (item == null) {
+        PropertyReference<BuiltInTasks> propertyRef = tryGetPropertyRef();
+
+        if (item == null || propertyRef == null) {
             return null;
         }
 
-        BuiltInTasks builtInTasks = commonProperties.builtInTasks().getActiveValue();
+        BuiltInTasks builtInTasks = propertyRef.getActiveValue();
         return builtInTasks != null ? builtInTasks.tryGetByCommand(item.command) : null;
     }
 
     private PredefinedTask getCurrentValue(String command) {
-        BuiltInTasks builtInTasks = commonProperties.builtInTasks().getActiveValue();
+        PropertyReference<BuiltInTasks> propertyRef = tryGetPropertyRef();
+
+        BuiltInTasks builtInTasks = propertyRef != null ? propertyRef.getActiveValue() : null;
         PredefinedTask result = builtInTasks != null ? builtInTasks.tryGetByCommand(command) : null;
 
         if (result == null) {
@@ -234,7 +260,10 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     public void saveModifiedTasks() {
         saveLastShown();
 
-        PropertyReference<BuiltInTasks> builtInTasks = commonProperties.builtInTasks();
+        PropertyReference<BuiltInTasks> builtInTasks = tryGetPropertyRef();
+        if (builtInTasks == null) {
+            return;
+        }
 
         List<PredefinedTask> newValues = new ArrayList<>(toSaveTasks.size());
         for (SavedTask task: toSaveTasks.values()) {
@@ -309,6 +338,44 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         @Override
         public String toString() {
             return displayName;
+        }
+    }
+
+    private final class PropertyValues implements ProfileValuesEditor {
+        public final PropertyReference<BuiltInTasks> builtInTasksRef;
+        private final Map<String, SavedTask> modifiedCommands;
+
+        public PropertyValues(NbGradleProject ownerProject, ActiveSettingsQuery settings) {
+            this.builtInTasksRef = NbGradleCommonProperties.builtInTasks(ownerProject, settings);
+            this.modifiedCommands = new HashMap<>();
+        }
+
+        @Override
+        public void displayValues() {
+            toSaveTasks.clear();
+            toSaveTasks.putAll(modifiedCommands);
+
+            showSelectedItem();
+        }
+
+        @Override
+        public void readFromGui() {
+            saveLastShown();
+
+            modifiedCommands.clear();
+            modifiedCommands.putAll(toSaveTasks);
+        }
+
+        @Override
+        public void applyValues() {
+            List<PredefinedTask> tasks = new ArrayList<>(modifiedCommands.size());
+            for (SavedTask task: modifiedCommands.values()) {
+                if (!task.isInherited()) {
+                    tasks.add(task.getTaskDef());
+                }
+            }
+
+            builtInTasksRef.trySetValue(BuiltInTasksProperty.createValue(tasks));
         }
     }
 
