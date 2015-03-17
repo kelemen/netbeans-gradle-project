@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleLocationDirectory implements GradleLocation {
@@ -32,5 +33,10 @@ public final class GradleLocationDirectory implements GradleLocation {
     @Override
     public String getUniqueTypeName() {
         return UNIQUE_TYPE_NAME;
+    }
+
+    @Override
+    public String toLocalizedString() {
+        return NbStrings.getGradleLocationLocal(gradleHome);
     }
 }

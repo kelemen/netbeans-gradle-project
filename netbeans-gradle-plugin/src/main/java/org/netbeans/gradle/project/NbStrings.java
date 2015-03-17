@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import org.gradle.util.GradleVersion;
@@ -485,6 +486,22 @@ public final class NbStrings {
 
     public static String getLoading() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.Loading");
+    }
+
+    public static String getGradleLocationDefault() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.DEFAULT");
+    }
+
+    public static String getGradleLocationVersion(String version) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.VERSION", version);
+    }
+
+    public static String getGradleLocationDist(URI location) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.DIST", location);
+    }
+
+    public static String getGradleLocationLocal(File dir) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.LOCAL", dir);
     }
 
     private NbStrings() {

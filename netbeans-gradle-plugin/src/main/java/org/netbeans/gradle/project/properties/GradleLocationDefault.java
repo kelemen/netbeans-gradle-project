@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 
 public enum GradleLocationDefault implements GradleLocation {
     INSTANCE;
@@ -20,5 +21,10 @@ public enum GradleLocationDefault implements GradleLocation {
     @Override
     public String getUniqueTypeName() {
         return UNIQUE_TYPE_NAME;
+    }
+
+    @Override
+    public String toLocalizedString() {
+        return NbStrings.getGradleLocationDefault();
     }
 }

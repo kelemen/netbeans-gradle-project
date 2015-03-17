@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 
 public final class GradleLocationVersion implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "VER";
@@ -30,5 +31,10 @@ public final class GradleLocationVersion implements GradleLocation {
     @Override
     public String getUniqueTypeName() {
         return UNIQUE_TYPE_NAME;
+    }
+
+    @Override
+    public String toLocalizedString() {
+        return NbStrings.getGradleLocationVersion(versionStr);
     }
 }

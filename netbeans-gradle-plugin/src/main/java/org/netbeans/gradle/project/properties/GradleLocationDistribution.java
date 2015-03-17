@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.net.URI;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 
 public final class GradleLocationDistribution implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "DIST";
@@ -31,5 +32,10 @@ public final class GradleLocationDistribution implements GradleLocation {
     @Override
     public String asString() {
         return location.toString();
+    }
+
+    @Override
+    public String toLocalizedString() {
+        return NbStrings.getGradleLocationDist(location);
     }
 }
