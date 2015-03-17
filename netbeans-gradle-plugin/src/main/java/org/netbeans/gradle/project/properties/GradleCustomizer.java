@@ -52,16 +52,44 @@ public final class GradleCustomizer implements CustomizerProvider {
         return result.toArray(new ProjectCustomizer.CompositeCategoryProvider[result.size()]);
     }
 
+    private static ProfileBasedCustomizer newMainCustomizer(NbGradleProject project) {
+        return new ProfileBasedCustomizer(
+                GRADLE_CATEGORY_NAME,
+                NbStrings.getGradleProjectCategoryName(),
+                CommonProjectPropertiesPanel.createProfileBasedPanel(project));
+    }
+
+    private static ProfileBasedCustomizer newBuiltInTasksCustomizer(NbGradleProject project) {
+        return new ProfileBasedCustomizer(
+                BUILT_IN_TASKS_CATEGORY_NAME,
+                NbStrings.getManageBuiltInTasksTitle(),
+                ManageBuiltInTasksPanel.createProfileBasedPanel(project));
+    }
+
+    private static ProfileBasedCustomizer newCustomTasksCustomizer(NbGradleProject project) {
+        return new ProfileBasedCustomizer(
+                CUSTOM_TASKS_CATEGORY_NAME,
+                NbStrings.getManageCustomTasksTitle(),
+                ManageTasksPanel.createProfileBasedPanel(project));
+    }
+
+    private static ProfileBasedCustomizer newLicenseCustomizer(NbGradleProject project) {
+        return new ProfileBasedCustomizer(
+                LICENSE_CATEGORY_NAME,
+                NbStrings.getGradleProjectLicenseCategoryName(),
+                LicenseHeaderPanel.createProfileBasedPanel(project));
+    }
+
     private ProjectCustomizer.CompositeCategoryProvider[] getAllCustomizers() {
         ProjectCustomizer.CompositeCategoryProvider[] externalCategories
                 = getExternalCustomizers();
         List<ProjectCustomizer.CompositeCategoryProvider> allCategoriesList
                 = new ArrayList<>(externalCategories.length + 2);
 
-        allCategoriesList.add(new MainCustomizer(project));
-        allCategoriesList.add(new BuiltInTasksCustomizer(project));
-        allCategoriesList.add(new CustomTasksCustomizer(project));
-        allCategoriesList.add(new LicenseCustomizer(project));
+        allCategoriesList.add(newMainCustomizer(project));
+        allCategoriesList.add(newBuiltInTasksCustomizer(project));
+        allCategoriesList.add(newCustomTasksCustomizer(project));
+        allCategoriesList.add(newLicenseCustomizer(project));
         allCategoriesList.addAll(project
                 .getCombinedExtensionLookup()
                 .lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
@@ -122,111 +150,29 @@ public final class GradleCustomizer implements CustomizerProvider {
         dlg.setVisible(true);
     }
 
-    private static final class MainCustomizer
+    private static final class ProfileBasedCustomizer
     implements
             ProjectCustomizer.CompositeCategoryProvider {
 
+        private final String categoryName;
+        private final String displayName;
         private final ProfileBasedPanel panel;
 
-        public MainCustomizer(NbGradleProject project) {
-            this.panel = CommonProjectPropertiesPanel.createProfileBasedPanel(project);
+        public ProfileBasedCustomizer(String categoryName, String displayName, ProfileBasedPanel panel) {
+            ExceptionHelper.checkNotNullArgument(categoryName, "categoryName");
+            ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+            ExceptionHelper.checkNotNullArgument(panel, "panel");
+
+            this.categoryName = categoryName;
+            this.displayName = displayName;
+            this.panel = panel;
         }
 
         @Override
         public ProjectCustomizer.Category createCategory(Lookup context) {
             return ProjectCustomizer.Category.create(
-                    GRADLE_CATEGORY_NAME,
-                    NbStrings.getGradleProjectCategoryName(),
-                    null);
-        }
-
-        @Override
-        public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
-            category.setOkButtonListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    panel.saveProperties();
-                }
-            });
-            return panel;
-        }
-    }
-
-    private static final class BuiltInTasksCustomizer
-    implements
-            ProjectCustomizer.CompositeCategoryProvider {
-
-        private final ProfileBasedPanel panel;
-
-        public BuiltInTasksCustomizer(NbGradleProject project) {
-            this.panel = ManageBuiltInTasksPanel.createProfileBasedPanel(project);
-        }
-
-        @Override
-        public ProjectCustomizer.Category createCategory(Lookup context) {
-            return ProjectCustomizer.Category.create(
-                    BUILT_IN_TASKS_CATEGORY_NAME,
-                    NbStrings.getManageBuiltInTasksTitle(),
-                    null);
-        }
-
-        @Override
-        public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
-            category.setOkButtonListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    panel.saveProperties();
-                }
-            });
-            return panel;
-        }
-    }
-
-    private static final class CustomTasksCustomizer
-    implements
-            ProjectCustomizer.CompositeCategoryProvider {
-
-        private final ProfileBasedPanel panel;
-
-        public CustomTasksCustomizer(NbGradleProject project) {
-            this.panel = ManageTasksPanel.createProfileBasedPanel(project);
-        }
-
-        @Override
-        public ProjectCustomizer.Category createCategory(Lookup context) {
-            return ProjectCustomizer.Category.create(
-                    CUSTOM_TASKS_CATEGORY_NAME,
-                    NbStrings.getManageCustomTasksTitle(),
-                    null);
-        }
-
-        @Override
-        public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
-            category.setOkButtonListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    panel.saveProperties();
-                }
-            });
-            return panel;
-        }
-    }
-
-    private static final class LicenseCustomizer
-    implements
-            ProjectCustomizer.CompositeCategoryProvider {
-
-        private final ProfileBasedPanel panel;
-
-        public LicenseCustomizer(NbGradleProject project) {
-            this.panel = LicenseHeaderPanel.createProfileBasedPanel(project);
-        }
-
-        @Override
-        public ProjectCustomizer.Category createCategory(Lookup context) {
-            return ProjectCustomizer.Category.create(
-                    LICENSE_CATEGORY_NAME,
-                    NbStrings.getGradleProjectLicenseCategoryName(),
+                    categoryName,
+                    displayName,
                     null);
         }
 
