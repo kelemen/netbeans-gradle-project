@@ -12,8 +12,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -22,6 +20,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
+import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
@@ -61,19 +60,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
     }
 
     private static void setupInheritCheck(final JCheckBox inheritCheck, JComponent... components) {
-        final JComponent[] componentsSnapshot = components.clone();
-        ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                boolean enable = !inheritCheck.isSelected();
-                for (JComponent component: componentsSnapshot) {
-                    component.setEnabled(enable);
-                }
-            }
-        };
-
-        changeListener.stateChanged(new ChangeEvent(inheritCheck));
-        inheritCheck.getModel().addChangeListener(changeListener);
+        NbGuiUtils.enableBasedOnCheck(inheritCheck, false, components);
     }
 
     private void setupEnableDisable() {
