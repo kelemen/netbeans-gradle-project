@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 
 public enum GradleLocationDefault implements GradleLocation {
@@ -9,7 +8,7 @@ public enum GradleLocationDefault implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "DEFAULT";
 
     @Override
-    public void applyLocation(NbGradleProject project, Applier applier) {
+    public void applyLocation(Applier applier) {
         applier.applyDefault();
     }
 

@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties;
 
 import java.net.URI;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 
 public final class GradleLocationDistribution implements GradleLocation {
@@ -20,7 +19,7 @@ public final class GradleLocationDistribution implements GradleLocation {
     }
 
     @Override
-    public void applyLocation(NbGradleProject project, Applier applier) {
+    public void applyLocation(Applier applier) {
         applier.applyDistribution(location);
     }
 

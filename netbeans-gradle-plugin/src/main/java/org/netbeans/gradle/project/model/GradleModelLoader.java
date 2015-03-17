@@ -163,7 +163,7 @@ public final class GradleModelLoader {
         commonProperties.waitForLoadedOnce(cancelToken);
 
         GradleLocation gradleLocation = commonProperties.gradleLocation().getActiveValue();
-        gradleLocation.applyLocation(gradleProject, new GradleLocation.Applier() {
+        gradleLocation.applyLocation(new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 result.useGradleVersion(versionStr);
