@@ -204,12 +204,12 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTaskTitle");
     }
 
-    public static String getManageTasksDlgTitle(String profile) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageTasksTitle", profile);
+    public static String getManageCustomTasksTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageCustomTasksTitle");
     }
 
-    public static String getManageBuiltInTasksDlgTitle(String profile) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageBuiltInTasksTitle", profile);
+    public static String getManageBuiltInTasksTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ManageBuiltInTasksTitle");
     }
 
     public static String getAddNewTaskDlgTitle() {

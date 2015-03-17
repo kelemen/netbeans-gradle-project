@@ -166,7 +166,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         public ProjectCustomizer.Category createCategory(Lookup context) {
             return ProjectCustomizer.Category.create(
                     BUILT_IN_TASKS_CATEGORY_NAME,
-                    "Built-in commands",
+                    NbStrings.getManageBuiltInTasksTitle(),
                     null);
         }
 
@@ -196,7 +196,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         public ProjectCustomizer.Category createCategory(Lookup context) {
             return ProjectCustomizer.Category.create(
                     CUSTOM_TASKS_CATEGORY_NAME,
-                    "Custom tasks",
+                    NbStrings.getManageCustomTasksTitle(),
                     null);
         }
 
