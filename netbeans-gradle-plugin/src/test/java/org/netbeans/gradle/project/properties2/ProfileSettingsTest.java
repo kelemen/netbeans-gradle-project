@@ -16,6 +16,8 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
+import org.netbeans.gradle.project.properties2.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties2.standard.PlatformId;
 import org.netbeans.gradle.project.properties2.standard.TargetPlatformProperty;
 
@@ -224,6 +226,23 @@ public class ProfileSettingsTest {
 
         property1.setValue(new PlatformId("j2me", "1.5"));
         assertEquals(new PlatformId("j2me", "1.7"), property2.getValue());
+    }
+
+    @Test
+    public void testLicenseHeaderInfoInSettings1() throws IOException {
+        ProfileSettings settings = new ProfileSettings();
+        readFromSettings1(settings);
+
+        MutableProperty<LicenseHeaderInfo> license = settings.getProperty(LicenseHeaderInfoProperty.PROPERTY_DEF);
+        LicenseHeaderInfo value = license.getValue();
+        assertNotNull("LicenseHeaderInfo", value);
+
+        assertEquals("LicenseName", "my-license", value.getLicenseName());
+        assertEquals("organization", Collections.singletonMap("organization", "MyCompany"), value.getProperties());
+        assertEquals("FileName", "license2.txt", value.getLicenseTemplateFile().getName());
+
+        license.setValue(null);
+        assertNull("LicenseHeaderInfo", license.getValue());
     }
 
     @Test

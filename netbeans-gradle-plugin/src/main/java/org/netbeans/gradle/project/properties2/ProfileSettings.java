@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -178,7 +179,7 @@ public final class ProfileSettings {
         if (outputDir != null) {
             Files.createDirectories(outputDir);
         }
-        // TODO: Probably should pass the root project.
+
         ConfigXmlUtils.saveXmlTo(document, xmlFile, saveOptions);
     }
 
@@ -420,7 +421,10 @@ public final class ProfileSettings {
             PropertyKeyEncodingDef<ValueKey> keyEncodingDef) {
 
         ValueWithStateKey<ConfigTree> parentBasedConfig = getChildConfig(parent, relativePaths);
-        return parentBasedConfig.withNewValue(keyEncodingDef.decode(parentBasedConfig.value));
+        ConfigTree value = parentBasedConfig.value;
+        assert value != null;
+
+        return parentBasedConfig.withNewValue(keyEncodingDef.decode(value));
     }
 
     private static interface ConfigUpdateListener {
@@ -477,15 +481,15 @@ public final class ProfileSettings {
             } while (!lastValueKeyRef.compareAndSet(valueKey, newValueKey));
         }
 
-        private ValueWithStateKey<ValueKey> updateConfigFromKey(ValueWithStateKey<ValueKey> valueKey) {
+        private ValueWithStateKey<ValueKey> updateConfigFromKey(ValueWithStateKey<ValueKey> valueKeyWithState) {
             // Should only be called by updateConfigFromKey()
 
-            ConfigTree encodedValueKey = keyEncodingDef.encode(valueKey.value);
+            ValueKey valueKey = valueKeyWithState.value;
+            ConfigTree encodedValueKey = valueKey != null ? keyEncodingDef.encode(valueKey) : ConfigTree.EMPTY;
             Object newState;
 
             configLock.lock();
             try {
-                // TODO: Report unsaved keys.
                 int pathCount = relativeConfigPaths.length;
                 for (int i = 0; i < pathCount; i++) {
                     ConfigPath relativePath = relativeConfigPaths[i];
@@ -501,7 +505,7 @@ public final class ProfileSettings {
             }
 
             fireDocumentUpdate(configPathsAsList);
-            return new ValueWithStateKey<>(newState, valueKey.value);
+            return new ValueWithStateKey<>(newState, valueKeyWithState.value);
         }
 
         private void updateConfigAtPath(ConfigPath path, ConfigTree content) {
@@ -623,6 +627,8 @@ public final class ProfileSettings {
 
     private static final class ValueWithStateKey<Value> {
         public final Object stateKey;
+
+        @Nullable
         public final Value value;
 
         public ValueWithStateKey(Object stateKey, Value valueKey) {
