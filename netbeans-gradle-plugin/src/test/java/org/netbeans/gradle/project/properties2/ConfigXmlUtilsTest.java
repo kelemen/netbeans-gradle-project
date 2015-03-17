@@ -114,12 +114,6 @@ public class ConfigXmlUtilsTest {
         ConfigTree.Builder customGroup = result.addChildBuilder("custom-group");
         customGroup.addChildBuilder("custom-node").setValue("Value0");
 
-        ConfigTree.Builder auxiliary = result.addChildBuilder("auxiliary");
-        auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.enable").setValue("true");
-        auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.lf-kind").setValue("LF");
-        auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.use-global").setValue("true");
-        auxiliary.addChildBuilder("com-junichi11-netbeans-changelf.use-project").setValue("false");
-
         return result;
     }
 
@@ -129,7 +123,7 @@ public class ConfigXmlUtilsTest {
 
     @Test
     public void testSettings1() throws Exception {
-        ConfigTree parsedTree = ConfigXmlUtils.parseDocument(readSettings1()).create();
+        ConfigTree parsedTree = ConfigXmlUtils.parseDocument(readSettings1(), ConfigXmlUtils.AUXILIARY_NODE_NAME).create();
         assertEquals(getExpectedSettings1Content(), parsedTree);
     }
 
@@ -166,7 +160,6 @@ public class ConfigXmlUtilsTest {
 
     private void testSaveDoesNotChangeASingleCharacter(boolean setValueOfArgs) throws Exception {
         ConfigTree.Builder settings1Tree = getExpectedSettings1ContentBuilder(setValueOfArgs);
-        settings1Tree.removeChild("auxiliary");
 
         Document builtXml = ConfigXmlUtils.createXml(settings1Tree.create());
         ConfigXmlUtils.addAuxiliary(builtXml,
