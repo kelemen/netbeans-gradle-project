@@ -111,16 +111,13 @@ public final class LazyAuxProperties {
     }
 
     public Element getAuxConfigValue(DomElementKey key) {
-        Element result;
         tmpStoreLock.lock();
         try {
-            result = tmpStore != null ? tmpStore.get(key) : null;
+            if (tmpStore != null && tmpStore.containsKey(key)) {
+                return tmpStore.get(key);
+            }
         } finally {
             tmpStoreLock.unlock();
-        }
-
-        if (result != null) {
-            return result;
         }
 
         ProjectProfileSettings settings = getSettings();
