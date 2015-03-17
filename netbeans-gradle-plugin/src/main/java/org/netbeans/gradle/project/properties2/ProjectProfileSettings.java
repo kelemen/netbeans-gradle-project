@@ -43,6 +43,8 @@ public final class ProjectProfileSettings {
     private final Lock ioLock;
     private boolean loadedOnce;
 
+    private volatile boolean dirty;
+
     private final UpdateTaskExecutor loadedListenersExecutor;
     private final Runnable loadedListenersDispatcher;
     private final OneShotListenerManager<Runnable, Void> loadedListeners;
@@ -55,6 +57,7 @@ public final class ProjectProfileSettings {
         this.key = key;
         this.settings = new ProfileSettings();
         this.ioLock = new ReentrantLock();
+        this.dirty = false;
         this.loadedOnce = false;
         this.loadedOnceSignal = new WaitableSignal();
         this.loadedListeners = new OneShotListenerManager<>();
@@ -187,6 +190,10 @@ public final class ProjectProfileSettings {
     }
 
     private void saveEventually() {
+        if (!dirty) {
+            return;
+        }
+
         saveExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -223,7 +230,10 @@ public final class ProjectProfileSettings {
     private void savetoFile(Path profileFile, ConfigSaveOptions saveOptions) throws IOException {
         ioLock.lock();
         try {
-            settings.saveToFile(profileFile, saveOptions);
+            if (dirty) {
+                dirty = false;
+                settings.saveToFile(profileFile, saveOptions);
+            }
         } finally {
             ioLock.unlock();
         }
@@ -235,6 +245,7 @@ public final class ProjectProfileSettings {
 
     public boolean setAuxConfigValue(DomElementKey key, Element value) {
         boolean result = settings.setAuxConfigValue(key, value);
+        dirty = true;
         saveEventually();
         return result;
     }
@@ -245,6 +256,7 @@ public final class ProjectProfileSettings {
             @Override
             public void setValue(ValueType value) {
                 result.setValue(value);
+                dirty = true;
                 saveEventually();
             }
 
