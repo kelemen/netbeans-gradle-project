@@ -49,7 +49,21 @@ final class CompatibleRootNodeProperty extends AbstractFixedOrderNodeProperty {
         }
     }
 
-    private static final class TaskOrder extends AbstractFixedOrderNodeProperty {
+    private static abstract class AbstractFixedOrderNodePropertyWithoutValue
+    extends
+            AbstractFixedOrderNodeProperty {
+
+        public AbstractFixedOrderNodePropertyWithoutValue(String... order) {
+            super(order);
+        }
+
+        @Override
+        public boolean ignoreValue() {
+            return true;
+        }
+    }
+
+    private static final class TaskOrder extends AbstractFixedOrderNodePropertyWithoutValue {
         private static final String TASK_ARGS = "task-args";
         private static final String TASK_JVM_ARGS = "task-jvm-args";
 
@@ -96,7 +110,7 @@ final class CompatibleRootNodeProperty extends AbstractFixedOrderNodeProperty {
         }
     }
 
-    private static final class LicenseOrder extends AbstractFixedOrderNodeProperty {
+    private static final class LicenseOrder extends AbstractFixedOrderNodePropertyWithoutValue {
         private static final String[] LICENSE_KEYS = {
             "name",
             "template",
@@ -114,7 +128,7 @@ final class CompatibleRootNodeProperty extends AbstractFixedOrderNodeProperty {
         }
     }
 
-    private static final class TaskListOrder extends AbstractFixedOrderNodeProperty {
+    private static final class TaskListOrder extends AbstractFixedOrderNodePropertyWithoutValue {
         public static final ConfigNodeProperty INSTANCE = new TaskListOrder();
 
         public TaskListOrder() {

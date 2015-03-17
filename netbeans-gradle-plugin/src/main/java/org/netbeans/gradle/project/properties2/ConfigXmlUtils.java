@@ -391,7 +391,7 @@ final class ConfigXmlUtils {
         String value = tree.getValue(null);
         boolean ignoreValue = nodeProperties.ignoreValue();
         if (ignoreValue) {
-            value = "";
+            value = null;
         }
 
         if (value != null) {
