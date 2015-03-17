@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.awt.Dialog;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -19,8 +20,9 @@ import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.util.NbGuiUtils;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
@@ -29,8 +31,12 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(CommonProjectPropertiesPanel.class.getName());
 
     private PropertyValues currentValues;
+    private GradleLocation selectedGradleLocation;
 
     private CommonProjectPropertiesPanel() {
+        currentValues = null;
+        selectedGradleLocation = null;
+
         initComponents();
 
         setupEnableDisable();
@@ -65,7 +71,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
     private void setupEnableDisable() {
         setupInheritCheck(jScriptPlatformInherit, jScriptPlatformCombo);
-        setupInheritCheck(jGradleHomeInherit, jGradleHomeEdit);
+        setupInheritCheck(jGradleHomeInherit, jGradleHomeEdit, jGradleHomeChangeButton);
         setupInheritCheck(jPlatformComboInherit, jPlatformCombo);
         setupInheritCheck(jSourceEncodingInherit, jSourceEncoding);
         setupInheritCheck(jSourceLevelComboInherit, jSourceLevelCombo);
@@ -135,8 +141,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         @Override
         public void readFromGui() {
-            String gradleHomeStr = jGradleHomeEdit.getText().trim();
-            GradleLocation gradleHome = GradleLocationProperty.getGradleLocationFromString(gradleHomeStr);
+            GradleLocation gradleHome = selectedGradleLocation;
             gradleLocation = jGradleHomeInherit.isSelected() ? null : gradleHome;
 
             JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
@@ -178,8 +183,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                     jGradleHomeInherit);
 
             if (value != null) {
-                String gradleHome = GradleLocationProperty.gradleLocationToString(value);
-                jGradleHomeEdit.setText(gradleHome);
+                selectGradleLocation(value);
             }
         }
 
@@ -225,6 +229,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
                 jSourceLevelCombo.setSelectedItem(value);
             }
         }
+    }
+
+    private void selectGradleLocation(GradleLocation newLocation) {
+        selectedGradleLocation = newLocation;
+        jGradleHomeEdit.setText(newLocation != null ? newLocation.toLocalizedString() : "");
     }
 
     private static class JavaPlatformComboItem {
@@ -326,9 +335,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jTargetPlatformCaption = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jSourceLevelCaption = new javax.swing.JLabel();
+        jGradleHomeChangeButton = new javax.swing.JButton();
 
         jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
 
+        jGradleHomeEdit.setEditable(false);
         jGradleHomeEdit.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeEdit.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleHomeInherit, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeInherit.text")); // NOI18N
@@ -360,6 +371,13 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLevelCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceLevelCaption.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jGradleHomeChangeButton, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeChangeButton.text")); // NOI18N
+        jGradleHomeChangeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jGradleHomeChangeButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -370,10 +388,13 @@ public class CommonProjectPropertiesPanel extends JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jScriptPlatformCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jGradleHomeEdit)
                             .addComponent(jSourceLevelCombo, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPlatformCombo, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jSourceEncoding, javax.swing.GroupLayout.Alignment.LEADING))
+                            .addComponent(jSourceEncoding, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jGradleHomeChangeButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jGradleHomeEdit)))
                         .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jSourceEncodingInherit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -391,7 +412,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                             .addComponent(jTargetPlatformCaption)
                             .addComponent(jLabel1)
                             .addComponent(jSourceLevelCaption))
-                        .addGap(0, 139, Short.MAX_VALUE)))
+                        .addGap(0, 363, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -408,7 +429,8 @@ public class CommonProjectPropertiesPanel extends JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jGradleHomeEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jGradleHomeInherit))
+                    .addComponent(jGradleHomeInherit)
+                    .addComponent(jGradleHomeChangeButton))
                 .addGap(12, 12, 12)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -441,8 +463,38 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
     }//GEN-LAST:event_jPlatformPreferenceButtonActionPerformed
 
+    private void jGradleHomeChangeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jGradleHomeChangeButtonActionPerformed
+        if (currentValues == null) {
+            return;
+        }
+
+        GradleLocationPanel panel = new GradleLocationPanel(
+                currentValues.commonProperties.gradleLocation().getActiveValue());
+
+        DialogDescriptor dlgDescriptor = new DialogDescriptor(
+            panel,
+            "Gradle location",
+            true,
+            new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
+            DialogDescriptor.OK_OPTION,
+            DialogDescriptor.BOTTOM_ALIGN,
+            null,
+            null);
+
+        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
+        dlg.pack();
+        dlg.setVisible(true);
+
+        if (DialogDescriptor.OK_OPTION != dlgDescriptor.getValue()) {
+            return;
+        }
+
+        selectGradleLocation(panel.getSelectedLocation());
+    }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jGradleHomeCaption;
+    private javax.swing.JButton jGradleHomeChangeButton;
     private javax.swing.JTextField jGradleHomeEdit;
     private javax.swing.JCheckBox jGradleHomeInherit;
     private javax.swing.JLabel jLabel1;
