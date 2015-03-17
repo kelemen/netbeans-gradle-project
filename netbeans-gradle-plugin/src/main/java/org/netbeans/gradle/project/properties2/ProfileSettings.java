@@ -35,7 +35,6 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.properties.DomElementKey;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
