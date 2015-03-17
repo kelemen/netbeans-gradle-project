@@ -2,10 +2,10 @@ package org.netbeans.gradle.project.properties2;
 
 import javax.annotation.Nullable;
 
-public final class ConfigSaveOption {
+public final class ConfigSaveOptions {
     private final String preferredLineSeparator;
 
-    public ConfigSaveOption(@Nullable String preferredLineSeparator) {
+    public ConfigSaveOptions(@Nullable String preferredLineSeparator) {
         this.preferredLineSeparator = preferredLineSeparator;
     }
 

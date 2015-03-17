@@ -151,9 +151,9 @@ public final class ProfileSettings {
         loadFromDocument(document);
     }
 
-    public void saveToFile(Project ownerProject, Path xmlFile) throws IOException {
-        ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
+    public void saveToFile(Path xmlFile, ConfigSaveOptions saveOptions) throws IOException {
         ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
+        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
 
         ConfigTree configTree;
         List<Element> auxConfigList;
@@ -180,7 +180,7 @@ public final class ProfileSettings {
             Files.createDirectories(outputDir);
         }
         // TODO: Probably should pass the root project.
-        ConfigXmlUtils.saveXmlTo(ownerProject, document, xmlFile);
+        ConfigXmlUtils.saveXmlTo(document, xmlFile, saveOptions);
     }
 
     private void fireDocumentUpdate(final Collection<ConfigPath> path) {

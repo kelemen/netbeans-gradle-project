@@ -189,7 +189,9 @@ public final class ProjectProfileSettings {
             return;
         }
 
-        settings.saveToFile(project, profileFile);
+        ConfigSaveOptions saveOptions = ConfigXmlUtils.getSaveOptions(project, profileFile);
+
+        settings.saveToFile(profileFile, saveOptions);
     }
 
     public Element getAuxConfigValue(DomElementKey key) {

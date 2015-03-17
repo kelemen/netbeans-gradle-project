@@ -573,15 +573,18 @@ final class ConfigXmlUtils {
         }
     }
 
-    public static void saveXmlTo(Project project, Document document, Path output) throws IOException {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
+    public static ConfigSaveOptions getSaveOptions(Project project, Path output) {
         String lineSeparator = tryGetLineSeparator(output);
         if (lineSeparator == null) {
             lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);
         }
+        return new ConfigSaveOptions(lineSeparator);
+    }
 
-        saveXmlTo(document, output, lineSeparator);
+    public static void saveXmlTo(Document document, Path output, ConfigSaveOptions saveOptions) throws IOException {
+        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
+
+        saveXmlTo(document, output, saveOptions.getPreferredLineSeparator());
     }
 
     public static void saveXmlTo(
