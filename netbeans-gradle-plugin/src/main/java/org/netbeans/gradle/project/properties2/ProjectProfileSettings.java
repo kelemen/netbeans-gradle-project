@@ -3,6 +3,8 @@ package org.netbeans.gradle.project.properties2;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
@@ -10,7 +12,6 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutorService;
-import org.jtrim.concurrent.TaskFuture;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.EventListeners;
@@ -39,6 +40,9 @@ public final class ProjectProfileSettings {
     private final ProfileSettings settings;
 
     private final WaitableSignal loadedOnceSignal;
+    private final Lock ioLock;
+    private boolean loadedOnce;
+
     private final UpdateTaskExecutor loadedListenersExecutor;
     private final Runnable loadedListenersDispatcher;
     private final OneShotListenerManager<Runnable, Void> loadedListeners;
@@ -50,6 +54,8 @@ public final class ProjectProfileSettings {
 
         this.key = key;
         this.settings = new ProfileSettings();
+        this.ioLock = new ReentrantLock();
+        this.loadedOnce = false;
         this.loadedOnceSignal = new WaitableSignal();
         this.loadedListeners = new OneShotListenerManager<>();
         this.loadedListenersExecutor = new SwingUpdateTaskExecutor();
@@ -109,36 +115,34 @@ public final class ProjectProfileSettings {
         SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
-                if (!loadedOnceSignal.isSignaled()) {
-                    loadNow();
-                }
+                loadNowIfNotLoaded();
             }
         }, null);
     }
 
     public void ensureLoadedAndWait() {
-        ensureLoaded();
-        loadedOnceSignal.waitSignal(Cancellation.UNCANCELABLE_TOKEN);
+        try {
+            loadNowIfNotLoaded();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public void loadEventually() {
         SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
-                loadNow();
+                loadNowAlways();
             }
         }, null);
     }
 
     public void loadAndWait() {
-        TaskFuture<?> loadFuture = SAVE_LOAD_EXECUTOR.submit(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
-                loadNow();
-            }
-        }, null);
-
-        loadFuture.waitAndGet(Cancellation.UNCANCELABLE_TOKEN);
+        try {
+            loadNowAlways();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private void setLoadedOnce() {
@@ -146,7 +150,17 @@ public final class ProjectProfileSettings {
         loadedListenersExecutor.execute(loadedListenersDispatcher);
     }
 
-    private void loadNow() throws IOException {
+    private void loadNowIfNotLoaded() throws IOException {
+        if (!loadedOnceSignal.isSignaled()) {
+            loadNow(true);
+        }
+    }
+
+    private void loadNowAlways() throws IOException {
+        loadNow(false);
+    }
+
+    private void loadNow(boolean skipIfLoaded) throws IOException {
         try {
             Path profileFile = tryGetProfileFile();
             if (profileFile == null) {
@@ -154,9 +168,21 @@ public final class ProjectProfileSettings {
                 return;
             }
 
-            settings.loadFromFile(profileFile);
+            loadFromFile(profileFile, skipIfLoaded);
         } finally {
             setLoadedOnce();
+        }
+    }
+
+    private void loadFromFile(Path profileFile, boolean skipIfLoaded) {
+        ioLock.lock();
+        try {
+            if (!skipIfLoaded || !loadedOnce) {
+                settings.loadFromFile(profileFile);
+            }
+        } finally {
+            loadedOnce = true;
+            ioLock.unlock();
         }
     }
 
@@ -191,7 +217,16 @@ public final class ProjectProfileSettings {
 
         ConfigSaveOptions saveOptions = ConfigXmlUtils.getSaveOptions(project, profileFile);
 
-        settings.saveToFile(profileFile, saveOptions);
+        savetoFile(profileFile, saveOptions);
+    }
+
+    private void savetoFile(Path profileFile, ConfigSaveOptions saveOptions) throws IOException {
+        ioLock.lock();
+        try {
+            settings.saveToFile(profileFile, saveOptions);
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public Element getAuxConfigValue(DomElementKey key) {
