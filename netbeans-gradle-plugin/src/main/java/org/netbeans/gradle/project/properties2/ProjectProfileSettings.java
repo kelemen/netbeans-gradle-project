@@ -197,12 +197,12 @@ public final class ProjectProfileSettings {
         saveExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                saveNow();
+                saveAndWait();
             }
         });
     }
 
-    private void saveNow() {
+    public void saveAndWait() {
         try {
             saveNowUnsafe();
         } catch (IOException ex) {
