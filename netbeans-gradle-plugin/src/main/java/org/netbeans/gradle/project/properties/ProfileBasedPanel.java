@@ -1,6 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
 import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -59,10 +62,11 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private ProfileBasedPanel(
             NbGradleProject project,
-            JComponent customPanel,
+            final JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
 
         ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(customPanel, "customPanel");
         ExceptionHelper.checkNotNullArgument(snapshotCreator, "snapshotCreator");
 
         this.project = project;
@@ -74,7 +78,26 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        jCustomPanelContainer.add(new JScrollPane(customPanelLayer));
+        final JScrollPane customPanelScroller = new JScrollPane(customPanelLayer);
+        customPanelScroller.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Dimension containerSize = customPanelScroller.getViewport().getExtentSize();
+                int containerWidth = containerSize.width;
+                int containerHeight = containerSize.height;
+
+                Dimension contentSize = customPanel.getMinimumSize();
+                int contentWidth = contentSize.width;
+                int contentHeight = contentSize.height;
+
+                int width = Math.max(contentWidth, containerWidth);
+                int height = Math.max(contentHeight, containerHeight);
+
+                customPanelLayer.setPreferredSize(new Dimension(width, height));
+            }
+        });
+
+        jCustomPanelContainer.add(customPanelScroller);
         jProfileCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
