@@ -398,6 +398,9 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jGradleHomeCaption = new javax.swing.JLabel();
         jManageTasksButton = new javax.swing.JButton();
         jSourceEncodingCaption = new javax.swing.JLabel();
+        jTargetPlatformCaption = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jSourceLevelCaption = new javax.swing.JLabel();
 
         jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
 
@@ -440,6 +443,12 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceEncodingCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceEncodingCaption.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jTargetPlatformCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jTargetPlatformCaption.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jLabel1.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jSourceLevelCaption, org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jSourceLevelCaption.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -447,11 +456,6 @@ public class CommonProjectPropertiesPanel extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSourceEncodingCaption)
-                            .addComponent(jGradleHomeCaption))
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jScriptPlatformCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -471,7 +475,15 @@ public class CommonProjectPropertiesPanel extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jManageBuiltInTasks)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 98, Short.MAX_VALUE)
-                        .addComponent(jPlatformPreferenceButton)))
+                        .addComponent(jPlatformPreferenceButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jSourceEncodingCaption)
+                            .addComponent(jGradleHomeCaption)
+                            .addComponent(jTargetPlatformCaption)
+                            .addComponent(jLabel1)
+                            .addComponent(jSourceLevelCaption))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -489,15 +501,21 @@ public class CommonProjectPropertiesPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jGradleHomeEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jGradleHomeInherit))
-                .addGap(34, 34, 34)
+                .addGap(12, 12, 12)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jScriptPlatformCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScriptPlatformInherit))
-                .addGap(34, 34, 34)
+                .addGap(12, 12, 12)
+                .addComponent(jTargetPlatformCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jPlatformCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPlatformComboInherit))
-                .addGap(34, 34, 34)
+                .addGap(12, 12, 12)
+                .addComponent(jSourceLevelCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceLevelCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jSourceLevelComboInherit))
@@ -537,6 +555,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private javax.swing.JLabel jGradleHomeCaption;
     private javax.swing.JTextField jGradleHomeEdit;
     private javax.swing.JCheckBox jGradleHomeInherit;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton jManageBuiltInTasks;
     private javax.swing.JButton jManageTasksButton;
     private javax.swing.JComboBox<ProjectPlatformComboItem> jPlatformCombo;
@@ -547,7 +566,9 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private javax.swing.JTextField jSourceEncoding;
     private javax.swing.JLabel jSourceEncodingCaption;
     private javax.swing.JCheckBox jSourceEncodingInherit;
+    private javax.swing.JLabel jSourceLevelCaption;
     private javax.swing.JComboBox<String> jSourceLevelCombo;
     private javax.swing.JCheckBox jSourceLevelComboInherit;
+    private javax.swing.JLabel jTargetPlatformCaption;
     // End of variables declaration//GEN-END:variables
 }
