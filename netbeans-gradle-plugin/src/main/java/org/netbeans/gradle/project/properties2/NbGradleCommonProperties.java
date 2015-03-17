@@ -46,7 +46,7 @@ public final class NbGradleCommonProperties {
 
         // Warning: "get" uses the fields set above.
 
-        builtInTasks = get(BuiltInTasksProperty.PROPERTY_DEF, BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
+        builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
         customTasks = get(CustomTasksProperty.PROPERTY_DEF, PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
         gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, GlobalGradleSettings.getGradleHome());
         licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
@@ -61,6 +61,16 @@ public final class NbGradleCommonProperties {
                 LicenseHeaderInfoProperty.PROPERTY_DEF,
                 activeSettingsQuery,
                 PropertyFactory.<LicenseHeaderInfo>constSource(null));
+    }
+
+    public static PropertyReference<BuiltInTasks> builtInTasks(
+            NbGradleProject ownerProject,
+            ActiveSettingsQuery activeSettingsQuery) {
+
+        return new PropertyReference<>(
+                BuiltInTasksProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
     }
 
     public Project getOwnerProject() {
