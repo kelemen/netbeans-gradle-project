@@ -74,7 +74,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        jCusomPanelContainer.add(new JScrollPane(customPanelLayer));
+        jCustomPanelContainer.add(new JScrollPane(customPanelLayer));
         jProfileCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -346,7 +346,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         jProfileCombo = new javax.swing.JComboBox<ProfileItem>();
         jAddProfileButton = new javax.swing.JButton();
         jRemoveProfileButton = new javax.swing.JButton();
-        jCusomPanelContainer = new javax.swing.JPanel();
+        jCustomPanelContainer = new javax.swing.JPanel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jProfileCaption, org.openide.util.NbBundle.getMessage(ProfileBasedPanel.class, "ProfileBasedPanel.jProfileCaption.text")); // NOI18N
 
@@ -364,7 +364,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             }
         });
 
-        jCusomPanelContainer.setLayout(new java.awt.GridLayout(1, 1));
+        jCustomPanelContainer.setLayout(new java.awt.GridLayout(1, 1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -380,7 +380,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 69, Short.MAX_VALUE)
                 .addComponent(jRemoveProfileButton)
                 .addContainerGap())
-            .addComponent(jCusomPanelContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jCustomPanelContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -392,7 +392,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                     .addComponent(jAddProfileButton)
                     .addComponent(jRemoveProfileButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jCusomPanelContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jCustomPanelContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -492,7 +492,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jAddProfileButton;
-    private javax.swing.JPanel jCusomPanelContainer;
+    private javax.swing.JPanel jCustomPanelContainer;
     private javax.swing.JLabel jProfileCaption;
     private javax.swing.JComboBox<ProfileItem> jProfileCombo;
     private javax.swing.JButton jRemoveProfileButton;
