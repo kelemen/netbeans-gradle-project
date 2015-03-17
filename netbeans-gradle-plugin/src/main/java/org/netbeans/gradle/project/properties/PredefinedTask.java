@@ -56,7 +56,7 @@ public final class PredefinedTask {
 
             final Name other = (Name)obj;
             return Objects.equals(this.name, other.name)
-                    && this.mustExist != other.mustExist;
+                    && this.mustExist == other.mustExist;
         }
     }
 
