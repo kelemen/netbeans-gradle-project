@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.awt.Dialog;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -13,7 +12,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -22,8 +20,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.util.NbGuiUtils;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
@@ -469,38 +465,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
             return;
         }
 
-        GradleLocationPanel panel = new GradleLocationPanel(
-                currentValues.commonProperties.gradleLocation().getActiveValue());
-
-        final DialogDescriptor dlgDescriptor = new DialogDescriptor(
-            panel,
-            "Gradle location",
-            true,
-            new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
-            DialogDescriptor.OK_OPTION,
-            DialogDescriptor.BOTTOM_ALIGN,
-            null,
-            null);
-
-        final PropertySource<Boolean> validLocation = panel.validLocation();
-        dlgDescriptor.setValid(validLocation.getValue());
-
-        validLocation.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                dlgDescriptor.setValid(validLocation.getValue());
-            }
-        });
-
-        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
-        dlg.pack();
-        dlg.setVisible(true);
-
-        if (DialogDescriptor.OK_OPTION != dlgDescriptor.getValue()) {
-            return;
+        GradleLocation currentLocation = currentValues.commonProperties.gradleLocation().getActiveValue();
+        GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
+        if (newLocation != null) {
+            selectGradleLocation(newLocation);
         }
-
-        selectGradleLocation(panel.getSelectedLocation());
     }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

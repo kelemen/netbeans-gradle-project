@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import java.awt.Component;
+import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +14,8 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.util.NbGuiUtils;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileChooserBuilder;
 
 import static org.jtrim.property.BoolProperties.*;
@@ -49,6 +53,43 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         NbGuiUtils.enableBasedOnCheck(jVersionCheck, true, jVersionEdit);
 
         setupLocationChangeListeners();
+    }
+
+    public static GradleLocation tryChooseLocation(
+            Component parent,
+            GradleLocation defaultLocation) {
+        GradleLocationPanel panel = new GradleLocationPanel(defaultLocation);
+
+        final DialogDescriptor dlgDescriptor = new DialogDescriptor(
+            panel,
+            "Gradle location",
+            true,
+            new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
+            DialogDescriptor.OK_OPTION,
+            DialogDescriptor.BOTTOM_ALIGN,
+            null,
+            null);
+
+        final PropertySource<Boolean> validLocation = panel.validLocation();
+        dlgDescriptor.setValid(validLocation.getValue());
+
+        validLocation.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                dlgDescriptor.setValid(validLocation.getValue());
+            }
+        });
+
+        Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
+        dlg.setLocationRelativeTo(parent);
+        dlg.pack();
+        dlg.setVisible(true);
+
+        if (DialogDescriptor.OK_OPTION != dlgDescriptor.getValue()) {
+            return null;
+        }
+
+        return panel.getSelectedLocation();
     }
 
     private void setupLocationChangeListeners() {
