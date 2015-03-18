@@ -5,12 +5,24 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.swing.ButtonGroup;
 import org.gradle.util.GradleVersion;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
+import static org.jtrim.property.BoolProperties.*;
+
 @SuppressWarnings("serial")
 public class GradleLocationPanel extends javax.swing.JPanel {
+    private final ListenerManager<Runnable> locationChangedListeners;
+
     public GradleLocationPanel(GradleLocation defaultLocation) {
+        locationChangedListeners = new CopyOnTriggerListenerManager<>();
+
         initComponents();
 
         jFolderEdit.setText("");
@@ -35,6 +47,29 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         NbGuiUtils.enableBasedOnCheck(jDistCheck, true, jUriEdit);
         NbGuiUtils.enableBasedOnCheck(jLocalDirCheck, true, jFolderEdit, jFolderSelectButton);
         NbGuiUtils.enableBasedOnCheck(jVersionCheck, true, jVersionEdit);
+
+        setupLocationChangeListeners();
+    }
+
+    private void setupLocationChangeListeners() {
+        Runnable fireEventTask = new Runnable() {
+            @Override
+            public void run() {
+                fireLocationChangeEvent();
+            }
+        };
+
+        SwingProperties.buttonSelected(jDefaultCheck).addChangeListener(fireEventTask);
+        SwingProperties.buttonSelected(jDistCheck).addChangeListener(fireEventTask);
+        SwingProperties.buttonSelected(jLocalDirCheck).addChangeListener(fireEventTask);
+        SwingProperties.buttonSelected(jVersionCheck).addChangeListener(fireEventTask);
+        SwingProperties.textProperty(jUriEdit).addChangeListener(fireEventTask);
+        SwingProperties.textProperty(jFolderEdit).addChangeListener(fireEventTask);
+        SwingProperties.textProperty(jVersionEdit).addChangeListener(fireEventTask);
+    }
+
+    private void fireLocationChangeEvent() {
+        EventListeners.dispatchRunnable(locationChangedListeners);
     }
 
     private static String getUriStrForVersion(GradleVersion version) {
@@ -74,6 +109,28 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         });
     }
 
+    public PropertySource<Boolean> validLocation() {
+        return not(isNull(selectedLocation()));
+    }
+
+    private PropertySource<GradleLocation> selectedLocation() {
+        return new PropertySource<GradleLocation>() {
+            @Override
+            public GradleLocation getValue() {
+                try {
+                    return getSelectedLocation();
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return locationChangedListeners.registerListener(listener);
+            }
+        };
+    }
+
     public GradleLocation getSelectedLocation() {
         if (jVersionCheck.isSelected()) {
             return new GradleLocationVersion(jVersionEdit.getText().trim());
@@ -83,7 +140,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
             try {
                 distUri = new URI(jUriEdit.getText().trim());
             } catch (URISyntaxException ex) {
-                return GradleLocationDefault.INSTANCE;
+                return null;
             }
 
             return new GradleLocationDistribution(distUri);

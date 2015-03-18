@@ -13,6 +13,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -471,7 +472,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         GradleLocationPanel panel = new GradleLocationPanel(
                 currentValues.commonProperties.gradleLocation().getActiveValue());
 
-        DialogDescriptor dlgDescriptor = new DialogDescriptor(
+        final DialogDescriptor dlgDescriptor = new DialogDescriptor(
             panel,
             "Gradle location",
             true,
@@ -480,6 +481,16 @@ public class CommonProjectPropertiesPanel extends JPanel {
             DialogDescriptor.BOTTOM_ALIGN,
             null,
             null);
+
+        final PropertySource<Boolean> validLocation = panel.validLocation();
+        dlgDescriptor.setValid(validLocation.getValue());
+
+        validLocation.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                dlgDescriptor.setValid(validLocation.getValue());
+            }
+        });
 
         Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
         dlg.pack();
