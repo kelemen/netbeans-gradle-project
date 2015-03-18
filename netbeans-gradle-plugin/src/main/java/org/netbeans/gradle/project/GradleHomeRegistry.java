@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -24,6 +25,9 @@ import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 
 public final class GradleHomeRegistry {
+    private static final GenericUpdateTaskExecutor GRADLE_HOME_UPDATER
+            = new GenericUpdateTaskExecutor(NbGradleProject.PROJECT_PROCESSOR);
+
     private static final AtomicReference<GradleHomePaths> GRADLE_HOME_BINARIES;
     private static final AtomicBoolean REGISTERED_GLOBAL_PATH;
     private static final AtomicBoolean USING_GLOBAL_PATHS;
@@ -65,23 +69,27 @@ public final class GradleHomeRegistry {
             GlobalGradleSettings.getGradleHome().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
-                    CHANGES.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+                    updateGradleHome();
                 }
             });
 
-            FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
-            if (gradleHome != null) {
-                setGradleHome(gradleHome);
-            }
+            updateGradleHome();
         }
     }
 
-    public static void setGradleHome(final FileObject gradleHome) {
+    private static void updateGradleHome() {
+        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
+        if (gradleHome != null) {
+            setGradleHome(gradleHome);
+        }
+    }
+
+    private static void setGradleHome(final FileObject gradleHome) {
         ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        GRADLE_HOME_UPDATER.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) {
+            public void run() {
                 URL[] urls = GradleHomeClassPathProvider.getAllGradleLibs(gradleHome);
                 if (urls.length == 0) {
                     // Keep the previous classpaths if there are non found.
@@ -105,7 +113,7 @@ public final class GradleHomeRegistry {
                     doRegisterGlobalClassPath();
                 }
             }
-        }, null);
+        });
     }
 
     private static class GradleHomePaths {
