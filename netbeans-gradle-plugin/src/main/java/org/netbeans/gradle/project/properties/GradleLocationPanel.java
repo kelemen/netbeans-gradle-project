@@ -13,6 +13,7 @@ import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -62,7 +63,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
 
         final DialogDescriptor dlgDescriptor = new DialogDescriptor(
             panel,
-            "Gradle location",
+            NbStrings.getGradleLocationDlgTitle(),
             true,
             new Object[]{DialogDescriptor.OK_OPTION, DialogDescriptor.CANCEL_OPTION},
             DialogDescriptor.OK_OPTION,

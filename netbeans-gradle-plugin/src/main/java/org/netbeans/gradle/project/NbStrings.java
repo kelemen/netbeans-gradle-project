@@ -488,6 +488,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.Loading");
     }
 
+    public static String getGradleLocationDlgTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocationDlgTitle");
+    }
+
     public static String getGradleLocationDefault() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.DEFAULT");
     }
