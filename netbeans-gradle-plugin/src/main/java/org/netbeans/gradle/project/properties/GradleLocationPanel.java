@@ -117,10 +117,10 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     private static String getUriStrForVersion(GradleVersion version) {
         String versionStr = version.getVersion();
         if (version.isSnapshot()) {
-            return "http://services.gradle.org/distributions/gradle-" + versionStr + "-bin.zip";
+            return "http://services.gradle.org/distributions-snapshots/gradle-" + versionStr + "-bin.zip";
         }
         else {
-            return "http://services.gradle.org/distributions-snapshots/gradle-" + versionStr + "-bin.zip";
+            return "http://services.gradle.org/distributions/gradle-" + versionStr + "-bin.zip";
         }
     }
 
