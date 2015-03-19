@@ -7,23 +7,20 @@ import java.util.RandomAccess;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
-import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
-import org.jtrim.event.OneShotListenerManager;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
+import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
@@ -32,23 +29,14 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     private final ChangeListenerManager currentProfileChangeListeners;
 
     private final WaitableSignal loadedOnceSignal;
-    private final OneShotListenerManager<Runnable, Void> loadedOnceListeners;
-    private final UpdateTaskExecutor loadedOnceEventExecutor;
-    private final Runnable loadedOnceEventFirer;
+    private final OneShotChangeListenerManager loadedOnceListeners;
 
     public MultiProfileProperties() {
         this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
                 Collections.<ProjectProfileSettings>emptyList(),
                 SwingTaskExecutor.getStrictExecutor(false));
         this.loadedOnceSignal = new WaitableSignal();
-        this.loadedOnceListeners = new OneShotListenerManager<>();
-        this.loadedOnceEventExecutor = new SwingUpdateTaskExecutor(false);
-        this.loadedOnceEventFirer = new Runnable() {
-            @Override
-            public void run() {
-                EventListeners.dispatchRunnable(loadedOnceListeners);
-            }
-        };
+        this.loadedOnceListeners = OneShotChangeListenerManager.getSwingNotifier();
 
         this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentProfileSettings = new PropertySource<ProjectProfileSettings>() {
@@ -104,7 +92,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         currentProfileSettingsList.setValue(settingsCopy);
 
         loadedOnceSignal.signal();
-        loadedOnceEventExecutor.execute(loadedOnceEventFirer);
+        loadedOnceListeners.fireEventually();
         currentProfileChangeListeners.fireEventually();
     }
 

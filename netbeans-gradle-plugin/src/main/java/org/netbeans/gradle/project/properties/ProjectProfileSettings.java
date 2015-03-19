@@ -11,16 +11,14 @@ import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
-import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerRef;
-import org.jtrim.event.OneShotListenerManager;
 import org.jtrim.property.MutableProperty;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.w3c.dom.Element;
@@ -40,9 +38,7 @@ public final class ProjectProfileSettings {
 
     private volatile boolean dirty;
 
-    private final UpdateTaskExecutor loadedListenersExecutor;
-    private final Runnable loadedListenersDispatcher;
-    private final OneShotListenerManager<Runnable, Void> loadedListeners;
+    private final OneShotChangeListenerManager loadedListeners;
 
     private final UpdateTaskExecutor loadExecutor;
     private final UpdateTaskExecutor saveExecutor;
@@ -56,14 +52,7 @@ public final class ProjectProfileSettings {
         this.dirty = false;
         this.loadedOnce = false;
         this.loadedOnceSignal = new WaitableSignal();
-        this.loadedListeners = new OneShotListenerManager<>();
-        this.loadedListenersExecutor = new SwingUpdateTaskExecutor();
-        this.loadedListenersDispatcher = new Runnable() {
-            @Override
-            public void run() {
-                EventListeners.dispatchRunnable(loadedListeners);
-            }
-        };
+        this.loadedListeners = OneShotChangeListenerManager.getSwingNotifier();
         this.saveExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
         this.loadExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
     }
@@ -139,7 +128,7 @@ public final class ProjectProfileSettings {
 
     private void setLoadedOnce() {
         loadedOnceSignal.signal();
-        loadedListenersExecutor.execute(loadedListenersDispatcher);
+        loadedListeners.fireEventually();
     }
 
     private void loadNowIfNotLoaded() {
