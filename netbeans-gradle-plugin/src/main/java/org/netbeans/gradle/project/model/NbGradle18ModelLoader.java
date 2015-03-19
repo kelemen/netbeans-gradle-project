@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import org.gradle.tooling.ProjectConnection;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
@@ -24,6 +23,7 @@ import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -38,8 +38,6 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
-    private static final Logger LOGGER = Logger.getLogger(NbGradle18ModelLoader.class.getName());
-
     private final GradleTarget gradleTarget;
     private final OperationInitializer setup;
 
@@ -55,19 +53,6 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         if (toAdd != null) {
             collection.addAll(toAdd);
         }
-    }
-
-    private static <K, V> void addAllToMultiMap(K key, Collection<? extends V> newValues, Map<? super K, List<V>> map) {
-        if (newValues.isEmpty()) {
-            return;
-        }
-
-        List<V> values = map.get(key);
-        if (values == null) {
-            values = new LinkedList<>();
-            map.put(key, values);
-        }
-        values.addAll(newValues);
     }
 
     @Override
@@ -364,8 +349,8 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 GradleModelDef modelDef = modelQuery.getModelDef(gradleTarget);
 
                 models.addAll(modelDef.getToolingModels());
-                addAllToMultiMap(extensionName, modelDef.getProjectInfoQueries(), projectInfoRequests);
-                addAllToMultiMap(extensionName, modelDef.getToolingModels(), toolingModelNeeds);
+                MultiMapUtils.addAllToMultiMap(extensionName, modelDef.getProjectInfoQueries(), projectInfoRequests);
+                MultiMapUtils.addAllToMultiMap(extensionName, modelDef.getToolingModels(), toolingModelNeeds);
             }
 
             modelFetcher = new GenericModelFetcher(buildInfoRequests, projectInfoRequests, models);
