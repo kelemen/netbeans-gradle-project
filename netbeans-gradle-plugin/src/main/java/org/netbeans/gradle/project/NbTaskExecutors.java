@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import org.jtrim.cancel.OperationCanceledException;
 import org.jtrim.concurrent.DelegatedTaskExecutorService;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
+import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.SingleThreadedExecutor;
 import org.jtrim.concurrent.TaskExecutors;
@@ -42,6 +43,10 @@ public final class NbTaskExecutors {
         else {
             return new ThreadPoolTaskExecutor(name, threadCount, Integer.MAX_VALUE, timeoutMs, TimeUnit.MILLISECONDS);
         }
+    }
+
+    public static MonitorableTaskExecutor newDefaultFifoExecutor() {
+        return TaskExecutors.inOrderExecutor(NbTaskExecutors.DEFAULT_EXECUTOR);
     }
 
     public static UpdateTaskExecutor newDefaultUpdateExecutor() {
