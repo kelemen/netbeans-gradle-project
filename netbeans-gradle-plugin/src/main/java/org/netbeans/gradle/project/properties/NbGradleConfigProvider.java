@@ -40,7 +40,7 @@ public final class NbGradleConfigProvider {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
 
     // Must be FIFO executor
-    // Warning: May not wait for properties to be loaded on this executor.
+    // Warning: May not wait for multiProfileProperties to be loaded on this executor.
     private static final TaskExecutor PROFILE_APPLIER_EXECUTOR
             = NbTaskExecutors.newExecutor("Profile-applier", 1);
 
