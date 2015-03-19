@@ -13,8 +13,6 @@ import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache implements PersistentModelCache {
-    private static final Charset UTF8 = Charset.forName("UTF-8");
-
     private static MessageDigest getMD5() {
         try {
             return MessageDigest.getInstance("MD5");
@@ -62,7 +60,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
 
         // We do this to limit the key length and make it usable as part of a file name.
         hashCalculator.reset();
-        String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(UTF8)));
+        String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(StringUtils.UTF8)));
         return limitLength(model.getProjectDir().getName(), 16) + "-" + keyHash;
     }
 

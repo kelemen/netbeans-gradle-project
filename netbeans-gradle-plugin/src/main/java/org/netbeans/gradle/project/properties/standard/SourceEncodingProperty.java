@@ -8,11 +8,12 @@ import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class SourceEncodingProperty {
     private static final Logger LOGGER = Logger.getLogger(SourceEncodingProperty.class.getName());
 
-    public static final Charset DEFAULT_SOURCE_ENCODING = Charset.forName("UTF-8");
+    public static final Charset DEFAULT_SOURCE_ENCODING = StringUtils.UTF8;
 
     private static final String CONFIG_KEY_SOURCE_ENCODING = "source-encoding";
 

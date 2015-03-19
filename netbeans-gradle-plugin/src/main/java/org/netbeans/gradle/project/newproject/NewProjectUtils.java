@@ -31,7 +31,7 @@ import org.openide.util.Utilities;
 import static org.netbeans.gradle.project.validate.Validators.*;
 
 public final class NewProjectUtils {
-    public static final Charset DEFAULT_FILE_ENCODING = Charset.forName("UTF-8");
+    public static final Charset DEFAULT_FILE_ENCODING = StringUtils.UTF8;
 
     private static final Pattern RECOMMENDED_PROJECTNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");
     private static final Pattern MAVEN_GROUP_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_\\-.]*[a-zA-Z0-9]");

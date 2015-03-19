@@ -18,6 +18,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
+    public static final Charset UTF8 = Charset.forName("UTF-8");
+
     private static final String HEX_TABLE = "0123456789abcdef";
     private static final String SEPARATORS = ",./?;:'\"\\";
 

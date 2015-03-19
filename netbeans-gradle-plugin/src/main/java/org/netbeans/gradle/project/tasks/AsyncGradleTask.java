@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +64,7 @@ import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;
 import org.openide.windows.OutputWriter;
@@ -75,7 +75,6 @@ public final class AsyncGradleTask implements Runnable {
     private static final TaskExecutor CANCEL_EXECUTOR
             = NbTaskExecutors.newExecutor("Gradle-Cancel-Executor", Integer.MAX_VALUE);
     private static final Logger LOGGER = Logger.getLogger(GradleTasks.class.getName());
-    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final NbGradleProject project;
     private final GradleCommandSpecFactory taskDefFactroy;
@@ -148,7 +147,7 @@ public final class AsyncGradleTask implements Runnable {
                 try {
                     String scriptContent = scriptQuery.getInitScript();
                     results.add(TemporaryFileManager.getDefault().createFile(
-                            "task-init-script", scriptContent, UTF8));
+                            "task-init-script", scriptContent, StringUtils.UTF8));
                 } catch (Throwable ex) {
                     LOGGER.log(Level.SEVERE,
                             "Failed to create initialization script provided by " + scriptQuery.getClass().getName(),

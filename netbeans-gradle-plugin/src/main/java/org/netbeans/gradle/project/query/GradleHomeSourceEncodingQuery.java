@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.query;
 import java.nio.charset.Charset;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -11,7 +12,7 @@ import org.openide.util.lookup.ServiceProviders;
 
 @ServiceProviders({@ServiceProvider(service = FileEncodingQueryImplementation.class)})
 public final class GradleHomeSourceEncodingQuery extends FileEncodingQueryImplementation {
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StringUtils.UTF8;
 
     @Override
     public Charset getEncoding(FileObject file) {

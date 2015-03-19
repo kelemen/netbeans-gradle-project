@@ -21,7 +21,7 @@ public final class JavaInitScriptQuery implements InitScriptQuery {
     public String getInitScript() throws IOException {
         String result = initScriptCache.get();
         if (result == null) {
-            result = StringUtils.getResourceAsString(INIT_SCRIPT_PATH, Charset.forName("UTF-8"));
+            result = StringUtils.getResourceAsString(INIT_SCRIPT_PATH, StringUtils.UTF8);
             initScriptCache.compareAndSet(null, result);
             result = initScriptCache.get();
         }
