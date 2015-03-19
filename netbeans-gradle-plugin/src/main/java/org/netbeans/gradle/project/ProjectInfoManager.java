@@ -75,7 +75,7 @@ public final class ProjectInfoManager {
                 mainLock.unlock();
             }
 
-            if (Objects.equals(prevInfo, info)) {
+            if (!Objects.equals(prevInfo, info)) {
                 fireChange();
             }
         }
