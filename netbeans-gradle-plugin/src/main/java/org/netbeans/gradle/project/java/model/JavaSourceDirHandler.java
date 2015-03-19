@@ -4,23 +4,22 @@ import java.io.File;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.java.JavaExtension;
 
 public final class JavaSourceDirHandler {
     private static final Logger LOGGER = Logger.getLogger(JavaSourceDirHandler.class.getName());
 
     private final JavaExtension javaExt;
-    private final ListenerManager<Runnable> dirsCreatedListeners;
+    private final ChangeListenerManager dirsCreatedListeners;
 
     public JavaSourceDirHandler(JavaExtension javaExt) {
         this.javaExt = javaExt;
-        this.dirsCreatedListeners = new CopyOnTriggerListenerManager<>();
+        this.dirsCreatedListeners = new GenericChangeListenerManager();
     }
 
     public ListenerRef addDirsCreatedListener(Runnable listener) {
@@ -88,7 +87,7 @@ public final class JavaSourceDirHandler {
     }
 
     private void fireDirsCreated() {
-        EventListeners.dispatchRunnable(dirsCreatedListeners);
+        dirsCreatedListeners.fireEventually();
     }
 
     public void deleteEmptyDirectories() {

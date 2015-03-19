@@ -22,9 +22,6 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.WaitableSignal;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertySource;
@@ -35,6 +32,8 @@ import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
@@ -96,7 +95,7 @@ public final class NbGradleProject implements Project {
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
-    private final ListenerManager<Runnable> modelChangeListeners;
+    private final ChangeListenerManager modelChangeListeners;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final ProjectInfoManager projectInfoManager;
@@ -125,7 +124,7 @@ public final class NbGradleProject implements Project {
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<>(null);
-        this.modelChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.modelChangeListeners = new GenericChangeListenerManager();
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
@@ -368,7 +367,7 @@ public final class NbGradleProject implements Project {
         assert SwingUtilities.isEventDispatchThread();
 
         try {
-            EventListeners.dispatchRunnable(modelChangeListeners);
+            modelChangeListeners.fireEventually();
         } finally {
             GradleCacheByBinaryLookup.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();

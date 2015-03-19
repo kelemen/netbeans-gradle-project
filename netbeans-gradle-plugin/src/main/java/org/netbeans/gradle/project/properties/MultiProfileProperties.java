@@ -9,9 +9,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.concurrent.WaitableSignal;
-import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.OneShotListenerManager;
@@ -24,16 +22,17 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettingsList;
+    private final PropertySource<ProjectProfileSettings> currentProfileSettings;
+    private final ChangeListenerManager currentProfileChangeListeners;
+
     private final WaitableSignal loadedOnceSignal;
     private final OneShotListenerManager<Runnable, Void> loadedOnceListeners;
-
-    private final PropertySource<ProjectProfileSettings> currentProfileSettings;
-    private final ListenerManager<Runnable> currentProfileChangeListeners;
-
     private final UpdateTaskExecutor loadedOnceEventExecutor;
     private final Runnable loadedOnceEventFirer;
 
@@ -51,7 +50,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
             }
         };
 
-        this.currentProfileChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentProfileSettings = new PropertySource<ProjectProfileSettings>() {
             @Override
             public ProjectProfileSettings getValue() {
@@ -106,7 +105,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
         loadedOnceSignal.signal();
         loadedOnceEventExecutor.execute(loadedOnceEventFirer);
-        EventListeners.dispatchRunnable(currentProfileChangeListeners);
+        currentProfileChangeListeners.fireEventually();
     }
 
     private static <ValueType> ValueType mergePropertyValues(

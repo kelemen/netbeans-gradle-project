@@ -26,7 +26,6 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
-import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
@@ -45,6 +44,8 @@ import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
@@ -87,18 +88,18 @@ implements
 
     private final ListenerManager<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
-    private final ListenerManager<Runnable> refreshRequestListeners;
+    private final ChangeListenerManager refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
-        this.refreshRequestListeners = new CopyOnTriggerListenerManager<>();
+        this.refreshRequestListeners = GenericChangeListenerManager.getSwingNotifier();
     }
 
     public void refreshProjectNode() {
-        EventListeners.dispatchRunnable(refreshRequestListeners);
+        refreshRequestListeners.fireEventually();
     }
 
     public ListenerRef addRefreshRequestListeners(Runnable listener) {

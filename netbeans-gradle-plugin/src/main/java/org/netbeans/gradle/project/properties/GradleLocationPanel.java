@@ -7,13 +7,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.swing.ButtonGroup;
 import org.gradle.util.GradleVersion;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -23,10 +22,10 @@ import static org.jtrim.property.BoolProperties.*;
 
 @SuppressWarnings("serial")
 public class GradleLocationPanel extends javax.swing.JPanel {
-    private final ListenerManager<Runnable> locationChangedListeners;
+    private final ChangeListenerManager locationChangedListeners;
 
     public GradleLocationPanel(GradleLocation defaultLocation) {
-        locationChangedListeners = new CopyOnTriggerListenerManager<>();
+        locationChangedListeners = new GenericChangeListenerManager();
 
         initComponents();
 
@@ -111,7 +110,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     }
 
     private void fireLocationChangeEvent() {
-        EventListeners.dispatchRunnable(locationChangedListeners);
+        locationChangedListeners.fireEventually();
     }
 
     private static String getUriStrForVersion(GradleVersion version) {

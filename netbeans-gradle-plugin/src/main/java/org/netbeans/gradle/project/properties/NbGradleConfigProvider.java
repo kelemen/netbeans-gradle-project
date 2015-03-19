@@ -25,14 +25,13 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 
@@ -52,7 +51,7 @@ public final class NbGradleConfigProvider {
 
     private final Path rootDirectory;
     private final PropertyChangeSupport changeSupport;
-    private final ListenerManager<Runnable> activeConfigChangeListeners;
+    private final ChangeListenerManager activeConfigChangeListeners;
     private final AtomicReference<List<NbGradleConfiguration>> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
     private final AtomicBoolean hasBeenUsed;
@@ -69,7 +68,7 @@ public final class NbGradleConfigProvider {
         this.rootDirectory = rootDirectory;
         this.hasBeenUsed = new AtomicBoolean(false);
         this.changeSupport = new PropertyChangeSupport(this);
-        this.activeConfigChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.activeConfigChangeListeners = new GenericChangeListenerManager();
         this.activeConfig = new AtomicReference<>(NbGradleConfiguration.DEFAULT_CONFIG);
         this.configs = new AtomicReference<>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
@@ -291,7 +290,7 @@ public final class NbGradleConfigProvider {
             public void run() {
                 NbGradleConfiguration newConfig = activeConfig.get();
                 changeSupport.firePropertyChange(ProjectConfigurationProvider.PROP_CONFIGURATION_ACTIVE, prevConfig, newConfig);
-                EventListeners.dispatchRunnable(activeConfigChangeListeners);
+                activeConfigChangeListeners.fireEventually();
             }
         });
     }

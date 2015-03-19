@@ -11,9 +11,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -27,6 +24,8 @@ import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
@@ -72,7 +71,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final AtomicReference<Lookup> extensionLookupRef;
     private final AtomicReference<Lookup> combinedLookupRef;
 
-    private final ListenerManager<Runnable> modelChangeListeners;
+    private final ChangeListenerManager modelChangeListeners;
 
     private JavaExtension(Project project) throws IOException {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -92,7 +91,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.hasEverBeenLoaded = false;
         this.sourceDirsHandlerRef = new AtomicReference<>(null);
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
-        this.modelChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.modelChangeListeners = new GenericChangeListenerManager();
     }
 
     public static JavaExtension getJavaExtensionOfProject(Project project) {
@@ -264,7 +263,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         for (JavaModelChangeListener listener: getCombinedLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();
         }
-        EventListeners.dispatchRunnable(modelChangeListeners);
+        modelChangeListeners.fireEventually();
     }
 
     private static ProjectInfoManager getProjectInfoManager(Project project) {

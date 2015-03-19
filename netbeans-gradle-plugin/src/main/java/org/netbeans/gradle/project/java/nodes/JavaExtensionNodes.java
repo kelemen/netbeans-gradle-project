@@ -7,9 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -21,6 +18,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
@@ -43,14 +42,14 @@ implements
         JavaModelChangeListener {
 
     private final JavaExtension javaExt;
-    private final ListenerManager<Runnable> nodeChangeListeners;
+    private final ChangeListenerManager nodeChangeListeners;
     private final AtomicReference<NodesDescription> lastDisplayed;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-        this.nodeChangeListeners = new CopyOnTriggerListenerManager<>();
+        this.nodeChangeListeners = new GenericChangeListenerManager();
         this.lastDisplayed = new AtomicReference<>(null);
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
@@ -62,7 +61,7 @@ implements
     }
 
     private void fireNodeChangeEvent() {
-        EventListeners.dispatchRunnable(nodeChangeListeners);
+        nodeChangeListeners.fireEventually();
     }
 
     @Override

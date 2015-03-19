@@ -4,26 +4,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.swing.SwingUtilities;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.swing.concurrent.SwingTaskExecutor;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 
 public final class ProjectInfoManager {
     private final Lock mainLock;
     private final Map<InfoKey, ProjectInfo> informations;
-    private final ListenerManager<Runnable> changeListeners;
-    private final AtomicBoolean hasUnprocessedChangeEvent;
+    private final ChangeListenerManager changeListeners;
 
     public ProjectInfoManager() {
         this.mainLock = new ReentrantLock();
         this.informations = new HashMap<>();
-        this.changeListeners = new CopyOnTriggerListenerManager<>();
-        this.hasUnprocessedChangeEvent = new AtomicBoolean(false);
+        this.changeListeners = GenericChangeListenerManager.getSwingNotifier();
     }
 
     public ListenerRef addChangeListener(Runnable listener) {
@@ -31,15 +27,7 @@ public final class ProjectInfoManager {
     }
 
     private void fireChange() {
-        if (hasUnprocessedChangeEvent.compareAndSet(false, true)) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    hasUnprocessedChangeEvent.set(false);
-                    EventListeners.dispatchRunnable(changeListeners);
-                }
-            });
-        }
+        changeListeners.fireEventually();
     }
 
     public Collection<ProjectInfo> getInformations() {
