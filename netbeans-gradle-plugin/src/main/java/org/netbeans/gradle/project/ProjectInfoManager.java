@@ -2,22 +2,23 @@ package org.netbeans.gradle.project;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.collections.RefLinkedList;
+import org.jtrim.collections.RefList;
 import org.jtrim.event.ListenerRef;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 
 public final class ProjectInfoManager {
     private final Lock mainLock;
-    private final Map<InfoKey, ProjectInfo> informations;
+    private final RefList<ProjectInfo> informations;
     private final ChangeListenerManager changeListeners;
 
     public ProjectInfoManager() {
         this.mainLock = new ReentrantLock();
-        this.informations = new HashMap<>();
+        this.informations = new RefLinkedList<>();
         this.changeListeners = GenericChangeListenerManager.getSwingNotifier();
     }
 
@@ -32,7 +33,7 @@ public final class ProjectInfoManager {
     public Collection<ProjectInfo> getInformations() {
         mainLock.lock();
         try {
-            return new ArrayList<>(informations.values());
+            return new ArrayList<>(informations);
         } finally {
             mainLock.unlock();
         }
@@ -43,10 +44,10 @@ public final class ProjectInfoManager {
     }
 
     private class ProjectInfoRefImpl implements ProjectInfoRef {
-        private final InfoKey key;
+        private RefList.ElementRef<ProjectInfo> infoRef;
 
         public ProjectInfoRefImpl() {
-            this.key = new InfoKey();
+            this.infoRef = null;
         }
 
         @Override
@@ -54,23 +55,29 @@ public final class ProjectInfoManager {
             ProjectInfo prevInfo;
             mainLock.lock();
             try {
+                prevInfo = infoRef != null ? infoRef.getElement() : null;
+
                 if (info == null) {
-                    prevInfo = informations.remove(key);
+                    if (infoRef != null) {
+                        infoRef.remove();
+                        infoRef = null;
+                    }
                 }
                 else {
-                    prevInfo = informations.put(key, info);
+                    if (infoRef != null) {
+                        infoRef.setElement(info);
+                    }
+                    else {
+                        infoRef = informations.addLastGetReference(info);
+                    }
                 }
             } finally {
                 mainLock.unlock();
             }
 
-            if (prevInfo != info) {
+            if (Objects.equals(prevInfo, info)) {
                 fireChange();
             }
         }
-    }
-
-    // Only defined for type safety, could be Object otherwise.
-    private static class InfoKey {
     }
 }
