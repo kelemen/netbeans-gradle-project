@@ -11,7 +11,6 @@ import org.jtrim.collections.Equality;
 import org.jtrim.collections.RefLinkedList;
 import org.jtrim.collections.RefList;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.EventDispatcher;
@@ -29,9 +28,6 @@ import org.netbeans.gradle.project.NbTaskExecutors;
 import static org.jtrim.property.PropertyFactory.*;
 
 public final class BackgroundValidator {
-    private static final MonitorableTaskExecutorService VALIDATOR_PROCESSOR
-            = NbTaskExecutors.newExecutor("Gradle-NewProject-Validator-Processor", 1);
-
     private final UpdateTaskExecutor validationExecutor;
 
     private final MutableProperty<Problem> currentProblem;
@@ -41,7 +37,7 @@ public final class BackgroundValidator {
     private final MostSevereValidator validator;
 
     public BackgroundValidator() {
-        this.validationExecutor = new GenericUpdateTaskExecutor(VALIDATOR_PROCESSOR);
+        this.validationExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
         this.validator = new MostSevereValidator();
 
         this.currentProblem = lazilySetProperty(memProperty((Problem)null, true), Equality.<Problem>referenceEquality());
