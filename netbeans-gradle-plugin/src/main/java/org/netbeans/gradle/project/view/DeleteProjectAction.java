@@ -13,7 +13,6 @@ import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -31,8 +30,6 @@ public final class DeleteProjectAction extends AbstractAction {
     private static final long serialVersionUID = -386797460711624644L;
 
     private static final Logger LOGGER = Logger.getLogger(DeleteProjectAction.class.getName());
-    private static final MonitorableTaskExecutorService PROJECT_PROCESSOR
-            = NbTaskExecutors.newExecutor("Delete-Project-Processor", 1);
 
     private final NbGradleProject project;
 
@@ -95,7 +92,7 @@ public final class DeleteProjectAction extends AbstractAction {
         final ProgressHandle progress = createProgress(cancel.getController());
 
         progress.start();
-        PROJECT_PROCESSOR.execute(cancel.getToken(), new CancelableTask() {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 doRemoveProject(cancelToken);
