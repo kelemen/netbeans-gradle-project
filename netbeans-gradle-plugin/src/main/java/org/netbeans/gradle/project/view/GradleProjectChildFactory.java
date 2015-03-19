@@ -22,6 +22,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.event.ChangeListenerManager;
+import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
@@ -44,8 +46,7 @@ extends
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
     private final AtomicBoolean lastHasSubprojects;
     private final ListenerRegistrations listenerRefs;
-    private volatile boolean enableRefresh;
-    private final AtomicBoolean hasPreventedRefresh;
+    private final ChangeListenerManager refreshNotifier;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -57,8 +58,13 @@ extends
         this.lastHasSubprojects = new AtomicBoolean(false);
         this.listenerRefs = new ListenerRegistrations();
 
-        this.enableRefresh = true;
-        this.hasPreventedRefresh = new AtomicBoolean(false);
+        this.refreshNotifier = new GenericChangeListenerManager();
+        this.refreshNotifier.registerListener(new Runnable() {
+            @Override
+            public void run() {
+                refresh(false);
+            }
+        });
     }
 
     private NbGradleModel getShownModule() {
@@ -72,12 +78,7 @@ extends
     }
 
     private void refreshProjectNode() {
-        if (enableRefresh) {
-            refresh(false);
-        }
-        else {
-            hasPreventedRefresh.set(true);
-        }
+        refreshNotifier.fireEventually();
     }
 
     private boolean hasSubProjects() {
@@ -95,18 +96,25 @@ extends
 
     private ListenerRef registerModelRefreshListener() {
         return parent.addChildModelRefreshListener(new ModelRefreshListener() {
+            private final AtomicReference<ChangeListenerManager.PauseRef> pauseRef
+                    = new AtomicReference<>(null);
+
             @Override
             public void startRefresh() {
-                enableRefresh = false;
+                ChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(refreshNotifier.pauseManager());
+                if (prevRef != null) {
+                    prevRef.unpause();
+                }
             }
 
             @Override
             public void endRefresh(boolean extensionsChanged) {
-                enableRefresh = true;
-
-                boolean needRefresh = hasPreventedRefresh.getAndSet(false);
-                if (extensionsChanged || needRefresh) {
-                    refreshProjectNode();
+                if (extensionsChanged) {
+                    refreshNotifier.fireEventually();
+                }
+                ChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(null);
+                if (prevRef != null) {
+                    prevRef.unpause();
                 }
             }
         });
