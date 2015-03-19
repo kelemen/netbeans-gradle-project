@@ -7,9 +7,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.UpdateTaskExecutor;
@@ -47,6 +44,7 @@ public final class ProjectProfileSettings {
     private final Runnable loadedListenersDispatcher;
     private final OneShotListenerManager<Runnable, Void> loadedListeners;
 
+    private final UpdateTaskExecutor loadExecutor;
     private final UpdateTaskExecutor saveExecutor;
 
     public ProjectProfileSettings(ProfileSettingsKey key) {
@@ -67,6 +65,7 @@ public final class ProjectProfileSettings {
             }
         };
         this.saveExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
+        this.loadExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
     }
 
     public ProfileSettingsKey getKey() {
@@ -113,37 +112,29 @@ public final class ProjectProfileSettings {
             return;
         }
 
-        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        loadExecutor.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
+            public void run() {
                 loadNowIfNotLoaded();
             }
-        }, null);
+        });
     }
 
     public void ensureLoadedAndWait() {
-        try {
-            loadNowIfNotLoaded();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+        loadNowIfNotLoaded();
     }
 
     public void loadEventually() {
-        SAVE_LOAD_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        loadExecutor.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
+            public void run() {
                 loadNowAlways();
             }
-        }, null);
+        });
     }
 
     public void loadAndWait() {
-        try {
-            loadNowAlways();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+        loadNowAlways();
     }
 
     private void setLoadedOnce() {
@@ -151,17 +142,25 @@ public final class ProjectProfileSettings {
         loadedListenersExecutor.execute(loadedListenersDispatcher);
     }
 
-    private void loadNowIfNotLoaded() throws IOException {
+    private void loadNowIfNotLoaded() {
         if (!loadedOnceSignal.isSignaled()) {
             loadNow(true);
         }
     }
 
-    private void loadNowAlways() throws IOException {
+    private void loadNowAlways() {
         loadNow(false);
     }
 
-    private void loadNow(boolean skipIfLoaded) throws IOException {
+    private void loadNow(boolean skipIfLoaded) {
+        try {
+            loadNowUnsafe(skipIfLoaded);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private void loadNowUnsafe(boolean skipIfLoaded) throws IOException {
         try {
             Path profileFile = tryGetProfileFile();
             if (profileFile == null) {
