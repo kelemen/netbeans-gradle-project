@@ -68,7 +68,7 @@ public final class TaskVariableQueryDialog extends JDialog {
 
     private static int getTypeOrder(DisplayedTaskVariable var) {
         Integer order = TYPE_ORDER.get(var.getTypeDescription().getTypeName());
-        return order != null ? order.intValue() : 0;
+        return order != null ? order : 0;
     }
 
     private static List<UserVariable> toUserVariables(Collection<DisplayedTaskVariable> variables) {
