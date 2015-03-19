@@ -23,6 +23,7 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
+import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.ListenerRef;
@@ -62,6 +63,8 @@ public final class NbGradleConfigProvider {
 
     private final UpdateTaskExecutor profileApplierExecutor;
 
+    private final MonitorableTaskExecutor profileIOExecutor;
+
     private NbGradleConfigProvider(Path rootDirectory) {
         ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
 
@@ -76,6 +79,7 @@ public final class NbGradleConfigProvider {
         this.multiProfileProperties = new MultiProfileProperties();
         this.settingsContainer = ProfileSettingsContainer.getDefault();
         this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
+        this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
     }
 
     public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
@@ -137,7 +141,7 @@ public final class NbGradleConfigProvider {
             return;
         }
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
                 removeFromConfig(config);
@@ -234,7 +238,7 @@ public final class NbGradleConfigProvider {
     }
 
     private void saveActiveProfileNow() throws IOException {
-        assert NbGradleProject.PROJECT_PROCESSOR.isExecutingInThis();
+        assert profileIOExecutor.isExecutingInThis();
 
         Path lastProfileFile = getLastProfileFile();
 
@@ -264,7 +268,7 @@ public final class NbGradleConfigProvider {
     }
 
     private void saveActiveProfile() {
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
                 saveActiveProfileNow();
@@ -274,7 +278,7 @@ public final class NbGradleConfigProvider {
 
     private void ensureLoadedAsynchronously() {
         if (hasBeenUsed.compareAndSet(false, true)) {
-            NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
                     findAndUpdateConfigurations(false);
