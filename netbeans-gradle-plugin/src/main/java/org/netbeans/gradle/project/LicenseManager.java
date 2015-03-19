@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
+import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.openide.filesystems.FileObject;
@@ -20,8 +20,8 @@ import org.openide.filesystems.FileUtil;
 public final class LicenseManager {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
 
-    private static final MonitorableTaskExecutorService SYNC_EXECUTOR
-            = NbTaskExecutors.newExecutor("LicenseManager-Processor", 1);
+    private static final MonitorableTaskExecutor SYNC_EXECUTOR
+            = NbTaskExecutors.newDefaultFifoExecutor();
 
     // The key File does not contain a path we only use File to properly
     // use case insensitivity if required.
