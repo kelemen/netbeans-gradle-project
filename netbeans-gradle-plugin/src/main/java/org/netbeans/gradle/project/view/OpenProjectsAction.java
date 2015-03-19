@@ -16,8 +16,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.api.project.ui.OpenProjects;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -94,7 +94,7 @@ public final class OpenProjectsAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 for (File projectDir: projectDirs) {
