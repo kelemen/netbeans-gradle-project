@@ -15,9 +15,7 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.SourceGroup;
@@ -25,8 +23,8 @@ import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.MultiMapUtils;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
@@ -51,7 +49,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     private volatile Map<String, SourceGroup[]> currentGroups;
 
     private final AtomicBoolean hasScanned;
-    private final AtomicReference<Object> scanRequestId;
+    private final UpdateTaskExecutor scanSourcesExecutor;
 
     public GradleProjectSources(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
@@ -60,7 +58,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         this.changeSupport = new ChangeSupport(this);
         this.currentGroups = Collections.emptyMap();
         this.hasScanned = new AtomicBoolean(false);
-        this.scanRequestId = new AtomicReference<>(null);
+        this.scanSourcesExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
 
         javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
             @Override
@@ -170,23 +168,15 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     }
 
     private void scanForSources(boolean initialScan) {
-        if (initialScan) {
-            if (!hasScanned.compareAndSet(false, true)) {
+        if (!hasScanned.compareAndSet(false, true)) {
+            if (initialScan) {
                 return;
             }
         }
 
-        final Object requestId = new Object();
-        if (!scanRequestId.compareAndSet(null, requestId)) {
-            return;
-        }
-
-        hasScanned.set(true);
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        scanSourcesExecutor.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) {
-                scanRequestId.compareAndSet(requestId, null);
-
+            public void run() {
                 Map<String, SourceGroup[]> groups = findSourceGroups(javaExt);
 
                 currentGroups = groups;
@@ -199,7 +189,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                     }
                 });
             }
-        }, null);
+        });
     }
 
     private SourceGroup[] getGenericGroup() {
