@@ -20,7 +20,6 @@ import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
@@ -82,10 +81,6 @@ import org.openide.util.lookup.ProxyLookup;
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
 
-    // Note: There is a lot of assumption on that this executor is
-    //   single-threaded and executes task in the order they were submitted.
-    public static final MonitorableTaskExecutorService PROJECT_PROCESSOR
-            = NbTaskExecutors.newExecutor("Gradle-Project-Processor", 1);
     private static final LicenseManager LICENSE_MANAGER = new LicenseManager();
 
     private final FileObject projectDir;
