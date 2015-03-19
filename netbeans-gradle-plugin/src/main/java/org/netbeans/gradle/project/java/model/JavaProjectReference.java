@@ -1,27 +1,18 @@
 package org.netbeans.gradle.project.java.model;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class JavaProjectReference implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    private static final Logger LOGGER = Logger.getLogger(JavaProjectReference.class.getName());
 
     private final File projectDir;
     private volatile NbJavaModule initialModule;
@@ -47,16 +38,7 @@ public final class JavaProjectReference implements Serializable {
     public Project tryGetProject() {
         Project result = projectRef.get();
         if (result == null) {
-            FileObject projectDirObj = FileUtil.toFileObject(projectDir);
-            try {
-                try (Closeable safeToOpen = NbGradleProjectFactory.safeToOpen(projectDir)) {
-                    assert safeToOpen != null; // Avoid warning
-
-                    result = ProjectManager.getDefault().findProject(projectDirObj);
-                }
-            } catch (IOException ex) {
-                LOGGER.log(Level.INFO, "Failed to open project.", ex);
-            }
+            result = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
 
             if (result != null) {
                 projectRef.set(result);
