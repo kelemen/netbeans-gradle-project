@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -13,6 +12,7 @@ import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.MultiMapUtils;
 
 public final class GradleTaskTree {
     private static final Logger LOGGER = Logger.getLogger(GradleTaskTree.class.getName());
@@ -69,15 +69,6 @@ public final class GradleTaskTree {
         return createTaskTree(taskLimit, 0, taskIDs);
     }
 
-    private static <K, V> void addToMultiMap(Map<K, List<V>> map, K key, V value) {
-        List<V> valueContainer = map.get(key);
-        if (valueContainer == null) {
-            valueContainer = new LinkedList<>();
-            map.put(key, valueContainer);
-        }
-        valueContainer.add(value);
-    }
-
     private static List<GradleTaskTree> createTaskTree(
             int taskLimit,
             int skipCharCount,
@@ -92,11 +83,11 @@ public final class GradleTaskTree {
             String name = taskID.getName();
             int nextPos = getNextWordStartPos(skipCharCount, name);
             if (nextPos < 0) {
-                addToMultiMap(splitTasks, name, taskID);
+                MultiMapUtils.addToMultiMap(name, taskID, splitTasks);
             }
             else {
                 String prefix = name.substring(0, nextPos);
-                addToMultiMap(splitTasks, prefix, taskID);
+                MultiMapUtils.addToMultiMap(prefix, taskID, splitTasks);
             }
         }
 
