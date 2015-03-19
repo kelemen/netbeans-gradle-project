@@ -13,12 +13,10 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.source.CompilationController;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.Task;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -26,9 +24,6 @@ import org.openide.filesystems.FileObject;
 
 public final class ShowTestUtils {
     private static final Logger LOGGER = Logger.getLogger(ShowTestUtils.class.getName());
-
-    public static final MonitorableTaskExecutorService FILE_OPEN_PROCESSOR
-            = NbTaskExecutors.newExecutor("Test-File-Open-Processor", 1);
 
     // This is mostly copied from the Maven plugin.
     public static boolean openTestMethod(

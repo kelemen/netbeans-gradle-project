@@ -14,6 +14,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.modules.gsf.testrunner.api.TestMethodNode;
@@ -188,7 +189,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
                 }
             });
 
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(cancel.getToken(), new CancelableTask() {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
                     progress.start();

@@ -13,6 +13,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -144,7 +145,7 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
                     jumpToSourcesNow();

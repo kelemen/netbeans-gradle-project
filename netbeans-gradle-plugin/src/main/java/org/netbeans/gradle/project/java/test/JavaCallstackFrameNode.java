@@ -11,6 +11,7 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.modules.gsf.testrunner.api.CallstackFrameNode;
@@ -76,7 +77,7 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            ShowTestUtils.FILE_OPEN_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
                     doActionNow(e);
