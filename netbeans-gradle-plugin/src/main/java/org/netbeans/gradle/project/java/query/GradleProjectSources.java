@@ -6,7 +6,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,6 +24,7 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -94,16 +94,6 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         return null;
     }
 
-    private static <K, V> void addToMultiMap(K key, V value, Map<K, List<V>> map) {
-        List<V> sourceGroupList = map.get(key);
-        if (sourceGroupList == null) {
-            sourceGroupList = new LinkedList<>();
-            map.put(key, sourceGroupList);
-        }
-
-        sourceGroupList.add(value);
-    }
-
     private static Map<String, List<SourceGroup>> findSourceGroupsOfModule(
             NbJavaModule module) {
         Map<String, List<SourceGroup>> result = new HashMap<>(8);
@@ -117,12 +107,12 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             JavaSourceGroupID groupID = root.getGroupID();
 
             if (groupID.getGroupName() == JavaSourceGroupName.RESOURCES) {
-                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
+                MultiMapUtils.addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
             }
             else {
-                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_JAVA, newGroup, result);
+                MultiMapUtils.addToMultiMap(JavaProjectConstants.SOURCES_TYPE_JAVA, newGroup, result);
                 if (groupID.isTest()) {
-                    addToMultiMap(JavaProjectConstants.SOURCES_HINT_TEST, newGroup, result);
+                    MultiMapUtils.addToMultiMap(JavaProjectConstants.SOURCES_HINT_TEST, newGroup, result);
                 }
 
                 // TODO: Consider "SOURCES_TYPE_GROOVY" and "SOURCES_TYPE_SCALA", "SOURCES_TYPE_ANTLR"
@@ -132,7 +122,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         for (NbListedDir listedDir: module.getListedDirs()) {
             SourceGroup newGroup = tryCreateSourceGroup(listedDir);
             if (newGroup != null) {
-                addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
+                MultiMapUtils.addToMultiMap(JavaProjectConstants.SOURCES_TYPE_RESOURCES, newGroup, result);
             }
         }
 
