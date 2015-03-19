@@ -8,9 +8,6 @@ public final class OtherPlugins {
     public static final PluginClassFactory CHANGE_LF
             = new PluginClassFactory("com.junichi11.netbeans.changelf");
 
-    public static final PluginClassFactory WEB_BEANS
-            = new PluginClassFactory("org.netbeans.modules.web.beans/2");
-
     public static final String JAVA_EE_EXTENSION_NAME = "org.netbeans.gradle.javaee.web.WebModuleExtensionDef";
     private static volatile Boolean hasJavaEE = null;
 
