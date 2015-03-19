@@ -14,28 +14,28 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class GenericChangeListenerManager implements PausableChangeListenerManager {
-    private final ListenerManager<Runnable> wrapped;
+    private final ChangeListenerManager wrapped;
     private final AtomicInteger pauseCount;
     private final AtomicBoolean hasUnfired;
     private final Runnable dispatcher;
 
     public GenericChangeListenerManager() {
-        this(new CopyOnTriggerListenerManager<Runnable>());
+        this(newDefaultListenerManager());
     }
 
     public GenericChangeListenerManager(TaskExecutor eventExecutor) {
-        this(new CopyOnTriggerListenerManager<Runnable>(), eventExecutor);
+        this(newDefaultListenerManager(), eventExecutor);
     }
 
-    public GenericChangeListenerManager(ListenerManager<Runnable> wrapped) {
+    public GenericChangeListenerManager(ChangeListenerManager wrapped) {
         this(wrapped, (UpdateTaskExecutor)null);
     }
 
-    public GenericChangeListenerManager(ListenerManager<Runnable> wrapped, TaskExecutor eventExecutor) {
+    public GenericChangeListenerManager(ChangeListenerManager wrapped, TaskExecutor eventExecutor) {
         this(wrapped, new GenericUpdateTaskExecutor(eventExecutor));
     }
 
-    private GenericChangeListenerManager(ListenerManager<Runnable> wrapped, final UpdateTaskExecutor executor) {
+    private GenericChangeListenerManager(ChangeListenerManager wrapped, final UpdateTaskExecutor executor) {
         ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
 
         this.wrapped = wrapped;
@@ -60,6 +60,26 @@ public final class GenericChangeListenerManager implements PausableChangeListene
         else {
             dispatcher = forwarder;
         }
+    }
+
+    private static ChangeListenerManager newDefaultListenerManager() {
+        final ListenerManager<Runnable> listeners = new CopyOnTriggerListenerManager<>();
+        return new ChangeListenerManager() {
+            @Override
+            public void fireEventually() {
+                EventListeners.dispatchRunnable(listeners);
+            }
+
+            @Override
+            public ListenerRef registerListener(Runnable listener) {
+                return listeners.registerListener(listener);
+            }
+
+            @Override
+            public int getListenerCount() {
+                return listeners.getListenerCount();
+            }
+        };
     }
 
     public static GenericChangeListenerManager getSwingNotifier() {
@@ -90,7 +110,7 @@ public final class GenericChangeListenerManager implements PausableChangeListene
 
     private void fireEventNow() {
         if (pauseCount.get() == 0) {
-            EventListeners.dispatchRunnable(wrapped);
+            wrapped.fireEventually();
         }
         else {
             hasUnfired.set(true);
