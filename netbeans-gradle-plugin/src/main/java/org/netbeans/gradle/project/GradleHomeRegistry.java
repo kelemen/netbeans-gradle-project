@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
-import org.jtrim.concurrent.GenericUpdateTaskExecutor;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -22,8 +22,8 @@ import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
 
 public final class GradleHomeRegistry {
-    private static final GenericUpdateTaskExecutor GRADLE_HOME_UPDATER
-            = new GenericUpdateTaskExecutor(NbGradleProject.PROJECT_PROCESSOR);
+    private static final UpdateTaskExecutor GRADLE_HOME_UPDATER
+            = NbTaskExecutors.newDefaultUpdateExecutor();
 
     private static final AtomicReference<GradleHomePaths> GRADLE_HOME_BINARIES;
     private static final AtomicBoolean REGISTERED_GLOBAL_PATH;
