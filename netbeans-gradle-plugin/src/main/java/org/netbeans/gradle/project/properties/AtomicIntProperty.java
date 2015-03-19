@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
@@ -10,9 +11,9 @@ public final class AtomicIntProperty implements MutableProperty<Integer> {
     private final AtomicInteger value;
     private final ChangeListenerManager listeners;
 
-    public AtomicIntProperty() {
+    public AtomicIntProperty(TaskExecutor eventExecutor) {
         this.value = new AtomicInteger(0);
-        this.listeners = GenericChangeListenerManager.getSwingNotifier();
+        this.listeners = new GenericChangeListenerManager(eventExecutor);
     }
 
     private void fireChangeEvent() {

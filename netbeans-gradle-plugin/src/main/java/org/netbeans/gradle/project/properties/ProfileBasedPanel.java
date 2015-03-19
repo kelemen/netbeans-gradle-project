@@ -31,6 +31,7 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -68,7 +69,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         this.project = project;
         this.snapshotCreator = snapshotCreator;
-        this.profileLoadCounter= new AtomicIntProperty();
+        this.profileLoadCounter = new AtomicIntProperty(SwingTaskExecutor.getStrictExecutor(false));
         this.currentlyShownProfile = null;
         this.snapshots = new HashMap<>();
         this.customPanelLayer = new JLayer<>(customPanel);
