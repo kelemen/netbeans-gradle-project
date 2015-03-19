@@ -71,18 +71,7 @@ public final class SmartOutputHandler implements LineOutputWriter.Handler {
             error = ex;
         }
 
-        if (error != null) {
-            if (error instanceof IOException) {
-                throw (IOException)error;
-            }
-            if (error instanceof RuntimeException) {
-                throw (RuntimeException)error;
-            }
-            if (error instanceof Error) {
-                throw (Error)error;
-            }
-            throw new RuntimeException(error.getMessage(), error);
-        }
+        ExceptionHelper.rethrowCheckedIfNotNull(error, IOException.class);
     }
 
     @Override
