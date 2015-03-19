@@ -72,12 +72,12 @@ public final class OpenEditorOutputListener implements OutputListener, ActionLis
     }
 
     private void openInEditor() {
-        if (lineNumber < 0) {
+        if (lineNumber <= 0) {
             editor.open();
         }
         else {
             try {
-                editor.getLineSet().getCurrent(lineNumber).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                editor.getLineSet().getCurrent(lineNumber - 1).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
             } catch (IndexOutOfBoundsException ex) {
                 // In case the lineNumber is invalid
                 LOGGER.warning("Invalid line number in the document to be opened.");

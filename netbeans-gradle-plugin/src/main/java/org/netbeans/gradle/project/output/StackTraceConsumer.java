@@ -57,7 +57,7 @@ public final class StackTraceConsumer implements OutputLinkFinder {
             if (javaFo != null) {
                 int lineInt = -1;
                 try {
-                    lineInt = Integer.parseInt(lineNum) - 1;
+                    lineInt = Integer.parseInt(lineNum);
                 } catch (NumberFormatException ex) {
                 }
                 return OpenEditorOutputListener.tryCreateListener(javaFo, lineInt);
