@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +16,7 @@ import org.netbeans.gradle.model.internal.IssueTransformer;
 import org.netbeans.gradle.model.internal.SerializedEntries;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 final class GradleInfoQueryMap {
@@ -105,19 +105,6 @@ final class GradleInfoQueryMap {
         return new Deserializer(builderMap, classpath);
     }
 
-    private static void addToMultiMap(Object key, Object value, Map<Object, List<Object>> result) {
-        addAllToMultiMap(key, Collections.singletonList(value), result);
-    }
-
-    private static void addAllToMultiMap(Object key, List<?> values, Map<Object, List<Object>> result) {
-        List<Object> container = result.get(key);
-        if (container == null) {
-            container = new LinkedList<Object>();
-            result.put(key, container);
-        }
-        container.addAll(values);
-    }
-
     @SuppressWarnings("unchecked")
     private static Map<Object, List<?>> unsafeCast(Map<Object, List<Object>> map) {
         return (Map<Object, List<?>>)(Map<?, ?>)map;
@@ -135,19 +122,19 @@ final class GradleInfoQueryMap {
         for (Map.Entry<Object, SerializedEntries> entry: map.getMap().entrySet()) {
             KeyWrapper key = (KeyWrapper)entry.getKey();
             List<?> values = entry.getValue().getUnserialized(getClassLoaderForKey(key));
-            addAllToMultiMap(key.wrappedKey, values, result);
+            MultiMapUtils.addAllToMultiMap(key.wrappedKey, values, result);
         }
 
         for (Map.Entry<Object, Throwable> entry: map.getSerializationProblems().entrySet()) {
             KeyWrapper key = (KeyWrapper)entry.getKey();
             Object issue = issueTransformer.transformIssue(entry.getValue());
-            addToMultiMap(key.wrappedKey, issue, result);
+            MultiMapUtils.addToMultiMap(key.wrappedKey, issue, result);
         }
 
         for (Map.Entry<KeyWrapper, Throwable> entry: serializationIssues.entrySet()) {
             Object key = entry.getKey().wrappedKey;
             Object issue = issueTransformer.transformIssue(entry.getValue());
-            addToMultiMap(key, issue, result);
+            MultiMapUtils.addToMultiMap(key, issue, result);
         }
 
         return unsafeCast(result);
