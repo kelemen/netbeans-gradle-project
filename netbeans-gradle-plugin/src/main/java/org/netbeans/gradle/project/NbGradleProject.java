@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -156,6 +157,10 @@ public final class NbGradleProject implements Project {
     @Nonnull
     public List<NbGradleExtensionRef> getExtensionRefs() {
         return extensionRefs;
+    }
+
+    public boolean isSameProject(Project other) {
+        return Objects.equals(other.getProjectDirectory(), getProjectDirectory());
     }
 
     private List<Lookup> extractLookupsFromProviders(Lookup providerContainer) {
