@@ -16,13 +16,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
@@ -42,6 +40,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     private final ReentrantLock initLock;
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
     private final Map<ClassPathType, ClassPath> classpaths;
+    private final UpdateTaskExecutor classpathUpdateExecutor;
 
     private final PropertyChangeSupport changes;
 
@@ -51,6 +50,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         this.initialized = false;
         this.classpaths = new EnumMap<>(ClassPathType.class);
         this.classpathResources = new ConcurrentHashMap<>();
+        this.classpathUpdateExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
 
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
@@ -135,24 +135,28 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         }
     }
 
+    private void scheduleUpdateClassPath() {
+        classpathUpdateExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                updateClassPathResources();
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+                    }
+                });
+            }
+        });
+    }
+
     private void unsafeInit() {
         assert initLock.isHeldByCurrentThread();
 
         Runnable changeListener = new Runnable() {
             @Override
             public void run() {
-                NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                    @Override
-                    public void execute(CancellationToken cancelToken) {
-                        updateClassPathResources();
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
-                            }
-                        });
-                    }
-                }, null);
+                scheduleUpdateClassPath();
             }
         };
 
