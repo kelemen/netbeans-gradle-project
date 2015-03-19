@@ -5,12 +5,12 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
@@ -33,9 +33,7 @@ public final class GradleModelCache {
         this.cacheLock = new ReentrantLock();
         this.maxCapacity = new AtomicInteger(maxCapacity);
 
-        float loadFactor = 0.75f;
-        int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
-        this.cache = new LinkedHashMap<>(capacity, loadFactor, true);
+        this.cache = CollectionUtils.newLinkedHashMap(maxCapacity);
         this.updateListeners = new PropertyChangeSupport(this);
     }
 

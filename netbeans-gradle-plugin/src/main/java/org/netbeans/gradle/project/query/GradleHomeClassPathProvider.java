@@ -5,7 +5,6 @@ import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleHomeRegistry;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
@@ -157,9 +157,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         public SimpleCache(int maxCapacity) {
             this.cacheLock = new ReentrantLock();
 
-            float loadFactor = 0.75f;
-            int capacity = (int)Math.floor((float)(maxCapacity + 1) / loadFactor);
-            this.cache = new LinkedHashMap<>(capacity, loadFactor, true);
+            this.cache = CollectionUtils.newLinkedHashMap(maxCapacity);
             this.maxCapacity = maxCapacity;
         }
 
