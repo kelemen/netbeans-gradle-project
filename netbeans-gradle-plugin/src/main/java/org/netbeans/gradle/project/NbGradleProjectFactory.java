@@ -3,6 +3,7 @@ package org.netbeans.gradle.project;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,6 +27,59 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
             = new ConcurrentHashMap<>();
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
+
+    public static Project loadSafeProject(Path projectDir) throws IOException {
+        return loadSafeProject(projectDir.toFile());
+    }
+
+    public static Project loadSafeProject(File projectDir) throws IOException {
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir);
+        if (projectDirObj == null) {
+            throw new IllegalArgumentException("Project directory does not exist: " + projectDir);
+        }
+        return loadSafeProject(projectDirObj);
+    }
+
+    public static Project loadSafeProject(FileObject projectDir) throws IOException {
+        Project result = findSafeProject(projectDir);
+        if (result == null) {
+            throw new IllegalArgumentException("Project does not exist: " + projectDir);
+        }
+        return result;
+    }
+
+    public static Project tryLoadSafeProject(Path projectDir) {
+        return tryLoadSafeProject(projectDir.toFile());
+    }
+
+    public static Project tryLoadSafeProject(File projectDir) {
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir);
+        if (projectDirObj == null) {
+            return null;
+        }
+        return tryLoadSafeProject(projectDirObj);
+    }
+
+    public static Project tryLoadSafeProject(FileObject projectDir) {
+        try {
+            return findSafeProject(projectDir);
+        } catch (IOException | IllegalArgumentException ex) {
+            LOGGER.log(Level.INFO, "Failed to load project: " + projectDir, ex);
+            return null;
+        }
+    }
+
+    private static Project findSafeProject(FileObject projectDir) throws IOException {
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
+        try (Closeable safeToOpen = NbGradleProjectFactory.safeToOpen(projectDir)) {
+            assert safeToOpen != null; // Avoid warning
+
+            return ProjectManager.getDefault().findProject(projectDir);
+        }
+    }
 
     public static Closeable safeToOpen(FileObject projectDir) {
         File projectDirFile = FileUtil.toFile(projectDir);
