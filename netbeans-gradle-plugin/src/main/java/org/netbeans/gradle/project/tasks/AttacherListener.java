@@ -17,7 +17,6 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
@@ -40,8 +39,6 @@ import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
-    private static final MonitorableTaskExecutorService ATTACH_EXECUTOR
-            = NbTaskExecutors.newExecutor("Debug-Attach-Executor", 1);
 
     private final JavaExtension javaExt;
     private final CancellationController buildCancel;
@@ -141,7 +138,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
 
     @Override
     public void onDebugeeListening(final int port) {
-        ATTACH_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 try {
