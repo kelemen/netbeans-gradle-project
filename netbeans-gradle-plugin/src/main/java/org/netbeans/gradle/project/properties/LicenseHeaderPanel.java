@@ -8,10 +8,6 @@ import org.openide.filesystems.FileChooserBuilder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
-/**
- *
- * @author Kelemen Attila
- */
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel {
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";

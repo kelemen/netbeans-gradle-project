@@ -9,10 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
-/**
- *
- * @author radim
- */
 public class GradleTestExtension implements GradleProjectExtension {
     private final AtomicReference<Lookup> lookupRef;
 

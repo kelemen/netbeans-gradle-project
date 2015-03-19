@@ -3,10 +3,6 @@ package org.netbeans.gradle.project.others;
 import java.lang.reflect.Method;
 import org.openide.util.Lookup;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class PluginLookupMethod {
     private final PluginClass pluginClass;
     private final String methodName;

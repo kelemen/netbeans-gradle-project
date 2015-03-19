@@ -5,10 +5,6 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 
 import static org.junit.Assert.*;
 
-/**
- *
- * @author Kelemen Attila
- */
 public class TaskVariableTest {
 
     private static TaskVariable create(String name) {

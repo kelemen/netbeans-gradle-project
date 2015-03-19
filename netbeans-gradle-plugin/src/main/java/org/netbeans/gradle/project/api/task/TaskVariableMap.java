@@ -11,8 +11,6 @@ import javax.annotation.Nullable;
  * multiple threads concurrently.
  *
  * @see GradleTaskVariableQuery
- *
- * @author Kelemen Attila
  */
 public interface TaskVariableMap {
     /**

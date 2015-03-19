@@ -13,8 +13,6 @@ import org.openide.filesystems.FileObject;
 
 /**
  * AnnotationProcessingQueryImplementation implementation
- *
- * @author César Izurieta
  */
 public final class GradleAnnotationProcessingQuery implements AnnotationProcessingQueryImplementation {
     @Override

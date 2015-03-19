@@ -22,8 +22,6 @@ import org.netbeans.gradle.project.api.event.NbListenerRef;
  *
  * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup()
  * @see ManualRefreshedNodes
- *
- * @author Kelemen Attila
  */
 public interface GradleProjectExtensionNodes {
     /**

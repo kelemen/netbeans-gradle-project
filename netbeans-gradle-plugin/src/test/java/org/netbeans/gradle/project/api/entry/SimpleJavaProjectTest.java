@@ -60,10 +60,6 @@ import org.openide.util.lookup.Lookups;
 import static org.netbeans.spi.project.ActionProvider.*;
 import static org.junit.Assert.*;
 
-/**
- *
- * @author radim
- */
 public class SimpleJavaProjectTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;

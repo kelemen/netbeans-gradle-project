@@ -19,10 +19,6 @@ import org.jtrim.utils.ExceptionHelper;
 
 import static org.jtrim.property.swing.AutoDisplayState.invisibleGlassPane;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class GlassPanes {
     private static final Color LOADING_PANEL_BASE_BCKG = Color.GRAY;
     private static final Color LOADING_PANEL_BCKG = toTransparent(LOADING_PANEL_BASE_BCKG);

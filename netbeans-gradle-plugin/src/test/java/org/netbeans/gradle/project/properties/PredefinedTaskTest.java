@@ -21,10 +21,6 @@ import org.netbeans.gradle.project.model.NbGradleProjectTree;
 
 import static org.junit.Assert.*;
 
-/**
- *
- * @author Kelemen Attila
- */
 public class PredefinedTaskTest {
     @BeforeClass
     public static void setUpClass() {

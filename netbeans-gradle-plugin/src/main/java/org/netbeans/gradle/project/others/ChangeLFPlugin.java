@@ -4,10 +4,6 @@ import java.lang.reflect.Method;
 import org.netbeans.api.project.Project;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
-/**
- *
- * @author Kelemen Attila
- */
 public final class ChangeLFPlugin {
     private static final PluginLookupMethod LINE_FEED_METHOD;
     private static final PluginLookupMethod PROJECT_SETTINGS_METHOD;

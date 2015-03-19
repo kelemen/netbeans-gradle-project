@@ -21,8 +21,6 @@ import javax.swing.Action;
  *
  * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup()
  * @see GradleProjectAction
- *
- * @author Kelemen Attila
  */
 public interface GradleProjectContextActions {
     /**
