@@ -19,17 +19,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
@@ -75,6 +73,8 @@ implements
 
     private volatile boolean loadedOnce;
 
+    private final UpdateTaskExecutor classpathUpdateExecutor;
+
     public GradleClassPathProvider(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
@@ -87,6 +87,7 @@ implements
         this.classpaths = new ConcurrentHashMap<>();
         this.allSources = Collections.emptyList();
         this.allSourcesClassPathRef = new AtomicReference<>(null);
+        this.classpathUpdateExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
 
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
@@ -146,12 +147,12 @@ implements
 
     @Override
     public void onModelChange() {
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        classpathUpdateExecutor.execute(new Runnable() {
             @Override
-            public void execute(CancellationToken cancelToken) {
+            public void run() {
                 loadPathResources(javaExt.getCurrentModel());
             }
-        }, null);
+        });
     }
 
     private GradleProperty.BuildPlatform getPlatformProperty() {
