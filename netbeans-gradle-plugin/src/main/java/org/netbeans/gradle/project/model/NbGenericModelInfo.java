@@ -6,8 +6,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -49,7 +49,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public boolean isBuildSrc() {
-        return getProjectDir().getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
+        return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
     }
 
     public File getBuildFile() {
@@ -103,12 +103,12 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public static File getBuildFile(File projectDir) {
-        File buildFile = new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
+        File buildFile = new File(projectDir, SettingsFiles.BUILD_FILE_NAME);
         if (buildFile.isFile()) {
             return buildFile;
         }
 
-        buildFile = new File(projectDir, projectDir.getName() + GradleProjectConstants.DEFAULT_GRADLE_EXTENSION);
+        buildFile = new File(projectDir, projectDir.getName() + SettingsFiles.DEFAULT_GRADLE_EXTENSION);
         if (buildFile.isFile()) {
             return buildFile;
         }
@@ -129,7 +129,7 @@ public final class NbGenericModelInfo implements Serializable {
             return null;
         }
 
-        FileObject settingsGradle = projectDir.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME);
+        FileObject settingsGradle = projectDir.getFileObject(SettingsFiles.SETTINGS_GRADLE);
         if (settingsGradle != null && !settingsGradle.isVirtual()) {
             return settingsGradle;
         }

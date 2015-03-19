@@ -10,12 +10,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
@@ -172,12 +172,12 @@ public final class BuildScriptsNode extends AbstractNode {
         private static FileObject tryGetHomeGradleProperties() {
             FileObject userHome = GradleFileUtils.getGradleUserHomeFileObject();
             return userHome != null
-                    ? userHome.getFileObject(GradleProjectConstants.GRADLE_PROPERTIES_NAME)
+                    ? userHome.getFileObject(SettingsFiles.GRADLE_PROPERTIES_NAME)
                     : null;
         }
 
         private static File getLocalGradleProperties(NbGradleModel model) {
-            return new File(model.getProjectDir(), GradleProjectConstants.GRADLE_PROPERTIES_NAME);
+            return new File(model.getProjectDir(), SettingsFiles.GRADLE_PROPERTIES_NAME);
         }
 
         private static FileObject tryGetLocalGradlePropertiesObj(NbGradleModel model) {
@@ -201,7 +201,7 @@ public final class BuildScriptsNode extends AbstractNode {
             FileObject rootBuildDir = getRootBuildDir(settingsGradle);
 
             if (rootBuildDir != null && !model.isBuildSrc()) {
-                FileObject buildSrcObj = rootBuildDir.getFileObject(GradleProjectConstants.BUILD_SRC_NAME);
+                FileObject buildSrcObj = rootBuildDir.getFileObject(SettingsFiles.BUILD_SRC_NAME);
                 final File buildSrc = buildSrcObj != null
                         ? FileUtil.toFile(buildSrcObj)
                         : null;
@@ -227,7 +227,7 @@ public final class BuildScriptsNode extends AbstractNode {
             FileObject homePropertiesFile = tryGetHomeGradleProperties();
             if (homePropertiesFile != null) {
                 addFileObject(homePropertiesFile,
-                        NbStrings.getUserHomeFileName(GradleProjectConstants.GRADLE_PROPERTIES_NAME),
+                        NbStrings.getUserHomeFileName(SettingsFiles.GRADLE_PROPERTIES_NAME),
                         toPopulate);
             }
 

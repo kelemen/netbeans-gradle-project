@@ -18,7 +18,6 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.property.swing.SwingProperties;
@@ -52,7 +51,7 @@ public final class BackgroundValidator {
                 eventListener.stateChanged(new ChangeEvent(BackgroundValidator.this));
             }
         });
-        this.valid = PropertyFactory.convert(currentProblem, new ValueConverter<Problem, Boolean>() {
+        this.valid = convert(currentProblem, new ValueConverter<Problem, Boolean>() {
             @Override
             public Boolean convert(Problem input) {
                 return input == null || input.getLevel() != Problem.Level.SEVERE;

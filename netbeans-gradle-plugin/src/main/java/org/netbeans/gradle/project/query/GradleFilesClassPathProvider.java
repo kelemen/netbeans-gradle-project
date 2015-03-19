@@ -22,9 +22,9 @@ import org.jtrim.concurrent.CancelableTask;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -59,7 +59,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
     public static boolean isGradleFile(FileObject file) {
         // case-insensitive check, so that there is no surprise on Windows.
-        return GradleProjectConstants.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(file.getExt());
+        return SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(file.getExt());
     }
 
     // These PropertyChangeListener methods are declared because

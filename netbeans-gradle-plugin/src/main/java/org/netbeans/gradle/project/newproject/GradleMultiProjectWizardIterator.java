@@ -15,8 +15,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.templates.TemplateRegistration;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
@@ -57,9 +57,8 @@ implements
         Map<String, String> varReplaceMap =
                 Collections.singletonMap("${PROJECT_NAME}", projectDir.getName());
 
-        NewProjectUtils.copyTemplateFile(
-                MULTI_PROJECT_SETTINGS_GRADLE,
-                new File(projectDir, GradleProjectConstants.SETTINGS_FILE_NAME),
+        NewProjectUtils.copyTemplateFile(MULTI_PROJECT_SETTINGS_GRADLE,
+                new File(projectDir, SettingsFiles.SETTINGS_GRADLE),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
@@ -104,7 +103,7 @@ implements
 
         NewProjectUtils.createDefaultSourceDirs(projectDir);
         createParentGradle(projectDirAsFile, config);
-        copyToProject(projectDirAsFile, MULTI_PROJECT_BUILD_GRADLE, GradleProjectConstants.BUILD_FILE_NAME);
+        copyToProject(projectDirAsFile, MULTI_PROJECT_BUILD_GRADLE, SettingsFiles.BUILD_FILE_NAME);
         createSettingsGradle(projectDirAsFile);
 
         return Collections.singleton(projectDir);

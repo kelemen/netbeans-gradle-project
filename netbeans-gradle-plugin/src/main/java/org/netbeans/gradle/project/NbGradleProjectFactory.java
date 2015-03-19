@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.ProjectFactory2;
 import org.netbeans.spi.project.ProjectState;
@@ -71,13 +72,13 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static boolean hasBuildFile(FileObject directory) {
-        if (directory.getFileObject(GradleProjectConstants.BUILD_FILE_NAME) != null) {
+        if (directory.getFileObject(SettingsFiles.BUILD_FILE_NAME) != null) {
             return true;
         }
-        if (directory.getFileObject(GradleProjectConstants.SETTINGS_FILE_NAME) != null) {
+        if (directory.getFileObject(SettingsFiles.SETTINGS_GRADLE) != null) {
             return true;
         }
-        return directory.getFileObject(directory.getNameExt() + GradleProjectConstants.DEFAULT_GRADLE_EXTENSION) != null;
+        return directory.getFileObject(directory.getNameExt() + SettingsFiles.DEFAULT_GRADLE_EXTENSION) != null;
     }
 
     @Override
@@ -113,7 +114,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         if (hasBuildFile(projectDirectory)) {
             return true;
         }
-        if (projectDirectory.getNameExt().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME)) {
+        if (projectDirectory.getNameExt().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME)) {
             FileObject parent = projectDirectory.getParent();
             if (parent != null) {
                 if (hasBuildFile(parent)) {

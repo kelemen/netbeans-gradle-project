@@ -12,8 +12,8 @@ import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.templates.TemplateRegistration;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -72,7 +72,7 @@ implements
         buildGradleContent = buildGradleContent.replace("${MAIN_CLASS}",
                 mainClass != null ? mainClass : "");
 
-        File buildGradle = new File(projectDir, GradleProjectConstants.BUILD_FILE_NAME);
+        File buildGradle = new File(projectDir, SettingsFiles.BUILD_FILE_NAME);
         StringUtils.writeStringToFile(buildGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, buildGradle);
     }
 

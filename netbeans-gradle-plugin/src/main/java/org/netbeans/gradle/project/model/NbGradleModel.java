@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.openide.filesystems.FileObject;
 
 public final class NbGradleModel {
@@ -132,7 +132,7 @@ public final class NbGradleModel {
     }
 
     public boolean isBuildSrc() {
-        return getProjectDir().getName().equalsIgnoreCase(GradleProjectConstants.BUILD_SRC_NAME);
+        return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
     }
 
     public boolean isRootProject() {

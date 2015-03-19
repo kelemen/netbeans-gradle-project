@@ -20,15 +20,21 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 public final class SettingsFiles {
     private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
 
-    private static final String SETTINGS_FILENAME = ".nb-gradle-properties";
+    public static final String SETTINGS_GRADLE = "settings.gradle";
+    public static final String BUILD_FILE_NAME = "build.gradle";
+    public static final String GRADLE_PROPERTIES_NAME = "gradle.properties";
+    public static final String BUILD_SRC_NAME = "buildSrc";
+    public static final String DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT = "gradle";
+    public static final String DEFAULT_GRADLE_EXTENSION = "." + DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT;
+
+    private static final String DEFAULT_PROPERTIES_FILENAME = ".nb-gradle-properties";
     private static final String PROFILE_FILE_NAME_SUFFIX = ".profile";
     private static final String SETTINGS_DIR_NAME = ".nb-gradle";
     private static final String PROFILE_DIRECTORY = "profiles";
-    private static final String PRIVATE_SETTINGS_DIR = "private";
     private static final String CACHE_DIR = "cache";
 
     public static Path getPrivateSettingsDir(Path rootDir) {
-        return getSettingsDir(rootDir).resolve(PRIVATE_SETTINGS_DIR);
+        return getSettingsDir(rootDir).resolve(ProfileKey.PRIVATE_PROFILE.getGroupName());
     }
 
     public static Path getCacheDir(Path rootDir) {
@@ -103,7 +109,7 @@ public final class SettingsFiles {
             return profileFileDir.resolve(profileKey.getFileName());
         }
         else {
-            return rootDir.resolve(SETTINGS_FILENAME);
+            return rootDir.resolve(DEFAULT_PROPERTIES_FILENAME);
         }
     }
 
@@ -114,7 +120,7 @@ public final class SettingsFiles {
     public static Path[] getFilesForProfile(Path rootDir, ProfileKey profileKey) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
 
-        Path mainFile = rootDir.resolve(SETTINGS_FILENAME);
+        Path mainFile = rootDir.resolve(DEFAULT_PROPERTIES_FILENAME);
 
         if (profileKey == null) {
             return new Path[]{mainFile};

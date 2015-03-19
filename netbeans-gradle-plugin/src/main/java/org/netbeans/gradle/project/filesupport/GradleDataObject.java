@@ -4,8 +4,8 @@ import java.io.IOException;
 import org.netbeans.core.api.multiview.MultiViews;
 import org.netbeans.core.spi.multiview.MultiViewElement;
 import org.netbeans.core.spi.multiview.text.MultiViewEditorElement;
-import org.netbeans.gradle.project.GradleProjectConstants;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -197,7 +197,7 @@ public final class GradleDataObject extends MultiDataObject {
         }
 
         private String annotateWithFolder(String name) {
-            if (GradleProjectConstants.BUILD_FILE_NAME.equals(getPrimaryFile().getNameExt())) {
+            if (SettingsFiles.BUILD_FILE_NAME.equals(getPrimaryFile().getNameExt())) {
                 FileObject parent = getPrimaryFile().getParent();
                 if (parent != null) {
                     String folderName = parent.getNameExt();
