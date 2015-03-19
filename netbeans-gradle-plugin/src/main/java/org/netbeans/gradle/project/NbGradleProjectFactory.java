@@ -23,7 +23,7 @@ import org.openide.filesystems.FileUtil;
 public class NbGradleProjectFactory implements ProjectFactory2 {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
-    private static final ConcurrentMap<File, RefCounter> SAFE_TO_OPEN_PROJECTS
+    private static final ConcurrentMap<Path, RefCounter> SAFE_TO_OPEN_PROJECTS
             = new ConcurrentHashMap<>();
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
@@ -91,21 +91,27 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static Closeable safeToOpen(File projectDir) {
+        return safeToOpen(projectDir.toPath());
+    }
+
+    public static Closeable safeToOpen(Path projectDir) {
         ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
+        Path normProjectDir = projectDir.normalize();
 
         RefCounter counter;
         RefCounter newCounter;
         boolean set;
 
         do {
-            counter = SAFE_TO_OPEN_PROJECTS.get(projectDir);
+            counter = SAFE_TO_OPEN_PROJECTS.get(normProjectDir);
             if (counter == null) {
                 newCounter = new RefCounter(1);
-                set = SAFE_TO_OPEN_PROJECTS.putIfAbsent(projectDir, newCounter) == null;
+                set = SAFE_TO_OPEN_PROJECTS.putIfAbsent(normProjectDir, newCounter) == null;
             }
             else {
                 newCounter = counter.increment();
-                set = SAFE_TO_OPEN_PROJECTS.replace(projectDir, counter, newCounter);
+                set = SAFE_TO_OPEN_PROJECTS.replace(normProjectDir, counter, newCounter);
             }
         } while(!set);
 
@@ -113,7 +119,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
             LOGGER.log(Level.INFO, "Project is now safe to load: {0}", projectDir);
         }
 
-        return new CounterCloser(projectDir);
+        return new CounterCloser(normProjectDir);
     }
 
     public static boolean isSafeToOpen(FileObject projectDir) {
@@ -122,7 +128,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
             return false;
         }
 
-        return SAFE_TO_OPEN_PROJECTS.containsKey(projectDirFile);
+        return SAFE_TO_OPEN_PROJECTS.containsKey(projectDirFile.toPath());
     }
 
     private static boolean hasBuildFile(FileObject directory) {
@@ -227,10 +233,10 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static class CounterCloser implements Closeable {
-        private final File key;
+        private final Path key;
         private final AtomicBoolean closed;
 
-        public CounterCloser(File key) {
+        public CounterCloser(Path key) {
             ExceptionHelper.checkNotNullArgument(key, "key");
 
             this.key = key;
