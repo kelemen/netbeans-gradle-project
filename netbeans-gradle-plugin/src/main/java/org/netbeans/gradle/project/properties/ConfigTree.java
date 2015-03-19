@@ -397,7 +397,7 @@ public final class ConfigTree {
             String key = entry.getKey();
             for (ConfigTree tree: entry.getValue()) {
                 result.append('\n');
-                tree.toString(key.toString() + " -> ", indent + 1, result);
+                tree.toString(key + " -> ", indent + 1, result);
             }
         }
     }
