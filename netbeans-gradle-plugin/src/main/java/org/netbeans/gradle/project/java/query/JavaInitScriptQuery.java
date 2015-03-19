@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.java.query;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;

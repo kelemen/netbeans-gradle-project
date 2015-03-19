@@ -8,7 +8,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class GradleSourceEncodingQuery extends FileEncodingQueryImplementation {
     private final NbGradleProject project;

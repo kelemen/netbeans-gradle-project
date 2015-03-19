@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.nodes;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
