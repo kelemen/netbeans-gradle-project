@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
@@ -120,6 +123,22 @@ public final class StringUtils {
 
             return writer.toString();
         }
+    }
+
+    public static String replaceLFWithPreferredLineSeparator(String str) {
+        return replaceLFWithPreferredLineSeparator(str, null);
+    }
+
+    public static String replaceLFWithPreferredLineSeparator(String str, Project ownerProject) {
+        String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(ownerProject);
+        if (lineSeparator == null) {
+            lineSeparator = FileSystems.getDefault().getSeparator();
+        }
+        if ("\n".equals(lineSeparator)) {
+            return str;
+        }
+
+        return lineSeparator.replace("\n", lineSeparator);
     }
 
     public static void writeStringToFile(String content, Charset encoding, Path file) throws IOException {
