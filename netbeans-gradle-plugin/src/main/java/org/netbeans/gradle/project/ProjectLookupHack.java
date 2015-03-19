@@ -50,9 +50,13 @@ public final class ProjectLookupHack extends ProxyLookup {
         setLookups(new AccessPreventerLookup());
     }
 
-    private Lookup activate() {
+    private Lookup activate(Object reason) {
         Lookup result = lookupContainer.getLookupAndActivate();
         if (activated.compareAndSet(false, true)) {
+            FileObject projectDir = lookupContainer.getProject().getProjectDirectory();
+            LOGGER.log(Level.INFO,
+                    "Activating project ({0}) lookup due to requesting: {1}",
+                    new Object[]{projectDir, reason});
             setLookups(result);
         }
         return result;
@@ -114,8 +118,7 @@ public final class ProjectLookupHack extends ProxyLookup {
                 return action;
             }
             else {
-                LOGGER.log(Level.INFO, "Activating project lookup because of the request type: {0}", type.getName());
-                return activate();
+                return activate(type.getName());
             }
         }
 
@@ -153,7 +156,7 @@ public final class ProjectLookupHack extends ProxyLookup {
                 lookup = lookupContainer.getLookup();
             }
             else {
-                lookup = activate();
+                lookup = activate("ClassPathProvider.findClassPath");
             }
 
             for (ClassPathProvider otherProvider: lookup.lookupAll(ClassPathProvider.class)) {
