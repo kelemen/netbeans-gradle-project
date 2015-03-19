@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutorService;
 import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
@@ -32,9 +31,8 @@ public final class ProjectProfileSettings {
     private final ProfileSettingsKey key;
     private final ProfileSettings settings;
 
-    private final WaitableSignal loadedOnceSignal;
     private final Lock ioLock;
-    private boolean loadedOnce;
+    private volatile boolean loadedOnce;
 
     private volatile boolean dirty;
 
@@ -51,7 +49,6 @@ public final class ProjectProfileSettings {
         this.ioLock = new ReentrantLock();
         this.dirty = false;
         this.loadedOnce = false;
-        this.loadedOnceSignal = new WaitableSignal();
         this.loadedListeners = OneShotChangeListenerManager.getSwingNotifier();
         this.saveExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
         this.loadExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
@@ -93,11 +90,11 @@ public final class ProjectProfileSettings {
     }
 
     public boolean isLoadedOnce() {
-        return loadedOnceSignal.isSignaled();
+        return loadedOnce;
     }
 
     public void ensureLoaded() {
-        if (loadedOnceSignal.isSignaled()) {
+        if (loadedOnce) {
             return;
         }
 
@@ -126,13 +123,8 @@ public final class ProjectProfileSettings {
         loadNowAlways();
     }
 
-    private void setLoadedOnce() {
-        loadedOnceSignal.signal();
-        loadedListeners.fireEventually();
-    }
-
     private void loadNowIfNotLoaded() {
-        if (!loadedOnceSignal.isSignaled()) {
+        if (!loadedOnce) {
             loadNow(true);
         }
     }
@@ -159,7 +151,7 @@ public final class ProjectProfileSettings {
 
             loadFromFile(profileFile, skipIfLoaded);
         } finally {
-            setLoadedOnce();
+            loadedListeners.fireEventually();
         }
     }
 
