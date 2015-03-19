@@ -39,6 +39,7 @@ import org.netbeans.gradle.project.tasks.DaemonTaskDef;
 import org.netbeans.gradle.project.tasks.DownloadSourcesTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -51,7 +52,6 @@ import org.openide.nodes.Node;
 
 public final class JavaDependenciesNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(JavaDependenciesNode.class.getName());
-    private static final Collator STR_CMP = Collator.getInstance();
 
     private static final TaskExecutor SOURCES_DOWNLOADER
             = NbTaskExecutors.newExecutor("Sources-downloader", 1);
@@ -291,14 +291,14 @@ public final class JavaDependenciesNode extends AbstractNode {
                 return -1;
             }
 
-            return STR_CMP.compare(module1.getShortName(), module2.getShortName());
+            return StringUtils.STR_CMP.compare(module1.getShortName(), module2.getShortName());
         }
 
         private static int compareFileDependencyNodes(FileDependency node1, FileDependency node2) {
             String name1 = node1.file.getName();
             String name2 = node2.file.getName();
 
-            return STR_CMP.compare(name1, name2);
+            return StringUtils.STR_CMP.compare(name1, name2);
         }
 
         private static int compareDependencyNodes(SingleNodeFactory node1, SingleNodeFactory node2) {

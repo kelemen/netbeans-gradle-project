@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +20,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -35,7 +35,6 @@ extends
         ChildFactory.Detachable<SingleNodeFactory> {
 
     private static final Logger LOGGER = Logger.getLogger(SubProjectsChildFactory.class.getName());
-    private static final Collator STR_SMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final List<NbGradleProjectTree> subProjects;
@@ -73,7 +72,7 @@ extends
         Collections.sort(modules, new Comparator<NbGradleProjectTree>(){
             @Override
             public int compare(NbGradleProjectTree o1, NbGradleProjectTree o2) {
-                return STR_SMP.compare(o1.getProjectName(), o2.getProjectName());
+                return StringUtils.STR_CMP.compare(o1.getProjectName(), o2.getProjectName());
             }
         });
     }

@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,8 +21,6 @@ import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class NamedSourceRoot {
-    private static final Collator STR_CMP = Collator.getInstance();
-
     private final JavaSourceGroupID groupID;
     private final String displayName;
     private final File root;
@@ -218,7 +215,7 @@ public final class NamedSourceRoot {
             return 1;
         }
 
-        return STR_CMP.compare(name1, name2);
+        return StringUtils.STR_CMP.compare(name1, name2);
     }
 
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {

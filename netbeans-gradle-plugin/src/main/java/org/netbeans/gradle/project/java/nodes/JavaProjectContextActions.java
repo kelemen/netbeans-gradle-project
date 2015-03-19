@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.java.nodes;
 
 import java.awt.event.ActionEvent;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,8 +30,6 @@ import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 
 public final class JavaProjectContextActions implements GradleProjectContextActions {
-    private static final Collator STR_CMP = Collator.getInstance();
-
     private final JavaExtension javaExt;
 
     public JavaProjectContextActions(JavaExtension javaExt) {
@@ -163,7 +160,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         Collections.sort(actions, new Comparator<CustomTestAction>() {
             @Override
             public int compare(CustomTestAction o1, CustomTestAction o2) {
-                return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+                return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
             }
         });
     }

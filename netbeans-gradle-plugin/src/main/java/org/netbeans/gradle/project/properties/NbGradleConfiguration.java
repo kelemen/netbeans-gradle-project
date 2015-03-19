@@ -1,20 +1,18 @@
 package org.netbeans.gradle.project.properties;
 
-import java.text.Collator;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ProjectConfiguration;
 
 public final class NbGradleConfiguration implements ProjectConfiguration {
     public static final NbGradleConfiguration DEFAULT_CONFIG = new NbGradleConfiguration(null);
 
-    private static final Collator STR_CMP = Collator.getInstance(Locale.getDefault());
     private static final Comparator<NbGradleConfiguration> ALPHABETICAL_ORDER = new Comparator<NbGradleConfiguration>() {
         @Override
         public int compare(NbGradleConfiguration o1, NbGradleConfiguration o2) {
@@ -25,7 +23,7 @@ public final class NbGradleConfiguration implements ProjectConfiguration {
                 return DEFAULT_CONFIG.equals(o1) ? 0 : 1;
             }
 
-            return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+            return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
         }
     };
 

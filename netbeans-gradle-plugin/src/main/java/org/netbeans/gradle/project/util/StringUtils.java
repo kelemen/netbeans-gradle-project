@@ -11,13 +11,16 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import org.jtrim.utils.ExceptionHelper;
 import org.openide.filesystems.FileUtil;
 
 public final class StringUtils {
+    public static final Collator STR_CMP = Collator.getInstance(Locale.getDefault());
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
     private static final String HEX_TABLE = "0123456789abcdef";

@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.awt.Dialog;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,14 +14,13 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
 @SuppressWarnings("serial")
 public class ManageTasksPanel extends javax.swing.JPanel {
-    private static final Collator STR_CMP = Collator.getInstance();
-
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
@@ -68,7 +66,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             public int compare(PredefinedTaskItem o1, PredefinedTaskItem o2) {
                 String name1 = o1.toString();
                 String name2 = o2.toString();
-                return STR_CMP.compare(name1, name2);
+                return StringUtils.STR_CMP.compare(name1, name2);
             }
         });
         for (int i = 0; i < elementCount; i++) {

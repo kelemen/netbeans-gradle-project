@@ -4,7 +4,6 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,8 +33,6 @@ import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial")
 public final class TaskVariableQueryDialog extends JDialog {
-    private static final Collator STR_CMP = Collator.getInstance();
-
     private static final Map<String, UserVariableFactory> FACTORY_MAP = variableFactoryMap();
     private static final Map<String, Integer> TYPE_ORDER = typeOrderMap();
 
@@ -99,7 +96,7 @@ public final class TaskVariableQueryDialog extends JDialog {
                     return typeOrder1 < typeOrder2 ? -1 : 1;
                 }
 
-                return STR_CMP.compare(var1.getDisplayName(), var2.getDisplayName());
+                return StringUtils.STR_CMP.compare(var1.getDisplayName(), var2.getDisplayName());
             }
         });
 
@@ -322,7 +319,7 @@ public final class TaskVariableQueryDialog extends JDialog {
             Arrays.sort(comboValues, new Comparator<ComboValue>() {
                 @Override
                 public int compare(ComboValue o1, ComboValue o2) {
-                    return STR_CMP.compare(o1.displayValue, o2.displayValue);
+                    return StringUtils.STR_CMP.compare(o1.displayValue, o2.displayValue);
                 }
             });
 

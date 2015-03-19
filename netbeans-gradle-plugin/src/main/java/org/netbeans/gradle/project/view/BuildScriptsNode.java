@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
-import java.text.Collator;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -20,6 +19,7 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -33,7 +33,6 @@ import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(BuildScriptsNode.class.getName());
-    private static final Collator STR_CMP = Collator.getInstance();
 
     public BuildScriptsNode(NbGradleProject project) {
         super(createChildren(project));
@@ -251,7 +250,7 @@ public final class BuildScriptsNode extends AbstractNode {
             Collections.sort(gradleFiles, new Comparator<FileObject>() {
                 @Override
                 public int compare(FileObject o1, FileObject o2) {
-                    return STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
+                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
                 }
             });
 

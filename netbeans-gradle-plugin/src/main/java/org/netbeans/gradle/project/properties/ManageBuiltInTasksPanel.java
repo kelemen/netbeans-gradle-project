@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,12 +26,12 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
 @SuppressWarnings("serial")
 public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     private static final Logger LOGGER = Logger.getLogger(ManageBuiltInTasksPanel.class.getName());
-    private static final Collator STR_CMP = Collator.getInstance();
 
     private final NbGradleProject project;
     private final CustomActionPanel jActionPanel;
@@ -115,7 +114,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         Collections.sort(items, new Comparator<BuiltInTaskItem>() {
             @Override
             public int compare(BuiltInTaskItem o1, BuiltInTaskItem o2) {
-                return STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+                return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
             }
         });
         jTaskCombo.setModel(new DefaultComboBoxModel<>(items.toArray(new BuiltInTaskItem[items.size()])));
