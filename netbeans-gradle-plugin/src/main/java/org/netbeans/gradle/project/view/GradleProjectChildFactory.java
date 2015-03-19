@@ -22,8 +22,8 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
+import org.netbeans.gradle.project.event.PausableChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
@@ -46,7 +46,7 @@ extends
     private final AtomicReference<NodeExtensions> nodeExtensionsRef;
     private final AtomicBoolean lastHasSubprojects;
     private final ListenerRegistrations listenerRefs;
-    private final ChangeListenerManager refreshNotifier;
+    private final PausableChangeListenerManager refreshNotifier;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -96,12 +96,12 @@ extends
 
     private ListenerRef registerModelRefreshListener() {
         return parent.addChildModelRefreshListener(new ModelRefreshListener() {
-            private final AtomicReference<ChangeListenerManager.PauseRef> pauseRef
+            private final AtomicReference<PausableChangeListenerManager.PauseRef> pauseRef
                     = new AtomicReference<>(null);
 
             @Override
             public void startRefresh() {
-                ChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(refreshNotifier.pauseManager());
+                PausableChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(refreshNotifier.pauseManager());
                 if (prevRef != null) {
                     prevRef.unpause();
                 }
@@ -112,7 +112,7 @@ extends
                 if (extensionsChanged) {
                     refreshNotifier.fireEventually();
                 }
-                ChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(null);
+                PausableChangeListenerManager.PauseRef prevRef = pauseRef.getAndSet(null);
                 if (prevRef != null) {
                     prevRef.unpause();
                 }

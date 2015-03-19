@@ -13,7 +13,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class GenericChangeListenerManager implements ChangeListenerManager {
+public final class GenericChangeListenerManager implements PausableChangeListenerManager {
     private final ListenerManager<Runnable> wrapped;
     private final AtomicInteger pauseCount;
     private final AtomicBoolean hasUnfired;
@@ -62,7 +62,7 @@ public final class GenericChangeListenerManager implements ChangeListenerManager
         }
     }
 
-    public static ChangeListenerManager getSwingNotifier() {
+    public static GenericChangeListenerManager getSwingNotifier() {
         return new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
     }
 
