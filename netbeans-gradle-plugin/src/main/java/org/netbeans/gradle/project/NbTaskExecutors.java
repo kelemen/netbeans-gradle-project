@@ -13,6 +13,9 @@ import org.jtrim.utils.ExceptionHelper;
 public final class NbTaskExecutors {
     private static final Logger LOGGER = Logger.getLogger(NbTaskExecutors.class.getName());
 
+    public static final MonitorableTaskExecutorService DEFAULT_EXECUTOR
+            = newExecutor("Gradle-Default", 2);
+
     private static final long IDLE_TIMEOUT_MS = 1000;
 
     public static MonitorableTaskExecutorService newExecutor(String name, int threadCount) {
