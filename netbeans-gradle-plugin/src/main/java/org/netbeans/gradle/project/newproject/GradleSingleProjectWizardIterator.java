@@ -1,7 +1,8 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ implements
     }
 
     private static void createBuildGradle(
-            File projectDir,
+            Path projectDir,
             GradleSingleProjectConfig config) throws IOException {
         String mainClass = config.getMainClass();
         String sourceLevel = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
@@ -61,17 +62,17 @@ implements
         varReplaceMap.put("${SOURCE_LEVEL}", sourceLevel);
 
         NewProjectUtils.copyTemplateFile(SINGLE_PROJECT_BUILD_GRADLE,
-                new File(projectDir, SettingsFiles.BUILD_FILE_NAME),
+                projectDir.resolve(SettingsFiles.BUILD_FILE_NAME),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
 
-    private static void createSettingsGradle(File projectDir) throws IOException {
+    private static void createSettingsGradle(Path projectDir) throws IOException {
         Map<String, String> varReplaceMap =
-                Collections.singletonMap("${PROJECT_NAME}", projectDir.getName());
+                Collections.singletonMap("${PROJECT_NAME}", projectDir.getFileName().toString());
 
         NewProjectUtils.copyTemplateFile(SINGLE_PROJECT_SETTINGS_GRADLE,
-                new File(projectDir, SettingsFiles.SETTINGS_GRADLE),
+                projectDir.resolve(SettingsFiles.SETTINGS_GRADLE),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
@@ -83,19 +84,24 @@ implements
             throw new IOException("Missing configuration.");
         }
 
-        File projectDirAsFile = FileUtil.normalizeFile(config.getProjectFolder());
-        FileObject projectDir = FileUtil.createFolder(projectDirAsFile);
+        Path projectDir = config.getProjectFolder().normalize();
+        Files.createDirectories(projectDir);
+
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir.toFile());
+        if (projectDirObj == null) {
+            throw new IOException("Failed to open directory: " + projectDir);
+        }
 
         NewProjectUtils.createDefaultSourceDirs(projectDir);
-        createBuildGradle(projectDirAsFile, config);
-        createSettingsGradle(projectDirAsFile);
+        createBuildGradle(projectDir, config);
+        createSettingsGradle(projectDir);
 
         String mainClass = config.getMainClass();
         if (mainClass != null) {
-            NewProjectUtils.createMainClass(projectDirAsFile, mainClass);
+            NewProjectUtils.createMainClass(projectDir, mainClass);
         }
 
-        return Collections.singleton(projectDir);
+        return Collections.singleton(projectDirObj);
     }
 
     @Override

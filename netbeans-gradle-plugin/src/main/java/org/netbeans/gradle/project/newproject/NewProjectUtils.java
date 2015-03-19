@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;
@@ -23,7 +26,6 @@ import org.netbeans.gradle.project.validate.Validator;
 import org.netbeans.gradle.project.validate.Validators;
 import org.netbeans.spi.project.ui.support.ProjectChooser;
 import org.openide.WizardDescriptor;
-import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
@@ -43,7 +45,7 @@ public final class NewProjectUtils {
 
     public static void copyTemplateFile(
             String resourcePath,
-            File destination,
+            Path destination,
             Charset encoding,
             Map<String, String> varReplaceMap) throws IOException {
 
@@ -53,6 +55,7 @@ public final class NewProjectUtils {
             resourceContent = resourceContent.replace(entry.getKey(), entry.getValue());
         }
 
+        resourceContent = StringUtils.replaceLFWithPreferredLineSeparator(resourceContent);
         StringUtils.writeStringToFile(resourceContent, encoding, destination);
     }
 
@@ -67,19 +70,25 @@ public final class NewProjectUtils {
         }
     }
 
-    public static void createDefaultSourceDirs(FileObject projectDir) throws IOException {
-        FileObject srcDir = projectDir.createFolder("src");
-        FileObject mainDir = srcDir.createFolder("main");
-        FileObject testDir = srcDir.createFolder("test");
-
-        mainDir.createFolder("java");
-        mainDir.createFolder("resources");
-
-        testDir.createFolder("java");
-        testDir.createFolder("resources");
+    public static Path resolveAndCreateDir(Path base, String dirName) throws IOException {
+        Path result = base.resolve(dirName);
+        Files.createDirectory(result);
+        return result;
     }
 
-    public static void createMainClass(File projectDir, String mainClass) throws IOException {
+    public static void createDefaultSourceDirs(Path projectDir) throws IOException {
+        Path srcDir = resolveAndCreateDir(projectDir, "src");
+        Path mainDir = resolveAndCreateDir(srcDir, "main");
+        Path testDir = resolveAndCreateDir(srcDir, "test");
+
+        resolveAndCreateDir(mainDir, "java");
+        resolveAndCreateDir(mainDir, "resources");
+
+        resolveAndCreateDir(testDir, "java");
+        resolveAndCreateDir(testDir, "resources");
+    }
+
+    public static void createMainClass(Path projectDir, String mainClass) throws IOException {
         ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
         ExceptionHelper.checkNotNullArgument(mainClass, "mainClass");
 
@@ -96,36 +105,32 @@ public final class NewProjectUtils {
             simpleClassName = mainClass;
         }
 
-        String relPackagePathStr = packageName.replace(".", File.separator);
+        String separator = projectDir.getFileSystem().getSeparator();
+        String relPackagePathStr = packageName.replace(".", separator);
 
-        File packagePath = new File(projectDir, "src");
-        packagePath = new File(packagePath, "main");
-        packagePath = new File(packagePath, "java");
+        Path packagePath = projectDir.resolve("src").resolve("main").resolve("java");
         if (!relPackagePathStr.isEmpty()) {
-            packagePath = new File(packagePath, relPackagePathStr);
+            packagePath = packagePath.resolve(relPackagePathStr);
         }
 
-        StringBuilder content = new StringBuilder(256);
+        List<String> content = new LinkedList<>();
         if (!packageName.isEmpty()) {
-            content.append("package ");
-            content.append(packageName);
-            content.append(";\n\n");
+            content.add("package " + packageName + ";");
+            content.add("");
         }
 
-        content.append("public class ");
-        content.append(simpleClassName);
-        content.append(" {\n");
-        content.append("    /**\n");
-        content.append("     * @param args the command line arguments\n");
-        content.append("     */\n");
-        content.append("    public static void main(String[] args) {\n");
-        content.append("    }\n");
-        content.append("}\n");
+        content.add("public class " + simpleClassName + " {");
+        content.add("    /**");
+        content.add("     * @param args the command line arguments");
+        content.add("     */");
+        content.add("    public static void main(String[] args) {");
+        content.add("    }");
+        content.add("}");
 
-        File mainClassPath = new File(packagePath, simpleClassName + ".java");
+        Path mainClassPath = packagePath.resolve(simpleClassName + ".java");
 
-        FileUtil.createFolder(packagePath);
-        StringUtils.writeStringToFile(content.toString(), DEFAULT_FILE_ENCODING, mainClassPath);
+        Files.createDirectories(packagePath);
+        NbFileUtils.writeLinesToFile(mainClassPath, content, DEFAULT_FILE_ENCODING);
     }
 
     public static Validator<String> createProjectNameValidator() {

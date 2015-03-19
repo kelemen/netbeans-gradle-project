@@ -1,7 +1,8 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,20 +48,20 @@ implements
     }
 
     private static void createBuildGradle(
-            File projectDir,
+            Path projectDir,
             GradleSingleProjectConfig config) throws IOException {
-        File rootDir = projectDir.getParentFile();
+        Path rootDir = projectDir.getParent();
         if (rootDir == null) {
             throw new IOException("Invalid project directory for subproject.");
         }
 
-        boolean oldFormat = new File(rootDir, "parent.gradle").isFile();
-        boolean newFormat = new File(rootDir, "common.gradle").isFile();
+        boolean oldFormat = Files.isRegularFile(rootDir.resolve("parent.gradle"));
+        boolean newFormat = Files.isRegularFile(rootDir.resolve("common.gradle"));
         if (oldFormat && newFormat) {
             throw new IOException("Cannot determine if the project uses the new or the old format.");
         }
         if (!oldFormat && !newFormat) {
-            throw new IOException("The parent directory does nto appear to be created  by the multi-project wizard.");
+            throw new IOException("The parent directory does not appear to be created by the multi-project wizard.");
         }
 
         String mainClass = config.getMainClass();
@@ -72,7 +73,9 @@ implements
         buildGradleContent = buildGradleContent.replace("${MAIN_CLASS}",
                 mainClass != null ? mainClass : "");
 
-        File buildGradle = new File(projectDir, SettingsFiles.BUILD_FILE_NAME);
+        buildGradleContent = StringUtils.replaceLFWithPreferredLineSeparator(buildGradleContent);
+
+        Path buildGradle = projectDir.resolve(SettingsFiles.BUILD_FILE_NAME);
         StringUtils.writeStringToFile(buildGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, buildGradle);
     }
 
@@ -83,18 +86,24 @@ implements
             throw new IOException("Missing configuration.");
         }
 
-        File projectDirAsFile = FileUtil.normalizeFile(config.getProjectFolder());
-        FileObject projectDir = FileUtil.createFolder(projectDirAsFile);
+        Path projectDir = config.getProjectFolder().normalize();
+        Files.createDirectories(projectDir);
+
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir.toFile());
+        if (projectDirObj == null) {
+            throw new IOException("Failed to open directory: " + projectDir);
+        }
+
 
         NewProjectUtils.createDefaultSourceDirs(projectDir);
-        createBuildGradle(projectDirAsFile, config);
+        createBuildGradle(projectDir, config);
 
         String mainClass = config.getMainClass();
         if (mainClass != null) {
-            NewProjectUtils.createMainClass(projectDirAsFile, mainClass);
+            NewProjectUtils.createMainClass(projectDir, mainClass);
         }
 
-        return Collections.singleton(projectDir);
+        return Collections.singleton(projectDirObj);
     }
 
     @Override

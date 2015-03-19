@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.event.ChangeListener;
 import org.jtrim.event.ListenerRef;
@@ -71,7 +72,7 @@ public final class GradleSingleProjectPropertiesPanel extends javax.swing.JPanel
 
         NewProjectUtils.setDefaultProjectDir(jProjectLocationEdit.getText());
 
-        File projectDir = new File(projectDirStr);
+        Path projectDir = Paths.get(projectDirStr);
         return new GradleSingleProjectConfig(projectName, projectDir, mainClass);
     }
 

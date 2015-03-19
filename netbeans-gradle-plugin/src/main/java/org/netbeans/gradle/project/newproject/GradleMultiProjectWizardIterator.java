@@ -1,7 +1,8 @@
 package org.netbeans.gradle.project.newproject;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,18 +54,18 @@ implements
         this.configRef = new AtomicReference<>(null);
     }
 
-    private static void createSettingsGradle(File projectDir) throws IOException {
+    private static void createSettingsGradle(Path projectDir) throws IOException {
         Map<String, String> varReplaceMap =
-                Collections.singletonMap("${PROJECT_NAME}", projectDir.getName());
+                Collections.singletonMap("${PROJECT_NAME}", projectDir.getFileName().toString());
 
         NewProjectUtils.copyTemplateFile(MULTI_PROJECT_SETTINGS_GRADLE,
-                new File(projectDir, SettingsFiles.SETTINGS_GRADLE),
+                projectDir.resolve(SettingsFiles.SETTINGS_GRADLE),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
 
     private static void createParentGradle(
-            File projectDir,
+            Path projectDir,
             GradleMultiProjectConfig config) throws IOException {
 
         Map<String, String> varReplaceMap = new HashMap<>();
@@ -74,20 +75,21 @@ implements
 
         NewProjectUtils.copyTemplateFile(
                 MULTI_PROJECT_COMMON_GRADLE,
-                new File(projectDir, "common.gradle"),
+                projectDir.resolve("common.gradle"),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
 
     private static void copyToProject(
-            File projectDir,
+            Path projectDir,
             String resourcePath,
             String fileName) throws IOException {
 
         String content = StringUtils.getResourceAsString(
                 resourcePath,
                 NewProjectUtils.DEFAULT_FILE_ENCODING);
-        File file = new File(projectDir, fileName);
+        Path file = projectDir.resolve(fileName);
+        content = StringUtils.replaceLFWithPreferredLineSeparator(content);
         StringUtils.writeStringToFile(content, NewProjectUtils.DEFAULT_FILE_ENCODING, file);
     }
 
@@ -98,15 +100,20 @@ implements
             throw new IOException("Missing configuration.");
         }
 
-        File projectDirAsFile = FileUtil.normalizeFile(config.getProjectFolder());
-        FileObject projectDir = FileUtil.createFolder(projectDirAsFile);
+        Path projectDir = config.getProjectFolder().normalize();
+        Files.createDirectories(projectDir);
+
+        FileObject projectDirObj = FileUtil.toFileObject(projectDir.toFile());
+        if (projectDirObj == null) {
+            throw new IOException("Failed to open directory: " + projectDir);
+        }
 
         NewProjectUtils.createDefaultSourceDirs(projectDir);
-        createParentGradle(projectDirAsFile, config);
-        copyToProject(projectDirAsFile, MULTI_PROJECT_BUILD_GRADLE, SettingsFiles.BUILD_FILE_NAME);
-        createSettingsGradle(projectDirAsFile);
+        createParentGradle(projectDir, config);
+        copyToProject(projectDir, MULTI_PROJECT_BUILD_GRADLE, SettingsFiles.BUILD_FILE_NAME);
+        createSettingsGradle(projectDir);
 
-        return Collections.singleton(projectDir);
+        return Collections.singleton(projectDirObj);
     }
 
     @Override
