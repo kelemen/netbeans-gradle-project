@@ -1,17 +1,17 @@
 package org.netbeans.gradle.project.model;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventDispatcher;
+import org.jtrim.event.ListenerManager;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -23,7 +23,7 @@ public final class GradleModelCache {
     private final ReentrantLock cacheLock;
     private final Map<CacheKey, NbGradleModel> cache;
     private final AtomicInteger maxCapacity;
-    private final PropertyChangeSupport updateListeners;
+    private final ListenerManager<ProjectModelUpdatedListener> updateListeners;
 
     public GradleModelCache(int maxCapacity) {
         if (maxCapacity < 0) {
@@ -34,7 +34,7 @@ public final class GradleModelCache {
         this.maxCapacity = new AtomicInteger(maxCapacity);
 
         this.cache = CollectionUtils.newLinkedHashMap(maxCapacity);
-        this.updateListeners = new PropertyChangeSupport(this);
+        this.updateListeners = new CopyOnTriggerListenerManager<>();
     }
 
     private static int getProjectCacheSize() {
@@ -111,35 +111,12 @@ public final class GradleModelCache {
         return new CacheKey(projectDir, settingsFile);
     }
 
-    public NbListenerRef addModelUpdateListener(final ProjectModelUpdatedListener listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        final PropertyChangeListener forwarder = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                listener.onUpdateProject((NbGradleModel)evt.getNewValue());
-            }
-        };
-
-        updateListeners.addPropertyChangeListener(forwarder);
-        return new NbListenerRef() {
-            private volatile boolean registered = true;
-
-            @Override
-            public boolean isRegistered() {
-                return registered;
-            }
-
-            @Override
-            public void unregister() {
-                updateListeners.removePropertyChangeListener(forwarder);
-                registered = true;
-            }
-        };
+    public ListenerRef addModelUpdateListener(ProjectModelUpdatedListener listener) {
+        return updateListeners.registerListener(listener);
     }
 
     private void notifyUpdate(NbGradleModel newModel) {
-        updateListeners.firePropertyChange("newModel", null, newModel);
+        updateListeners.onEvent(ModelUpdateDispatcher.INSTANCE, newModel);
     }
 
     public NbGradleModel updateEntry(NbGradleModel model) {
@@ -232,6 +209,15 @@ public final class GradleModelCache {
             }
             return this.settingsFile == other.settingsFile
                     || (this.settingsFile != null && this.settingsFile.equals(other.settingsFile));
+        }
+    }
+
+    private enum ModelUpdateDispatcher implements EventDispatcher<ProjectModelUpdatedListener, NbGradleModel> {
+        INSTANCE;
+
+        @Override
+        public void onEvent(ProjectModelUpdatedListener eventListener, NbGradleModel arg) {
+            eventListener.onUpdateProject(arg);
         }
     }
 }
