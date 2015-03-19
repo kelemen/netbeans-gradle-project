@@ -30,6 +30,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -44,6 +45,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
@@ -74,8 +76,14 @@ public final class GradleModelLoader {
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
 
-    public static void addModelLoadedListener(ModelLoadListener listener) {
+    public static ListenerRef addModelLoadedListener(final ModelLoadListener listener) {
         LISTENERS.addListener(listener);
+        return NbListenerRefs.fromRunnable(new Runnable() {
+            @Override
+            public void run() {
+                LISTENERS.removeListener(listener);
+            }
+        });
     }
 
     public static void removeModelLoadedListener(ModelLoadListener listener) {

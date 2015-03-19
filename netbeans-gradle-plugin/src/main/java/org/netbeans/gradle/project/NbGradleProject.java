@@ -66,6 +66,7 @@ import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -575,8 +576,7 @@ public final class NbGradleProject implements Project {
     // submitted to it is good (using SwingUtilities.invokeLater was only
     // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook {
-        private final ModelLoadListener modelLoadListener;
-        private final AtomicReference<ListenerRef> licenseChangeListenerRef;
+        private final ListenerRegistrations openedRefs;
         private LicenseManager.Ref licenseRef;
         private boolean opened;
 
@@ -584,16 +584,7 @@ public final class NbGradleProject implements Project {
             this.opened = false;
 
             this.licenseRef = null;
-            this.licenseChangeListenerRef = new AtomicReference<>(null);
-
-            this.modelLoadListener = new ModelLoadListener() {
-                @Override
-                public void modelLoaded(NbGradleModel model) {
-                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-                        new ModelRetrievedListenerImpl().onComplete(model, null);
-                    }
-                }
-            };
+            this.openedRefs = new ListenerRegistrations();
         }
 
         private void registerLicenseNow() {
@@ -621,22 +612,26 @@ public final class NbGradleProject implements Project {
 
         @Override
         protected void projectOpened() {
-            GradleModelLoader.addModelLoadedListener(modelLoadListener);
+            openedRefs.unregisterAll();
+
+            openedRefs.add(GradleModelLoader.addModelLoadedListener(new ModelLoadListener() {
+                @Override
+                public void modelLoaded(NbGradleModel model) {
+                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
+                        new ModelRetrievedListenerImpl().onComplete(model, null);
+                    }
+                }
+            }));
             reloadProject(true);
 
             PropertySource<LicenseHeaderInfo> licenseHeaderInfo = getCommonProperties().licenseHeaderInfo().getActiveSource();
-            ListenerRef newRef = licenseHeaderInfo.addChangeListener(new Runnable() {
+
+            openedRefs.add(licenseHeaderInfo.addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     registerLicense();
                 }
-            });
-
-            ListenerRef prevRef = licenseChangeListenerRef.getAndSet(newRef);
-            if (prevRef != null) {
-                LOGGER.warning("projectOpened() without close.");
-                prevRef.unregister();
-            }
+            }));
 
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -649,6 +644,8 @@ public final class NbGradleProject implements Project {
 
         @Override
         protected void projectClosed() {
+            openedRefs.unregisterAll();
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -660,13 +657,6 @@ public final class NbGradleProject implements Project {
                     }
                 }
             });
-
-            ListenerRef listenerRef = licenseChangeListenerRef.getAndSet(null);
-            if (listenerRef != null) {
-                listenerRef.unregister();
-            }
-
-            GradleModelLoader.removeModelLoadedListener(modelLoadListener);
         }
     }
 
