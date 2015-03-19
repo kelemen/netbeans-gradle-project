@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.gradle.util.GradleVersion;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -14,7 +13,6 @@ import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
-import org.openide.filesystems.FileUtil;
 
 public final class SampleGradleProject implements Closeable {
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
@@ -50,19 +48,7 @@ public final class SampleGradleProject implements Closeable {
     }
 
     private Project getUnloadedProject(File projectDir) throws IOException {
-        File normProjectDir = FileUtil.normalizeFile(projectDir);
-        try (Closeable safeToOpenRef = NbGradleProjectFactory.safeToOpen(normProjectDir)) {
-            assert safeToOpenRef != null; // Avoid warning
-
-            Project project = ProjectManager.getDefault().findProject(FileUtil.toFileObject(normProjectDir));
-            if (project == null) {
-                throw new IllegalArgumentException("Project does not exist: " + normProjectDir);
-            }
-
-            return project;
-        } catch (IOException ex) {
-            throw Exceptions.throwUnchecked(ex);
-        }
+        return NbGradleProjectFactory.loadSafeProject(projectDir);
     }
 
     public Project getUnloadedProject(String... projectPath) throws IOException {
