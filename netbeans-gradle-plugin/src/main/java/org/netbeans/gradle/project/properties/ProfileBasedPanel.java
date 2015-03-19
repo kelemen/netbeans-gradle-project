@@ -152,7 +152,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     private void fetchProfilesAndSelect() {
         final AtomicReference<PanelLockRef> lockRef = new AtomicReference<>(lockPanel());
 
-        NbGradleProject.PROJECT_PROCESSOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 final Collection<NbGradleConfiguration> profiles = project
