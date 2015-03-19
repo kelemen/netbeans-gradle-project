@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +128,10 @@ public final class CollectionUtils {
 
     private static int expectedSizeToCapacity(int expectedSize) {
         return 4 * expectedSize / 3 + 1;
+    }
+
+    public static <K, V> Map<K, V> newLinkedHashMap(int expectedSize) {
+        return new LinkedHashMap<K, V>(expectedSizeToCapacity(expectedSize));
     }
 
     public static <K, V> Map<K, V> newHashMap(int expectedSize) {
