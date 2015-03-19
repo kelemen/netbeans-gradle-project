@@ -36,7 +36,7 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 
-public final class NbGradleConfigProvider implements ProjectConfigurationProvider<NbGradleConfiguration> {
+public final class NbGradleConfigProvider {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
 
     // Must be FIFO executor
@@ -290,7 +290,7 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
             @Override
             public void run() {
                 NbGradleConfiguration newConfig = activeConfig.get();
-                changeSupport.firePropertyChange(PROP_CONFIGURATION_ACTIVE, prevConfig, newConfig);
+                changeSupport.firePropertyChange(ProjectConfigurationProvider.PROP_CONFIGURATION_ACTIVE, prevConfig, newConfig);
                 EventListeners.dispatchRunnable(activeConfigChangeListeners);
             }
         });
@@ -300,18 +300,16 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         executeOnEdt(new Runnable() {
             @Override
             public void run() {
-                changeSupport.firePropertyChange(PROP_CONFIGURATIONS, null, null);
+                changeSupport.firePropertyChange(ProjectConfigurationProvider.PROP_CONFIGURATIONS, null, null);
             }
         });
     }
 
-    @Override
     public Collection<NbGradleConfiguration> getConfigurations() {
         ensureLoadedAsynchronously();
         return configs.get();
     }
 
-    @Override
     public NbGradleConfiguration getActiveConfiguration() {
         ensureLoadedAsynchronously();
         return activeConfig.get();
@@ -344,7 +342,6 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         });
     }
 
-    @Override
     public void setActiveConfiguration(final NbGradleConfiguration configuration) {
         if (configuration == null) {
             LOGGER.warning("Attempting to set null configuration.");
@@ -362,26 +359,14 @@ public final class NbGradleConfigProvider implements ProjectConfigurationProvide
         saveActiveProfile();
     }
 
-    @Override
-    public boolean hasCustomizer() {
-        return false;
-    }
-
-    @Override
-    public void customize() {
-    }
-
-    @Override
     public boolean configurationsAffectAction(String command) {
         return true;
     }
 
-    @Override
     public void addPropertyChangeListener(PropertyChangeListener lst) {
         changeSupport.addPropertyChangeListener(lst);
     }
 
-    @Override
     public void removePropertyChangeListener(PropertyChangeListener lst) {
         changeSupport.removePropertyChangeListener(lst);
     }
