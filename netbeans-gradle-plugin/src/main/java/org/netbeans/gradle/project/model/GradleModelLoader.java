@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -36,7 +35,6 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.GradleVersions;
@@ -97,36 +95,13 @@ public final class GradleModelLoader {
     public static NbGradleProject tryFindGradleProject(File projectDir) {
         ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
 
-        FileObject projectDirObj = FileUtil.toFileObject(projectDir);
-        return projectDirObj != null
-                ? tryFindGradleProject(projectDirObj, projectDir)
-                : null;
-    }
-
-    private static NbGradleProject tryFindGradleProject(FileObject projectDir, File plainProjectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-        ExceptionHelper.checkNotNullArgument(plainProjectDir, "plainProjectDir");
-
-        Closeable safeToOpen = null;
-        try {
-            safeToOpen = NbGradleProjectFactory.safeToOpen(plainProjectDir);
-            Project project = ProjectManager.getDefault().findProject(projectDir);
-            if (project != null) {
-                return project.getLookup().lookup(NbGradleProject.class);
-            }
-        } catch (IOException | IllegalArgumentException ex) {
-            LOGGER.log(Level.INFO, "Failed to load project: " + projectDir, ex);
-        } finally {
-            try {
-                if (safeToOpen != null) {
-                    safeToOpen.close();
-                }
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+        Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
+        if (project != null) {
+            return project.getLookup().lookup(NbGradleProject.class);
         }
-
-        return null;
+        else {
+            return null;
+        }
     }
 
     private static GradleModelCache getCache() {
