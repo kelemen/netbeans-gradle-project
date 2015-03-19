@@ -11,6 +11,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,6 +120,14 @@ public final class StringUtils {
 
             return writer.toString();
         }
+    }
+
+    public static void writeStringToFile(String content, Charset encoding, Path file) throws IOException {
+        Path parent = file.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        Files.write(file, content.getBytes(encoding));
     }
 
     public static void writeStringToFile(String content, Charset encoding, File file) throws IOException {
