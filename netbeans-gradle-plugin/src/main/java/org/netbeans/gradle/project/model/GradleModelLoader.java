@@ -29,6 +29,9 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventDispatcher;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -43,7 +46,6 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
@@ -69,23 +71,13 @@ public final class GradleModelLoader {
     private static final MonitorableTaskExecutorService MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
-    private static final ModelLoadSupport LISTENERS = new ModelLoadSupport();
+    private static final ListenerManager<ModelLoadListener> LISTENERS = new CopyOnTriggerListenerManager<>();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
 
     public static ListenerRef addModelLoadedListener(final ModelLoadListener listener) {
-        LISTENERS.addListener(listener);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                LISTENERS.removeListener(listener);
-            }
-        });
-    }
-
-    public static void removeModelLoadedListener(ModelLoadListener listener) {
-        LISTENERS.removeListener(listener);
+        return LISTENERS.registerListener(listener);
     }
 
     private static void updateProjectFromCacheIfNeeded(NbGradleProject project, NbGradleModel baseModel) {
@@ -420,7 +412,7 @@ public final class GradleModelLoader {
             modelToSave = getCache().updateEntry(model);
         }
 
-        LISTENERS.fireEvent(model);
+        LISTENERS.onEvent(ModelLoaderDispatcher.INSTANCE, model);
 
         return modelToSave;
     }
@@ -613,5 +605,14 @@ public final class GradleModelLoader {
 
     private GradleModelLoader() {
         throw new AssertionError();
+    }
+
+    private enum ModelLoaderDispatcher implements EventDispatcher<ModelLoadListener, NbGradleModel> {
+        INSTANCE;
+
+        @Override
+        public void onEvent(ModelLoadListener eventListener, NbGradleModel arg) {
+            eventListener.modelLoaded(arg);
+        }
     }
 }
