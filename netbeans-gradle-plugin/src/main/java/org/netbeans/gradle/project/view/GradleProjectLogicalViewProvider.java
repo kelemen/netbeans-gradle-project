@@ -29,6 +29,8 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.AutoDisplayState;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
@@ -541,7 +543,7 @@ implements
             JButton executeButton = new JButton(NbStrings.getExecuteLabel());
             JButton saveAndExecuteButton = new JButton(NbStrings.getSaveAndExecuteLabel());
 
-            DialogDescriptor dlgDescriptor = new DialogDescriptor(
+            final DialogDescriptor dlgDescriptor = new DialogDescriptor(
                 panel,
                 NbStrings.getCustomTaskDlgTitle(),
                 true,
@@ -550,6 +552,12 @@ implements
                 DialogDescriptor.BOTTOM_ALIGN,
                 null,
                 null);
+            PropertySource<Boolean> validInput = panel.validInput();
+            AutoDisplayState.addSwingStateListener(validInput,
+                    AutoDisplayState.componentDisabler(executeButton, saveAndExecuteButton));
+
+            dlgDescriptor.setValid(validInput.getValue());
+
             Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
             dlg.setVisible(true);
 
