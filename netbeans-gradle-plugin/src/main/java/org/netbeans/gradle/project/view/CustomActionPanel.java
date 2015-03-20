@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.view;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +11,7 @@ import javax.swing.JTextArea;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial") // Don't care about serialization
@@ -142,7 +144,19 @@ public class CustomActionPanel extends javax.swing.JPanel {
     }
 
     public PredefinedTask tryGetPredefinedTask(String displayName) {
+        return tryGetPredefinedTask(displayName, new NbSupplier<List<PredefinedTask.Name>>() {
+            @Override
+            public List<PredefinedTask.Name> get() {
+                return Collections.emptyList();
+            }
+        });
+    }
+
+    public PredefinedTask tryGetPredefinedTask(
+            String displayName,
+            NbSupplier<? extends List<PredefinedTask.Name>> fallbackNames) {
         ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+        ExceptionHelper.checkNotNullArgument(fallbackNames, "fallbackNames");
 
         boolean tasksMustExist = jMustExistCheck.isSelected();
         String[] rawTaskNames = getTasks();
@@ -150,9 +164,19 @@ public class CustomActionPanel extends javax.swing.JPanel {
             return null;
         }
 
-        List<PredefinedTask.Name> names = new ArrayList<>(rawTaskNames.length);
-        for (String name: rawTaskNames) {
-            names.add(new PredefinedTask.Name(name, tasksMustExist));
+        List<PredefinedTask.Name> names;
+        if (rawTaskNames.length > 0) {
+            names = new ArrayList<>(rawTaskNames.length);
+            for (String name: rawTaskNames) {
+                names.add(new PredefinedTask.Name(name, tasksMustExist));
+            }
+        }
+        else {
+            names = fallbackNames.get();
+        }
+
+        if (names.isEmpty()) {
+            return null;
         }
 
         return new PredefinedTask(
