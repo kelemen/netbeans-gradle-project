@@ -1,11 +1,13 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JTextArea;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -137,6 +139,28 @@ public class CustomActionPanel extends javax.swing.JPanel {
 
     private static String[] splitLinesIgnoreVars(String text) {
         return splitTextIgnoreVars(text, "\n\r");
+    }
+
+    public PredefinedTask tryGetPredefinedTask(String displayName) {
+        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+
+        boolean tasksMustExist = jMustExistCheck.isSelected();
+        String[] rawTaskNames = getTasks();
+        if (rawTaskNames.length == 0) {
+            return null;
+        }
+
+        List<PredefinedTask.Name> names = new ArrayList<>(rawTaskNames.length);
+        for (String name: rawTaskNames) {
+            names.add(new PredefinedTask.Name(name, tasksMustExist));
+        }
+
+        return new PredefinedTask(
+                displayName,
+                names,
+                Arrays.asList(getArguments()),
+                Arrays.asList(getJvmArguments()),
+                isNonBlocking());
     }
 
     public String[] getTasks() {
