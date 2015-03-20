@@ -187,7 +187,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
                 isNonBlocking());
     }
 
-    public String[] getTasks() {
+    private String[] getTasks() {
         String text = jTasksEdit.getText();
         if (text == null) {
             return new String[0];
@@ -196,7 +196,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
         return splitBySpacesIgnoreVars(text);
     }
 
-    public String[] getArguments() {
+    private String[] getArguments() {
         String text = jArgsTextArea.getText();
         if (text == null) {
             return new String[0];
@@ -205,7 +205,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
         return splitLinesIgnoreVars(text);
     }
 
-    public String[] getJvmArguments() {
+    private String[] getJvmArguments() {
         String text = jJvmArgsTextArea.getText();
         if (text == null) {
             return new String[0];

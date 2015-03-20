@@ -472,22 +472,12 @@ implements
             this.project = project;
         }
 
-        private PredefinedTask createTaskDef(
+        private PredefinedTask tryCreateTaskDef(
                 CustomActionPanel actionPanel,
                 String displayName,
                 boolean tasksMustExist) {
-            String[] rawTaskNames = actionPanel.getTasks();
-            List<PredefinedTask.Name> names = new ArrayList<>(rawTaskNames.length);
-            for (String name: rawTaskNames) {
-                names.add(new PredefinedTask.Name(name, tasksMustExist));
-            }
-
-            return new PredefinedTask(
-                    displayName,
-                    names,
-                    Arrays.asList(actionPanel.getArguments()),
-                    Arrays.asList(actionPanel.getJvmArguments()),
-                    actionPanel.isNonBlocking());
+            actionPanel.setTasksMustExist(tasksMustExist);
+            return actionPanel.tryGetPredefinedTask(displayName);
         }
 
         private String doSaveTask(CustomActionPanel actionPanel) {
@@ -513,9 +503,13 @@ implements
                 return null;
             }
 
-            PredefinedTask newTaskDef = createTaskDef(actionPanel, displayName, true);
+            PredefinedTask newTaskDef = tryCreateTaskDef(actionPanel, displayName, true);
+            if (newTaskDef == null) {
+                return null;
+            }
+
             if (!newTaskDef.isTasksExistsIfRequired(project, Lookup.EMPTY)) {
-                newTaskDef = createTaskDef(actionPanel, displayName, false);
+                newTaskDef = tryCreateTaskDef(actionPanel, displayName, false);
             }
 
             addNewCommonTaskTask(newTaskDef);

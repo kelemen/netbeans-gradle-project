@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
@@ -183,33 +184,22 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
             return null;
         }
 
-        String command = lastShownItem.getCommand();
+        final String command = lastShownItem.getCommand();
+        jActionPanel.setTasksMustExist(false);
+        PredefinedTask resultTask = jActionPanel.tryGetPredefinedTask(command, new NbSupplier<List<PredefinedTask.Name>>() {
+            @Override
+            public List<PredefinedTask.Name> get() {
+                SavedTask lastValue = toSaveTasks.get(command);
+                if (lastValue == null) {
+                    return getCurrentValue(command).getTaskNames();
+                }
+                else {
+                    return lastValue.getTaskDef().getTaskNames();
+                }
+            }
+        });
 
-        String[] rawTaskNames = jActionPanel.getTasks();
-        List<PredefinedTask.Name> names;
-        if (rawTaskNames.length > 0) {
-            names = new ArrayList<>(rawTaskNames.length);
-            for (String name: rawTaskNames) {
-                names.add(new PredefinedTask.Name(name, false));
-            }
-        }
-        else {
-            SavedTask lastValue = toSaveTasks.get(command);
-            if (lastValue == null) {
-                names = getCurrentValue(command).getTaskNames();
-            }
-            else {
-                names = lastValue.getTaskDef().getTaskNames();
-            }
-        }
-
-        PredefinedTask resultTask = new PredefinedTask(
-                command,
-                names,
-                Arrays.asList(jActionPanel.getArguments()),
-                Arrays.asList(jActionPanel.getJvmArguments()),
-                jActionPanel.isNonBlocking());
-        return new SavedTask(resultTask, jInheritCheck.isSelected());
+        return resultTask != null ? new SavedTask(resultTask, jInheritCheck.isSelected()) : null;
     }
 
     private void saveLastShown() {

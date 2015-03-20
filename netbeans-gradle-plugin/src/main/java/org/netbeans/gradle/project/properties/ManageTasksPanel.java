@@ -96,26 +96,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
             return null;
         }
 
-        boolean mustExist = jActionPanel.isTasksMustExist();
-        String[] rawTaskNames = jActionPanel.getTasks();
-
-        List<PredefinedTask.Name> names;
-        if (rawTaskNames.length > 0) {
-            names = new ArrayList<>(rawTaskNames.length);
-            for (String name: rawTaskNames) {
-                names.add(new PredefinedTask.Name(name, mustExist));
-            }
-        }
-        else {
-            names = currentlyShown.getTask().getTaskNames();
-        }
-
-        return new PredefinedTask(
-                currentlyShown.getTask().getDisplayName(),
-                names,
-                Arrays.asList(jActionPanel.getArguments()),
-                Arrays.asList(jActionPanel.getJvmArguments()),
-                jActionPanel.isNonBlocking());
+        return jActionPanel.tryGetPredefinedTask(currentlyShown.getTask().getDisplayName());
     }
 
     private void updateShownInList() {
