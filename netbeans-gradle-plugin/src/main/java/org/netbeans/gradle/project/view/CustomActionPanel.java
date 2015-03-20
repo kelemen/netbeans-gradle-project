@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -83,22 +82,22 @@ public class CustomActionPanel extends javax.swing.JPanel {
     }
 
     public GradleCommandTemplate tryGetGradleCommand(String displayName) {
-        String[] tasks = getTasks();
-        if (tasks.length == 0) {
+        List<String> tasks = getTasks();
+        if (tasks.isEmpty()) {
             return null;
         }
 
         GradleCommandTemplate.Builder builder = new GradleCommandTemplate.Builder(
                 displayName != null ? displayName : "",
-                Arrays.asList(tasks));
+                tasks);
 
-        builder.setArguments(Arrays.asList(getArguments()));
-        builder.setJvmArguments(Arrays.asList(getJvmArguments()));
+        builder.setArguments(getArguments());
+        builder.setJvmArguments(getJvmArguments());
         builder.setBlocking(!isNonBlocking());
         return builder.create();
     }
 
-    private static String[] splitTextIgnoreVars(String text, String delimiters) {
+    private static List<String> splitTextIgnoreVars(String text, String delimiters) {
         List<String> result = new LinkedList<>();
 
         StringBuilder currentPart = new StringBuilder();
@@ -141,14 +140,14 @@ public class CustomActionPanel extends javax.swing.JPanel {
             }
         }
 
-        return result.toArray(new String[result.size()]);
+        return result;
     }
 
-    private static String[] splitBySpacesIgnoreVars(String text) {
+    private static List<String> splitBySpacesIgnoreVars(String text) {
         return splitTextIgnoreVars(text, " \t\n\r\f");
     }
 
-    private static String[] splitLinesIgnoreVars(String text) {
+    private static List<String> splitLinesIgnoreVars(String text) {
         return splitTextIgnoreVars(text, "\n\r");
     }
 
@@ -168,14 +167,14 @@ public class CustomActionPanel extends javax.swing.JPanel {
         ExceptionHelper.checkNotNullArgument(fallbackNames, "fallbackNames");
 
         boolean tasksMustExist = jMustExistCheck.isSelected();
-        String[] rawTaskNames = getTasks();
-        if (rawTaskNames.length == 0) {
+        List<String> rawTaskNames = getTasks();
+        if (rawTaskNames.isEmpty()) {
             return null;
         }
 
         List<PredefinedTask.Name> names;
-        if (rawTaskNames.length > 0) {
-            names = new ArrayList<>(rawTaskNames.length);
+        if (!rawTaskNames.isEmpty()) {
+            names = new ArrayList<>(rawTaskNames.size());
             for (String name: rawTaskNames) {
                 names.add(new PredefinedTask.Name(name, tasksMustExist));
             }
@@ -191,33 +190,33 @@ public class CustomActionPanel extends javax.swing.JPanel {
         return new PredefinedTask(
                 displayName,
                 names,
-                Arrays.asList(getArguments()),
-                Arrays.asList(getJvmArguments()),
+                getArguments(),
+                getJvmArguments(),
                 isNonBlocking());
     }
 
-    private String[] getTasks() {
+    private List<String> getTasks() {
         String text = jTasksEdit.getText();
         if (text == null) {
-            return new String[0];
+            return Collections.emptyList();
         }
 
         return splitBySpacesIgnoreVars(text);
     }
 
-    private String[] getArguments() {
+    private List<String> getArguments() {
         String text = jArgsTextArea.getText();
         if (text == null) {
-            return new String[0];
+            return Collections.emptyList();
         }
 
         return splitLinesIgnoreVars(text);
     }
 
-    private String[] getJvmArguments() {
+    private List<String> getJvmArguments() {
         String text = jJvmArgsTextArea.getText();
         if (text == null) {
-            return new String[0];
+            return Collections.emptyList();
         }
 
         return splitLinesIgnoreVars(text);
