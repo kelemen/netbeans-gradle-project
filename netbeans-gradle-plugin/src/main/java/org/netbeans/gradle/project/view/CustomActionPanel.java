@@ -8,11 +8,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JTextArea;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.property.BoolProperties;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.gradle.project.validate.Validators;
 
 @SuppressWarnings("serial") // Don't care about serialization
 public class CustomActionPanel extends javax.swing.JPanel {
@@ -33,6 +38,12 @@ public class CustomActionPanel extends javax.swing.JPanel {
         if (!showTaskMustExistCheckBox) {
             jMustExistCheck.setVisible(false);
         }
+    }
+
+    public PropertySource<Boolean> validInput() {
+        PropertySource<String> taskNames = Validators.trimmedText(jTasksEdit);
+        PropertySource<Boolean> emptyNames = BoolProperties.equalsWithConst(taskNames, "");
+        return BoolProperties.not(emptyNames);
     }
 
     public void setNonBlocking(boolean value) {
