@@ -24,12 +24,12 @@
                           <Component id="jScriptPlatformCombo" alignment="1" max="32767" attributes="0"/>
                           <Component id="jSourceLevelCombo" alignment="0" max="32767" attributes="0"/>
                           <Component id="jPlatformCombo" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jSourceEncoding" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="1" attributes="0">
                               <Component id="jGradleHomeChangeButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jGradleHomeEdit" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="jSourceEncoding" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -66,8 +66,8 @@
               <Component id="jSourceEncodingCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jSourceEncoding" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jSourceEncodingInherit" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jSourceEncoding" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jGradleHomeCaption" min="-2" pref="14" max="-2" attributes="0"/>
@@ -186,13 +186,6 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jPlatformPreferenceButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JTextField" name="jSourceEncoding">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="CommonProjectPropertiesPanel.jSourceEncoding.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JComboBox" name="jPlatformCombo">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
@@ -247,6 +240,11 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jGradleHomeChangeButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="jSourceEncoding">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Charset&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>
