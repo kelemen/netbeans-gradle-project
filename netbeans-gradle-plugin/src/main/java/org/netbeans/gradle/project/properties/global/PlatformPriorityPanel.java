@@ -9,12 +9,14 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
@@ -27,7 +29,7 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import static org.jtrim.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
-public class PlatformPriorityPanel extends javax.swing.JPanel {
+public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private final DefaultListModel<PlatformItem> jPlatformListModel;
     private boolean okPressed;
 
@@ -47,6 +49,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         setupEnableDisable();
     }
 
+    @Override
     public final void updateSettings() {
         JavaPlatform[] platforms
                 = JavaPlatformManager.getDefault().getInstalledPlatforms();
@@ -62,6 +65,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         setupEnableDisable();
     }
 
+    @Override
     public final void saveSettings() {
         List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
 
@@ -73,6 +77,16 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
 
         PlatformOrder newOrdere = new PlatformOrder(platforms);
         GlobalGradleSettings.getPlatformPreferenceOrder().setValue(newOrdere);
+    }
+
+    @Override
+    public PropertySource<Boolean> valid() {
+        return PropertyFactory.constSource(true);
+    }
+
+    @Override
+    public JComponent getEditorComponent() {
+        return this;
     }
 
     public boolean isOkPressed() {
