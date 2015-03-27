@@ -31,15 +31,25 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
     private final DefaultListModel<PlatformItem> jPlatformListModel;
     private boolean okPressed;
 
-    public PlatformPriorityPanel() {
+    public PlatformPriorityPanel(boolean hasOwnButtons) {
         okPressed = false;
 
         initComponents();
 
-        JavaPlatform[] platforms
-                = JavaPlatformManager.getDefault().getInstalledPlatforms();
+        jOkButton.setVisible(hasOwnButtons);
+        jCancelButton.setVisible(hasOwnButtons);
 
         jPlatformListModel = new DefaultListModel<>();
+        jPlatformList.setModel(jPlatformListModel);
+
+        updateSettings();
+
+        setupEnableDisable();
+    }
+
+    public final void updateSettings() {
+        JavaPlatform[] platforms
+                = JavaPlatformManager.getDefault().getInstalledPlatforms();
 
         // To increase the model's iternal capacity
         jPlatformListModel.setSize(platforms.length);
@@ -48,7 +58,21 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         for (JavaPlatform platform: GlobalGradleSettings.orderPlatforms(platforms)) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }
-        jPlatformList.setModel(jPlatformListModel);
+
+        setupEnableDisable();
+    }
+
+    public final void saveSettings() {
+        List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
+
+        Enumeration<PlatformItem> listItems = jPlatformListModel.elements();
+        while (listItems.hasMoreElements()) {
+            PlatformItem item = listItems.nextElement();
+            platforms.add(item.platform);
+        }
+
+        PlatformOrder newOrdere = new PlatformOrder(platforms);
+        GlobalGradleSettings.getPlatformPreferenceOrder().setValue(newOrdere);
     }
 
     public boolean isOkPressed() {
@@ -63,7 +87,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
         Container contentPane = dlg.getContentPane();
         contentPane.setLayout(new GridLayout(1, 1));
 
-        PlatformPriorityPanel content = new PlatformPriorityPanel();
+        PlatformPriorityPanel content = new PlatformPriorityPanel(true);
         contentPane.add(content);
 
         dlg.pack();
@@ -88,8 +112,6 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
 
         jPlatformListModel.add(newIndex, item);
         jPlatformList.setSelectedIndex(newIndex);
-
-        setupEnableDisable();
     }
 
     private void setupEnableDisable() {
@@ -258,16 +280,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jCancelButtonActionPerformed
 
     private void jOkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOkButtonActionPerformed
-        List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
-
-        Enumeration<PlatformItem> listItems = jPlatformListModel.elements();
-        while (listItems.hasMoreElements()) {
-            PlatformItem item = listItems.nextElement();
-            platforms.add(item.platform);
-        }
-
-        PlatformOrder newOrdere = new PlatformOrder(platforms);
-        GlobalGradleSettings.getPlatformPreferenceOrder().setValue(newOrdere);
+        saveSettings();
 
         okPressed = true;
         closeWindow();
