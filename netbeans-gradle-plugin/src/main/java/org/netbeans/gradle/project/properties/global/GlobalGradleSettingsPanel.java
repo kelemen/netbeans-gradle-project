@@ -19,6 +19,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         categoriesModel.addElement(new CategoryItem("Script & tasks", new ScriptAndTasksPanel()));
         categoriesModel.addElement(new CategoryItem("Build script parsing", new BuildScriptParsingPanel()));
         categoriesModel.addElement(new CategoryItem("Task execution", new TaskExecutionPanel()));
+        categoriesModel.addElement(new CategoryItem("Other", new OtherOptionsPanel()));
 
         jCategoriesList.setModel(categoriesModel);
 
