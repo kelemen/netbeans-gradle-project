@@ -25,6 +25,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -615,8 +616,7 @@ public final class GlobalGradleSettings {
 
     private static final class DefaultPreference implements BasicPreference {
         private static Preferences getPreferences() {
-            // Use GradleSettingsPanel.class for compatibility.
-            return NbPreferences.forModule(GradleSettingsPanel.class);
+            return NbPreferences.forModule(NbGradleProjectFactory.class);
         }
 
         @Override

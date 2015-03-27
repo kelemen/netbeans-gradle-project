@@ -12,12 +12,6 @@ import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.HtmlBrowser;
 import org.openide.filesystems.FileChooserBuilder;
 
-// !!! Note: This file cannot be renamed, moved or deleted. !!!
-// This is required for backward compatibility because GlobalGradleSettings
-// relies on this class to store the global settings.
-// If this file is ever moved, check GlobalGradleSettings, so that it still
-// references the "org.netbeans.gradle.project.properties.GradleSettingsPanel"
-// class (and not something else which may happen due to automated refactoring).
 @SuppressWarnings("serial")
 public class GradleSettingsPanel extends javax.swing.JPanel {
     private static final URL HELP_URL = getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
