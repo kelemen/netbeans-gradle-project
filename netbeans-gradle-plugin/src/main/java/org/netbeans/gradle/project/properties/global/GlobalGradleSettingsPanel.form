@@ -22,7 +22,13 @@
                   <Group type="102" attributes="0">
                       <Component id="jScrollPane1" min="-2" pref="125" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jCurrentCategoryPanel" pref="257" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jCurrentCategoryPanel" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jReadWikiButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="72" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="jCategoriesLabel" min="-2" max="-2" attributes="0"/>
@@ -40,8 +46,12 @@
               <Component id="jCategoriesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jCurrentCategoryPanel" max="32767" attributes="0"/>
                   <Component id="jScrollPane1" pref="266" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="jReadWikiButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jCurrentCategoryPanel" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -82,5 +92,15 @@
         <Property name="rows" type="int" value="1"/>
       </Layout>
     </Container>
+    <Component class="javax.swing.JButton" name="jReadWikiButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GlobalGradleSettingsPanel.jReadWikiButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jReadWikiButtonActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>

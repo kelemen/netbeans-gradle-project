@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
+import java.net.URL;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.ListModel;
@@ -7,10 +8,15 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.property.BoolProperties;
 import org.jtrim.property.PropertySource;
+import org.openide.awt.HtmlBrowser;
 
 @SuppressWarnings("serial")
 public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+    private URL currentHelpUrl;
+
     public GlobalGradleSettingsPanel() {
+        currentHelpUrl = null;
+
         initComponents();
 
         DefaultListModel<CategoryItem> categoriesModel = new DefaultListModel<>();
@@ -41,7 +47,14 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         if (selected != null) {
             JComponent editorComponent = selected.editor.getEditorComponent();
             jCurrentCategoryPanel.add(editorComponent);
+
+            currentHelpUrl = selected.editor.getHelpUrl();
         }
+        else {
+            currentHelpUrl = null;
+        }
+
+        jReadWikiButton.setEnabled(currentHelpUrl != null);
 
         jCurrentCategoryPanel.revalidate();
         jCurrentCategoryPanel.repaint();
@@ -84,6 +97,11 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         return this;
     }
 
+    @Override
+    public URL getHelpUrl() {
+        return null;
+    }
+
     private static final class CategoryItem {
         private final String caption;
         public final GlobalSettingsEditor editor;
@@ -111,12 +129,20 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         jScrollPane1 = new javax.swing.JScrollPane();
         jCategoriesList = new javax.swing.JList<CategoryItem>();
         jCurrentCategoryPanel = new javax.swing.JPanel();
+        jReadWikiButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jCategoriesLabel, org.openide.util.NbBundle.getMessage(GlobalGradleSettingsPanel.class, "GlobalGradleSettingsPanel.jCategoriesLabel.text")); // NOI18N
 
         jScrollPane1.setViewportView(jCategoriesList);
 
         jCurrentCategoryPanel.setLayout(new java.awt.GridLayout(1, 1));
+
+        org.openide.awt.Mnemonics.setLocalizedText(jReadWikiButton, org.openide.util.NbBundle.getMessage(GlobalGradleSettingsPanel.class, "GlobalGradleSettingsPanel.jReadWikiButton.text")); // NOI18N
+        jReadWikiButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jReadWikiButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -128,7 +154,11 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCurrentCategoryPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCurrentCategoryPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jReadWikiButton)
+                                .addGap(0, 72, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jCategoriesLabel)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -141,17 +171,27 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
                 .addComponent(jCategoriesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCurrentCategoryPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jReadWikiButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jCurrentCategoryPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jReadWikiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jReadWikiButtonActionPerformed
+        if (currentHelpUrl != null) {
+            HtmlBrowser.URLDisplayer.getDefault().showURLExternal(currentHelpUrl);
+        }
+    }//GEN-LAST:event_jReadWikiButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jCategoriesLabel;
     private javax.swing.JList<CategoryItem> jCategoriesList;
     private javax.swing.JPanel jCurrentCategoryPanel;
+    private javax.swing.JButton jReadWikiButton;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }

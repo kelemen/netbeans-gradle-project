@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
+import java.net.URL;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
@@ -9,9 +10,12 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
 public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+
     public ScriptAndTasksPanel() {
         initComponents();
 
@@ -53,6 +57,11 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     @Override
     public JComponent getEditorComponent() {
         return this;
+    }
+
+    @Override
+    public URL getHelpUrl() {
+        return HELP_URL;
     }
 
     private JavaPlatform getJdk() {

@@ -1,12 +1,16 @@
 package org.netbeans.gradle.project.properties.global;
 
+import java.net.URL;
 import javax.swing.JComponent;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
 public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+
     public TaskExecutionPanel() {
         initComponents();
     }
@@ -35,6 +39,11 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
     @Override
     public JComponent getEditorComponent() {
         return this;
+    }
+
+    @Override
+    public URL getHelpUrl() {
+        return HELP_URL;
     }
 
     /**

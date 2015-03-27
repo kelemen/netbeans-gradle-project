@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.GridLayout;
 import java.awt.Window;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -25,11 +26,14 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
 public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+
     private final DefaultListModel<PlatformItem> jPlatformListModel;
     private boolean okPressed;
 
@@ -87,6 +91,11 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     @Override
     public JComponent getEditorComponent() {
         return this;
+    }
+
+    @Override
+    public URL getHelpUrl() {
+        return HELP_URL;
     }
 
     public boolean isOkPressed() {
