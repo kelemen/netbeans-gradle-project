@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;

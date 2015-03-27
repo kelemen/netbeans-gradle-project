@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.properties.global;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
 
 public final class PlatformOrder {

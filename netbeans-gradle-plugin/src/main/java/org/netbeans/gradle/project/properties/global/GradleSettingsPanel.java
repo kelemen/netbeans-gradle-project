@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -9,6 +9,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.openide.awt.HtmlBrowser;
 import org.openide.filesystems.FileChooserBuilder;
 

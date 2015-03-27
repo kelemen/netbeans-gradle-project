@@ -69,7 +69,7 @@
     <Component class="javax.swing.JLabel" name="jPlatformListTitle">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="PlatformPriorityPanel.jPlatformListTitle.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="PlatformPriorityPanel.jPlatformListTitle.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -109,7 +109,7 @@
         <Component class="javax.swing.JButton" name="jMoveUpButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="PlatformPriorityPanel.jMoveUpButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="PlatformPriorityPanel.jMoveUpButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -119,7 +119,7 @@
         <Component class="javax.swing.JButton" name="jMoveDownButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="PlatformPriorityPanel.jMoveDownButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="PlatformPriorityPanel.jMoveDownButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -129,7 +129,7 @@
         <Component class="javax.swing.JButton" name="jOkButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="PlatformPriorityPanel.jOkButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="PlatformPriorityPanel.jOkButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -139,7 +139,7 @@
         <Component class="javax.swing.JButton" name="jCancelButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="PlatformPriorityPanel.jCancelButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="PlatformPriorityPanel.jCancelButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>

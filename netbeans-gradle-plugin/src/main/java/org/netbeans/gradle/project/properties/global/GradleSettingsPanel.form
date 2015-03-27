@@ -128,21 +128,21 @@
     <Component class="javax.swing.JLabel" name="jGradlePathCaption">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradlePathCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradlePathCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="jGradlePathEdit">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradlePathEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradlePathEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="jBrowsePathButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jBrowsePathButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jBrowsePathButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -152,7 +152,7 @@
     <Component class="javax.swing.JLabel" name="jGradleVMArgsCaption">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradleVMArgsCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradleVMArgsCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -184,21 +184,21 @@
     <Component class="javax.swing.JLabel" name="jGradleJdkCaption">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradleJdkCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradleJdkCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jSkipTestsCheck">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jSkipTestsCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jSkipTestsCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jSkipCheckCheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jSkipCheckCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jSkipCheckCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -207,42 +207,42 @@
     <Component class="javax.swing.JLabel" name="jProjectCacheSizeLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jProjectCacheSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jProjectCacheSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jAlwayClearOutput">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jAlwayClearOutput.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jAlwayClearOutput.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jDontAddInitScriptCheck">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jDontAddInitScriptCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jDontAddInitScriptCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jGradleUserHomeCaption">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradleUserHomeCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradleUserHomeCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="jGradleUserHomeEdit">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jGradleUserHomeEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jGradleUserHomeEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="jBrowseUserHomeDirButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jBrowseUserHomeDirButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jBrowseUserHomeDirButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -252,7 +252,7 @@
     <Component class="javax.swing.JCheckBox" name="jReliableJavaVersionCheck">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jReliableJavaVersionCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jReliableJavaVersionCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -269,14 +269,14 @@
     <Component class="javax.swing.JLabel" name="jModelLoadStrategyLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jModelLoadStrategyLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jModelLoadStrategyLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="jReadWikiButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jReadWikiButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jReadWikiButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -286,14 +286,14 @@
     <Component class="javax.swing.JCheckBox" name="jCompileOnSaveCheckbox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jCompileOnSaveCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jCompileOnSaveCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="jJavaPlatformOrderButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="GradleSettingsPanel.jJavaPlatformOrderButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleSettingsPanel.jJavaPlatformOrderButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>

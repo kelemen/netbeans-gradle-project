@@ -16,6 +16,7 @@ import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties.global.PlatformPriorityPanel;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;

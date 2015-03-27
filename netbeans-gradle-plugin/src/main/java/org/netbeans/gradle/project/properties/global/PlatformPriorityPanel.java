@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.properties.global;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -21,6 +21,8 @@ import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.NbProperties;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
 

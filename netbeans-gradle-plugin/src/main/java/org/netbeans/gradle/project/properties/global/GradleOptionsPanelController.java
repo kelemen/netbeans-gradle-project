@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.properties.global;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
