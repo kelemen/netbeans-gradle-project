@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
@@ -11,26 +10,19 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.awt.HtmlBrowser;
 import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
 public class GradleSettingsPanel extends javax.swing.JPanel {
-    private static final URL HELP_URL = getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
 
     public GradleSettingsPanel() {
         initComponents();
 
         fillModelLoadStrategyCombo();
         updateSettings();
-    }
-
-    private static URL getSafeURL(String url) {
-        try {
-            return new URL(url);
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
-        }
     }
 
     private void fillModelLoadStrategyCombo() {

@@ -6,6 +6,8 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -21,6 +23,14 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class NbFileUtils {
+    public static URL getSafeURL(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     public static FileObject asArchiveOrDir(File file) {
         FileObject result = FileUtil.toFileObject(file);
         return asArchiveOrDir(result);
