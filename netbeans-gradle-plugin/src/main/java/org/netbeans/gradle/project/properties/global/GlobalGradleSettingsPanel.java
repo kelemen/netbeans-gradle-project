@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
 import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -45,10 +44,10 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
 
         CategoryItem selected = jCategoriesList.getSelectedValue();
         if (selected != null) {
-            JComponent editorComponent = selected.editor.getEditorComponent();
-            jCurrentCategoryPanel.add(editorComponent);
+            SettingsEditorProperties properties = selected.properties;
 
-            currentHelpUrl = selected.editor.getHelpUrl();
+            jCurrentCategoryPanel.add(properties.getEditorComponent());
+            currentHelpUrl = properties.getHelpUrl();
         }
         else {
             currentHelpUrl = null;
@@ -79,36 +78,35 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }
 
     @Override
-    public PropertySource<Boolean> valid() {
+    public SettingsEditorProperties getProperties() {
+        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
+        result.setValid(valid());
+
+        return result.create();
+    }
+
+    private PropertySource<Boolean> valid() {
         ListModel<CategoryItem> model = jCategoriesList.getModel();
         int categoryCount = model.getSize();
 
         @SuppressWarnings("unchecked")
         PropertySource<Boolean>[] subValids = (PropertySource<Boolean>[])new PropertySource<?>[categoryCount];
         for (int i = 0; i < categoryCount; i++) {
-            subValids[i] = model.getElementAt(i).editor.valid();
+            subValids[i] = model.getElementAt(i).properties.valid();
         }
 
         return BoolProperties.or(subValids);
     }
 
-    @Override
-    public JComponent getEditorComponent() {
-        return this;
-    }
-
-    @Override
-    public URL getHelpUrl() {
-        return null;
-    }
-
     private static final class CategoryItem {
         private final String caption;
         public final GlobalSettingsEditor editor;
+        public final SettingsEditorProperties properties;
 
         public CategoryItem(String caption, GlobalSettingsEditor editor) {
             this.caption = caption;
             this.editor = editor;
+            this.properties = editor.getProperties();
         }
 
         @Override

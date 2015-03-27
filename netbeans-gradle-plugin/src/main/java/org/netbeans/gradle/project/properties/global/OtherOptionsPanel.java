@@ -1,9 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
-import javax.swing.JComponent;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
@@ -28,18 +25,11 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
     }
 
     @Override
-    public PropertySource<Boolean> valid() {
-        return PropertyFactory.constSource(true);
-    }
+    public SettingsEditorProperties getProperties() {
+        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
+        result.setHelpUrl(HELP_URL);
 
-    @Override
-    public JComponent getEditorComponent() {
-        return this;
-    }
-
-    @Override
-    public URL getHelpUrl() {
-        return HELP_URL;
+        return result.create();
     }
 
     private int getProjectCacheSize() {

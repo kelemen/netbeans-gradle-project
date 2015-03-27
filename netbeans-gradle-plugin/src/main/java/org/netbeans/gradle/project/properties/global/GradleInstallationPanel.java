@@ -2,9 +2,6 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
 import java.net.URL;
-import javax.swing.JComponent;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
@@ -32,13 +29,11 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     }
 
     @Override
-    public PropertySource<Boolean> valid() {
-        return PropertyFactory.constSource(true);
-    }
+    public SettingsEditorProperties getProperties() {
+        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
+        result.setHelpUrl(HELP_URL);
 
-    @Override
-    public JComponent getEditorComponent() {
-        return this;
+        return result.create();
     }
 
     private String getGradleUserHomeDir() {
@@ -49,11 +44,6 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     private String getGradleInstallDir() {
         String result = jGradlePathEdit.getText();
         return result != null ? result.trim() : "";
-    }
-
-    @Override
-    public URL getHelpUrl() {
-        return HELP_URL;
     }
 
     /**

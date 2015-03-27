@@ -10,14 +10,12 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
@@ -84,18 +82,11 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }
 
     @Override
-    public PropertySource<Boolean> valid() {
-        return PropertyFactory.constSource(true);
-    }
+    public SettingsEditorProperties getProperties() {
+        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
+        result.setHelpUrl(HELP_URL);
 
-    @Override
-    public JComponent getEditorComponent() {
-        return this;
-    }
-
-    @Override
-    public URL getHelpUrl() {
-        return HELP_URL;
+        return result.create();
     }
 
     public boolean isOkPressed() {

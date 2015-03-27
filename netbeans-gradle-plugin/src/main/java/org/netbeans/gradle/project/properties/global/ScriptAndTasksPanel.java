@@ -3,9 +3,6 @@ package org.netbeans.gradle.project.properties.global;
 import java.net.URL;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComponent;
-import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -50,18 +47,11 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     }
 
     @Override
-    public PropertySource<Boolean> valid() {
-        return PropertyFactory.constSource(true);
-    }
+    public SettingsEditorProperties getProperties() {
+        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
+        result.setHelpUrl(HELP_URL);
 
-    @Override
-    public JComponent getEditorComponent() {
-        return this;
-    }
-
-    @Override
-    public URL getHelpUrl() {
-        return HELP_URL;
+        return result.create();
     }
 
     private JavaPlatform getJdk() {
