@@ -124,7 +124,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     }// </editor-fold>//GEN-END:initComponents
 
     private void jBrowsePathButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowsePathButtonActionPerformed
-        FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleSettingsPanel.class);
+        FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleInstallationPanel.class);
         dlgChooser.setDirectoriesOnly(true);
         File f = dlgChooser.showOpenDialog();
         if (f != null && f.isDirectory()) {
@@ -134,7 +134,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     }//GEN-LAST:event_jBrowsePathButtonActionPerformed
 
     private void jBrowseUserHomeDirButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseUserHomeDirButtonActionPerformed
-        FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleSettingsPanel.class);
+        FileChooserBuilder dlgChooser = new FileChooserBuilder(GradleInstallationPanel.class);
         dlgChooser.setDirectoriesOnly(true);
 
         File f = dlgChooser.showOpenDialog();
