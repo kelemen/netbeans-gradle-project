@@ -12,11 +12,11 @@ import org.openide.util.Lookup;
         keywords = "#AdvancedOption_Keywords_Gradle",
         keywordsCategory = "Advanced/Gradle")
 public final class GradleOptionsPanelController extends OptionsPanelController {
-    private GradleSettingsPanel settingsPanel;
+    private GlobalGradleSettingsPanel settingsPanel;
 
-    private GradleSettingsPanel getPanel() {
+    private GlobalGradleSettingsPanel getPanel() {
         if (settingsPanel == null) {
-            settingsPanel = new GradleSettingsPanel();
+            settingsPanel = new GlobalGradleSettingsPanel();
         }
         return settingsPanel;
     }
