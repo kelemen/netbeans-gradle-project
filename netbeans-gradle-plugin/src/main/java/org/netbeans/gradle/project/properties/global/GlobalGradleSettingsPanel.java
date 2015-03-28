@@ -24,6 +24,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         DefaultListModel<CategoryItem> categoriesModel = new DefaultListModel<>();
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryGradleInstallation(), new GradleInstallationPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryPlatformPriority(), new PlatformPriorityPanel(false)));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryDaemon(), new GradleDaemonPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScriptAndTasks(), new ScriptAndTasksPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScript(), new BuildScriptParsingPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryTasks(), new TaskExecutionPanel()));

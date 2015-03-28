@@ -532,6 +532,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Other");
     }
 
+    public static String getSettingsCategoryDaemon() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Daemon");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
