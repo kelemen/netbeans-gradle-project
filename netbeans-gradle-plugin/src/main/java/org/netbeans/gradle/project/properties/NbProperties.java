@@ -1,8 +1,14 @@
 package org.netbeans.gradle.project.properties;
 
+import javax.swing.JList;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
 public final class NbProperties {
@@ -36,5 +42,36 @@ public final class NbProperties {
             PropertySource<? extends RootValue> rootSrc,
             NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
         return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
+    }
+
+    public static <Value> PropertySource<Value> listSelection(final JList<? extends Value> list) {
+        ExceptionHelper.checkNotNullArgument(list, "list");
+
+        return new PropertySource<Value>() {
+            @Override
+            public Value getValue() {
+                return list.getSelectedValue();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(final Runnable listener) {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+                final ListSelectionListener swingListener = new ListSelectionListener() {
+                    @Override
+                    public void valueChanged(ListSelectionEvent e) {
+                        listener.run();
+                    }
+                };
+
+                list.addListSelectionListener(swingListener);
+                return NbListenerRefs.fromRunnable(new Runnable() {
+                    @Override
+                    public void run() {
+                        list.removeListSelectionListener(swingListener);
+                    }
+                });
+            }
+        };
     }
 }
