@@ -77,8 +77,10 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
             platforms.add(item.platform);
         }
 
-        PlatformOrder newOrdere = new PlatformOrder(platforms);
-        GlobalGradleSettings.getPlatformPreferenceOrder().setValue(newOrdere);
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        PlatformOrder newOrder = new PlatformOrder(platforms);
+        globalSettings.platformPreferenceOrder().setValue(newOrder);
     }
 
     @Override

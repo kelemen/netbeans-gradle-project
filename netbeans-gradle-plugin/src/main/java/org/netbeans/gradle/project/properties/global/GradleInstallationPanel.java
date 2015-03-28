@@ -16,16 +16,20 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
 
     @Override
     public final void updateSettings() {
-        jGradlePathEdit.setText(GlobalGradleSettings.getGradleHome().getValueAsString());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
 
-        File userHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+        jGradlePathEdit.setText(globalSettings.gradleLocation().getValueAsString());
+
+        File userHome = globalSettings.gradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
     }
 
     @Override
     public final void saveSettings() {
-        GlobalGradleSettings.getGradleHome().setValueFromString(getGradleInstallDir());
-        GlobalGradleSettings.getGradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        globalSettings.gradleLocation().setValueFromString(getGradleInstallDir());
+        globalSettings.gradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
     }
 
     @Override

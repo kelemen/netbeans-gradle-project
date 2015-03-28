@@ -63,7 +63,7 @@ public final class GradleHomeRegistry {
 
     public static void requireGradlePaths() {
         if (USING_GLOBAL_PATHS.compareAndSet(false, true)) {
-            GlobalGradleSettings.getGradleHome().addChangeListener(new Runnable() {
+            GlobalGradleSettings.getDefault().gradleLocation().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     updateGradleHome();

@@ -10,6 +10,7 @@ import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
@@ -37,23 +38,20 @@ public final class GradleModelCache {
         this.updateListeners = new CopyOnTriggerListenerManager<>();
     }
 
-    private static int getProjectCacheSize() {
-        return GlobalGradleSettings.getProjectCacheSize().getValue();
-    }
-
     public static GradleModelCache getDefault() {
         GradleModelCache result = DEFAULT_REF.get();
         if (result == null) {
-            result = new GradleModelCache(getProjectCacheSize());
+            final PropertySource<Integer> cacheSize = GlobalGradleSettings.getDefault().projectCacheSize();
+            result = new GradleModelCache(cacheSize.getValue());
             if (DEFAULT_REF.compareAndSet(null, result)) {
                 final GradleModelCache cache = result;
-                GlobalGradleSettings.getProjectCacheSize().addChangeListener(new Runnable() {
+                cacheSize.addChangeListener(new Runnable() {
                     @Override
                     public void run() {
-                        cache.setMaxCapacity(getProjectCacheSize());
+                        cache.setMaxCapacity(cacheSize.getValue());
                     }
                 });
-                cache.setMaxCapacity(getProjectCacheSize());
+                cache.setMaxCapacity(cacheSize.getValue());
             }
             else {
                 result = DEFAULT_REF.get();

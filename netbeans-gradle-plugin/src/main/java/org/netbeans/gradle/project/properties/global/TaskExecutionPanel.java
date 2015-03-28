@@ -14,18 +14,22 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
 
     @Override
     public void updateSettings() {
-        jAlwayClearOutput.setSelected(GlobalGradleSettings.getAlwaysClearOutput().getValue());
-        jDontAddInitScriptCheck.setSelected(GlobalGradleSettings.getOmitInitScript().getValue());
-        jSkipTestsCheck.setSelected(GlobalGradleSettings.getSkipTests().getValue());
-        jSkipCheckCheckBox.setSelected(GlobalGradleSettings.getSkipCheck().getValue());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        jAlwayClearOutput.setSelected(globalSettings.alwaysClearOutput().getValue());
+        jDontAddInitScriptCheck.setSelected(globalSettings.omitInitScript().getValue());
+        jSkipTestsCheck.setSelected(globalSettings.skipTests().getValue());
+        jSkipCheckCheckBox.setSelected(globalSettings.skipCheck().getValue());
     }
 
     @Override
     public void saveSettings() {
-        GlobalGradleSettings.getSkipTests().setValue(jSkipTestsCheck.isSelected());
-        GlobalGradleSettings.getSkipCheck().setValue(jSkipCheckCheckBox.isSelected());
-        GlobalGradleSettings.getAlwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
-        GlobalGradleSettings.getOmitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        globalSettings.skipTests().setValue(jSkipTestsCheck.isSelected());
+        globalSettings.skipCheck().setValue(jSkipCheckCheckBox.isSelected());
+        globalSettings.alwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
+        globalSettings.omitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
     }
 
     @Override

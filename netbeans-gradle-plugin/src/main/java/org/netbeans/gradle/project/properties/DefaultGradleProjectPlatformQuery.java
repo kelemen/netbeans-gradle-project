@@ -48,7 +48,7 @@ implements
         manager.addPropertyChangeListener(changeListener);
 
         StringBasedProperty<PlatformOrder> order
-                = GlobalGradleSettings.getPlatformPreferenceOrder();
+                = GlobalGradleSettings.getDefault().platformPreferenceOrder();
 
         final ListenerRef orderListenerRef = order.addChangeListener(listener);
 

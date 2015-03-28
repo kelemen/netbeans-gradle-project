@@ -101,7 +101,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         classpathResources.put(ClassPathType.COMPILE, jarResources);
         classpathResources.put(ClassPathType.RUNTIME, jarResources);
 
-        JavaPlatform platform = GlobalGradleSettings.getGradleJdk().getValue();
+        JavaPlatform platform = GlobalGradleSettings.getDefault().gradleJdk().getValue();
         if (platform != null) {
             List<PathResourceImplementation> platformResources = new LinkedList<>();
             for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
@@ -160,8 +160,8 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             }
         };
 
-        GlobalGradleSettings.getGradleHome().addChangeListener(changeListener);
-        GlobalGradleSettings.getGradleJdk().addChangeListener(changeListener);
+        GlobalGradleSettings.getDefault().gradleLocation().addChangeListener(changeListener);
+        GlobalGradleSettings.getDefault().gradleJdk().addChangeListener(changeListener);
 
         setupClassPaths();
     }

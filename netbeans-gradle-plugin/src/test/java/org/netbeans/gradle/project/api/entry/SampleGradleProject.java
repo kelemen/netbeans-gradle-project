@@ -28,7 +28,7 @@ public final class SampleGradleProject implements Closeable {
     }
 
     public static SampleGradleProject createProject(String resourceRelPath) throws IOException {
-        GlobalGradleSettings.getGradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
+        GlobalGradleSettings.getDefault().gradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
         return createProject(SampleGradleProject.class, resourceRelPath);
     }
 

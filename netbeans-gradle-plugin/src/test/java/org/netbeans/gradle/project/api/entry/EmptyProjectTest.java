@@ -35,8 +35,8 @@ public final class EmptyProjectTest {
         MockServices.setServices(SingleModelExtensionQuery.class);
 
         GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
+        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
+        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
 
         sampleProject = createEmptyProject();
     }

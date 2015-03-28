@@ -32,6 +32,10 @@ public final class SourceLevelProperty {
         return result.create();
     }
 
+    private static PropertySource<Boolean> mayRelyOnJavaOfScript() {
+        return GlobalGradleSettings.getDefault().mayRelyOnJavaOfScript();
+    }
+
     public static PropertySource<String> defaultValue(
             final NbGradleProject project,
             final PropertySource<ProjectPlatform> targetPlatform) {
@@ -57,7 +61,7 @@ public final class SourceLevelProperty {
             public ListenerRef addChangeListener(Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                ListenerRef ref1 = GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                ListenerRef ref1 = mayRelyOnJavaOfScript().addChangeListener(listener);
                 ListenerRef ref2 = project.addModelChangeListener(listener);
                 ListenerRef ref3 = targetPlatform.addChangeListener(listener);
 
@@ -101,7 +105,7 @@ public final class SourceLevelProperty {
 
     public static boolean isReliableJavaVersion(JavaExtension javaExt) {
         return (javaExt != null && isModelSourceReliable(javaExt))
-                || GlobalGradleSettings.getMayRelyOnJavaOfScript().getValue();
+                || mayRelyOnJavaOfScript().getValue();
     }
 
     private SourceLevelProperty() {

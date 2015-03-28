@@ -26,7 +26,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
 
     @Override
     public void performTask() {
-        if (!GlobalGradleSettings.getCompileOnSave().getValue()) {
+        if (!GlobalGradleSettings.getDefault().compileOnSave().getValue()) {
             return;
         }
 

@@ -52,6 +52,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
@@ -119,7 +120,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         final GradleConnector result = GradleConnector.newConnector();
-        Integer timeoutSec = GlobalGradleSettings.getGradleDaemonTimeoutSec().getValue();
+        Integer timeoutSec = GlobalGradleSettings.getDefault().gradleDaemonTimeoutSec().getValue();
         if (timeoutSec != null && result instanceof DefaultGradleConnector) {
             ((DefaultGradleConnector)result).daemonMaxIdleTime(timeoutSec, TimeUnit.SECONDS);
         }
@@ -129,7 +130,7 @@ public final class GradleModelLoader {
             throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
         }
 
-        File gradleUserHome = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+        File gradleUserHome = GlobalGradleSettings.getDefault().gradleUserHomeDir().getValue();
         if (gradleUserHome != null) {
             result.useGradleUserHomeDir(gradleUserHome);
         }
@@ -508,13 +509,10 @@ public final class GradleModelLoader {
 
         GradleVersion version = gradleTarget.getGradleVersion();
 
-        NbModelLoader result;
-        if (GlobalGradleSettings.getModelLoadingStrategy().getValue().canUse18Api(version)) {
-            result = new NbGradle18ModelLoader(setup, gradleTarget);
-        }
-        else {
-            result = new NbCompatibleModelLoader(cachedModel, setup, gradleTarget);
-        }
+        ModelLoadingStrategy modelLoadingStrategy = GlobalGradleSettings.getDefault().modelLoadingStrategy().getValue();
+        NbModelLoader result = modelLoadingStrategy.canUse18Api(version)
+                ? new NbGradle18ModelLoader(setup, gradleTarget)
+                : new NbCompatibleModelLoader(cachedModel, setup, gradleTarget);
 
         LOGGER.log(Level.INFO, "Using model loader: {0}", result.getClass().getSimpleName());
         return result;
@@ -537,7 +535,7 @@ public final class GradleModelLoader {
         public ModelBuilderSetup(Project project, ProgressHandle progress) {
             this(project,
                     Collections.singletonList("-PevaluatingIDE=NetBeans"),
-                    GlobalGradleSettings.getGradleJvmArgs().getValue(),
+                    GlobalGradleSettings.getDefault().gradleJvmArgs().getValue(),
                     progress);
         }
 

@@ -23,9 +23,9 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
-import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaPlatformUtils {
@@ -126,7 +126,7 @@ public final class JavaPlatformUtils {
 
     private static PropertySource<List<JavaPlatform>> createJavaPlatforms() {
         final PropertySource<JavaPlatform[]> unordered = unorderedJavaPlatforms();
-        final StringBasedProperty<PlatformOrder> order = GlobalGradleSettings.getPlatformPreferenceOrder();
+        final StringBasedProperty<PlatformOrder> order = GlobalGradleSettings.getDefault().platformPreferenceOrder();
         return new PropertySource<List<JavaPlatform>>() {
             @Override
             public List<JavaPlatform> getValue() {
@@ -346,7 +346,7 @@ public final class JavaPlatformUtils {
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
             return ListenerRegistries.combineListenerRefs(
-                    GlobalGradleSettings.getPlatformPreferenceOrder().addChangeListener(listener),
+                    GlobalGradleSettings.getDefault().platformPreferenceOrder().addChangeListener(listener),
                     installedPlatforms.addChangeListener(listener));
         }
     }

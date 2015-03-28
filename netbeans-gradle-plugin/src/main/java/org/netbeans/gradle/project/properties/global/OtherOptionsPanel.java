@@ -14,14 +14,18 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
 
     @Override
     public void updateSettings() {
-        jCompileOnSaveCheckbox.setSelected(GlobalGradleSettings.getCompileOnSave().getValue());
-        jProjectCacheSize.setValue(GlobalGradleSettings.getProjectCacheSize().getValue());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        jCompileOnSaveCheckbox.setSelected(globalSettings.compileOnSave().getValue());
+        jProjectCacheSize.setValue(globalSettings.projectCacheSize().getValue());
     }
 
     @Override
     public void saveSettings() {
-        GlobalGradleSettings.getProjectCacheSize().setValue(getProjectCacheSize());
-        GlobalGradleSettings.getCompileOnSave().setValue(jCompileOnSaveCheckbox.isSelected());
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+
+        globalSettings.projectCacheSize().setValue(getProjectCacheSize());
+        globalSettings.compileOnSave().setValue(jCompileOnSaveCheckbox.isSelected());
     }
 
     @Override
@@ -39,7 +43,7 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
             result = ((Number)value).intValue();
         }
         else {
-            result = GlobalGradleSettings.getProjectCacheSize().getValue();
+            result = GlobalGradleSettings.getDefault().projectCacheSize().getValue();
         }
         return result > 0 ? result : 1;
     }

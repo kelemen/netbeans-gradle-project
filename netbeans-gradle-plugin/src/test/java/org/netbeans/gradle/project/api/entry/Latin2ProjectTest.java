@@ -33,9 +33,9 @@ public class Latin2ProjectTest {
         MockServices.setServices();
 
         GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
-        GlobalGradleSettings.getGradleJvmArgs().setValue(Arrays.asList("-Dfile.encoding=ISO-8859-2", "-Xmx128m"));
+        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
+        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
+        GlobalGradleSettings.getDefault().gradleJvmArgs().setValue(Arrays.asList("-Dfile.encoding=ISO-8859-2", "-Xmx128m"));
 
         sampleProject = SampleGradleProject.createProject("latin2-project.zip");
     }

@@ -56,7 +56,7 @@ public final class GradleFileUtils {
         return new PropertySource<File>() {
             @Override
             public File getValue() {
-                File value = GlobalGradleSettings.getGradleUserHomeDir().getValue();
+                File value = GlobalGradleSettings.getDefault().gradleUserHomeDir().getValue();
                 if (value == null) {
                     value = getDefaultGradleUserHome();
                 }
@@ -65,7 +65,7 @@ public final class GradleFileUtils {
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
-                return GlobalGradleSettings.getGradleUserHomeDir().addChangeListener(listener);
+                return GlobalGradleSettings.getDefault().gradleUserHomeDir().addChangeListener(listener);
             }
         };
     }

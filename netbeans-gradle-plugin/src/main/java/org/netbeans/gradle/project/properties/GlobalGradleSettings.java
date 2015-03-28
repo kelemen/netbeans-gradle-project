@@ -203,62 +203,6 @@ public final class GlobalGradleSettings {
         return result != null ? FileUtil.toFileObject(result) : null;
     }
 
-    public static StringBasedProperty<Integer> getGradleDaemonTimeoutSec() {
-        return getDefault().gradleDaemonTimeoutSec;
-    }
-
-    public static StringBasedProperty<ModelLoadingStrategy> getModelLoadingStrategy() {
-        return getDefault().modelLoadingStrategy;
-    }
-
-    public static StringBasedProperty<File> getGradleUserHomeDir() {
-        return getDefault().gradleUserHomeDir;
-    }
-
-    public static StringBasedProperty<GradleLocation> getGradleHome() {
-        return getDefault().gradleLocation;
-    }
-
-    public static StringBasedProperty<List<String>> getGradleJvmArgs() {
-        return getDefault().gradleJvmArgs;
-    }
-
-    public static StringBasedProperty<JavaPlatform> getGradleJdk() {
-        return getDefault().gradleJdk;
-    }
-
-    public static StringBasedProperty<Boolean> getSkipTests() {
-        return getDefault().skipTests;
-    }
-
-    public static StringBasedProperty<Boolean> getSkipCheck() {
-        return getDefault().skipCheck;
-    }
-
-    public static StringBasedProperty<Integer> getProjectCacheSize() {
-        return getDefault().projectCacheSize;
-    }
-
-    public static StringBasedProperty<Boolean> getAlwaysClearOutput() {
-        return getDefault().alwaysClearOutput;
-    }
-
-    public static StringBasedProperty<Boolean> getOmitInitScript() {
-        return getDefault().omitInitScript;
-    }
-
-    public static StringBasedProperty<Boolean> getMayRelyOnJavaOfScript() {
-        return getDefault().mayRelyOnJavaOfScript;
-    }
-
-    public static StringBasedProperty<Boolean> getCompileOnSave() {
-        return getDefault().compileOnSave;
-    }
-
-    public static StringBasedProperty<PlatformOrder> getPlatformPreferenceOrder() {
-        return getDefault().platformPreferenceOrder;
-    }
-
     public static List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
         return filterIndistinguishable(Arrays.asList(platforms));
     }
@@ -281,7 +225,7 @@ public final class GlobalGradleSettings {
     }
 
     public static List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
-        PlatformOrder order = getPlatformPreferenceOrder().getValue();
+        PlatformOrder order = getDefault().platformPreferenceOrder().getValue();
         return order.orderPlatforms(platforms);
     }
 

@@ -68,7 +68,7 @@ public final class TargetPlatformProperty {
             public ListenerRef addChangeListener(Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                ListenerRef ref1 = GlobalGradleSettings.getMayRelyOnJavaOfScript().addChangeListener(listener);
+                ListenerRef ref1 = GlobalGradleSettings.getDefault().mayRelyOnJavaOfScript().addChangeListener(listener);
                 ListenerRef ref2 = project.addModelChangeListener(listener);
                 ListenerRef ref3 = platformListHelper.addChangeListener(listener);
 

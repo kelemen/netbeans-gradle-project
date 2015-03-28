@@ -134,7 +134,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static List<TemporaryFileRef> getAllInitScriptFiles(NbGradleProject project) {
-        if (GlobalGradleSettings.getOmitInitScript().getValue()) {
+        if (GlobalGradleSettings.getDefault().omitInitScript().getValue()) {
             return Collections.emptyList();
         }
 
@@ -388,7 +388,7 @@ public final class AsyncGradleTask implements Runnable {
 
                     try {
                         OutputWriter buildOutput = tab.getIo().getOutRef();
-                        if (GlobalGradleSettings.getAlwaysClearOutput().getValue()
+                        if (GlobalGradleSettings.getDefault().alwaysClearOutput().getValue()
                                 || taskDef.isCleanOutput()) {
                             buildOutput.reset();
                             // There is no need to reset buildErrOutput,
@@ -541,7 +541,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
-        List<String> globalJvmArgs = GlobalGradleSettings.getGradleJvmArgs().getValue();
+        List<String> globalJvmArgs = GlobalGradleSettings.getDefault().gradleJvmArgs().getValue();
 
         GradleTaskDef result;
         if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {

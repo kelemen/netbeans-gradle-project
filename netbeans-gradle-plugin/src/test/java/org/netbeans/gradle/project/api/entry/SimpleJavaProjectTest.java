@@ -69,8 +69,8 @@ public class SimpleJavaProjectTest {
         MockServices.setServices(CustomSourcesMergerExtDef.class);
 
         GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getGradleHome().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getGradleJdk().setValue(JavaPlatform.getDefault());
+        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
+        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
 
         sampleProject = SampleGradleProject.createProject("gradle-sample.zip");
     }
