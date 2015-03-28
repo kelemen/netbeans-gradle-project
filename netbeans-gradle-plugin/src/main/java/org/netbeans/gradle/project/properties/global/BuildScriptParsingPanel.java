@@ -23,14 +23,14 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
     }
 
     @Override
-    public void updateSettings() {
+    public void updateSettings(GlobalGradleSettings globalSettings) {
         jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
-                GlobalGradleSettings.getDefault().modelLoadingStrategy().getValue()));
+                globalSettings.modelLoadingStrategy().getValue()));
     }
 
     @Override
-    public void saveSettings() {
-        GlobalGradleSettings.getDefault().modelLoadingStrategy().setValue(getModelLoadingStrategy());
+    public void saveSettings(GlobalGradleSettings globalSettings) {
+        globalSettings.modelLoadingStrategy().setValue(getModelLoadingStrategy());
     }
 
     @Override

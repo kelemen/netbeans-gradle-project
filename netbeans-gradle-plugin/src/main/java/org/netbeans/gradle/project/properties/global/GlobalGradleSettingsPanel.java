@@ -71,20 +71,20 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }
 
     @Override
-    public final void updateSettings() {
+    public final void updateSettings(GlobalGradleSettings globalSettings) {
         ListModel<CategoryItem> model = jCategoriesList.getModel();
         int categoryCount = model.getSize();
         for (int i = 0; i < categoryCount; i++) {
-            model.getElementAt(i).editor.updateSettings();
+            model.getElementAt(i).editor.updateSettings(globalSettings);
         }
     }
 
     @Override
-    public final void saveSettings() {
+    public final void saveSettings(GlobalGradleSettings globalSettings) {
         ListModel<CategoryItem> model = jCategoriesList.getModel();
         int categoryCount = model.getSize();
         for (int i = 0; i < categoryCount; i++) {
-            model.getElementAt(i).editor.saveSettings();
+            model.getElementAt(i).editor.saveSettings(globalSettings);
         }
     }
 

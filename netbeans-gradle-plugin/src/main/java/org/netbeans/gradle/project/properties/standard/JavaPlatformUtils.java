@@ -131,7 +131,7 @@ public final class JavaPlatformUtils {
             @Override
             public List<JavaPlatform> getValue() {
                 JavaPlatform[] platforms = unordered.getValue();
-                return GlobalGradleSettings.orderPlatforms(platforms);
+                return GlobalGradleSettings.getDefault().orderPlatforms(platforms);
             }
 
             @Override
@@ -179,7 +179,7 @@ public final class JavaPlatformUtils {
             String specName,
             String versionStr,
             List<JavaPlatform> platforms) {
-        List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.orderPlatforms(platforms);
+        List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.getDefault().orderPlatforms(platforms);
         return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
     }
 

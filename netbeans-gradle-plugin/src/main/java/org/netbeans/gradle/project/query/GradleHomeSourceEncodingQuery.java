@@ -16,7 +16,7 @@ public final class GradleHomeSourceEncodingQuery extends FileEncodingQueryImplem
 
     @Override
     public Charset getEncoding(FileObject file) {
-        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
+        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
         if (gradleHome == null) {
             return null;
         }

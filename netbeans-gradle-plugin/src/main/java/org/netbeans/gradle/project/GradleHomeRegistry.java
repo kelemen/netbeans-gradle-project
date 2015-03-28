@@ -75,7 +75,7 @@ public final class GradleHomeRegistry {
     }
 
     private static void updateGradleHome() {
-        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
+        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
         if (gradleHome != null) {
             setGradleHome(gradleHome);
         }

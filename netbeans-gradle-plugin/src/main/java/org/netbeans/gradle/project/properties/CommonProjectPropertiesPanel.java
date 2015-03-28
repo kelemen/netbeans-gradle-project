@@ -93,7 +93,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<JavaPlatformComboItem> comboItems = new LinkedList<>();
 
-        for (JavaPlatform platform: GlobalGradleSettings.filterIndistinguishable(platforms)) {
+        for (JavaPlatform platform: GlobalGradleSettings.getDefault().filterIndistinguishable(platforms)) {
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
                 comboItems.add(new JavaPlatformComboItem(platform));

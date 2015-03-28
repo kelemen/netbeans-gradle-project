@@ -24,7 +24,7 @@ public final class GradleHomeBinaryForSourceQuery extends AbstractBinaryForSourc
             return null;
         }
 
-        FileObject gradleHomeObj = GlobalGradleSettings.getGradleLocation();
+        FileObject gradleHomeObj = GlobalGradleSettings.getDefault().getGradleLocation();
         if (gradleHomeObj == null) {
             return null;
         }

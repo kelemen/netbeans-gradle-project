@@ -25,7 +25,7 @@ public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinar
             return null;
         }
 
-        FileObject gradleHomeObj = GlobalGradleSettings.getGradleLocation();
+        FileObject gradleHomeObj = GlobalGradleSettings.getDefault().getGradleLocation();
         if (gradleHomeObj == null) {
             return null;
         }

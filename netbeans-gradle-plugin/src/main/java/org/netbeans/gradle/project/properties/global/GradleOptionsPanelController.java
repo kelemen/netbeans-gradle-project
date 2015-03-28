@@ -23,12 +23,12 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
 
     @Override
     public void update() {
-        getPanel().updateSettings();
+        getPanel().updateSettings(GlobalGradleSettings.getDefault());
     }
 
     @Override
     public void applyChanges() {
-        getPanel().saveSettings();
+        getPanel().saveSettings(GlobalGradleSettings.getDefault());
     }
 
     @Override

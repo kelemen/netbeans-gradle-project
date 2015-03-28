@@ -122,7 +122,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
             return null;
         }
 
-        FileObject gradleHome = GlobalGradleSettings.getGradleLocation();
+        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
         if (gradleHome == null) {
             return null;
         }

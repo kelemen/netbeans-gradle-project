@@ -14,8 +14,6 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
 
     public ScriptAndTasksPanel() {
         initComponents();
-
-        updateSettings();
     }
 
     private void fillPlatformCombo() {
@@ -29,10 +27,8 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     }
 
     @Override
-    public final void updateSettings() {
+    public final void updateSettings(GlobalGradleSettings globalSettings) {
         fillPlatformCombo();
-
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
 
         jGradleJVMArgs.setText(globalSettings.gradleJvmArgs().getValueAsString());
         JavaPlatform currentJdk = globalSettings.gradleJdk().getValue();
@@ -42,9 +38,7 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     }
 
     @Override
-    public final void saveSettings() {
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
-
+    public final void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.gradleJvmArgs().setValueFromString(getGradleJvmArgs());
         globalSettings.gradleJdk().setValue(getJdk());
     }

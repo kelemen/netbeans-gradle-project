@@ -195,24 +195,24 @@ public final class GlobalGradleSettings {
         return DEFAULT;
     }
 
-    public static File getGradleInstallationAsFile() {
-        GradleLocation location = getDefault().gradleLocation.getValue();
+    public File getGradleInstallationAsFile() {
+        GradleLocation location = gradleLocation.getValue();
         if (location instanceof GradleLocationDirectory) {
             return ((GradleLocationDirectory)location).getGradleHome();
         }
         return null;
     }
 
-    public static FileObject getGradleLocation() {
+    public FileObject getGradleLocation() {
         File result = getGradleInstallationAsFile();
         return result != null ? FileUtil.toFileObject(result) : null;
     }
 
-    public static List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
+    public List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
         return filterIndistinguishable(Arrays.asList(platforms));
     }
 
-    public static List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
+    public List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
         List<JavaPlatform> result = new ArrayList<>(platforms.size());
         Set<NameAndVersion> foundVersions = CollectionUtils.newHashSet(platforms.size());
 
@@ -225,12 +225,12 @@ public final class GlobalGradleSettings {
         return result;
     }
 
-    public static List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
+    public List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
         return orderPlatforms(Arrays.asList(platforms));
     }
 
-    public static List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
-        PlatformOrder order = getDefault().platformPreferenceOrder().getValue();
+    public List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
+        PlatformOrder order = platformPreferenceOrder().getValue();
         return order.orderPlatforms(platforms);
     }
 
@@ -249,8 +249,8 @@ public final class GlobalGradleSettings {
         return installFolders.iterator().next();
     }
 
-    public static FileObject getCurrentGradleJdkHome() {
-        JavaPlatform platform = getDefault().gradleJdk.getValue();
+    public FileObject getCurrentGradleJdkHome() {
+        JavaPlatform platform = gradleJdk.getValue();
         if (platform == null) {
             return null;
         }

@@ -72,7 +72,7 @@ implements
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<ProjectPlatform> result = new ArrayList<>(platforms.length);
 
-        for (JavaPlatform platform: GlobalGradleSettings.filterIndistinguishable(platforms)) {
+        for (JavaPlatform platform: GlobalGradleSettings.getDefault().filterIndistinguishable(platforms)) {
             result.add(JavaPlatformUtils.getJavaPlatform(platform));
         }
         return result;

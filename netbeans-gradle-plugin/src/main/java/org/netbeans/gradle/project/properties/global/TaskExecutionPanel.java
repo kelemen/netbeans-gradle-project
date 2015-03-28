@@ -12,9 +12,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
     }
 
     @Override
-    public void updateSettings() {
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
-
+    public void updateSettings(GlobalGradleSettings globalSettings) {
         jAlwayClearOutput.setSelected(globalSettings.alwaysClearOutput().getValue());
         jDontAddInitScriptCheck.setSelected(globalSettings.omitInitScript().getValue());
         jSkipTestsCheck.setSelected(globalSettings.skipTests().getValue());
@@ -22,9 +20,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
     }
 
     @Override
-    public void saveSettings() {
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
-
+    public void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.skipTests().setValue(jSkipTestsCheck.isSelected());
         globalSettings.skipCheck().setValue(jSkipCheckCheckBox.isSelected());
         globalSettings.alwaysClearOutput().setValue(jAlwayClearOutput.isSelected());

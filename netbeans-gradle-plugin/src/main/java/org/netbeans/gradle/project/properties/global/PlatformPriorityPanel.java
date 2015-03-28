@@ -45,13 +45,11 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel = new DefaultListModel<>();
         jPlatformList.setModel(jPlatformListModel);
 
-        updateSettings();
-
         setupEnableDisable();
     }
 
     @Override
-    public final void updateSettings() {
+    public final void updateSettings(GlobalGradleSettings globalSettings) {
         JavaPlatform[] platforms
                 = JavaPlatformManager.getDefault().getInstalledPlatforms();
 
@@ -59,7 +57,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel.setSize(platforms.length);
         jPlatformListModel.setSize(0);
 
-        for (JavaPlatform platform: GlobalGradleSettings.orderPlatforms(platforms)) {
+        for (JavaPlatform platform: GlobalGradleSettings.getDefault().orderPlatforms(platforms)) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }
 
@@ -67,7 +65,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }
 
     @Override
-    public final void saveSettings() {
+    public final void saveSettings(GlobalGradleSettings globalSettings) {
         List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
 
         Enumeration<PlatformItem> listItems = jPlatformListModel.elements();
@@ -75,8 +73,6 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
             PlatformItem item = listItems.nextElement();
             platforms.add(item.platform);
         }
-
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
 
         PlatformOrder newOrder = new PlatformOrder(platforms);
         globalSettings.platformPreferenceOrder().setValue(newOrder);
@@ -295,7 +291,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }//GEN-LAST:event_jCancelButtonActionPerformed
 
     private void jOkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOkButtonActionPerformed
-        saveSettings();
+        saveSettings(GlobalGradleSettings.getDefault());
 
         okPressed = true;
         closeWindow();
