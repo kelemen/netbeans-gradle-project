@@ -44,6 +44,15 @@ public final class NbProperties {
         return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
     }
 
+    public static PropertySource<Boolean> isNotNull(PropertySource<?> src) {
+        return PropertyFactory.convert(src, new ValueConverter<Object, Boolean>() {
+            @Override
+            public Boolean convert(Object input) {
+                return input != null;
+            }
+        });
+    }
+
     public static <Value> PropertySource<Value> listSelection(final JList<? extends Value> list) {
         ExceptionHelper.checkNotNullArgument(list, "list");
 
