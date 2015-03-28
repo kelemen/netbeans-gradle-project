@@ -4,23 +4,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
-import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
-import org.jtrim.event.SimpleListenerRegistry;
-import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
@@ -128,110 +125,48 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         });
     }
 
+    private static <ValueType> PropertySource<ValueType> mergedProperty(
+            final PropertyDef<?, ValueType> propertyDef,
+            final List<ProjectProfileSettings> profileList) {
+
+        return new PropertySource<ValueType>() {
+            @Override
+            public ValueType getValue() {
+                return mergePropertyValues(propertyDef, profileList);
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+                // Minor optimization for the default case
+                if (profileList.size() == 1) {
+                    MutableProperty<ValueType> property = profileList.get(0).getProperty(propertyDef);
+                    return property.addChangeListener(listener);
+                }
+                else {
+                    List<ListenerRef> refs = new ArrayList<>(profileList.size());
+                    for (ProjectProfileSettings settings: profileList) {
+                        MutableProperty<ValueType> property = settings.getProperty(propertyDef);
+                        refs.add(property.addChangeListener(listener));
+                    }
+                    return ListenerRegistries.combineListenerRefs(refs);
+                }
+            }
+        };
+    }
+
     @Override
     public <ValueType> PropertySource<ValueType> getProperty(
             final PropertyDef<?, ValueType> propertyDef) {
 
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        return new ProjectPropertyProxy<>(propertyDef, currentProfileSettingsList);
-    }
-
-    private static SimpleListenerRegistry<Runnable> asListenerRegistry(final PropertySource<?> property) {
-        return new SimpleListenerRegistry<Runnable>() {
+        return NbProperties.propertyOfProperty(currentProfileSettingsList, new NbFunction<List<ProjectProfileSettings>, PropertySource<ValueType>>() {
             @Override
-            public ListenerRef registerListener(Runnable listener) {
-                return property.addChangeListener(listener);
+            public PropertySource<ValueType> call(List<ProjectProfileSettings> arg) {
+                return mergedProperty(propertyDef, arg);
             }
-        };
-    }
-
-    private static class ProjectPropertyProxy<ValueType>
-    implements
-            PropertySource<ValueType> {
-
-        private final PropertyDef<?, ValueType> propertyDef;
-        private final PropertySource<List<ProjectProfileSettings>> currentProfileSettings;
-
-        public ProjectPropertyProxy(
-                PropertyDef<?, ValueType> propertyDef,
-                PropertySource<List<ProjectProfileSettings>> currentProfileSettings) {
-
-            this.propertyDef = propertyDef;
-            this.currentProfileSettings = currentProfileSettings;
-        }
-
-
-        @Override
-        public ValueType getValue() {
-            return mergePropertyValues(propertyDef, currentProfileSettings.getValue());
-        }
-
-        private void registerWithSubListener(Runnable listener, AtomicReference<ListenerRef> subListenerRef) {
-            SimpleListenerRegistry<Runnable> mergedListeners = mergedPropertyListener(propertyDef);
-            ListenerRef newRef = mergedListeners.registerListener(listener);
-            ListenerRef prevRef = subListenerRef.getAndSet(newRef);
-            if (prevRef != null) {
-                prevRef.unregister();
-            }
-            else {
-                subListenerRef.compareAndSet(newRef, null);
-                newRef.unregister();
-            }
-        }
-
-        @Override
-        public ListenerRef addChangeListener(final Runnable listener) {
-            ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-            final AtomicReference<ListenerRef> subListenerRef
-                    = new AtomicReference<ListenerRef>(UnregisteredListenerRef.INSTANCE);
-            // subListenerRef.get() == null means that the the client
-            // unregistered its listener and therefore, we must no longer
-            // register listeners. That is, once this property is null, we may
-            // never set it.
-
-            final ListenerRef listenerRef = currentProfileSettings.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    registerWithSubListener(listener, subListenerRef);
-                    listener.run();
-                }
-            });
-
-            registerWithSubListener(listener, subListenerRef);
-
-            return NbListenerRefs.fromRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    listenerRef.unregister();
-                    ListenerRef subRef = subListenerRef.getAndSet(null);
-                    if (subRef != null) {
-                        subRef.unregister();
-                    }
-                }
-            });
-        }
-
-        private SimpleListenerRegistry<Runnable> mergedPropertyListener(final PropertyDef<?, ValueType> propertyDef) {
-            final List<ProjectProfileSettings> allSettings = currentProfileSettings.getValue();
-            // Minor optimization for the default case
-            if (allSettings.size() == 1) {
-                MutableProperty<ValueType> property = allSettings.get(0).getProperty(propertyDef);
-                return asListenerRegistry(property);
-            }
-
-            return new SimpleListenerRegistry<Runnable>() {
-                @Override
-                public ListenerRef registerListener(Runnable listener) {
-                    List<ListenerRef> refs = new ArrayList<>(allSettings.size());
-                    for (ProjectProfileSettings settings: allSettings) {
-                        MutableProperty<ValueType> property = settings.getProperty(propertyDef);
-                        refs.add(property.addChangeListener(listener));
-                    }
-                    return ListenerRegistries.combineListenerRefs(refs);
-                }
-            };
-        }
+        });
     }
 }
