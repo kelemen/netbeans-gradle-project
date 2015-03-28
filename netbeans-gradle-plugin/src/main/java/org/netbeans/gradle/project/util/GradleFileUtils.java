@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 

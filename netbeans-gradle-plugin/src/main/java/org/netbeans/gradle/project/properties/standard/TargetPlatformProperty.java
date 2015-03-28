@@ -13,7 +13,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.ConfigTree;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;

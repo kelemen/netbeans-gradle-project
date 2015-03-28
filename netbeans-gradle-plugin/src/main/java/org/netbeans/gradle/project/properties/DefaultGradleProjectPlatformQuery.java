@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URI;

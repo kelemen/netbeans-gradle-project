@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
 import java.net.URL;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 

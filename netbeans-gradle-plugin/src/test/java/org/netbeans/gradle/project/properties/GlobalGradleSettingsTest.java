@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

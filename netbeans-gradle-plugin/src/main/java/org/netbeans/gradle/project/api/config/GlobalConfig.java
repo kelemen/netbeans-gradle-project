@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
 
 /**

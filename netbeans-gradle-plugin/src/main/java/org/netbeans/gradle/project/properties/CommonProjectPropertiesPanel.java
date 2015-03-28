@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;

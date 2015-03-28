@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.nio.charset.Charset;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.event.ListenerRef;

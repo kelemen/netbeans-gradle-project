@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;

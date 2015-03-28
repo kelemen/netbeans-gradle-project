@@ -25,7 +25,7 @@ import org.netbeans.gradle.project.api.entry.SampleGradleProject;
 import org.netbeans.gradle.project.others.test.NbGradleTestManager;
 import org.netbeans.gradle.project.others.test.NbGradleTestSession;
 import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
 import org.netbeans.modules.gsf.testrunner.api.Status;

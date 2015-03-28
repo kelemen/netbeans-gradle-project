@@ -63,7 +63,7 @@ import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;

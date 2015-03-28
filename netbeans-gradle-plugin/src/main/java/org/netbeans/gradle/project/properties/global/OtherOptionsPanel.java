@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
-import org.netbeans.gradle.project.properties.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
