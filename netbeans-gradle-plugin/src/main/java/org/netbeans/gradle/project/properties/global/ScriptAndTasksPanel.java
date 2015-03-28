@@ -30,7 +30,9 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     public final void updateSettings(GlobalGradleSettings globalSettings) {
         fillPlatformCombo();
 
+        jGradleArgs.setText(globalSettings.gradleArgs().getValueAsString());
         jGradleJVMArgs.setText(globalSettings.gradleJvmArgs().getValueAsString());
+
         JavaPlatform currentJdk = globalSettings.gradleJdk().getValue();
         if (currentJdk != null) {
             jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk));
@@ -39,6 +41,7 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
 
     @Override
     public final void saveSettings(GlobalGradleSettings globalSettings) {
+        globalSettings.gradleArgs().setValueFromString(getGradleArgs());
         globalSettings.gradleJvmArgs().setValueFromString(getGradleJvmArgs());
         globalSettings.gradleJdk().setValue(getJdk());
     }
@@ -57,6 +60,10 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         return selected != null ? selected.getPlatform() : JavaPlatform.getDefault();
     }
 
+    private String getGradleArgs() {
+        String result = jGradleArgs.getText();
+        return result != null ? result.trim() : "";
+    }
 
     private String getGradleJvmArgs() {
         String result = jGradleJVMArgs.getText();
@@ -117,6 +124,9 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         jGradleVMArgsCaption = new javax.swing.JLabel();
         jJdkCombo = new javax.swing.JComboBox<JavaPlatformItem>();
         jGradleJdkCaption = new javax.swing.JLabel();
+        jGradleArgsCaption = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jGradleArgs = new javax.swing.JTextArea();
 
         jGradleJVMArgs.setColumns(20);
         jGradleJVMArgs.setRows(3);
@@ -125,6 +135,12 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         org.openide.awt.Mnemonics.setLocalizedText(jGradleVMArgsCaption, org.openide.util.NbBundle.getMessage(ScriptAndTasksPanel.class, "ScriptAndTasksPanel.jGradleVMArgsCaption.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradleJdkCaption, org.openide.util.NbBundle.getMessage(ScriptAndTasksPanel.class, "ScriptAndTasksPanel.jGradleJdkCaption.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jGradleArgsCaption, org.openide.util.NbBundle.getMessage(ScriptAndTasksPanel.class, "ScriptAndTasksPanel.jGradleArgsCaption.text")); // NOI18N
+
+        jGradleArgs.setColumns(20);
+        jGradleArgs.setRows(3);
+        jScrollPane2.setViewportView(jGradleArgs);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -138,8 +154,10 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jGradleJdkCaption)
-                            .addComponent(jGradleVMArgsCaption))
-                        .addGap(0, 113, Short.MAX_VALUE)))
+                            .addComponent(jGradleVMArgsCaption)
+                            .addComponent(jGradleArgsCaption))
+                        .addGap(0, 65, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -149,8 +167,12 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
                 .addComponent(jGradleJdkCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jJdkCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jGradleVMArgsCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jGradleArgsCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jGradleVMArgsCaption, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -159,10 +181,13 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextArea jGradleArgs;
+    private javax.swing.JLabel jGradleArgsCaption;
     private javax.swing.JTextArea jGradleJVMArgs;
     private javax.swing.JLabel jGradleJdkCaption;
     private javax.swing.JLabel jGradleVMArgsCaption;
     private javax.swing.JComboBox<JavaPlatformItem> jJdkCombo;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 }
