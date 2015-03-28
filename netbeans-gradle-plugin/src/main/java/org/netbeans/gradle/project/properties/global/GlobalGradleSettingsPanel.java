@@ -3,19 +3,21 @@ package org.netbeans.gradle.project.properties.global;
 import java.net.URL;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import org.jtrim.property.BoolProperties;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.openide.awt.HtmlBrowser;
+
+import static org.jtrim.property.swing.AutoDisplayState.*;
+import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
 public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private URL currentHelpUrl;
+    private final PropertySource<CategoryItem> categorySelection;
+    private final PropertySource<URL> selectedHelpUrl;
 
     public GlobalGradleSettingsPanel() {
-        currentHelpUrl = null;
-
         initComponents();
 
         DefaultListModel<CategoryItem> categoriesModel = new DefaultListModel<>();
@@ -27,33 +29,41 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         categoriesModel.addElement(new CategoryItem("Other", new OtherOptionsPanel()));
 
         jCategoriesList.setModel(categoriesModel);
-
         jCategoriesList.setSelectedIndex(0);
-        showSelectedEditor();
 
-        jCategoriesList.addListSelectionListener(new ListSelectionListener() {
+        categorySelection = listSelection(jCategoriesList);
+        selectedHelpUrl = PropertyFactory.convert(categorySelection, new ValueConverter<CategoryItem, URL>() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
+            public URL convert(CategoryItem input) {
+                return input != null ? input.properties.getHelpUrl() : null;
+            }
+        });
+
+        categorySelection.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
                 showSelectedEditor();
             }
         });
+        showSelectedEditor();
+
+        setupEnableDisable();
+    }
+
+    private void setupEnableDisable() {
+        addSwingStateListener(isNotNull(selectedHelpUrl),
+                componentDisabler(jReadWikiButton));
     }
 
     private void showSelectedEditor() {
         jCurrentCategoryPanel.removeAll();
 
-        CategoryItem selected = jCategoriesList.getSelectedValue();
+        CategoryItem selected = categorySelection.getValue();
         if (selected != null) {
             SettingsEditorProperties properties = selected.properties;
 
             jCurrentCategoryPanel.add(properties.getEditorComponent());
-            currentHelpUrl = properties.getHelpUrl();
         }
-        else {
-            currentHelpUrl = null;
-        }
-
-        jReadWikiButton.setEnabled(currentHelpUrl != null);
 
         jCurrentCategoryPanel.revalidate();
         jCurrentCategoryPanel.repaint();
@@ -179,8 +189,9 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }// </editor-fold>//GEN-END:initComponents
 
     private void jReadWikiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jReadWikiButtonActionPerformed
-        if (currentHelpUrl != null) {
-            HtmlBrowser.URLDisplayer.getDefault().showURLExternal(currentHelpUrl);
+        URL helpUrl = selectedHelpUrl.getValue();
+        if (helpUrl != null) {
+            HtmlBrowser.URLDisplayer.getDefault().showURLExternal(helpUrl);
         }
     }//GEN-LAST:event_jReadWikiButtonActionPerformed
 
