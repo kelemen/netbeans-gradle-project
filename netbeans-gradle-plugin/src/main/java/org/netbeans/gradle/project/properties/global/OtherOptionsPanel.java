@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
+import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
@@ -9,6 +10,8 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
 
     public OtherOptionsPanel() {
         initComponents();
+
+        jProjectCacheSize.setModel(new SpinnerNumberModel(0, 1, Integer.MAX_VALUE, 1));
     }
 
     @Override
