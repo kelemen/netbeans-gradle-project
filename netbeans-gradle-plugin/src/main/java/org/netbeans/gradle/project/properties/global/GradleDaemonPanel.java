@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import org.jtrim.property.swing.SwingProperties;
+import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.BoolProperties.*;
@@ -18,6 +18,9 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
 
     public GradleDaemonPanel() {
         initComponents();
+
+        jDaemonTimeoutSpinner.setModel(new SpinnerNumberModel(0, 1, Integer.MAX_VALUE, 30));
+
         setupEnableDisable();
     }
 
