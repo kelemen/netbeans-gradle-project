@@ -508,6 +508,30 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.LOCAL", dir);
     }
 
+    public static String getSettingsCategoryGradleInstallation() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.GradleInstallation");
+    }
+
+    public static String getSettingsCategoryPlatformPriority() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.PlatformPriority");
+    }
+
+    public static String getSettingsCategoryScriptAndTasks() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.ScriptAndTasks");
+    }
+
+    public static String getSettingsCategoryScript() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Script");
+    }
+
+    public static String getSettingsCategoryTasks() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Tasks");
+    }
+
+    public static String getSettingsCategoryOther() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Other");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

@@ -7,6 +7,7 @@ import org.jtrim.property.BoolProperties;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.netbeans.gradle.project.NbStrings;
 import org.openide.awt.HtmlBrowser;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
@@ -21,12 +22,12 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         initComponents();
 
         DefaultListModel<CategoryItem> categoriesModel = new DefaultListModel<>();
-        categoriesModel.addElement(new CategoryItem("Gradle Installation", new GradleInstallationPanel()));
-        categoriesModel.addElement(new CategoryItem("Platform priority", new PlatformPriorityPanel(false)));
-        categoriesModel.addElement(new CategoryItem("Script & tasks", new ScriptAndTasksPanel()));
-        categoriesModel.addElement(new CategoryItem("Build script parsing", new BuildScriptParsingPanel()));
-        categoriesModel.addElement(new CategoryItem("Task execution", new TaskExecutionPanel()));
-        categoriesModel.addElement(new CategoryItem("Other", new OtherOptionsPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryGradleInstallation(), new GradleInstallationPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryPlatformPriority(), new PlatformPriorityPanel(false)));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScriptAndTasks(), new ScriptAndTasksPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScript(), new BuildScriptParsingPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryTasks(), new TaskExecutionPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryOther(), new OtherOptionsPanel()));
 
         jCategoriesList.setModel(categoriesModel);
         jCategoriesList.setSelectedIndex(0);
