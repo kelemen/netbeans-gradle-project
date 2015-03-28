@@ -19,7 +19,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
     public GradleDaemonPanel() {
         initComponents();
 
-        jDaemonTimeoutSpinner.setModel(new SpinnerNumberModel(0, 1, Integer.MAX_VALUE, 30));
+        jDaemonTimeoutSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 30));
 
         setupEnableDisable();
     }

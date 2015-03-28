@@ -11,7 +11,7 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
     public OtherOptionsPanel() {
         initComponents();
 
-        jProjectCacheSize.setModel(new SpinnerNumberModel(0, 1, Integer.MAX_VALUE, 1));
+        jProjectCacheSize.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
     }
 
     @Override
