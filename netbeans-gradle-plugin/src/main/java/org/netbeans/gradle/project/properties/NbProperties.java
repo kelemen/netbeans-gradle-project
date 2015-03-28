@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.netbeans.gradle.project.util.NbFunction;
 
 public final class NbProperties {
     public static PropertySource<Boolean> between(
@@ -29,5 +30,11 @@ public final class NbProperties {
             final PropertySource<Integer> wrapped,
             final int value) {
         return between(wrapped, Integer.MIN_VALUE, value);
+    }
+
+    public static <RootValue, SubValue> PropertySource<SubValue> propertyOfProperty(
+            PropertySource<? extends RootValue> rootSrc,
+            NbFunction<? super RootValue, ? extends PropertySource<SubValue>> subPropertyGetter) {
+        return new PropertyOfProperty<>(rootSrc, subPropertyGetter);
     }
 }
