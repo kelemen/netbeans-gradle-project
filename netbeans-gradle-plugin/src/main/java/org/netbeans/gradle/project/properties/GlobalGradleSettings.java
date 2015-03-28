@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
