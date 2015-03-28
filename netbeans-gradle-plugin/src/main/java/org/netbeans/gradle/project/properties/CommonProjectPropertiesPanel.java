@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +16,7 @@ import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.global.PlatformPriorityPanel;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.util.NbGuiUtils;

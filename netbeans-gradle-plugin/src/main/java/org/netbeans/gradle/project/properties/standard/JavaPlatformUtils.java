@@ -21,10 +21,10 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.openide.modules.SpecificationVersion;
 

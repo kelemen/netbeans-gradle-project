@@ -10,9 +10,9 @@ import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 
 public final class SampleGradleProject implements Closeable {
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();

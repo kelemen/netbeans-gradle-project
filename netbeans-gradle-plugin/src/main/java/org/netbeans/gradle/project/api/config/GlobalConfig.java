@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 
 /**
  * Contains the values of some of the properties set in the global settings.

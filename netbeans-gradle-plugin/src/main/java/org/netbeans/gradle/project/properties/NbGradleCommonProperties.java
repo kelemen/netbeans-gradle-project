@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import java.nio.charset.Charset;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.event.ListenerRef;
@@ -11,6 +10,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
