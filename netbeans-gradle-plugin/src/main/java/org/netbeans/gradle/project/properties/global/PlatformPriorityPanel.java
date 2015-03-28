@@ -99,6 +99,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         contentPane.setLayout(new GridLayout(1, 1));
 
         PlatformPriorityPanel content = new PlatformPriorityPanel(true);
+        content.updateSettings(GlobalGradleSettings.getDefault());
         contentPane.add(content);
 
         dlg.pack();
