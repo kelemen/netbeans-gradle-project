@@ -17,18 +17,27 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
     private GlobalGradleSettingsPanel getPanel() {
         if (settingsPanel == null) {
             settingsPanel = new GlobalGradleSettingsPanel();
+            updateEditor(settingsPanel);
         }
         return settingsPanel;
     }
 
+    private GlobalGradleSettings getSettings() {
+        return GlobalGradleSettings.getDefault();
+    }
+
+    private void updateEditor(GlobalSettingsEditor editor) {
+        editor.updateSettings(getSettings());
+    }
+
     @Override
     public void update() {
-        getPanel().updateSettings(GlobalGradleSettings.getDefault());
+        updateEditor(getPanel());
     }
 
     @Override
     public void applyChanges() {
-        getPanel().saveSettings(GlobalGradleSettings.getDefault());
+        getPanel().saveSettings(getSettings());
     }
 
     @Override
