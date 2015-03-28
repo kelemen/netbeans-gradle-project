@@ -522,6 +522,22 @@ public final class GradleModelLoader {
         return new NbGradleModel(NbGradleMultiProjectDef.createEmpty(projectDir));
     }
 
+    private static List<String> getModelEvaluateArguments() {
+        List<String> globalArgs = GlobalGradleSettings.getDefault().gradleArgs().getValue();
+        if (globalArgs == null) {
+            globalArgs = Collections.emptyList();
+        }
+
+        List<String> result = new ArrayList<>(globalArgs.size() + 1);
+        result.add("-PevaluatingIDE=NetBeans");
+        result.addAll(globalArgs);
+        return result;
+    }
+
+    private static List<String> getModelEvaluateJvmArguments() {
+        return GlobalGradleSettings.getDefault().gradleJvmArgs().getValue();
+    }
+
     public static class ModelBuilderSetup implements OperationInitializer {
         private static final SpecificationVersion DEFAULT_JDK_VERSION = new SpecificationVersion("1.5");
 
@@ -533,10 +549,7 @@ public final class GradleModelLoader {
         private final List<String> jvmArgs;
 
         public ModelBuilderSetup(Project project, ProgressHandle progress) {
-            this(project,
-                    Collections.singletonList("-PevaluatingIDE=NetBeans"),
-                    GlobalGradleSettings.getDefault().gradleJvmArgs().getValue(),
-                    progress);
+            this(project, getModelEvaluateArguments(), getModelEvaluateJvmArguments(), progress);
         }
 
         public ModelBuilderSetup(

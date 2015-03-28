@@ -48,6 +48,7 @@ public final class GlobalGradleSettings {
 
     private final StringBasedProperty<GradleLocation> gradleLocation;
     private final StringBasedProperty<File> gradleUserHomeDir;
+    private final StringBasedProperty<List<String>> gradleArgs;
     private final StringBasedProperty<List<String>> gradleJvmArgs;
     private final StringBasedProperty<JavaPlatform> gradleJdk;
     private final StringBasedProperty<Boolean> skipTests;
@@ -70,6 +71,9 @@ public final class GlobalGradleSettings {
         gradleUserHomeDir = new GlobalProperty<>(
                 withNS(namespace, "gradle-user-home"),
                 FileConverter.INSTANCE);
+        gradleArgs = new GlobalProperty<>(
+                withNS(namespace, "gradle-args"),
+                StringToStringListConverter.INSTANCE);
         gradleJvmArgs = new GlobalProperty<>(
                 withNS(namespace, "gradle-jvm-args"),
                 StringToStringListConverter.INSTANCE);
@@ -149,6 +153,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<List<String>> gradleJvmArgs() {
         return gradleJvmArgs;
+    }
+
+    public StringBasedProperty<List<String>> gradleArgs() {
+        return gradleArgs;
     }
 
     public StringBasedProperty<JavaPlatform> gradleJdk() {

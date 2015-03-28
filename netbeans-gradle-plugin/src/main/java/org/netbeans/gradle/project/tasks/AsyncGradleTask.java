@@ -540,13 +540,19 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private static <V> List<V> emptyIfNull(List<V> list) {
+        return list != null ? list : Collections.<V>emptyList();
+    }
+
     private static GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
-        List<String> globalJvmArgs = GlobalGradleSettings.getDefault().gradleJvmArgs().getValue();
+        List<String> globalArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue());
+        List<String> globalJvmArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue());
 
         GradleTaskDef result;
-        if (globalJvmArgs != null && !globalJvmArgs.isEmpty()) {
+        if (!globalJvmArgs.isEmpty() || !globalArgs.isEmpty()) {
             GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
             builder.addJvmArguments(globalJvmArgs);
+            builder.addArguments(globalArgs);
             result = builder.create();
         }
         else {
