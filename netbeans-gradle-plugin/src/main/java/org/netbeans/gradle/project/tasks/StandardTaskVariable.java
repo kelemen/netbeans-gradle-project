@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
-import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -98,58 +97,7 @@ public enum StandardTaskVariable {
                     ? StringUtils.capitalizeFirstCharacter(value)
                     : null);
         }
-    }),
-    PROJECT_PATH("project.path", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String path = project.currentModel().getValue().getMainProject().getProjectFullName();
-            return new VariableValue(path);
-        }
-    }),
-    PROJECT_PATH_OR_NAME("project.path-or-name", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String path = project.currentModel().getValue().getMainProject().getProjectFullName();
-            if (path.isEmpty() || path.equals(":")) {
-                return new VariableValue(getSafeProjectName(project));
-            }
-            else {
-                return new VariableValue(path);
-            }
-        }
-    }),
-    PROJECT_GROUP("project.group", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectId projectId = project.currentModel().getValue().getProjectId();
-            return new VariableValue(projectId.getGroup());
-        }
-    }),
-    PROJECT_NAME("project.name", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectId projectId = project.currentModel().getValue().getProjectId();
-            return new VariableValue(projectId.getName());
-        }
-    }),
-    PROJECT_VERSION("project.version", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectId projectId = project.currentModel().getValue().getProjectId();
-            return new VariableValue(projectId.getVersion());
-        }
     });
-
-    private static String getSafeProjectName(NbGradleProject project) {
-        ProjectId projectId = project.currentModel().getValue().getProjectId();
-        String name = projectId.getName();
-        if (name.isEmpty()) {
-            return project.getProjectDirectory().getNameExt();
-        }
-        else {
-            return name;
-        }
-    }
 
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
