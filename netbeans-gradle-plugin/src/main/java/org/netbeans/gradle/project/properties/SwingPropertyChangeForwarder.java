@@ -34,7 +34,7 @@ public final class SwingPropertyChangeForwarder {
             this(new GenericUpdateTaskExecutor(eventExecutor));
         }
 
-        public Builder(UpdateTaskExecutor eventExecutor) {
+        private Builder(UpdateTaskExecutor eventExecutor) {
             this.eventExecutor = eventExecutor;
             this.properties = new LinkedList<>();
         }
