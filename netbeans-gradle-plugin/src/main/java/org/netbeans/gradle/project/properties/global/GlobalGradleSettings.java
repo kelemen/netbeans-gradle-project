@@ -35,6 +35,7 @@ import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbPreferences;
@@ -61,6 +62,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
     private final StringBasedProperty<Boolean> compileOnSave;
     private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
+    private final StringBasedProperty<String> displayNamePattern;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -110,6 +112,10 @@ public final class GlobalGradleSettings {
         platformPreferenceOrder = new GlobalProperty<>(
                 withNS(namespace, "platform-pref-order"),
                 PlatformOrderConverter.INSTANCE
+        );
+        displayNamePattern = new GlobalProperty<>(
+                withNS(namespace, "display-name-pattern"),
+                new StringConverter(DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant())
         );
     }
 
@@ -197,6 +203,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<PlatformOrder> platformPreferenceOrder() {
         return platformPreferenceOrder;
+    }
+
+    public StringBasedProperty<String> displayNamePattern() {
+        return displayNamePattern;
     }
 
     public static GlobalGradleSettings getDefault() {
@@ -431,7 +441,7 @@ public final class GlobalGradleSettings {
 
         @Override
         public String toString(Boolean value) {
-            if (Utilities.compareObjects(value, defaultValue)) {
+            if (Objects.equals(value, defaultValue)) {
                 return null;
             }
 
@@ -489,6 +499,24 @@ public final class GlobalGradleSettings {
         @Override
         public String toString(File value) {
             return value != null ? value.getPath() : null;
+        }
+    }
+
+    private static final class StringConverter implements ValueConverter<String> {
+        private final String defaultValue;
+
+        public StringConverter(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public String toValue(String strValue) {
+            return strValue != null ? strValue : defaultValue;
+        }
+
+        @Override
+        public String toString(String value) {
+            return Objects.equals(value, defaultValue) ? null : value;
         }
     }
 

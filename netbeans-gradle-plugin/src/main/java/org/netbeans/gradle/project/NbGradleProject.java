@@ -58,6 +58,7 @@ import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
@@ -138,8 +139,7 @@ public final class NbGradleProject implements Project {
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
 
-        this.displayName = getDisplayName(currentModel,
-                PropertyFactory.constSource(DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant()));
+        this.displayName = getDisplayName(currentModel, GlobalGradleSettings.getDefault().displayNamePattern());
 
         this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
             @Override
