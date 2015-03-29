@@ -512,6 +512,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.LOCAL", dir);
     }
 
+    public static String getCustomNamePatternLabel() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomNamePatternLabel");
+    }
+
     public static String getSettingsCategoryGradleInstallation() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.GradleInstallation");
     }
