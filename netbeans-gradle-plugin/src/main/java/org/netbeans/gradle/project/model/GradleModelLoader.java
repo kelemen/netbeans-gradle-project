@@ -235,7 +235,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final File projectDir = project.getProjectDirectoryAsFile();
-        String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
+        String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {
@@ -327,7 +327,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
+        String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {

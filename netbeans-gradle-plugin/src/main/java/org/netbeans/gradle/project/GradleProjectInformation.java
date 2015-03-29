@@ -26,7 +26,7 @@ public final class GradleProjectInformation implements ProjectInformation {
 
     @Override
     public String getDisplayName() {
-        return project.getDisplayName();
+        return project.displayName().getValue();
     }
 
     @Override

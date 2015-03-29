@@ -23,7 +23,9 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -96,6 +98,8 @@ public final class NbGradleProject implements Project {
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
+    private final PropertySource<String> displayName;
+    private final PropertySource<String> description;
     private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
@@ -132,6 +136,19 @@ public final class NbGradleProject implements Project {
         this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
+
+        this.displayName = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
+            @Override
+            public String convert(NbGradleModel input) {
+                return input.getDisplayName();
+            }
+        });
+        this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
+            @Override
+            public String convert(NbGradleModel input) {
+                return input.getDescription();
+            }
+        });
     }
 
     @Nonnull
@@ -457,14 +474,11 @@ public final class NbGradleProject implements Project {
         return name;
     }
 
-    @Nonnull
-    public String getDisplayName() {
-        return currentModel().getValue().getDisplayName();
+    public PropertySource<String> displayName() {
+        return displayName;
     }
-
-    @Nonnull
-    public String getDescription() {
-        return currentModel().getValue().getDescription();
+    public PropertySource<String> description() {
+        return description;
     }
 
     @Nonnull

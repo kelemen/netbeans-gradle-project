@@ -480,22 +480,24 @@ public final class GradleTaskDef {
         Object additionalKey;
         String caption;
 
+        String projectDisplayName = project.displayName().getValue();
+
         switch (kind) {
             case DEBUG:
                 additionalKey = null;
-                caption = project.getDisplayName() + " - debug";
+                caption = projectDisplayName + " - debug";
                 break;
             case RUN:
                 additionalKey = null;
-                caption = project.getDisplayName() + " - run";
+                caption = projectDisplayName + " - run";
                 break;
             case BUILD:
                 additionalKey = null;
-                caption = project.getDisplayName();
+                caption = projectDisplayName;
                 break;
             case OTHER:
                 additionalKey = getTabKeyForCommand(command);
-                caption = project.getDisplayName() + " - " + command.getSafeDisplayName();
+                caption = projectDisplayName + " - " + command.getSafeDisplayName();
                 break;
             default:
                 throw new AssertionError(kind.name());

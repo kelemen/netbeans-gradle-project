@@ -48,7 +48,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
 
         values.put("encoding", encoding.name());
         values.put("name", project.getName());
-        values.put("displayName", project.getDisplayName());
+        values.put("displayName", project.displayName().getValue());
 
         if (values.size() > 0) {
             return Collections.singletonMap("project", values);

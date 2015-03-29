@@ -145,7 +145,7 @@ public final class GradleCustomizer implements CustomizerProvider {
                 okListener,
                 HelpCtx.DEFAULT_HELP);
 
-        dlg.setTitle(NbStrings.getProjectPropertiesDlgTitle(project.getDisplayName()));
+        dlg.setTitle(NbStrings.getProjectPropertiesDlgTitle(project.displayName().getValue()));
         dlg.setModal(true);
         dlg.setVisible(true);
     }

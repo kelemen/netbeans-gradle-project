@@ -372,12 +372,12 @@ implements
 
         @Override
         public String getDisplayName() {
-            return project.getDisplayName();
+            return project.displayName().getValue();
         }
 
         @Override
         public String getShortDescription() {
-            return project.getDescription();
+            return project.description().getValue();
         }
     }
 
