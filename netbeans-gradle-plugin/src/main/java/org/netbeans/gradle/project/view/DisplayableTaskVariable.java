@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.view;
 import java.util.Map;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.tasks.CachingVariableMap;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
 import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
@@ -14,85 +14,84 @@ import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableValue;
 import org.openide.util.Lookup;
 
 public enum DisplayableTaskVariable {
-    PROJECT_PATH("project.path", new ValueGetter<NbGradleProject>() {
+    PROJECT_PATH("project.path", new ValueGetter<NbGradleModel>() {
         @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String path = project.currentModel().getValue().getMainProject().getProjectFullName();
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            String path = model.getMainProject().getProjectFullName();
             if (path.isEmpty() || path.equals(":")) {
-                return new VariableValue(getSafeProjectName(project));
+                return new VariableValue(getSafeProjectName(model));
             }
             else {
                 return new VariableValue(path);
             }
         }
     }),
-    PROJECT_GROUP("project.group", new ValueGetter<NbGradleProject>() {
+    PROJECT_GROUP("project.group", new ValueGetter<NbGradleModel>() {
         @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectId projectId = project.currentModel().getValue().getProjectId();
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            ProjectId projectId = model.getProjectId();
             return new VariableValue(projectId.getGroup());
         }
     }),
-    PROJECT_NAME("project.name", new ValueGetter<NbGradleProject>() {
+    PROJECT_NAME("project.name", new ValueGetter<NbGradleModel>() {
         @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            return new VariableValue(getSafeProjectName(project));
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            return new VariableValue(getSafeProjectName(model));
         }
     }),
-    PROJECT_VERSION("project.version", new ValueGetter<NbGradleProject>() {
+    PROJECT_VERSION("project.version", new ValueGetter<NbGradleModel>() {
         @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectId projectId = project.currentModel().getValue().getProjectId();
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            ProjectId projectId = model.getProjectId();
             return new VariableValue(projectId.getVersion());
         }
     });
 
-    private static String getSafeProjectName(NbGradleProject project) {
-        ProjectId projectId = project.currentModel().getValue().getProjectId();
+    private static String getSafeProjectName(NbGradleModel model) {
+        ProjectId projectId = model.getProjectId();
         String name = projectId.getName();
         if (name.isEmpty()) {
-            return project.getProjectDirectory().getNameExt();
+            return model.getProjectDir().getName();
         }
         else {
             return name;
         }
     }
 
-    private static final VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
+    private static final VariableDefMap<NbGradleModel> TASK_VARIABLE_MAP
             = createStandardMap();
 
-    private static VariableDefMap<NbGradleProject> createStandardMap() {
+    private static VariableDefMap<NbGradleModel> createStandardMap() {
         DisplayableTaskVariable[] variables = DisplayableTaskVariable.values();
 
-        final Map<TaskVariable, VariableDef<NbGradleProject>> result
+        final Map<TaskVariable, VariableDef<NbGradleModel>> result
                 = CollectionUtils.newHashMap(variables.length);
 
         for (DisplayableTaskVariable variable: variables) {
             result.put(variable.getVariable(), variable.asVariableDef());
         }
 
-        return new VariableDefMap<NbGradleProject>() {
+        return new VariableDefMap<NbGradleModel>() {
             @Override
-            public VariableDef<NbGradleProject> tryGetDef(TaskVariable variable) {
+            public VariableDef<NbGradleModel> tryGetDef(TaskVariable variable) {
                 return result.get(variable);
             }
         };
     }
 
-    public static TaskVariableMap createVarReplaceMap(
-            NbGradleProject project, Lookup actionContext) {
-        return new CachingVariableMap<>(TASK_VARIABLE_MAP, project, actionContext);
+    public static TaskVariableMap createVarReplaceMap(NbGradleModel project) {
+        return new CachingVariableMap<>(TASK_VARIABLE_MAP, project, Lookup.EMPTY);
     }
 
     private final TaskVariable variable;
-    private final ValueGetter<NbGradleProject> valueGetter;
+    private final ValueGetter<NbGradleModel> valueGetter;
 
-    private DisplayableTaskVariable(String variableName, ValueGetter<NbGradleProject> valueGetter) {
+    private DisplayableTaskVariable(String variableName, ValueGetter<NbGradleModel> valueGetter) {
         this.variable = new TaskVariable(variableName);
         this.valueGetter = valueGetter;
     }
 
-    private VariableDef<NbGradleProject> asVariableDef() {
+    private VariableDef<NbGradleModel> asVariableDef() {
         return new VariableDef<>(variable, valueGetter);
     }
 
