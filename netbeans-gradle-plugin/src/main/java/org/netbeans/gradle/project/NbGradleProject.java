@@ -69,6 +69,7 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -137,18 +138,34 @@ public final class NbGradleProject implements Project {
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
 
-        this.displayName = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
-            @Override
-            public String convert(NbGradleModel input) {
-                return input.getDisplayName();
-            }
-        });
+        this.displayName = getDisplayName(currentModel,
+                PropertyFactory.constSource(DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant()));
+
         this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
             @Override
             public String convert(NbGradleModel input) {
                 return input.getDescription();
             }
         });
+    }
+
+    private static PropertySource<String> getDisplayName(
+            final PropertySource<NbGradleModel> model,
+            final PropertySource<String> namePattern) {
+
+        return new PropertySource<String>() {
+            @Override
+            public String getValue() {
+                return model.getValue().getDisplayName(namePattern.getValue());
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                ListenerRef ref1 = model.addChangeListener(listener);
+                ListenerRef ref2 = namePattern.addChangeListener(listener);
+                return ListenerRegistries.combineListenerRefs(ref1, ref2);
+            }
+        };
     }
 
     @Nonnull
