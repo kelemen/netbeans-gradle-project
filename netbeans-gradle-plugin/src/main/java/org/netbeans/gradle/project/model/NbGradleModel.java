@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.properties.SettingsFiles;
@@ -121,6 +122,10 @@ public final class NbGradleModel {
 
     public static FileObject findSettingsGradle(FileObject projectDir) {
         return NbGenericModelInfo.findSettingsGradle(projectDir);
+    }
+
+    public ProjectId getProjectId() {
+        return genericInfo.getMainProject().getGenericProperties().getProjectId();
     }
 
     public String getDisplayName() {
