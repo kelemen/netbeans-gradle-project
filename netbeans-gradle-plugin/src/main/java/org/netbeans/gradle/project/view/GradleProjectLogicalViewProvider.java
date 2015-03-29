@@ -149,6 +149,18 @@ implements
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
 
+        final ListenerRef displayNameRef = project.displayName().addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                result.fireDisplayNameChange();
+            }
+        });
+        final ListenerRef descriptionRef = project.description().addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                result.fireShortDescriptionChange();
+            }
+        });
         final ListenerRef modelListenerRef = project.currentModel().addChangeListener(new Runnable() {
             @Override
             public void run() {
@@ -164,6 +176,8 @@ implements
         result.addNodeListener(new NodeAdapter(){
             @Override
             public void nodeDestroyed(NodeEvent ev) {
+                displayNameRef.unregister();
+                descriptionRef.unregister();
                 infoListenerRef.unregister();
                 modelListenerRef.unregister();
             }
@@ -295,9 +309,15 @@ implements
             this.actions = projectActions.toArray(new Action[projectActions.size()]);
         }
 
-        public void fireModelChange() {
+        public void fireDisplayNameChange() {
             fireDisplayNameChange(null, null);
+        }
+
+        public void fireShortDescriptionChange() {
             fireShortDescriptionChange(null, null);
+        }
+
+        public void fireModelChange() {
             updateActionsList();
         }
 
