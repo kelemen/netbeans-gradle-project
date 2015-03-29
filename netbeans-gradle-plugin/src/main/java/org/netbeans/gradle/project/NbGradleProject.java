@@ -126,7 +126,7 @@ public final class NbGradleProject implements Project {
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new AtomicReference<>(null);
-        this.modelChangeListeners = new GenericChangeListenerManager();
+        this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
