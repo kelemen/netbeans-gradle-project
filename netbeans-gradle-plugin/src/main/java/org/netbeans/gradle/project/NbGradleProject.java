@@ -50,6 +50,7 @@ import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
+import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.ProfileKey;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
@@ -94,6 +95,7 @@ public final class NbGradleProject implements Project {
     private final ChangeListenerManager modelChangeListeners;
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
+    private final PropertySource<NbGradleModel> currentModel;
     private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
@@ -129,6 +131,7 @@ public final class NbGradleProject implements Project {
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<>(null);
+        this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
     }
 
     @Nonnull
@@ -297,16 +300,8 @@ public final class NbGradleProject implements Project {
         return projectInfoManager;
     }
 
-    public ListenerRef addModelChangeListener(Runnable listener) {
-        return modelChangeListeners.registerListener(listener);
-    }
-
-    public NbGradleModel getAvailableModel() {
-        return currentModelRef.get();
-    }
-
-    public NbGradleModel getCurrentModel() {
-        return getAvailableModel();
+    public PropertySource<NbGradleModel> currentModel() {
+        return currentModel;
     }
 
     public void tryUpdateFromCache(NbGradleModel baseModel) {
@@ -346,16 +341,14 @@ public final class NbGradleProject implements Project {
     public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
         checkCanWaitForProjectLoad();
 
-        // Ensure that the project is started to be loaded.
-        getCurrentModel();
+        ensureLoadRequested();
         return loadedAtLeastOnceSignal.tryWaitSignal(cancelToken, timeout, unit);
     }
 
     public void waitForLoadedProject(CancellationToken cancelToken) {
         checkCanWaitForProjectLoad();
 
-        // Ensure that the project is started to be loaded.
-        getCurrentModel();
+        ensureLoadRequested();
         loadedAtLeastOnceSignal.waitSignal(cancelToken);
     }
 
@@ -446,7 +439,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
-        Path rootProjectDir = getCurrentModel().getRootProjectDir().toPath();
+        Path rootProjectDir = currentModel().getValue().getRootProjectDir().toPath();
         return new ProfileSettingsKey(rootProjectDir, profileKey);
     }
 
@@ -466,12 +459,12 @@ public final class NbGradleProject implements Project {
 
     @Nonnull
     public String getDisplayName() {
-        return getAvailableModel().getDisplayName();
+        return currentModel().getValue().getDisplayName();
     }
 
     @Nonnull
     public String getDescription() {
-        return getAvailableModel().getDescription();
+        return currentModel().getValue().getDescription();
     }
 
     @Nonnull

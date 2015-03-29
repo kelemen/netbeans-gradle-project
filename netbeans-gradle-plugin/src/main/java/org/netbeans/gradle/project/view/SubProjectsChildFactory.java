@@ -124,7 +124,7 @@ extends
     }
 
     private void modelChanged() {
-        NbGradleProjectTree newTree = project.getAvailableModel().getMainProject();
+        NbGradleProjectTree newTree = project.currentModel().getValue().getMainProject();
         NbGradleProjectTree prevTree = lastTree.getAndSet(newTree);
         if (hasRelevantDifferences(prevTree, newTree)) {
             refresh(false);
@@ -134,7 +134,7 @@ extends
     @Override
     protected void addNotify() {
         if (root) {
-            listenerRefs.add(project.addModelChangeListener(new Runnable() {
+            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     modelChanged();
@@ -159,7 +159,7 @@ extends
         }
 
         List<NbGradleProjectTree> result = new ArrayList<>(
-                project.getAvailableModel().getMainProject().getChildren());
+                project.currentModel().getValue().getMainProject().getChildren());
         sortModules(result);
         return result;
     }

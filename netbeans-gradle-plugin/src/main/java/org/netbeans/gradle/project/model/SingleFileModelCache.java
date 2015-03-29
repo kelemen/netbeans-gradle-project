@@ -17,7 +17,7 @@ import org.netbeans.gradle.project.util.SerializationUtils2;
 public final class SingleFileModelCache implements PersistentModelCache {
     @Override
     public NbGradleModel tryGetModel(NbGradleProject project) throws IOException {
-        NbGradleModel model = project.getAvailableModel();
+        NbGradleModel model = project.currentModel().getValue();
         Path rootDir = model.getRootProjectDir().toPath();
 
         Map<String, SerializedNbGradleModels> allModels = tryReadFromCache(rootDir);

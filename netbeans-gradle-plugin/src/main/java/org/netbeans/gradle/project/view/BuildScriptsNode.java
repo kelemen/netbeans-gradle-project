@@ -71,7 +71,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            listenerRefs.add(project.addModelChangeListener(new Runnable() {
+            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     refresh(false);
@@ -195,7 +195,7 @@ public final class BuildScriptsNode extends AbstractNode {
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
-            NbGradleModel model = project.getCurrentModel();
+            NbGradleModel model = project.currentModel().getValue();
 
             FileObject settingsGradle = model.tryGetSettingsFileObj();
             FileObject rootBuildDir = getRootBuildDir(settingsGradle);

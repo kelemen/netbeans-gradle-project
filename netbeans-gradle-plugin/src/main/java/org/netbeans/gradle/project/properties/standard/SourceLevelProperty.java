@@ -62,7 +62,7 @@ public final class SourceLevelProperty {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
                 ListenerRef ref1 = mayRelyOnJavaOfScript().addChangeListener(listener);
-                ListenerRef ref2 = project.addModelChangeListener(listener);
+                ListenerRef ref2 = project.currentModel().addChangeListener(listener);
                 ListenerRef ref3 = targetPlatform.addChangeListener(listener);
 
                 return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);

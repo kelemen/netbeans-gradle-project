@@ -149,7 +149,7 @@ implements
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
 
-        final ListenerRef modelListenerRef = project.addModelChangeListener(new Runnable() {
+        final ListenerRef modelListenerRef = project.currentModel().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireModelChange();
@@ -666,7 +666,7 @@ implements
 
         public void updateMenuContent() {
             PredefinedTasks commonTasks = project.getCommonProperties().customTasks().getActiveValue();
-            NbGradleModel mainModule = project.getAvailableModel();
+            NbGradleModel mainModule = project.currentModel().getValue();
             if (lastUsedTasks == commonTasks && lastUsedModule == mainModule) {
                 return;
             }
@@ -799,7 +799,7 @@ implements
         }
 
         public void updateMenuContent() {
-            NbGradleModel projectModel = project.getAvailableModel();
+            NbGradleModel projectModel = project.currentModel().getValue();
             if (lastUsedModel == projectModel) {
                 return;
             }

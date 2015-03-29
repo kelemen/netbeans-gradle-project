@@ -31,7 +31,7 @@ public enum StandardTaskVariable {
     PROJECT_NAME("project", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String uniqueName = project.getAvailableModel().getMainProject().getProjectFullName();
+            String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
             if (":".equals(uniqueName)) { // This is the root project.
                 uniqueName = "";
             }

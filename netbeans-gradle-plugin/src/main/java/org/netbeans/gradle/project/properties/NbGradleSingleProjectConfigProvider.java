@@ -71,7 +71,7 @@ implements
 
     @Override
     public void onInitProject() {
-        project.addModelChangeListener(new Runnable() {
+        project.currentModel().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 updateExtensionProfiles();

@@ -22,7 +22,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
 
     @Override
     public NbGradleModel tryGetModel(NbGradleProject project) throws IOException {
-        NbGradleModel currentModel = project.getAvailableModel();
+        NbGradleModel currentModel = project.currentModel().getValue();
         Path cacheFilePath = getCacheFilePath(currentModel, getMD5());
 
         if (!Files.isRegularFile(cacheFilePath)) {

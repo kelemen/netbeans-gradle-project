@@ -193,7 +193,7 @@ public final class PredefinedTask {
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
-        NbGradleMultiProjectDef gradleProject = project.getAvailableModel().getProjectDef();
+        NbGradleMultiProjectDef gradleProject = project.currentModel().getValue().getProjectDef();
         return isTasksExistsIfRequired(gradleProject, varReplaceMap);
     }
 

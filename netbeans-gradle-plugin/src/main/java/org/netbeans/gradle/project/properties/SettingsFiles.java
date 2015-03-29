@@ -152,7 +152,7 @@ public final class SettingsFiles {
     }
 
     public static Path getRootDirectory(NbGradleProject project) {
-        NbGradleModel model = project.getAvailableModel();
+        NbGradleModel model = project.currentModel().getValue();
         File settingsFile = model.getSettingsFile();
         File dir = settingsFile != null
                 ? settingsFile.getParentFile()

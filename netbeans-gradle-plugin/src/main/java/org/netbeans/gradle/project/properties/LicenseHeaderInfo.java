@@ -47,7 +47,7 @@ public final class LicenseHeaderInfo {
             return licenseTemplateFile;
         }
 
-        File rootProjectDir = project.getAvailableModel().getRootProjectDir();
+        File rootProjectDir = project.currentModel().getValue().getRootProjectDir();
         return new File(rootProjectDir, licenseTemplateFile.getPath());
     }
 

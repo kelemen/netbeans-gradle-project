@@ -68,7 +68,7 @@ extends
     }
 
     private NbGradleModel getShownModule() {
-        return project.getCurrentModel();
+        return project.currentModel().getValue();
     }
 
     private List<GradleProjectExtensionNodes> getExtensionNodes() {
@@ -161,7 +161,7 @@ extends
             }
         };
 
-        listenerRefs.add(project.addModelChangeListener(new Runnable() {
+        listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 NodeExtensions newNodeExtensions
