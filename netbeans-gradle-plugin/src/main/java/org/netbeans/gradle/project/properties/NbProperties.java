@@ -1,9 +1,11 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
@@ -12,6 +14,25 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
 public final class NbProperties {
+    public static <Value> PropertySource<Value> atomicValueView(
+            final AtomicReference<? extends Value> valueRef,
+            final SimpleListenerRegistry<Runnable> changeListeners) {
+        ExceptionHelper.checkNotNullArgument(valueRef, "valueRef");
+        ExceptionHelper.checkNotNullArgument(changeListeners, "changeListeners");
+
+        return new PropertySource<Value>() {
+            @Override
+            public Value getValue() {
+                return valueRef.get();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return changeListeners.registerListener(listener);
+            }
+        };
+    }
+
     public static PropertySource<Boolean> between(
             final PropertySource<Integer> wrapped,
             final int minValue,
