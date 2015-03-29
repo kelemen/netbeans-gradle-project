@@ -106,6 +106,18 @@ public enum StandardTaskVariable {
             return new VariableValue(path);
         }
     }),
+    PROJECT_PATH_OR_NAME("project.path-or-name", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            String path = project.currentModel().getValue().getMainProject().getProjectFullName();
+            if (path.isEmpty() || path.equals(":")) {
+                return new VariableValue(getSafeProjectName(project));
+            }
+            else {
+                return new VariableValue(path);
+            }
+        }
+    }),
     PROJECT_GROUP("project.group", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
@@ -127,6 +139,17 @@ public enum StandardTaskVariable {
             return new VariableValue(projectId.getVersion());
         }
     });
+
+    private static String getSafeProjectName(NbGradleProject project) {
+        ProjectId projectId = project.currentModel().getValue().getProjectId();
+        String name = projectId.getName();
+        if (name.isEmpty()) {
+            return project.getProjectDirectory().getNameExt();
+        }
+        else {
+            return name;
+        }
+    }
 
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
