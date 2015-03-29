@@ -185,7 +185,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     }
 
     private static String projectTask(String task) {
-        return StandardTaskVariable.PROJECT_NAME.getScriptReplaceConstant() + ":" + task;
+        return StandardTaskVariable.PROJECT_PATH_NORMALIZED.getScriptReplaceConstant() + ":" + task;
     }
 
     private final JavaExtension javaExt;
