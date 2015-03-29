@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.view;
 
+import java.io.File;
 import java.util.Map;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -55,7 +56,8 @@ public enum DisplayableTaskVariable {
 
     private static String getSafeProjectName(NbGradleModel model) {
         if (model.isBuildSrc()) {
-            return getProjectName(model.getProjectDef().getRootProject());
+            File parentFile = model.getProjectDir().getParentFile();
+            return parentFile != null ? parentFile.getName() : "?";
         }
         else {
             return getProjectName(model.getMainProject());
@@ -74,7 +76,8 @@ public enum DisplayableTaskVariable {
 
     private static String getSafeProjectPath(NbGradleModel model) {
         if (model.isBuildSrc()) {
-            return getProjectPath(model.getProjectDef().getRootProject());
+            File parentFile = model.getProjectDir().getParentFile();
+            return parentFile != null ? parentFile.getName() : "?";
         }
         else {
             return getProjectPath(model.getMainProject());
