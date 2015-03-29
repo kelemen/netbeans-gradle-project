@@ -11,7 +11,10 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
 
 public final class NbGradleModel {
@@ -128,8 +131,21 @@ public final class NbGradleModel {
         return genericInfo.getMainProject().getGenericProperties().getProjectId();
     }
 
+    public String getDisplayName(String namePattern) {
+        String rawName = StandardTaskVariable.replaceVars(namePattern, DisplayableTaskVariable.createVarReplaceMap(this));
+
+        if (isBuildSrc()) {
+            return NbStrings.getBuildSrcMarker(rawName);
+        }
+        if (isRootProject()) {
+            return NbStrings.getRootProjectMarker(rawName);
+        }
+
+        return rawName;
+    }
+
     public String getDisplayName() {
-        return genericInfo.getDisplayName();
+        return getDisplayName(DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant());
     }
 
     public String getDescription() {
