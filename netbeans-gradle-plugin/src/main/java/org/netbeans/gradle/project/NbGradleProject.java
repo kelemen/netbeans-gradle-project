@@ -477,6 +477,7 @@ public final class NbGradleProject implements Project {
     public PropertySource<String> displayName() {
         return displayName;
     }
+
     public PropertySource<String> description() {
         return description;
     }
