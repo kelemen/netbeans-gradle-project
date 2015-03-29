@@ -29,6 +29,7 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.AutoDisplayState;
 import org.jtrim.utils.ExceptionHelper;
@@ -149,13 +150,16 @@ implements
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
 
-        final ListenerRef displayNameRef = project.displayName().addChangeListener(new Runnable() {
+        PropertySource<String> displayName = PropertyFactory.lazilyNotifiedSource(project.displayName());
+        PropertySource<String> description = PropertyFactory.lazilyNotifiedSource(project.description());
+
+        final ListenerRef displayNameRef = displayName.addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireDisplayNameChange();
             }
         });
-        final ListenerRef descriptionRef = project.description().addChangeListener(new Runnable() {
+        final ListenerRef descriptionRef = description.addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireShortDescriptionChange();
