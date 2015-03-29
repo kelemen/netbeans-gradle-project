@@ -12,6 +12,7 @@ import org.gradle.api.Task;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
@@ -75,6 +76,18 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return result;
     }
 
+    private static String toSafeString(Object obj) {
+        String result = obj != null ? obj.toString() : null;
+        return result != null ? result : "";
+    }
+
+    private static ProjectId getProjectId(Project project) {
+        String group = toSafeString(project.getGroup());
+        String name = toSafeString(project.getName());
+        String version = toSafeString(project.getVersion());
+        return new ProjectId(group, name, version);
+    }
+
     public Object buildAll(String modelName, Project project) {
         if (!canBuild(modelName)) {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
@@ -85,18 +98,19 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         ModelQueryOutput.BasicInfo basicInfo = null;
 
         String projectFullName = project.getPath();
+        ProjectId projectId = getProjectId(project);
 
         ModelQueryOutput output;
         try {
             buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
             tasks = findTasks(project);
-            basicInfo = new ModelQueryOutput.BasicInfo(projectFullName, buildFile, tasks);
+            basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
 
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
             output = new ModelQueryOutput(basicInfo, projectInfos, null);
         } catch (Throwable ex) {
             if (basicInfo == null) {
-                basicInfo = new ModelQueryOutput.BasicInfo(projectFullName, buildFile, tasks);
+                basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
             }
 
             output = new ModelQueryOutput(basicInfo, CustomSerializedMap.EMPTY, ex);

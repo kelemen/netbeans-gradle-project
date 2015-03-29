@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
@@ -43,16 +44,23 @@ public final class ModelQueryOutput implements Serializable {
     public static final class BasicInfo implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        private final ProjectId projectId;
         private final String projectFullName;
         private final File buildScript;
         private final Collection<GradleTaskID> tasks;
 
-        public BasicInfo(String projectFullName, File buildScript, Collection<GradleTaskID> tasks) {
+        public BasicInfo(ProjectId projectId, String projectFullName, File buildScript, Collection<GradleTaskID> tasks) {
+            if (projectId == null) throw new NullPointerException("projectId");
             if (projectFullName == null) throw new NullPointerException("projectFullName");
 
+            this.projectId = projectId;
             this.projectFullName = projectFullName;
             this.buildScript = buildScript;
             this.tasks = CollectionUtils.copyNullSafeList(tasks);
+        }
+
+        public ProjectId getProjectId() {
+            return projectId;
         }
 
         public String getProjectFullName() {

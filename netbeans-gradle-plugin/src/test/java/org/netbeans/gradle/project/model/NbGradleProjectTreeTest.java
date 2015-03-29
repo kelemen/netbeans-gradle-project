@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
@@ -13,7 +14,7 @@ import static org.junit.Assert.*;
 public class NbGradleProjectTreeTest {
     public static GenericProjectProperties createProperties(String name, String fullName) {
         return new GenericProjectProperties(
-                name,
+                new ProjectId("", name, ""),
                 fullName,
                 new File(name),
                 new File("build.gradle"));

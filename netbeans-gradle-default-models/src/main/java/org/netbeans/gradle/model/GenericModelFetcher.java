@@ -508,7 +508,7 @@ public final class GenericModelFetcher {
             }
 
             GenericProjectProperties genericProperties = new GenericProjectProperties(
-                    project.getName(),
+                    customInfo.getBasicInfo().getProjectId(),
                     projectPath,
                     project.getProjectDirectory(),
                     customInfo.getBasicInfo().getBuildScript());
