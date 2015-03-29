@@ -4,6 +4,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.URL;
 import java.util.Objects;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 
@@ -55,7 +56,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
                         + DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant()
                         + "-"
                         + DisplayableTaskVariable.PROJECT_VERSION.getScriptReplaceConstant()));
-        jDisplayNameCombo.addItem(new NamePatternItem("Custom", null));
+        jDisplayNameCombo.addItem(new NamePatternItem(NbStrings.getCustomNamePatternLabel(), null));
     }
 
     @Override
