@@ -149,7 +149,33 @@ public final class NbGradleModel {
     }
 
     public String getDescription() {
-        return genericInfo.getDescription();
+        if (isBuildSrc()) {
+            File ownerProjectDir = getProjectDir().getParentFile();
+            if (ownerProjectDir == null) {
+                ownerProjectDir = getProjectDir();
+            }
+
+            String name = ownerProjectDir.getName();
+            String projectDir = ownerProjectDir.getAbsolutePath();
+
+            return NbStrings.getBuildSrcDescription(name, projectDir);
+        }
+        else {
+            String name = getMainProject().getProjectFullName();
+            name = name.trim();
+            if (name.isEmpty()) {
+                name = getProjectDir().getName();
+            }
+
+            String projectDir = getProjectDir().getAbsolutePath();
+
+            if (isRootProject()) {
+                return NbStrings.getRootProjectDescription(name, projectDir);
+            }
+            else {
+                return NbStrings.getSubProjectDescription(name, projectDir);
+            }
+        }
     }
 
     public boolean isBuildSrc() {

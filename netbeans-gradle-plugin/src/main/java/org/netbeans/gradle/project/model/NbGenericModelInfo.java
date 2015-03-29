@@ -18,10 +18,6 @@ public final class NbGenericModelInfo implements Serializable {
     private final NbGradleMultiProjectDef projectDef;
     private final File settingsFile;
 
-    // Derived properties
-    private final String displayName;
-    private final String description;
-
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef) {
         this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
     }
@@ -31,17 +27,6 @@ public final class NbGenericModelInfo implements Serializable {
 
         this.settingsFile = settingsFile;
         this.projectDef = projectDef;
-
-        this.displayName = findDisplayName();
-        this.description = findDescription();
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public String getDescription() {
-        return description;
     }
 
     public File getProjectDir() {

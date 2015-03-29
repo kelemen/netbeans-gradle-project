@@ -359,6 +359,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectMarker", projectName);
     }
 
+    public static String getBuildSrcDescription(String projectName, String projectPath) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.BuildSrcDescription", projectName, projectPath);
+    }
+
     public static String getRootProjectDescription(String projectName, String projectPath) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectDescription", projectName, projectPath);
     }
