@@ -141,6 +141,10 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
 
         private Charset getSelectedSourceEncoding(Charset defaultEncoding) {
+            if (jSourceEncodingInherit.isSelected()) {
+                return null;
+            }
+
             Object selected = jSourceEncoding.getSelectedItem();
             if (selected instanceof Charset) {
                 return (Charset)selected;
