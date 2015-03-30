@@ -27,14 +27,16 @@
                       <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                       <Component id="jBrowseUserHomeDirButton" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <Component id="jGradleUserHomeCaption" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="109" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <Component id="jChangeGradleLocationButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jGradleLocationDescription" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jPreferWrapperCheck" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -50,6 +52,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jGradleLocationDescription" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jChangeGradleLocationButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jPreferWrapperCheck" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="jGradleUserHomeCaption" min="-2" max="-2" attributes="0"/>
@@ -112,6 +115,13 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jBrowseUserHomeDirButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jPreferWrapperCheck">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="GradleInstallationPanel.jPreferWrapperCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

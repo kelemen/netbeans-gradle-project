@@ -28,8 +28,14 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     @Override
     public final void updateSettings(GlobalGradleSettings globalSettings) {
         GradleLocationDef locationDef = globalSettings.gradleLocation().getValue();
-        GradleLocation location = locationDef != null ? locationDef.getLocation() : null;
-        selectGradleLocation(location);
+        if (locationDef != null) {
+            selectGradleLocation(locationDef.getLocation());
+            jPreferWrapperCheck.setSelected(locationDef.isPreferWrapper());
+        }
+        else {
+            selectGradleLocation(null);
+            jPreferWrapperCheck.setSelected(false);
+        }
 
         File userHome = globalSettings.gradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -54,7 +60,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
             return null;
         }
 
-        return new GradleLocationDef(selectedGradleLocation, false);
+        return new GradleLocationDef(selectedGradleLocation, jPreferWrapperCheck.isSelected());
     }
 
     private String getGradleUserHomeDir() {
@@ -76,6 +82,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
         jGradleUserHomeCaption = new javax.swing.JLabel();
         jGradleUserHomeEdit = new javax.swing.JTextField();
         jBrowseUserHomeDirButton = new javax.swing.JButton();
+        jPreferWrapperCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jGradlePathCaption, org.openide.util.NbBundle.getMessage(GradleInstallationPanel.class, "GradleInstallationPanel.jGradlePathCaption.text")); // NOI18N
 
@@ -100,6 +107,8 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jPreferWrapperCheck, org.openide.util.NbBundle.getMessage(GradleInstallationPanel.class, "GradleInstallationPanel.jPreferWrapperCheck.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -119,7 +128,9 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jChangeGradleLocationButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jGradleLocationDescription)))
+                        .addComponent(jGradleLocationDescription)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPreferWrapperCheck)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -130,7 +141,8 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jGradleLocationDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jChangeGradleLocationButton))
+                    .addComponent(jChangeGradleLocationButton)
+                    .addComponent(jPreferWrapperCheck))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jGradleUserHomeCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -168,5 +180,6 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     private javax.swing.JLabel jGradlePathCaption;
     private javax.swing.JLabel jGradleUserHomeCaption;
     private javax.swing.JTextField jGradleUserHomeEdit;
+    private javax.swing.JCheckBox jPreferWrapperCheck;
     // End of variables declaration//GEN-END:variables
 }
