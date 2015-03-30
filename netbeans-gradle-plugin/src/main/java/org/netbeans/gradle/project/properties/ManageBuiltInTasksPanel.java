@@ -243,25 +243,6 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         setEnabledDisabledState();
     }
 
-    public void saveModifiedTasks() {
-        saveLastShown();
-
-        PropertyReference<BuiltInTasks> builtInTasks = tryGetPropertyRef();
-        if (builtInTasks == null) {
-            return;
-        }
-
-        List<PredefinedTask> newValues = new ArrayList<>(toSaveTasks.size());
-        for (SavedTask task: toSaveTasks.values()) {
-            PredefinedTask taskDef = task.taskDef;
-            if (!task.inherited && taskDef != null) {
-                newValues.add(taskDef);
-            }
-        }
-
-        builtInTasks.trySetValue(BuiltInTasksProperty.createValue(newValues));
-    }
-
     private static class SavedTask {
         private final PredefinedTask taskDef;
         private final boolean inherited;
