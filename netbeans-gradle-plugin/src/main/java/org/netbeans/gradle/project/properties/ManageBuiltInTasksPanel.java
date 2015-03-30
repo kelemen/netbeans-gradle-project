@@ -6,6 +6,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,10 +22,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
+import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -335,14 +339,27 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            List<PredefinedTask> tasks = new ArrayList<>(modifiedCommands.size());
+            BuiltInTasks currentTasks = builtInTasksRef.tryGetValueWithoutFallback();
+            PredefinedTasks currentTaskList = currentTasks != null
+                    ? currentTasks.getAllTasks()
+                    : PredefinedTasks.NO_TASKS;
+
+            Map<String, PredefinedTask> taskMap = CollectionUtils.newLinkedHashMap(currentTaskList.getTasks().size());
+            for (PredefinedTask task: currentTaskList.getTasks()) {
+                String command = task.getDisplayName();
+                taskMap.put(command, task);
+            }
+
             for (SavedTask task: modifiedCommands.values()) {
-                if (!task.isInherited()) {
-                    tasks.add(task.getTaskDef());
+                if (task.isInherited()) {
+                    taskMap.remove(task.getCommand());
+                }
+                else {
+                    taskMap.put(task.getCommand(), task.getTaskDef());
                 }
             }
 
-            builtInTasksRef.trySetValue(BuiltInTasksProperty.createValue(tasks));
+            builtInTasksRef.trySetValue(BuiltInTasksProperty.createValue(taskMap.values()));
         }
     }
 
