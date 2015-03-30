@@ -110,7 +110,7 @@ public final class GradleLocationDef {
             }
         }
 
-        return new GradleLocationDirectory(new File(str));
+        return getRawLocation(str);
     }
 
     private static GradleLocation getRawLocation(String locationPath) {
