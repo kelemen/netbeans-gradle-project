@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties.global;
 import java.io.File;
 import java.net.URL;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationPanel;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
@@ -26,7 +27,9 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
 
     @Override
     public final void updateSettings(GlobalGradleSettings globalSettings) {
-        selectGradleLocation(globalSettings.gradleLocation().getValue());
+        GradleLocationDef locationDef = globalSettings.gradleLocation().getValue();
+        GradleLocation location = locationDef != null ? locationDef.getLocation() : null;
+        selectGradleLocation(location);
 
         File userHome = globalSettings.gradleUserHomeDir().getValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
@@ -34,7 +37,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
 
     @Override
     public final void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.gradleLocation().setValue(selectedGradleLocation);
+        globalSettings.gradleLocation().setValue(getGradleLocationDef());
         globalSettings.gradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
     }
 
@@ -44,6 +47,14 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private GradleLocationDef getGradleLocationDef() {
+        if (selectedGradleLocation == null) {
+            return null;
+        }
+
+        return new GradleLocationDef(selectedGradleLocation, false);
     }
 
     private String getGradleUserHomeDir() {

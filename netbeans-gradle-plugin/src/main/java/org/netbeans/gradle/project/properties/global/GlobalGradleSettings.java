@@ -28,12 +28,11 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.GradleLocation;
-import org.netbeans.gradle.project.properties.GradleLocationDefault;
+import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
-import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
@@ -47,7 +46,7 @@ public final class GlobalGradleSettings {
     private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
     private static volatile BasicPreference PREFERENCE = new DefaultPreference();
 
-    private final StringBasedProperty<GradleLocation> gradleLocation;
+    private final StringBasedProperty<GradleLocationDef> gradleLocation;
     private final StringBasedProperty<File> gradleUserHomeDir;
     private final StringBasedProperty<List<String>> gradleArgs;
     private final StringBasedProperty<List<String>> gradleJvmArgs;
@@ -149,7 +148,7 @@ public final class GlobalGradleSettings {
         return gradleDaemonTimeoutSec;
     }
 
-    public StringBasedProperty<GradleLocation> gradleLocation() {
+    public StringBasedProperty<GradleLocationDef> gradleLocation() {
         return gradleLocation;
     }
 
@@ -214,7 +213,8 @@ public final class GlobalGradleSettings {
     }
 
     public File getGradleInstallationAsFile() {
-        GradleLocation location = gradleLocation.getValue();
+        GradleLocationDef locationDef = gradleLocation.getValue();
+        GradleLocation location = locationDef.getLocation();
         if (location instanceof GradleLocationDirectory) {
             return ((GradleLocationDirectory)location).getGradleHome();
         }
@@ -520,25 +520,29 @@ public final class GlobalGradleSettings {
         }
     }
 
-    private enum GradleLocationConverter implements ValueConverter<GradleLocation> {
+    private enum GradleLocationConverter implements ValueConverter<GradleLocationDef> {
         INSTANCE;
 
         @Override
-        public GradleLocation toValue(String strValue) {
+        public GradleLocationDef toValue(String strValue) {
             if (strValue == null)  {
-                return GradleLocationDefault.INSTANCE;
+                return GradleLocationDef.DEFAULT;
             }
-            return GradleLocationProperty.getGradleLocationFromString(strValue);
+            return GradleLocationDef.parseFromString(strValue);
         }
 
         @Override
-        public String toString(GradleLocation value) {
+        public String toString(GradleLocationDef value) {
             if (value == null) {
                 return null;
             }
 
-            String result = GradleLocationProperty.gradleLocationToString(value);
-            return result.isEmpty() ? null : result;
+            if (Objects.equals(value, GradleLocationDef.DEFAULT)) {
+                return null;
+            }
+            else {
+                return value.toStringFormat();
+            }
         }
     }
 

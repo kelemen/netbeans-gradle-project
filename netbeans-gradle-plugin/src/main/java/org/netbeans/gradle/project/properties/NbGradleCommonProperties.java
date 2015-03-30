@@ -28,7 +28,7 @@ public final class NbGradleCommonProperties {
 
     private final PropertyReference<BuiltInTasks> builtInTasks;
     private final PropertyReference<PredefinedTasks> customTasks;
-    private final PropertyReference<GradleLocation> gradleLocation;
+    private final PropertyReference<GradleLocationDef> gradleLocation;
     private final PropertyReference<LicenseHeaderInfo> licenseHeaderInfo;
     private final PropertyReference<JavaPlatform> scriptPlatform;
     private final PropertyReference<Charset> sourceEncoding;
@@ -103,7 +103,7 @@ public final class NbGradleCommonProperties {
         return customTasks;
     }
 
-    public PropertyReference<GradleLocation> gradleLocation() {
+    public PropertyReference<GradleLocationDef> gradleLocation() {
         return gradleLocation;
     }
 

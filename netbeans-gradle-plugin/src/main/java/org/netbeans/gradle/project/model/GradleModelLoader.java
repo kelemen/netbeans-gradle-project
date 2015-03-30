@@ -51,6 +51,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GradleLocation;
+import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
@@ -138,8 +139,9 @@ public final class GradleModelLoader {
         NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
         commonProperties.waitForLoadedOnce(cancelToken);
 
-        GradleLocation gradleLocation = commonProperties.gradleLocation().getActiveValue();
-        gradleLocation.applyLocation(new GradleLocation.Applier() {
+        GradleLocationDef gradleLocation = commonProperties.gradleLocation().getActiveValue();
+        // TODO: Consider gradleLocation.isPreferWrapper()
+        gradleLocation.getLocation().applyLocation(new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 result.useGradleVersion(versionStr);

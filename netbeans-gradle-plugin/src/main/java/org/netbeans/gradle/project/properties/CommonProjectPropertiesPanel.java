@@ -27,7 +27,7 @@ import org.openide.util.Lookup;
 @SuppressWarnings("serial")
 public class CommonProjectPropertiesPanel extends JPanel {
     private PropertyValues currentValues;
-    private GradleLocation selectedGradleLocation;
+    private GradleLocationDef selectedGradleLocation;
 
     private CommonProjectPropertiesPanel() {
         currentValues = null;
@@ -106,7 +106,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private final class PropertyValues implements ProfileValuesEditor {
         public NbGradleCommonProperties commonProperties;
 
-        public GradleLocation gradleLocation;
+        public GradleLocationDef gradleLocation;
         public JavaPlatform scriptPlatform;
         public Charset sourceEncoding;
         public ProjectPlatform targetPlatform;
@@ -154,7 +154,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         @Override
         public void readFromGui() {
-            GradleLocation gradleHome = selectedGradleLocation;
+            GradleLocationDef gradleHome = selectedGradleLocation;
             gradleLocation = jGradleHomeInherit.isSelected() ? null : gradleHome;
 
             JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
@@ -182,13 +182,13 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
 
         private void displayGradleLocation() {
-            GradleLocation value = setInheritAndGetValue(
+            GradleLocationDef value = setInheritAndGetValue(
                     gradleLocation,
                     commonProperties.gradleLocation(),
                     jGradleHomeInherit);
 
             if (value != null) {
-                selectGradleLocation(value);
+                selectGradleLocation(value.getLocation());
             }
         }
 
@@ -237,7 +237,8 @@ public class CommonProjectPropertiesPanel extends JPanel {
     }
 
     private void selectGradleLocation(GradleLocation newLocation) {
-        selectedGradleLocation = newLocation;
+        GradleLocationDef newLocationDef = new GradleLocationDef(newLocation, false);
+        selectedGradleLocation = newLocationDef;
         jGradleHomeEdit.setText(newLocation != null ? newLocation.toLocalizedString() : "");
     }
 
@@ -471,9 +472,13 @@ public class CommonProjectPropertiesPanel extends JPanel {
             return;
         }
 
-        GradleLocation currentLocation = selectedGradleLocation != null
-                ?  selectedGradleLocation
+        GradleLocationDef currentLocationDef = selectedGradleLocation != null
+                ? selectedGradleLocation
                 : currentValues.commonProperties.gradleLocation().getActiveValue();
+        GradleLocation currentLocation = currentLocationDef != null
+                ? currentLocationDef.getLocation()
+                : null;
+
         GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
         if (newLocation != null) {
             selectGradleLocation(newLocation);
