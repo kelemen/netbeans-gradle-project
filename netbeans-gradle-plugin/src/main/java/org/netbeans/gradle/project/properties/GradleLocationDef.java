@@ -113,6 +113,15 @@ public final class GradleLocationDef {
         return new GradleLocationDirectory(new File(str));
     }
 
+    private static GradleLocation getRawLocation(String locationPath) {
+        if (locationPath.isEmpty()) {
+            return GradleLocationDefault.INSTANCE;
+        }
+        else {
+            return new GradleLocationDirectory(new File(locationPath));
+        }
+    }
+
     public static GradleLocationDef parseFromString(String locationDefStr) {
         ExceptionHelper.checkNotNullArgument(locationDefStr, "locationDefStr");
 
@@ -120,7 +129,7 @@ public final class GradleLocationDef {
 
         KeyValue keyValue = trySplitKeyValue(normDef);
         if (keyValue == null) {
-            return new GradleLocationDef(new File(normDef), false);
+            return new GradleLocationDef(getRawLocation(normDef), false);
         }
 
         GradleLocation location;
@@ -133,7 +142,7 @@ public final class GradleLocationDef {
             preferWrapper = false;
             location = getLocation(keyValue);
             if (location == null) {
-                location = new GradleLocationDirectory(new File(normDef));
+                location = getRawLocation(normDef);
             }
         }
         return new GradleLocationDef(location, preferWrapper);
