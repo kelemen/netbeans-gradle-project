@@ -3,6 +3,8 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -114,6 +116,15 @@ public final class GradleModelLoader {
         return GradleModelCache.getDefault();
     }
 
+    private static boolean hasWrapper(NbGradleProject project) {
+        File rootDir = project.currentModel().getValue().getRootProjectDir();
+        Path wrapperPropertiesFile = rootDir.toPath()
+                .resolve("gradle")
+                .resolve("wrapper")
+                .resolve("gradle-wrapper.properties");
+        return Files.isRegularFile(wrapperPropertiesFile);
+    }
+
     public static GradleConnector createGradleConnector(
             CancellationToken cancelToken,
             final Project project) {
@@ -140,27 +151,28 @@ public final class GradleModelLoader {
         commonProperties.waitForLoadedOnce(cancelToken);
 
         GradleLocationDef gradleLocation = commonProperties.gradleLocation().getActiveValue();
-        // TODO: Consider gradleLocation.isPreferWrapper()
-        gradleLocation.getLocation().applyLocation(new GradleLocation.Applier() {
-            @Override
-            public void applyVersion(String versionStr) {
-                result.useGradleVersion(versionStr);
-            }
+        if (!gradleLocation.isPreferWrapper() || !hasWrapper(gradleProject)) {
+            gradleLocation.getLocation().applyLocation(new GradleLocation.Applier() {
+                @Override
+                public void applyVersion(String versionStr) {
+                    result.useGradleVersion(versionStr);
+                }
 
-            @Override
-            public void applyDirectory(File gradleHome) {
-                result.useInstallation(gradleHome);
-            }
+                @Override
+                public void applyDirectory(File gradleHome) {
+                    result.useInstallation(gradleHome);
+                }
 
-            @Override
-            public void applyDistribution(URI location) {
-                result.useDistribution(location);
-            }
+                @Override
+                public void applyDistribution(URI location) {
+                    result.useDistribution(location);
+                }
 
-            @Override
-            public void applyDefault() {
-            }
-        });
+                @Override
+                public void applyDefault() {
+                }
+            });
+        }
 
         return result;
     }
