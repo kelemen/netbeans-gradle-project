@@ -20,6 +20,7 @@ import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
+import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
@@ -98,6 +99,7 @@ public final class ProjectLookupHack extends ProxyLookup {
 
             Lookup wrappedLookup = lookupContainer.getLookup();
             typeActions.put(NbGradleProject.class.getName(), wrappedLookup);
+            typeActions.put(FileEncodingQueryImplementation.class.getName(), wrappedLookup);
             typeActions.put(ProjectInformation.class.getName(), wrappedLookup);
             typeActions.put(ActionProvider.class.getName(), wrappedLookup);
             typeActions.put(CustomizerProvider.class.getName(), wrappedLookup);
