@@ -40,7 +40,6 @@ public final class NbGradleConfigProvider {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
 
     // Must be FIFO executor
-    // Warning: May not wait for multiProfileProperties to be loaded on this executor.
     private static final TaskExecutor PROFILE_APPLIER_EXECUTOR
             = NbTaskExecutors.newExecutor("Profile-applier", 1);
 
@@ -65,8 +64,14 @@ public final class NbGradleConfigProvider {
 
     private final MonitorableTaskExecutor profileIOExecutor;
 
-    private NbGradleConfigProvider(Path rootDirectory) {
+    private NbGradleConfigProvider(
+            Path rootDirectory,
+            MultiProfileProperties multiProfileProperties,
+            ProfileSettingsContainer settingsContainer) {
+
         ExceptionHelper.checkNotNullArgument(rootDirectory, "rootDirectory");
+        ExceptionHelper.checkNotNullArgument(multiProfileProperties, "multiProfileProperties");
+        ExceptionHelper.checkNotNullArgument(settingsContainer, "settingsContainer");
 
         this.rootDirectory = rootDirectory;
         this.hasBeenUsed = new AtomicBoolean(false);
@@ -76,8 +81,8 @@ public final class NbGradleConfigProvider {
         this.configs = new AtomicReference<>(
                 Collections.singletonList(NbGradleConfiguration.DEFAULT_CONFIG));
         this.hasActiveBeenSet = false;
-        this.multiProfileProperties = new MultiProfileProperties();
-        this.settingsContainer = ProfileSettingsContainer.getDefault();
+        this.multiProfileProperties = multiProfileProperties;
+        this.settingsContainer = settingsContainer;
         this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
         this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
     }
@@ -99,8 +104,14 @@ public final class NbGradleConfigProvider {
             return result;
         }
 
-        result = new NbGradleConfigProvider(rootDir);
-        result.updateByKey(result.activeConfig.get().getProfileKey());
+        ProfileSettingsContainer settingsContainer = ProfileSettingsContainer.getDefault();
+        List<ProjectProfileSettings> initialProfiles = getLoadedProfileSettings(rootDir,
+                settingsContainer,
+                NbGradleConfiguration.DEFAULT_CONFIG.getProfileKey());
+
+        MultiProfileProperties profileProperties = new MultiProfileProperties(initialProfiles);
+
+        result = new NbGradleConfigProvider(rootDir, profileProperties, settingsContainer);
 
         CONFIG_PROVIDERS_LOCK.lock();
         try {
@@ -344,12 +355,24 @@ public final class NbGradleConfigProvider {
         return true;
     }
 
-    private void updateByKeyNow(ProfileKey profileKey) {
+    private static List<ProjectProfileSettings> getLoadedProfileSettings(
+            Path rootDirectory,
+            ProfileSettingsContainer settingsContainer,
+            ProfileKey profileKey) {
+
         ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
         List<ProjectProfileSettings> profileSettings
                 = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
         loadAll(profileSettings);
-        multiProfileProperties.setProfileSettings(profileSettings);
+        return profileSettings;
+    }
+
+    private List<ProjectProfileSettings> getLoadedProfileSettings(ProfileKey profileKey) {
+        return getLoadedProfileSettings(rootDirectory, settingsContainer, profileKey);
+    }
+
+    private void updateByKeyNow(ProfileKey profileKey) {
+        multiProfileProperties.setProfileSettings(getLoadedProfileSettings(profileKey));
     }
 
     private void updateByKey(final ProfileKey profileKey) {

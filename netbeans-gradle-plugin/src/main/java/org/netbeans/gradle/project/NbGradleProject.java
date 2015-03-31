@@ -447,9 +447,7 @@ public final class NbGradleProject implements Project {
             current.ensureLoadedAndWait();
         }
 
-        MultiProfileProperties result = new MultiProfileProperties();
-        result.setProfileSettings(settings);
-        return result;
+        return new MultiProfileProperties(settings);
     }
 
     public ListenerRef loadActiveSettingsForProfile(ProfileKey profileKey, final ActiveSettingsQueryListener listener) {
@@ -458,13 +456,11 @@ public final class NbGradleProject implements Project {
         final List<ProjectProfileSettings> settings = getUnloadedProjectProfileSettingsForProfile(profileKey);
         final AtomicInteger requiredCallCount = new AtomicInteger(settings.size());
 
-        final MultiProfileProperties result = new MultiProfileProperties();
         Runnable listenerForwarder = new Runnable() {
             @Override
             public void run() {
                 if (requiredCallCount.decrementAndGet() == 0) {
-                    result.setProfileSettings(settings);
-                    listener.onLoad(result);
+                    listener.onLoad(new MultiProfileProperties(settings));
                 }
             }
         };

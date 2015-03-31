@@ -1,14 +1,13 @@
 package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -16,7 +15,6 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
-import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
@@ -25,15 +23,10 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     private final PropertySource<ProjectProfileSettings> currentProfileSettings;
     private final ChangeListenerManager currentProfileChangeListeners;
 
-    private final WaitableSignal loadedOnceSignal;
-    private final OneShotChangeListenerManager loadedOnceListeners;
-
-    public MultiProfileProperties() {
+    public MultiProfileProperties(List<ProjectProfileSettings> initialProfiles) {
         this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
-                Collections.<ProjectProfileSettings>emptyList(),
+                CollectionsEx.readOnlyCopy(initialProfiles),
                 SwingTaskExecutor.getStrictExecutor(false));
-        this.loadedOnceSignal = new WaitableSignal();
-        this.loadedOnceListeners = OneShotChangeListenerManager.getSwingNotifier();
 
         this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentProfileSettings = new PropertySource<ProjectProfileSettings>() {
@@ -51,12 +44,14 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     @Override
     public void waitForLoadedOnce(CancellationToken cancelToken) {
-        loadedOnceSignal.waitSignal(cancelToken);
+        // TODO: Remove this method
     }
 
     @Override
     public ListenerRef notifyWhenLoadedOnce(Runnable listener) {
-        return loadedOnceListeners.registerOrNotifyListener(listener);
+        // TODO: Remove this method
+        listener.run();
+        return UnregisteredListenerRef.INSTANCE;
     }
 
     @Override
@@ -87,9 +82,6 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         ExceptionHelper.checkArgumentInRange(settingsCopy.size(), 1, Integer.MAX_VALUE, "newSettings.size()");
 
         currentProfileSettingsList.setValue(settingsCopy);
-
-        loadedOnceSignal.signal();
-        loadedOnceListeners.fireEventually();
         currentProfileChangeListeners.fireEventually();
     }
 
