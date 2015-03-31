@@ -70,7 +70,6 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
-import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -90,8 +89,9 @@ public final class NbGradleProject implements Project {
 
     private final FileObject projectDir;
     private final File projectDirAsFile;
-    private final ProjectState state;
-    private final AtomicReference<Lookup> defaultLookupRef;
+
+    private final AtomicReference<ServiceObjects> serviceObjectsRef;
+
     private final AtomicReference<DynamicLookup> lookupRef;
     private final DynamicLookup combinedExtensionLookup;
 
@@ -102,7 +102,6 @@ public final class NbGradleProject implements Project {
     private final PropertySource<NbGradleModel> currentModel;
     private final PropertySource<String> displayName;
     private final PropertySource<String> description;
-    private final ProjectInfoManager projectInfoManager;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
@@ -113,17 +112,15 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
-    private NbGradleProject(FileObject projectDir, ProjectState state) throws IOException {
+    private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
+        this.serviceObjectsRef = new AtomicReference<>(null);
 
         this.mergedCommandQueryRef = new AtomicReference<>(null);
-        this.state = state;
-        this.defaultLookupRef = new AtomicReference<>(null);
-        this.projectInfoManager = new ProjectInfoManager();
         this.combinedExtensionLookup = new DynamicLookup();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
@@ -149,6 +146,25 @@ public final class NbGradleProject implements Project {
         });
     }
 
+    private void initServiceObjects(ProjectState state) {
+        ServiceObjects serviceObjects = new ServiceObjects(this, state);
+        if (!serviceObjectsRef.compareAndSet(null, serviceObjects)) {
+            throw new IllegalStateException("Alread initialized: ServiceObjects");
+        }
+
+        for (ProjectInitListener listener: serviceObjects.services.lookupAll(ProjectInitListener.class)) {
+            listener.onInitProject();
+        }
+    }
+
+    private ServiceObjects getServiceObjects() {
+        ServiceObjects result = serviceObjectsRef.get();
+        if (result == null) {
+            throw new IllegalStateException("Services are not yet initialized.");
+        }
+        return result;
+    }
+
     private static PropertySource<String> getDisplayName(
             final PropertySource<NbGradleModel> model,
             final PropertySource<String> namePattern) {
@@ -170,7 +186,8 @@ public final class NbGradleProject implements Project {
 
     @Nonnull
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
-        NbGradleProject project = new NbGradleProject(projectDir, state);
+        NbGradleProject project = new NbGradleProject(projectDir);
+        project.initServiceObjects(state);
         project.setExtensions(ExtensionLoader.loadExtensions(project));
         return project;
     }
@@ -286,8 +303,7 @@ public final class NbGradleProject implements Project {
     }
 
     private NbGradleSingleProjectConfigProvider getConfigProvider() {
-        // TODO: Cache this value
-        return getLookup().lookup(NbGradleSingleProjectConfigProvider.class);
+        return getServiceObjects().configProvider;
     }
 
     public NbGradleConfiguration getCurrentProfile() {
@@ -331,7 +347,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProjectInfoManager getProjectInfoManager() {
-        return projectInfoManager;
+        return getServiceObjects().projectInfoManager;
     }
 
     public PropertySource<NbGradleModel> currentModel() {
@@ -412,7 +428,7 @@ public final class NbGradleProject implements Project {
     }
 
     public NbGradleCommonProperties getCommonProperties() {
-        return getLookup().lookup(NbGradleCommonProperties.class);
+        return getServiceObjects().commonProperties;
     }
 
     public NbGradleCommonProperties loadCommonPropertiesForProfile(ProfileKey profileKey) {
@@ -510,52 +526,7 @@ public final class NbGradleProject implements Project {
     }
 
     private Lookup getDefaultLookup() {
-        // The Lookup is not created in the constructor, so that we do not need
-        // to share "this" in the constructor.
-        Lookup result = defaultLookupRef.get();
-        if (result == null) {
-            GradleAuxiliaryConfiguration auxConfig = new GradleAuxiliaryConfiguration(this);
-            NbGradleSingleProjectConfigProvider configProvider = NbGradleSingleProjectConfigProvider.create(this);
-
-            NbGradleCommonProperties commonProperties
-                    = new NbGradleCommonProperties(this, configProvider.getActiveSettingsQuery());
-
-            Lookup newLookup = Lookups.fixed(new Object[] {
-                this,
-                state, //allow outside code to mark the project as needing saving
-                configProvider,
-                commonProperties,
-                new GradleProjectInformation(this),
-                new GradleProjectLogicalViewProvider(this),
-                new GradleActionProvider(this),
-                new GradleSharabilityQuery(this),
-                new GradleSourceEncodingQuery(this),
-                new GradleCustomizer(this),
-                new OpenHook(),
-                auxConfig,
-                new GradleAuxiliaryProperties(auxConfig),
-                new GradleTemplateAttrProvider(this),
-                new DefaultGradleCommandExecutor(this),
-                ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()),
-                ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()),
-                ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()),
-                ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()),
-                new ProjectInfoManager(),
-
-                // FileOwnerQueryImplementation cannot be added to the project's
-                // lookup, since NetBeans will ignore it. It must be added
-                // using the ServiceProviders annotation. Our implementation is
-                // GradleFileOwnerQuery and is added using the annotation.
-            });
-
-            if (defaultLookupRef.compareAndSet(null, newLookup)) {
-                for (ProjectInitListener listener: newLookup.lookupAll(ProjectInitListener.class)) {
-                    listener.onInitProject();
-                }
-            }
-            result = defaultLookupRef.get();
-        }
-        return result;
+        return getServiceObjects().services;
     }
 
     private DynamicLookup getMainLookup() {
@@ -800,6 +771,59 @@ public final class NbGradleProject implements Project {
             } finally {
                 loadedAtLeastOnceSignal.signal();
             }
+        }
+    }
+
+    private static final class ServiceObjects {
+        public final GradleAuxiliaryConfiguration auxConfig;
+        public final NbGradleSingleProjectConfigProvider configProvider;
+        public final NbGradleCommonProperties commonProperties;
+        public final ProjectState state;
+        public final GradleProjectInformation projectInformation;
+        public final GradleProjectLogicalViewProvider logicalViewProvider;
+        public final GradleActionProvider actionProvider;
+        public final GradleSharabilityQuery sharabilityQuery;
+        public final GradleSourceEncodingQuery sourceEncoding;
+        public final GradleCustomizer customizer;
+        public final GradleAuxiliaryProperties auxProperties;
+        public final GradleTemplateAttrProvider templateAttrProvider;
+        public final DefaultGradleCommandExecutor commandExecutor;
+        public final ProjectInfoManager projectInfoManager;
+
+        public final Lookup services;
+
+        public ServiceObjects(NbGradleProject project, ProjectState state) {
+            List<Object> serviceObjects = new LinkedList<>();
+            serviceObjects.add(project);
+
+            this.auxConfig = add(new GradleAuxiliaryConfiguration(project), serviceObjects);
+            this.configProvider = add(NbGradleSingleProjectConfigProvider.create(project), serviceObjects);
+            this.commonProperties = add(new NbGradleCommonProperties(project, configProvider.getActiveSettingsQuery()), serviceObjects);
+            this.state = add(state, serviceObjects);
+            this.projectInformation = add(new GradleProjectInformation(project), serviceObjects);
+            this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
+            this.actionProvider = add(new GradleActionProvider(project), serviceObjects);
+            this.sharabilityQuery = add(new GradleSharabilityQuery(project), serviceObjects);
+            this.sourceEncoding = add(new GradleSourceEncodingQuery(project), serviceObjects);
+            this.customizer = add(new GradleCustomizer(project), serviceObjects);
+            this.auxProperties = add(new GradleAuxiliaryProperties(auxConfig), serviceObjects);
+            this.templateAttrProvider = add(new GradleTemplateAttrProvider(project), serviceObjects);
+            this.commandExecutor = add(new DefaultGradleCommandExecutor(project), serviceObjects);
+            this.projectInfoManager = add(new ProjectInfoManager(), serviceObjects);
+
+            add(project.new OpenHook(), serviceObjects);
+
+            add(ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()), serviceObjects);
+            add(ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()), serviceObjects);
+            add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
+            add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
+
+            this.services = Lookups.fixed(serviceObjects.toArray());
+        }
+
+        private static <T> T add(T obj, Collection<? super T> serviceContainer) {
+            serviceContainer.add(obj);
+            return obj;
         }
     }
 }
