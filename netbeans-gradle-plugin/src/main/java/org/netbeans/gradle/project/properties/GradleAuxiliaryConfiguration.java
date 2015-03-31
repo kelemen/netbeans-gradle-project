@@ -9,8 +9,8 @@ import org.w3c.dom.Element;
 
 public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguration {
     private final NbGradleProject project;
-    private final AtomicReference<ProjectProfileSettings> sharedConfigRef;
-    private final AtomicReference<ProjectProfileSettings> privateConfigRef;
+    private final AtomicReference<SingleProfileSettingsEx> sharedConfigRef;
+    private final AtomicReference<SingleProfileSettingsEx> privateConfigRef;
 
     public GradleAuxiliaryConfiguration(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -24,16 +24,16 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
         this.privateConfigRef = new AtomicReference<>(null);
     }
 
-    private static ProjectProfileSettings getSharedProperties(NbGradleProject project) {
+    private static SingleProfileSettingsEx getSharedProperties(NbGradleProject project) {
         return project.loadPropertiesForProfile(null);
     }
 
-    private static ProjectProfileSettings getPrivateProperties(NbGradleProject project) {
+    private static SingleProfileSettingsEx getPrivateProperties(NbGradleProject project) {
         return project.loadPrivateProfile();
     }
 
-    private ProjectProfileSettings getSharedProperties() {
-        ProjectProfileSettings result = sharedConfigRef.get();
+    private SingleProfileSettingsEx getSharedProperties() {
+        SingleProfileSettingsEx result = sharedConfigRef.get();
         if (result == null) {
             result = getSharedProperties(project);
             if (!sharedConfigRef.compareAndSet(null, result)) {
@@ -44,8 +44,8 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
         return result;
     }
 
-    private ProjectProfileSettings getPrivateProperties() {
-        ProjectProfileSettings result = privateConfigRef.get();
+    private SingleProfileSettingsEx getPrivateProperties() {
+        SingleProfileSettingsEx result = privateConfigRef.get();
         if (result == null) {
             result = getPrivateProperties(project);
             if (!privateConfigRef.compareAndSet(null, result)) {
@@ -56,7 +56,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
         return result;
     }
 
-    private ProjectProfileSettings getConfig(boolean shared) {
+    private SingleProfileSettingsEx getConfig(boolean shared) {
         return shared ? getSharedProperties() : getPrivateProperties();
     }
 
@@ -67,7 +67,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
 
     @Override
     public void putConfigurationFragment(Element fragment, boolean shared) throws IllegalArgumentException {
-        ProjectProfileSettings config = getConfig(shared);
+        SingleProfileSettingsEx config = getConfig(shared);
         config.setAuxConfigValue(keyFromElement(fragment), fragment);
     }
 
@@ -77,7 +77,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
             String namespace,
             boolean shared) throws IllegalArgumentException {
 
-        ProjectProfileSettings config = getConfig(shared);
+        SingleProfileSettingsEx config = getConfig(shared);
         return config.setAuxConfigValue(new DomElementKey(elementName, namespace), null);
     }
 

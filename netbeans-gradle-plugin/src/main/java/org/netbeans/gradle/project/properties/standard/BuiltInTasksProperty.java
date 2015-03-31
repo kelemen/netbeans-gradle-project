@@ -20,9 +20,9 @@ import org.netbeans.gradle.project.properties.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.ProfileKey;
-import org.netbeans.gradle.project.properties.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
+import org.netbeans.gradle.project.properties.SingleProfileSettings;
 import org.netbeans.gradle.project.properties.ValueMerger;
 import org.netbeans.gradle.project.properties.ValueReference;
 
@@ -100,7 +100,7 @@ public final class BuiltInTasksProperty {
     }
 
     private static ProfileDef getProfileDef(ActiveSettingsQuery settingsQuery) {
-        ProjectProfileSettings settings = settingsQuery.currentProfileSettings().getValue();
+        SingleProfileSettings settings = settingsQuery.currentProfileSettings().getValue();
         ProfileKey key = settings != null ? settings.getKey().getKey() : null;
         return key != null
                 ? new ProfileDef(key.getGroupName(), key.getFileName(), key.getFileName())

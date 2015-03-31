@@ -105,7 +105,7 @@ public final class NbGradleConfigProvider {
         }
 
         ProfileSettingsContainer settingsContainer = ProfileSettingsContainer.getDefault();
-        List<ProjectProfileSettings> initialProfiles = getLoadedProfileSettings(rootDir,
+        List<SingleProfileSettingsEx> initialProfiles = getLoadedProfileSettings(rootDir,
                 settingsContainer,
                 NbGradleConfiguration.DEFAULT_CONFIG.getProfileKey());
 
@@ -348,18 +348,18 @@ public final class NbGradleConfigProvider {
         return activeConfig.get();
     }
 
-    private static List<ProjectProfileSettings> getLoadedProfileSettings(
+    private static List<SingleProfileSettingsEx> getLoadedProfileSettings(
             Path rootDirectory,
             ProfileSettingsContainer settingsContainer,
             ProfileKey profileKey) {
 
         ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
-        List<ProjectProfileSettings> profileSettings
+        List<SingleProfileSettingsEx> profileSettings
                 = settingsContainer.loadAllProfileSettings(key.getWithFallbacks());
         return profileSettings;
     }
 
-    private List<ProjectProfileSettings> getLoadedProfileSettings(ProfileKey profileKey) {
+    private List<SingleProfileSettingsEx> getLoadedProfileSettings(ProfileKey profileKey) {
         return getLoadedProfileSettings(rootDirectory, settingsContainer, profileKey);
     }
 

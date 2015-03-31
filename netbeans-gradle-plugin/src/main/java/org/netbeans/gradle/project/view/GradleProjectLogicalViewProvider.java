@@ -55,7 +55,7 @@ import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.properties.ProjectProfileSettings;
+import org.netbeans.gradle.project.properties.SingleProfileSettings;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
@@ -545,7 +545,7 @@ implements
         private void addNewCommonTaskTask(final PredefinedTask newTaskDef) {
             ActiveSettingsQueryEx activeSettings = project.getActiveSettingsQuery();
 
-            ProjectProfileSettings profile = activeSettings.currentProfileSettings().getValue();
+            SingleProfileSettings profile = activeSettings.currentProfileSettings().getValue();
             NbGradleCommonProperties commonProperties = project.getCommonProperties();
 
             MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().forProfile(profile);

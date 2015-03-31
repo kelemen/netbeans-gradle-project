@@ -55,8 +55,8 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.ProfileKey;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
-import org.netbeans.gradle.project.properties.ProjectProfileSettings;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
+import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
@@ -444,7 +444,7 @@ public final class NbGradleProject implements Project {
         ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
         List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
 
-        List<ProjectProfileSettings> settings = settingsContainer.loadAllProfileSettings(combinedKeys);
+        List<SingleProfileSettingsEx> settings = settingsContainer.loadAllProfileSettings(combinedKeys);
         return new MultiProfileProperties(settings);
     }
 
@@ -454,9 +454,9 @@ public final class NbGradleProject implements Project {
         ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
         List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
 
-        return settingsContainer.loadAllProfileSettings(combinedKeys, new NbConsumer<List<ProjectProfileSettings>>() {
+        return settingsContainer.loadAllProfileSettings(combinedKeys, new NbConsumer<List<SingleProfileSettingsEx>>() {
             @Override
-            public void accept(List<ProjectProfileSettings> settings) {
+            public void accept(List<SingleProfileSettingsEx> settings) {
                 listener.onLoad(new MultiProfileProperties(settings));
             }
         });
@@ -475,12 +475,12 @@ public final class NbGradleProject implements Project {
         return new ProfileSettingsKey(rootProjectDir, profileKey);
     }
 
-    public ProjectProfileSettings loadPropertiesForProfile(ProfileKey profileKey) {
+    public SingleProfileSettingsEx loadPropertiesForProfile(ProfileKey profileKey) {
         ProfileSettingsKey key = getProjectProfileKey(profileKey);
         return getProfileSettingsContainer().loadProfileSettings(key);
     }
 
-    public ProjectProfileSettings loadPrivateProfile() {
+    public SingleProfileSettingsEx loadPrivateProfile() {
         return loadPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
     }
 

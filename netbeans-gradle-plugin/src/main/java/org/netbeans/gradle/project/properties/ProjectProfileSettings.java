@@ -22,7 +22,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.w3c.dom.Element;
 
-public final class ProjectProfileSettings {
+final class ProjectProfileSettings implements SingleProfileSettingsEx {
     private static final Logger LOGGER = Logger.getLogger(ProjectProfileSettings.class.getName());
     // Should be single threaded to avoid unnecessary multiple load.
     private static final TaskExecutorService SAVE_LOAD_EXECUTOR
@@ -54,6 +54,7 @@ public final class ProjectProfileSettings {
         this.loadExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
     }
 
+    @Override
     public ProfileSettingsKey getKey() {
         return key;
     }
@@ -172,6 +173,7 @@ public final class ProjectProfileSettings {
         });
     }
 
+    @Override
     public void saveAndWait() {
         try {
             saveNowUnsafe();
@@ -209,10 +211,12 @@ public final class ProjectProfileSettings {
         }
     }
 
+    @Override
     public Element getAuxConfigValue(DomElementKey key) {
         return settings.getAuxConfigValue(key);
     }
 
+    @Override
     public boolean setAuxConfigValue(DomElementKey key, Element value) {
         boolean result = settings.setAuxConfigValue(key, value);
         dirty = true;
@@ -220,6 +224,7 @@ public final class ProjectProfileSettings {
         return result;
     }
 
+    @Override
     public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
         final MutableProperty<ValueType> result = settings.getProperty(propertyDef);
         return new MutableProperty<ValueType>() {
@@ -242,6 +247,7 @@ public final class ProjectProfileSettings {
         };
     }
 
+    @Override
     public Collection<DomElementKey> getAuxConfigKeys() {
         return settings.getAuxConfigKeys();
     }

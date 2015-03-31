@@ -91,11 +91,11 @@ public final class PropertyReference<ValueType> {
     }
 
     public MutableProperty<ValueType> tryGetForActiveProfile() {
-        ProjectProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
+        SingleProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
         return settings != null ? forProfile(settings) : null;
     }
 
-    public MutableProperty<ValueType> forProfile(ProjectProfileSettings settings) {
+    public MutableProperty<ValueType> forProfile(SingleProfileSettings settings) {
         return settings.getProperty(propertyDef);
     }
 }

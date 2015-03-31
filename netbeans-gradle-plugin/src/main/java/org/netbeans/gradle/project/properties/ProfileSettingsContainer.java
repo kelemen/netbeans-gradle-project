@@ -77,7 +77,7 @@ public final class ProfileSettingsContainer {
         return result;
     }
 
-    public ProjectProfileSettings loadProfileSettings(ProfileSettingsKey key) {
+    public SingleProfileSettingsEx loadProfileSettings(ProfileSettingsKey key) {
         ProjectProfileSettings result = getUnloadedProfileSettings(key);
         result.ensureLoadedAndWait();
         return result;
@@ -85,7 +85,7 @@ public final class ProfileSettingsContainer {
 
     public ListenerRef loadProfileSettings(
             ProfileSettingsKey key,
-            final NbConsumer<ProjectProfileSettings> listener) {
+            final NbConsumer<? super SingleProfileSettingsEx> listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final ProjectProfileSettings result = getUnloadedProfileSettings(key);
@@ -100,7 +100,7 @@ public final class ProfileSettingsContainer {
 
     public ListenerRef loadAllProfileSettings(
             Collection<ProfileSettingsKey> keys,
-            final NbConsumer<? super List<ProjectProfileSettings>> listener) {
+            final NbConsumer<? super List<SingleProfileSettingsEx>> listener) {
         ExceptionHelper.checkNotNullElements(keys, "keys");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
@@ -118,7 +118,7 @@ public final class ProfileSettingsContainer {
                 @Override
                 public void run() {
                     if (loadCount.decrementAndGet() == 0) {
-                        listener.accept(result);
+                        listener.accept(new ArrayList<SingleProfileSettingsEx>(result));
                     }
                 }
             }, false));
@@ -128,10 +128,10 @@ public final class ProfileSettingsContainer {
         return ListenerRegistries.combineListenerRefs(resultRefs);
     }
 
-    public List<ProjectProfileSettings> loadAllProfileSettings(Collection<ProfileSettingsKey> keys) {
+    public List<SingleProfileSettingsEx> loadAllProfileSettings(Collection<ProfileSettingsKey> keys) {
         ExceptionHelper.checkNotNullElements(keys, "keys");
 
-        List<ProjectProfileSettings> result = new ArrayList<>(keys.size());
+        List<SingleProfileSettingsEx> result = new ArrayList<>(keys.size());
         for (ProfileSettingsKey key: keys) {
             result.add(loadProfileSettings(key));
         }

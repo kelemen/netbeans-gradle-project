@@ -9,6 +9,7 @@ import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
@@ -17,19 +18,20 @@ import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
 public final class MultiProfileProperties implements ActiveSettingsQueryEx {
-    private final MutableProperty<List<ProjectProfileSettings>> currentProfileSettingsList;
-    private final PropertySource<ProjectProfileSettings> currentProfileSettings;
+    private final MutableProperty<List<SingleProfileSettingsEx>> currentProfileSettingsList;
+    private final PropertySource<SingleProfileSettings> currentProfileSettings;
+    private final PropertySource<SingleProfileSettingsEx> currentProfileSettingsEx;
     private final ChangeListenerManager currentProfileChangeListeners;
 
-    public MultiProfileProperties(List<ProjectProfileSettings> initialProfiles) {
+    public MultiProfileProperties(List<SingleProfileSettingsEx> initialProfiles) {
         this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
                 CollectionsEx.readOnlyCopy(initialProfiles),
                 SwingTaskExecutor.getStrictExecutor(false));
 
         this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-        this.currentProfileSettings = new PropertySource<ProjectProfileSettings>() {
+        this.currentProfileSettingsEx = new PropertySource<SingleProfileSettingsEx>() {
             @Override
-            public ProjectProfileSettings getValue() {
+            public SingleProfileSettingsEx getValue() {
                 return tryGetCurrentProfileSettings();
             }
 
@@ -38,11 +40,19 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
                 return currentProfileChangeListeners.registerListener(listener);
             }
         };
+
+        // Just for type safety. An unsafe cast would do because of type erasure.
+        this.currentProfileSettings = PropertyFactory.convert(currentProfileSettingsEx, new ValueConverter<SingleProfileSettingsEx, SingleProfileSettings>() {
+            @Override
+            public SingleProfileSettings convert(SingleProfileSettingsEx input) {
+                return input;
+            }
+        });
     }
 
     @Override
     public Element getAuxConfigValue(DomElementKey key) {
-        for (ProjectProfileSettings settings: currentProfileSettingsList.getValue()) {
+        for (SingleProfileSettingsEx settings: currentProfileSettingsList.getValue()) {
             Element result = settings.getAuxConfigValue(key);
             if (result != null) {
                 return result;
@@ -51,18 +61,23 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         return null;
     }
 
-    private ProjectProfileSettings tryGetCurrentProfileSettings() {
-        List<ProjectProfileSettings> allProfileSettings = currentProfileSettingsList.getValue();
+    private SingleProfileSettingsEx tryGetCurrentProfileSettings() {
+        List<SingleProfileSettingsEx> allProfileSettings = currentProfileSettingsList.getValue();
         return allProfileSettings.isEmpty() ? null : allProfileSettings.get(0);
     }
 
     @Override
-    public PropertySource<ProjectProfileSettings> currentProfileSettings() {
+    public PropertySource<SingleProfileSettingsEx> currentProfileSettingsEx() {
+        return currentProfileSettingsEx;
+    }
+
+    @Override
+    public PropertySource<SingleProfileSettings> currentProfileSettings() {
         return currentProfileSettings;
     }
 
-    public void setProfileSettings(List<? extends ProjectProfileSettings> newSettings) {
-        List<ProjectProfileSettings> settingsCopy = CollectionsEx.readOnlyCopy(newSettings);
+    public void setProfileSettings(List<? extends SingleProfileSettingsEx> newSettings) {
+        List<SingleProfileSettingsEx> settingsCopy = CollectionsEx.readOnlyCopy(newSettings);
 
         ExceptionHelper.checkNotNullElements(settingsCopy, "newSettings");
         ExceptionHelper.checkArgumentInRange(settingsCopy.size(), 1, Integer.MAX_VALUE, "newSettings.size()");
@@ -73,14 +88,14 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     private static <ValueType> ValueType mergePropertyValues(
             PropertyDef<?, ValueType> propertyDef,
-            List<ProjectProfileSettings> settings) {
+            List<SingleProfileSettingsEx> settings) {
         return mergePropertyValues(propertyDef, 0, settings);
     }
 
     private static <ValueType> ValueType mergePropertyValues(
             final PropertyDef<?, ValueType> propertyDef,
             final int settingsIndex,
-            final List<ProjectProfileSettings> settings) {
+            final List<SingleProfileSettingsEx> settings) {
 
         assert settings instanceof RandomAccess;
 
@@ -89,7 +104,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
             return null;
         }
 
-        ProjectProfileSettings currentSettings = settings.get(settingsIndex);
+        SingleProfileSettingsEx currentSettings = settings.get(settingsIndex);
         ValueType childValue = currentSettings.getProperty(propertyDef).getValue();
         if (propertiesCount <= 1) {
             return childValue;
@@ -105,7 +120,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     private static <ValueType> PropertySource<ValueType> mergedProperty(
             final PropertyDef<?, ValueType> propertyDef,
-            final List<ProjectProfileSettings> profileList) {
+            final List<SingleProfileSettingsEx> profileList) {
 
         return new PropertySource<ValueType>() {
             @Override
@@ -124,7 +139,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
                 }
                 else {
                     List<ListenerRef> refs = new ArrayList<>(profileList.size());
-                    for (ProjectProfileSettings settings: profileList) {
+                    for (SingleProfileSettingsEx settings: profileList) {
                         MutableProperty<ValueType> property = settings.getProperty(propertyDef);
                         refs.add(property.addChangeListener(listener));
                     }
@@ -140,9 +155,9 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        return NbProperties.propertyOfProperty(currentProfileSettingsList, new NbFunction<List<ProjectProfileSettings>, PropertySource<ValueType>>() {
+        return NbProperties.propertyOfProperty(currentProfileSettingsList, new NbFunction<List<SingleProfileSettingsEx>, PropertySource<ValueType>>() {
             @Override
-            public PropertySource<ValueType> call(List<ProjectProfileSettings> arg) {
+            public PropertySource<ValueType> call(List<SingleProfileSettingsEx> arg) {
                 return mergedProperty(propertyDef, arg);
             }
         });

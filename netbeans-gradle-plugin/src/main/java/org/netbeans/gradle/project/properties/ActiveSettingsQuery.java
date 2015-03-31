@@ -5,5 +5,5 @@ import org.jtrim.property.PropertySource;
 public interface ActiveSettingsQuery {
     public <ValueType> PropertySource<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef);
 
-    public PropertySource<ProjectProfileSettings> currentProfileSettings();
+    public PropertySource<SingleProfileSettings> currentProfileSettings();
 }
