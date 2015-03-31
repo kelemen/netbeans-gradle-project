@@ -15,7 +15,6 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.openide.filesystems.FileObject;
@@ -59,11 +58,6 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
         return key;
     }
 
-    private Path tryGetProfileFile() throws IOException {
-        Project project = tryGetProject();
-        return project != null ? tryGetProfileFile(project) : null;
-    }
-
     private Project tryGetProject() throws IOException {
         Path projectDir = key.getProjectDir();
         FileObject projectDirObj = FileUtil.toFileObject(projectDir.toFile());
@@ -71,14 +65,8 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
         return ProjectManager.getDefault().findProject(projectDirObj);
     }
 
-    private Path tryGetProfileFile(Project project) {
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            LOGGER.log(Level.WARNING, "Not a Gradle project: {0}", project.getProjectDirectory());
-            return null;
-        }
-
-        return SettingsFiles.getProfileFile(gradleProject, key.getKey());
+    private Path tryGetProfileFile() {
+        return SettingsFiles.getProfileFile(key.getProjectDir(), key.getKey());
     }
 
     public ListenerRef notifyWhenLoaded(Runnable onLoaded) {
@@ -189,7 +177,7 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
             return;
         }
 
-        Path profileFile = tryGetProfileFile(project);
+        Path profileFile = tryGetProfileFile();
         if (profileFile == null) {
             return;
         }

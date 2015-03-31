@@ -2,7 +2,6 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -471,8 +470,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
-        Path rootProjectDir = currentModel().getValue().getRootProjectDir().toPath();
-        return new ProfileSettingsKey(rootProjectDir, profileKey);
+        return new ProfileSettingsKey(this, profileKey);
     }
 
     public SingleProfileSettingsEx loadPropertiesForProfile(ProfileKey profileKey) {

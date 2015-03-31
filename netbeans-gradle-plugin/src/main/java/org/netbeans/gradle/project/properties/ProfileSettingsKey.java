@@ -8,10 +8,15 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbGradleProject;
 
 public final class ProfileSettingsKey {
     private final Path projectDir;
     private final ProfileKey key;
+
+    public ProfileSettingsKey(@Nonnull NbGradleProject project, @Nullable ProfileKey key) {
+        this(project.currentModel().getValue().getRootProjectDir().toPath(), key);
+    }
 
     public ProfileSettingsKey(@Nonnull Path projectDir, @Nullable ProfileKey key) {
         ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
