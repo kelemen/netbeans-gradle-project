@@ -348,13 +348,6 @@ public final class NbGradleConfigProvider {
         return activeConfig.get();
     }
 
-    private static boolean loadAll(List<ProjectProfileSettings> profiles) {
-        for (ProjectProfileSettings profile: profiles) {
-            profile.ensureLoadedAndWait();
-        }
-        return true;
-    }
-
     private static List<ProjectProfileSettings> getLoadedProfileSettings(
             Path rootDirectory,
             ProfileSettingsContainer settingsContainer,
@@ -362,8 +355,7 @@ public final class NbGradleConfigProvider {
 
         ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
         List<ProjectProfileSettings> profileSettings
-                = settingsContainer.getAllProfileSettings(key.getWithFallbacks());
-        loadAll(profileSettings);
+                = settingsContainer.loadAllProfileSettings(key.getWithFallbacks());
         return profileSettings;
     }
 

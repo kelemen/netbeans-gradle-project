@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,6 +69,7 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -436,40 +436,30 @@ public final class NbGradleProject implements Project {
         return new NbGradleCommonProperties(this, settings);
     }
 
-    private List<ProjectProfileSettings> getUnloadedProjectProfileSettingsForProfile(ProfileKey profileKey) {
-        List<ProfileSettingsKey> keys = getProjectProfileKey(profileKey).getWithFallbacks();
-        return getConfigProvider().getProfileSettingsContainer().getAllProfileSettings(keys);
+    private List<ProfileSettingsKey> keysWithFallbacks(ProfileKey profileKey) {
+        return getProjectProfileKey(profileKey).getWithFallbacks();
     }
 
     public ActiveSettingsQueryEx loadActiveSettingsForProfile(ProfileKey profileKey) {
-        List<ProjectProfileSettings> settings = getUnloadedProjectProfileSettingsForProfile(profileKey);
-        for (ProjectProfileSettings current: settings) {
-            current.ensureLoadedAndWait();
-        }
+        ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
+        List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
 
+        List<ProjectProfileSettings> settings = settingsContainer.loadAllProfileSettings(combinedKeys);
         return new MultiProfileProperties(settings);
     }
 
     public ListenerRef loadActiveSettingsForProfile(ProfileKey profileKey, final ActiveSettingsQueryListener listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final List<ProjectProfileSettings> settings = getUnloadedProjectProfileSettingsForProfile(profileKey);
-        final AtomicInteger requiredCallCount = new AtomicInteger(settings.size());
+        ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
+        List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
 
-        Runnable listenerForwarder = new Runnable() {
+        return settingsContainer.loadAllProfileSettings(combinedKeys, new NbConsumer<List<ProjectProfileSettings>>() {
             @Override
-            public void run() {
-                if (requiredCallCount.decrementAndGet() == 0) {
-                    listener.onLoad(new MultiProfileProperties(settings));
-                }
+            public void accept(List<ProjectProfileSettings> settings) {
+                listener.onLoad(new MultiProfileProperties(settings));
             }
-        };
-
-        List<ListenerRef> resultRefs = new ArrayList<>(settings.size());
-        for (ProjectProfileSettings current: settings) {
-            resultRefs.add(current.notifyWhenLoaded(listenerForwarder));
-        }
-        return ListenerRegistries.combineListenerRefs(resultRefs);
+        });
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -485,13 +475,13 @@ public final class NbGradleProject implements Project {
         return new ProfileSettingsKey(rootProjectDir, profileKey);
     }
 
-    public ProjectProfileSettings getPropertiesForProfile(ProfileKey profileKey) {
+    public ProjectProfileSettings loadPropertiesForProfile(ProfileKey profileKey) {
         ProfileSettingsKey key = getProjectProfileKey(profileKey);
-        return getProfileSettingsContainer().getProfileSettings(key);
+        return getProfileSettingsContainer().loadProfileSettings(key);
     }
 
-    public ProjectProfileSettings getPrivateProfile() {
-        return getPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
+    public ProjectProfileSettings loadPrivateProfile() {
+        return loadPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
     }
 
     @Nonnull

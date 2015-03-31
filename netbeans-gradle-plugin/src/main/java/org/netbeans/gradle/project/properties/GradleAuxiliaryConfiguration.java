@@ -25,11 +25,11 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     }
 
     private static ProjectProfileSettings getSharedProperties(NbGradleProject project) {
-        return project.getPropertiesForProfile(null);
+        return project.loadPropertiesForProfile(null);
     }
 
     private static ProjectProfileSettings getPrivateProperties(NbGradleProject project) {
-        return project.getPrivateProfile();
+        return project.loadPrivateProfile();
     }
 
     private ProjectProfileSettings getSharedProperties() {
@@ -57,9 +57,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     }
 
     private ProjectProfileSettings getConfig(boolean shared) {
-        ProjectProfileSettings result = shared ? getSharedProperties() : getPrivateProperties();
-        result.ensureLoadedAndWait();
-        return result;
+        return shared ? getSharedProperties() : getPrivateProperties();
     }
 
     @Override
