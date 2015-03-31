@@ -54,8 +54,8 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
     }
 
     @Override
-    public ProfileSettingsKey getKey() {
-        return key;
+    public ProfileKey getKey() {
+        return key.getKey();
     }
 
     private Project tryGetProject() throws IOException {

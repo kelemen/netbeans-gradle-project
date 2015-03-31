@@ -101,7 +101,7 @@ public final class BuiltInTasksProperty {
 
     private static ProfileDef getProfileDef(ActiveSettingsQuery settingsQuery) {
         SingleProfileSettings settings = settingsQuery.currentProfileSettings().getValue();
-        ProfileKey key = settings != null ? settings.getKey().getKey() : null;
+        ProfileKey key = settings != null ? settings.getKey() : null;
         return key != null
                 ? new ProfileDef(key.getGroupName(), key.getFileName(), key.getFileName())
                 : null;
