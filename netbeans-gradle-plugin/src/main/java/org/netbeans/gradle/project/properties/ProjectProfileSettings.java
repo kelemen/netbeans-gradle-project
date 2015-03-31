@@ -58,10 +58,6 @@ public final class ProjectProfileSettings {
         return key;
     }
 
-    public static boolean isEventThread() {
-        return ProfileSettings.isEventThread();
-    }
-
     private Path tryGetProfileFile() throws IOException {
         Project project = tryGetProject();
         return project != null ? tryGetProfileFile(project) : null;
@@ -87,10 +83,6 @@ public final class ProjectProfileSettings {
     public ListenerRef notifyWhenLoaded(Runnable onLoaded) {
         ensureLoaded();
         return loadedListeners.registerOrNotifyListener(onLoaded);
-    }
-
-    public boolean isLoadedOnce() {
-        return loadedOnce;
     }
 
     public void ensureLoaded() {
