@@ -543,22 +543,18 @@ implements
         }
 
         private void addNewCommonTaskTask(final PredefinedTask newTaskDef) {
-            final ActiveSettingsQueryEx activeSettings = project.getActiveSettingsQuery();
-            activeSettings.notifyWhenLoadedOnce(new Runnable() {
-                @Override
-                public void run() {
-                    ProjectProfileSettings profile = activeSettings.currentProfileSettings().getValue();
-                    NbGradleCommonProperties commonProperties = project.getCommonProperties();
+            ActiveSettingsQueryEx activeSettings = project.getActiveSettingsQuery();
 
-                    MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().forProfile(profile);
+            ProjectProfileSettings profile = activeSettings.currentProfileSettings().getValue();
+            NbGradleCommonProperties commonProperties = project.getCommonProperties();
 
-                    List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
-                    List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);
-                    newTasks.add(newTaskDef);
+            MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().forProfile(profile);
 
-                    commonTasks.setValue(new PredefinedTasks(newTasks));
-                }
-            });
+            List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
+            List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);
+            newTasks.add(newTaskDef);
+
+            commonTasks.setValue(new PredefinedTasks(newTasks));
         }
 
         @Override

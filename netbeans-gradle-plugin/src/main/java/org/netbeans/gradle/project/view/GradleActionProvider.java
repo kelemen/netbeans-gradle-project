@@ -92,8 +92,6 @@ public final class GradleActionProvider implements ActionProvider {
         NbGradleCommonProperties result = config != null
                     ? project.loadCommonPropertiesForProfile(config.getProfileKey())
                     : project.getCommonProperties();
-
-        result.waitForLoadedOnce(cancelToken);
         return result;
     }
 

@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.nio.charset.Charset;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
@@ -85,14 +83,6 @@ public final class NbGradleCommonProperties {
 
     public ActiveSettingsQuery getActiveSettingsQuery() {
         return activeSettingsQuery;
-    }
-
-    public void waitForLoadedOnce(CancellationToken cancelToken) {
-        activeSettingsQuery.waitForLoadedOnce(cancelToken);
-    }
-
-    public ListenerRef afterLoaded(Runnable listener) {
-        return activeSettingsQuery.notifyWhenLoadedOnce(listener);
     }
 
     public PropertyReference<BuiltInTasks> builtInTasks() {

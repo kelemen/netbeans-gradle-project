@@ -3,11 +3,9 @@ package org.netbeans.gradle.project.properties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.RandomAccess;
-import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
-import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -40,18 +38,6 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
                 return currentProfileChangeListeners.registerListener(listener);
             }
         };
-    }
-
-    @Override
-    public void waitForLoadedOnce(CancellationToken cancelToken) {
-        // TODO: Remove this method
-    }
-
-    @Override
-    public ListenerRef notifyWhenLoadedOnce(Runnable listener) {
-        // TODO: Remove this method
-        listener.run();
-        return UnregisteredListenerRef.INSTANCE;
     }
 
     @Override

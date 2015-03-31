@@ -148,7 +148,6 @@ public final class GradleModelLoader {
         }
 
         NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
-        commonProperties.waitForLoadedOnce(cancelToken);
 
         GradleLocationDef gradleLocation = commonProperties.gradleLocation().getActiveValue();
         if (!gradleLocation.isPreferWrapper() || !hasWrapper(gradleProject)) {
