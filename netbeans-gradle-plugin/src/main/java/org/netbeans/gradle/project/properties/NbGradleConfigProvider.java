@@ -82,21 +82,40 @@ public final class NbGradleConfigProvider {
         this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
     }
 
-    public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
-        Path rootDir = SettingsFiles.getRootDirectory(project);
-
+    private static NbGradleConfigProvider tryGetConfigProvider(Path rootDir) {
         CONFIG_PROVIDERS_LOCK.lock();
         try {
-            NbGradleConfigProvider result = CONFIG_PROVIDERS.get(rootDir);
-            if (result == null) {
-                result = new NbGradleConfigProvider(rootDir);
-                result.updateByKey(result.activeConfig.get().getProfileKey());
-                CONFIG_PROVIDERS.put(rootDir, result);
-            }
-            return result;
+            return CONFIG_PROVIDERS.get(rootDir);
         } finally {
             CONFIG_PROVIDERS_LOCK.unlock();
         }
+    }
+
+    public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
+        Path rootDir = SettingsFiles.getRootDirectory(project);
+
+        NbGradleConfigProvider result = tryGetConfigProvider(rootDir);
+        if (result != null) {
+            return result;
+        }
+
+        result = new NbGradleConfigProvider(rootDir);
+        result.updateByKey(result.activeConfig.get().getProfileKey());
+
+        CONFIG_PROVIDERS_LOCK.lock();
+        try {
+            NbGradleConfigProvider currentProvider = CONFIG_PROVIDERS.get(rootDir);
+            if (currentProvider == null) {
+                CONFIG_PROVIDERS.put(rootDir, result);
+            }
+            else {
+                result = currentProvider;
+            }
+        } finally {
+            CONFIG_PROVIDERS_LOCK.unlock();
+        }
+
+        return result;
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -334,9 +353,6 @@ public final class NbGradleConfigProvider {
     }
 
     private void updateByKey(final ProfileKey profileKey) {
-        // Warning: This method gets called under CONFIG_PROVIDERS_LOCK.
-        //          Avoid calling alien code.
-
         profileApplierExecutor.execute(new Runnable() {
             @Override
             public void run() {
