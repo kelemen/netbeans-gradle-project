@@ -157,7 +157,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
         return NbProperties.propertyOfProperty(currentProfileSettingsList, new NbFunction<List<SingleProfileSettingsEx>, PropertySource<ValueType>>() {
             @Override
-            public PropertySource<ValueType> call(List<SingleProfileSettingsEx> arg) {
+            public PropertySource<ValueType> apply(List<SingleProfileSettingsEx> arg) {
                 return mergedProperty(propertyDef, arg);
             }
         });

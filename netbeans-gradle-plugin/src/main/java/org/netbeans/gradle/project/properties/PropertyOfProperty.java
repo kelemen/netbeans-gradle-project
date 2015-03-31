@@ -24,7 +24,7 @@ final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<Su
 
     private PropertySource<SubValue> getSubProperty() {
         RootValue rootValue = rootSrc.getValue();
-        return subPropertyGetter.call(rootValue);
+        return subPropertyGetter.apply(rootValue);
     }
 
     @Override

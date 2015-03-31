@@ -23,7 +23,7 @@ public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBi
                 GradleCacheSourceForBinaryQuery.binaryToSourceName());
         this.javadocForBinary = new GradleCacheByBinaryLookup(GradleFileUtils.JAVADOC_DIR_NAME, new NbFunction<FileObject, String>() {
             @Override
-            public String call(FileObject arg) {
+            public String apply(FileObject arg) {
                 return GradleFileUtils.binaryToJavadocName(arg);
             }
         });

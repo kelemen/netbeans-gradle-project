@@ -22,7 +22,7 @@ public final class GradleCacheSourceForBinaryQuery extends AbstractSourceForBina
     public static NbFunction<FileObject, String> binaryToSourceName() {
         return new NbFunction<FileObject, String>() {
             @Override
-            public String call(FileObject arg) {
+            public String apply(FileObject arg) {
                 return GradleFileUtils.binaryToSourceName(arg);
             }
         };
