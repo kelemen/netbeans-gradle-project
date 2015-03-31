@@ -472,10 +472,6 @@ public final class NbGradleProject implements Project {
         return ListenerRegistries.combineListenerRefs(resultRefs);
     }
 
-    public ProjectProfileSettings getUnloadedProfileSettings(ProfileKey profileKey) {
-        return getProfileSettingsContainer().getProfileSettings(getProjectProfileKey(profileKey));
-    }
-
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
         return getConfigProvider().getActiveSettingsQuery();
     }
