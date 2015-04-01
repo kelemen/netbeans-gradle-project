@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.RandomAccess;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.event.ListenerRef;
@@ -87,59 +88,64 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     }
 
     private static <ValueType> ValueType mergePropertyValues(
-            PropertyDef<?, ValueType> propertyDef,
-            List<SingleProfileSettingsEx> settings) {
-        return mergePropertyValues(propertyDef, 0, settings);
+            ValueMerger<ValueType> valueMerger,
+            List<? extends PropertySource<ValueType>> properties) {
+        return mergePropertyValues(0, valueMerger, properties);
     }
 
     private static <ValueType> ValueType mergePropertyValues(
-            final PropertyDef<?, ValueType> propertyDef,
             final int settingsIndex,
-            final List<SingleProfileSettingsEx> settings) {
+            final ValueMerger<ValueType> valueMerger,
+            final List<? extends PropertySource<ValueType>> properties) {
 
-        assert settings instanceof RandomAccess;
+        assert properties instanceof RandomAccess;
 
-        int propertiesCount = settings.size() - settingsIndex;
+        int propertiesCount = properties.size() - settingsIndex;
         if (propertiesCount <= 0) {
             return null;
         }
 
-        SingleProfileSettingsEx currentSettings = settings.get(settingsIndex);
-        ValueType childValue = currentSettings.getProperty(propertyDef).getValue();
+        ValueType childValue = properties.get(settingsIndex).getValue();
         if (propertiesCount <= 1) {
             return childValue;
         }
 
-        return propertyDef.getValueMerger().mergeValues(childValue, new ValueReference<ValueType>() {
+        return valueMerger.mergeValues(childValue, new ValueReference<ValueType>() {
             @Override
             public ValueType getValue() {
-                return mergePropertyValues(propertyDef, settingsIndex + 1, settings);
+                return mergePropertyValues(settingsIndex + 1, valueMerger, properties);
             }
         });
     }
 
     private static <ValueType> PropertySource<ValueType> mergedProperty(
-            final PropertyDef<?, ValueType> propertyDef,
-            final List<SingleProfileSettingsEx> profileList) {
+            PropertyDef<?, ValueType> propertyDef,
+            List<SingleProfileSettingsEx> profileList) {
 
         // Minor optimization for the default profile
         if (profileList.size() == 1) {
             return profileList.get(0).getProperty(propertyDef);
         }
 
+        final List<PropertySource<ValueType>> properties = new ArrayList<>();
+        for (SingleProfileSettingsEx profile: profileList) {
+            properties.add(profile.getProperty(propertyDef));
+        }
+
+        final ValueMerger<ValueType> valueMerger = propertyDef.getValueMerger();
+
         return new PropertySource<ValueType>() {
             @Override
             public ValueType getValue() {
-                return mergePropertyValues(propertyDef, profileList);
+                return mergePropertyValues(valueMerger, properties);
             }
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                List<ListenerRef> refs = new ArrayList<>(profileList.size());
-                for (SingleProfileSettingsEx settings: profileList) {
-                    MutableProperty<ValueType> property = settings.getProperty(propertyDef);
+                List<ListenerRef> refs = new ArrayList<>(properties.size());
+                for (PropertySource<ValueType> property: properties) {
                     refs.add(property.addChangeListener(listener));
                 }
                 return ListenerRegistries.combineListenerRefs(refs);
@@ -148,16 +154,50 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     }
 
     @Override
-    public <ValueType> PropertySource<ValueType> getProperty(
-            final PropertyDef<?, ValueType> propertyDef) {
+    public <ValueType> PropertySource<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
+        return NbProperties.propertyOfProperty(currentProfileSettingsList, new CachingPropertyMerger<>(propertyDef));
+    }
 
-        ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
+    private static class CachingPropertyMerger<Value> implements NbFunction<List<SingleProfileSettingsEx>, PropertySource<Value>> {
+        private final PropertyDef<?, Value> propertyDef;
+        private volatile CachedMergedProperty<Value> cachedValue;
 
-        return NbProperties.propertyOfProperty(currentProfileSettingsList, new NbFunction<List<SingleProfileSettingsEx>, PropertySource<ValueType>>() {
-            @Override
-            public PropertySource<ValueType> apply(List<SingleProfileSettingsEx> arg) {
-                return mergedProperty(propertyDef, arg);
+        public CachingPropertyMerger(PropertyDef<?, Value> propertyDef) {
+            ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
+
+            this.propertyDef = propertyDef;
+            this.cachedValue = null;
+        }
+
+        @Override
+        public PropertySource<Value> apply(List<SingleProfileSettingsEx> arg) {
+            CachedMergedProperty<Value> result = cachedValue;
+            if (result == null || !result.isSame(arg)) {
+                result = new CachedMergedProperty<>(propertyDef, arg);
             }
-        });
+
+            return result.getProperty();
+        }
+    }
+
+    private static final class CachedMergedProperty<Value> {
+        private final List<SingleProfileSettingsEx> settings;
+        private final PropertySource<Value> property;
+
+        public CachedMergedProperty(
+                PropertyDef<?, Value> propertyDef,
+                List<SingleProfileSettingsEx> settings) {
+
+            this.settings = CollectionsEx.readOnlyCopy(settings);
+            this.property = mergedProperty(propertyDef, this.settings);
+        }
+
+        public boolean isSame(List<SingleProfileSettingsEx> testedSettings) {
+            return Objects.equals(this.settings, testedSettings);
+        }
+
+        public PropertySource<Value> getProperty() {
+            return property;
+        }
     }
 }
