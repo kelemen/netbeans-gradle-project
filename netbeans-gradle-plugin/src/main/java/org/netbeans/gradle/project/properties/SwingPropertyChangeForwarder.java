@@ -130,6 +130,24 @@ public final class SwingPropertyChangeForwarder {
         }
     }
 
+    // For testing purposes
+    void checkListenerConsistency() {
+        mainLock.lock();
+        try {
+            for (RegistrationRef ref: listeners.values()) {
+                if (ref.listeners.isEmpty()) {
+                    throw new AssertionError("There are no listeners and the listener map still contains the reference.");
+                }
+
+                if (ref.listeners.size() != ref.regCount) {
+                    throw new AssertionError("Number of listeners is not equal to registration count.");
+                }
+            }
+        } finally {
+            mainLock.unlock();
+        }
+    }
+
     private static final class RegistrationRef {
         private final List<RegisteredListener> listeners;
         private int regCount;

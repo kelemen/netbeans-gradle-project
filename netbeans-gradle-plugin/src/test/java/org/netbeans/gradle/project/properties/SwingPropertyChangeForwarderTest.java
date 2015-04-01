@@ -39,6 +39,8 @@ public class SwingPropertyChangeForwarderTest {
 
         property.setValue(2);
         property.verifyMock(listener, 1);
+
+        listenerForwarder.checkListenerConsistency();
     }
 
     @Test
@@ -69,6 +71,8 @@ public class SwingPropertyChangeForwarderTest {
         property2.setValue(2);
 
         verify(listener, times(2)).propertyChange(any(PropertyChangeEvent.class));
+
+        listenerForwarder.checkListenerConsistency();
     }
 
     @Test
@@ -101,6 +105,8 @@ public class SwingPropertyChangeForwarderTest {
 
         property1.verifyMock(listener1, 1);
         property2.verifyMock(listener2, 2, 4);
+
+        listenerForwarder.checkListenerConsistency();
     }
 
     @Test
@@ -126,6 +132,8 @@ public class SwingPropertyChangeForwarderTest {
         property.setValue(2);
         property.verifyMock(listener1, 1);
         property.verifyMock(listener2, 1, 2);
+
+        listenerForwarder.checkListenerConsistency();
     }
 
     @Test
@@ -151,6 +159,8 @@ public class SwingPropertyChangeForwarderTest {
         property.setValue(2);
         property.verifyMock(listener1, 1, 2);
         property.verifyMock(listener2, 1);
+
+        listenerForwarder.checkListenerConsistency();
     }
 
     private static final class TestProperty {
