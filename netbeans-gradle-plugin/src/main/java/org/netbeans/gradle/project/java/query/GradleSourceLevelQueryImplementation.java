@@ -1,93 +1,67 @@
 package org.netbeans.gradle.project.java.query;
 
+import java.util.Objects;
 import javax.swing.event.ChangeListener;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.spi.java.queries.SourceLevelQueryImplementation2;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 
 public final class GradleSourceLevelQueryImplementation
 implements
-        SourceLevelQueryImplementation2,
-        ProjectInitListener {
+        SourceLevelQueryImplementation2 {
 
-    private final JavaExtension javaExt;
-    private final ChangeSupport changes;
+    private final FileObject projectDir;
+    private final Result result;
 
     public GradleSourceLevelQueryImplementation(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
-        this.javaExt = javaExt;
+        this.projectDir = javaExt.getProjectDirectory();
 
-        EventSource eventSource = new EventSource();
-        this.changes = new ChangeSupport(eventSource);
-        eventSource.init(this.changes);
-    }
-
-    @Override
-    public void onInitProject() {
-        javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class).addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                changes.fireChange();
-            }
-        });
+        GradleProperty.SourceLevel sourceLevel = javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class);
+        this.result = new ResultImpl(sourceLevel);
     }
 
     @Override
     public Result getSourceLevel(FileObject javaFile) {
-        // Assume that every source file must reside in the project directory.
-        if (FileUtil.getRelativePath(javaExt.getProjectDirectory(), javaFile) == null) {
+        Project owner = FileOwnerQuery.getOwner(javaFile);
+        if (owner == null) {
             return null;
         }
 
-        final GradleProperty.SourceLevel sourceLevel
-                = javaExt.getOwnerProjectLookup().lookup(GradleProperty.SourceLevel.class);
-
-        return new Result() {
-            @Override
-            public String getSourceLevel() {
-                return sourceLevel.getValue();
-            }
-
-            @Override
-            public void addChangeListener(ChangeListener listener) {
-                changes.addChangeListener(listener);
-            }
-
-            @Override
-            public void removeChangeListener(ChangeListener listener) {
-                changes.addChangeListener(listener);
-            }
-        };
+        return Objects.equals(projectDir, owner.getProjectDirectory())
+                ? result
+                : null;
     }
 
-    private static final class EventSource implements Result {
-        private volatile ChangeSupport changes;
+    private static final class ResultImpl implements Result {
+        private final SwingPropertySource<String, ChangeListener> property;
 
-        public void init(ChangeSupport changes) {
-            assert changes != null;
-            this.changes = changes;
+        @SuppressWarnings("LeakingThisInConstructor")
+        public ResultImpl(PropertySource<String> sourceLevel) {
+            this.property = NbProperties.toOldProperty(sourceLevel, this);
         }
 
         @Override
         public String getSourceLevel() {
-            return SourceLevelProperty.DEFAULT_SOURCE_LEVEL;
+            return property.getValue();
         }
 
         @Override
         public void addChangeListener(ChangeListener l) {
-            changes.addChangeListener(l);
+            property.addChangeListener(l);
         }
 
         @Override
         public void removeChangeListener(ChangeListener l) {
-            changes.removeChangeListener(l);
+            property.removeChangeListener(l);
         }
     }
 }
