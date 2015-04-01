@@ -4,7 +4,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,6 +20,8 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.java.JavaOutputDirs;
+import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectInfo;
@@ -51,6 +56,7 @@ import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
@@ -308,6 +314,37 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
     }
 
+    private void markOwnerIfNecessary(Path projectDir, File dir) {
+        if (!dir.toPath().startsWith(projectDir)) {
+            URI dirUri = Utilities.toURI(dir);
+            FileOwnerQuery.markExternalOwner(dirUri, project, FileOwnerQuery.EXTERNAL_ALGORITHM_TRANSIENT);
+        }
+    }
+
+    private void markOwnerIfNecessary(Path projectDir, Collection<? extends File> dirs) {
+        for (File dir: dirs) {
+            markOwnerIfNecessary(projectDir, dir);
+        }
+    }
+
+    private void markOwnedOutputDirs(Path projectDir, JavaSourceSet sourceSet) {
+        JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+        markOwnerIfNecessary(projectDir, outputDirs.getClassesDir());
+        markOwnerIfNecessary(projectDir, outputDirs.getResourcesDir());
+        markOwnerIfNecessary(projectDir, outputDirs.getOtherDirs());
+    }
+
+    private void markOwnedDirs(NbJavaModule mainModule) {
+        Path projectDir = getProjectDirectoryAsFile().toPath();
+        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+            markOwnedOutputDirs(projectDir, sourceSet);
+
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                markOwnerIfNecessary(projectDir, sourceGroup.getSourceRoots());
+            }
+        }
+    }
+
     @Override
     public void activateExtension(NbJavaModel parsedModel) {
         ExceptionHelper.checkNotNullArgument(parsedModel, "parsedModel");
@@ -315,7 +352,10 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         currentModel = parsedModel;
         hasEverBeenLoaded = true;
 
-        checkDependencyResolveProblems(parsedModel.getMainModule());
+        NbJavaModule mainModule = parsedModel.getMainModule();
+
+        checkDependencyResolveProblems(mainModule);
+        markOwnedDirs(mainModule);
 
         fireModelChange();
     }
