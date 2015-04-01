@@ -4,10 +4,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.NbFunction;
 
@@ -61,6 +57,55 @@ public class PropertyOfPropertyTest {
         verify(listener, only()).run();
     }
 
+    @Test
+    public void testSubPropertyChangesPreviousUntracked() {
+        TestProperty property = new TestProperty();
+        PropertySource<Integer> propertyOfProperty = property.getPropertyOfProperty();
+
+        Runnable listener = mock(Runnable.class);
+        ListenerRef listenerRef = propertyOfProperty.addChangeListener(listener);
+
+        verifyZeroInteractions(listener);
+
+        MutableProperty<Integer> prevSubProperty = property.setSubProperty(1);
+        verify(listener, only()).run();
+
+        prevSubProperty.setValue(5);
+        property.assertValue(1);
+        verify(listener, only()).run();
+
+        listenerRef.unregister();
+    }
+
+    @Test
+    public void testSubPropertyAndSubValueChanges() {
+        TestProperty property = new TestProperty();
+        PropertySource<Integer> propertyOfProperty = property.getPropertyOfProperty();
+
+        Runnable listener = mock(Runnable.class);
+        ListenerRef listenerRef = propertyOfProperty.addChangeListener(listener);
+
+        verifyZeroInteractions(listener);
+
+        property.setSubProperty(1);
+        property.assertValue(1);
+        verify(listener, only()).run();
+
+        property.setSubValue(2);
+        property.assertValue(2);
+        verify(listener, times(2)).run();
+
+        listenerRef.unregister();
+
+        property.setSubValue(3);
+        property.assertValue(3);
+
+        property.setSubProperty(4);
+        property.assertValue(4);
+
+        verify(listener, times(2)).run();
+    }
+
     private static final class TestProperty {
         private final MutableProperty<MutableProperty<Integer>> property;
         private final PropertyOfProperty<MutableProperty<Integer>, Integer> wrapper;
@@ -75,8 +120,10 @@ public class PropertyOfPropertyTest {
             });
         }
 
-        public void setSubProperty(int value) {
+        public MutableProperty<Integer> setSubProperty(int value) {
+            MutableProperty<Integer> prevSubProperty = property.getValue();
             property.setValue(PropertyFactory.memProperty(value));
+            return prevSubProperty;
         }
 
         public void setSubValue(int value) {
@@ -88,7 +135,8 @@ public class PropertyOfPropertyTest {
         }
 
         public void assertValue(int expectedValue) {
-            assertEquals("value", expectedValue, wrapper.getValue().intValue());
+            int value = wrapper.getValue();
+            assertEquals("value", expectedValue, value);
         }
     }
 }
