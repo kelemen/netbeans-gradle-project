@@ -2,13 +2,18 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.property.swing.SwingProperties;
+import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -103,5 +108,24 @@ public final class NbProperties {
                 });
             }
         };
+    }
+
+    public static <Value> SwingPropertySource<Value, ChangeListener> toOldProperty(
+            PropertySource<? extends Value> property) {
+        return toOldProperty(property, property);
+    }
+
+    public static <Value> SwingPropertySource<Value, ChangeListener> toOldProperty(
+            PropertySource<? extends Value> property,
+            Object src) {
+        ExceptionHelper.checkNotNullArgument(property, "property");
+        final ChangeEvent event = new ChangeEvent(src);
+
+        return SwingProperties.toSwingSource(property, new EventDispatcher<ChangeListener, Void>() {
+            @Override
+            public void onEvent(ChangeListener eventListener, Void arg) {
+                eventListener.stateChanged(event);
+            }
+        });
     }
 }
