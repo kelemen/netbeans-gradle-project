@@ -92,7 +92,7 @@ public final class SwingPropertyChangeForwarder {
         List<ListenerRef> refs = new ArrayList<>(properties.size());
         for (NamedProperty namedProperty: properties) {
             if (name == null || Objects.equals(name, namedProperty.name)) {
-                namedProperty.property.addChangeListener(namedProperty.forwarderTask(eventExecutor, listener));
+                refs.add(namedProperty.property.addChangeListener(namedProperty.forwarderTask(eventExecutor, listener)));
             }
         }
 
