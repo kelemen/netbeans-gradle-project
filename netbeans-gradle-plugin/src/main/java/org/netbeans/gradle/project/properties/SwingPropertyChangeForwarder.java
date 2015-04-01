@@ -13,7 +13,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
@@ -25,18 +28,20 @@ import org.jtrim.utils.ExceptionHelper;
 
 public final class SwingPropertyChangeForwarder {
     public static final class Builder {
+        private final TaskExecutor eventExecutorSrc;
         private final UpdateTaskExecutor eventExecutor;
         private final List<NamedProperty> properties;
 
         public Builder() {
-            this((UpdateTaskExecutor)null);
+            this(null, null);
         }
 
         public Builder(TaskExecutor eventExecutor) {
-            this(new GenericUpdateTaskExecutor(eventExecutor));
+            this(eventExecutor, new GenericUpdateTaskExecutor(eventExecutor));
         }
 
-        private Builder(UpdateTaskExecutor eventExecutor) {
+        private Builder(TaskExecutor eventExecutorSrc, UpdateTaskExecutor eventExecutor) {
+            this.eventExecutorSrc = eventExecutorSrc;
             this.eventExecutor = eventExecutor;
             this.properties = new LinkedList<>();
         }
@@ -57,34 +62,64 @@ public final class SwingPropertyChangeForwarder {
     private final Lock mainLock;
     private final Map<PropertyChangeListener, RegistrationRef> listeners;
     private final List<NamedProperty> properties;
+
+    private final TaskExecutor eventExecutorSrc;
     private final UpdateTaskExecutor eventExecutor;
 
     private SwingPropertyChangeForwarder(Builder builder) {
         this.mainLock = new ReentrantLock();
         this.listeners = new HashMap<>();
         this.properties = CollectionsEx.readOnlyCopy(builder.properties);
+        this.eventExecutorSrc = builder.eventExecutorSrc;
         this.eventExecutor = builder.eventExecutor;
     }
 
-    public void firePropertyChange(PropertyChangeEvent changeEvent) {
+    private void fireListeners(PropertyChangeEvent changeEvent, List<PropertyChangeListener> toCall) {
+        for (PropertyChangeListener listener: toCall) {
+            listener.propertyChange(changeEvent);
+        }
+    }
+
+    public void firePropertyChange(final PropertyChangeEvent changeEvent) {
         ExceptionHelper.checkNotNullArgument(changeEvent, "changeEvent");
 
         String name = changeEvent.getPropertyName();
 
-        List<PropertyChangeListener> toCall;
+        boolean addedAll = true;
+
+        final List<PropertyChangeListener> toCall;
         mainLock.lock();
         try {
             toCall = new ArrayList<>(listeners.size());
 
             for (RegistrationRef ref: listeners.values()) {
-                ref.addListeners(name, toCall);
+                boolean currentAddedAll = ref.addListeners(name, toCall);
+                addedAll = addedAll && currentAddedAll;
             }
         } finally {
             mainLock.unlock();
         }
 
-        for (PropertyChangeListener listener: toCall) {
-            listener.propertyChange(changeEvent);
+        if (eventExecutor == null) {
+            fireListeners(changeEvent, toCall);
+        }
+        else {
+            if (addedAll) {
+                eventExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        fireListeners(changeEvent, toCall);
+                    }
+                });
+            }
+            else {
+                eventExecutorSrc.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                    @Override
+                    public void execute(CancellationToken cancelToken) {
+                        fireListeners(changeEvent, toCall);
+                    }
+                }, null);
+            }
         }
     }
 
@@ -210,12 +245,17 @@ public final class SwingPropertyChangeForwarder {
             return regCount <= 0;
         }
 
-        private void addListeners(String name, Collection<? super PropertyChangeListener> result) {
+        private boolean addListeners(String name, Collection<? super PropertyChangeListener> result) {
+            boolean addedAll = true;
             for (RegisteredListener listener: listeners) {
                 if (name == null || listener.name == null || Objects.equals(name, listener.name)) {
                     result.add(listener.listener);
                 }
+                else {
+                    addedAll = false;
+                }
             }
+            return addedAll;
         }
     }
 
