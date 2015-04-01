@@ -122,6 +122,11 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
             final PropertyDef<?, ValueType> propertyDef,
             final List<SingleProfileSettingsEx> profileList) {
 
+        // Minor optimization for the default profile
+        if (profileList.size() == 1) {
+            return profileList.get(0).getProperty(propertyDef);
+        }
+
         return new PropertySource<ValueType>() {
             @Override
             public ValueType getValue() {
@@ -132,19 +137,12 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
             public ListenerRef addChangeListener(Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                // Minor optimization for the default case
-                if (profileList.size() == 1) {
-                    MutableProperty<ValueType> property = profileList.get(0).getProperty(propertyDef);
-                    return property.addChangeListener(listener);
+                List<ListenerRef> refs = new ArrayList<>(profileList.size());
+                for (SingleProfileSettingsEx settings: profileList) {
+                    MutableProperty<ValueType> property = settings.getProperty(propertyDef);
+                    refs.add(property.addChangeListener(listener));
                 }
-                else {
-                    List<ListenerRef> refs = new ArrayList<>(profileList.size());
-                    for (SingleProfileSettingsEx settings: profileList) {
-                        MutableProperty<ValueType> property = settings.getProperty(propertyDef);
-                        refs.add(property.addChangeListener(listener));
-                    }
-                    return ListenerRegistries.combineListenerRefs(refs);
-                }
+                return ListenerRegistries.combineListenerRefs(refs);
             }
         };
     }
