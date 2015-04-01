@@ -406,6 +406,9 @@ public final class NbGradleProject implements Project {
 
         try {
             modelChangeListeners.fireEventually();
+            for (ProjectModelChangeListener listener: getLookup().lookupAll(ProjectModelChangeListener.class)) {
+                listener.onModelChanged();
+            }
         } finally {
             GradleCacheByBinaryLookup.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();
