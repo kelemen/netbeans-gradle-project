@@ -46,8 +46,16 @@ public final class SwingPropertyChangeForwarder {
             this.properties = new LinkedList<>();
         }
 
+        public void addPropertyNoValue(String name, PropertySource<?> property, Object source) {
+            properties.add(new NamedProperty(name, property, source, false));
+        }
+
+        public void addPropertyNoValue(String name, PropertySource<?> property) {
+            addPropertyNoValue(name, property, property);
+        }
+
         public void addProperty(String name, PropertySource<?> property, Object source) {
-            properties.add(new NamedProperty(name, property, source));
+            properties.add(new NamedProperty(name, property, source, true));
         }
 
         public void addProperty(String name, PropertySource<?> property) {
@@ -271,8 +279,9 @@ public final class SwingPropertyChangeForwarder {
         public final String name;
         public final PropertySource<?> property;
         public final Object source;
+        private final boolean forwardValue;
 
-        public NamedProperty(String name, PropertySource<?> property, Object source) {
+        public NamedProperty(String name, PropertySource<?> property, Object source, boolean forwardValue) {
             ExceptionHelper.checkNotNullArgument(name, "name");
             ExceptionHelper.checkNotNullArgument(property, "property");
             ExceptionHelper.checkNotNullArgument(source, "source");
@@ -280,9 +289,10 @@ public final class SwingPropertyChangeForwarder {
             this.name = name;
             this.property = property;
             this.source = source;
+            this.forwardValue = forwardValue;
         }
 
-        private PropertyChangeEvent getChangeEvent() {
+        private PropertyChangeEvent getChangeEventWithValue() {
             return new PropertyChangeEvent(source, name, null, property.getValue());
         }
 
@@ -301,12 +311,23 @@ public final class SwingPropertyChangeForwarder {
         }
 
         public Runnable directForwarderTask(final PropertyChangeListener listener) {
-            return new Runnable() {
-                @Override
-                public void run() {
-                    listener.propertyChange(getChangeEvent());
-                }
-            };
+            if (forwardValue) {
+                return new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.propertyChange(getChangeEventWithValue());
+                    }
+                };
+            }
+            else {
+                final PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, null);
+                return new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.propertyChange(event);
+                    }
+                };
+            }
         }
     }
 }
