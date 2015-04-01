@@ -12,7 +12,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.ProjectModelChangeListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
@@ -21,7 +21,7 @@ import org.netbeans.spi.project.ui.CustomizerProvider;
 public final class NbGradleSingleProjectConfigProvider
 implements
         ProjectConfigurationProvider<NbGradleConfiguration>,
-        ProjectInitListener {
+        ProjectModelChangeListener {
 
     private final NbGradleProject project;
     private final NbGradleConfigProvider commonConfig;
@@ -70,13 +70,8 @@ implements
     }
 
     @Override
-    public void onInitProject() {
-        project.currentModel().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                updateExtensionProfiles();
-            }
-        });
+    public void onModelChanged() {
+        updateExtensionProfiles();
     }
 
     @Override
