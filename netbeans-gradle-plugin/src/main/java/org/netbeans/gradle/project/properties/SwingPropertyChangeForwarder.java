@@ -123,10 +123,6 @@ public final class SwingPropertyChangeForwarder {
         }
     }
 
-    public void firePropertyChange(String name, Object oldValue, Object newValue) {
-        firePropertyChange(new PropertyChangeEvent(this, name, oldValue, newValue));
-    }
-
     public void addPropertyChangeListener(String name, PropertyChangeListener listener) {
         if (listener == null) {
             return;
