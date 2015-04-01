@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeListenerProxy;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -69,22 +70,18 @@ public final class SwingPropertyChangeForwarder {
             return;
         }
 
-        // FIXME: It is possible that the passed listener "equals" to an
-        //   already existing one but is not the same. In this case, it would
-        //   be better to call both instance separately. Though the client
-        //   code should not rely on such a behaviour.
-
         InitLaterListenerRef combinedRef = new InitLaterListenerRef();
+        RegisteredListener registeredListener = new RegisteredListener(name, listener, combinedRef);
 
         mainLock.lock();
         try {
             RegistrationRef currentRef = listeners.get(listener);
             if (currentRef != null) {
-                currentRef.incRegCount();
-                return;
+                currentRef.incRegCount(registeredListener);
             }
-
-            listeners.put(listener, new RegistrationRef(combinedRef));
+            else {
+                listeners.put(listener, new RegistrationRef(registeredListener));
+            }
         } finally {
             mainLock.unlock();
         }
@@ -114,40 +111,70 @@ public final class SwingPropertyChangeForwarder {
             return;
         }
 
+        ListenerRef toUnregister = null;
         mainLock.lock();
         try {
             RegistrationRef regRef = listeners.get(listener);
             if (regRef != null) {
-                if (regRef.decRegCount()) {
-                    regRef.unregister();
+                toUnregister = regRef.decRegCount(listener);
+                if (regRef.isCompletelyUnregistered()) {
                     listeners.remove(listener);
                 }
             }
         } finally {
             mainLock.unlock();
         }
+
+        if (toUnregister != null) {
+            toUnregister.unregister();
+        }
     }
 
     private static final class RegistrationRef {
-        private final ListenerRef ref;
+        private final List<RegisteredListener> listeners;
         private int regCount;
 
-        public RegistrationRef(ListenerRef ref) {
-            this.ref = ref;
+        public RegistrationRef(RegisteredListener listener) {
             this.regCount = 1;
+            this.listeners = new LinkedList<>();
+            this.listeners.add(listener);
         }
 
-        public void incRegCount() {
+        public void incRegCount(RegisteredListener listener) {
             regCount++;
+
+            listeners.add(listener);
         }
 
-        public boolean decRegCount() {
+        public ListenerRef decRegCount(PropertyChangeListener listener) {
             regCount--;
+
+            Iterator<RegisteredListener> listenersItr = listeners.iterator();
+            while (listenersItr.hasNext()) {
+                RegisteredListener currentListener = listenersItr.next();
+                if (Objects.equals(currentListener.listener, listener)) {
+                    listenersItr.remove();
+                    return currentListener.listenerRef;
+                }
+            }
+
+            return null;
+        }
+
+        public boolean isCompletelyUnregistered() {
             return regCount <= 0;
         }
+    }
 
-        public void unregister() {
-            ref.unregister();
+    private static final class RegisteredListener {
+        private final String name;
+        private final PropertyChangeListener listener;
+        private final ListenerRef listenerRef;
+
+        public RegisteredListener(String name, PropertyChangeListener listener, ListenerRef listenerRef) {
+            this.name = name;
+            this.listener = listener;
+            this.listenerRef = listenerRef;
         }
     }
 
