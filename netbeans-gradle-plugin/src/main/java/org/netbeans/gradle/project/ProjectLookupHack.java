@@ -13,6 +13,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -98,6 +99,7 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(ClassPathProvider.class.getName(), Lookups.singleton(new UnimportantRootClassPathProvider()));
 
             Lookup wrappedLookup = lookupContainer.getLookup();
+            typeActions.put(GradleClassPathProvider.class.getName(), wrappedLookup);
             typeActions.put(NbGradleProject.class.getName(), wrappedLookup);
             typeActions.put(FileEncodingQueryImplementation.class.getName(), wrappedLookup);
             typeActions.put(ProjectInformation.class.getName(), wrappedLookup);
