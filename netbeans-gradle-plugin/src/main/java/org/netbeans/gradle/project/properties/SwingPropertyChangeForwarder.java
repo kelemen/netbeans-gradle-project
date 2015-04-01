@@ -4,6 +4,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeListenerProxy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -63,6 +64,32 @@ public final class SwingPropertyChangeForwarder {
         this.listeners = new HashMap<>();
         this.properties = CollectionsEx.readOnlyCopy(builder.properties);
         this.eventExecutor = builder.eventExecutor;
+    }
+
+    public void firePropertyChange(PropertyChangeEvent changeEvent) {
+        ExceptionHelper.checkNotNullArgument(changeEvent, "changeEvent");
+
+        String name = changeEvent.getPropertyName();
+
+        List<PropertyChangeListener> toCall;
+        mainLock.lock();
+        try {
+            toCall = new ArrayList<>(listeners.size());
+
+            for (RegistrationRef ref: listeners.values()) {
+                ref.addListeners(name, toCall);
+            }
+        } finally {
+            mainLock.unlock();
+        }
+
+        for (PropertyChangeListener listener: toCall) {
+            listener.propertyChange(changeEvent);
+        }
+    }
+
+    public void firePropertyChange(String name, Object oldValue, Object newValue) {
+        firePropertyChange(new PropertyChangeEvent(this, name, oldValue, newValue));
     }
 
     public void addPropertyChangeListener(String name, PropertyChangeListener listener) {
@@ -182,12 +209,20 @@ public final class SwingPropertyChangeForwarder {
         public boolean isCompletelyUnregistered() {
             return regCount <= 0;
         }
+
+        private void addListeners(String name, Collection<? super PropertyChangeListener> result) {
+            for (RegisteredListener listener: listeners) {
+                if (name == null || listener.name == null || Objects.equals(name, listener.name)) {
+                    result.add(listener.listener);
+                }
+            }
+        }
     }
 
     private static final class RegisteredListener {
-        private final String name;
-        private final PropertyChangeListener listener;
-        private final ListenerRef listenerRef;
+        public final String name;
+        public final PropertyChangeListener listener;
+        public final ListenerRef listenerRef;
 
         public RegisteredListener(String name, PropertyChangeListener listener, ListenerRef listenerRef) {
             this.name = name;
