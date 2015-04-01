@@ -20,12 +20,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.ProjectInfo;
@@ -33,6 +37,7 @@ import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
+import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
@@ -66,6 +71,7 @@ implements
     private final PropertyChangeSupport changes;
     private volatile ProjectPlatform currentPlatform;
 
+    private final AtomicReference<ListenerRef> projectListenerRef;
     private final AtomicReference<ProjectInfoRef> infoRefRef;
 
     private final AtomicReference<ClassPath> allSourcesClassPathRef;
@@ -78,6 +84,7 @@ implements
     public GradleClassPathProvider(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
+        this.projectListenerRef = new AtomicReference<>(null);
         this.javaExt = javaExt;
         this.currentPlatform = null;
         this.infoRefRef = new AtomicReference<>(null);
@@ -145,14 +152,24 @@ implements
         }
     }
 
+    private void onModelChangeNow() {
+        loadPathResources(javaExt.getCurrentModel());
+    }
+
     @Override
     public void onModelChange() {
         classpathUpdateExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                loadPathResources(javaExt.getCurrentModel());
+                onModelChangeNow();
             }
         });
+    }
+
+    private void onPlatformChange() {
+        GradleProperty.BuildPlatform platformProperty = getPlatformProperty();
+        currentPlatform = platformProperty.getValue();
+        onModelChangeNow();
     }
 
     private GradleProperty.BuildPlatform getPlatformProperty() {
@@ -163,13 +180,21 @@ implements
     public void onInitProject() {
         final GradleProperty.BuildPlatform platformProperty = getPlatformProperty();
 
-        platformProperty.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                currentPlatform = platformProperty.getValue();
-                onModelChange();
-            }
-        });
+        NbListenerRef listenerRef = platformProperty.addChangeListener(new PlatformChangeListener(javaExt, classpathUpdateExecutor));
+
+        if (!projectListenerRef.compareAndSet(null, listenerRef)) {
+            listenerRef.unregister();
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        ListenerRef listenerRef = projectListenerRef.getAndSet(UnregisteredListenerRef.INSTANCE);
+        if (listenerRef != null) {
+            listenerRef.unregister();
+        }
+
+        super.finalize();
     }
 
     // These PropertyChangeListener methods are declared because
@@ -703,6 +728,38 @@ implements
         @Override
         public String toString () {
             return "ExcludeAwarePathResource{" + url + "}";
+        }
+    }
+
+    private static class PlatformChangeListener implements Runnable {
+        private final File projectDir;
+        private final UpdateTaskExecutor executor;
+
+        public PlatformChangeListener(JavaExtension javaExt, UpdateTaskExecutor executor) {
+            this.projectDir = javaExt.getProjectDirectoryAsFile();
+            this.executor = executor;
+        }
+
+        private void updateNow() {
+            Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
+            if (project == null) {
+                return;
+            }
+
+            GradleClassPathProvider classPathProvider = project.getLookup().lookup(GradleClassPathProvider.class);
+            if (classPathProvider != null) {
+                classPathProvider.onPlatformChange();
+            }
+        }
+
+        @Override
+        public void run() {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    updateNow();
+                }
+            });
         }
     }
 }
