@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.java.test;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
-import org.netbeans.modules.gsf.testrunner.api.TestsuiteNode;
+import org.netbeans.modules.gsf.testrunner.ui.api.TestRunnerNodeFactory;
+import org.netbeans.modules.gsf.testrunner.ui.api.TestsuiteNode;
 import org.openide.nodes.Node;
 
 public final class JavaTestRunnerNodeFactory extends TestRunnerNodeFactory {

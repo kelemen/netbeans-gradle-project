@@ -7,13 +7,14 @@ ext.scriptFile = { String fileName ->
 apply from: scriptFile('compiler-settings.gradle');
 configureJavaCompilers(7);
 
-String netbeansVersion = 'RELEASE73'
+String netbeansVersion = 'dev-SNAPSHOT'
 
 repositories {
     mavenCentral()
     maven { url 'http://bits.netbeans.org/maven2/' }
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
     maven { url 'http://dl.bintray.com/kelemen/maven' }
+    maven { url 'http://bits.netbeans.org/nexus/content/repositories/snapshots' }
 }
 
 compileJava {
@@ -116,6 +117,7 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-modules-parsing-api')
     providedCompile netbeansApi('org-netbeans-modules-java-platform')
     providedCompile netbeansApi('org-netbeans-modules-java-project')
+    providedCompile netbeansApi('org-netbeans-modules-java-project-ui')
     providedCompile netbeansApi('org-netbeans-modules-java-source')
     providedCompile netbeansApi('org-netbeans-modules-options-api')
     providedCompile netbeansApi('org-netbeans-modules-projectapi')
@@ -137,6 +139,7 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-modules-nbjunit')
     providedCompile netbeansApi('org-netbeans-libs-junit4')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
+    providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
 
     compile 'org.slf4j:slf4j-api:1.7.2'

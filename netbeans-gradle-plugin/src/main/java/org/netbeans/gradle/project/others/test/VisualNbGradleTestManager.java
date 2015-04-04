@@ -2,13 +2,13 @@ package org.netbeans.gradle.project.others.test;
 
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.modules.gsf.testrunner.api.Manager;
 import org.netbeans.modules.gsf.testrunner.api.Report;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
-import org.netbeans.modules.gsf.testrunner.api.TestRunnerNodeFactory;
 import org.netbeans.modules.gsf.testrunner.api.TestSession;
 import org.netbeans.modules.gsf.testrunner.api.TestSuite;
 import org.netbeans.modules.gsf.testrunner.api.Testcase;
+import org.netbeans.modules.gsf.testrunner.ui.api.Manager;
+import org.netbeans.modules.gsf.testrunner.ui.api.TestRunnerNodeFactory;
 
 public final class VisualNbGradleTestManager implements NbGradleTestManager {
     private final Manager manager;
@@ -27,9 +27,11 @@ public final class VisualNbGradleTestManager implements NbGradleTestManager {
         ExceptionHelper.checkNotNullArgument(name, "name");
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        TestSession session = nodeFactory != null
-                ? new TestSession(name, project, TestSession.SessionType.TEST, nodeFactory)
-                : new TestSession(name, project, TestSession.SessionType.TEST);
+        TestSession session = new TestSession(name, project, TestSession.SessionType.TEST);
+
+        if (nodeFactory != null) {
+            manager.setNodeFactory(nodeFactory);
+        }
         // RerunHandler must be added right after creating the session
         // otherwise it will be ignore by the rerun buttons.
         if (rerunHandler != null) {
