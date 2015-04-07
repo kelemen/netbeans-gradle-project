@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -16,7 +15,6 @@ import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
-import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
@@ -29,8 +27,6 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
-    private static final Logger LOGGER = Logger.getLogger(BuildScriptsNode.class.getName());
-
     public BuildScriptsNode(NbGradleProject project) {
         super(createChildren(project));
     }
@@ -90,16 +86,6 @@ public final class BuildScriptsNode extends AbstractNode {
             }
         }
 
-        private void addFileObject(
-                FileObject file,
-                String name,
-                List<SingleNodeFactory> toPopulate) {
-            SingleNodeFactory nodeFactory = NodeUtils.tryGetFileNode(file, name);
-            if (nodeFactory != null) {
-                toPopulate.add(nodeFactory);
-            }
-        }
-
         private void addGradleFile(
                 FileObject file,
                 List<SingleNodeFactory> toPopulate) {
@@ -115,13 +101,6 @@ public final class BuildScriptsNode extends AbstractNode {
             if (nodeFactory != null) {
                 toPopulate.add(nodeFactory);
             }
-        }
-
-        private static FileObject tryGetHomeGradleProperties() {
-            FileObject userHome = GradleFileUtils.getGradleUserHomeFileObject();
-            return userHome != null
-                    ? userHome.getFileObject(SettingsFiles.GRADLE_PROPERTIES_NAME)
-                    : null;
         }
 
         private static File getLocalGradleProperties(NbGradleModel model) {
@@ -172,13 +151,6 @@ public final class BuildScriptsNode extends AbstractNode {
                 addGradleFile(buildGradle, toPopulate);
             }
 
-            FileObject homePropertiesFile = tryGetHomeGradleProperties();
-            if (homePropertiesFile != null) {
-                addFileObject(homePropertiesFile,
-                        NbStrings.getUserHomeFileName(SettingsFiles.GRADLE_PROPERTIES_NAME),
-                        toPopulate);
-            }
-
             FileObject propertiesFile = tryGetLocalGradlePropertiesObj(model);
             if (propertiesFile != null) {
                 addFileObject(propertiesFile, toPopulate);
@@ -202,9 +174,16 @@ public final class BuildScriptsNode extends AbstractNode {
                 }
             });
 
-            for (FileObject file : gradleFiles) {
+            for (FileObject file: gradleFiles) {
                 addGradleFile(file, toPopulate);
             }
+
+            toPopulate.add(new SingleNodeFactory() {
+                @Override
+                public Node createNode() {
+                    return new GradleHomeNode();
+                }
+            });
         }
 
         @Override
