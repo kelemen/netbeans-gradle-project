@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
@@ -22,8 +21,6 @@ import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
-import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -87,43 +84,20 @@ public final class BuildScriptsNode extends AbstractNode {
         private void addFileObject(
                 FileObject file,
                 List<SingleNodeFactory> toPopulate) {
-            addFileObject(file, file.getNameExt(), toPopulate);
-        }
-
-        private static DataObject tryGetDataObject(FileObject fileObj) {
-            try {
-                return DataObject.find(fileObj);
-            } catch (DataObjectNotFoundException ex) {
-                LOGGER.log(Level.INFO, "Failed to find DataObject for file object: " + fileObj.getPath(), ex);
-                return null;
+            SingleNodeFactory nodeFactory = NodeUtils.tryGetFileNode(file);
+            if (nodeFactory != null) {
+                toPopulate.add(nodeFactory);
             }
         }
 
         private void addFileObject(
                 FileObject file,
-                final String name,
+                String name,
                 List<SingleNodeFactory> toPopulate) {
-            final DataObject fileData = tryGetDataObject(file);
-            if (fileData == null) {
-                return;
+            SingleNodeFactory nodeFactory = NodeUtils.tryGetFileNode(file, name);
+            if (nodeFactory != null) {
+                toPopulate.add(nodeFactory);
             }
-
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new FilterNode(fileData.getNodeDelegate().cloneNode()) {
-                        @Override
-                        public boolean canRename() {
-                            return false;
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return name;
-                        }
-                    };
-                }
-            });
         }
 
         private void addGradleFile(
@@ -136,37 +110,11 @@ public final class BuildScriptsNode extends AbstractNode {
                 FileObject file,
                 final String name,
                 List<SingleNodeFactory> toPopulate) {
-            final DataObject fileData = tryGetDataObject(file);
-            if (fileData == null) {
-                return;
+
+            SingleNodeFactory nodeFactory = NodeUtils.tryGetFileNode(file, name, NbIcons.getGradleIcon());
+            if (nodeFactory != null) {
+                toPopulate.add(nodeFactory);
             }
-
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new FilterNode(fileData.getNodeDelegate()) {
-                        @Override
-                        public boolean canRename() {
-                            return false;
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return name;
-                        }
-
-                        @Override
-                        public Image getIcon(int type) {
-                            return NbIcons.getGradleIcon();
-                        }
-
-                        @Override
-                        public Image getOpenedIcon(int type) {
-                            return getIcon(type);
-                        }
-                    };
-                }
-            });
         }
 
         private static FileObject tryGetHomeGradleProperties() {
