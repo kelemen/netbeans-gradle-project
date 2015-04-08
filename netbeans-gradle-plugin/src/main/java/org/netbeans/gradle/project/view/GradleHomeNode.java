@@ -7,7 +7,6 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
