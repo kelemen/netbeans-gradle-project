@@ -4,6 +4,7 @@ import java.awt.Image;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -26,6 +27,13 @@ public final class GradleFolderNode extends AbstractNode {
         ExceptionHelper.checkNotNullArgument(caption, "caption");
 
         this.caption = caption;
+    }
+
+    public static SingleNodeFactory getFactory(String caption, FileObject dir) {
+        ExceptionHelper.checkNotNullArgument(caption, "caption");
+        ExceptionHelper.checkNotNullArgument(dir, "dir");
+
+        return new FactoryImpl(caption, dir);
     }
 
     private static Children createChildren(FileObject dir) {
@@ -113,6 +121,39 @@ public final class GradleFolderNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private static final class FactoryImpl implements SingleNodeFactory {
+        private final String caption;
+        private final FileObject dir;
+
+        public FactoryImpl(String caption, FileObject dir) {
+            this.caption = caption;
+            this.dir = dir;
+        }
+
+        @Override
+        public Node createNode() {
+            return new GradleFolderNode(caption, dir);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 83 * hash + Objects.hashCode(this.caption);
+            hash = 83 * hash + Objects.hashCode(this.dir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final FactoryImpl other = (FactoryImpl)obj;
+            return Objects.equals(this.caption, other.caption)
+                    && Objects.equals(this.dir, other.dir);
         }
     }
 }
