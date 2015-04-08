@@ -9,10 +9,9 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
-import org.openide.filesystems.FileChangeAdapter;
-import org.openide.filesystems.FileChangeListener;
-import org.openide.filesystems.FileEvent;
 import org.openide.filesystems.FileObject;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -59,33 +58,28 @@ public final class GradleFolderNode extends AbstractNode {
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
         private final FileObject dir;
-        private final FileChangeListener changeListener;
+        private final ListenerRegistrations listenerRegistrations;
 
         public ChildFactoryImpl(FileObject dir) {
             ExceptionHelper.checkNotNullArgument(dir, "dir");
 
             this.dir = dir;
-            this.changeListener = new FileChangeAdapter() {
-                @Override
-                public void fileDeleted(FileEvent fe) {
-                    refresh(false);
-                }
-
-                @Override
-                public void fileDataCreated(FileEvent fe) {
-                    refresh(false);
-                }
-            };
+            this.listenerRegistrations = new ListenerRegistrations();
         }
 
         @Override
         protected void addNotify() {
-            dir.addFileChangeListener(changeListener);
+            listenerRegistrations.add(NbFileUtils.addDirectoryContentListener(dir, new Runnable() {
+                @Override
+                public void run() {
+                    refresh(false);
+                }
+            }));
         }
 
         @Override
         protected void removeNotify() {
-            dir.removeFileChangeListener(changeListener);
+            listenerRegistrations.unregisterAll();
         }
 
         private static SingleNodeFactory tryGetGradleNode(FileObject child) {
