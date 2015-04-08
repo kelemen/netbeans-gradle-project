@@ -7,6 +7,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
@@ -56,15 +57,13 @@ public final class GradleHomeNode extends AbstractNode {
 
     @Override
     public String getDisplayName() {
-        // TODO: I18N
-        return "Gradle Home";
+        return NbStrings.getGradleHomeNodeCaption();
     }
 
     @SuppressWarnings("serial") // don't care about serialization
     private class RefreshNodesAction extends AbstractAction {
         public RefreshNodesAction() {
-            // TODO: I18N
-            super("Scan for changes");
+            super(NbStrings.getScanForChangesCaption());
         }
 
         @Override
@@ -136,8 +135,9 @@ public final class GradleHomeNode extends AbstractNode {
             final FileObject initD = tryGetFile(userHome, "init.d");
 
             if (initD != null && initD.isFolder()) {
-                // TODO: I18N
-                toPopulate.add(GradleFolderNode.getFactory("Global init scripts", initD));
+                toPopulate.add(GradleFolderNode.getFactory(
+                        NbStrings.getGlobalInitScriptsNodeCaption(),
+                        initD));
             }
         }
 

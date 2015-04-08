@@ -556,6 +556,18 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectScriptNodeCaption");
     }
 
+    public static String getScanForChangesCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ScanForChangesCaption");
+    }
+
+    public static String getGradleHomeNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleHomeNodeCaption");
+    }
+
+    public static String getGlobalInitScriptsNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GlobalInitScriptsNodeCaption");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
