@@ -201,12 +201,7 @@ extends
     }
 
     private void addProjectFiles(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
-        toPopulate.add(new SingleNodeFactory() {
-            @Override
-            public Node createNode() {
-                return new BuildScriptsNode(project);
-            }
-        });
+        toPopulate.add(BuildScriptsNode.getFactory(project));
     }
 
     private Node createSimpleNode() {
