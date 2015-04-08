@@ -20,6 +20,7 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -128,12 +129,15 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
+            Runnable refreshChildrenTask = new Runnable() {
                 @Override
                 public void run() {
                     refreshChildren();
                 }
-            }));
+            };
+
+            listenerRefs.add(project.currentModel().addChangeListener(refreshChildrenTask));
+            listenerRefs.add(NbFileUtils.addDirectoryContentListener(project.getProjectDirectory(), refreshChildrenTask));
         }
 
         @Override
