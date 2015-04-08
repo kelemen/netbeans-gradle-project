@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.Action;
 import org.jtrim.event.ProxyListenerRegistry;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
@@ -15,7 +14,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -29,9 +27,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
-import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.lookup.Lookups;
 
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
@@ -204,54 +200,6 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
-        }
-    }
-
-    private static class BuildSrcNode extends FilterNode {
-        private final File buildSrcDir;
-
-        public BuildSrcNode(File buildSrcDir) {
-            super(Node.EMPTY.cloneNode(), null, Lookups.fixed(buildSrcDir));
-            this.buildSrcDir = buildSrcDir;
-        }
-
-        @Override
-        public Action[] getActions(boolean context) {
-            return new Action[]{
-                getPreferredAction()
-            };
-        }
-
-        @Override
-        public Action getPreferredAction() {
-            return OpenProjectsAction.createFromProjectDirs(
-                    NbStrings.getOpenBuildSrcCaption(),
-                    Collections.singleton(buildSrcDir));
-        }
-
-        @Override
-        public String getName() {
-            File parentFile = buildSrcDir.getParentFile();
-            return "BuildSrc_" + (parentFile != null ? parentFile.getName() : "unknown");
-        }
-        @Override
-        public String getDisplayName() {
-            return NbStrings.getBuildSrcNodeCaption();
-        }
-
-        @Override
-        public Image getIcon(int type) {
-            return NbIcons.getGradleIcon();
-        }
-
-        @Override
-        public Image getOpenedIcon(int type) {
-            return getIcon(type);
-        }
-
-        @Override
-        public boolean canRename() {
-            return false;
         }
     }
 }
