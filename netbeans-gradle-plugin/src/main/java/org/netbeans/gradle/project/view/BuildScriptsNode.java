@@ -56,21 +56,11 @@ public final class BuildScriptsNode extends AbstractNode {
             ChildFactory.Detachable<SingleNodeFactory> {
         private final NbGradleProject project;
         private final ListenerRegistrations listenerRefs;
-        private volatile ChildrenCreateInfo lastShownInfo;
 
         public BuildScriptChildFactory(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
             this.project = project;
             this.listenerRefs = new ListenerRegistrations();
-            this.lastShownInfo = null;
-        }
-
-        private void refreshIfNeeded() {
-            NbGradleModel model = project.currentModel().getValue();
-            ChildrenCreateInfo createInfo = new ChildrenCreateInfo(model);
-            if (!Objects.equals(createInfo, lastShownInfo)) {
-                refresh(false);
-            }
         }
 
         @Override
@@ -78,7 +68,7 @@ public final class BuildScriptsNode extends AbstractNode {
             listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
-                    refreshIfNeeded();
+                    refresh(false);
                 }
             }));
         }
@@ -102,19 +92,18 @@ public final class BuildScriptsNode extends AbstractNode {
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
-            ChildrenCreateInfo createInfo = new ChildrenCreateInfo(project.currentModel().getValue());
-            lastShownInfo = createInfo;
+            NbGradleModel currentModel = project.currentModel().getValue();
 
-            File rootProjectDir = createInfo.rootProjectDir;
+            File rootProjectDir = currentModel.getRootProjectDir();
 
-            if (!createInfo.buildSrc) {
+            if (!currentModel.isBuildSrc()) {
                 final File buildSrc = new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
                 if (buildSrc.isDirectory()) {
                     toPopulate.add(new BuildSrcNodeFactory(buildSrc));
                 }
             }
 
-            File projectDir = createInfo.projectDir;
+            File projectDir = currentModel.getProjectDir();
             addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
 
             if (!Objects.equals(projectDir, rootProjectDir)) {
@@ -210,38 +199,6 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         public boolean canRename() {
             return false;
-        }
-    }
-
-    private static final class ChildrenCreateInfo {
-        public final File rootProjectDir;
-        public final File projectDir;
-        public final boolean buildSrc;
-
-        public ChildrenCreateInfo(NbGradleModel model) {
-            this.rootProjectDir = model.getRootProjectDir();
-            this.projectDir = model.getProjectDir();
-            this.buildSrc = model.isBuildSrc();
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 67 * hash + Objects.hashCode(this.rootProjectDir);
-            hash = 67 * hash + Objects.hashCode(this.projectDir);
-            hash = 67 * hash + (this.buildSrc ? 1 : 0);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-
-            final ChildrenCreateInfo other = (ChildrenCreateInfo)obj;
-            return Objects.equals(this.rootProjectDir, other.rootProjectDir)
-                    && Objects.equals(this.projectDir, other.projectDir)
-                    && this.buildSrc == other.buildSrc;
         }
     }
 
