@@ -568,6 +568,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GlobalInitScriptsNodeCaption");
     }
 
+    public static String getOpenFileCaption(String baseName) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenFileCaption", baseName);
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

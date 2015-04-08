@@ -20,8 +20,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
 public final class GradleHomeNode extends AbstractNode {
+    private static final String INIT_GRADLE_NAME = "init.gradle";
+
     private final GradleHomeNodeChildFactory childFactory;
-    private final Action[] contextActions;
 
     public GradleHomeNode() {
         this(new GradleHomeNodeChildFactory());
@@ -31,18 +32,33 @@ public final class GradleHomeNode extends AbstractNode {
         super(Children.create(childFactory, true));
 
         this.childFactory = childFactory;
-        this.contextActions = new Action[] {
-            new RefreshNodesAction()
-        };
     }
 
     public static SingleNodeFactory getFactory() {
         return FactoryImpl.INSTANCE;
     }
 
+    private Action openGradleHomeFile(String name) {
+        File userHome = getUserHome();
+        File file = userHome != null ? new File(userHome, name) : new File(name);
+
+        String caption = NbStrings.getOpenFileCaption(name);
+        Action result = new OpenAlwaysFileAction(caption, file.toPath());
+        if (userHome == null) {
+            result.setEnabled(false);
+        }
+
+        return result;
+    }
+
     @Override
     public Action[] getActions(boolean context) {
-        return contextActions.clone();
+        return new Action[] {
+            openGradleHomeFile(INIT_GRADLE_NAME),
+            openGradleHomeFile(SettingsFiles.GRADLE_PROPERTIES_NAME),
+            null,
+            new RefreshNodesAction()
+        };
     }
 
     @Override
@@ -58,6 +74,10 @@ public final class GradleHomeNode extends AbstractNode {
     @Override
     public String getDisplayName() {
         return NbStrings.getGradleHomeNodeCaption();
+    }
+
+    private static File getUserHome() {
+        return GradleFileUtils.GRADLE_USER_HOME.getValue();
     }
 
     @SuppressWarnings("serial") // don't care about serialization
@@ -100,10 +120,6 @@ public final class GradleHomeNode extends AbstractNode {
             listenerRefs.unregisterAll();
         }
 
-        private static File getUserHome() {
-            return GradleFileUtils.GRADLE_USER_HOME.getValue();
-        }
-
         private static FileObject tryGetFile(File dir, String name) {
             return FileUtil.toFileObject(new File(dir, name));
         }
@@ -119,7 +135,7 @@ public final class GradleHomeNode extends AbstractNode {
         }
 
         private void addInitGradle(File userHome, List<SingleNodeFactory> toPopulate) {
-            FileObject initGradle = tryGetFile(userHome, "init.gradle");
+            FileObject initGradle = tryGetFile(userHome, INIT_GRADLE_NAME);
             if (initGradle != null) {
                 SingleNodeFactory node = NodeUtils.tryGetFileNode(
                         initGradle,
