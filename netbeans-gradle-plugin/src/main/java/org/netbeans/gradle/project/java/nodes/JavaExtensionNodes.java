@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
@@ -28,11 +29,10 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.view.NodeUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataFolder;
-import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 @ManualRefreshedNodes
@@ -131,22 +131,12 @@ implements
         for (NbListedDir listedDir: allListedDirs) {
             FileObject listedDirObj = FileUtil.toFileObject(listedDir.getDirectory());
             if (listedDirObj != null) {
-                final String dirName = listedDir.getName();
-                final DataFolder listedFolder = DataFolder.findFolder(listedDirObj);
-
-                result.add(listedDir);
-
-                toPopulate.add(new SingleNodeFactory() {
-                    @Override
-                    public Node createNode() {
-                        return new FilterNode(listedFolder.getNodeDelegate().cloneNode()) {
-                            @Override
-                            public String getDisplayName() {
-                                return dirName;
-                            }
-                        };
-                    }
-                });
+                String dirName = listedDir.getName();
+                SingleNodeFactory nodeFactory = NodeUtils.tryGetFileNode(listedDirObj, dirName);
+                if (nodeFactory != null) {
+                    result.add(listedDir);
+                    toPopulate.add(nodeFactory);
+                }
             }
         }
 
@@ -179,12 +169,7 @@ implements
                     root.getRoot(),
                     root.getIncludeRules()));
 
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return PackageView.createPackageView(group);
-                }
-            });
+            toPopulate.add(new SourceRootNodeFactory(root, group));
         }
 
         return result;
@@ -265,6 +250,37 @@ implements
             }
 
             return sourceRoot == other.sourceRoot || sourceRoot.equals(other.sourceRoot);
+        }
+    }
+
+    private static class SourceRootNodeFactory implements SingleNodeFactory {
+        private final Object sourceGroupKey;
+        private final SourceGroup group;
+
+        public SourceRootNodeFactory(Object sourceGroupKey, SourceGroup group) {
+            this.sourceGroupKey = sourceGroupKey;
+            this.group = group;
+        }
+
+        @Override
+        public Node createNode() {
+            return PackageView.createPackageView(group);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 89 * hash + Objects.hashCode(this.sourceGroupKey);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null)return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final SourceRootNodeFactory other = (SourceRootNodeFactory)obj;
+            return Objects.equals(this.sourceGroupKey, other.sourceGroupKey);
         }
     }
 }
