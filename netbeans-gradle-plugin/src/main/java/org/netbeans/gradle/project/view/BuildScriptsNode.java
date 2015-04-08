@@ -26,6 +26,10 @@ public final class BuildScriptsNode extends AbstractNode {
         super(createChildren(project));
     }
 
+    public static SingleNodeFactory getFactory(final NbGradleProject project) {
+        return new NodeFactoryImpl(project);
+    }
+
     private static Children createChildren(NbGradleProject project) {
         return Children.create(new BuildScriptChildFactory(project), true);
     }
@@ -83,15 +87,10 @@ public final class BuildScriptsNode extends AbstractNode {
         }
 
         private void addProjectScriptsNode(
-                final String caption,
-                final File projectDir,
+                String caption,
+                File projectDir,
                 List<SingleNodeFactory> toPopulate) {
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new ProjectScriptFilesNode(caption, projectDir);
-                }
-            });
+            toPopulate.add(ProjectScriptFilesNode.getFactory(caption, projectDir));
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
@@ -103,12 +102,7 @@ public final class BuildScriptsNode extends AbstractNode {
             if (!createInfo.buildSrc) {
                 final File buildSrc = new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
                 if (buildSrc.isDirectory()) {
-                    toPopulate.add(new SingleNodeFactory() {
-                        @Override
-                        public Node createNode() {
-                            return new BuildSrcNode(buildSrc);
-                        }
-                    });
+                    toPopulate.add(new BuildSrcNodeFactory(buildSrc));
                 }
             }
 
@@ -121,12 +115,7 @@ public final class BuildScriptsNode extends AbstractNode {
                 addProjectScriptsNode("Root Project", rootProjectDir, toPopulate);
             }
 
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new GradleHomeNode();
-                }
-            });
+            toPopulate.add(GradleHomeNode.getFactory());
         }
 
         @Override
@@ -138,6 +127,35 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private static class BuildSrcNodeFactory implements SingleNodeFactory {
+        private final File buildSrcDir;
+
+        public BuildSrcNodeFactory(File buildSrcDir) {
+            this.buildSrcDir = buildSrcDir;
+        }
+
+        @Override
+        public Node createNode() {
+            return new BuildSrcNode(buildSrcDir);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 73 * hash + Objects.hashCode(this.buildSrcDir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final BuildSrcNodeFactory other = (BuildSrcNodeFactory)obj;
+            return Objects.equals(this.buildSrcDir, other.buildSrcDir);
         }
     }
 
@@ -218,6 +236,37 @@ public final class BuildScriptsNode extends AbstractNode {
             return Objects.equals(this.rootProjectDir, other.rootProjectDir)
                     && Objects.equals(this.projectDir, other.projectDir)
                     && this.buildSrc == other.buildSrc;
+        }
+    }
+
+    private static class NodeFactoryImpl implements SingleNodeFactory {
+        private final NbGradleProject project;
+        private final File projectDir;
+
+        public NodeFactoryImpl(NbGradleProject project) {
+            this.project = project;
+            this.projectDir = project.getProjectDirectoryAsFile();
+        }
+
+        @Override
+        public Node createNode() {
+            return new BuildScriptsNode(project);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 23 * hash + Objects.hashCode(this.projectDir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final NodeFactoryImpl other = (NodeFactoryImpl)obj;
+            return Objects.equals(this.projectDir, other.projectDir);
         }
     }
 }
