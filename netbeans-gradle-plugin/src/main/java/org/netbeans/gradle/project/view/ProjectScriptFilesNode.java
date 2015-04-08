@@ -2,25 +2,19 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Action;
-import org.jtrim.event.ProxyListenerRegistry;
-import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
@@ -34,28 +28,31 @@ import org.openide.nodes.Node;
 
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
-    private final File projectDir;
+    private final NbGradleProject project;
 
-    public ProjectScriptFilesNode(String caption, File projectDir) {
-        super(createChildren(projectDir));
+    public ProjectScriptFilesNode(String caption, NbGradleProject project) {
+        super(createChildren(project));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         this.caption = caption;
-        this.projectDir = projectDir;
+        this.project = project;
     }
 
-    public static SingleNodeFactory getFactory(String caption, File projectDir) {
-        return new FactoryImpl(caption, projectDir);
+    public static SingleNodeFactory getFactory(String caption, NbGradleProject project) {
+        return new FactoryImpl(caption, project);
     }
 
-    private static Children createChildren(File projectDir) {
-        return Children.create(new ProjectScriptFilesChildFactory(projectDir), true);
+    private static Children createChildren(NbGradleProject project) {
+        return Children.create(new ProjectScriptFilesChildFactory(project), true);
     }
 
     private Action openProjectFileAction(String name) {
-        File file = new File(projectDir, name);
+        File file = new File(project.getProjectDirectoryAsFile(), name);
+        return openFileAction(file);
+    }
 
-        String actionCaption = NbStrings.getOpenFileCaption(name);
+    private Action openFileAction(File file) {
+        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
         Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
 
         return result;
@@ -63,9 +60,16 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        return new Action[] {
-            openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME)
-        };
+        List<Action> actions = new ArrayList<>(3);
+
+        NbGradleModel currentModel = project.currentModel().getValue();
+        if (currentModel.isRootProject()) {
+            actions.add(openFileAction(currentModel.getSettingsFile()));
+        }
+        actions.add(openFileAction(currentModel.getBuildFile()));
+        actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
+
+        return actions.toArray(new Action[actions.size()]);
     }
 
     @Override
@@ -86,42 +90,18 @@ public final class ProjectScriptFilesNode extends AbstractNode {
     private static class ProjectScriptFilesChildFactory
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
-        private final File projectDir;
-        private final AtomicReference<NbGradleProject> projectRef;
+        private final NbGradleProject project;
         private final ListenerRegistrations listenerRefs;
-        private final ProxyListenerRegistry<Runnable> modelChangeListener;
 
-        public ProjectScriptFilesChildFactory(File projectDir) {
-            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-            this.projectDir = projectDir;
-            this.projectRef = new AtomicReference<>(null);
+        public ProjectScriptFilesChildFactory(NbGradleProject project) {
+            ExceptionHelper.checkNotNullArgument(project, "project");
+            this.project = project;
             this.listenerRefs = new ListenerRegistrations();
-            this.modelChangeListener = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
-        }
-
-        private NbGradleProject tryGetProject() {
-            NbGradleProject result = projectRef.get();
-            if (result == null) {
-                Project rawProject = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
-                result = rawProject.getLookup().lookup(NbGradleProject.class);
-                if (projectRef.compareAndSet(null, result)) {
-                    SimpleListenerRegistry<Runnable> projectModelChangeListener
-                            = NbProperties.asChangeListenerRegistry(result.currentModel());
-                    modelChangeListener.replaceRegistry(projectModelChangeListener);
-                    // There is no reason to notify listeners yet on the
-                    // first project request because there is no change
-                    // to observe yet.
-                }
-                else {
-                    result = projectRef.get();
-                }
-            }
-            return result;
         }
 
         @Override
         protected void addNotify() {
-            listenerRefs.add(modelChangeListener.registerListener(new Runnable() {
+            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     // TODO: Refresh only if something relevant changed.
@@ -171,11 +151,6 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
-            NbGradleProject project = tryGetProject();
-            if (project == null) {
-                return;
-            }
-
             NbGradleModel model = project.currentModel().getValue();
 
             FileObject settingsGradle = model.tryGetSettingsFileObj();
@@ -230,19 +205,21 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     private static class FactoryImpl implements SingleNodeFactory {
         private final String caption;
+        private final NbGradleProject project;
         private final File projectDir;
 
-        public FactoryImpl(String caption, File projectDir) {
+        public FactoryImpl(String caption, NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(caption, "caption");
-            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+            ExceptionHelper.checkNotNullArgument(project, "project");
 
             this.caption = caption;
-            this.projectDir = projectDir;
+            this.project = project;
+            this.projectDir = project.getProjectDirectoryAsFile();
         }
 
         @Override
         public Node createNode() {
-            return new ProjectScriptFilesNode(caption, projectDir);
+            return new ProjectScriptFilesNode(caption, project);
         }
 
         @Override

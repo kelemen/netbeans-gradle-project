@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -86,11 +88,17 @@ public final class BuildScriptsNode extends AbstractNode {
             listenerRefs.unregisterAll();
         }
 
-        private void addProjectScriptsNode(
+        private static void addProjectScriptsNode(
                 String caption,
                 File projectDir,
                 List<SingleNodeFactory> toPopulate) {
-            toPopulate.add(ProjectScriptFilesNode.getFactory(caption, projectDir));
+            Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
+            if (project != null) {
+                NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+                if (gradleProject != null) {
+                    toPopulate.add(ProjectScriptFilesNode.getFactory(caption, gradleProject));
+                }
+            }
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
