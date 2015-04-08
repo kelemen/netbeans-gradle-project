@@ -35,7 +35,7 @@ public final class GradleHomeNode extends AbstractNode {
         };
     }
 
-    public SingleNodeFactory getFactory() {
+    public static SingleNodeFactory getFactory() {
         return FactoryImpl.INSTANCE;
     }
 
