@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -29,21 +31,28 @@ import org.openide.nodes.Node;
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
     private final NbGradleProject project;
+    private final ProjectScriptFilesChildFactory childFactory;
 
     public ProjectScriptFilesNode(String caption, NbGradleProject project) {
-        super(createChildren(project));
+        this(caption, project, new ProjectScriptFilesChildFactory(project));
+    }
+
+    private ProjectScriptFilesNode(
+            String caption,
+            NbGradleProject project,
+            ProjectScriptFilesChildFactory childFactory) {
+        super(Children.create(childFactory, true));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
         this.caption = caption;
         this.project = project;
+        this.childFactory = childFactory;
     }
 
     public static SingleNodeFactory getFactory(String caption, NbGradleProject project) {
         return new FactoryImpl(caption, project);
-    }
-
-    private static Children createChildren(NbGradleProject project) {
-        return Children.create(new ProjectScriptFilesChildFactory(project), true);
     }
 
     private Action openProjectFileAction(String name) {
@@ -60,7 +69,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = new ArrayList<>(3);
+        List<Action> actions = new ArrayList<>(5);
 
         NbGradleModel currentModel = project.currentModel().getValue();
         if (currentModel.isRootProject()) {
@@ -68,6 +77,8 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         }
         actions.add(openFileAction(currentModel.getBuildFile()));
         actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
+        actions.add(null);
+        actions.add(new RefreshNodesAction());
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -87,6 +98,18 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         return caption;
     }
 
+    @SuppressWarnings("serial") // don't care about serialization
+    private class RefreshNodesAction extends AbstractAction {
+        public RefreshNodesAction() {
+            super(NbStrings.getScanForChangesCaption());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            childFactory.refreshChildren();
+        }
+    }
+
     private static class ProjectScriptFilesChildFactory
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
@@ -99,13 +122,16 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             this.listenerRefs = new ListenerRegistrations();
         }
 
+        public void refreshChildren() {
+            refresh(false);
+        }
+
         @Override
         protected void addNotify() {
             listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: Refresh only if something relevant changed.
-                    refresh(false);
+                    refreshChildren();
                 }
             }));
         }
