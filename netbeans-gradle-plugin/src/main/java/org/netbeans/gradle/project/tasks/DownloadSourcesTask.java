@@ -10,7 +10,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.OperationInitializer;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.openide.filesystems.FileObject;
@@ -24,7 +23,7 @@ public final class DownloadSourcesTask implements DaemonTask {
         this.project = project;
     }
 
-    public static DaemonTaskDef createTaskDef(NbGradleProject project) {
+    public static DaemonTaskDef createTaskDef(Project project) {
         return new DaemonTaskDef(
                 NbStrings.getDownloadSourcesProgressCaption(),
                 true,
