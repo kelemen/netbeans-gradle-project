@@ -1,9 +1,13 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
@@ -16,12 +20,29 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
 public final class GradleHomeNode extends AbstractNode {
+    private final GradleHomeNodeChildFactory childFactory;
+    private final Action[] contextActions;
+
     public GradleHomeNode() {
-        super(createChildren());
+        this(new GradleHomeNodeChildFactory());
     }
 
-    private static Children createChildren() {
-        return Children.create(new GradleHomeNodeChildFactory(), true);
+    private GradleHomeNode(GradleHomeNodeChildFactory childFactory) {
+        super(Children.create(childFactory, true));
+
+        this.childFactory = childFactory;
+        this.contextActions = new Action[] {
+            new RefreshNodesAction()
+        };
+    }
+
+    public SingleNodeFactory getFactory() {
+        return FactoryImpl.INSTANCE;
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        return contextActions.clone();
     }
 
     @Override
@@ -40,6 +61,19 @@ public final class GradleHomeNode extends AbstractNode {
         return "Gradle Home";
     }
 
+    @SuppressWarnings("serial") // don't care about serialization
+    private class RefreshNodesAction extends AbstractAction {
+        public RefreshNodesAction() {
+            // TODO: I18N
+            super("Scan for changes");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            childFactory.refreshChildren();
+        }
+    }
+
     private static class GradleHomeNodeChildFactory
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
@@ -47,6 +81,10 @@ public final class GradleHomeNode extends AbstractNode {
 
         public GradleHomeNodeChildFactory() {
             this.listenerRefs = new ListenerRegistrations();
+        }
+
+        public void refreshChildren() {
+            refresh(false);
         }
 
         @Override
@@ -124,6 +162,15 @@ public final class GradleHomeNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private enum FactoryImpl implements SingleNodeFactory {
+        INSTANCE;
+
+        @Override
+        public Node createNode() {
+            return new GradleHomeNode();
         }
     }
 }
