@@ -107,12 +107,10 @@ public final class BuildScriptsNode extends AbstractNode {
             }
 
             File projectDir = createInfo.projectDir;
-            // TODO: I18N
-            addProjectScriptsNode("Project", projectDir, toPopulate);
+            addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
 
             if (!Objects.equals(projectDir, rootProjectDir)) {
-                // TODO: I18N
-                addProjectScriptsNode("Root Project", rootProjectDir, toPopulate);
+                addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }
 
             toPopulate.add(GradleHomeNode.getFactory());

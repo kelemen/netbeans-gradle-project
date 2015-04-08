@@ -548,6 +548,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Appearance");
     }
 
+    public static String getProjectScriptNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectScriptNodeCaption");
+    }
+
+    public static String getRootProjectScriptNodeCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.RootProjectScriptNodeCaption");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
