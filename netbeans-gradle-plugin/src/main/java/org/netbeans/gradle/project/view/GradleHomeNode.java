@@ -99,13 +99,8 @@ public final class GradleHomeNode extends AbstractNode {
             final FileObject initD = tryGetFile(userHome, "init.d");
 
             if (initD != null && initD.isFolder()) {
-                toPopulate.add(new SingleNodeFactory() {
-                    @Override
-                    public Node createNode() {
-                        // TODO: I18N
-                        return new GradleFolderNode("Global init scripts", initD);
-                    }
-                });
+                // TODO: I18N
+                toPopulate.add(GradleFolderNode.getFactory("Global init scripts", initD));
             }
         }
 
