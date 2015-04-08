@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.Action;
 import org.jtrim.event.ProxyListenerRegistry;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
@@ -15,6 +16,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -32,12 +34,14 @@ import org.openide.nodes.Node;
 
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
+    private final File projectDir;
 
     public ProjectScriptFilesNode(String caption, File projectDir) {
         super(createChildren(projectDir));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         this.caption = caption;
+        this.projectDir = projectDir;
     }
 
     public static SingleNodeFactory getFactory(String caption, File projectDir) {
@@ -46,6 +50,22 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     private static Children createChildren(File projectDir) {
         return Children.create(new ProjectScriptFilesChildFactory(projectDir), true);
+    }
+
+    private Action openProjectFileAction(String name) {
+        File file = new File(projectDir, name);
+
+        String actionCaption = NbStrings.getOpenFileCaption(name);
+        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
+
+        return result;
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        return new Action[] {
+            openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME)
+        };
     }
 
     @Override
