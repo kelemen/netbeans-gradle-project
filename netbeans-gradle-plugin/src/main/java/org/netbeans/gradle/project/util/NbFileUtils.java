@@ -16,13 +16,44 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
+import org.openide.filesystems.FileChangeAdapter;
+import org.openide.filesystems.FileChangeListener;
+import org.openide.filesystems.FileEvent;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class NbFileUtils {
+    public static ListenerRef addDirectoryContentListener(
+            final FileObject dir,
+            final Runnable listener) {
+        ExceptionHelper.checkNotNullArgument(dir, "dir");
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+        final FileChangeListener fileChangeListener = new FileChangeAdapter() {
+            @Override
+            public void fileDeleted(FileEvent fe) {
+                listener.run();
+            }
+
+            @Override
+            public void fileDataCreated(FileEvent fe) {
+                listener.run();
+            }
+        };
+        dir.addFileChangeListener(fileChangeListener);
+        return NbListenerRefs.fromRunnable(new Runnable() {
+            @Override
+            public void run() {
+                dir.removeFileChangeListener(fileChangeListener);
+            }
+        });
+    }
+
     public static URL getSafeURL(String url) {
         try {
             return new URL(url);
