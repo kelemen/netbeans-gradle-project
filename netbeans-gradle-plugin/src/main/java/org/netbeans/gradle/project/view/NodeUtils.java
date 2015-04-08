@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.FilterNode;
@@ -16,7 +17,12 @@ public final class NodeUtils {
 
     public static DataObject tryGetDataObject(FileObject fileObj) {
         try {
-            return DataObject.find(fileObj);
+            if (fileObj.isFolder()) {
+                return DataFolder.findFolder(fileObj);
+            }
+            else {
+                return DataObject.find(fileObj);
+            }
         } catch (DataObjectNotFoundException ex) {
             LOGGER.log(Level.INFO, "Failed to find DataObject for file object: " + fileObj.getPath(), ex);
             return null;
