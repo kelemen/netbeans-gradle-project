@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.event.ProxyListenerRegistry;
 import org.jtrim.event.SimpleListenerRegistry;
@@ -37,6 +38,10 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         this.caption = caption;
+    }
+
+    public static SingleNodeFactory getFactory(String caption, File projectDir) {
+        return new FactoryImpl(caption, projectDir);
     }
 
     private static Children createChildren(File projectDir) {
@@ -200,6 +205,42 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    private static class FactoryImpl implements SingleNodeFactory {
+        private final String caption;
+        private final File projectDir;
+
+        public FactoryImpl(String caption, File projectDir) {
+            ExceptionHelper.checkNotNullArgument(caption, "caption");
+            ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+
+            this.caption = caption;
+            this.projectDir = projectDir;
+        }
+
+        @Override
+        public Node createNode() {
+            return new ProjectScriptFilesNode(caption, projectDir);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 61 * hash + Objects.hashCode(this.caption);
+            hash = 61 * hash + Objects.hashCode(this.projectDir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final FactoryImpl other = (FactoryImpl)obj;
+            return Objects.equals(this.caption, other.caption)
+                    && Objects.equals(this.projectDir, other.projectDir);
         }
     }
 }
