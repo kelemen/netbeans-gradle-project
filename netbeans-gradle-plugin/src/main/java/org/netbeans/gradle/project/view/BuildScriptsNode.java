@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -24,8 +25,12 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
+    private final NbGradleProject project;
+
     public BuildScriptsNode(NbGradleProject project) {
         super(createChildren(project));
+
+        this.project = project;
     }
 
     public static SingleNodeFactory getFactory(final NbGradleProject project) {
@@ -34,6 +39,24 @@ public final class BuildScriptsNode extends AbstractNode {
 
     private static Children createChildren(NbGradleProject project) {
         return Children.create(new BuildScriptChildFactory(project), true);
+    }
+
+    private static Action openFileAction(File file) {
+        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
+        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
+
+        return result;
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actions = new ArrayList<>(2);
+
+        NbGradleModel currentModel = project.currentModel().getValue();
+        actions.add(openFileAction(currentModel.getSettingsFile()));
+        actions.add(openFileAction(currentModel.getBuildFile()));
+
+        return actions.toArray(new Action[actions.size()]);
     }
 
     @Override
