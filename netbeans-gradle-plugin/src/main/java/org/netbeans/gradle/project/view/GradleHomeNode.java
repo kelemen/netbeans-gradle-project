@@ -6,12 +6,18 @@ import java.io.File;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ProxyListenerRegistry;
+import org.jtrim.event.SimpleListenerRegistry;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.nodes.AbstractNode;
@@ -96,18 +102,52 @@ public final class GradleHomeNode extends AbstractNode {
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
         private final ListenerRegistrations listenerRefs;
+        private final ProxyListenerRegistry<Runnable> userHomeChangeListeners;
 
         public GradleHomeNodeChildFactory() {
             this.listenerRefs = new ListenerRegistrations();
+            this.userHomeChangeListeners = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
         }
 
         public void refreshChildren() {
             refresh(false);
         }
 
+        private FileObject tryGetUserHomeObj() {
+            File userHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
+            if (userHome == null) {
+                return null;
+            }
+
+            return FileUtil.toFileObject(userHome);
+        }
+
+        private void updateUserHome() {
+            final FileObject userHome = tryGetUserHomeObj();
+            if (userHome == null) {
+                userHomeChangeListeners.replaceRegistry(NbListenerManagers.neverNotifingRegistry());
+            }
+            else {
+                userHomeChangeListeners.replaceRegistry(new SimpleListenerRegistry<Runnable>() {
+                    @Override
+                    public ListenerRef registerListener(Runnable listener) {
+                        return NbFileUtils.addDirectoryContentListener(userHome, listener);
+                    }
+                });
+            }
+            userHomeChangeListeners.onEvent(EventListeners.runnableDispatcher(), null);
+        }
+
         @Override
         protected void addNotify() {
             listenerRefs.add(GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    updateUserHome();
+                }
+            }));
+            updateUserHome();
+            listenerRefs.add(userHomeChangeListeners.registerListener(new Runnable() {
                 @Override
                 public void run() {
                     refresh(false);
