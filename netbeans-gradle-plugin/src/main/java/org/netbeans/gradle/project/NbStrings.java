@@ -572,6 +572,14 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenFileCaption", baseName);
     }
 
+    public static String getConfirmCreateBuildSrcMessage() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmCreateBuildSrcMessage");
+    }
+
+    public static String getConfirmCreateBuildSrcTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmCreateBuildSrcTitle");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }

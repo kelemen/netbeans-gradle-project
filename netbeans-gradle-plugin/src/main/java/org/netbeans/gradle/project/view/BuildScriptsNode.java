@@ -1,22 +1,36 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -26,19 +40,21 @@ import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
     private final NbGradleProject project;
+    private final BuildScriptChildFactory childFactory;
 
     public BuildScriptsNode(NbGradleProject project) {
-        super(createChildren(project));
+        this(project, new BuildScriptChildFactory(project));
+    }
+
+    private BuildScriptsNode(NbGradleProject project, BuildScriptChildFactory childFactory) {
+        super(Children.create(childFactory, true));
 
         this.project = project;
+        this.childFactory = childFactory;
     }
 
     public static SingleNodeFactory getFactory(final NbGradleProject project) {
         return new NodeFactoryImpl(project);
-    }
-
-    private static Children createChildren(NbGradleProject project) {
-        return Children.create(new BuildScriptChildFactory(project), true);
     }
 
     private static Action openFileAction(File file) {
@@ -55,6 +71,11 @@ public final class BuildScriptsNode extends AbstractNode {
         NbGradleModel currentModel = project.currentModel().getValue();
         actions.add(openFileAction(currentModel.getSettingsFile()));
         actions.add(openFileAction(currentModel.getBuildFile()));
+        actions.add(null);
+        actions.add(new OpenOrCreateBuildSrc(
+                NbStrings.getOpenBuildSrcCaption(),
+                project,
+                childFactory));
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -74,6 +95,15 @@ public final class BuildScriptsNode extends AbstractNode {
         return NbStrings.getBuildScriptsNodeCaption();
     }
 
+    private static File getBuildSrcDir(NbGradleProject project) {
+         return getBuildSrcDir(project.currentModel().getValue());
+    }
+
+    private static File getBuildSrcDir(NbGradleModel currentModel) {
+        File rootProjectDir = currentModel.getRootProjectDir();
+        return new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
+    }
+
     private static class BuildScriptChildFactory
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
@@ -86,12 +116,16 @@ public final class BuildScriptsNode extends AbstractNode {
             this.listenerRefs = new ListenerRegistrations();
         }
 
+        public void refreshChildren() {
+            refresh(false);
+        }
+
         @Override
         protected void addNotify() {
             listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
-                    refresh(false);
+                    refreshChildren();
                 }
             }));
         }
@@ -117,10 +151,8 @@ public final class BuildScriptsNode extends AbstractNode {
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             NbGradleModel currentModel = project.currentModel().getValue();
 
-            File rootProjectDir = currentModel.getRootProjectDir();
-
             if (!currentModel.isBuildSrc()) {
-                final File buildSrc = new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
+                final File buildSrc = getBuildSrcDir(currentModel);
                 if (buildSrc.isDirectory()) {
                     toPopulate.add(new BuildSrcNodeFactory(buildSrc));
                 }
@@ -129,6 +161,7 @@ public final class BuildScriptsNode extends AbstractNode {
             File projectDir = currentModel.getProjectDir();
             addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
 
+            File rootProjectDir = currentModel.getRootProjectDir();
             if (!Objects.equals(projectDir, rootProjectDir)) {
                 addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }
@@ -145,6 +178,105 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private static class OpenOrCreateBuildSrc extends AbstractAction {
+        private final NbGradleProject project;
+        private final BuildScriptChildFactory childFactory;
+
+        public OpenOrCreateBuildSrc(
+                String name,
+                NbGradleProject project,
+                BuildScriptChildFactory childFactory) {
+
+            super(name);
+            this.project = project;
+            this.childFactory = childFactory;
+        }
+
+        private void openProjectNow(Path buildSrcDir) {
+            OpenProjectsAction.openProject(buildSrcDir);
+        }
+
+        private static Path resolveAndCreate(Path parent, String name) throws IOException {
+            Path result = parent.resolve(name);
+            Files.createDirectories(result);
+            return result;
+        }
+
+        private void createDirs(Path buildSrcDir) throws IOException {
+            Files.createDirectories(buildSrcDir);
+
+            Path srcDir = resolveAndCreate(buildSrcDir, "src");
+
+            Path srcMainDir = resolveAndCreate(srcDir, "main");
+            resolveAndCreate(srcMainDir, "groovy");
+            resolveAndCreate(srcMainDir, "resources");
+
+            Path srcTestDir = resolveAndCreate(srcDir, "test");
+            resolveAndCreate(srcTestDir, "groovy");
+            resolveAndCreate(srcTestDir, "resources");
+        }
+
+        private void createBuildSrc(Path buildSrcDir) throws IOException {
+            createDirs(buildSrcDir);
+
+            Path buildGradle = buildSrcDir.resolve(SettingsFiles.BUILD_FILE_NAME);
+            List<String> buildGradleContent = Arrays.asList(
+                    "apply plugin: 'groovy'",
+                    "",
+                    "dependencies {",
+                    "    compile gradleApi()",
+                    "}");
+            NbFileUtils.writeLinesToFile(buildGradle, buildGradleContent, StringUtils.UTF8, project);
+
+            childFactory.refreshChildren();
+        }
+
+        private void confirmAndCreateProject(final Path buildSrcDir) {
+            String message = NbStrings.getConfirmCreateBuildSrcMessage();
+            String title = NbStrings.getConfirmCreateBuildSrcTitle();
+            boolean confirmed = JOptionPane.showConfirmDialog(null,
+                    message,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+            if (confirmed) {
+                NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                    @Override
+                    public void execute(CancellationToken cancelToken) throws Exception {
+                        createBuildSrc(buildSrcDir);
+                        openProjectNow(buildSrcDir);
+                    }
+                }, null);
+            }
+        }
+
+        private void doActionNow(final Path buildSrcDir) {
+            if (Files.isDirectory(buildSrcDir)) {
+                openProjectNow(buildSrcDir);
+            }
+            else {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        confirmAndCreateProject(buildSrcDir);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                @Override
+                public void execute(CancellationToken cancelToken) throws Exception {
+                    Path buildSrcDir = getBuildSrcDir(project).toPath();
+                    doActionNow(buildSrcDir);
+                }
+            }, null);
         }
     }
 
