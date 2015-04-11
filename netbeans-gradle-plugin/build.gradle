@@ -11,10 +11,10 @@ String netbeansVersion = 'dev-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven { url 'http://bits.netbeans.org/nexus/content/repositories/snapshots' }
     maven { url 'http://bits.netbeans.org/maven2/' }
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
     maven { url 'http://dl.bintray.com/kelemen/maven' }
-    maven { url 'http://bits.netbeans.org/nexus/content/repositories/snapshots' }
 }
 
 compileJava {
