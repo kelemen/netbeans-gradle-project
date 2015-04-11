@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -53,7 +54,11 @@ public final class OpenProjectsAction extends AbstractAction {
         this.projectDirs = projectDirs;
     }
 
-    private void openProject(File projectDir) {
+    public static void openProject(Path projectDir) {
+        openProject(projectDir.toFile());
+    }
+
+    public static void openProject(File projectDir) {
         LOGGER.log(Level.FINE, "Trying to open project: {0}", projectDir.getName());
 
         FileObject projectDirObj = FileUtil.toFileObject(projectDir);
