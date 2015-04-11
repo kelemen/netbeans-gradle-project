@@ -19,6 +19,18 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
 public final class NbProperties {
+    public static SimpleListenerRegistry<Runnable> asChangeListenerRegistry(
+            final PropertySource<?> property) {
+        ExceptionHelper.checkNotNullArgument(property, "property");
+
+        return new SimpleListenerRegistry<Runnable>() {
+            @Override
+            public ListenerRef registerListener(Runnable listener) {
+                return property.addChangeListener(listener);
+            }
+        };
+    }
+
     public static <Value> PropertySource<Value> atomicValueView(
             final AtomicReference<? extends Value> valueRef,
             final SimpleListenerRegistry<Runnable> changeListeners) {

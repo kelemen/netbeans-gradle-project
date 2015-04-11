@@ -1,29 +1,36 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Objects;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
-import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
-import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -32,14 +39,45 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
-    private static final Logger LOGGER = Logger.getLogger(BuildScriptsNode.class.getName());
+    private final NbGradleProject project;
+    private final BuildScriptChildFactory childFactory;
 
     public BuildScriptsNode(NbGradleProject project) {
-        super(createChildren(project));
+        this(project, new BuildScriptChildFactory(project));
     }
 
-    private static Children createChildren(NbGradleProject project) {
-        return Children.create(new BuildScriptChildFactory(project), true);
+    private BuildScriptsNode(NbGradleProject project, BuildScriptChildFactory childFactory) {
+        super(Children.create(childFactory, true));
+
+        this.project = project;
+        this.childFactory = childFactory;
+    }
+
+    public static SingleNodeFactory getFactory(final NbGradleProject project) {
+        return new NodeFactoryImpl(project);
+    }
+
+    private static Action openFileAction(File file) {
+        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
+        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
+
+        return result;
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actions = new ArrayList<>(2);
+
+        NbGradleModel currentModel = project.currentModel().getValue();
+        actions.add(openFileAction(currentModel.getSettingsFile()));
+        actions.add(openFileAction(currentModel.getBuildFile()));
+        actions.add(null);
+        actions.add(new OpenOrCreateBuildSrc(
+                NbStrings.getOpenBuildSrcCaption(),
+                project,
+                childFactory));
+
+        return actions.toArray(new Action[actions.size()]);
     }
 
     @Override
@@ -57,6 +95,15 @@ public final class BuildScriptsNode extends AbstractNode {
         return NbStrings.getBuildScriptsNodeCaption();
     }
 
+    private static File getBuildSrcDir(NbGradleProject project) {
+         return getBuildSrcDir(project.currentModel().getValue());
+    }
+
+    private static File getBuildSrcDir(NbGradleModel currentModel) {
+        File rootProjectDir = currentModel.getRootProjectDir();
+        return new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
+    }
+
     private static class BuildScriptChildFactory
     extends
             ChildFactory.Detachable<SingleNodeFactory> {
@@ -69,12 +116,16 @@ public final class BuildScriptsNode extends AbstractNode {
             this.listenerRefs = new ListenerRegistrations();
         }
 
+        public void refreshChildren() {
+            refresh(false);
+        }
+
         @Override
         protected void addNotify() {
             listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
-                    refresh(false);
+                    refreshChildren();
                 }
             }));
         }
@@ -84,179 +135,38 @@ public final class BuildScriptsNode extends AbstractNode {
             listenerRefs.unregisterAll();
         }
 
-        private void addFileObject(
-                FileObject file,
+        private static void addProjectScriptsNode(
+                String caption,
+                File projectDir,
                 List<SingleNodeFactory> toPopulate) {
-            addFileObject(file, file.getNameExt(), toPopulate);
-        }
-
-        private static DataObject tryGetDataObject(FileObject fileObj) {
-            try {
-                return DataObject.find(fileObj);
-            } catch (DataObjectNotFoundException ex) {
-                LOGGER.log(Level.INFO, "Failed to find DataObject for file object: " + fileObj.getPath(), ex);
-                return null;
-            }
-        }
-
-        private void addFileObject(
-                FileObject file,
-                final String name,
-                List<SingleNodeFactory> toPopulate) {
-            final DataObject fileData = tryGetDataObject(file);
-            if (fileData == null) {
-                return;
-            }
-
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new FilterNode(fileData.getNodeDelegate().cloneNode()) {
-                        @Override
-                        public boolean canRename() {
-                            return false;
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return name;
-                        }
-                    };
+            Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
+            if (project != null) {
+                NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+                if (gradleProject != null) {
+                    toPopulate.add(ProjectScriptFilesNode.getFactory(caption, gradleProject));
                 }
-            });
-        }
-
-        private void addGradleFile(
-                FileObject file,
-                List<SingleNodeFactory> toPopulate) {
-            addGradleFile(file, file.getNameExt(), toPopulate);
-        }
-
-        private void addGradleFile(
-                FileObject file,
-                final String name,
-                List<SingleNodeFactory> toPopulate) {
-            final DataObject fileData = tryGetDataObject(file);
-            if (fileData == null) {
-                return;
-            }
-
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new FilterNode(fileData.getNodeDelegate()) {
-                        @Override
-                        public boolean canRename() {
-                            return false;
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return name;
-                        }
-
-                        @Override
-                        public Image getIcon(int type) {
-                            return NbIcons.getGradleIcon();
-                        }
-
-                        @Override
-                        public Image getOpenedIcon(int type) {
-                            return getIcon(type);
-                        }
-                    };
-                }
-            });
-        }
-
-        private static FileObject tryGetHomeGradleProperties() {
-            FileObject userHome = GradleFileUtils.getGradleUserHomeFileObject();
-            return userHome != null
-                    ? userHome.getFileObject(SettingsFiles.GRADLE_PROPERTIES_NAME)
-                    : null;
-        }
-
-        private static File getLocalGradleProperties(NbGradleModel model) {
-            return new File(model.getProjectDir(), SettingsFiles.GRADLE_PROPERTIES_NAME);
-        }
-
-        private static FileObject tryGetLocalGradlePropertiesObj(NbGradleModel model) {
-            File result = getLocalGradleProperties(model);
-            return FileUtil.toFileObject(result);
-        }
-
-        private FileObject getRootBuildDir(FileObject settingsGradle) {
-            if (settingsGradle != null) {
-                return settingsGradle.getParent();
-            }
-            else {
-                return project.getProjectDirectory();
             }
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
-            NbGradleModel model = project.currentModel().getValue();
+            NbGradleModel currentModel = project.currentModel().getValue();
 
-            FileObject settingsGradle = model.tryGetSettingsFileObj();
-            FileObject rootBuildDir = getRootBuildDir(settingsGradle);
-
-            if (rootBuildDir != null && !model.isBuildSrc()) {
-                FileObject buildSrcObj = rootBuildDir.getFileObject(SettingsFiles.BUILD_SRC_NAME);
-                final File buildSrc = buildSrcObj != null
-                        ? FileUtil.toFile(buildSrcObj)
-                        : null;
-                if (buildSrc != null) {
-                    toPopulate.add(new SingleNodeFactory() {
-                        @Override
-                        public Node createNode() {
-                            return new BuildSrcNode(buildSrc);
-                        }
-                    });
+            if (!currentModel.isBuildSrc()) {
+                final File buildSrc = getBuildSrcDir(currentModel);
+                if (buildSrc.isDirectory()) {
+                    toPopulate.add(new BuildSrcNodeFactory(buildSrc));
                 }
             }
 
-            if (settingsGradle != null) {
-                addGradleFile(settingsGradle, toPopulate);
+            File projectDir = currentModel.getProjectDir();
+            addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
+
+            File rootProjectDir = currentModel.getRootProjectDir();
+            if (!Objects.equals(projectDir, rootProjectDir)) {
+                addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }
 
-            FileObject buildGradle = model.tryGetBuildFileObj();
-            if (buildGradle != null) {
-                addGradleFile(buildGradle, toPopulate);
-            }
-
-            FileObject homePropertiesFile = tryGetHomeGradleProperties();
-            if (homePropertiesFile != null) {
-                addFileObject(homePropertiesFile,
-                        NbStrings.getUserHomeFileName(SettingsFiles.GRADLE_PROPERTIES_NAME),
-                        toPopulate);
-            }
-
-            FileObject propertiesFile = tryGetLocalGradlePropertiesObj(model);
-            if (propertiesFile != null) {
-                addFileObject(propertiesFile, toPopulate);
-            }
-
-            List<FileObject> gradleFiles = new LinkedList<>();
-            for (FileObject file : project.getProjectDirectory().getChildren()) {
-                if (file.equals(buildGradle) || file.equals(settingsGradle)) {
-                    continue;
-                }
-
-                if (GradleFilesClassPathProvider.isGradleFile(file)) {
-                    gradleFiles.add(file);
-                }
-            }
-
-            Collections.sort(gradleFiles, new Comparator<FileObject>() {
-                @Override
-                public int compare(FileObject o1, FileObject o2) {
-                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
-                }
-            });
-
-            for (FileObject file : gradleFiles) {
-                addGradleFile(file, toPopulate);
-            }
+            toPopulate.add(GradleHomeNode.getFactory());
         }
 
         @Override
@@ -268,6 +178,134 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(SingleNodeFactory key) {
             return key.createNode();
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private static class OpenOrCreateBuildSrc extends AbstractAction {
+        private final NbGradleProject project;
+        private final BuildScriptChildFactory childFactory;
+
+        public OpenOrCreateBuildSrc(
+                String name,
+                NbGradleProject project,
+                BuildScriptChildFactory childFactory) {
+
+            super(name);
+            this.project = project;
+            this.childFactory = childFactory;
+        }
+
+        private void openProjectNow(Path buildSrcDir) {
+            OpenProjectsAction.openProject(buildSrcDir);
+        }
+
+        private static Path resolveAndCreate(Path parent, String name) throws IOException {
+            Path result = parent.resolve(name);
+            Files.createDirectories(result);
+            return result;
+        }
+
+        private void createDirs(Path buildSrcDir) throws IOException {
+            Files.createDirectories(buildSrcDir);
+
+            Path srcDir = resolveAndCreate(buildSrcDir, "src");
+
+            Path srcMainDir = resolveAndCreate(srcDir, "main");
+            resolveAndCreate(srcMainDir, "groovy");
+            resolveAndCreate(srcMainDir, "resources");
+
+            Path srcTestDir = resolveAndCreate(srcDir, "test");
+            resolveAndCreate(srcTestDir, "groovy");
+            resolveAndCreate(srcTestDir, "resources");
+        }
+
+        private void createBuildSrc(Path buildSrcDir) throws IOException {
+            createDirs(buildSrcDir);
+
+            Path buildGradle = buildSrcDir.resolve(SettingsFiles.BUILD_FILE_NAME);
+            List<String> buildGradleContent = Arrays.asList(
+                    "apply plugin: 'groovy'",
+                    "",
+                    "dependencies {",
+                    "    compile gradleApi()",
+                    "}");
+            NbFileUtils.writeLinesToFile(buildGradle, buildGradleContent, StringUtils.UTF8, project);
+
+            childFactory.refreshChildren();
+        }
+
+        private void confirmAndCreateProject(final Path buildSrcDir) {
+            String message = NbStrings.getConfirmCreateBuildSrcMessage();
+            String title = NbStrings.getConfirmCreateBuildSrcTitle();
+            boolean confirmed = JOptionPane.showConfirmDialog(null,
+                    message,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+            if (confirmed) {
+                NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                    @Override
+                    public void execute(CancellationToken cancelToken) throws Exception {
+                        createBuildSrc(buildSrcDir);
+                        openProjectNow(buildSrcDir);
+                    }
+                }, null);
+            }
+        }
+
+        private void doActionNow(final Path buildSrcDir) {
+            if (Files.isDirectory(buildSrcDir)) {
+                openProjectNow(buildSrcDir);
+            }
+            else {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        confirmAndCreateProject(buildSrcDir);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                @Override
+                public void execute(CancellationToken cancelToken) throws Exception {
+                    Path buildSrcDir = getBuildSrcDir(project).toPath();
+                    doActionNow(buildSrcDir);
+                }
+            }, null);
+        }
+    }
+
+    private static class BuildSrcNodeFactory implements SingleNodeFactory {
+        private final File buildSrcDir;
+
+        public BuildSrcNodeFactory(File buildSrcDir) {
+            this.buildSrcDir = buildSrcDir;
+        }
+
+        @Override
+        public Node createNode() {
+            return new BuildSrcNode(buildSrcDir);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 73 * hash + Objects.hashCode(this.buildSrcDir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final BuildSrcNodeFactory other = (BuildSrcNodeFactory)obj;
+            return Objects.equals(this.buildSrcDir, other.buildSrcDir);
         }
     }
 
@@ -316,6 +354,37 @@ public final class BuildScriptsNode extends AbstractNode {
         @Override
         public boolean canRename() {
             return false;
+        }
+    }
+
+    private static class NodeFactoryImpl implements SingleNodeFactory {
+        private final NbGradleProject project;
+        private final File projectDir;
+
+        public NodeFactoryImpl(NbGradleProject project) {
+            this.project = project;
+            this.projectDir = project.getProjectDirectoryAsFile();
+        }
+
+        @Override
+        public Node createNode() {
+            return new BuildScriptsNode(project);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 23 * hash + Objects.hashCode(this.projectDir);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final NodeFactoryImpl other = (NodeFactoryImpl)obj;
+            return Objects.equals(this.projectDir, other.projectDir);
         }
     }
 }

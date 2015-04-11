@@ -5,6 +5,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
@@ -82,6 +83,22 @@ public final class JavaProjectReference implements Serializable {
         // This reference is no longer needed, allow it to be garbage collected.
         initialModule = null;
         return javaExt.getCurrentModel().getMainModule();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.projectDir);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+
+        final JavaProjectReference other = (JavaProjectReference)obj;
+        return Objects.equals(this.projectDir, other.projectDir);
     }
 
     private Object writeReplace() {

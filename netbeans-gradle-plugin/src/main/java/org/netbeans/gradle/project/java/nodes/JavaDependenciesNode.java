@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -182,35 +183,15 @@ public final class JavaDependenciesNode extends AbstractNode {
         }
 
         private void addDependencyGroup(
-                final String groupName,
-                final Collection<? extends SingleNodeFactory> dependencies,
+                String groupName,
+                Collection<? extends SingleNodeFactory> dependencies,
                 List<SingleNodeFactory> toPopulate) {
 
             if (dependencies.isEmpty()) {
                 return;
             }
 
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    return new AbstractNode(Children.create(new DependencyGroupChildFactory(dependencies), true)) {
-                        @Override
-                        public Image getIcon(int type) {
-                            return NbIcons.getLibrariesIcon();
-                        }
-
-                        @Override
-                        public Image getOpenedIcon(int type) {
-                            return getIcon(type);
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return groupName;
-                        }
-                    };
-                }
-            });
+            toPopulate.add(new DependencyGroupNodeFactory(groupName, dependencies));
         }
 
         private static List<SingleNodeFactory> filesToNodes(NbJavaModel currentModel, Collection<File> files) {
@@ -477,6 +458,54 @@ public final class JavaDependenciesNode extends AbstractNode {
         }
     }
 
+    private static class DependencyGroupNodeFactory implements SingleNodeFactory {
+        private final String groupName;
+        private final List<SingleNodeFactory> dependencies;
+
+        public DependencyGroupNodeFactory(String groupName, Collection<? extends SingleNodeFactory> dependencies) {
+            this.dependencies = new ArrayList<>(dependencies);
+            this.groupName = groupName;
+        }
+
+        @Override
+        public Node createNode() {
+            return new AbstractNode(Children.create(new DependencyGroupChildFactory(dependencies), true)) {
+                @Override
+                public Image getIcon(int type) {
+                    return NbIcons.getLibrariesIcon();
+                }
+
+                @Override
+                public Image getOpenedIcon(int type) {
+                    return getIcon(type);
+                }
+
+                @Override
+                public String getDisplayName() {
+                    return groupName;
+                }
+            };
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 83 * hash + Objects.hashCode(this.groupName);
+            hash = 83 * hash + Objects.hashCode(this.dependencies);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final DependencyGroupNodeFactory other = (DependencyGroupNodeFactory)obj;
+            return Objects.equals(this.groupName, other.groupName)
+                    && Objects.equals(this.dependencies, other.dependencies);
+        }
+    }
+
     private static class DependencyGroupChildFactory extends ChildFactory<SingleNodeFactory> {
         private final List<SingleNodeFactory> dependencies;
 
@@ -530,6 +559,22 @@ public final class JavaDependenciesNode extends AbstractNode {
                     return getIcon(type);
                 }
             };
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 79 * hash + Objects.hashCode(this.file);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final FileDependency other = (FileDependency)obj;
+            return Objects.equals(this.file, other.file);
         }
 
         @Override
@@ -600,6 +645,22 @@ public final class JavaDependenciesNode extends AbstractNode {
                             : super.getDisplayName();
                 }
             };
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 29 * hash + Objects.hashCode(this.projectDep);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final ProjectDependencyFactory other = (ProjectDependencyFactory)obj;
+            return Objects.equals(this.projectDep, other.projectDep);
         }
     }
 
