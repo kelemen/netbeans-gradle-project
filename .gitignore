@@ -2,6 +2,7 @@
 /*/target/
 /*/build/
 .gradle/
+/.nb-gradle-properties
 .nb-gradle/
 
 # Directories left from old Ant project
