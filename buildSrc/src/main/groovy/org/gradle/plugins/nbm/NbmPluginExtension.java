@@ -18,6 +18,7 @@ public final class NbmPluginExtension {
     private final List<String> requires;
     private String localizingBundle;
     private String moduleInstall;
+    private String moduleLayer;
     private final NbmFriendPackages friendPackages;
     private final NbmManifest manifest;
 
@@ -30,6 +31,7 @@ public final class NbmPluginExtension {
                 project.getDependencies().create("org.codehaus.mojo:nbm-maven-harness:7.4"));
 
         this.moduleName = null;
+        this.moduleLayer = null;
         this.specificationVersion = null;
         this.implementationVersion = null;
         this.localizingBundle = null;
@@ -65,6 +67,14 @@ public final class NbmPluginExtension {
 
     public Configuration getHarnessConfiguration() {
         return harnessConfiguration;
+    }
+
+    public String getModuleLayer() {
+        return moduleLayer;
+    }
+
+    public void setModuleLayer(String moduleLayer) {
+        this.moduleLayer = moduleLayer;
     }
 
     public String getModuleInstall() {
