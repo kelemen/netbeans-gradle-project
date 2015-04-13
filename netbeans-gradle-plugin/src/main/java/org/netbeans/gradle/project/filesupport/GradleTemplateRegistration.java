@@ -20,11 +20,12 @@ import org.openide.filesystems.FileUtil;
 import org.openide.loaders.TemplateWizard;
 
 @TemplateRegistration(
-    folder="GradleTemplate",
+    folder=GradleTemplateConsts.FOLDER_NAME,
+    id=GradleTemplateConsts.TEMPLATE_SCRIPT_NAME,
     displayName="#GradleFiles.template",
     iconBase="org/netbeans/gradle/project/resources/gradle.png",
     description="Gradle-Files.html",
-    category="gradle-files"
+    category=GradleTemplateConsts.CATEGORY_NAME
 )
 public final class GradleTemplateRegistration
 implements
@@ -38,6 +39,10 @@ implements
         this.config = PropertyFactory.memPropertyConcurrent(null, true, SwingTaskExecutor.getSimpleExecutor(false));
         this.descriptors = new ArrayList<>(1);
         this.descriptorIndex = 0;
+    }
+
+    public static FileObject getTemplateFileObj() {
+        return GradleTemplateConsts.getTemplateFolder().getFileObject(GradleTemplateConsts.TEMPLATE_SCRIPT_NAME);
     }
 
     @Override
