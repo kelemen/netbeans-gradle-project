@@ -1,0 +1,10 @@
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Templates">
+        <folder name="GradleTemplate">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.gradle.project.filesupport.Bundle"/>
+            <attr name="instantiatingWizardURL" urlvalue="nbresloc:/org/netbeans/gradle/project/filesupport/Gradle-Files-Group.html"/>
+            <attr name="position" intvalue="1903"/>
+        </folder>
+    </folder>
+</filesystem>

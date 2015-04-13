@@ -23,7 +23,8 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "web-types",
         "junit",
         "simple-files",
-        "ear-types"
+        "ear-types",
+        "gradle-files"
     };
     private static final String[] PRIVILEGED_TEMPLATES = {
         "Templates/Classes/Class.java",

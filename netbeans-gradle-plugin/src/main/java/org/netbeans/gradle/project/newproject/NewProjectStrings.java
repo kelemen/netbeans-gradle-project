@@ -7,6 +7,10 @@ public final class NewProjectStrings {
         return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidPath");
     }
 
+    public static String getInvalidFileName() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_InvalidFileName");
+    }
+
     public static String getDirectoryAlreadyExists() {
         return NbBundle.getMessage(NewProjectStrings.class, "MSG_DirectoryAlreadyExists");
     }
@@ -45,6 +49,14 @@ public final class NewProjectStrings {
 
     public static String getNotRootProject() {
         return NbBundle.getMessage(NewProjectStrings.class, "MSG_NotRootProject");
+    }
+
+    public static String getTargetFolderNotAvailable() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_TargetFolderNotAvailable");
+    }
+
+    public static String getFileNameRequired() {
+        return NbBundle.getMessage(NewProjectStrings.class, "MSG_FileNameRequired");
     }
 
     private NewProjectStrings() {

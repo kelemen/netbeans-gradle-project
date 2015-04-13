@@ -31,6 +31,7 @@ def tryGetProperty = {String name, String defaultValue ->
 nbm {
     moduleName = 'org.netbeans.gradle.project';
     moduleInstall = 'org.netbeans.gradle.project.NbGradleModuleInstall';
+    moduleLayer = 'org/netbeans/gradle/project/layer.xml';
     localizingBundle = 'org/netbeans/gradle/project/Bundle.properties';
     friendPackages {
         addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api';
