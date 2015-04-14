@@ -3,15 +3,22 @@ package org.netbeans.gradle.project.view;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ProxyListenerRegistry;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.properties.SettingsFiles;
@@ -27,6 +34,7 @@ import org.openide.nodes.Node;
 
 public final class GradleHomeNode extends AbstractNode {
     private static final String INIT_GRADLE_NAME = "init.gradle";
+    private static final String INIT_D_NAME = "init.d";
 
     private final GradleHomeNodeChildFactory childFactory;
 
@@ -59,12 +67,17 @@ public final class GradleHomeNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        return new Action[] {
-            openGradleHomeFile(INIT_GRADLE_NAME),
-            openGradleHomeFile(SettingsFiles.GRADLE_PROPERTIES_NAME),
-            null,
-            new RefreshNodesAction()
-        };
+        List<Action> result = new ArrayList<>();
+
+        result.add(openGradleHomeFile(INIT_GRADLE_NAME));
+        result.add(openGradleHomeFile(SettingsFiles.GRADLE_PROPERTIES_NAME));
+        if (!childFactory.hasInitDDirDisplayed) {
+            result.add(new CreateInitDAction());
+        }
+        result.add(null);
+        result.add(new RefreshNodesAction());
+
+        return result.toArray(new Action[result.size()]);
     }
 
     @Override
@@ -103,10 +116,12 @@ public final class GradleHomeNode extends AbstractNode {
             ChildFactory.Detachable<SingleNodeFactory> {
         private final ListenerRegistrations listenerRefs;
         private final ProxyListenerRegistry<Runnable> userHomeChangeListeners;
+        private volatile boolean hasInitDDirDisplayed;
 
         public GradleHomeNodeChildFactory() {
             this.listenerRefs = new ListenerRegistrations();
             this.userHomeChangeListeners = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
+            this.hasInitDDirDisplayed = false;
         }
 
         public void refreshChildren() {
@@ -131,7 +146,7 @@ public final class GradleHomeNode extends AbstractNode {
                 userHomeChangeListeners.replaceRegistry(new SimpleListenerRegistry<Runnable>() {
                     @Override
                     public ListenerRef registerListener(Runnable listener) {
-                        return NbFileUtils.addDirectoryContentListener(userHome, listener);
+                        return NbFileUtils.addDirectoryContentListener(userHome, true, listener);
                     }
                 });
             }
@@ -188,9 +203,10 @@ public final class GradleHomeNode extends AbstractNode {
         }
 
         private void addInitDDir(File userHome, List<SingleNodeFactory> toPopulate) {
-            final FileObject initD = tryGetFile(userHome, "init.d");
+            final FileObject initD = tryGetFile(userHome, INIT_D_NAME);
 
             if (initD != null && initD.isFolder()) {
+                hasInitDDirDisplayed = true;
                 toPopulate.add(GradleFolderNode.getFactory(
                         NbStrings.getGlobalInitScriptsNodeCaption(),
                         initD));
@@ -198,6 +214,8 @@ public final class GradleHomeNode extends AbstractNode {
         }
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
+            hasInitDDirDisplayed = false;
+
             File userHome = getUserHome();
             if (userHome == null) {
                 return;
@@ -226,6 +244,27 @@ public final class GradleHomeNode extends AbstractNode {
         @Override
         public Node createNode() {
             return new GradleHomeNode();
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private static class CreateInitDAction extends AbstractAction {
+        public CreateInitDAction() {
+            super(NbStrings.getCreateInitDDir());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                @Override
+                public void execute(CancellationToken cancelToken) throws Exception {
+                    File userHome = getUserHome();
+                    if (userHome != null) {
+                        Path initDPath = userHome.toPath().resolve(INIT_D_NAME);
+                        Files.createDirectories(initDPath);
+                    }
+                }
+            }, null);
         }
     }
 }

@@ -580,6 +580,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmCreateBuildSrcTitle");
     }
 
+    public static String getCreateInitDDir() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateInitDDir");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
