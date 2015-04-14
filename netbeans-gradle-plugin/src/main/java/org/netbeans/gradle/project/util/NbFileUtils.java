@@ -102,6 +102,14 @@ public final class NbFileUtils {
         return null;
     }
 
+    public static Path asPath(FileObject fileObj) {
+        return fileObj != null ? asPath(FileUtil.toFile(fileObj)) : null;
+    }
+
+    public static Path asPath(File file) {
+        return file != null ? file.toPath() : null;
+    }
+
     public static File asFile(FileObject fileObj) {
         return fileObj != null ? FileUtil.toFile(fileObj) : null;
     }
