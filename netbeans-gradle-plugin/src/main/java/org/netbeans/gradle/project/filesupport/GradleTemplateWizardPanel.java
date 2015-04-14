@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.filesupport;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -11,13 +11,18 @@ import javax.swing.event.ChangeListener;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.api.project.SourceGroup;
+import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.newproject.NewProjectStrings;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.TemplateWizard;
 
 import static org.netbeans.gradle.project.validate.Validators.*;
@@ -39,21 +44,27 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
         this.started = new AtomicBoolean(false);
         this.wizard = wizard;
         this.bckgValidator = new BackgroundValidator();
-        this.targetDir = getTargetDir(wizard);
+        this.targetDir = NbFileUtils.asPath(getTargetDirObj(wizard));
 
         initComponents();
 
+        this.jDestDirEdit.setText(getDisplayNameOfTargetDir(targetDir));
         this.fileNameStr = trimmedText(jFileNameEdit);
+        this.fileNameStr.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                updateDestFileEdit();
+            }
+        });
+        updateDestFileEdit();
     }
 
-    private static Path getTargetDir(TemplateWizard wizard) {
-        File result = getTargetDirFile(wizard);
-        return result != null ? result.toPath() : null;
+    private void updateDestFileEdit() {
+        jDestFileEdit.setText(getResultFilePath().toString());
     }
 
-    private static File getTargetDirFile(TemplateWizard wizard) {
-        FileObject result = getTargetDirObj(wizard);
-        return result != null ? FileUtil.toFile(result) : null;
+    private static String getDisplayNameOfTargetDir(Path targetDir) {
+        return targetDir != null ? targetDir.toString() : "";
     }
 
     private static FileObject getTargetDirObj(TemplateWizard wizard) {
@@ -107,10 +118,13 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
         }
     }
 
-    public GradleTemplateWizardConfig getConfig() {
+    private Path getResultFilePath() {
         String fileName = toGradleFileName(fileNameStr.getValue());
-        Path gradlePath = targetDir.resolve(fileName);
-        return new GradleTemplateWizardConfig(gradlePath);
+        return targetDir != null ? targetDir.resolve(fileName) : Paths.get(fileName);
+    }
+
+    public GradleTemplateWizardConfig getConfig() {
+        return new GradleTemplateWizardConfig(getResultFilePath());
     }
 
     public boolean containsValidData() {
@@ -137,10 +151,26 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
 
         jFileNameLabel = new javax.swing.JLabel();
         jFileNameEdit = new javax.swing.JTextField();
+        jDestDirLabel = new javax.swing.JLabel();
+        jDestDirEdit = new javax.swing.JTextField();
+        jSeparator1 = new javax.swing.JSeparator();
+        jDestFileLabel = new javax.swing.JLabel();
+        jDestFileEdit = new javax.swing.JTextField();
 
         org.openide.awt.Mnemonics.setLocalizedText(jFileNameLabel, org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jFileNameLabel.text")); // NOI18N
 
         jFileNameEdit.setText(org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jFileNameEdit.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jDestDirLabel, org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jDestDirLabel.text")); // NOI18N
+
+        jDestDirEdit.setEditable(false);
+        jDestDirEdit.setText(org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jDestDirEdit.text")); // NOI18N
+        jDestDirEdit.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jDestFileLabel, org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jDestFileLabel.text")); // NOI18N
+
+        jDestFileEdit.setEditable(false);
+        jDestFileEdit.setText(org.openide.util.NbBundle.getMessage(GradleTemplateWizardPanel.class, "GradleTemplateWizardPanel.jDestFileEdit.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -150,25 +180,46 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jFileNameEdit)
+                    .addComponent(jDestDirEdit)
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jFileNameLabel)
-                        .addGap(0, 330, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jDestDirLabel)
+                            .addComponent(jFileNameLabel)
+                            .addComponent(jDestFileLabel))
+                        .addGap(0, 273, Short.MAX_VALUE))
+                    .addComponent(jDestFileEdit))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jDestDirLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jDestDirEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jFileNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jFileNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jDestFileLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jDestFileEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField jDestDirEdit;
+    private javax.swing.JLabel jDestDirLabel;
+    private javax.swing.JTextField jDestFileEdit;
+    private javax.swing.JLabel jDestFileLabel;
     private javax.swing.JTextField jFileNameEdit;
     private javax.swing.JLabel jFileNameLabel;
+    private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 }
