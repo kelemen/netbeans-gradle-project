@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.filesupport;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,6 +12,7 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.newproject.NewProjectStrings;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
@@ -92,8 +94,22 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
         connectWizardDescriptorToProblems(bckgValidator, wizard);
     }
 
+    private static String toGradleFileName(String rawFileName) {
+        String ext = SettingsFiles.DEFAULT_GRADLE_EXTENSION;
+        if (rawFileName.toLowerCase(Locale.ROOT).endsWith(ext)) {
+            return rawFileName.substring(0, rawFileName.length() - ext.length()) + ext;
+        }
+        else if (rawFileName.endsWith(".")) {
+            return rawFileName + SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT;
+        }
+        else {
+            return rawFileName + ext;
+        }
+    }
+
     public GradleTemplateWizardConfig getConfig() {
-        Path gradlePath = targetDir.resolve(fileNameStr.getValue());
+        String fileName = toGradleFileName(fileNameStr.getValue());
+        Path gradlePath = targetDir.resolve(fileName);
         return new GradleTemplateWizardConfig(gradlePath);
     }
 
