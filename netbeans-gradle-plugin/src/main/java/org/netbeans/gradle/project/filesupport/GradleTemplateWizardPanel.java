@@ -73,7 +73,7 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
                 NewProjectStrings.getFileNameRequired());
         bckgValidator.addValidator(emptyNameValidator, fileNameStr);
 
-        Validator<String> fileNameValidator = createFileNameValidator(
+        Validator<String> fileNameValidator = createFileNameWithExtensionValidator(
                 Problem.Level.SEVERE,
                 NewProjectStrings.getInvalidFileName());
         bckgValidator.addValidator(fileNameValidator, fileNameStr);
