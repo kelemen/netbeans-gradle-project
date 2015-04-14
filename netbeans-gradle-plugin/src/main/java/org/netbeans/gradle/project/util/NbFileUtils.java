@@ -31,10 +31,24 @@ public final class NbFileUtils {
     public static ListenerRef addDirectoryContentListener(
             final FileObject dir,
             final Runnable listener) {
+        return addDirectoryContentListener(dir, false, listener);
+    }
+
+    public static ListenerRef addDirectoryContentListener(
+            final FileObject dir,
+            final boolean listenForDirs,
+            final Runnable listener) {
         ExceptionHelper.checkNotNullArgument(dir, "dir");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final FileChangeListener fileChangeListener = new FileChangeAdapter() {
+            @Override
+            public void fileFolderCreated(FileEvent fe) {
+                if (listenForDirs) {
+                    listener.run();
+                }
+
+            }
             @Override
             public void fileDeleted(FileEvent fe) {
                 listener.run();
