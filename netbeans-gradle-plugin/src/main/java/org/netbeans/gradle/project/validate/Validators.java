@@ -17,6 +17,7 @@ import org.openide.WizardDescriptor;
 
 public final class Validators {
     private static final Pattern LEGAL_FILENAME_PATTERN = Pattern.compile("[^/./\\:*?\"<>|]*");
+    private static final Pattern LEGAL_FILENAME_PATTERN_WITH_EXTENSION= Pattern.compile("[^/\\:*?\"<>|]*");
 
     public static PropertySource<String> trimmedText(JTextComponent component) {
         MutableProperty<String> property = SwingProperties.textProperty(component);
@@ -42,6 +43,12 @@ public final class Validators {
                         : null;
             }
         };
+    }
+
+    public static Validator<String> createFileNameWithExtensionValidator(
+            Problem.Level severity,
+            String errorMessage) {
+        return createPatternValidator(LEGAL_FILENAME_PATTERN_WITH_EXTENSION, severity, errorMessage);
     }
 
     public static Validator<String> createFileNameValidator(
