@@ -25,6 +25,8 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
+
+        setName(displayName);
     }
 
     @Override
