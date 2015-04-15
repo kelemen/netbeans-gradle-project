@@ -66,15 +66,8 @@ public final class NodeUtils {
         return null;
     }
 
-    public static PathFinder askChildrenNodeFinder(final Children children) {
-        ExceptionHelper.checkNotNullArgument(children, "children");
-
-        return new PathFinder() {
-            @Override
-            public Node findPath(Node root, Object target) {
-                return askChildrenForTarget(root.getChildren(), target);
-            }
-        };
+    public static PathFinder askChildrenNodeFinder() {
+        return AskChildrenNodeFinder.INSTANCE;
     }
 
     public static Node findChildFileOfFolderNode(Node folderNode, FileObject file) {
@@ -218,6 +211,15 @@ public final class NodeUtils {
             return this.icon == other.icon
                     && Objects.equals(this.name, other.name)
                     && Objects.equals(this.fileDataKey, other.fileDataKey);
+        }
+    }
+
+    private enum AskChildrenNodeFinder implements PathFinder {
+        INSTANCE;
+
+        @Override
+        public Node findPath(Node root, Object target) {
+            return askChildrenForTarget(root.getChildren(), target);
         }
     }
 
