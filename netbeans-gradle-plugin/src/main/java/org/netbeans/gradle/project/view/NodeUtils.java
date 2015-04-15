@@ -9,8 +9,8 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.api.nodes.NodeFinder;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
@@ -55,8 +55,8 @@ public final class NodeUtils {
         ExceptionHelper.checkNotNullArgument(target, "target");
 
         for (Node child: children.getNodes(false)) {
-            for (NodeFinder nodeFinder: child.getLookup().lookupAll(NodeFinder.class)) {
-                Node result = nodeFinder.findNode(target);
+            for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
+                Node result = nodeFinder.findPath(child, target);
                 if (result != null) {
                     return result;
                 }
@@ -66,13 +66,13 @@ public final class NodeUtils {
         return null;
     }
 
-    public static NodeFinder askChildrenNodeFinder(final Children children) {
+    public static PathFinder askChildrenNodeFinder(final Children children) {
         ExceptionHelper.checkNotNullArgument(children, "children");
 
-        return new NodeFinder() {
+        return new PathFinder() {
             @Override
-            public Node findNode(Object target) {
-                return askChildrenForTarget(children, target);
+            public Node findPath(Node root, Object target) {
+                return askChildrenForTarget(root.getChildren(), target);
             }
         };
     }

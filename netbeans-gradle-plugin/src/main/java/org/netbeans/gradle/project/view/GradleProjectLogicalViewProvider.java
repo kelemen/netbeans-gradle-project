@@ -42,7 +42,6 @@ import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
-import org.netbeans.gradle.project.api.nodes.NodeFinder;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -61,6 +60,7 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
+import org.netbeans.spi.project.ui.PathFinder;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.DialogDescriptor;
@@ -414,10 +414,10 @@ implements
         Node[] children = root.getChildren().getNodes(false);
         for (Node child: children) {
             boolean hasNodeFinder = false;
-            for (NodeFinder nodeFinder: child.getLookup().lookupAll(NodeFinder.class)) {
+            for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
                 hasNodeFinder = true;
 
-                Node result = nodeFinder.findNode(target);
+                Node result = nodeFinder.findPath(child, target);
                 if (result != null) {
                     return result;
                 }
@@ -427,6 +427,9 @@ implements
                 continue;
             }
 
+            // This will always return {@code null} because PackageView
+            // asks for PathFinder as well but since it is not in its
+            // specification, we won't rely on this.
             Node result = PackageView.findPath(child, target);
             if (result == null && targetFile != null) {
                 result = NodeUtils.findChildFileOfFolderNode(child, targetFile);
