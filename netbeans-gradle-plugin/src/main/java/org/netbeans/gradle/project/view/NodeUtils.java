@@ -1,19 +1,77 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeNotFoundException;
+import org.openide.nodes.NodeOp;
 
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
+
+    public static Node findChildFileOfFolderNode(Node folderNode, FileObject file) {
+        ExceptionHelper.checkNotNullArgument(folderNode, "folderNode");
+        ExceptionHelper.checkNotNullArgument(file, "file");
+
+        // Copied from the LogicalViewProvider implementation of the Maven plugin
+
+        FileObject xfo = folderNode.getLookup().lookup(FileObject.class);
+        if (xfo == null) {
+            DataObject dobj = folderNode.getLookup().lookup(DataObject.class);
+            if (dobj != null) {
+                xfo = dobj.getPrimaryFile();
+            }
+        }
+        if (xfo != null) {
+            if ((xfo.equals(file))) {
+                return folderNode;
+            }
+            else if (FileUtil.isParentOf(xfo, file)) {
+                FileObject folder = file.isFolder() ? file : file.getParent();
+                String relPath = FileUtil.getRelativePath(xfo, folder);
+                List<String> path = new ArrayList<>();
+                StringTokenizer strtok = new StringTokenizer(relPath, "/");
+                while (strtok.hasMoreTokens()) {
+                    String token = strtok.nextToken();
+                    path.add(token);
+                }
+                try {
+                    Node parentNode = folder.equals(xfo)
+                            ? folderNode
+                            : NodeOp.findPath(folderNode, Collections.enumeration(path));
+                    if (file.isFolder()) {
+                        return parentNode;
+                    }
+                    else {
+                        Node[] childs = parentNode.getChildren().getNodes(false);
+                        for (Node child: childs) {
+                            DataObject dobj = child.getLookup().lookup(DataObject.class);
+                            if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(file.getNameExt())) {
+                                return child;
+                            }
+                        }
+                    }
+                } catch (NodeNotFoundException e) {
+                    // OK, never mind
+                }
+            }
+        }
+        return null;
+    }
 
     public static DataObject tryGetDataObject(FileObject fileObj) {
         try {
