@@ -46,6 +46,8 @@ public final class GradleHomeNode extends AbstractNode {
         super(Children.create(childFactory, true));
 
         this.childFactory = childFactory;
+
+        setName(getClass().getSimpleName());
     }
 
     public static SingleNodeFactory getFactory() {
