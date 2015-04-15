@@ -60,6 +60,8 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         this.caption = caption;
         this.project = project;
         this.childFactory = childFactory;
+
+        setName(caption);
     }
 
     public static SingleNodeFactory getFactory(String caption, NbGradleProject project) {
