@@ -66,6 +66,8 @@ public final class JavaDependenciesNode extends AbstractNode {
         super(createChildren(childFactory));
 
         this.javaExt = javaExt;
+
+        setName("java.dependencies");
     }
 
     private static Children createChildren(DependenciesChildFactory childFactory) {
