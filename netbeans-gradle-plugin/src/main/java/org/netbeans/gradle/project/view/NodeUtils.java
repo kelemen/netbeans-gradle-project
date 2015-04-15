@@ -25,6 +25,31 @@ import org.openide.nodes.NodeOp;
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
 
+    public static Node findFileChildNode(Children children, FileObject file) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+        ExceptionHelper.checkNotNullArgument(file, "file");
+
+        for (Node child: children.getNodes(false)) {
+            if (NodeUtils.isNodeOfFile(child, file)) {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    public static boolean isNodeOfFile(Node node, FileObject file) {
+        ExceptionHelper.checkNotNullArgument(node, "node");
+        ExceptionHelper.checkNotNullArgument(file, "file");
+
+        for (FileObject nodeFile: node.getLookup().lookupAll(FileObject.class)) {
+            if (file.equals(nodeFile)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static Node askChildrenForTarget(Children children, Object target) {
         ExceptionHelper.checkNotNullArgument(children, "children");
         ExceptionHelper.checkNotNullArgument(target, "target");
