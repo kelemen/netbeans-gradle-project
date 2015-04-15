@@ -42,6 +42,7 @@ import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.nodes.NodeFinder;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
@@ -402,31 +403,40 @@ implements
 
     @Override
     public Node findPath(Node root, Object target) {
-        // The implementation of this method is mostly a copy-paste from the
-        // Maven plugin. I didn't take the time to fully understand it.
-        if (target instanceof FileObject) {
-            FileObject fileObject = (FileObject)target;
+        if (target == null) {
+            return null;
+        }
 
-            Node[] nodes = root.getChildren().getNodes(false);
-            for (Node child: nodes) {
-                Node found = PackageView.findPath(child, fileObject);
-                if (found != null) {
-                    return found;
+        FileObject targetFile = target instanceof FileObject
+                ? (FileObject)target
+                : null;
+
+        Node[] children = root.getChildren().getNodes(false);
+        for (Node child: children) {
+            boolean hasNodeFinder = false;
+            for (NodeFinder nodeFinder: child.getLookup().lookupAll(NodeFinder.class)) {
+                hasNodeFinder = true;
+
+                Node result = nodeFinder.findNode(target);
+                if (result != null) {
+                    return result;
                 }
             }
-            for (Node node: nodes) {
-                for (Node childNode: node.getChildren().getNodes(false)) {
-                    Node result = PackageView.findPath(childNode, fileObject);
-                    if (result != null) {
-                        return result;
-                    }
-                    Node found = NodeUtils.findChildFileOfFolderNode(childNode, fileObject);
-                    if (found != null) {
-                        return found;
-                    }
-                }
+
+            if (hasNodeFinder) {
+                continue;
+            }
+
+            Node result = PackageView.findPath(child, target);
+            if (result == null && targetFile != null) {
+                result = NodeUtils.findChildFileOfFolderNode(child, targetFile);
+            }
+
+            if (result != null) {
+                return result;
             }
         }
+
         return null;
     }
 
