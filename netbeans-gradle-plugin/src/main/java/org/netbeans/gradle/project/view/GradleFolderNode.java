@@ -48,6 +48,8 @@ public final class GradleFolderNode extends AbstractNode {
 
         this.caption = caption;
         this.dir = dir;
+
+        setName(dir.toString());
     }
 
     public static SingleNodeFactory getFactory(String caption, FileObject dir) {
