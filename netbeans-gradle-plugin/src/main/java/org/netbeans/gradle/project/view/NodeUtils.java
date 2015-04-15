@@ -9,12 +9,14 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.nodes.NodeFinder;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
@@ -22,6 +24,33 @@ import org.openide.nodes.NodeOp;
 
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
+
+    private static Node askChildrenForTarget(Children children, Object target) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+        ExceptionHelper.checkNotNullArgument(target, "target");
+
+        for (Node child: children.getNodes(false)) {
+            for (NodeFinder nodeFinder: child.getLookup().lookupAll(NodeFinder.class)) {
+                Node result = nodeFinder.findNode(target);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static NodeFinder askChildrenNodeFinder(final Children children) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+
+        return new NodeFinder() {
+            @Override
+            public Node findNode(Object target) {
+                return askChildrenForTarget(children, target);
+            }
+        };
+    }
 
     public static Node findChildFileOfFolderNode(Node folderNode, FileObject file) {
         ExceptionHelper.checkNotNullArgument(folderNode, "folderNode");
