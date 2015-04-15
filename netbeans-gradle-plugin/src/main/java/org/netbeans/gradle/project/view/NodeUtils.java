@@ -29,7 +29,7 @@ public final class NodeUtils {
         ExceptionHelper.checkNotNullArgument(children, "children");
         ExceptionHelper.checkNotNullArgument(file, "file");
 
-        for (Node child: children.getNodes(false)) {
+        for (Node child: children.getNodes(true)) {
             if (NodeUtils.isNodeOfFile(child, file)) {
                 return child;
             }
@@ -54,7 +54,7 @@ public final class NodeUtils {
         ExceptionHelper.checkNotNullArgument(children, "children");
         ExceptionHelper.checkNotNullArgument(target, "target");
 
-        for (Node child: children.getNodes(false)) {
+        for (Node child: children.getNodes(true)) {
             for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
                 Node result = nodeFinder.findPath(child, target);
                 if (result != null) {
@@ -111,7 +111,7 @@ public final class NodeUtils {
                         return parentNode;
                     }
                     else {
-                        Node[] childs = parentNode.getChildren().getNodes(false);
+                        Node[] childs = parentNode.getChildren().getNodes(true);
                         for (Node child: childs) {
                             DataObject dobj = child.getLookup().lookup(DataObject.class);
                             if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(file.getNameExt())) {

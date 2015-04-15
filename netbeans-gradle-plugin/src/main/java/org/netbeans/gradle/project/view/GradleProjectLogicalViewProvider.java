@@ -411,7 +411,7 @@ implements
                 ? (FileObject)target
                 : null;
 
-        Node[] children = root.getChildren().getNodes(false);
+        Node[] children = root.getChildren().getNodes(true);
         for (Node child: children) {
             boolean hasNodeFinder = false;
             for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
