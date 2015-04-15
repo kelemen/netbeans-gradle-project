@@ -58,6 +58,8 @@ public final class BuildScriptsNode extends AbstractNode {
 
         this.project = project;
         this.childFactory = childFactory;
+
+        setName(getClass().getSimpleName());
     }
 
     public static SingleNodeFactory getFactory(final NbGradleProject project) {
