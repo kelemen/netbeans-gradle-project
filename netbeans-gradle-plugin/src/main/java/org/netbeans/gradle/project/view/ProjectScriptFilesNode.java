@@ -15,6 +15,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.NodeFinder;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
@@ -28,6 +29,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.lookup.Lookups;
 
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
@@ -42,7 +44,15 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             String caption,
             NbGradleProject project,
             ProjectScriptFilesChildFactory childFactory) {
-        super(Children.create(childFactory, true));
+        this(caption, project, childFactory, Children.create(childFactory, true));
+    }
+
+    private ProjectScriptFilesNode(
+            String caption,
+            NbGradleProject project,
+            ProjectScriptFilesChildFactory childFactory,
+            Children children) {
+        super(children, Lookups.fixed(new ProjectScriptFileFinder(children)));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -108,6 +118,32 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         @Override
         public void actionPerformed(ActionEvent e) {
             childFactory.refreshChildren();
+        }
+    }
+
+    private static class ProjectScriptFileFinder implements NodeFinder {
+        private final Children children;
+
+        public ProjectScriptFileFinder(Children children) {
+            this.children = children;
+        }
+
+        private Node findNodeByFile(FileObject target) {
+            boolean canBeFound =
+                    SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(target.getNameExt())
+                    || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(target.getExt());
+            if (!canBeFound) {
+                return null;
+            }
+
+            return NodeUtils.findFileChildNode(children, target);
+        }
+
+        @Override
+        public Node findNode(Object target) {
+            return target instanceof FileObject
+                    ? findNodeByFile((FileObject)target)
+                    : null;
         }
     }
 
