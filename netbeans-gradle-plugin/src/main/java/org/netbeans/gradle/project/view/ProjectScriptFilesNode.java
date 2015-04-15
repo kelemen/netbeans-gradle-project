@@ -52,7 +52,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             NbGradleProject project,
             ProjectScriptFilesChildFactory childFactory,
             Children children) {
-        super(children, Lookups.fixed(new ProjectScriptFileFinder()));
+        super(children, Lookups.fixed(ProjectScriptFileFinder.INSTANCE));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -123,7 +123,9 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         }
     }
 
-    private static class ProjectScriptFileFinder implements PathFinder {
+    private enum ProjectScriptFileFinder implements PathFinder {
+        INSTANCE;
+
         private Node findNodeByFile(Node root, FileObject target) {
             boolean canBeFound =
                     SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(target.getNameExt())
