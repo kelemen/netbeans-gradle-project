@@ -44,6 +44,8 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         this.javaExt = javaExt;
         this.testTaskName = testTaskName;
+
+        setName(suiteName);
     }
 
     @Override
