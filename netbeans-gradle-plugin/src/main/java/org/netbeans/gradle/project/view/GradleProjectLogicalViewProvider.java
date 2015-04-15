@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -66,16 +65,12 @@ import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
-import org.openide.loaders.DataObject;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeNotFoundException;
-import org.openide.nodes.NodeOp;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
@@ -425,53 +420,10 @@ implements
                     if (result != null) {
                         return result;
                     }
-                    Node found = findNodeByFileDataObject(childNode, fileObject);
+                    Node found = NodeUtils.findChildFileOfFolderNode(childNode, fileObject);
                     if (found != null) {
                         return found;
                     }
-                }
-            }
-        }
-        return null;
-    }
-
-    private Node findNodeByFileDataObject(Node node, FileObject fo) {
-        FileObject xfo = node.getLookup().lookup(FileObject.class);
-        if (xfo == null) {
-            DataObject dobj = node.getLookup().lookup(DataObject.class);
-            if (dobj != null) {
-                xfo = dobj.getPrimaryFile();
-            }
-        }
-        if (xfo != null) {
-            if ((xfo.equals(fo))) {
-                return node;
-            }
-            else if (FileUtil.isParentOf(xfo, fo)) {
-                FileObject folder = fo.isFolder() ? fo : fo.getParent();
-                String relPath = FileUtil.getRelativePath(xfo, folder);
-                List<String> path = new ArrayList<>();
-                StringTokenizer strtok = new StringTokenizer(relPath, "/");
-                while (strtok.hasMoreTokens()) {
-                    String token = strtok.nextToken();
-                    path.add(token);
-                }
-                try {
-                    Node folderNode = folder.equals(xfo) ? node : NodeOp.findPath(node, Collections.enumeration(path));
-                    if (fo.isFolder()) {
-                        return folderNode;
-                    }
-                    else {
-                        Node[] childs = folderNode.getChildren().getNodes(false);
-                        for (Node child: childs) {
-                            DataObject dobj = child.getLookup().lookup(DataObject.class);
-                            if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(fo.getNameExt())) {
-                                return child;
-                            }
-                        }
-                    }
-                } catch (NodeNotFoundException e) {
-                    // OK, never mind
                 }
             }
         }
