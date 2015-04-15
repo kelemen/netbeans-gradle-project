@@ -47,7 +47,14 @@ public final class BuildScriptsNode extends AbstractNode {
     }
 
     private BuildScriptsNode(NbGradleProject project, BuildScriptChildFactory childFactory) {
-        super(Children.create(childFactory, true));
+        this(project, childFactory, Children.create(childFactory, true));
+    }
+
+    private BuildScriptsNode(
+            NbGradleProject project,
+            BuildScriptChildFactory childFactory,
+            Children children) {
+        super(children, Lookups.fixed(NodeUtils.askChildrenNodeFinder(children)));
 
         this.project = project;
         this.childFactory = childFactory;
