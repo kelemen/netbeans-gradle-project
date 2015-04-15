@@ -17,7 +17,8 @@ repositories {
 }
 
 compileJava {
-    options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
+    String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator);
+    options.compilerArgs = ['-sourcepath', resDirsPath]
 }
 
 def tryGetProperty = {String name, String defaultValue ->
