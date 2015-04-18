@@ -37,6 +37,10 @@ public final class NbGenericModelInfo implements Serializable {
         return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
     }
 
+    public File getBuildDir() {
+        return projectDef.getMainProject().getGenericProperties().getBuildDir();
+    }
+
     public File getBuildFile() {
         return projectDef.getMainProject().getGenericProperties().getBuildScript();
     }
