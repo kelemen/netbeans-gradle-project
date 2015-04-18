@@ -78,6 +78,10 @@ public final class NodeUtils {
         return null;
     }
 
+    public static PathFinder childrenFileFinder() {
+        return ChildrenFileFinder.INSTANCE;
+    }
+
     public static PathFinder askChildrenNodeFinder() {
         return AskChildrenNodeFinder.INSTANCE;
     }
@@ -237,5 +241,15 @@ public final class NodeUtils {
 
     private NodeUtils() {
         throw new AssertionError();
+    }
+
+    private enum ChildrenFileFinder implements PathFinder {
+        INSTANCE;
+
+        @Override
+        public Node findPath(Node root, Object target) {
+            FileObject targetFile = tryGetFileSearchTarget(target);
+            return targetFile != null ? findChildFileOfFolderNode(root, targetFile) : null;
+        }
     }
 }
