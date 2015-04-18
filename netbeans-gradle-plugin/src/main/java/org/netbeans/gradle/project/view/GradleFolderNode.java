@@ -16,6 +16,7 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.filesupport.GradleTemplateConsts;
@@ -90,8 +91,7 @@ public final class GradleFolderNode extends AbstractNode {
         private final FileObject dir;
 
         public CreateGradleFileTask(FileObject dir) {
-            // TODO: I18N
-            super("Add new init script");
+            super(NbStrings.getAddNewInitScriptCaption());
 
             this.dir = dir;
         }

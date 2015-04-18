@@ -584,6 +584,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateInitDDir");
     }
 
+    public static String getAddNewInitScriptCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewInitScriptCaption");
+    }
+
     private NbStrings() {
         throw new AssertionError();
     }
