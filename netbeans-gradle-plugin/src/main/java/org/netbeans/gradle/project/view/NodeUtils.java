@@ -26,6 +26,18 @@ import org.openide.nodes.NodeOp;
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
 
+    public static FileObject tryGetFileSearchTarget(Object target) {
+        if (target instanceof FileObject) {
+            return (FileObject)target;
+        }
+
+        if (target instanceof DataObject) {
+            return ((DataObject)target).getPrimaryFile();
+        }
+
+        return null;
+    }
+
     public static Node findWithChildrenPathFinder(Node root, Object target) {
         ExceptionHelper.checkNotNullArgument(root, "root");
         ExceptionHelper.checkNotNullArgument(target, "target");
