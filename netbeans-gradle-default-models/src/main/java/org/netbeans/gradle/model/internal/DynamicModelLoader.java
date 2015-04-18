@@ -97,6 +97,8 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         File buildFile = null;
         ModelQueryOutput.BasicInfo basicInfo = null;
 
+        File buildDir = project.getBuildDir();
+
         String projectFullName = project.getPath();
         ProjectId projectId = getProjectId(project);
 
@@ -104,13 +106,13 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         try {
             buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
             tasks = findTasks(project);
-            basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
+            basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
 
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
             output = new ModelQueryOutput(basicInfo, projectInfos, null);
         } catch (Throwable ex) {
             if (basicInfo == null) {
-                basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
+                basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
             }
 
             output = new ModelQueryOutput(basicInfo, CustomSerializedMap.EMPTY, ex);

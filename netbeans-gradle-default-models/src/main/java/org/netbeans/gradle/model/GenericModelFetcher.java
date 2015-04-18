@@ -507,15 +507,18 @@ public final class GenericModelFetcher {
                 throw new IllegalStateException("Missing ModelQueryOutput for project " + projectPath);
             }
 
+            ModelQueryOutput.BasicInfo basicInfo = customInfo.getBasicInfo();
+
             GenericProjectProperties genericProperties = new GenericProjectProperties(
-                    customInfo.getBasicInfo().getProjectId(),
+                    basicInfo.getProjectId(),
                     projectPath,
                     project.getProjectDirectory(),
-                    customInfo.getBasicInfo().getBuildScript());
+                    basicInfo.getBuildScript(),
+                    basicInfo.getBuildDir());
 
             GradleProjectTree result = new GradleProjectTree(
                     genericProperties,
-                    customInfo.getBasicInfo().getTasks(),
+                    basicInfo.getTasks(),
                     children);
 
             trees.put(projectPath, result);

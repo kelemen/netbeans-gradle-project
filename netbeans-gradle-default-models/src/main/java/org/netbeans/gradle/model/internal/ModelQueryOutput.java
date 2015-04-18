@@ -47,15 +47,23 @@ public final class ModelQueryOutput implements Serializable {
         private final ProjectId projectId;
         private final String projectFullName;
         private final File buildScript;
+        private final File buildDir;
         private final Collection<GradleTaskID> tasks;
 
-        public BasicInfo(ProjectId projectId, String projectFullName, File buildScript, Collection<GradleTaskID> tasks) {
+        public BasicInfo(
+                ProjectId projectId,
+                String projectFullName,
+                File buildScript,
+                File buildDir,
+                Collection<GradleTaskID> tasks) {
             if (projectId == null) throw new NullPointerException("projectId");
             if (projectFullName == null) throw new NullPointerException("projectFullName");
+            if (buildDir == null) throw new NullPointerException("buildDir");
 
             this.projectId = projectId;
             this.projectFullName = projectFullName;
             this.buildScript = buildScript;
+            this.buildDir = buildDir;
             this.tasks = CollectionUtils.copyNullSafeList(tasks);
         }
 
@@ -69,6 +77,10 @@ public final class ModelQueryOutput implements Serializable {
 
         public File getBuildScript() {
             return buildScript;
+        }
+
+        public File getBuildDir() {
+            return buildDir;
         }
 
         public Collection<GradleTaskID> getTasks() {
