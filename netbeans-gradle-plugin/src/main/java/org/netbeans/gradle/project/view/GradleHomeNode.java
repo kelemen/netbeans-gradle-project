@@ -155,7 +155,7 @@ public final class GradleHomeNode extends AbstractNode {
                 return result;
             }
 
-            return NodeUtils.findWithChildrenPathFinder(root, target);
+            return NodeUtils.askChildrenForTarget(root.getChildren(), target);
         }
     }
 
