@@ -87,7 +87,7 @@ public final class SettingsFiles {
         return getAvailableProfiles(getRootDirectory(project));
     }
 
-    private static Path getSettingsDir(Path rootDir) {
+    public static Path getSettingsDir(Path rootDir) {
         ExceptionHelper.checkNotNullArgument(rootDir, "rootDir");
         return rootDir.resolve(SETTINGS_DIR_NAME);
     }
