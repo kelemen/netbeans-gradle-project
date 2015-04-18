@@ -249,7 +249,7 @@ public final class NodeUtils {
         @Override
         public Node findPath(Node root, Object target) {
             FileObject targetFile = tryGetFileSearchTarget(target);
-            return targetFile != null ? findChildFileOfFolderNode(root, targetFile) : null;
+            return targetFile != null ? findFileChildNode(root.getChildren(), targetFile) : null;
         }
     }
 }
