@@ -142,13 +142,6 @@ implements
         commonConfig.addConfiguration(config);
     }
 
-    public Collection<NbGradleConfiguration> findAndUpdateConfigurations(boolean mayRemove) {
-        List<NbGradleConfiguration> result = new LinkedList<>();
-        result.addAll(extensionProfiles);
-        result.addAll(commonConfig.findAndUpdateConfigurations(mayRemove));
-        return result;
-    }
-
     public ListenerRef addActiveConfigChangeListener(Runnable listener) {
         return commonConfig.addActiveConfigChangeListener(listener);
     }

@@ -158,7 +158,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                 final Collection<NbGradleConfiguration> profiles = project
                         .getLookup()
                         .lookup(NbGradleSingleProjectConfigProvider.class)
-                        .findAndUpdateConfigurations(false);
+                        .getConfigurations();
 
                 final PanelLockRef swingLock = lockRef.getAndSet(null);
                 SwingUtilities.invokeLater(new Runnable() {
