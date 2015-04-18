@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -24,6 +25,23 @@ import org.openide.nodes.NodeOp;
 
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
+
+    public static Node findWithChildrenPathFinder(Node root, Object target) {
+        ExceptionHelper.checkNotNullArgument(root, "root");
+        ExceptionHelper.checkNotNullArgument(target, "target");
+
+        Node[] children = root.getChildren().getNodes(true);
+        for (Node child: children) {
+            for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
+                Node result = nodeFinder.findPath(child, target);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
 
     public static Node findFileChildNode(Children children, FileObject file) {
         ExceptionHelper.checkNotNullArgument(children, "children");
