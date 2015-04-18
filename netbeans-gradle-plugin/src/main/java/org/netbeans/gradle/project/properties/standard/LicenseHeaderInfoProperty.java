@@ -13,7 +13,8 @@ import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 
 public final class LicenseHeaderInfoProperty {
-    private static final String CONFIG_KEY_LICENSE_HEADER = "license-header";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("license-header");
+
     private static final String CONFIG_KEY_NAME = "name";
     private static final String CONFIG_KEY_FILE = "template";
     private static final String CONFIG_KEY_PROPERTY = "property";
@@ -24,7 +25,7 @@ public final class LicenseHeaderInfoProperty {
 
     private static PropertyDef<ConfigTree, LicenseHeaderInfo> createPropertyDef() {
         PropertyDef.Builder<ConfigTree, LicenseHeaderInfo> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_LICENSE_HEADER));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(CommonProperties.getIdentityTreeKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

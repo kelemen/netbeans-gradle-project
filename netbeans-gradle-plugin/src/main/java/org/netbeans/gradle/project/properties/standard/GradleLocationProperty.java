@@ -8,13 +8,13 @@ import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 
 public final class GradleLocationProperty {
-    private static final String CONFIG_KEY_GRADLE_LOCATION = "gradle-home";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("gradle-home");
 
     public static final PropertyDef<?, GradleLocationDef> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<?, GradleLocationDef> createPropertyDef() {
         PropertyDef.Builder<String, GradleLocationDef> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_GRADLE_LOCATION));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();

@@ -27,7 +27,7 @@ import org.netbeans.gradle.project.properties.ValueMerger;
 import org.netbeans.gradle.project.properties.ValueReference;
 
 public final class BuiltInTasksProperty {
-    private static final String CONFIG_KEY_BUILT_IN_TASKS = "built-in-tasks";
+    private static final ConfigPath CONFIG_ROOT_BUILT_IN_TASKS = ConfigPath.fromKeys("built-in-tasks");
 
     public static final PropertyDef<?, BuiltInTasks> PROPERTY_DEF = createPropertyDef();
 
@@ -123,7 +123,7 @@ public final class BuiltInTasksProperty {
 
     private static PropertyDef<?, BuiltInTasks> createPropertyDef() {
         PropertyDef.Builder<PredefinedTasks, BuiltInTasks> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_BUILT_IN_TASKS));
+                = new PropertyDef.Builder<>(CONFIG_ROOT_BUILT_IN_TASKS);
         result.setKeyEncodingDef(CustomTasksProperty.getKeyEncodingDef());
         result.setValueDef(getValueDef());
         result.setValueMerger(getValueMerger());

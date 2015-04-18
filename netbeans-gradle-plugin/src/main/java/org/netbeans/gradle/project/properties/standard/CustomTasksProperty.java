@@ -13,7 +13,8 @@ import org.netbeans.gradle.project.properties.ValueMerger;
 import org.netbeans.gradle.project.properties.ValueReference;
 
 public final class CustomTasksProperty {
-    private static final String CONFIG_KEY_COMMON_TASKS = "common-tasks";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("common-tasks");
+
     private static final String CONFIG_KEY_TASK = "task";
     private static final String CONFIG_KEY_DISPLAY_NAME = "display-name";
     private static final String CONFIG_KEY_NON_BLOCKING = "non-blocking";
@@ -30,7 +31,7 @@ public final class CustomTasksProperty {
 
     private static PropertyDef<PredefinedTasks, PredefinedTasks> createPropertyDef() {
         PropertyDef.Builder<PredefinedTasks, PredefinedTasks> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_COMMON_TASKS));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(getKeyEncodingDef());
         result.setValueDef(getValueDef());
         result.setValueMerger(getValueMerger());
