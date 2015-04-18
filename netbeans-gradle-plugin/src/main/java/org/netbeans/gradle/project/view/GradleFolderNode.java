@@ -25,7 +25,6 @@ import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
-import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
@@ -223,19 +222,5 @@ public final class GradleFolderNode extends AbstractNode {
             return Objects.equals(this.caption, other.caption)
                     && Objects.equals(this.dir, other.dir);
         }
-    }
-
-    private static class NewGradleFileWizard extends TemplateWizard {
-
-        @Override
-        protected Panel<WizardDescriptor> createTemplateChooser() {
-            return super.createTemplateChooser();
-        }
-
-        @Override
-        protected Panel<WizardDescriptor> createTargetChooser() {
-            return super.createTargetChooser();
-        }
-
     }
 }
