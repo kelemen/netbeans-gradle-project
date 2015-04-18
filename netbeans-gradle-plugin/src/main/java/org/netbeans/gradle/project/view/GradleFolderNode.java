@@ -34,6 +34,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.lookup.Lookups;
 
 public final class GradleFolderNode extends AbstractNode {
     private static final TaskExecutor GRADLE_FOLDER_CREATOR
@@ -43,7 +44,7 @@ public final class GradleFolderNode extends AbstractNode {
     private final FileObject dir;
 
     public GradleFolderNode(String caption, FileObject dir) {
-        super(createChildren(dir));
+        super(createChildren(dir), Lookups.fixed(NodeUtils.childrenFileFinder()));
         ExceptionHelper.checkNotNullArgument(caption, "caption");
 
         this.caption = caption;
