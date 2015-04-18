@@ -407,9 +407,7 @@ implements
             return null;
         }
 
-        FileObject targetFile = target instanceof FileObject
-                ? (FileObject)target
-                : null;
+        FileObject targetFile = NodeUtils.tryGetFileSearchTarget(target);
 
         Node[] children = root.getChildren().getNodes(true);
         for (Node child: children) {

@@ -139,8 +139,9 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         @Override
         public Node findPath(Node root, Object target) {
-            return target instanceof FileObject
-                    ? findNodeByFile(root, (FileObject)target)
+            FileObject targetFile = NodeUtils.tryGetFileSearchTarget(target);
+            return targetFile != null
+                    ? findNodeByFile(root, targetFile)
                     : null;
         }
     }

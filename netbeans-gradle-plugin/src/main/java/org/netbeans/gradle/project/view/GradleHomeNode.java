@@ -119,11 +119,11 @@ public final class GradleHomeNode extends AbstractNode {
 
         @Override
         public Node findPath(Node root, Object target) {
-            if (!(target instanceof FileObject)) {
+            FileObject targetFile = NodeUtils.tryGetFileSearchTarget(target);
+            if (targetFile == null) {
                 return null;
             }
 
-            FileObject targetFile = (FileObject)target;
             boolean canBeFound =
                 SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(targetFile.getNameExt())
                 || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(targetFile.getExt());
