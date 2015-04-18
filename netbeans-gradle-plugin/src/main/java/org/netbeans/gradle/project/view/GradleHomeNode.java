@@ -55,7 +55,7 @@ public final class GradleHomeNode extends AbstractNode {
     }
 
     private Action openGradleHomeFile(String name) {
-        File userHome = getUserHome();
+        File userHome = getGradleUserHome();
         File file = userHome != null ? new File(userHome, name) : new File(name);
 
         String caption = NbStrings.getOpenFileCaption(name);
@@ -97,7 +97,7 @@ public final class GradleHomeNode extends AbstractNode {
         return NbStrings.getGradleHomeNodeCaption();
     }
 
-    private static File getUserHome() {
+    private static File getGradleUserHome() {
         return GradleFileUtils.GRADLE_USER_HOME.getValue();
     }
 
@@ -218,7 +218,7 @@ public final class GradleHomeNode extends AbstractNode {
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             hasInitDDirDisplayed = false;
 
-            File userHome = getUserHome();
+            File userHome = getGradleUserHome();
             if (userHome == null) {
                 return;
             }
@@ -260,7 +260,7 @@ public final class GradleHomeNode extends AbstractNode {
             NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) throws Exception {
-                    File userHome = getUserHome();
+                    File userHome = getGradleUserHome();
                     if (userHome != null) {
                         Path initDPath = userHome.toPath().resolve(INIT_D_NAME);
                         Files.createDirectories(initDPath);
