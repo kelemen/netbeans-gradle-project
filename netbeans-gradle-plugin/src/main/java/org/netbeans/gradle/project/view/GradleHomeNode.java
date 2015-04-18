@@ -32,6 +32,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.lookup.Lookups;
 
 public final class GradleHomeNode extends AbstractNode {
     private static final String INIT_GRADLE_NAME = "init.gradle";
@@ -44,7 +45,7 @@ public final class GradleHomeNode extends AbstractNode {
     }
 
     private GradleHomeNode(GradleHomeNodeChildFactory childFactory) {
-        super(Children.create(childFactory, true));
+        super(Children.create(childFactory, true), Lookups.fixed(GradleHomePathFinder.INSTANCE));
 
         this.childFactory = childFactory;
 
