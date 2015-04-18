@@ -25,6 +25,7 @@ import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.nodes.AbstractNode;
@@ -110,6 +111,51 @@ public final class GradleHomeNode extends AbstractNode {
         @Override
         public void actionPerformed(ActionEvent e) {
             childFactory.refreshChildren();
+        }
+    }
+
+    private enum GradleHomePathFinder implements PathFinder {
+        INSTANCE;
+
+        @Override
+        public Node findPath(Node root, Object target) {
+            if (!(target instanceof FileObject)) {
+                return null;
+            }
+
+            FileObject targetFile = (FileObject)target;
+            boolean canBeFound =
+                SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(targetFile.getNameExt())
+                || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(targetFile.getExt());
+            // We have only gradle files and the gradle.properties.
+            if (!canBeFound) {
+                return null;
+            }
+
+            File userHome = getGradleUserHome();
+            if (userHome == null) {
+                // Most likely we could not create the nodes, so
+                // don't bother looking at subnodes.
+                return null;
+            }
+
+            FileObject userHomeObj = FileUtil.toFileObject(userHome);
+            if (userHomeObj == null) {
+                // The directory does not exist, so there should be
+                // no valid node.
+                return null;
+            }
+
+            if (!FileUtil.isParentOf(userHomeObj, targetFile)) {
+                return null;
+            }
+
+            Node result = NodeUtils.findFileChildNode(root.getChildren(), targetFile);
+            if (result != null) {
+                return result;
+            }
+
+            return NodeUtils.findWithChildrenPathFinder(root, target);
         }
     }
 
