@@ -471,6 +471,48 @@ public class MultiLevelJavaProjectTest {
         }
     }
 
+    private static JarOutput getJarOutput(JarOutputsModel jarOutputs, String taskName) {
+        for (JarOutput jar: jarOutputs.getJars()) {
+            if (jar.getTaskName().equals(taskName)) {
+                return jar;
+            }
+        }
+
+        throw new AssertionError("Missing jar task: " + taskName);
+    }
+
+    @Test
+    public void testCustomJarOutputsModel() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JarOutputsModel jarOutputs
+                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                assertNotNull("Must have a JarOutputsModel.", jarOutputs);
+
+                File projectDir = getProjectDir("apps", "app1");
+                String version = getProjectVersion("app1");
+
+                JarOutput testJar = getJarOutput(jarOutputs, "testJar");
+                assertEquals("Output jar must be at the expected location",
+                        getFileInLibs(projectDir, "test-app1-" + version + ".jar"),
+                        testJar.getJar().getCanonicalFile());
+                assertEquals("testJar.name", "testJar", testJar.getTaskName());
+                assertEquals("testJar.sourceSets",
+                        Collections.singleton("test"),
+                        testJar.tryGetSourceSetNames());
+
+                JarOutput customJar = getJarOutput(jarOutputs, "customJar");
+                assertEquals("Output jar must be at the expected location",
+                        getFileInLibs(projectDir, "custom-app1-" + version + ".jar"),
+                        customJar.getJar().getCanonicalFile());
+                assertEquals("customJar.name", "customJar", customJar.getTaskName());
+                assertEquals("customJar.sourceSets",
+                        Collections.singleton("main"),
+                        customJar.tryGetSourceSetNames());
+            }
+        });
+    }
+
     private Map<String, JavaTestTask> nameToTestTask(JavaTestModel testModel) {
         Collection<JavaTestTask> testTasks = testModel.getTestTasks();
         Map<String, JavaTestTask> result = CollectionUtils.newHashMap(testTasks.size());
