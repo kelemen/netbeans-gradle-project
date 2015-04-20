@@ -35,6 +35,7 @@ import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.internal.ConstBuilders;
@@ -140,6 +141,11 @@ public class MultiLevelJavaProjectTest {
 
         String simpleName = genericProperties.getProjectName();
         assertEquals(projectName, simpleName);
+
+        ProjectId projectId = genericProperties.getProjectId();
+        assertEquals("group", "my-group", projectId.getGroup());
+        assertEquals("name", simpleName, projectId.getName());
+        assertEquals("version", getProjectVersion(simpleName), projectId.getVersion());
 
         File projectDir = genericProperties.getProjectDir();
         assertEquals(getProjectDir(projectPathParts), projectDir.getCanonicalFile());
