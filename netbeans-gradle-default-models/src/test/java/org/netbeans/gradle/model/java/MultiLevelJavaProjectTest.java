@@ -260,13 +260,21 @@ public class MultiLevelJavaProjectTest {
         throw new AssertionError("Missing source set: " + sourceSetName);
     }
 
+    private static File getLibraryPath(File projectDir) throws IOException {
+        return getSubPath(projectDir, "build", "libs");
+    }
+
+    private static File getFileInLibs(File projectDir, String... subPaths) throws IOException {
+        return getSubPath(getLibraryPath(projectDir), subPaths);
+    }
+
     private Map<File, String> parseProjectDependencies(String... projectDependencies) throws IOException {
         Map<File, String> result = CollectionUtils.newHashMap(projectDependencies.length);
         for (String dep: projectDependencies) {
             String[] nameParts = dep.split(Pattern.quote(":"));
             String name = nameParts[nameParts.length - 1];
             File projectDir = getProjectDir(nameParts);
-            result.put(getSubPath(projectDir, "build", "libs", name + ".jar"), dep);
+            result.put(getFileInLibs(projectDir, name + "-" + getProjectVersion(name) + ".jar"), dep);
         }
         return result;
     }
@@ -424,11 +432,15 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    private static String getProjectVersion(String name) {
+        return "app1".equals(name) ? "5.95.3-beta" : "3.5.78-alpha";
+    }
+
     private void testJarOutputsModel(String relativeProjectPath) throws IOException {
         String[] projectPathParts = relativeProjectPath.split(Pattern.quote(":"));
         String name = projectPathParts[projectPathParts.length - 1];
         File projectDir = getProjectDir(projectPathParts);
-        final File expectedJarPath = getSubPath(projectDir, "build", "libs", name + ".jar");
+        final File expectedJarPath = getFileInLibs(projectDir, name + "-" + getProjectVersion(name) + ".jar");
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
@@ -447,6 +459,7 @@ public class MultiLevelJavaProjectTest {
                 assertNotNull("Project must contain a main jar.", mainJar);
                 assertEquals("Output jar must be at the expected location",
                         expectedJarPath, mainJar.getJar().getCanonicalFile());
+                assertNull("mainJar.tryGetSourceSetNames", mainJar.tryGetSourceSetNames());
             }
         });
     }
