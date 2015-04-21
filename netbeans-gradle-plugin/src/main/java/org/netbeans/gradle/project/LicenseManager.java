@@ -121,7 +121,8 @@ public final class LicenseManager {
             return;
         }
 
-        licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
+        FileObject templateFile = licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
+        templateFile.setAttribute("displayName", registration.key.name);
     }
 
     private void doUnregister(final LicenseKey key) {
