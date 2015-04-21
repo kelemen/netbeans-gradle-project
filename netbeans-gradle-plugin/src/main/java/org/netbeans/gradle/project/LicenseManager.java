@@ -108,7 +108,9 @@ public final class LicenseManager {
         }
 
         project.waitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN);
-        Path licenseTemplateFile = registration.key.getAbsoluteSrcFile(project.currentModel().getValue());
+        NbGradleModel currentModel = project.currentModel().getValue();
+
+        Path licenseTemplateFile = registration.key.getAbsoluteSrcFile(currentModel);
         licenseTemplateFile = licenseTemplateFile.normalize();
 
         if (licenseTemplateFile.getNameCount() == 0) {
@@ -123,7 +125,9 @@ public final class LicenseManager {
 
         FileObject templateFile = licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
         templateFile.setAttribute("template", true);
-        templateFile.setAttribute("displayName", registration.key.name);
+
+        String projectName = currentModel.getMainProject().getGenericProperties().getProjectFullName();
+        templateFile.setAttribute("displayName", registration.key.name + "(" + projectName + ")");
     }
 
     private void doUnregister(final LicenseKey key) {
