@@ -3,10 +3,12 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.security.SecureRandom;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
@@ -17,23 +19,54 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.util.CloseableAction;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class LicenseManager {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
+    private static final Random RND = new SecureRandom();
+
+    private static final LicenseManager DEFAULT = new LicenseManager();
 
     private static final MonitorableTaskExecutor SYNC_EXECUTOR
             = NbTaskExecutors.newDefaultFifoExecutor();
 
-    // The key File does not contain a path we only use File to properly
-    // use case insensitivity if required.
-    private final Map<File, AtomicInteger> useCount;
+    private final Map<LicenseKey, RegisteredLicense> licenseRegistartions;
 
-    public LicenseManager() {
-        this.useCount = new HashMap<>();
+    private LicenseManager() {
+        this.licenseRegistartions = new ConcurrentHashMap<>();
+    }
+
+    public static LicenseManager getDefault() {
+        return DEFAULT;
+    }
+
+    public String tryGetRegisteredLicenseName(NbGradleProject project, LicenseHeaderInfo headerInfo) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(headerInfo, "headerInfo");
+
+        LicenseKey key = new LicenseKey(project, headerInfo);
+        RegisteredLicense registration = licenseRegistartions.get(key);
+        String licenseName = registration != null
+                ? registration.privateName
+                : headerInfo.getLicenseName();
+
+        FileObject licenseRoot = getLicenseRoot();
+        if (licenseRoot == null) {
+            LOGGER.warning("License root does not exist.");
+            return null;
+        }
+
+        String fileName = toLicenseFileName(licenseName);
+        if (FileUtil.getConfigFile("Templates/Licenses/" + fileName) == null) {
+            return null;
+        }
+
+        return licenseName;
     }
 
     private FileObject getLicenseRoot() {
@@ -43,7 +76,7 @@ public final class LicenseManager {
                 : null;
     }
 
-    private void removeLicense(File file) throws IOException {
+    private void removeLicense(RegisteredLicense registration) throws IOException {
         assert SYNC_EXECUTOR.isExecutingInThis();
 
         FileObject licenseRoot = getLicenseRoot();
@@ -52,15 +85,15 @@ public final class LicenseManager {
             return;
         }
 
-        FileObject licenseFile = licenseRoot.getFileObject(file.getPath());
+        FileObject licenseFile = licenseRoot.getFileObject(registration.baseFileName);
         if (licenseFile == null) {
-            LOGGER.log(Level.INFO, "License file does not exist: {0}", file);
+            LOGGER.log(Level.INFO, "License file does not exist: {0}", registration.baseFileName);
             return;
         }
         licenseFile.delete();
     }
 
-    private void addLicense(File file, NbGradleProject project, LicenseHeaderInfo header) throws IOException {
+    private void addLicense(NbGradleProject project, RegisteredLicense registration) throws IOException {
         assert SYNC_EXECUTOR.isExecutingInThis();
 
         FileObject licenseRoot = getLicenseRoot();
@@ -69,18 +102,15 @@ public final class LicenseManager {
             return;
         }
 
-        if (licenseRoot.getFileObject(file.getPath()) != null) {
-            LOGGER.log(Level.INFO, "License file already exists: {0}", file);
+        if (licenseRoot.getFileObject(registration.baseFileName) != null) {
+            LOGGER.log(Level.INFO, "License file already exists: {0}", registration.baseFileName);
             return;
         }
 
         project.waitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN);
-        Path licenseTemplateFile = header.getLicenseTemplateFile(project);
-        if (licenseTemplateFile == null) {
-            return;
-        }
-
+        Path licenseTemplateFile = registration.key.getAbsoluteSrcFile(project.currentModel().getValue());
         licenseTemplateFile = licenseTemplateFile.normalize();
+
         if (licenseTemplateFile.getNameCount() == 0) {
             return;
         }
@@ -91,42 +121,39 @@ public final class LicenseManager {
             return;
         }
 
-        licenseTemplateSrc.copy(licenseRoot, file.getPath(), "");
+        licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
     }
 
-    private void doUnregister(final File file) {
+    private void doUnregister(final LicenseKey key) {
         SYNC_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
-                AtomicInteger fileCount = useCount.get(file);
-                if (fileCount == null) {
+                RegisteredLicense registration = licenseRegistartions.get(key);
+                if (registration == null) {
                     LOGGER.log(Level.WARNING, "Too many unregister call to LicenseManager.", new Exception());
                     return;
                 }
 
-                if (fileCount.decrementAndGet() == 0) {
-                    useCount.remove(file);
-                    removeLicense(file);
+                if (registration.release()) {
+                    licenseRegistartions.remove(key);
+                    removeLicense(registration);
                 }
             }
         }, null);
     }
 
-    private void doRegister(final File file, final NbGradleProject project, final LicenseHeaderInfo header) {
+    private void doRegister(final NbGradleProject project, final LicenseKey key) {
         SYNC_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
-                AtomicInteger fileCount = useCount.get(file);
-                if (fileCount == null) {
-                    fileCount = new AtomicInteger(1);
-                    useCount.put(file, fileCount);
+                RegisteredLicense registration = licenseRegistartions.get(key);
+                if (registration == null) {
+                    registration = new RegisteredLicense(key);
+                    licenseRegistartions.put(key, registration);
+                    addLicense(project, registration);
                 }
                 else {
-                    fileCount.incrementAndGet();
-                }
-
-                if (fileCount.get() == 1) {
-                    addLicense(file, project, header);
+                    registration.use();
                 }
             }
         }, null);
@@ -166,12 +193,14 @@ public final class LicenseManager {
             return CloseableAction.CLOSED_REF;
         }
 
-        if (header.getLicenseTemplateFile() == null) {
+        final Path templateFile = header.getLicenseTemplateFile();
+        if (templateFile == null) {
             return CloseableAction.CLOSED_REF;
         }
 
-        final File licenseFile = getLicenseFileName(project, header);
-        doRegister(licenseFile, project, header);
+        final LicenseKey key = new LicenseKey(project, header);
+
+        doRegister(project, key);
 
         return new CloseableAction.Ref() {
             private final AtomicBoolean unregistered = new AtomicBoolean(false);
@@ -179,13 +208,78 @@ public final class LicenseManager {
             @Override
             public void close() {
                 if (unregistered.compareAndSet(false, true)) {
-                    doUnregister(licenseFile);
+                    doUnregister(key);
                 }
             }
         };
     }
 
-    private static File getLicenseFileName(NbGradleProject project, LicenseHeaderInfo header) {
-        return new File("license-" + header.getPrivateLicenseName(project) + ".txt");
+    private static String toLicenseFileName(String licenseName) {
+        // This naming patter in required by NetBeans
+        return "license-" + licenseName + ".txt";
+    }
+
+    private static final class LicenseKey {
+        private final Path projectDir;
+        private final Path srcFile;
+        private final String name;
+
+        public LicenseKey(NbGradleProject project, LicenseHeaderInfo headerInfo) {
+            this.projectDir = project.getProjectDirectoryAsFile().toPath();
+            this.srcFile = headerInfo.getLicenseTemplateFile();
+            this.name = headerInfo.getLicenseName();
+        }
+
+        public Path getAbsoluteSrcFile(NbGradleModel currentModel) {
+            File rootProjectDir = currentModel.getRootProjectDir();
+            return rootProjectDir.toPath().resolve(srcFile);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 97 * hash + Objects.hashCode(this.projectDir);
+            hash = 97 * hash + Objects.hashCode(this.srcFile);
+            hash = 97 * hash + Objects.hashCode(this.name);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final LicenseKey other = (LicenseKey)obj;
+            return Objects.equals(this.name, other.name)
+                    && Objects.equals(this.srcFile, other.srcFile)
+                    && Objects.equals(this.projectDir, other.projectDir);
+        }
+    }
+
+    private static final class RegisteredLicense {
+        private final LicenseKey key;
+        private final String privateName;
+        private final String baseFileName;
+        private int useCount;
+
+        public RegisteredLicense(LicenseKey key) {
+            this.key = key;
+            this.useCount = 1;
+
+            String safeName = NbFileUtils.toSafeFileName(key.name);
+            String randomStr = Long.toHexString(RND.nextLong()) + "-" + Long.toHexString(RND.nextLong());
+            this.privateName = "nb-gradle-" + safeName + "-" + randomStr;
+            // This naming patter in required by NetBeans
+            this.baseFileName = toLicenseFileName(privateName);
+        }
+
+        public void use() {
+            useCount++;
+        }
+
+        public boolean release() {
+            useCount--;
+            return useCount <= 0;
+        }
     }
 }

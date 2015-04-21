@@ -83,8 +83,6 @@ import org.openide.util.lookup.ProxyLookup;
 public final class NbGradleProject implements Project {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
 
-    private static final LicenseManager LICENSE_MANAGER = new LicenseManager();
-
     private final FileObject projectDir;
     private final File projectDirAsFile;
 
@@ -558,7 +556,7 @@ public final class NbGradleProject implements Project {
                 return;
             }
 
-            this.closeableActions.defineAction(LICENSE_MANAGER.getRegisterListenerAction(
+            this.closeableActions.defineAction(LicenseManager.getDefault().getRegisterListenerAction(
                     NbGradleProject.this,
                     getCommonProperties().licenseHeaderInfo().getActiveSource()));
 
