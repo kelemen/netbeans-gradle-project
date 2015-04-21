@@ -238,7 +238,7 @@ public class ProfileSettingsTest {
 
         assertEquals("LicenseName", "my-license", value.getLicenseName());
         assertEquals("organization", Collections.singletonMap("organization", "MyCompany"), value.getProperties());
-        assertEquals("FileName", "license2.txt", value.getLicenseTemplateFile().getName());
+        assertEquals("FileName", "license2.txt", value.getLicenseTemplateFile().getFileName().toString());
 
         license.setValue(null);
         assertNull("LicenseHeaderInfo", license.getValue());

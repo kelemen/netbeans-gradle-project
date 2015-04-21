@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -44,8 +46,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
 
             jLicenseNameEdit.setText(info.getLicenseName());
 
-            File licenseTemplate = info.getLicenseTemplateFile();
-            jLicenseTemplateEdit.setText(licenseTemplate != null ? licenseTemplate.getPath() : "");
+            Path licenseTemplate = info.getLicenseTemplateFile();
+            jLicenseTemplateEdit.setText(licenseTemplate != null ? licenseTemplate.toString() : "");
         }
     }
 
@@ -56,7 +58,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         }
 
         String template = jLicenseTemplateEdit.getText().trim();
-        File templateFile = template.isEmpty() ? null : new File(template);
+        Path templateFile = template.isEmpty() ? null : Paths.get(template);
 
         String organization = jOrganizationEdit.getText().trim();
 

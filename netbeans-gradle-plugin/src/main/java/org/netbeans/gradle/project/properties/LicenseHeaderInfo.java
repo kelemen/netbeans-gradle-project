@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,12 +16,12 @@ public final class LicenseHeaderInfo {
     private final String licenseName;
     private final String privateName;
     private final Map<String, String> properties;
-    private final File licenseTemplateFile;
+    private final Path licenseTemplateFile;
 
     public LicenseHeaderInfo(
             String licenseName,
             Map<String, String> properties,
-            File licenseTemplateFile) {
+            Path licenseTemplateFile) {
         ExceptionHelper.checkNotNullArgument(licenseName, "licenseName");
         ExceptionHelper.checkNotNullArgument(properties, "properties");
 
@@ -32,11 +33,11 @@ public final class LicenseHeaderInfo {
         this.privateName = "nb-gradle-" + safeLicenseName(licenseName) + "-" + randomStr;
     }
 
-    public File getLicenseTemplateFile() {
+    public Path getLicenseTemplateFile() {
         return licenseTemplateFile;
     }
 
-    public File getLicenseTemplateFile(NbGradleProject project) {
+    public Path getLicenseTemplateFile(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         if (licenseTemplateFile == null) {
@@ -48,7 +49,7 @@ public final class LicenseHeaderInfo {
         }
 
         File rootProjectDir = project.currentModel().getValue().getRootProjectDir();
-        return new File(rootProjectDir, licenseTemplateFile.getPath());
+        return rootProjectDir.toPath().resolve(licenseTemplateFile);
     }
 
     private static boolean isSafeChar(char ch) {

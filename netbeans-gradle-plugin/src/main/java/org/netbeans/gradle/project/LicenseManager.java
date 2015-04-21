@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,12 +75,17 @@ public final class LicenseManager {
         }
 
         project.waitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN);
-        File licenseTemplateFile = FileUtil.normalizeFile(header.getLicenseTemplateFile(project));
+        Path licenseTemplateFile = header.getLicenseTemplateFile(project);
         if (licenseTemplateFile == null) {
             return;
         }
 
-        FileObject licenseTemplateSrc = FileUtil.toFileObject(licenseTemplateFile);
+        licenseTemplateFile = licenseTemplateFile.normalize();
+        if (licenseTemplateFile.getNameCount() == 0) {
+            return;
+        }
+
+        FileObject licenseTemplateSrc = FileUtil.toFileObject(licenseTemplateFile.toFile());
         if (licenseTemplateSrc == null) {
             LOGGER.log(Level.WARNING, "Missing license template file: {0}", licenseTemplateFile);
             return;
