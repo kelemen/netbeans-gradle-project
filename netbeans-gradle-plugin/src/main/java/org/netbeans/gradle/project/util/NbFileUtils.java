@@ -28,6 +28,25 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class NbFileUtils {
+    private static boolean isSafeChar(char ch) {
+        if (ch >= 'A' && ch <= 'Z') return true;
+        if (ch >= 'a' && ch <= 'z') return true;
+        if (ch >= '0' && ch <= '9') return true;
+
+        return "_-$. ".indexOf(ch) >= 0;
+    }
+
+    public static String toSafeFileName(String name) {
+        ExceptionHelper.checkNotNullArgument(name, "name");
+
+        StringBuilder result = new StringBuilder(name.length());
+        for (int i = 0; i < name.length(); i++) {
+            char ch = name.charAt(i);
+            result.append(isSafeChar(ch) ? ch : "_");
+        }
+        return result.toString();
+    }
+
     public static ListenerRef addDirectoryContentListener(
             final FileObject dir,
             final Runnable listener) {
