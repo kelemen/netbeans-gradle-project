@@ -45,7 +45,6 @@ import org.netbeans.gradle.project.properties.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
-import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
@@ -67,7 +66,7 @@ import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
-import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
@@ -545,40 +544,30 @@ public final class NbGradleProject implements Project {
         return this.projectDir.equals(other.projectDir);
     }
 
-    // SwingUtilities.invokeLater is used only to guarantee the order of events.
-    // Actually any executor which executes tasks in the order they were
-    // submitted to it is good (using SwingUtilities.invokeLater was only
-    // convenient to use because registering paths is cheap enough).
     private class OpenHook extends ProjectOpenedHook {
-        private final ListenerRegistrations openedRefs;
-        private LicenseManager.Ref licenseRef;
-        private boolean opened;
+        private final CloseableActionContainer closeableActions;
+        private final AtomicBoolean initialized;
 
         public OpenHook() {
-            this.opened = false;
-
-            this.licenseRef = null;
-            this.openedRefs = new ListenerRegistrations();
+            this.closeableActions = new CloseableActionContainer();
+            this.initialized = new AtomicBoolean(false);
         }
 
-        private void registerLicenseNow() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            if (licenseRef != null) {
-                licenseRef.unregister();
+        private void ensureInitialized() {
+            if (!initialized.compareAndSet(false, true)) {
+                return;
             }
 
-            licenseRef = LICENSE_MANAGER.registerLicense(
+            this.closeableActions.defineAction(LICENSE_MANAGER.getRegisterListenerAction(
                     NbGradleProject.this,
-                    getCommonProperties().licenseHeaderInfo().getActiveValue());
-        }
+                    getCommonProperties().licenseHeaderInfo().getActiveSource()));
 
-        public void registerLicense() {
-            SwingUtilities.invokeLater(new Runnable() {
+            final ModelRetrievedListenerImpl modelRetrievedListenerImpl = new ModelRetrievedListenerImpl();
+            this.closeableActions.defineEventAction(GradleModelLoader.getModelLoadListenerRegistry(), new ModelLoadListener() {
                 @Override
-                public void run() {
-                    if (opened) {
-                        registerLicenseNow();
+                public void modelLoaded(NbGradleModel model) {
+                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
+                        modelRetrievedListenerImpl.onComplete(model, null);
                     }
                 }
             });
@@ -586,51 +575,15 @@ public final class NbGradleProject implements Project {
 
         @Override
         protected void projectOpened() {
-            openedRefs.unregisterAll();
+            ensureInitialized();
 
-            openedRefs.add(GradleModelLoader.addModelLoadedListener(new ModelLoadListener() {
-                @Override
-                public void modelLoaded(NbGradleModel model) {
-                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-                        new ModelRetrievedListenerImpl().onComplete(model, null);
-                    }
-                }
-            }));
+            closeableActions.open();
             reloadProject(true);
-
-            PropertySource<LicenseHeaderInfo> licenseHeaderInfo = getCommonProperties().licenseHeaderInfo().getActiveSource();
-
-            openedRefs.add(licenseHeaderInfo.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    registerLicense();
-                }
-            }));
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    opened = true;
-                    registerLicenseNow();
-                }
-            });
         }
 
         @Override
         protected void projectClosed() {
-            openedRefs.unregisterAll();
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    opened = false;
-
-                    if (licenseRef != null) {
-                        licenseRef.unregister();
-                        licenseRef = null;
-                    }
-                }
-            });
+            closeableActions.close();
         }
     }
 

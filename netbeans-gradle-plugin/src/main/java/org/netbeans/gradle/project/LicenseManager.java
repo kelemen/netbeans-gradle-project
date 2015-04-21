@@ -12,8 +12,12 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutor;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
+import org.netbeans.gradle.project.util.CloseableAction;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -122,25 +126,52 @@ public final class LicenseManager {
         }, null);
     }
 
-    public Ref registerLicense(NbGradleProject project, LicenseHeaderInfo header) {
+    private CloseableAction getRegisterListenerAction(
+            final NbGradleProject project,
+            final LicenseHeaderInfo header) {
+        assert project != null;
+
+        return new CloseableAction() {
+            @Override
+            public CloseableAction.Ref open() {
+                return registerLicense(project, header);
+            }
+        };
+    }
+
+    public PropertySource<CloseableAction> getRegisterListenerAction(
+            final NbGradleProject project,
+            PropertySource<? extends LicenseHeaderInfo> headerProperty) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(headerProperty, "headerProperty");
+
+        return PropertyFactory.convert(headerProperty, new ValueConverter<LicenseHeaderInfo, CloseableAction>() {
+            @Override
+            public CloseableAction convert(LicenseHeaderInfo input) {
+                return getRegisterListenerAction(project, input);
+            }
+        });
+    }
+
+    private CloseableAction.Ref registerLicense(NbGradleProject project, LicenseHeaderInfo header) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         if (header == null) {
-            return NoOpRef.INSTANCE;
+            return CloseableAction.CLOSED_REF;
         }
 
         if (header.getLicenseTemplateFile() == null) {
-            return NoOpRef.INSTANCE;
+            return CloseableAction.CLOSED_REF;
         }
 
         final File licenseFile = getLicenseFileName(project, header);
         doRegister(licenseFile, project, header);
 
-        return new Ref() {
+        return new CloseableAction.Ref() {
             private final AtomicBoolean unregistered = new AtomicBoolean(false);
 
             @Override
-            public void unregister() {
+            public void close() {
                 if (unregistered.compareAndSet(false, true)) {
                     doUnregister(licenseFile);
                 }
@@ -150,17 +181,5 @@ public final class LicenseManager {
 
     private static File getLicenseFileName(NbGradleProject project, LicenseHeaderInfo header) {
         return new File("license-" + header.getPrivateLicenseName(project) + ".txt");
-    }
-
-    private enum NoOpRef implements Ref {
-        INSTANCE;
-
-        @Override
-        public void unregister() {
-        }
-    }
-
-    public static interface Ref {
-        public void unregister();
     }
 }
