@@ -122,6 +122,7 @@ public final class LicenseManager {
         }
 
         FileObject templateFile = licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
+        templateFile.setAttribute("template", true);
         templateFile.setAttribute("displayName", registration.key.name);
     }
 
