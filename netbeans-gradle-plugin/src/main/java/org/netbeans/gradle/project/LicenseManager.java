@@ -127,7 +127,7 @@ public final class LicenseManager {
         templateFile.setAttribute("template", true);
 
         String projectName = currentModel.getMainProject().getGenericProperties().getProjectFullName();
-        templateFile.setAttribute("displayName", registration.key.name + "(" + projectName + ")");
+        templateFile.setAttribute("displayName", registration.key.name + " (" + projectName + ")");
     }
 
     private void doUnregister(final LicenseKey key) {
