@@ -35,6 +35,7 @@ import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -79,6 +80,10 @@ public final class GradleModelLoader {
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
+
+    public static ListenerRegistry<ModelLoadListener> getModelLoadListenerRegistry() {
+        return LISTENERS;
+    }
 
     public static ListenerRef addModelLoadedListener(final ModelLoadListener listener) {
         return LISTENERS.registerListener(listener);
