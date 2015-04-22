@@ -2,9 +2,11 @@ package org.netbeans.gradle.project.properties;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Test;
 
@@ -41,18 +43,50 @@ public class NbPropertiesTest {
         AtomicReference<ListenerRef> listenerRef = new AtomicReference<>(null);
         final AtomicInteger listenerCallCount = new AtomicInteger(0);
 
-        MutableProperty<Integer> property = PropertyFactory.memProperty(0);
+        TestProperty<Integer> property = new TestProperty<>(0);
         addWeakListener(property, listenerCallCount, listenerRef);
 
         runGC();
 
         property.setValue(1);
         assertEquals("expected call count", 1, listenerCallCount.get());
+        assertEquals("listener count", 1, property.getListenerCount());
 
         listenerRef.set(null);
         runGC();
 
         property.setValue(2);
         assertEquals("expected call count", 1, listenerCallCount.get());
+        assertEquals("listener count", 0, property.getListenerCount());
+    }
+
+    private static final class TestProperty<ValueType> implements MutableProperty<ValueType> {
+        private volatile ValueType value;
+        private final ListenerManager<Runnable> listeners;
+
+        public TestProperty(ValueType value) {
+            this.value = value;
+            this.listeners = new CopyOnTriggerListenerManager<>();
+        }
+
+        public int getListenerCount() {
+            return listeners.getListenerCount();
+        }
+
+        @Override
+        public void setValue(ValueType value) {
+            this.value = value;
+            EventListeners.dispatchRunnable(listeners);
+        }
+
+        @Override
+        public ValueType getValue() {
+            return value;
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return listeners.registerListener(listener);
+        }
     }
 }
