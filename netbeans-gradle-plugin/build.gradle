@@ -145,7 +145,6 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile project(':netbeans-gradle-default-models')
 
-    compile 'org.gradle:gradle-tooling-api:1.11'
     compile 'org.jtrim:jtrim-gui:1.7.3'
     compile 'org.jtrim:jtrim-async:1.7.3'
     compile 'org.jtrim:jtrim-core:1.7.3'
