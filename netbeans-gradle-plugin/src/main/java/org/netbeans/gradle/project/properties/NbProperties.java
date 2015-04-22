@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
@@ -19,6 +20,10 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbFunction;
 
 public final class NbProperties {
+    public static <Value> PropertySource<Value> weakListenerProperty(PropertySource<? extends Value> src) {
+        return new WeakListenerProperty<>(src);
+    }
+
     public static SimpleListenerRegistry<Runnable> asChangeListenerRegistry(
             final PropertySource<?> property) {
         ExceptionHelper.checkNotNullArgument(property, "property");
@@ -139,5 +144,71 @@ public final class NbProperties {
                 eventListener.stateChanged(event);
             }
         });
+    }
+
+    private static class ReferenceHolderListenerRef implements ListenerRef {
+        private final Runnable listener;
+        private final ListenerRef wrappedRef;
+
+        public ReferenceHolderListenerRef(Runnable listener, ListenerRef wrappedRef) {
+            // We won't do anything useful with listener, just storing a reference
+            // to it to prevent it from being garbage collected.
+            this.listener = listener;
+            this.wrappedRef = wrappedRef;
+        }
+
+        public Runnable getListener() {
+            return listener;
+        }
+
+        @Override
+        public boolean isRegistered() {
+            return wrappedRef.isRegistered();
+        }
+
+        @Override
+        public void unregister() {
+            wrappedRef.unregister();
+        }
+
+        @Override
+        @SuppressWarnings("FinalizeDeclaration")
+        protected void finalize() throws Throwable {
+            wrappedRef.unregister();
+            super.finalize();
+        }
+    }
+
+    private static class WeakListenerProperty<Value> implements PropertySource<Value> {
+        private final PropertySource<? extends Value> src;
+
+        public WeakListenerProperty(PropertySource<? extends Value> src) {
+            ExceptionHelper.checkNotNullArgument(src, "src");
+
+            this.src = src;
+        }
+
+        @Override
+        public Value getValue() {
+            return src.getValue();
+        }
+
+        @Override
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+            final WeakReference<Runnable> listenerRef = new WeakReference<>(listener);
+            ListenerRef result = src.addChangeListener(new Runnable() {
+                @Override
+                public void run() {
+                    Runnable listener = listenerRef.get();
+                    if (listener != null) {
+                        listener.run();
+                    }
+                }
+            });
+
+            return new ReferenceHolderListenerRef(listener, result);
+        }
     }
 }
