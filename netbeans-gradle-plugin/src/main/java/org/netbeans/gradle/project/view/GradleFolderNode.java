@@ -25,6 +25,7 @@ import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataFolder;
@@ -34,6 +35,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleFolderNode extends AbstractNode {
@@ -44,7 +46,22 @@ public final class GradleFolderNode extends AbstractNode {
     private final FileObject dir;
 
     public GradleFolderNode(String caption, FileObject dir) {
-        super(createChildren(dir), Lookups.fixed(NodeUtils.childrenFileFinder()));
+        this(caption, dir, new ChildFactoryImpl(dir));
+    }
+
+    private GradleFolderNode(
+            String caption,
+            FileObject dir,
+            ChildFactoryImpl childFactory) {
+        this(caption, dir, childFactory, Children.create(childFactory, true));
+    }
+
+    private GradleFolderNode(
+            String caption,
+            FileObject dir,
+            ChildFactoryImpl childFactory,
+            Children children) {
+        super(children, createLookup(childFactory, children));
         ExceptionHelper.checkNotNullArgument(caption, "caption");
 
         this.caption = caption;
@@ -60,8 +77,10 @@ public final class GradleFolderNode extends AbstractNode {
         return new FactoryImpl(caption, dir);
     }
 
-    private static Children createChildren(FileObject dir) {
-        return Children.create(new ChildFactoryImpl(dir), true);
+    private static Lookup createLookup(ChildFactoryImpl childFactory, Children children) {
+        return Lookups.fixed(
+                NodeUtils.childrenFileFinder(),
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     @Override
@@ -82,7 +101,9 @@ public final class GradleFolderNode extends AbstractNode {
     @Override
     public Action[] getActions(boolean context) {
         return new Action[] {
-            new CreateGradleFileTask(dir)
+            new CreateGradleFileTask(dir),
+            null,
+            NodeUtils.getRefreshNodeAction(this)
         };
     }
 
@@ -129,15 +150,26 @@ public final class GradleFolderNode extends AbstractNode {
 
     private static class ChildFactoryImpl
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
         private final FileObject dir;
         private final ListenerRegistrations listenerRegistrations;
+        private volatile boolean createdOnce;
 
         public ChildFactoryImpl(FileObject dir) {
             ExceptionHelper.checkNotNullArgument(dir, "dir");
 
             this.dir = dir;
             this.listenerRegistrations = new ListenerRegistrations();
+            this.createdOnce = false;
+        }
+
+        @Override
+        public void refreshChildren() {
+            if (createdOnce) {
+                refresh(false);
+            }
         }
 
         @Override
@@ -145,7 +177,7 @@ public final class GradleFolderNode extends AbstractNode {
             listenerRegistrations.add(NbFileUtils.addDirectoryContentListener(dir, new Runnable() {
                 @Override
                 public void run() {
-                    refresh(false);
+                    refreshChildren();
                 }
             }));
         }
@@ -181,6 +213,7 @@ public final class GradleFolderNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+            createdOnce = true;
             readKeys(toPopulate);
             return true;
         }

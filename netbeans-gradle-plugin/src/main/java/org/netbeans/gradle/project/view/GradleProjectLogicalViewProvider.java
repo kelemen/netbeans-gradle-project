@@ -66,6 +66,7 @@ import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataFolder;
+import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
@@ -175,8 +176,8 @@ implements
         return result;
     }
 
-    private Lookup createLookup(Node rootNode, GradleProjectChildFactory childFactory) {
-        NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(rootNode.getChildren(), childFactory);
+    private Lookup createLookup(Node rootNode, GradleProjectChildFactory childFactory, Children children) {
+        NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
         return new ProxyLookup(
                 project.getLookup(),
                 rootNode.getLookup(),
@@ -246,7 +247,14 @@ implements
         }
 
         private GradleProjectNode(Node node, GradleProjectChildFactory childFactory) {
-            super(node, Children.create(childFactory, false), createLookup(node, childFactory));
+            this(node, childFactory, Children.create(childFactory, false));
+        }
+
+        private GradleProjectNode(
+                Node node,
+                GradleProjectChildFactory childFactory,
+                org.openide.nodes.Children children) {
+            super(node, children, createLookup(node, childFactory, children));
 
             updateActionsList();
         }

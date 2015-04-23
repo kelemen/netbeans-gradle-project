@@ -25,6 +25,7 @@ import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -32,6 +33,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleHomeNode extends AbstractNode {
@@ -45,11 +47,21 @@ public final class GradleHomeNode extends AbstractNode {
     }
 
     private GradleHomeNode(GradleHomeNodeChildFactory childFactory) {
-        super(Children.create(childFactory, true), Lookups.fixed(GradleHomePathFinder.INSTANCE));
+        this(childFactory, Children.create(childFactory, true));
+    }
+
+    private GradleHomeNode(GradleHomeNodeChildFactory childFactory, Children children) {
+        super(children, createLookup(childFactory, children));
 
         this.childFactory = childFactory;
 
         setName(getClass().getSimpleName());
+    }
+
+    private static Lookup createLookup(GradleHomeNodeChildFactory childFactory, Children children) {
+        return Lookups.fixed(
+                GradleHomePathFinder.INSTANCE,
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     public static SingleNodeFactory getFactory() {
@@ -79,7 +91,7 @@ public final class GradleHomeNode extends AbstractNode {
             result.add(new CreateInitDAction());
         }
         result.add(null);
-        result.add(new RefreshNodesAction());
+        result.add(NodeUtils.getRefreshNodeAction(this));
 
         return result.toArray(new Action[result.size()]);
     }
@@ -101,18 +113,6 @@ public final class GradleHomeNode extends AbstractNode {
 
     private static File getGradleUserHome() {
         return GradleFileUtils.GRADLE_USER_HOME.getValue();
-    }
-
-    @SuppressWarnings("serial") // don't care about serialization
-    private class RefreshNodesAction extends AbstractAction {
-        public RefreshNodesAction() {
-            super(NbStrings.getScanForChangesCaption());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            childFactory.refreshChildren();
-        }
     }
 
     private enum GradleHomePathFinder implements PathFinder {
@@ -162,19 +162,26 @@ public final class GradleHomeNode extends AbstractNode {
 
     private static class GradleHomeNodeChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
         private final ListenerRegistrations listenerRefs;
         private final ProxyListenerRegistry<Runnable> userHomeChangeListeners;
         private volatile boolean hasInitDDirDisplayed;
+        private volatile boolean createdOnce;
 
         public GradleHomeNodeChildFactory() {
             this.listenerRefs = new ListenerRegistrations();
             this.userHomeChangeListeners = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
             this.hasInitDDirDisplayed = false;
+            this.createdOnce = false;
         }
 
+        @Override
         public void refreshChildren() {
-            refresh(false);
+            if (createdOnce) {
+                refresh(false);
+            }
         }
 
         private FileObject tryGetUserHomeObj() {
@@ -277,6 +284,7 @@ public final class GradleHomeNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+            createdOnce = true;
             readKeys(toPopulate);
             return true;
         }
