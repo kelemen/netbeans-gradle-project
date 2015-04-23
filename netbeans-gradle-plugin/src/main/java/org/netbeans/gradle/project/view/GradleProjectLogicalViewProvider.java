@@ -42,12 +42,11 @@ import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.event.ChangeListenerManager;
-import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
@@ -67,7 +66,6 @@ import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataFolder;
-import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
@@ -76,6 +74,7 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class GradleProjectLogicalViewProvider
@@ -87,22 +86,12 @@ implements
 
     private final ListenerManager<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
-    private final ChangeListenerManager refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
-        this.refreshRequestListeners = GenericChangeListenerManager.getSwingNotifier();
-    }
-
-    public void refreshProjectNode() {
-        refreshRequestListeners.fireEventually();
-    }
-
-    public ListenerRef addRefreshRequestListeners(Runnable listener) {
-        return refreshRequestListeners.registerListener(listener);
     }
 
     public ListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
@@ -186,14 +175,12 @@ implements
         return result;
     }
 
-    private Children createChildren() {
-        return Children.create(new GradleProjectChildFactory(project, this), false);
-    }
-
-    private Lookup createLookup(Node rootNode) {
+    private Lookup createLookup(Node rootNode, GradleProjectChildFactory childFactory) {
+        NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(rootNode.getChildren(), childFactory);
         return new ProxyLookup(
                 project.getLookup(),
-                rootNode.getLookup());
+                rootNode.getLookup(),
+                Lookups.fixed(nodeRefresher));
     }
 
     private static <T> List<T> trimNulls(List<T> list) {
@@ -255,7 +242,11 @@ implements
         private volatile Action[] actions;
 
         public GradleProjectNode(Node node) {
-            super(node, createChildren(), createLookup(node));
+            this(node, new GradleProjectChildFactory(project, GradleProjectLogicalViewProvider.this));
+        }
+
+        private GradleProjectNode(Node node, GradleProjectChildFactory childFactory) {
+            super(node, Children.create(childFactory, false), createLookup(node, childFactory));
 
             updateActionsList();
         }
@@ -296,7 +287,7 @@ implements
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
-            projectActions.add(new RefreshNodesAction());
+            projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
             projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
@@ -572,18 +563,6 @@ implements
                     executeCommandTemplate(project, commandTemplate);
                 }
             }
-        }
-    }
-
-    @SuppressWarnings("serial") // don't care about serialization
-    private class RefreshNodesAction extends AbstractAction {
-        public RefreshNodesAction() {
-            super(NbStrings.getRefreshNodeCommandCaption());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            refreshProjectNode();
         }
     }
 

@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,8 +9,13 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -24,6 +30,43 @@ import org.openide.nodes.NodeOp;
 
 public final class NodeUtils {
     private static final Logger LOGGER = Logger.getLogger(NodeUtils.class.getName());
+
+    public static NodeRefresher defaultNodeRefresher(
+            final Children children,
+            final RefreshableChildren childrenRefresher) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+        ExceptionHelper.checkNotNullArgument(childrenRefresher, "childrenRefresher");
+
+        return new NodeRefresher() {
+            @Override
+            public void refreshNode() {
+                childrenRefresher.refreshChildren();
+                NodeUtils.refreshChildNodes(children);
+            }
+        };
+    }
+
+    public static Action getRefreshNodeAction(Node node) {
+        return getRefreshNodeAction(node, NbStrings.getScanForChangesCaption());
+    }
+
+    public static Action getRefreshNodeAction(final Node node, String caption) {
+        ExceptionHelper.checkNotNullArgument(node, "node");
+        ExceptionHelper.checkNotNullArgument(caption, "caption");
+
+        return new RefreshNodeAction(caption, node);
+    }
+
+    public static void refreshChildNodes(Children children) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+
+        for (Node child: children.getNodes(false)) {
+            NodeRefresher refresher = child.getLookup().lookup(NodeRefresher.class);
+            if (refresher != null) {
+                refresher.refreshNode();
+            }
+        }
+    }
 
     public static FileObject tryGetFileSearchTarget(Object target) {
         if (target instanceof FileObject) {
@@ -250,6 +293,24 @@ public final class NodeUtils {
         public Node findPath(Node root, Object target) {
             FileObject targetFile = tryGetFileSearchTarget(target);
             return targetFile != null ? findFileChildNode(root.getChildren(), targetFile) : null;
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private static class RefreshNodeAction extends AbstractAction {
+        private final Node node;
+
+        public RefreshNodeAction(String name, Node node) {
+            super(name);
+            this.node = node;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            NodeRefresher nodeRefresher = node.getLookup().lookup(NodeRefresher.class);
+            if (nodeRefresher != null) {
+                nodeRefresher.refreshNode();
+            }
         }
     }
 }
