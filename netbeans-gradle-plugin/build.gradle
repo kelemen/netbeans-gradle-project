@@ -162,22 +162,11 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
 
 apply from: scriptFile('maven-publish.gradle');
 
-task uploadedNbm {
-    dependsOn tasks.nbm;
-
-    Path outputPath = buildDir.toPath().resolve('tmp').resolve('nbm-upload');
-    Path dest = outputPath.resolve("${project.name}-${project.version}.nbm");
-
-    ext.outputFile = dest.toFile();
-
-    doLast {
-        Path src = tasks.nbm.outputFile.toPath();
-        Files.createDirectories(outputPath);
-        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
-    }
-}
-
-uploadArchives.dependsOn uploadedNbm;
+uploadArchives.dependsOn tasks.nbm;
 artifacts {
-    archives uploadedNbm.outputFile;
+    archives (tasks.nbm.outputFile) {
+        name = "${project.name}-${project.version}";
+        extension = 'nbm';
+        type = 'nbm';
+    }
 }
