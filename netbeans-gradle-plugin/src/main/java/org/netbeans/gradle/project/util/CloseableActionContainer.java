@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.RefCollection;
@@ -22,6 +24,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.NbProperties;
 
 public final class CloseableActionContainer {
+    private static final Logger LOGGER = Logger.getLogger(CloseableActionContainer.class.getName());
+
     private final Lock actionsLock;
     private final RefList<ActionDef> actions;
 
@@ -33,6 +37,37 @@ public final class CloseableActionContainer {
         this.actions = new RefLinkedList<>();
         this.openSynchronizer = TaskExecutors.inOrderSyncExecutor();
         this.opened = false;
+    }
+
+    public static CloseableAction mergeActions(CloseableAction... actions) {
+        final CloseableAction[] actionsCopy = actions.clone();
+        ExceptionHelper.checkNotNullElements(actionsCopy, "actions");
+
+        return new CloseableAction() {
+            @Override
+            public Ref open() {
+                Ref[] result = new Ref[actionsCopy.length];
+                for (int i = 0; i < result.length; i++) {
+                    result[i] = actionsCopy[i].open();
+                }
+                return mergeActionRefs(result);
+            }
+        };
+    }
+
+    private static CloseableAction.Ref mergeActionRefs(final CloseableAction.Ref[] refs) {
+        return new CloseableAction.Ref() {
+            @Override
+            public void close() {
+                for (CloseableAction.Ref ref: refs) {
+                    try {
+                        ref.close();
+                    } catch (Throwable ex) {
+                        LOGGER.log(Level.SEVERE, "Unexpected close exception.", ex);
+                    }
+                }
+            }
+        };
     }
 
     private void executeSync(CancelableTask task) {
