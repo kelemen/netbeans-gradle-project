@@ -74,6 +74,7 @@ import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
+import org.netbeans.spi.project.ui.support.UILookupMergerSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
@@ -251,8 +252,16 @@ public final class NbGradleProject implements Project {
         };
     }
 
+    private static Lookup getLookupMergers() {
+        return Lookups.fixed(
+                UILookupMergerSupport.createPrivilegedTemplatesMerger(),
+                UILookupMergerSupport.createProjectProblemsProviderMerger(),
+                UILookupMergerSupport.createRecommendedTemplatesMerger()
+        );
+    }
+
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
-        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 2);
+        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 3);
 
         Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
 
@@ -262,6 +271,8 @@ public final class NbGradleProject implements Project {
             newExtensionNames.add(extension.getName());
             allLookupProviders.add(moveToLookupProvider(extension.getProjectLookup()));
         }
+
+        allLookupProviders.add(moveToLookupProvider(getLookupMergers()));
 
         allLookupProviders.addAll(moveToLookupProvider(getLookupsFromAnnotations()));
 
