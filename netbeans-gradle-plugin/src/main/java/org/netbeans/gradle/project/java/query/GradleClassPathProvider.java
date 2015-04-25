@@ -67,7 +67,7 @@ implements
     private final ConcurrentMap<ClassPathKey, ClassPath> classpaths;
 
     private final PropertyChangeSupport changes;
-    private volatile ProjectPlatform currentPlatform;
+    private final AtomicReference<ProjectPlatform> currentPlatformRef;
 
     private final AtomicReference<ProjectInfoRef> infoRefRef;
 
@@ -84,7 +84,7 @@ implements
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-        this.currentPlatform = null;
+        this.currentPlatformRef = new AtomicReference<>(null);
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
 
@@ -151,33 +151,34 @@ implements
         }
     }
 
-    private void onModelChangeNow() {
-        loadPathResources(javaExt.getCurrentModel());
+    private void scheduleReloadPathResources() {
+        classpathUpdateExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                loadPathResources(javaExt.getCurrentModel());
+            }
+        });
     }
 
     @Override
     public void onModelChange() {
-        classpathUpdateExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                onModelChangeNow();
+        scheduleReloadPathResources();
+    }
+
+    private ProjectPlatform getCurrentPlatform() {
+        ProjectPlatform result = currentPlatformRef.get();
+        if (result == null) {
+            result = getPlatformProperty().getValue();
+            if (!currentPlatformRef.compareAndSet(null, result)) {
+                result = currentPlatformRef.get();
             }
-        });
+        }
+        return result;
     }
 
     private void onPlatformChange() {
-        classpathUpdateExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                onPlatformChangeNow();
-            }
-        });
-    }
-
-    private void onPlatformChangeNow() {
-        GradleProperty.BuildPlatform platformProperty = getPlatformProperty();
-        currentPlatform = platformProperty.getValue();
-        onModelChangeNow();
+        currentPlatformRef.set(getPlatformProperty().getValue());
+        scheduleReloadPathResources();
     }
 
     private GradleProperty.BuildPlatform getPlatformProperty() {
@@ -401,10 +402,7 @@ implements
 
     private void loadBootClassPath() {
         List<PathResourceImplementation> platformResources = new LinkedList<>();
-        ProjectPlatform platform = currentPlatform;
-        if (platform == null) {
-            platform = getPlatformProperty().getValue();
-        }
+        ProjectPlatform platform = getCurrentPlatform();
         for (URL url: platform.getBootLibraries()) {
             platformResources.add(ClassPathSupport.createResource(url));
         }
