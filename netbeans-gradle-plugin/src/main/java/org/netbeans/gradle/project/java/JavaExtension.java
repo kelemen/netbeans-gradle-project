@@ -180,7 +180,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public Lookup getPermanentProjectLookup() {
         Lookup lookup = permanentLookupRef.get();
         if (lookup == null) {
-            lookup = Lookups.fixed(this, new OpenHook());
+            lookup = Lookups.fixed(this, new OpenHook(this));
 
             if (permanentLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);
@@ -370,9 +370,9 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     private static PropertySource<CloseableAction> classPathProviderProperty(
-            GradleClassPathProvider cpProvider,
+            JavaExtension javaExt,
             String... classPathTypes) {
-        ClassPathProviderProperty src = new ClassPathProviderProperty(cpProvider, classPathTypes);
+        ClassPathProviderProperty src = new ClassPathProviderProperty(javaExt, classPathTypes);
 
         return SwingProperties.fromSwingSource(src, new SwingForwarderFactory<PropertyChangeListener>() {
             @Override
@@ -395,13 +395,13 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         private final CloseableAction pathRegAction;
 
         public ClassPathProviderProperty(
-                GradleClassPathProvider cpProvider,
+                JavaExtension javaExt,
                 String... classPathTypes) {
 
-            this.cpProvider = cpProvider;
+            this.cpProvider = javaExt.cpProvider;
             GlobalPathReg[] pathRegs = new GlobalPathReg[classPathTypes.length];
             for (int i = 0; i < classPathTypes.length; i++) {
-                pathRegs[i] = new GlobalPathReg(cpProvider, classPathTypes[i]);
+                pathRegs[i] = new GlobalPathReg(javaExt, classPathTypes[i]);
             }
             this.pathRegAction = CloseableActionContainer.mergeActions(pathRegs);
         }
@@ -424,13 +424,13 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     // OpenHook is important for debugging because the debugger relies on the
     // globally registered source class paths for source stepping.
-    private class OpenHook extends ProjectOpenedHook {
+    private static class OpenHook extends ProjectOpenedHook {
         private final CloseableActionContainer closeableActions;
 
-        public OpenHook() {
+        public OpenHook(JavaExtension javaExt) {
             this.closeableActions = new CloseableActionContainer();
 
-            closeableActions.defineAction(classPathProviderProperty(cpProvider,
+            closeableActions.defineAction(classPathProviderProperty(javaExt,
                     ClassPath.SOURCE,
                     ClassPath.BOOT,
                     ClassPath.COMPILE,
@@ -449,23 +449,31 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     private static class GlobalPathReg implements CloseableAction {
-        private final GradleClassPathProvider cpProvider;
+        private final JavaExtension javaExt;
         private final String type;
 
-        public GlobalPathReg(GradleClassPathProvider cpProvider, String type) {
-            this.cpProvider = cpProvider;
+        public GlobalPathReg(JavaExtension javaExt, String type) {
+            this.javaExt = javaExt;
             this.type = type;
         }
 
         @Override
         public Ref open() {
             final GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
-            final ClassPath[] paths = new ClassPath[]{cpProvider.getClassPaths(type)};
+            final ClassPath[] paths = new ClassPath[]{javaExt.cpProvider.getClassPaths(type)};
+
+            LOGGER.log(Level.FINE,
+                    "Registering ClassPath ({0}) for project: {1}",
+                    new Object[]{type, javaExt.getProjectDirectoryAsFile()});
             registry.register(type, paths);
+
             return new Ref() {
                 @Override
                 public void close() {
                     registry.unregister(type, paths);
+                    LOGGER.log(Level.FINE,
+                            "Unregistered ClassPath ({0}) for project: {1}",
+                            new Object[]{type, javaExt.getProjectDirectoryAsFile()});
                 }
             };
         }
