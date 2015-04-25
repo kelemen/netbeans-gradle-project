@@ -221,9 +221,9 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
-    private List<Lookup> getLookupsFromAnnotations() {
+    private Collection<? extends LookupProvider> getLookupsFromAnnotations() {
         Lookup lookupProviders = Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup");
-        return extractLookupsFromProviders(lookupProviders);
+        return lookupProviders.lookupAll(LookupProvider.class);
     }
 
     private void updateCombinedExtensionLookup() {
@@ -232,14 +232,6 @@ public final class NbGradleProject implements Project {
             extensionLookups.add(extenion.getExtensionLookup());
         }
         combinedExtensionLookup.replaceLookups(extensionLookups);
-    }
-
-    private static List<LookupProvider> moveToLookupProvider(List<Lookup> lookups) {
-        List<LookupProvider> result = new ArrayList<>(lookups.size());
-        for (Lookup lookup: lookups) {
-            result.add(moveToLookupProvider(lookup));
-        }
-        return result;
     }
 
     private static LookupProvider moveToLookupProvider(final Lookup lookup) {
@@ -262,7 +254,7 @@ public final class NbGradleProject implements Project {
     }
 
     private void setExtensions(List<NbGradleExtensionRef> extensions) {
-        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 3);
+        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 2);
 
         Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
 
@@ -275,7 +267,7 @@ public final class NbGradleProject implements Project {
 
         allLookupProviders.add(moveToLookupProvider(getLookupMergers()));
 
-        allLookupProviders.addAll(moveToLookupProvider(getLookupsFromAnnotations()));
+        allLookupProviders.addAll(getLookupsFromAnnotations());
 
         this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
         this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
