@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.output;
 
 import java.util.Arrays;
+import org.jtrim.cancel.CancellationSource;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
@@ -23,9 +24,9 @@ public final class TaskIOTab implements IOTabDef {
         }
     }
 
-    public void taskStarted() {
+    public void taskStarted(CancellationSource cancellation) {
         for (TaskTabAction action: actions) {
-            action.taskStarted();
+            action.taskStarted(cancellation);
         }
     }
 
