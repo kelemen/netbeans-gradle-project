@@ -83,7 +83,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = new ArrayList<>(2);
+        List<Action> actions = new ArrayList<>();
 
         NbGradleModel currentModel = project.currentModel().getValue();
         actions.add(openFileAction(currentModel.getSettingsFile()));
@@ -93,6 +93,13 @@ public final class BuildScriptsNode extends AbstractNode {
                 NbStrings.getOpenBuildSrcCaption(),
                 project,
                 childFactory));
+
+        if (!currentModel.isRootProject()) {
+            actions.add(OpenProjectsAction.createFromProjectDirs(
+                    NbStrings.getOpenRootProjectsCaption(),
+                    Collections.singleton(currentModel.getRootProjectDir())));
+        }
+
         actions.add(null);
         actions.add(NodeUtils.getRefreshNodeAction(this));
 
