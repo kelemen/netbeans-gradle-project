@@ -254,6 +254,7 @@ public final class NbGradleProject implements Project {
 
     private static Lookup getLookupMergers() {
         return Lookups.fixed(
+                LookupProviderSupport.createActionProviderMerger(),
                 UILookupMergerSupport.createPrivilegedTemplatesMerger(),
                 UILookupMergerSupport.createProjectProblemsProviderMerger(),
                 UILookupMergerSupport.createRecommendedTemplatesMerger()
