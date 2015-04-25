@@ -242,7 +242,7 @@ implements
 
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 ExcludeIncludeRules excludeRules = ExcludeIncludeRules.create(sourceGroup);
-                if (isInOneOf(file, sourceGroup.getSourceRoots())) {
+                if (isInOneOf(file, sourceGroup.getSourceRoots(), excludeRules)) {
                     return sourceSet;
                 }
             }
