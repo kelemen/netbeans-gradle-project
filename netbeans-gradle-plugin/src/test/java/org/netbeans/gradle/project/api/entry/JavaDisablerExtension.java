@@ -8,6 +8,10 @@ import java.util.Set;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
+/**
+ * @deprecated
+ */
+@Deprecated
 public final class JavaDisablerExtension implements GradleProjectExtension {
     private final boolean disableJava;
 

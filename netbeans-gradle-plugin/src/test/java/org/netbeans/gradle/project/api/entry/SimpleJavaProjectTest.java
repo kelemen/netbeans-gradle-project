@@ -60,6 +60,7 @@ import org.openide.util.lookup.Lookups;
 import static org.netbeans.spi.project.ActionProvider.*;
 import static org.junit.Assert.*;
 
+@SuppressWarnings("deprecation")
 public class SimpleJavaProjectTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;

@@ -4,10 +4,12 @@ import org.netbeans.api.project.Project;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
+ * @deprecated
  *
  * @author radim
  */
 @ServiceProvider(service = GradleProjectExtensionQuery.class, position = 500)
+@Deprecated
 public class GradleTestExtensionQuery implements GradleProjectExtensionQuery {
 
     @Override

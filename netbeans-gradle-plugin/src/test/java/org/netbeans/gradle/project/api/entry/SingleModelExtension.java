@@ -13,6 +13,10 @@ import org.jtrim.utils.ExceptionHelper;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
+/**
+ * @deprecated
+ */
+@Deprecated
 public final class SingleModelExtension implements GradleProjectExtension {
     private final Class<?> requestedModel;
     private final WaitableSignal loadedSignal;
