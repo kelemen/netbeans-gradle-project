@@ -84,17 +84,7 @@ public final class NbGradleConfigProvider {
         this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
         this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
 
-        this.configurations = new PropertySource<Collection<NbGradleConfiguration>>() {
-            @Override
-            public Collection<NbGradleConfiguration> getValue() {
-                return getConfigurations();
-            }
-
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                return configsChangeListeners.registerListener(listener);
-            }
-        };
+        this.configurations = NbProperties.<Collection<NbGradleConfiguration>>atomicValueView(configs, configsChangeListeners);
 
         this.activeConfiguration = new MutableProperty<NbGradleConfiguration>() {
             @Override
