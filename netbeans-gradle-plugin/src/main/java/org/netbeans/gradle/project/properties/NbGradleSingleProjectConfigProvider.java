@@ -10,12 +10,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectModelChangeListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 
@@ -25,7 +30,12 @@ implements
         ProjectModelChangeListener {
 
     private final NbGradleProject project;
-    private final NbGradleConfigProvider commonConfig;
+    private final MutableProperty<NbGradleConfigProvider> commonConfigRef;
+
+    private final PropertySource<NbGradleConfiguration> activeConfig;
+    private final PropertySource<Collection<NbGradleConfiguration>> configs;
+    private final ActiveSettingsQueryEx activeSettingsQuery;
+
     private final SwingPropertyChangeForwarder propertyChangeForwarder;
     private volatile Set<NbGradleConfiguration> extensionProfiles;
 
@@ -36,17 +46,40 @@ implements
         ExceptionHelper.checkNotNullArgument(multiProjectProvider, "multiProjectProvider");
 
         this.project = project;
-        this.commonConfig = multiProjectProvider;
+        this.commonConfigRef = PropertyFactory.memProperty(multiProjectProvider);
         this.extensionProfiles = Collections.emptySet();
 
-        this.propertyChangeForwarder = createPropertyChanges(commonConfig);
+        this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, new NbFunction<NbGradleConfigProvider, PropertySource<NbGradleConfiguration>>() {
+            @Override
+            public PropertySource<NbGradleConfiguration> apply(NbGradleConfigProvider arg) {
+                return arg.activeConfiguration();
+            }
+        });
+
+        this.configs = NbProperties.propertyOfProperty(commonConfigRef, new NbFunction<NbGradleConfigProvider, PropertySource<Collection<NbGradleConfiguration>>>() {
+            @Override
+            public PropertySource<Collection<NbGradleConfiguration>> apply(NbGradleConfigProvider arg) {
+                return arg.configurations();
+            }
+        });
+
+        PropertySource<ActiveSettingsQueryEx> activeSettingsQueryRef;
+        activeSettingsQueryRef = PropertyFactory.convert(commonConfigRef, new ValueConverter<NbGradleConfigProvider, ActiveSettingsQueryEx>() {
+            @Override
+            public ActiveSettingsQueryEx convert(NbGradleConfigProvider arg) {
+                return arg.getActiveSettingsQuery();
+            }
+        });
+        this.activeSettingsQuery = new ActiveSettingsQueryExProxy(activeSettingsQueryRef);
+
+        this.propertyChangeForwarder = createPropertyChanges();
     }
 
-    private SwingPropertyChangeForwarder createPropertyChanges(NbGradleConfigProvider configProvider) {
+    private SwingPropertyChangeForwarder createPropertyChanges() {
         SwingPropertyChangeForwarder.Builder result = new SwingPropertyChangeForwarder.Builder();
 
-        result.addProperty(PROP_CONFIGURATION_ACTIVE, configProvider.activeConfiguration(), this);
-        result.addPropertyNoValue(PROP_CONFIGURATIONS, configProvider.configurations(), this);
+        result.addProperty(PROP_CONFIGURATION_ACTIVE, activeConfig, this);
+        result.addPropertyNoValue(PROP_CONFIGURATIONS, configs, this);
 
         return result.create();
     }
@@ -59,12 +92,16 @@ implements
                 NbGradleConfigProvider.getConfigProvider(rootDir));
     }
 
+    private NbGradleConfigProvider getCommonConfig() {
+        return commonConfigRef.getValue();
+    }
+
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
-        return commonConfig.getActiveSettingsQuery();
+        return activeSettingsQuery;
     }
 
     public ProfileSettingsContainer getProfileSettingsContainer() {
-        return commonConfig.getProfileSettingsContainer();
+        return getCommonConfig().getProfileSettingsContainer();
     }
 
     private void updateExtensionProfiles() {
@@ -81,7 +118,7 @@ implements
         }
 
         extensionProfiles = Collections.unmodifiableSet(customProfiles);
-        commonConfig.fireConfigurationListChange();
+        getCommonConfig().fireConfigurationListChange();
     }
 
     @Override
@@ -91,7 +128,7 @@ implements
 
     @Override
     public Collection<NbGradleConfiguration> getConfigurations() {
-        Collection<NbGradleConfiguration> commonProfiles = commonConfig.getConfigurations();
+        Collection<NbGradleConfiguration> commonProfiles = getCommonConfig().getConfigurations();
         Collection<NbGradleConfiguration> currentExtProfiles = extensionProfiles;
 
         List<NbGradleConfiguration> result
@@ -105,6 +142,7 @@ implements
 
     @Override
     public NbGradleConfiguration getActiveConfiguration() {
+        NbGradleConfigProvider commonConfig = getCommonConfig();
         NbGradleConfiguration config = commonConfig.getActiveConfiguration();
         if (!extensionProfiles.contains(config) && !commonConfig.getConfigurations().contains(config)) {
             return NbGradleConfiguration.DEFAULT_CONFIG;
@@ -114,7 +152,7 @@ implements
 
     @Override
     public void setActiveConfiguration(NbGradleConfiguration configuration) throws IOException {
-        commonConfig.setActiveConfiguration(configuration);
+        getCommonConfig().setActiveConfiguration(configuration);
     }
 
     private CustomizerProvider getCustomizerProvider() {
@@ -136,7 +174,7 @@ implements
 
     @Override
     public boolean configurationsAffectAction(String command) {
-        return commonConfig.configurationsAffectAction(command);
+        return getCommonConfig().configurationsAffectAction(command);
     }
 
     @Override
@@ -150,14 +188,14 @@ implements
     }
 
     public void removeConfiguration(NbGradleConfiguration config) {
-        commonConfig.removeConfiguration(config);
+        getCommonConfig().removeConfiguration(config);
     }
 
     public void addConfiguration(NbGradleConfiguration config) {
-        commonConfig.addConfiguration(config);
+        getCommonConfig().addConfiguration(config);
     }
 
     public ListenerRef addActiveConfigChangeListener(Runnable listener) {
-        return commonConfig.addActiveConfigChangeListener(listener);
+        return activeConfig.addChangeListener(listener);
     }
 }
