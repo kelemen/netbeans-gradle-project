@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.SwingUtilities;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
@@ -127,12 +126,7 @@ implements
 
         extensionProfiles = Collections.unmodifiableSet(customProfiles);
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                propertyChangeForwarder.firePropertyChange(new PropertyChangeEvent(this, PROP_CONFIGURATIONS, null, null));
-            }
-        });
+        propertyChangeForwarder.firePropertyChange(new PropertyChangeEvent(this, PROP_CONFIGURATIONS, null, null));
     }
 
     @Override
