@@ -28,7 +28,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
@@ -307,7 +306,7 @@ public final class NbGradleConfigProvider {
         activeConfigChangeListeners.fireEventually();
     }
 
-    public void fireConfigurationListChange() {
+    private void fireConfigurationListChange() {
         configsChangeListeners.fireEventually();
     }
 

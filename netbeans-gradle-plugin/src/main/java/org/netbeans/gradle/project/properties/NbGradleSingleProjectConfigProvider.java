@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -8,18 +9,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.SwingUtilities;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.ProjectModelChangeListener;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
@@ -30,6 +36,7 @@ implements
         ProjectModelChangeListener {
 
     private final NbGradleProject project;
+    private final AtomicReference<Path> currentRootDir;
     private final MutableProperty<NbGradleConfigProvider> commonConfigRef;
 
     private final PropertySource<NbGradleConfiguration> activeConfig;
@@ -46,7 +53,8 @@ implements
         ExceptionHelper.checkNotNullArgument(multiProjectProvider, "multiProjectProvider");
 
         this.project = project;
-        this.commonConfigRef = PropertyFactory.memProperty(multiProjectProvider);
+        this.currentRootDir = new AtomicReference<>(multiProjectProvider.getRootDirectory());
+        this.commonConfigRef = PropertyFactory.memPropertyConcurrent(multiProjectProvider, SwingTaskExecutor.getStrictExecutor(false));
         this.extensionProfiles = Collections.emptySet();
 
         this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, new NbFunction<NbGradleConfigProvider, PropertySource<NbGradleConfiguration>>() {
@@ -118,11 +126,25 @@ implements
         }
 
         extensionProfiles = Collections.unmodifiableSet(customProfiles);
-        getCommonConfig().fireConfigurationListChange();
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                propertyChangeForwarder.firePropertyChange(new PropertyChangeEvent(this, PROP_CONFIGURATIONS, null, null));
+            }
+        });
     }
 
     @Override
     public void onModelChanged() {
+        NbGradleModel currentModel = project.currentModel().getValue();
+        Path newRootDir = currentModel.getRootProjectDir().toPath();
+        Path prevRootDir = currentRootDir.getAndSet(newRootDir);
+
+        if (!Objects.equals(prevRootDir, newRootDir)) {
+            commonConfigRef.setValue(NbGradleConfigProvider.getConfigProvider(newRootDir));
+        }
+
         updateExtensionProfiles();
     }
 
