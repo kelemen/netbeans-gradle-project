@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +26,7 @@ implements
 
     private final NbGradleProject project;
     private final NbGradleConfigProvider commonConfig;
+    private final SwingPropertyChangeForwarder propertyChangeForwarder;
     private volatile Set<NbGradleConfiguration> extensionProfiles;
 
     private NbGradleSingleProjectConfigProvider(
@@ -36,12 +38,25 @@ implements
         this.project = project;
         this.commonConfig = multiProjectProvider;
         this.extensionProfiles = Collections.emptySet();
+
+        this.propertyChangeForwarder = createPropertyChanges(commonConfig);
+    }
+
+    private SwingPropertyChangeForwarder createPropertyChanges(NbGradleConfigProvider configProvider) {
+        SwingPropertyChangeForwarder.Builder result = new SwingPropertyChangeForwarder.Builder();
+
+        result.addProperty(PROP_CONFIGURATION_ACTIVE, configProvider.activeConfiguration(), this);
+        result.addPropertyNoValue(PROP_CONFIGURATIONS, configProvider.configurations(), this);
+
+        return result.create();
     }
 
     public static NbGradleSingleProjectConfigProvider create(NbGradleProject project) {
+        Path rootDir = SettingsFiles.getRootDirectory(project);
+
         return new NbGradleSingleProjectConfigProvider(
                 project,
-                NbGradleConfigProvider.getConfigProvider(project));
+                NbGradleConfigProvider.getConfigProvider(rootDir));
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -126,12 +141,12 @@ implements
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener lst) {
-        commonConfig.addPropertyChangeListener(lst);
+        propertyChangeForwarder.addPropertyChangeListener(lst);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener lst) {
-        commonConfig.removePropertyChangeListener(lst);
+        propertyChangeForwarder.removePropertyChangeListener(lst);
     }
 
     public void removeConfiguration(NbGradleConfiguration config) {

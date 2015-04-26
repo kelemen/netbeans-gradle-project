@@ -1,7 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +25,8 @@ import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbTaskExecutors;
@@ -34,7 +34,6 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.SerializationUtils2;
-import org.netbeans.spi.project.ProjectConfigurationProvider;
 
 public final class NbGradleConfigProvider {
     private static final Logger LOGGER = Logger.getLogger(NbGradleConfigProvider.class.getName());
@@ -50,8 +49,8 @@ public final class NbGradleConfigProvider {
             = new WeakValueHashMap<>();
 
     private final Path rootDirectory;
-    private final PropertyChangeSupport changeSupport;
     private final ChangeListenerManager activeConfigChangeListeners;
+    private final ChangeListenerManager configsChangeListeners;
     private final AtomicReference<List<NbGradleConfiguration>> configs;
     private final AtomicReference<NbGradleConfiguration> activeConfig;
 
@@ -74,8 +73,8 @@ public final class NbGradleConfigProvider {
         ExceptionHelper.checkNotNullArgument(settingsContainer, "settingsContainer");
 
         this.rootDirectory = rootDirectory;
-        this.changeSupport = new PropertyChangeSupport(this);
-        this.activeConfigChangeListeners = new GenericChangeListenerManager();
+        this.activeConfigChangeListeners = GenericChangeListenerManager.getSwingNotifier();
+        this.configsChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.activeConfig = new AtomicReference<>(selectedConfig);
         this.configs = new AtomicReference<>(CollectionsEx.readOnlyCopy(initialConfigs));
         this.multiProfileProperties = multiProfileProperties;
@@ -93,9 +92,7 @@ public final class NbGradleConfigProvider {
         }
     }
 
-    public static NbGradleConfigProvider getConfigProvider(NbGradleProject project) {
-        Path rootDir = SettingsFiles.getRootDirectory(project);
-
+    public static NbGradleConfigProvider getConfigProvider(Path rootDir) {
         NbGradleConfigProvider result = tryGetConfigProvider(rootDir);
         if (result != null) {
             return result;
@@ -136,6 +133,10 @@ public final class NbGradleConfigProvider {
         }
 
         return result;
+    }
+
+    public Path getRootDirectory() {
+        return rootDirectory;
     }
 
     public ActiveSettingsQueryEx getActiveSettingsQuery() {
@@ -302,24 +303,12 @@ public final class NbGradleConfigProvider {
         }, null);
     }
 
-    private void fireActiveConfigurationListChange(final NbGradleConfiguration prevConfig) {
-        executeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                NbGradleConfiguration newConfig = activeConfig.get();
-                changeSupport.firePropertyChange(ProjectConfigurationProvider.PROP_CONFIGURATION_ACTIVE, prevConfig, newConfig);
-                activeConfigChangeListeners.fireEventually();
-            }
-        });
+    private void fireActiveConfigurationListChange() {
+        activeConfigChangeListeners.fireEventually();
     }
 
     public void fireConfigurationListChange() {
-        executeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                changeSupport.firePropertyChange(ProjectConfigurationProvider.PROP_CONFIGURATIONS, null, null);
-            }
-        });
+        configsChangeListeners.fireEventually();
     }
 
     public Collection<NbGradleConfiguration> getConfigurations() {
@@ -368,7 +357,7 @@ public final class NbGradleConfigProvider {
         if (!prevConfig.equals(configuration)) {
             updateByKey(configuration.getProfileKey());
 
-            fireActiveConfigurationListChange(prevConfig);
+            fireActiveConfigurationListChange();
         }
         saveActiveProfile();
     }
@@ -377,12 +366,37 @@ public final class NbGradleConfigProvider {
         return true;
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener lst) {
-        changeSupport.addPropertyChangeListener(lst);
+    public PropertySource<Collection<NbGradleConfiguration>> configurations() {
+        return new PropertySource<Collection<NbGradleConfiguration>>() {
+            @Override
+            public Collection<NbGradleConfiguration> getValue() {
+                return getConfigurations();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return configsChangeListeners.registerListener(listener);
+            }
+        };
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener lst) {
-        changeSupport.removePropertyChangeListener(lst);
+    public MutableProperty<NbGradleConfiguration> activeConfiguration() {
+        return new MutableProperty<NbGradleConfiguration>() {
+            @Override
+            public void setValue(NbGradleConfiguration config) {
+                setActiveConfiguration(config);
+            }
+
+            @Override
+            public NbGradleConfiguration getValue() {
+                return getActiveConfiguration();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return activeConfigChangeListeners.registerListener(listener);
+            }
+        };
     }
 
     public ListenerRef addActiveConfigChangeListener(Runnable listener) {
