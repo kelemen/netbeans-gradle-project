@@ -51,7 +51,7 @@ public final class NbGradleConfigProvider {
     private final ChangeListenerManager activeConfigChangeListeners;
     private final ChangeListenerManager configsChangeListeners;
     private final AtomicReference<List<NbGradleConfiguration>> configs;
-    private final AtomicReference<NbGradleConfiguration> activeConfig;
+    private final AtomicReference<NbGradleConfiguration> activeConfigRef;
 
     private final MultiProfileProperties multiProfileProperties;
     private final ProfileSettingsContainer settingsContainer;
@@ -59,6 +59,9 @@ public final class NbGradleConfigProvider {
     private final UpdateTaskExecutor profileApplierExecutor;
 
     private final MonitorableTaskExecutor profileIOExecutor;
+
+    private final MutableProperty<NbGradleConfiguration> activeConfiguration;
+    private final PropertySource<Collection<NbGradleConfiguration>> configurations;
 
     private NbGradleConfigProvider(
             Path rootDirectory,
@@ -74,12 +77,41 @@ public final class NbGradleConfigProvider {
         this.rootDirectory = rootDirectory;
         this.activeConfigChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.configsChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-        this.activeConfig = new AtomicReference<>(selectedConfig);
+        this.activeConfigRef = new AtomicReference<>(selectedConfig);
         this.configs = new AtomicReference<>(CollectionsEx.readOnlyCopy(initialConfigs));
         this.multiProfileProperties = multiProfileProperties;
         this.settingsContainer = settingsContainer;
         this.profileApplierExecutor = new GenericUpdateTaskExecutor(PROFILE_APPLIER_EXECUTOR);
         this.profileIOExecutor = NbTaskExecutors.newDefaultFifoExecutor();
+
+        this.configurations = new PropertySource<Collection<NbGradleConfiguration>>() {
+            @Override
+            public Collection<NbGradleConfiguration> getValue() {
+                return getConfigurations();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return configsChangeListeners.registerListener(listener);
+            }
+        };
+
+        this.activeConfiguration = new MutableProperty<NbGradleConfiguration>() {
+            @Override
+            public void setValue(NbGradleConfiguration config) {
+                setActiveConfiguration(config);
+            }
+
+            @Override
+            public NbGradleConfiguration getValue() {
+                return getActiveConfiguration();
+            }
+
+            @Override
+            public ListenerRef addChangeListener(Runnable listener) {
+                return activeConfigChangeListeners.registerListener(listener);
+            }
+        };
     }
 
     private static NbGradleConfigProvider tryGetConfigProvider(Path rootDir) {
@@ -268,7 +300,7 @@ public final class NbGradleConfigProvider {
 
         Path lastProfileFile = getLastProfileFile();
 
-        NbGradleConfiguration config = activeConfig.get();
+        NbGradleConfiguration config = activeConfigRef.get();
         if (config != null) {
             ProfileDef profileDef = config.getProfileDef();
             if (profileDef == null) {
@@ -315,7 +347,7 @@ public final class NbGradleConfigProvider {
     }
 
     public NbGradleConfiguration getActiveConfiguration() {
-        return activeConfig.get();
+        return activeConfigRef.get();
     }
 
     private static List<SingleProfileSettingsEx> getLoadedProfileSettings(
@@ -352,7 +384,7 @@ public final class NbGradleConfigProvider {
             return;
         }
 
-        final NbGradleConfiguration prevConfig = activeConfig.getAndSet(configuration);
+        final NbGradleConfiguration prevConfig = activeConfigRef.getAndSet(configuration);
         if (!prevConfig.equals(configuration)) {
             updateByKey(configuration.getProfileKey());
 
@@ -366,36 +398,11 @@ public final class NbGradleConfigProvider {
     }
 
     public PropertySource<Collection<NbGradleConfiguration>> configurations() {
-        return new PropertySource<Collection<NbGradleConfiguration>>() {
-            @Override
-            public Collection<NbGradleConfiguration> getValue() {
-                return getConfigurations();
-            }
-
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                return configsChangeListeners.registerListener(listener);
-            }
-        };
+        return configurations;
     }
 
     public MutableProperty<NbGradleConfiguration> activeConfiguration() {
-        return new MutableProperty<NbGradleConfiguration>() {
-            @Override
-            public void setValue(NbGradleConfiguration config) {
-                setActiveConfiguration(config);
-            }
-
-            @Override
-            public NbGradleConfiguration getValue() {
-                return getActiveConfiguration();
-            }
-
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                return activeConfigChangeListeners.registerListener(listener);
-            }
-        };
+        return activeConfiguration;
     }
 
     public ListenerRef addActiveConfigChangeListener(Runnable listener) {
