@@ -736,7 +736,6 @@ public final class NbGradleProject implements Project {
 
             this.auxConfig = add(new GradleAuxiliaryConfiguration(project), serviceObjects);
             this.configProvider = add(NbGradleSingleProjectConfigProvider.create(project), serviceObjects);
-            this.commonProperties = add(new NbGradleCommonProperties(project, configProvider.getActiveSettingsQuery()), serviceObjects);
             this.state = add(state, serviceObjects);
             this.projectInformation = add(new GradleProjectInformation(project), serviceObjects);
             this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
@@ -750,6 +749,9 @@ public final class NbGradleProject implements Project {
             this.projectInfoManager = add(new ProjectInfoManager(), serviceObjects);
 
             add(project.new OpenHook(), serviceObjects);
+
+            // NbGradleCommonProperties is not needed on the lookup
+            this.commonProperties = new NbGradleCommonProperties(project, configProvider.getActiveSettingsQuery());
 
             add(ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()), serviceObjects);
