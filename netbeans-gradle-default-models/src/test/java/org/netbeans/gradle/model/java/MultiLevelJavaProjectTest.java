@@ -97,7 +97,9 @@ public class MultiLevelJavaProjectTest {
             String relativeProjectPath,
             Collection<GradleTaskID> tasks,
             String... expectedNames) {
-        String taskPrefix = ":" + relativeProjectPath + ":";
+        String taskPrefix = relativeProjectPath.length() > 0
+                ? ":" + relativeProjectPath + ":"
+                : ":";
 
         Set<String> otherTasks = new LinkedHashSet<String>();
 
