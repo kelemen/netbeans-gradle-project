@@ -18,6 +18,7 @@ import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {
@@ -95,37 +96,55 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return new ProjectId(group, name, version);
     }
 
+    private BasicInfoWithError getBasicInfo(Project project) {
+        File buildDir = project.getBuildDir();
+        String projectFullName = project.getPath();
+        ProjectId projectId = getProjectId(project);
+
+        File buildFile = null;
+        Collection<GradleTaskID> tasks = Collections.emptyList();
+
+        Throwable error = null;
+        try {
+            buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
+            tasks = findTasks(project);
+        } catch (Throwable ex) {
+            error = ex;
+        }
+
+        ModelQueryOutput.BasicInfo result = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
+        return new BasicInfoWithError(result, error);
+    }
+
     public Object buildAll(String modelName, Project project) {
         if (!canBuild(modelName)) {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
         }
 
-        Collection<GradleTaskID> tasks = Collections.emptySet();
-        File buildFile = null;
-        ModelQueryOutput.BasicInfo basicInfo = null;
-
-        File buildDir = project.getBuildDir();
-
-        String projectFullName = project.getPath();
-        ProjectId projectId = getProjectId(project);
+        BasicInfoWithError basicInfo = getBasicInfo(project);
 
         ModelQueryOutput output;
         try {
-            buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
-            tasks = findTasks(project);
-            basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
-
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
-            output = new ModelQueryOutput(basicInfo, projectInfos, null);
+            output = new ModelQueryOutput(basicInfo.info, projectInfos, basicInfo.error);
         } catch (Throwable ex) {
-            if (basicInfo == null) {
-                basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
+            if (basicInfo.error != null) {
+                Exceptions.tryAddSuppressedException(ex, basicInfo.error);
             }
-
-            output = new ModelQueryOutput(basicInfo, CustomSerializedMap.EMPTY, ex);
+            output = new ModelQueryOutput(basicInfo.info, CustomSerializedMap.EMPTY, ex);
         }
 
         return new DefaultModelQueryOutputRef(output);
+    }
+
+    private static final class BasicInfoWithError {
+        public final ModelQueryOutput.BasicInfo info;
+        public final Throwable error;
+
+        public BasicInfoWithError(ModelQueryOutput.BasicInfo info, Throwable error) {
+            this.info = info;
+            this.error = error;
+        }
     }
 
     private static final class DefaultModelQueryOutputRef implements ModelQueryOutputRef, Serializable {
