@@ -7,8 +7,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -65,14 +67,19 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
     }
 
     private Collection<GradleTaskID> findTasks(Project project) {
-        Collection<Task> tasks = project.getTasks();
+        TaskContainer tasks = project.getTasks();
 
         List<GradleTaskID> result = new ArrayList<GradleTaskID>(tasks.size());
-        for (Task task: tasks) {
-            String name = task.getName();
-            String fullName = task.getPath();
-            result.add(new GradleTaskID(name, fullName));
+        SortedSet<String> taskNames = tasks.getNames();
+        for (String taskName: taskNames) {
+            Task task = tasks.findByName(taskName);
+            if (task != null) {
+                String name = task.getName();
+                String fullName = task.getPath();
+                result.add(new GradleTaskID(name, fullName));
+            }
         }
+
         return result;
     }
 
