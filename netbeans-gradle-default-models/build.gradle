@@ -56,6 +56,11 @@ otherGradleVersions.each { String otherGradleVersion ->
     testAll.dependsOn currentTask;
 }
 
+task testAllFiltered {
+    dependsOn 'testGradle1.8'
+    dependsOn test;
+}
+
 // Create the custom test task for the specific version for consistency
 createTestTask(gradleVersion);
 
