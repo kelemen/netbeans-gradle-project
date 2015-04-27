@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskContainer;
@@ -70,23 +71,29 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         TaskContainer tasks = project.getTasks();
 
         List<GradleTaskID> result = new ArrayList<GradleTaskID>(tasks.size());
-        // FIXME: Should call tasks.findByName on the elements of tasks.getNames()
-
-        for (Task task: tasks) {
-            String name = task.getName();
-            String fullName = task.getPath();
-            result.add(new GradleTaskID(name, fullName));
-        }
 
         // HACK: To workaround the issue in Gradle 2.4-rc-1
-        if (project.getPlugins().hasPlugin("base")) {
-            String taskNameQualifier = project.getPath();
-            if (!taskNameQualifier.endsWith(":")) {
-                taskNameQualifier = taskNameQualifier + ":";
-            }
+        //       We cannot request dependencyInsight with findByName otherwise,
+        //       model loading will fail.
+        Set<String> failingTasks = Collections.singleton("dependencyInsight");
 
-            result.add(new GradleTaskID("clean", taskNameQualifier + "clean"));
-            result.add(new GradleTaskID("build", taskNameQualifier + "build"));
+        for (String taskName: tasks.getNames()) {
+            if (failingTasks.contains(taskName)) {
+                String taskNameQualifier = project.getPath();
+                if (!taskNameQualifier.endsWith(":")) {
+                    taskNameQualifier = taskNameQualifier + ":";
+                }
+
+                result.add(new GradleTaskID(taskName, taskNameQualifier + taskName));
+            }
+            else {
+                Task task = tasks.findByName(taskName);
+                if (task != null) {
+                    String name = task.getName();
+                    String fullName = task.getPath();
+                    result.add(new GradleTaskID(name, fullName));
+                }
+            }
         }
 
         return result;
