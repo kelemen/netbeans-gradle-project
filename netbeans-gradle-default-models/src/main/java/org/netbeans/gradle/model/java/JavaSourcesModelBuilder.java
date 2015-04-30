@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.GroovyPlugin;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.scala.ScalaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -60,11 +62,13 @@ implements
      *   plugin
      */
     public JavaSourcesModel getProjectInfo(Project project) {
-        if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
+        JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
+        if (javaPlugin == null) {
             return null;
         }
+
         try {
-            return new Builder(project, needRuntime).getProjectInfo();
+            return new Builder(project, javaPlugin, needRuntime).getProjectInfo();
         } catch (Exception ex) {
             throw Exceptions.throwUnchecked(ex);
         }
@@ -77,19 +81,18 @@ implements
 
     private static final class Builder {
         private final Project project;
+        private final JavaPluginConvention javaPlugin;
         private final boolean needRuntime;
 
-        public Builder(Project project, boolean needRuntime)
-                throws Exception {
-
+        public Builder(Project project, JavaPluginConvention javaPlugin, boolean needRuntime) throws Exception {
             this.project = project;
+            this.javaPlugin = javaPlugin;
             this.needRuntime = needRuntime;
         }
 
         public JavaSourcesModel getProjectInfo() throws Exception {
             List<JavaSourceSet> result = new LinkedList<JavaSourceSet>();
-
-            SourceSetContainer sourceSets = (SourceSetContainer)project.property("sourceSets");
+            SourceSetContainer sourceSets = javaPlugin.getSourceSets();
             for (SourceSet sourceSet: sourceSets) {
                 result.add(parseSourceSet(sourceSet));
             }
@@ -127,11 +130,11 @@ implements
 
             others.removeAll(addSourceGroup(JavaSourceGroupName.JAVA, sourceSet.getJava(), result));
 
-            if (project.getPlugins().hasPlugin("groovy")) {
+            if (project.getPlugins().hasPlugin(GroovyPlugin.class)) {
                 others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet, "groovy", result));
             }
 
-            if (project.getPlugins().hasPlugin("scala")) {
+            if (project.getPlugins().hasPlugin(ScalaPlugin.class)) {
                 others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet, "scala", result));
             }
 
