@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -59,7 +60,7 @@ implements
      *   plugin
      */
     public JavaSourcesModel getProjectInfo(Project project) {
-        if (!project.getPlugins().hasPlugin("java")) {
+        if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
             return null;
         }
         try {
