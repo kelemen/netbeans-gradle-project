@@ -12,7 +12,7 @@ public final class FileLineConsumer implements OutputLinkFinder {
         int lineNumber = -1;
         if (lineIndexSep > 0) {
             try {
-                lineNumber = Integer.parseInt(otherInfo.substring(0, lineIndexSep).trim()) - 1;
+                lineNumber = Integer.parseInt(otherInfo.substring(0, lineIndexSep).trim());
             } catch (NumberFormatException ex) {
             }
         }
