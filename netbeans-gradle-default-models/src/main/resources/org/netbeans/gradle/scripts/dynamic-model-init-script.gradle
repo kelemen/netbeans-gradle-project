@@ -15,19 +15,23 @@ class DynamicGradleModelPlugin implements Plugin<Project> {
     }
 }
 
-ClassLoader scriptClassLoader = buildscript.classLoader
-File nbBootClassPath = new File($NB_BOOT_CLASSPATH)
-ClassLoader nbBootClassLoader = classLoaderFromClassPath(Collections.singleton(nbBootClassPath), scriptClassLoader)
+beforeProject { project ->
+    if (project.parent == null) {
+        ClassLoader scriptClassLoader = project.buildscript.classLoader
+        File nbBootClassPath = new File($NB_BOOT_CLASSPATH)
+        ClassLoader nbBootClassLoader = classLoaderFromClassPath(Collections.singleton(nbBootClassPath), scriptClassLoader)
 
-def modelQueryInput = deserialize(new File($INPUT_FILE), nbBootClassLoader)
+        def modelQueryInput = deserialize(new File($INPUT_FILE), nbBootClassLoader)
 
-Class modelClass = Class.forName('org.netbeans.gradle.model.internal.DynamicModelLoader', false, nbBootClassLoader)
+        Class modelClass = Class.forName('org.netbeans.gradle.model.internal.DynamicModelLoader', false, nbBootClassLoader)
 
-allprojects {
-    ext.modelClassForDynamicGradleModelPlugin = modelClass
-    ext.inputForDynamicGradleModelPlugin = modelQueryInput
-    ext.classLoaderForDynamicGradleModelPlugin = nbBootClassLoader
-    apply plugin: DynamicGradleModelPlugin
+        allprojects {
+            ext.modelClassForDynamicGradleModelPlugin = modelClass
+            ext.inputForDynamicGradleModelPlugin = modelQueryInput
+            ext.classLoaderForDynamicGradleModelPlugin = nbBootClassLoader
+            apply plugin: DynamicGradleModelPlugin
+        }
+    }
 }
 
 private Object deserialize(File inputFile, ClassLoader classLoader) {
