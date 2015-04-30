@@ -30,31 +30,38 @@ public final class ProjectFileConsumer implements OutputLinkFinder {
         return ch <= ' ' || ch == ':' || ch == ';';
     }
 
-    private static String tryReadNumberStr(String line, int startIndex) {
+    private static int tryFindEndLineIndex(String line, int startIndex) {
         int lineLength = line.length();
-        if (startIndex >= lineLength) {
-            return "";
-        }
-
-        String trimmedLine = line.substring(startIndex).trim();
-        int trimmedLength = trimmedLine.length();
-        for (int i = 0; i < trimmedLength; i++) {
-            char ch = trimmedLine.charAt(i);
-            if (ch < '0' || ch > '9') {
-                return trimmedLine.substring(0, i);
+        int actualStartIndex = startIndex;
+        for (; actualStartIndex < lineLength; actualStartIndex++) {
+            if (line.charAt(actualStartIndex) > ' ') {
+                break;
             }
         }
-        return trimmedLine;
+
+        if (actualStartIndex >= lineLength) {
+            return -1;
+        }
+
+        for (int i = actualStartIndex; i < lineLength; i++) {
+            char ch = line.charAt(i);
+            if (ch < '0' || ch > '9') {
+                return i;
+            }
+        }
+        return lineLength;
     }
 
     private static ParsedIntDef tryReadNumber(String line, int startIndex) {
-        String intStr = tryReadNumberStr(line, startIndex);
-        if (intStr.isEmpty()) {
+        int endOfNumberIndex = tryFindEndLineIndex(line, startIndex);
+        if (endOfNumberIndex <= startIndex) {
             return null;
         }
 
+        String intStr = line.substring(startIndex, endOfNumberIndex);
+
         try {
-            return new ParsedIntDef(Integer.parseInt(intStr), intStr.length());
+            return new ParsedIntDef(Integer.parseInt(intStr.trim()), intStr.length());
         } catch (NumberFormatException ex) {
             return null;
         }
@@ -95,7 +102,10 @@ public final class ProjectFileConsumer implements OutputLinkFinder {
             lineNumber = -1;
         }
 
-        String fileStr = StringUtils.stripSeperatorsFromEnd(line.substring(startIndex, endIndex));
+        String unstrippedFileStr = line.substring(startIndex, endIndex);
+        String fileStr = StringUtils.stripSeperatorsFromEnd(unstrippedFileStr);
+        completeLinkEndIndex = completeLinkEndIndex - (unstrippedFileStr.length() - fileStr.length());
+
         File file = new File(fileStr);
         if (!file.isFile()) {
             return null;
