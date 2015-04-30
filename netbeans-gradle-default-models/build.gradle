@@ -30,6 +30,15 @@ repositories {
     maven {
         url 'http://repo.gradle.org/gradle/libs-snapshots-local'
     }
+
+    ivy {
+        // This "repository" was added only as a hack to download
+        // the Gradle distribution at http://services.gradle.org/distributions/gradle-1.8-bin.zip
+        url 'http://services.gradle.org'
+        layout 'pattern', {
+            artifact '[organisation]/[artifact]-[revision].[ext]'
+        }
+    }
 }
 
 configurations {
@@ -38,7 +47,14 @@ configurations {
 
 dependencies {
     compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
-    provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6';
+
+    def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
+        project,
+        'distributions:gradle:1.8-bin@zip',
+        ['gradle-api'],
+        ['gradle-1.8', 'lib']
+    );
+    provided gradleApiDependency;
 
     testCompile group: 'junit', name: 'junit', version: '4.11';
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5';
