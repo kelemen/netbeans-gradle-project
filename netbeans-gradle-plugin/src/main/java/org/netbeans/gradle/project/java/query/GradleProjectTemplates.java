@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.java.query;
 
+import org.netbeans.gradle.project.filesupport.GradleTemplateConsts;
 import org.netbeans.spi.project.ui.PrivilegedTemplates;
 import org.netbeans.spi.project.ui.RecommendedTemplates;
 
@@ -23,7 +24,8 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "web-types",
         "junit",
         "simple-files",
-        "ear-types"
+        "ear-types",
+        GradleTemplateConsts.CATEGORY_NAME
     };
     private static final String[] PRIVILEGED_TEMPLATES = {
         "Templates/Classes/Class.java",

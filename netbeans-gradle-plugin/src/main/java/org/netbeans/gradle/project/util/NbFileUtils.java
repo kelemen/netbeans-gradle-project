@@ -28,13 +28,46 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class NbFileUtils {
+    private static boolean isSafeChar(char ch) {
+        if (ch >= 'A' && ch <= 'Z') return true;
+        if (ch >= 'a' && ch <= 'z') return true;
+        if (ch >= '0' && ch <= '9') return true;
+
+        return "_-$. ".indexOf(ch) >= 0;
+    }
+
+    public static String toSafeFileName(String name) {
+        ExceptionHelper.checkNotNullArgument(name, "name");
+
+        StringBuilder result = new StringBuilder(name.length());
+        for (int i = 0; i < name.length(); i++) {
+            char ch = name.charAt(i);
+            result.append(isSafeChar(ch) ? ch : "_");
+        }
+        return result.toString();
+    }
+
     public static ListenerRef addDirectoryContentListener(
             final FileObject dir,
+            final Runnable listener) {
+        return addDirectoryContentListener(dir, false, listener);
+    }
+
+    public static ListenerRef addDirectoryContentListener(
+            final FileObject dir,
+            final boolean listenForDirs,
             final Runnable listener) {
         ExceptionHelper.checkNotNullArgument(dir, "dir");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         final FileChangeListener fileChangeListener = new FileChangeAdapter() {
+            @Override
+            public void fileFolderCreated(FileEvent fe) {
+                if (listenForDirs) {
+                    listener.run();
+                }
+
+            }
             @Override
             public void fileDeleted(FileEvent fe) {
                 listener.run();
@@ -100,6 +133,14 @@ public final class NbFileUtils {
             }
         }
         return null;
+    }
+
+    public static Path asPath(FileObject fileObj) {
+        return fileObj != null ? asPath(FileUtil.toFile(fileObj)) : null;
+    }
+
+    public static Path asPath(File file) {
+        return file != null ? file.toPath() : null;
     }
 
     public static File asFile(FileObject fileObj) {

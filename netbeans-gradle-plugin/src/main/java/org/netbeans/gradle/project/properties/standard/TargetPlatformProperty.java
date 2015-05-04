@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
@@ -25,15 +26,15 @@ public final class TargetPlatformProperty {
     private static final String CONFIG_KEY_PLATFORM_NAME = "target-platform-name";
     private static final String CONFIG_KEY_PLATFORM_VERSION = "target-platform";
 
+    private static final List<ConfigPath> CONFIG_ROOT = Collections.unmodifiableList(Arrays.asList(
+            ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_NAME),
+            ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_VERSION)));
+
     public static final PropertyDef<PlatformId, ProjectPlatform> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<PlatformId, ProjectPlatform> createPropertyDef() {
-        List<ConfigPath> paths = Arrays.asList(
-                ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_NAME),
-                ConfigPath.fromKeys(CONFIG_KEY_PLATFORM_VERSION));
-
         PropertyDef.Builder<PlatformId, ProjectPlatform> result
-                = new PropertyDef.Builder<>(paths);
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
 
         result.setKeyEncodingDef(getEncodingDef());
         result.setValueDef(getValueDef());

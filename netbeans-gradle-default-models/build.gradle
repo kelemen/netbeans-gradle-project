@@ -1,7 +1,7 @@
 apply plugin: 'java';
 
-String gradleVersion = '2.1';
-List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0'];
+String gradleVersion = '2.4-rc-2';
+List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2'];
 
 ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName);
@@ -30,6 +30,15 @@ repositories {
     maven {
         url 'http://repo.gradle.org/gradle/libs-snapshots-local'
     }
+
+    ivy {
+        // This "repository" was added only as a hack to download
+        // the Gradle distribution at http://services.gradle.org/distributions/gradle-1.8-bin.zip
+        url 'http://services.gradle.org'
+        layout 'pattern', {
+            artifact '[organisation]/[artifact]-[revision].[ext]'
+        }
+    }
 }
 
 configurations {
@@ -38,7 +47,14 @@ configurations {
 
 dependencies {
     compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
-    provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6';
+
+    def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
+        project,
+        'distributions:gradle:1.8-bin@zip',
+        ['gradle-api'],
+        ['gradle-1.8', 'lib']
+    );
+    provided gradleApiDependency;
 
     testCompile group: 'junit', name: 'junit', version: '4.11';
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5';
@@ -54,6 +70,11 @@ task testAll {
 otherGradleVersions.each { String otherGradleVersion ->
     def currentTask = createTestTask(otherGradleVersion);
     testAll.dependsOn currentTask;
+}
+
+task testAllFiltered {
+    dependsOn 'testGradle1.8'
+    dependsOn test;
 }
 
 // Create the custom test task for the specific version for consistency

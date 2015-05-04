@@ -3,11 +3,13 @@ package org.netbeans.gradle.project.java.model;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.GenericProjectProperties;
@@ -31,7 +33,31 @@ import org.openide.util.Lookup;
 public final class JavaParsingUtils {
     private static final Logger LOGGER = Logger.getLogger(JavaParsingUtils.class.getName());
 
-    private static JavaSourceSet tryGetSourceSetForJar(JarOutput jar, JavaSourcesModel sources) {
+    private static Collection<JavaSourceSet> getSourceSetsForJar(JarOutput jar, JavaSourcesModel sources) {
+        Set<String> sourceSetNames = jar.tryGetSourceSetNames();
+        if (sourceSetNames != null) {
+            int numberOfSourceSets = sourceSetNames.size();
+            Set<JavaSourceSet> result = CollectionUtils.newHashSet(numberOfSourceSets);
+            for (JavaSourceSet sourceSet: sources.getSourceSets()) {
+                if (sourceSetNames.contains(sourceSet.getName())) {
+                    result.add(sourceSet);
+                    // There is no reason to look for other source sets,
+                    // we've already found all of them.
+                    if (numberOfSourceSets == result.size()) {
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+
+        JavaSourceSet heuristicSourceSet = tryGetSourceSetForJarWithHeuristic(jar, sources);
+        return heuristicSourceSet != null
+                ? Collections.singleton(heuristicSourceSet)
+                : Collections.<JavaSourceSet>emptySet();
+    }
+
+    private static JavaSourceSet tryGetSourceSetForJarWithHeuristic(JarOutput jar, JavaSourcesModel sources) {
         String taskName = jar.getTaskName().toLowerCase(Locale.ROOT);
         if ("jar".equals(taskName)) {
             for (JavaSourceSet sourceSet: sources.getSourceSets()) {
@@ -55,15 +81,23 @@ public final class JavaParsingUtils {
         }
     }
 
-    private static File tryGetBuildDirSourceForJar(JarOutput jar, JavaSourcesModel sources) {
-        JavaSourceSet result = tryGetSourceSetForJar(jar, sources);
-        return result != null ? result.getOutputDirs().getClassesDir() : null;
+    private static Set<File> tryGetBuildDirSourceForJar(JarOutput jar, JavaSourcesModel sources) {
+        Collection<JavaSourceSet> sourceSets = getSourceSetsForJar(jar, sources);
+        if (sourceSets.isEmpty()) {
+            return null;
+        }
+
+        Set<File> result = CollectionUtils.newHashSet(sourceSets.size());
+        for (JavaSourceSet sourceSet: sourceSets) {
+            result.add(sourceSet.getOutputDirs().getClassesDir());
+        }
+        return result;
     }
 
-    private static Map<File, File> getJarsToBuildDirs(ModelLoadResult buildInfo) {
+    private static Map<File, Set<File>> getJarsToBuildDirs(ModelLoadResult buildInfo) {
         Map<File, Lookup> allProjects = buildInfo.getEvaluatedProjectsModel();
 
-        Map<File, File> result = CollectionUtils.newHashMap(allProjects.size());
+        Map<File, Set<File>> result = CollectionUtils.newHashMap(allProjects.size());
         for (Lookup projectInfo: allProjects.values()) {
             JarOutputsModel jarsModel = projectInfo.lookup(JarOutputsModel.class);
             if (jarsModel != null) {
@@ -78,9 +112,9 @@ public final class JavaParsingUtils {
                 }
 
                 for (JarOutput jar: jarsModel.getJars()) {
-                    File buildDir = tryGetBuildDirSourceForJar(jar, sources);
-                    if (buildDir != null) {
-                        result.put(jar.getJar(), buildDir);
+                    Set<File> buildDirs = tryGetBuildDirSourceForJar(jar, sources);
+                    if (buildDirs != null) {
+                        result.put(jar.getJar(), buildDirs);
                     }
                 }
             }
@@ -91,19 +125,24 @@ public final class JavaParsingUtils {
 
     private static Collection<File> adjustedClassPaths(
             Collection<File> files,
-            Map<File, File> dependencyMap) {
+            Map<File, ? extends Collection<File>> dependencyMap) {
 
         List<File> result = new ArrayList<>(files.size());
         for (File file: files) {
-            File adjusted = dependencyMap.get(file);
-            result.add(adjusted != null ? adjusted : file);
+            Collection<File> adjusted = dependencyMap.get(file);
+            if (adjusted != null) {
+                result.addAll(adjusted);
+            }
+            else {
+                result.add(file);
+            }
         }
         return result;
     }
 
     private static JavaSourceSet adjustedSources(
             JavaSourceSet sourceSet,
-            Map<File, File> dependencyMap) {
+            Map<File, ? extends Collection<File>> dependencyMap) {
 
         JavaClassPaths origClassPaths = sourceSet.getClasspaths();
         Collection<File> compile = adjustedClassPaths(origClassPaths.getCompileClasspaths(), dependencyMap);
@@ -128,7 +167,7 @@ public final class JavaParsingUtils {
 
     private static Collection<JavaSourceSet> adjustedSources(
             JavaSourcesModel sourcesModel,
-            Map<File, File> dependencyMap) {
+            Map<File, ? extends Collection<File>> dependencyMap) {
 
         List<JavaSourceSet> result = new LinkedList<>();
         for (JavaSourceSet sourceSet: sourcesModel.getSourceSets()) {
@@ -156,7 +195,7 @@ public final class JavaParsingUtils {
     }
 
     public static Collection<NbJavaModule> parseModules(ModelLoadResult retrievedModels) {
-        Map<File, File> jarsToBuildDirs = getJarsToBuildDirs(retrievedModels);
+        Map<File, Set<File>> jarsToBuildDirs = getJarsToBuildDirs(retrievedModels);
 
         Map<File, Lookup> allProjects = retrievedModels.getEvaluatedProjectsModel();
 

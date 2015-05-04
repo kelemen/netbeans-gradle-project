@@ -15,13 +15,13 @@ public final class SourceEncodingProperty {
 
     public static final Charset DEFAULT_SOURCE_ENCODING = StringUtils.UTF8;
 
-    private static final String CONFIG_KEY_SOURCE_ENCODING = "source-encoding";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("source-encoding");
 
     public static final PropertyDef<String, Charset> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<String, Charset> createPropertyDef() {
         PropertyDef.Builder<String, Charset> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_SOURCE_ENCODING));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
 
         result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(getValueDef());

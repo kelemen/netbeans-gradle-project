@@ -5,11 +5,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.LicenseManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.CreateFromTemplateAttributesProvider;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObject;
@@ -29,10 +29,8 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
 
         LicenseHeaderInfo licenseHeader = project.getCommonProperties().licenseHeaderInfo().getActiveValue();
         if (licenseHeader != null) {
-            String licenseName = licenseHeader.getPrivateLicenseName(project);
-            String fileName = "license-" + licenseName + ".txt";
-
-            if (FileUtil.getConfigFile("Templates/Licenses/" + fileName) != null) {
+            String licenseName = LicenseManager.getDefault().tryGetRegisteredLicenseName(project, licenseHeader);
+            if (licenseName != null) {
                 values.put("license", licenseName);
                 for (Map.Entry<String, String> property: licenseHeader.getProperties().entrySet()) {
                     values.put(property.getKey(), property.getValue());

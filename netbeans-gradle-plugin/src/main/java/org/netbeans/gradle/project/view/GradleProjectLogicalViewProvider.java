@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -43,12 +42,11 @@ import org.netbeans.gradle.project.ProjectInfo.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.event.ChangeListenerManager;
-import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
@@ -61,25 +59,23 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
+import org.netbeans.spi.project.ui.PathFinder;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
 import org.netbeans.spi.project.ui.support.ProjectSensitiveActions;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
-import org.openide.loaders.DataObject;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeNotFoundException;
-import org.openide.nodes.NodeOp;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class GradleProjectLogicalViewProvider
@@ -91,22 +87,12 @@ implements
 
     private final ListenerManager<ModelRefreshListener> childRefreshListeners;
     private final AtomicReference<Collection<ModelRefreshListener>> listenersToFinalize;
-    private final ChangeListenerManager refreshRequestListeners;
 
     public GradleProjectLogicalViewProvider(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         this.project = project;
         this.childRefreshListeners = new CopyOnTriggerListenerManager<>();
         this.listenersToFinalize = new AtomicReference<>(null);
-        this.refreshRequestListeners = GenericChangeListenerManager.getSwingNotifier();
-    }
-
-    public void refreshProjectNode() {
-        refreshRequestListeners.fireEventually();
-    }
-
-    public ListenerRef addRefreshRequestListeners(Runnable listener) {
-        return refreshRequestListeners.registerListener(listener);
     }
 
     public ListenerRef addChildModelRefreshListener(final ModelRefreshListener listener) {
@@ -190,14 +176,12 @@ implements
         return result;
     }
 
-    private Children createChildren() {
-        return Children.create(new GradleProjectChildFactory(project, this), false);
-    }
-
-    private Lookup createLookup(Node rootNode) {
+    private Lookup createLookup(Node rootNode, GradleProjectChildFactory childFactory, Children children) {
+        NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
         return new ProxyLookup(
                 project.getLookup(),
-                rootNode.getLookup());
+                rootNode.getLookup(),
+                Lookups.fixed(nodeRefresher));
     }
 
     private static <T> List<T> trimNulls(List<T> list) {
@@ -259,7 +243,18 @@ implements
         private volatile Action[] actions;
 
         public GradleProjectNode(Node node) {
-            super(node, createChildren(), createLookup(node));
+            this(node, new GradleProjectChildFactory(project, GradleProjectLogicalViewProvider.this));
+        }
+
+        private GradleProjectNode(Node node, GradleProjectChildFactory childFactory) {
+            this(node, childFactory, Children.create(childFactory, false));
+        }
+
+        private GradleProjectNode(
+                Node node,
+                GradleProjectChildFactory childFactory,
+                org.openide.nodes.Children children) {
+            super(node, children, createLookup(node, childFactory, children));
 
             updateActionsList();
         }
@@ -300,7 +295,7 @@ implements
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
-            projectActions.add(new RefreshNodesAction());
+            projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
             projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
@@ -407,74 +402,41 @@ implements
 
     @Override
     public Node findPath(Node root, Object target) {
-        // The implementation of this method is mostly a copy-paste from the
-        // Maven plugin. I didn't take the time to fully understand it.
-        if (target instanceof FileObject) {
-            FileObject fileObject = (FileObject)target;
+        if (target == null) {
+            return null;
+        }
 
-            Node[] nodes = root.getChildren().getNodes(false);
-            for (Node child: nodes) {
-                Node found = PackageView.findPath(child, fileObject);
-                if (found != null) {
-                    return found;
-                }
-            }
-            for (Node node: nodes) {
-                for (Node childNode: node.getChildren().getNodes(false)) {
-                    Node result = PackageView.findPath(childNode, fileObject);
-                    if (result != null) {
-                        return result;
-                    }
-                    Node found = findNodeByFileDataObject(childNode, fileObject);
-                    if (found != null) {
-                        return found;
-                    }
-                }
-            }
-        }
-        return null;
-    }
+        FileObject targetFile = NodeUtils.tryGetFileSearchTarget(target);
 
-    private Node findNodeByFileDataObject(Node node, FileObject fo) {
-        FileObject xfo = node.getLookup().lookup(FileObject.class);
-        if (xfo == null) {
-            DataObject dobj = node.getLookup().lookup(DataObject.class);
-            if (dobj != null) {
-                xfo = dobj.getPrimaryFile();
-            }
-        }
-        if (xfo != null) {
-            if ((xfo.equals(fo))) {
-                return node;
-            }
-            else if (FileUtil.isParentOf(xfo, fo)) {
-                FileObject folder = fo.isFolder() ? fo : fo.getParent();
-                String relPath = FileUtil.getRelativePath(xfo, folder);
-                List<String> path = new ArrayList<>();
-                StringTokenizer strtok = new StringTokenizer(relPath, "/");
-                while (strtok.hasMoreTokens()) {
-                    String token = strtok.nextToken();
-                    path.add(token);
-                }
-                try {
-                    Node folderNode = folder.equals(xfo) ? node : NodeOp.findPath(node, Collections.enumeration(path));
-                    if (fo.isFolder()) {
-                        return folderNode;
-                    }
-                    else {
-                        Node[] childs = folderNode.getChildren().getNodes(false);
-                        for (Node child: childs) {
-                            DataObject dobj = child.getLookup().lookup(DataObject.class);
-                            if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(fo.getNameExt())) {
-                                return child;
-                            }
-                        }
-                    }
-                } catch (NodeNotFoundException e) {
-                    // OK, never mind
+        Node[] children = root.getChildren().getNodes(true);
+        for (Node child: children) {
+            boolean hasNodeFinder = false;
+            for (PathFinder nodeFinder: child.getLookup().lookupAll(PathFinder.class)) {
+                hasNodeFinder = true;
+
+                Node result = nodeFinder.findPath(child, target);
+                if (result != null) {
+                    return result;
                 }
             }
+
+            if (hasNodeFinder) {
+                continue;
+            }
+
+            // This will always return {@code null} because PackageView
+            // asks for PathFinder as well but since it is not in its
+            // specification, we won't rely on this.
+            Node result = PackageView.findPath(child, target);
+            if (result == null && targetFile != null) {
+                result = NodeUtils.findChildFileOfFolderNode(child, targetFile);
+            }
+
+            if (result != null) {
+                return result;
+            }
         }
+
         return null;
     }
 
@@ -609,18 +571,6 @@ implements
                     executeCommandTemplate(project, commandTemplate);
                 }
             }
-        }
-    }
-
-    @SuppressWarnings("serial") // don't care about serialization
-    private class RefreshNodesAction extends AbstractAction {
-        public RefreshNodesAction() {
-            super(NbStrings.getRefreshNodeCommandCaption());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            refreshProjectNode();
         }
     }
 

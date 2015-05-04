@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.properties.standard;
 
-import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +15,8 @@ import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyValueDef;
 
 public final class LicenseHeaderInfoProperty {
-    private static final String CONFIG_KEY_LICENSE_HEADER = "license-header";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("license-header");
+
     private static final String CONFIG_KEY_NAME = "name";
     private static final String CONFIG_KEY_FILE = "template";
     private static final String CONFIG_KEY_PROPERTY = "property";
@@ -24,7 +27,7 @@ public final class LicenseHeaderInfoProperty {
 
     private static PropertyDef<ConfigTree, LicenseHeaderInfo> createPropertyDef() {
         PropertyDef.Builder<ConfigTree, LicenseHeaderInfo> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_LICENSE_HEADER));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(CommonProperties.getIdentityTreeKeyEncodingDef());
         result.setValueDef(getValueDef());
         return result.create();
@@ -44,16 +47,20 @@ public final class LicenseHeaderInfoProperty {
         };
     }
 
-    private static File tryReadFilePath(String normalizedPath) {
+    private static Path tryReadFilePath(String normalizedPath) {
         if (normalizedPath == null) {
             return null;
         }
 
-        return new File(normalizedPath.trim().replace(SAVE_FILE_NAME_SEPARATOR, File.separator));
+        String separator = FileSystems.getDefault().getSeparator();
+        String nativePath = normalizedPath.replace(SAVE_FILE_NAME_SEPARATOR, separator);
+        return Paths.get(nativePath);
     }
 
-    private static String normalizeFilePath(File file) {
-        return file.getPath().replace(File.separator, SAVE_FILE_NAME_SEPARATOR);
+    private static String normalizeFilePath(Path file) {
+        String result = file.toString();
+        String separator = file.getFileSystem().getSeparator();
+        return result.replace(separator, SAVE_FILE_NAME_SEPARATOR);
     }
 
     private static ConfigTree writeLicenseHeader(LicenseHeaderInfo licenseHeader) {
@@ -61,7 +68,7 @@ public final class LicenseHeaderInfoProperty {
 
         result.getChildBuilder(CONFIG_KEY_NAME).setValue(licenseHeader.getLicenseName());
 
-        File licenseTemplateFile = licenseHeader.getLicenseTemplateFile();
+        Path licenseTemplateFile = licenseHeader.getLicenseTemplateFile();
         if (licenseTemplateFile != null) {
             result.getChildBuilder(CONFIG_KEY_FILE).setValue(normalizeFilePath(licenseTemplateFile));
         }
@@ -85,7 +92,7 @@ public final class LicenseHeaderInfoProperty {
             return null;
         }
 
-        File licenseTemplate = tryReadFilePath(licenseNode.getChildTree(CONFIG_KEY_FILE).getValue(null));
+        Path licenseTemplate = tryReadFilePath(licenseNode.getChildTree(CONFIG_KEY_FILE).getValue(null));
 
         Map<String, String> properties = new HashMap<>();
         List<ConfigTree> propertyNodes = licenseNode.getChildTrees(CONFIG_KEY_PROPERTY);

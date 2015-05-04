@@ -30,12 +30,14 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class BuildScriptsNode extends AbstractNode {
@@ -47,10 +49,25 @@ public final class BuildScriptsNode extends AbstractNode {
     }
 
     private BuildScriptsNode(NbGradleProject project, BuildScriptChildFactory childFactory) {
-        super(Children.create(childFactory, true));
+        this(project, childFactory, Children.create(childFactory, true));
+    }
+
+    private BuildScriptsNode(
+            NbGradleProject project,
+            BuildScriptChildFactory childFactory,
+            Children children) {
+        super(children, createLookup(childFactory, children));
 
         this.project = project;
         this.childFactory = childFactory;
+
+        setName(getClass().getSimpleName());
+    }
+
+    private static Lookup createLookup(BuildScriptChildFactory childFactory, Children children) {
+        return Lookups.fixed(
+                NodeUtils.askChildrenNodeFinder(),
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     public static SingleNodeFactory getFactory(final NbGradleProject project) {
@@ -66,7 +83,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = new ArrayList<>(2);
+        List<Action> actions = new ArrayList<>();
 
         NbGradleModel currentModel = project.currentModel().getValue();
         actions.add(openFileAction(currentModel.getSettingsFile()));
@@ -76,6 +93,15 @@ public final class BuildScriptsNode extends AbstractNode {
                 NbStrings.getOpenBuildSrcCaption(),
                 project,
                 childFactory));
+
+        if (!currentModel.isRootProject()) {
+            actions.add(OpenProjectsAction.createFromProjectDirs(
+                    NbStrings.getOpenRootProjectsCaption(),
+                    Collections.singleton(currentModel.getRootProjectDir())));
+        }
+
+        actions.add(null);
+        actions.add(NodeUtils.getRefreshNodeAction(this));
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -106,18 +132,26 @@ public final class BuildScriptsNode extends AbstractNode {
 
     private static class BuildScriptChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
+
         private final NbGradleProject project;
         private final ListenerRegistrations listenerRefs;
+        private volatile boolean createdOnce;
 
         public BuildScriptChildFactory(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
             this.project = project;
             this.listenerRefs = new ListenerRegistrations();
+            this.createdOnce = false;
         }
 
+        @Override
         public void refreshChildren() {
-            refresh(false);
+            if (createdOnce) {
+                refresh(false);
+            }
         }
 
         @Override
@@ -171,6 +205,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+            createdOnce = true;
             readKeys(toPopulate);
             return true;
         }

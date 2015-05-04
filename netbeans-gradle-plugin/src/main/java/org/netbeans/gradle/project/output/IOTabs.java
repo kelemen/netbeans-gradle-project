@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
@@ -31,22 +32,58 @@ public final class IOTabs {
         return new IOTabFactory<TaskIOTab>() {
             @Override
             public TaskIOTab create(String caption) {
-                TaskTabAction[] actions = createActions();
+                TaskTabAction[] actions = createActions(caption);
                 InputOutput io = IOProvider.getDefault().getIO(caption, actions);
                 return new TaskIOTab(io, actions);
             }
         };
     }
 
-    private static TaskTabAction[] createActions() {
+    private static TaskTabAction[] createActions(String caption) {
         return new TaskTabAction[] {
             new ReRunTask(),
-            new ReRunWithDifferentArgsTask()
+            new ReRunWithDifferentArgsTask(),
+            new StopTask(caption)
         };
     }
 
     public static IOTabMaintainer<TaskOutputKey, TaskIOTab> taskTabs() {
         return TASK_TABS;
+    }
+
+    @SuppressWarnings("serial")
+    private static class StopTask extends TaskTabAction {
+        @StaticResource
+        private static final String ICON = "org/netbeans/gradle/project/resources/stop.png";
+
+        private final String tabCaption;
+
+        public StopTask(String tabCaption) {
+            super(true);
+
+            this.tabCaption = tabCaption;
+
+            putValue(Action.SMALL_ICON, ImageUtilities.loadImage(ICON));
+
+            putValue(Action.NAME, NbStrings.getStopTaskCaption());
+            putValue(Action.SHORT_DESCRIPTION, NbStrings.getStopTaskDescription());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String message = NbStrings.getConfirmStopTask(tabCaption);
+            String title = NbStrings.getConfirmStopTaskTitle();
+
+            boolean confirmed = JOptionPane.showConfirmDialog(null,
+                    message,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+
+            if (confirmed) {
+                cancelCurrentlyRunning();
+            }
+        }
     }
 
     @SuppressWarnings("serial")

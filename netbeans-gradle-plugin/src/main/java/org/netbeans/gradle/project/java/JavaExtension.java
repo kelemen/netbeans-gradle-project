@@ -13,8 +13,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingForwarderFactory;
+import org.jtrim.property.swing.SwingProperties;
+import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -51,6 +54,8 @@ import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.gradle.project.util.CloseableAction;
+import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
@@ -175,7 +180,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public Lookup getPermanentProjectLookup() {
         Lookup lookup = permanentLookupRef.get();
         if (lookup == null) {
-            lookup = Lookups.fixed(this, new OpenHook());
+            lookup = Lookups.fixed(this, new OpenHook(this));
 
             if (permanentLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);
@@ -364,112 +369,113 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public void deactivateExtension() {
     }
 
+    private static PropertySource<CloseableAction> classPathProviderProperty(
+            JavaExtension javaExt,
+            String... classPathTypes) {
+        ClassPathProviderProperty src = new ClassPathProviderProperty(javaExt, classPathTypes);
+
+        return SwingProperties.fromSwingSource(src, new SwingForwarderFactory<PropertyChangeListener>() {
+            @Override
+            public PropertyChangeListener createForwarder(final Runnable listener) {
+                return new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        listener.run();
+                    }
+                };
+            }
+        });
+    }
+
+    private static final class ClassPathProviderProperty
+    implements
+            SwingPropertySource<CloseableAction, PropertyChangeListener> {
+
+        private final GradleClassPathProvider cpProvider;
+        private final CloseableAction pathRegAction;
+
+        public ClassPathProviderProperty(
+                JavaExtension javaExt,
+                String... classPathTypes) {
+
+            this.cpProvider = javaExt.cpProvider;
+            GlobalPathReg[] pathRegs = new GlobalPathReg[classPathTypes.length];
+            for (int i = 0; i < classPathTypes.length; i++) {
+                pathRegs[i] = new GlobalPathReg(javaExt, classPathTypes[i]);
+            }
+            this.pathRegAction = CloseableActionContainer.mergeActions(pathRegs);
+        }
+
+        @Override
+        public CloseableAction getValue() {
+            return pathRegAction;
+        }
+
+        @Override
+        public void addChangeListener(PropertyChangeListener listener) {
+            cpProvider.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removeChangeListener(PropertyChangeListener listener) {
+            cpProvider.removePropertyChangeListener(listener);
+        }
+    }
+
     // OpenHook is important for debugging because the debugger relies on the
     // globally registered source class paths for source stepping.
+    private static class OpenHook extends ProjectOpenedHook {
+        private final CloseableActionContainer closeableActions;
 
-    // SwingUtilities.invokeLater is used only to guarantee the order of events.
-    // Actually any executor which executes tasks in the order they were
-    // submitted to it is good (using SwingUtilities.invokeLater was only
-    // convenient to use because registering paths is cheap enough).
-    private class OpenHook extends ProjectOpenedHook implements PropertyChangeListener {
-        private final List<GlobalPathReg> paths;
-        private boolean opened;
+        public OpenHook(JavaExtension javaExt) {
+            this.closeableActions = new CloseableActionContainer();
 
-        public OpenHook() {
-            this.opened = false;
-
-            this.paths = new LinkedList<>();
-            this.paths.add(new GlobalPathReg(ClassPath.SOURCE));
-            this.paths.add(new GlobalPathReg(ClassPath.BOOT));
-            this.paths.add(new GlobalPathReg(ClassPath.COMPILE));
-            this.paths.add(new GlobalPathReg(ClassPath.EXECUTE));
+            closeableActions.defineAction(classPathProviderProperty(javaExt,
+                    ClassPath.SOURCE,
+                    ClassPath.BOOT,
+                    ClassPath.COMPILE,
+                    ClassPath.EXECUTE));
         }
 
         @Override
         protected void projectOpened() {
-            cpProvider.addPropertyChangeListener(this);
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    opened = true;
-                    doRegisterClassPaths();
-                }
-            });
+            closeableActions.open();
         }
 
         @Override
         protected void projectClosed() {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    opened = false;
-                    doUnregisterPaths();
-                }
-            });
-
-            cpProvider.removePropertyChangeListener(this);
-        }
-
-        private void doUnregisterPaths() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            for (GlobalPathReg pathReg: paths) {
-                pathReg.unregister();
-            }
-        }
-
-        private void doRegisterClassPaths() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            for (GlobalPathReg pathReg: paths) {
-                pathReg.register();
-            }
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    if (opened) {
-                        doRegisterClassPaths();
-                    }
-                }
-            });
+            closeableActions.close();
         }
     }
 
-    private class GlobalPathReg {
+    private static class GlobalPathReg implements CloseableAction {
+        private final JavaExtension javaExt;
         private final String type;
-        // Note that using AtomicReference does not really make the methods
-        // thread-safe but is only convenient to use.
-        private final AtomicReference<ClassPath[]> paths;
 
-        public GlobalPathReg(String type) {
+        public GlobalPathReg(JavaExtension javaExt, String type) {
+            this.javaExt = javaExt;
             this.type = type;
-            this.paths = new AtomicReference<>(null);
         }
 
-        private void replaceRegistration(ClassPath[] newPaths) {
-            GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
+        @Override
+        public Ref open() {
+            final GlobalPathRegistry registry = GlobalPathRegistry.getDefault();
+            final ClassPath[] paths = new ClassPath[]{javaExt.cpProvider.getClassPaths(type)};
 
-            ClassPath[] oldPaths = paths.getAndSet(newPaths);
-            if (oldPaths != null) {
-                registry.unregister(type, oldPaths);
-            }
-            if (newPaths != null) {
-                registry.register(type, newPaths);
-            }
-        }
+            LOGGER.log(Level.FINE,
+                    "Registering ClassPath ({0}) for project: {1}",
+                    new Object[]{type, javaExt.getProjectDirectoryAsFile()});
+            registry.register(type, paths);
 
-        public void register() {
-            ClassPath[] newPaths = new ClassPath[]{cpProvider.getClassPaths(type)};
-            replaceRegistration(newPaths);
-        }
-
-        public void unregister() {
-            replaceRegistration(null);
+            return new Ref() {
+                @Override
+                public void close() {
+                    registry.unregister(type, paths);
+                    LOGGER.log(Level.FINE,
+                            "Unregistered ClassPath ({0}) for project: {1}",
+                            new Object[]{type, javaExt.getProjectDirectoryAsFile()});
+                }
+            };
         }
     }
 }

@@ -1,31 +1,73 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.SwingUtilities;
+import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableTask;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.filesupport.GradleTemplateConsts;
+import org.netbeans.gradle.project.filesupport.GradleTemplateRegistration;
+import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataFolder;
+import org.openide.loaders.DataObject;
+import org.openide.loaders.TemplateWizard;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 public final class GradleFolderNode extends AbstractNode {
+    private static final TaskExecutor GRADLE_FOLDER_CREATOR
+            = NbTaskExecutors.newExecutor("Gradle folder creator", 1);
+
     private final String caption;
+    private final FileObject dir;
 
     public GradleFolderNode(String caption, FileObject dir) {
-        super(createChildren(dir));
+        this(caption, dir, new ChildFactoryImpl(dir));
+    }
+
+    private GradleFolderNode(
+            String caption,
+            FileObject dir,
+            ChildFactoryImpl childFactory) {
+        this(caption, dir, childFactory, Children.create(childFactory, true));
+    }
+
+    private GradleFolderNode(
+            String caption,
+            FileObject dir,
+            ChildFactoryImpl childFactory,
+            Children children) {
+        super(children, createLookup(childFactory, children));
         ExceptionHelper.checkNotNullArgument(caption, "caption");
 
         this.caption = caption;
+        this.dir = dir;
+
+        setName(dir.toString());
     }
 
     public static SingleNodeFactory getFactory(String caption, FileObject dir) {
@@ -35,8 +77,10 @@ public final class GradleFolderNode extends AbstractNode {
         return new FactoryImpl(caption, dir);
     }
 
-    private static Children createChildren(FileObject dir) {
-        return Children.create(new ChildFactoryImpl(dir), true);
+    private static Lookup createLookup(ChildFactoryImpl childFactory, Children children) {
+        return Lookups.fixed(
+                NodeUtils.childrenFileFinder(),
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     @Override
@@ -54,17 +98,78 @@ public final class GradleFolderNode extends AbstractNode {
         return caption;
     }
 
+    @Override
+    public Action[] getActions(boolean context) {
+        return new Action[] {
+            new CreateGradleFileTask(dir),
+            null,
+            NodeUtils.getRefreshNodeAction(this)
+        };
+    }
+
+    @SuppressWarnings("serial")
+    private static class CreateGradleFileTask extends AbstractAction {
+        private final FileObject dir;
+
+        public CreateGradleFileTask(FileObject dir) {
+            super(NbStrings.getAddNewInitScriptCaption());
+
+            this.dir = dir;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final TemplateWizard template = new TemplateWizard();
+            DataFolder targetFolder = DataFolder.findFolder(dir);
+            template.setTargetFolder(targetFolder);
+            template.setTemplatesFolder(DataFolder.findFolder(GradleTemplateConsts.getTemplateFolder()));
+
+            GRADLE_FOLDER_CREATOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+                @Override
+                public void execute(CancellationToken cancelToken) throws Exception {
+                    Set<DataObject> dataObjs = template.instantiate(DataFolder.find(GradleTemplateRegistration.getTemplateFileObj()));
+                    if (dataObjs == null) {
+                        return;
+                    }
+
+                    for (DataObject dataObj: dataObjs) {
+                        final FileObject fileObj = dataObj.getPrimaryFile();
+                        if (fileObj != null) {
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    OpenEditorOutputListener.tryOpenFile(fileObj, -1);
+                                }
+                            });
+                        }
+                    }
+                }
+            }, null);
+        }
+    }
+
     private static class ChildFactoryImpl
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
         private final FileObject dir;
         private final ListenerRegistrations listenerRegistrations;
+        private volatile boolean createdOnce;
 
         public ChildFactoryImpl(FileObject dir) {
             ExceptionHelper.checkNotNullArgument(dir, "dir");
 
             this.dir = dir;
             this.listenerRegistrations = new ListenerRegistrations();
+            this.createdOnce = false;
+        }
+
+        @Override
+        public void refreshChildren() {
+            if (createdOnce) {
+                refresh(false);
+            }
         }
 
         @Override
@@ -72,7 +177,7 @@ public final class GradleFolderNode extends AbstractNode {
             listenerRegistrations.add(NbFileUtils.addDirectoryContentListener(dir, new Runnable() {
                 @Override
                 public void run() {
-                    refresh(false);
+                    refreshChildren();
                 }
             }));
         }
@@ -108,6 +213,7 @@ public final class GradleFolderNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+            createdOnce = true;
             readKeys(toPopulate);
             return true;
         }

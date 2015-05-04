@@ -1,6 +1,7 @@
 package org.netbeans.gradle.model.java;
 
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
@@ -33,12 +34,13 @@ implements
      *   plugin
      */
     public JavaCompatibilityModel getProjectInfo(Project project) {
-        if (!project.getPlugins().hasPlugin("java")) {
+        JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
+        if (javaPlugin == null) {
             return null;
         }
 
-        String srcLevel = project.property("sourceCompatibility").toString();
-        String targetLevel = project.property("targetCompatibility").toString();
+        String srcLevel = javaPlugin.getSourceCompatibility().toString();
+        String targetLevel = javaPlugin.getTargetCompatibility().toString();
 
         return new JavaCompatibilityModel(srcLevel, targetLevel);
     }

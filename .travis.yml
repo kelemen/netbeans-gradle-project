@@ -1,13 +1,8 @@
 language: java
 jdk:
-  - openjdk6
   - oraclejdk7
   - openjdk7
-before_script:
-  - cd netbeans-gradle-default-models
-  - ./gradlew check install
-  - cd ../netbeans-gradle-plugin
-script: "mvn test"
+script: "./gradlew check testAllFiltered"
 branches:
   only:
     - master

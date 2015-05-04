@@ -7,12 +7,25 @@ import java.util.logging.Logger;
 public final class FileLineConsumer implements OutputLinkFinder {
     private static final Logger LOGGER = Logger.getLogger(FileLineConsumer.class.getName());
 
-    private static OutputLinkDef tryFindLink(String line, File file, String otherInfo) {
+    private static int trimEndIndex(String str, int endIndex) {
+        for (int i = endIndex - 1; i >= 0; i--) {
+            if (str.charAt(i) > ' ') {
+                return i + 1;
+            }
+        }
+        return 0;
+    }
+
+    private static OutputLinkDef tryFindLink(String line, File file, int otherInfoStartIndex) {
+        String otherInfo = line.substring(otherInfoStartIndex, line.length());
+        int endIndex = otherInfoStartIndex - 1;
+
         int lineIndexSep = otherInfo.indexOf(':');
         int lineNumber = -1;
         if (lineIndexSep > 0) {
             try {
-                lineNumber = Integer.parseInt(otherInfo.substring(0, lineIndexSep).trim()) - 1;
+                lineNumber = Integer.parseInt(otherInfo.substring(0, lineIndexSep).trim());
+                endIndex = otherInfoStartIndex + lineIndexSep;
             } catch (NumberFormatException ex) {
             }
         }
@@ -23,15 +36,14 @@ public final class FileLineConsumer implements OutputLinkFinder {
             return null;
         }
 
-        // TODO: Altough we expect the whole line to point to a line of a file
-        //       we should be more precise.
-        return new OutputLinkDef(0, line.length(), listener);
+        return new OutputLinkDef(0, trimEndIndex(line, endIndex), listener);
     }
 
     private OutputLinkDef tryFindLink(String line, int sepIndex) {
-        File file = new File(line.substring(0, sepIndex).trim());
+        String fileStr = line.substring(0, sepIndex).trim();
+        File file = new File(fileStr);
         if (file.isFile()) {
-            return tryFindLink(line, file, line.substring(sepIndex + 1, line.length()));
+            return tryFindLink(line, file, sepIndex + 1);
         }
         else {
             return null;

@@ -1,7 +1,7 @@
 package org.netbeans.gradle.model.java;
 
-import java.io.File;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.WarPluginConvention;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
@@ -12,11 +12,11 @@ implements
     INSTANCE;
 
     public WarFoldersModel getProjectInfo(Project project) {
-        if (!project.getPlugins().hasPlugin("war")) {
+        WarPluginConvention warPlugin = project.getConvention().findPlugin(WarPluginConvention.class);
+        if (warPlugin == null) {
             return null;
         }
-
-        return new WarFoldersModel((File)project.property("webAppDir"));
+        return new WarFoldersModel(warPlugin.getWebAppDir());
     }
 
     /** {@inheritDoc } */

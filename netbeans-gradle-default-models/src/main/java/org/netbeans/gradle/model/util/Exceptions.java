@@ -1,8 +1,43 @@
 package org.netbeans.gradle.model.util;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class Exceptions {
+    private static final Logger LOGGER = Logger.getLogger(Exceptions.class.getName());
+
+    private static void logSuppressedErrors(Throwable[] suppressedErrors) {
+        for (Throwable suppressed: suppressedErrors) {
+            LOGGER.log(Level.WARNING, "Suppressing exception.", suppressed);
+        }
+    }
+
+    public static void tryAddSuppressedException(Throwable main, Throwable... suppressedErrors) {
+        if (main == null) throw new NullPointerException("main");
+        if (suppressedErrors == null) throw new NullPointerException("suppressedErrors");
+
+        if (suppressedErrors.length == 0) {
+            return;
+        }
+
+        Method addSuppressed = ReflectionUtils.tryGetPublicMethod(Throwable.class, "addSuppressed", Void.TYPE, Throwable.class);
+        if (addSuppressed == null) {
+            logSuppressedErrors(suppressedErrors);
+        }
+        else {
+            for (Throwable suppressed: suppressedErrors) {
+                try {
+                    addSuppressed.invoke(main, suppressed);
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.WARNING, "Failed to call Throwable.addSuppressed", ex);
+                    LOGGER.log(Level.WARNING, "Suppressing exception.", suppressed);
+                }
+            }
+        }
+    }
+
     public static RuntimeException throwUncheckedIO(Throwable ex) throws IOException {
         if (ex instanceof IOException) {
             throw (IOException)ex;

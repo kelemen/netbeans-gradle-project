@@ -13,11 +13,13 @@ import static org.junit.Assert.*;
 
 public class NbGradleProjectTreeTest {
     public static GenericProjectProperties createProperties(String name, String fullName) {
+        File projectDir = new File(name);
         return new GenericProjectProperties(
                 new ProjectId("", name, ""),
                 fullName,
                 new File(name),
-                new File("build.gradle"));
+                new File("build.gradle"),
+                new File(projectDir, "build"));
     }
 
     public static NbGradleProjectTree createTree(String name, NbGradleProjectTree... children) {

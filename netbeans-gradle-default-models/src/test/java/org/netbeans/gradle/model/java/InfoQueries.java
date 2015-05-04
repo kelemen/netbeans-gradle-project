@@ -127,9 +127,19 @@ public final class InfoQueries {
         return CollectionUtils.getSingleElement(list);
     }
 
+    private static void verifyNoException(Throwable error) {
+        if (error == null) {
+            return;
+        }
+
+        AssertionError fail = new AssertionError("Expected no error");
+        fail.initCause(error);
+        throw fail;
+    }
+
     public static FetchedModels verifyNoError(FetchedModelsOrError modelsOrError) {
-        assertNull(modelsOrError.getBuildScriptEvaluationError());
-        assertNull(modelsOrError.getUnexpectedError());
+        verifyNoException(modelsOrError.getBuildScriptEvaluationError());
+        verifyNoException(modelsOrError.getUnexpectedError());
 
         FetchedModels result = modelsOrError.getModels();
         assertNotNull(result);

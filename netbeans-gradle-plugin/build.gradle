@@ -1,3 +1,5 @@
+import java.nio.file.*
+
 apply plugin: 'nbm'
 
 ext.scriptFile = { String fileName ->
@@ -18,7 +20,8 @@ repositories {
 }
 
 compileJava {
-    options.compilerArgs = ['-sourcepath', "$project.projectDir/src/main/resources"]
+    String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator);
+    options.compilerArgs = ['-sourcepath', resDirsPath]
 }
 
 def tryGetProperty = {String name, String defaultValue ->
@@ -32,6 +35,7 @@ def tryGetProperty = {String name, String defaultValue ->
 nbm {
     moduleName = 'org.netbeans.gradle.project';
     moduleInstall = 'org.netbeans.gradle.project.NbGradleModuleInstall';
+    moduleLayer = 'org/netbeans/gradle/project/layer.xml';
     localizingBundle = 'org/netbeans/gradle/project/Bundle.properties';
     friendPackages {
         addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api';
@@ -146,10 +150,9 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile project(':netbeans-gradle-default-models')
 
-    compile 'org.gradle:gradle-tooling-api:1.11'
-    compile 'org.jtrim:jtrim-gui:1.7.2'
-    compile 'org.jtrim:jtrim-async:1.7.2'
-    compile 'org.jtrim:jtrim-core:1.7.2'
+    compile 'org.jtrim:jtrim-gui:1.7.3'
+    compile 'org.jtrim:jtrim-async:1.7.3'
+    compile 'org.jtrim:jtrim-core:1.7.3'
     testCompile 'junit:junit:4.10'
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'
@@ -161,3 +164,12 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
 }
 
 apply from: scriptFile('maven-publish.gradle');
+
+uploadArchives.dependsOn tasks.nbm;
+artifacts {
+    archives (tasks.nbm.outputFile) {
+        name = "${project.name}-${project.version}";
+        extension = 'nbm';
+        type = 'nbm';
+    }
+}

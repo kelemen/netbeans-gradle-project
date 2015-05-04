@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
@@ -28,6 +29,7 @@ import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.openide.loaders.DataFolder;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.nodes.ChildFactory;
@@ -38,7 +40,10 @@ import org.openide.util.lookup.Lookups;
 
 public final class GradleProjectChildFactory
 extends
-        ChildFactory.Detachable<SingleNodeFactory> {
+        ChildFactory.Detachable<SingleNodeFactory>
+implements
+        RefreshableChildren {
+
     private static final Logger LOGGER = Logger.getLogger(GradleProjectChildFactory.class.getName());
 
     private final NbGradleProject project;
@@ -47,6 +52,7 @@ extends
     private final AtomicBoolean lastHasSubprojects;
     private final ListenerRegistrations listenerRefs;
     private final PausableChangeListenerManager refreshNotifier;
+    private volatile boolean createdOnce;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -57,12 +63,15 @@ extends
         this.nodeExtensionsRef = new AtomicReference<>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
         this.listenerRefs = new ListenerRegistrations();
+        this.createdOnce = false;
 
-        this.refreshNotifier = new GenericChangeListenerManager();
+        this.refreshNotifier = new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
         this.refreshNotifier.registerListener(new Runnable() {
             @Override
             public void run() {
-                refresh(false);
+                if (createdOnce) {
+                    refresh(false);
+                }
             }
         });
     }
@@ -77,21 +86,13 @@ extends
         return result;
     }
 
-    private void refreshProjectNode() {
+    @Override
+    public void refreshChildren() {
         refreshNotifier.fireEventually();
     }
 
     private boolean hasSubProjects() {
         return !getShownModule().getMainProject().getChildren().isEmpty();
-    }
-
-    private ListenerRef registerParentRefreshRequest() {
-        return parent.addRefreshRequestListeners(new Runnable() {
-            @Override
-            public void run() {
-                refreshProjectNode();
-            }
-        });
     }
 
     private ListenerRef registerModelRefreshListener() {
@@ -144,11 +145,11 @@ extends
         boolean newHasSubProjects = hasSubProjects();
         boolean prevHasSubProjects = lastHasSubprojects.getAndSet(newHasSubProjects);
         if (newHasSubProjects != prevHasSubProjects) {
-            refreshProjectNode();
+            refreshChildren();
         }
 
         if (newNodeExtensions.isNeedRefreshOnProjectReload()) {
-            refreshProjectNode();
+            refreshChildren();
         }
     }
 
@@ -157,7 +158,7 @@ extends
         final Runnable simpleChangeListener = new Runnable() {
             @Override
             public void run() {
-                refreshProjectNode();
+                refreshChildren();
             }
         };
 
@@ -178,7 +179,6 @@ extends
             }
         }));
 
-        listenerRefs.add(registerParentRefreshRequest());
         listenerRefs.add(registerModelRefreshListener());
 
         lastHasSubprojects.set(hasSubProjects());
@@ -306,6 +306,8 @@ extends
 
     @Override
     protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+        createdOnce = true;
+
         try {
             readKeys(toPopulate);
         } catch (DataObjectNotFoundException ex) {

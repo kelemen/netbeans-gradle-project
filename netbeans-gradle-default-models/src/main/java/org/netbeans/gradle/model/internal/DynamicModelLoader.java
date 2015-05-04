@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -16,6 +17,7 @@ import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
+import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {
@@ -65,14 +67,21 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
     }
 
     private Collection<GradleTaskID> findTasks(Project project) {
-        Collection<Task> tasks = project.getTasks();
+        TaskContainer tasks = project.getTasks();
 
+        // Note: This might cause failures in Gradle 2.4-rc-1
+        // due to GRADLE-3293. (in practice however, we do not request
+        // custom models and GradleProject together).
         List<GradleTaskID> result = new ArrayList<GradleTaskID>(tasks.size());
-        for (Task task: tasks) {
-            String name = task.getName();
-            String fullName = task.getPath();
-            result.add(new GradleTaskID(name, fullName));
+        for (String taskName: tasks.getNames()) {
+            Task task = tasks.findByName(taskName);
+            if (task != null) {
+                String name = task.getName();
+                String fullName = task.getPath();
+                result.add(new GradleTaskID(name, fullName));
+            }
         }
+
         return result;
     }
 
@@ -88,35 +97,55 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
         return new ProjectId(group, name, version);
     }
 
+    private BasicInfoWithError getBasicInfo(Project project) {
+        File buildDir = project.getBuildDir();
+        String projectFullName = project.getPath();
+        ProjectId projectId = getProjectId(project);
+
+        File buildFile = null;
+        Collection<GradleTaskID> tasks = Collections.emptyList();
+
+        Throwable error = null;
+        try {
+            buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
+            tasks = findTasks(project);
+        } catch (Throwable ex) {
+            error = ex;
+        }
+
+        ModelQueryOutput.BasicInfo result = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, buildDir, tasks);
+        return new BasicInfoWithError(result, error);
+    }
+
     public Object buildAll(String modelName, Project project) {
         if (!canBuild(modelName)) {
             throw new IllegalArgumentException("Unsupported model: " + modelName);
         }
 
-        Collection<GradleTaskID> tasks = Collections.emptySet();
-        File buildFile = null;
-        ModelQueryOutput.BasicInfo basicInfo = null;
-
-        String projectFullName = project.getPath();
-        ProjectId projectId = getProjectId(project);
+        BasicInfoWithError basicInfo = getBasicInfo(project);
 
         ModelQueryOutput output;
         try {
-            buildFile = BasicFileUtils.toCanonicalFile(project.getBuildFile());
-            tasks = findTasks(project);
-            basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
-
             CustomSerializedMap projectInfos = fetchProjectInfos(project);
-            output = new ModelQueryOutput(basicInfo, projectInfos, null);
+            output = new ModelQueryOutput(basicInfo.info, projectInfos, basicInfo.error);
         } catch (Throwable ex) {
-            if (basicInfo == null) {
-                basicInfo = new ModelQueryOutput.BasicInfo(projectId, projectFullName, buildFile, tasks);
+            if (basicInfo.error != null) {
+                Exceptions.tryAddSuppressedException(ex, basicInfo.error);
             }
-
-            output = new ModelQueryOutput(basicInfo, CustomSerializedMap.EMPTY, ex);
+            output = new ModelQueryOutput(basicInfo.info, CustomSerializedMap.EMPTY, ex);
         }
 
         return new DefaultModelQueryOutputRef(output);
+    }
+
+    private static final class BasicInfoWithError {
+        public final ModelQueryOutput.BasicInfo info;
+        public final Throwable error;
+
+        public BasicInfoWithError(ModelQueryOutput.BasicInfo info, Throwable error) {
+            this.info = info;
+            this.error = error;
+        }
     }
 
     private static final class DefaultModelQueryOutputRef implements ModelQueryOutputRef, Serializable {

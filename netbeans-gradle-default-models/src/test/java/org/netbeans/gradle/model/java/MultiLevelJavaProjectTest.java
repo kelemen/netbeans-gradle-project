@@ -35,6 +35,7 @@ import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
+import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.internal.ConstBuilders;
@@ -96,7 +97,9 @@ public class MultiLevelJavaProjectTest {
             String relativeProjectPath,
             Collection<GradleTaskID> tasks,
             String... expectedNames) {
-        String taskPrefix = ":" + relativeProjectPath + ":";
+        String taskPrefix = relativeProjectPath.length() > 0
+                ? ":" + relativeProjectPath + ":"
+                : ":";
 
         Set<String> otherTasks = new LinkedHashSet<String>();
 
@@ -140,6 +143,11 @@ public class MultiLevelJavaProjectTest {
 
         String simpleName = genericProperties.getProjectName();
         assertEquals(projectName, simpleName);
+
+        ProjectId projectId = genericProperties.getProjectId();
+        assertEquals("group", "my-group", projectId.getGroup());
+        assertEquals("name", simpleName, projectId.getName());
+        assertEquals("version", getProjectVersion(simpleName), projectId.getVersion());
 
         File projectDir = genericProperties.getProjectDir();
         assertEquals(getProjectDir(projectPathParts), projectDir.getCanonicalFile());
@@ -260,13 +268,21 @@ public class MultiLevelJavaProjectTest {
         throw new AssertionError("Missing source set: " + sourceSetName);
     }
 
+    private static File getLibraryPath(File projectDir) throws IOException {
+        return getSubPath(projectDir, "build", "libs");
+    }
+
+    private static File getFileInLibs(File projectDir, String... subPaths) throws IOException {
+        return getSubPath(getLibraryPath(projectDir), subPaths);
+    }
+
     private Map<File, String> parseProjectDependencies(String... projectDependencies) throws IOException {
         Map<File, String> result = CollectionUtils.newHashMap(projectDependencies.length);
         for (String dep: projectDependencies) {
             String[] nameParts = dep.split(Pattern.quote(":"));
             String name = nameParts[nameParts.length - 1];
             File projectDir = getProjectDir(nameParts);
-            result.put(getSubPath(projectDir, "build", "libs", name + ".jar"), dep);
+            result.put(getFileInLibs(projectDir, name + "-" + getProjectVersion(name) + ".jar"), dep);
         }
         return result;
     }
@@ -424,11 +440,15 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    private static String getProjectVersion(String name) {
+        return "app1".equals(name) ? "5.95.3-beta" : "3.5.78-alpha";
+    }
+
     private void testJarOutputsModel(String relativeProjectPath) throws IOException {
         String[] projectPathParts = relativeProjectPath.split(Pattern.quote(":"));
         String name = projectPathParts[projectPathParts.length - 1];
         File projectDir = getProjectDir(projectPathParts);
-        final File expectedJarPath = getSubPath(projectDir, "build", "libs", name + ".jar");
+        final File expectedJarPath = getFileInLibs(projectDir, name + "-" + getProjectVersion(name) + ".jar");
 
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
@@ -447,6 +467,7 @@ public class MultiLevelJavaProjectTest {
                 assertNotNull("Project must contain a main jar.", mainJar);
                 assertEquals("Output jar must be at the expected location",
                         expectedJarPath, mainJar.getJar().getCanonicalFile());
+                assertNull("mainJar.tryGetSourceSetNames", mainJar.tryGetSourceSetNames());
             }
         });
     }
@@ -456,6 +477,48 @@ public class MultiLevelJavaProjectTest {
         for (String project: subprojects()) {
             testJarOutputsModel(project);
         }
+    }
+
+    private static JarOutput getJarOutput(JarOutputsModel jarOutputs, String taskName) {
+        for (JarOutput jar: jarOutputs.getJars()) {
+            if (jar.getTaskName().equals(taskName)) {
+                return jar;
+            }
+        }
+
+        throw new AssertionError("Missing jar task: " + taskName);
+    }
+
+    @Test
+    public void testCustomJarOutputsModel() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JarOutputsModel jarOutputs
+                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                assertNotNull("Must have a JarOutputsModel.", jarOutputs);
+
+                File projectDir = getProjectDir("apps", "app1");
+                String version = getProjectVersion("app1");
+
+                JarOutput testJar = getJarOutput(jarOutputs, "testJar");
+                assertEquals("Output jar must be at the expected location",
+                        getFileInLibs(projectDir, "test-app1-" + version + ".jar"),
+                        testJar.getJar().getCanonicalFile());
+                assertEquals("testJar.name", "testJar", testJar.getTaskName());
+                assertEquals("testJar.sourceSets",
+                        Collections.singleton("test"),
+                        testJar.tryGetSourceSetNames());
+
+                JarOutput customJar = getJarOutput(jarOutputs, "customJar");
+                assertEquals("Output jar must be at the expected location",
+                        getFileInLibs(projectDir, "custom-app1-" + version + ".jar"),
+                        customJar.getJar().getCanonicalFile());
+                assertEquals("customJar.name", "customJar", customJar.getTaskName());
+                assertEquals("customJar.sourceSets",
+                        Collections.singleton("main"),
+                        customJar.tryGetSourceSetNames());
+            }
+        });
     }
 
     private Map<String, JavaTestTask> nameToTestTask(JavaTestModel testModel) {

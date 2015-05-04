@@ -1,14 +1,15 @@
 package org.netbeans.gradle.project.query;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.queries.SharabilityQuery.Sharability;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class GradleSharabilityQuery implements SharabilityQueryImplementation2 {
     private final NbGradleProject project;
@@ -18,48 +19,45 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
         this.project = project;
     }
 
-    private static boolean isInDirectory(FileObject containingDir, String subDir, FileObject queriedFile) {
-        FileObject dir = containingDir.getFileObject(subDir);
-        if (dir == null) {
-            return false;
-        }
-
-        return FileUtil.getRelativePath(dir, queriedFile) != null;
+    private static boolean isInDirectory(Path dir, Path queriedFile) {
+        return queriedFile.startsWith(dir);
     }
 
-    private static FileObject uriAsFileObject(URI uri) {
-        File uriAsFile;
+    private static boolean isInBuildDir(NbGradleModel model, Path queriedFile) {
+        Path buildDir = model.getGenericInfo().getBuildDir().toPath();
+        return isInDirectory(buildDir, queriedFile);
+    }
+
+    private static Path tryConvertToPath(URI uri) {
         try {
-            uriAsFile = FileUtil.archiveOrDirForURL(uri.toURL());
-        } catch (MalformedURLException ex) {
+            return Paths.get(uri);
+        } catch (IllegalArgumentException | FileSystemNotFoundException e) {
             return null;
         }
-
-        return uriAsFile != null
-                ? FileUtil.toFileObject(uriAsFile)
-                : null;
     }
 
     @Override
     public Sharability getSharability(URI uri) {
-        FileObject queriedFile = uriAsFileObject(uri);
-
-        if (queriedFile == null) {
+        Path queriedPath = tryConvertToPath(uri);
+        if (queriedPath == null) {
             return Sharability.UNKNOWN;
         }
 
-        FileObject projectDir = project.getProjectDirectory();
-        if (isInDirectory(projectDir, "build/", queriedFile)) {
+        NbGradleModel model = project.currentModel().getValue();
+        Path rootProjectDir = model.getRootProjectDir().toPath();
+
+        if (isInBuildDir(model, queriedPath)) {
             return Sharability.NOT_SHARABLE;
         }
-        if (isInDirectory(projectDir, ".nb-gradle/private/", queriedFile)) {
+        if (isInDirectory(SettingsFiles.getSettingsDir(rootProjectDir), queriedPath)) {
             return Sharability.NOT_SHARABLE;
         }
-        if (isInDirectory(projectDir, ".nb-gradle/profiles/private/", queriedFile)) {
+        if (isInDirectory(SettingsFiles.getPrivateSettingsDir(rootProjectDir), queriedPath)) {
             return Sharability.NOT_SHARABLE;
         }
 
-        if (FileUtil.getRelativePath(projectDir, queriedFile) != null) {
+        Path projectDir = model.getProjectDir().toPath();
+        if (isInDirectory(projectDir, queriedPath)) {
             return Sharability.SHARABLE;
         }
 

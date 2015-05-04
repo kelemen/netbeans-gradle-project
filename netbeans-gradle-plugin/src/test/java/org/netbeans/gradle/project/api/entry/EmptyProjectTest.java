@@ -22,6 +22,7 @@ import org.openide.nodes.Node;
 
 import static org.junit.Assert.*;
 
+@SuppressWarnings("deprecation")
 public final class EmptyProjectTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;

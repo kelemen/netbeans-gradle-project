@@ -2,24 +2,47 @@ package org.netbeans.gradle.project.output;
 
 import javax.swing.AbstractAction;
 import javax.swing.SwingUtilities;
+import org.jtrim.cancel.CancellationSource;
 import org.netbeans.gradle.project.tasks.AsyncGradleTask;
 import org.netbeans.gradle.project.tasks.GradleTaskDef;
 
 @SuppressWarnings("serial")
 public abstract class TaskTabAction extends AbstractAction {
+    private final boolean enableWhileRunning;
     private volatile GradleTaskDef lastSourceTask;
     private volatile AsyncGradleTask lastTask;
+    private volatile CancellationSource lastCancellation;
 
     public TaskTabAction() {
-        this.lastTask = null;
+        this(false);
     }
 
-    protected void taskStarted() {
-        setEnableAction(false);
+    public TaskTabAction(boolean enableWhileRunning) {
+        this.enableWhileRunning = enableWhileRunning;
+        this.lastSourceTask = null;
+        this.lastTask = null;
+        this.lastCancellation = null;
+
+        if (enableWhileRunning) {
+            setEnabled(false);
+        }
+    }
+
+    protected void taskStarted(CancellationSource cancellation) {
+        lastCancellation = cancellation;
+        setEnableAction(enableWhileRunning);
     }
 
     protected void taskCompleted() {
-        setEnableAction(true);
+        setEnableAction(!enableWhileRunning);
+        lastCancellation = null; // Do not refernece it needlessly
+    }
+
+    protected final void cancelCurrentlyRunning() {
+        CancellationSource currentCancellation = lastCancellation;
+        if (currentCancellation != null) {
+            currentCancellation.getController().cancel();
+        }
     }
 
     protected final void setLastTask(GradleTaskDef lastSourceTask, AsyncGradleTask lastTask) {

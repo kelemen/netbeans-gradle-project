@@ -19,13 +19,13 @@ import org.openide.modules.SpecificationVersion;
 public final class SourceLevelProperty {
     public static final String DEFAULT_SOURCE_LEVEL = "1.7";
 
-    private static final String CONFIG_KEY_SOURCE_LEVEL = "source-level";
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("source-level");
 
     public static final PropertyDef<String, String> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<String, String> createPropertyDef() {
         PropertyDef.Builder<String, String> result
-                = new PropertyDef.Builder<>(ConfigPath.fromKeys(CONFIG_KEY_SOURCE_LEVEL));
+                = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(CommonProperties.getIdentityKeyEncodingDef());
         result.setValueDef(CommonProperties.<String>getIdentityValueDef());
         result.setValueMerger(CommonProperties.<String>getParentIfNullValueMerger());

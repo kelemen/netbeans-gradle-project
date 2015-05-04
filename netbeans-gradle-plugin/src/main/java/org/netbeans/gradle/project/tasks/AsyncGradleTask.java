@@ -28,6 +28,7 @@ import org.gradle.tooling.internal.consumer.DefaultCancellationTokenSource;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
+import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
@@ -336,9 +337,17 @@ public final class AsyncGradleTask implements Runnable {
         doGradleTasksWithProgressIgnoreTaskDefCancel(mergedToken, progress, buildItem);
     }
 
-    // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgressIgnoreTaskDefCancel(
             CancellationToken cancelToken,
+            ProgressHandle progress,
+            BuildExecutionItem buildItem) {
+        CancellationSource cancellation = Cancellation.createChildCancellationSource(cancelToken);
+        doGradleTasksWithProgressIgnoreTaskDefCancel(cancellation, progress, buildItem);
+    }
+
+    // TODO: This method is extremly nasty and is in a dire need of refactoring.
+    private void doGradleTasksWithProgressIgnoreTaskDefCancel(
+            CancellationSource cancellation,
             final ProgressHandle progress,
             BuildExecutionItem buildItem) {
 
@@ -365,7 +374,7 @@ public final class AsyncGradleTask implements Runnable {
 
         Throwable commandError = null;
 
-        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancelToken, project);
+        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancellation.getToken(), project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
@@ -383,7 +392,7 @@ public final class AsyncGradleTask implements Runnable {
                 try (IOTabRef<TaskIOTab> ioRef = IOTabs.taskTabs().getTab(outputDefKey, outputDefCaption)) {
                     TaskIOTab tab = ioRef.getTab();
                     tab.setLastTask(buildItem.getSourceTaskDef(), adjust(taskDef));
-                    tab.taskStarted();
+                    tab.taskStarted(cancellation);
                     BuildExecutionSupport.registerRunningItem(buildItem);
 
                     try {
@@ -406,7 +415,7 @@ public final class AsyncGradleTask implements Runnable {
                             }
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
-                                runBuild(cancelToken, buildLauncher);
+                                runBuild(cancellation.getToken(), buildLauncher);
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,

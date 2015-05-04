@@ -190,6 +190,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenEverySubProject");
     }
 
+    public static String getOpenRootProjectsCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.OpenRootProjectsCaption");
+    }
+
     public static String getOpenSubProjectCaption(Collection<? extends NbGradleProjectTree> projects) {
         int numberOfProjects = projects.size();
         if (numberOfProjects == 1) {
@@ -403,6 +407,22 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDescription");
     }
 
+    public static String getStopTaskCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.StopTaskCaption");
+    }
+
+    public static String getStopTaskDescription() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.StopTaskDescription");
+    }
+
+    public static String getConfirmStopTaskTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmStopTaskTitle");
+    }
+
+    public static String getConfirmStopTask(String taskName) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmStopTask", taskName);
+    }
+
     public static String getReRunDiffName() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDiffName");
     }
@@ -578,6 +598,14 @@ public final class NbStrings {
 
     public static String getConfirmCreateBuildSrcTitle() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ConfirmCreateBuildSrcTitle");
+    }
+
+    public static String getCreateInitDDir() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CreateInitDDir");
+    }
+
+    public static String getAddNewInitScriptCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewInitScriptCaption");
     }
 
     private NbStrings() {

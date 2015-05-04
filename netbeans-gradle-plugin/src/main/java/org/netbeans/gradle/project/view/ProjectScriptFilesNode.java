@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +8,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -21,18 +19,21 @@ import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 public final class ProjectScriptFilesNode extends AbstractNode {
     private final String caption;
     private final NbGradleProject project;
-    private final ProjectScriptFilesChildFactory childFactory;
 
     public ProjectScriptFilesNode(String caption, NbGradleProject project) {
         this(caption, project, new ProjectScriptFilesChildFactory(project));
@@ -42,14 +43,29 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             String caption,
             NbGradleProject project,
             ProjectScriptFilesChildFactory childFactory) {
-        super(Children.create(childFactory, true));
+        this(caption, project, childFactory, Children.create(childFactory, true));
+    }
+
+    private ProjectScriptFilesNode(
+            String caption,
+            NbGradleProject project,
+            ProjectScriptFilesChildFactory childFactory,
+            Children children) {
+        super(children, createLookup(childFactory, children));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         this.caption = caption;
         this.project = project;
-        this.childFactory = childFactory;
+
+        setName(caption);
+    }
+
+    private static Lookup createLookup(ProjectScriptFilesChildFactory childFactory, Children children) {
+        return Lookups.fixed(
+                ProjectScriptFileFinder.INSTANCE,
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     public static SingleNodeFactory getFactory(String caption, NbGradleProject project) {
@@ -79,7 +95,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         actions.add(openFileAction(currentModel.getBuildFile()));
         actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
         actions.add(null);
-        actions.add(new RefreshNodesAction());
+        actions.add(NodeUtils.getRefreshNodeAction(this));
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -99,32 +115,50 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         return caption;
     }
 
-    @SuppressWarnings("serial") // don't care about serialization
-    private class RefreshNodesAction extends AbstractAction {
-        public RefreshNodesAction() {
-            super(NbStrings.getScanForChangesCaption());
+    private enum ProjectScriptFileFinder implements PathFinder {
+        INSTANCE;
+
+        private Node findNodeByFile(Node root, FileObject target) {
+            boolean canBeFound =
+                    SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(target.getNameExt())
+                    || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(target.getExt());
+            if (!canBeFound) {
+                return null;
+            }
+
+            return NodeUtils.findFileChildNode(root.getChildren(), target);
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            childFactory.refreshChildren();
+        public Node findPath(Node root, Object target) {
+            FileObject targetFile = NodeUtils.tryGetFileSearchTarget(target);
+            return targetFile != null
+                    ? findNodeByFile(root, targetFile)
+                    : null;
         }
     }
 
     private static class ProjectScriptFilesChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
         private final NbGradleProject project;
         private final ListenerRegistrations listenerRefs;
+        private volatile boolean createdOnce;
 
         public ProjectScriptFilesChildFactory(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
             this.project = project;
             this.listenerRefs = new ListenerRegistrations();
+            this.createdOnce = false;
         }
 
+        @Override
         public void refreshChildren() {
-            refresh(false);
+            if (createdOnce) {
+                refresh(false);
+            }
         }
 
         @Override
@@ -223,6 +257,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
+            createdOnce = true;
             readKeys(toPopulate);
             return true;
         }

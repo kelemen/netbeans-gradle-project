@@ -66,6 +66,8 @@ public final class JavaDependenciesNode extends AbstractNode {
         super(createChildren(childFactory));
 
         this.javaExt = javaExt;
+
+        setName("java.dependencies");
     }
 
     private static Children createChildren(DependenciesChildFactory childFactory) {
@@ -469,7 +471,7 @@ public final class JavaDependenciesNode extends AbstractNode {
 
         @Override
         public Node createNode() {
-            return new AbstractNode(Children.create(new DependencyGroupChildFactory(dependencies), true)) {
+            AbstractNode result = new AbstractNode(Children.create(new DependencyGroupChildFactory(dependencies), true)) {
                 @Override
                 public Image getIcon(int type) {
                     return NbIcons.getLibrariesIcon();
@@ -485,6 +487,9 @@ public final class JavaDependenciesNode extends AbstractNode {
                     return groupName;
                 }
             };
+            result.setName(groupName);
+
+            return result;
         }
 
         @Override
