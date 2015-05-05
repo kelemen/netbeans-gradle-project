@@ -1,6 +1,6 @@
 apply plugin: 'java';
 
-String gradleVersion = '2.4-rc-2';
+String gradleVersion = '2.4';
 List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2'];
 
 ext.scriptFile = { String fileName ->
