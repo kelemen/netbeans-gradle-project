@@ -29,7 +29,7 @@ import static org.jtrim.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
 public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Platform-Priority");
 
     private final DefaultListModel<PlatformItem> jPlatformListModel;
     private boolean okPressed;

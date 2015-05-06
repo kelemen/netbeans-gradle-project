@@ -10,7 +10,7 @@ import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 
 @SuppressWarnings("serial")
 public class AppearancePanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Appearance");
 
     private String defaultValue;
 
