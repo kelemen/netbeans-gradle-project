@@ -63,6 +63,7 @@ import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.CombinedTaskVariableMap;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
+import org.netbeans.gradle.project.tasks.EnvTaskVariableMap;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
@@ -350,6 +351,7 @@ public final class NbGradleProject implements Project {
 
         // Allow extensions to redefine variables.
         maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
+        maps.add(EnvTaskVariableMap.DEFAULT);
 
         return new CombinedTaskVariableMap(maps);
     }
