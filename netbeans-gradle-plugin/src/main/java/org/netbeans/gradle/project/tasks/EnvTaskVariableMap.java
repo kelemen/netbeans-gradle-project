@@ -6,6 +6,8 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 public final class EnvTaskVariableMap implements TaskVariableMap {
     private static final String ENV_PREFIX = "env.";
 
+    public static final EnvTaskVariableMap DEFAULT = new EnvTaskVariableMap();
+
     @Override
     public String tryGetValueForVariable(TaskVariable variable) {
         String name = variable.getVariableName();
