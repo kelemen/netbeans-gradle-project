@@ -77,10 +77,6 @@ public final class GradleModelLoader {
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
 
-    private static void updateProjectFromCacheIfNeeded(NbGradleProject project, NbGradleModel baseModel) {
-        project.tryUpdateFromCache(baseModel);
-    }
-
     public static NbGradleProject tryFindGradleProject(File projectDir) {
         ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
 
@@ -93,15 +89,20 @@ public final class GradleModelLoader {
         }
     }
 
+    private static void updateProjectFromCacheIfNeeded(NbGradleModel newModel) {
+        File projectDir = newModel.getProjectDir();
+        NbGradleProject project = LoadedProjectManager.getDefault().tryGetLoadedProject(projectDir);
+        if (project != null) {
+            project.tryReplaceModel(newModel);
+        }
+    }
+
     private static GradleModelCache getCache() {
         if (CACHE_INIT.compareAndSet(false, true)) {
             GradleModelCache.getDefault().addModelUpdateListener(new ProjectModelUpdatedListener() {
                 @Override
                 public void onUpdateProject(NbGradleModel newModel) {
-                    NbGradleProject project = tryFindGradleProject(newModel.getProjectDir());
-                    if (project != null) {
-                        updateProjectFromCacheIfNeeded(project, newModel);
-                    }
+                    updateProjectFromCacheIfNeeded(newModel);
                 }
             });
         }
