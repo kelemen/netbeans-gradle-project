@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project;
 
+import java.io.File;
 import java.nio.file.Path;
 import org.netbeans.gradle.project.properties.WeakValueHashMap;
 import org.netbeans.gradle.project.util.NbConsumer;
@@ -26,5 +27,13 @@ public final class LoadedProjectManager {
         for (NbGradleProject project: projects.values()) {
             action.accept(project);
         }
+    }
+
+    public NbGradleProject tryGetLoadedProject(File projectDir) {
+        return tryGetLoadedProject(projectDir.toPath());
+    }
+
+    public NbGradleProject tryGetLoadedProject(Path projectDir) {
+        return projects.get(projectDir);
     }
 }
