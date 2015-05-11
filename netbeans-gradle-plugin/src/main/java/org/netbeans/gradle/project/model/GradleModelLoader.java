@@ -43,7 +43,6 @@ import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.LoadedProjectManager;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
@@ -76,18 +75,6 @@ public final class GradleModelLoader {
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
-
-    public static NbGradleProject tryFindGradleProject(File projectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-
-        Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
-        if (project != null) {
-            return project.getLookup().lookup(NbGradleProject.class);
-        }
-        else {
-            return null;
-        }
-    }
 
     private static void updateProjectFromCacheIfNeeded(NbGradleModel newModel) {
         File projectDir = newModel.getProjectDir();
