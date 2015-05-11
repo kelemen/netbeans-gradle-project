@@ -138,7 +138,7 @@ public final class StringUtils {
             return str;
         }
 
-        return lineSeparator.replace("\n", lineSeparator);
+        return str.replace("\n", lineSeparator);
     }
 
     public static void writeStringToFile(String content, Charset encoding, Path file) throws IOException {
