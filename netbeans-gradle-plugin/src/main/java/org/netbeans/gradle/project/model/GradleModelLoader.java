@@ -31,11 +31,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
-import org.jtrim.event.ListenerManager;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -44,6 +40,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.GradleVersions;
+import org.netbeans.gradle.project.LoadedProjectManager;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
@@ -76,18 +73,9 @@ public final class GradleModelLoader {
     private static final MonitorableTaskExecutorService MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
-    private static final ListenerManager<ModelLoadListener> LISTENERS = new CopyOnTriggerListenerManager<>();
     private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
 
     private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
-
-    public static ListenerRegistry<ModelLoadListener> getModelLoadListenerRegistry() {
-        return LISTENERS;
-    }
-
-    public static ListenerRef addModelLoadedListener(final ModelLoadListener listener) {
-        return LISTENERS.registerListener(listener);
-    }
 
     private static void updateProjectFromCacheIfNeeded(NbGradleProject project, NbGradleModel baseModel) {
         project.tryUpdateFromCache(baseModel);
@@ -431,7 +419,10 @@ public final class GradleModelLoader {
             modelToSave = getCache().updateEntry(model);
         }
 
-        LISTENERS.onEvent(ModelLoaderDispatcher.INSTANCE, model);
+        NbGradleProject ownerProject = LoadedProjectManager.getDefault().tryGetLoadedProject(model.getProjectDir());
+        if (ownerProject != null) {
+            ownerProject.tryReplaceModel(model);
+        }
 
         return modelToSave;
     }

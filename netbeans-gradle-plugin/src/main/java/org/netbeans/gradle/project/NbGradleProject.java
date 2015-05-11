@@ -34,7 +34,6 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.GradleModelLoader;
-import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -110,6 +109,8 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
+    private final ModelRetrievedListener modelLoadListener;
+
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
@@ -133,6 +134,7 @@ public final class NbGradleProject implements Project {
         this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
+        this.modelLoadListener = new ModelRetrievedListenerImpl();
 
         this.displayName = getDisplayName(currentModel, GlobalGradleSettings.getDefault().displayNamePattern());
 
@@ -373,7 +375,7 @@ public final class NbGradleProject implements Project {
             return;
         }
 
-        GradleModelLoader.tryUpdateFromCache(this, baseModel, new ModelRetrievedListenerImpl());
+        GradleModelLoader.tryUpdateFromCache(this, baseModel, modelLoadListener);
     }
 
     public void reloadProject() {
@@ -439,7 +441,7 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
+        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, modelLoadListener);
     }
 
     public NbGradleCommonProperties getCommonProperties() {
@@ -558,6 +560,12 @@ public final class NbGradleProject implements Project {
         return this.projectDir.equals(other.projectDir);
     }
 
+    public void tryReplaceModel(NbGradleModel model) {
+        if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
+            modelLoadListener.onComplete(model, null);
+        }
+    }
+
     private class OpenHook extends ProjectOpenedHook {
         private final CloseableActionContainer closeableActions;
         private final AtomicBoolean initialized;
@@ -575,16 +583,6 @@ public final class NbGradleProject implements Project {
             this.closeableActions.defineAction(LicenseManager.getDefault().getRegisterListenerAction(
                     NbGradleProject.this,
                     getCommonProperties().licenseHeaderInfo().getActiveSource()));
-
-            final ModelRetrievedListenerImpl modelRetrievedListenerImpl = new ModelRetrievedListenerImpl();
-            this.closeableActions.defineEventAction(GradleModelLoader.getModelLoadListenerRegistry(), new ModelLoadListener() {
-                @Override
-                public void modelLoaded(NbGradleModel model) {
-                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-                        modelRetrievedListenerImpl.onComplete(model, null);
-                    }
-                }
-            });
         }
 
         @Override
