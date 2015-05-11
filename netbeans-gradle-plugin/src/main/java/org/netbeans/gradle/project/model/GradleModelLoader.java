@@ -421,7 +421,7 @@ public final class GradleModelLoader {
 
         NbGradleProject ownerProject = LoadedProjectManager.getDefault().tryGetLoadedProject(model.getProjectDir());
         if (ownerProject != null) {
-            ownerProject.tryReplaceModel(model);
+            ownerProject.tryReplaceModel(modelToSave);
         }
 
         return modelToSave;
