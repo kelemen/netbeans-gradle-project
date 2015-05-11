@@ -48,6 +48,20 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         return result;
     }
 
+    private static NbGradleProject asGradleProject(Project project) {
+        return project != null
+                ? project.getLookup().lookup(NbGradleProject.class)
+                : null;
+    }
+
+    public static NbGradleProject tryLoadSafeGradleProject(Path projectDir) {
+        return asGradleProject(tryLoadSafeGradleProject(projectDir));
+    }
+
+    public static NbGradleProject tryLoadSafeGradleProject(File projectDir) {
+        return asGradleProject(tryLoadSafeGradleProject(projectDir));
+    }
+
     public static Project tryLoadSafeProject(Path projectDir) {
         return tryLoadSafeProject(projectDir.toFile());
     }
