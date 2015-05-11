@@ -187,6 +187,8 @@ public final class NbGradleProject implements Project {
         NbGradleProject project = new NbGradleProject(projectDir);
         project.initServiceObjects(state);
         project.setExtensions(ExtensionLoader.loadExtensions(project));
+
+        LoadedProjectManager.getDefault().addProject(project);
         return project;
     }
 
