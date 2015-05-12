@@ -32,8 +32,9 @@ public final class GradleCommandSpec {
             GradleCommandSpecFactory source,
             List<String> taskNames,
             List<String> arguments,
-            List<String> jvmArguments) {
-        return new CommandAdjusterFactory(source, taskNames, arguments, jvmArguments);
+            List<String> jvmArguments,
+            boolean adjustSource) {
+        return new CommandAdjusterFactory(source, taskNames, arguments, jvmArguments, adjustSource);
     }
 
     private static final class CommandAdjusterFactory implements GradleCommandSpecFactory {
@@ -41,18 +42,21 @@ public final class GradleCommandSpec {
         private final List<String> taskNames;
         private final List<String> arguments;
         private final List<String> jvmArguments;
+        private final boolean adjustSource;
 
         public CommandAdjusterFactory(
                 GradleCommandSpecFactory source,
                 List<String> taskNames,
                 List<String> arguments,
-                List<String> jvmArguments) {
+                List<String> jvmArguments,
+                boolean adjustSource) {
             ExceptionHelper.checkNotNullArgument(source, "source");
 
             this.source = source;
             this.taskNames = CollectionUtils.copyNullSafeList(taskNames);
             this.arguments = CollectionUtils.copyNullSafeList(arguments);
             this.jvmArguments = CollectionUtils.copyNullSafeList(jvmArguments);
+            this.adjustSource = adjustSource;
         }
 
 
@@ -73,7 +77,12 @@ public final class GradleCommandSpec {
             result.setArguments(arguments);
             result.setJvmArguments(jvmArguments);
 
-            return new GradleCommandSpec(original.getSource(), result.create());
+            if (adjustSource) {
+                return new GradleCommandSpec(result.create(), null);
+            }
+            else {
+                return new GradleCommandSpec(original.getSource(), result.create());
+            }
         }
     }
 }

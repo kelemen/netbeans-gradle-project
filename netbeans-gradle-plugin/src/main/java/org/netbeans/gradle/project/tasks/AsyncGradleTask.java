@@ -607,7 +607,8 @@ public final class AsyncGradleTask implements Runnable {
                 taskDefFactroy,
                 taskDef.getTaskNames(),
                 taskDef.getArguments(),
-                taskDef.getJvmArguments()));
+                taskDef.getJvmArguments(),
+                false));
     }
 
     private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
