@@ -386,6 +386,28 @@ public final class NbGradleProject implements Project {
         loadProject(false, mayUseCache);
     }
 
+    public void updateSettingsFile(final File settingsFile) {
+        if (settingsFile == null) {
+            // This means, that we can use whatever settings file we want
+            // so don't update stay with the current one.
+            return;
+        }
+
+        // TODO: Try to be a little more lazy but beware of outstanding project loading.
+        //       That is, it might be the case that currently we are in a good state
+        //       and there is an outstanding request with a different settingsFile.
+
+        GradleModelLoader.fetchModel(this, true, new ModelRetrievedListener() {
+            @Override
+            public void onComplete(NbGradleModel model, Throwable error) {
+                File currentSettingsFile = currentModel().getValue().getSettingsFile();
+                if (!Objects.equals(currentSettingsFile, settingsFile)) {
+                    modelLoadListener.onComplete(model, error);
+                }
+            }
+        });
+    }
+
     public boolean hasLoadedProject() {
         return loadedAtLeastOnceSignal.isSignaled();
     }
@@ -583,6 +605,8 @@ public final class NbGradleProject implements Project {
             this.closeableActions.defineAction(LicenseManager.getDefault().getRegisterListenerAction(
                     NbGradleProject.this,
                     getCommonProperties().licenseHeaderInfo().getActiveSource()));
+
+            this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(NbGradleProject.this));
         }
 
         @Override

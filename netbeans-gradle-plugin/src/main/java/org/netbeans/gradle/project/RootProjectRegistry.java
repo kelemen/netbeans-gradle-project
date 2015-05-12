@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,6 +11,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
@@ -29,6 +33,75 @@ public final class RootProjectRegistry {
 
     public static RootProjectRegistry getDefault() {
         return DEFAULT;
+    }
+
+    private static boolean isExplicitRootProject(NbGradleModel input) {
+        if (!input.isRootProject()) {
+            return false;
+        }
+
+        File settingsFile = input.getSettingsFile();
+        if (settingsFile == null) {
+            return false;
+        }
+
+        return Files.isRegularFile(settingsFile.toPath());
+    }
+
+    private CloseableAction.Ref registerAndUpdateProjects(NbGradleModel input) {
+        if (!isExplicitRootProject(input)) {
+            return CloseableAction.CLOSED_REF;
+        }
+
+        CloseableAction.Ref result = registerRootProjectModel(input);
+        try {
+            updateProjects(input);
+        } catch (Throwable ex) {
+            try {
+                result.close();
+            } catch (Throwable subEx) {
+                ex.addSuppressed(subEx);
+            }
+            throw ex;
+        }
+        return result;
+    }
+
+    private static void updateProjects(NbGradleModel model) {
+        updateProjects(LoadedProjectManager.getDefault(), model.getSettingsFile(), model.getMainProject());
+    }
+
+    private static void updateProjects(
+            LoadedProjectManager loadedProjects,
+            File settingsFile,
+            NbGradleProjectTree projectTree) {
+
+        for (NbGradleProjectTree child: projectTree.getChildren()) {
+            NbGradleProject childProject = loadedProjects.tryGetLoadedProject(child.getProjectDir());
+            if (childProject != null) {
+                childProject.updateSettingsFile(settingsFile);
+            }
+
+            updateProjects(loadedProjects, settingsFile, child);
+        }
+    }
+
+    private CloseableAction registerAsCloseableAction(final NbGradleModel input) {
+        return new CloseableAction() {
+            @Override
+            public CloseableAction.Ref open() {
+                return registerAndUpdateProjects(input);
+            }
+        };
+    }
+
+    public PropertySource<CloseableAction> forProject(NbGradleProject project) {
+        return PropertyFactory.convert(project.currentModel(), new ValueConverter<NbGradleModel, CloseableAction>() {
+            @Override
+            public CloseableAction convert(NbGradleModel input) {
+                return registerAsCloseableAction(input);
+            }
+        });
     }
 
     public CloseableAction.Ref registerRootProjectModel(NbGradleModel model) {
@@ -129,16 +202,12 @@ public final class RootProjectRegistry {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
             final RootProjectKey other = (RootProjectKey)obj;
-            if (!Objects.equals(this.settingsFile, other.settingsFile))
-                return false;
-            if (!Objects.equals(this.projectDir, other.projectDir))
-                return false;
-            return true;
+            return Objects.equals(this.settingsFile, other.settingsFile)
+                    && Objects.equals(this.projectDir, other.projectDir);
         }
     }
 }

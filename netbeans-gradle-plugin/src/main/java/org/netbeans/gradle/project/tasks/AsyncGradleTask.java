@@ -553,14 +553,17 @@ public final class AsyncGradleTask implements Runnable {
         return list != null ? list : Collections.<V>emptyList();
     }
 
-    private static GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
+    private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
         List<String> globalArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue());
         List<String> globalJvmArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue());
 
+        List<String> projectLoadArguments = GradleModelLoader.getProjectLoadArguments(project);
+
         GradleTaskDef result;
-        if (!globalJvmArgs.isEmpty() || !globalArgs.isEmpty()) {
+        if (!globalJvmArgs.isEmpty() || !globalArgs.isEmpty() || !projectLoadArguments.isEmpty()) {
             GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
             builder.addJvmArguments(globalJvmArgs);
+            builder.addArguments(projectLoadArguments);
             builder.addArguments(globalArgs);
             result = builder.create();
         }
@@ -611,7 +614,7 @@ public final class AsyncGradleTask implements Runnable {
         return new AsyncGradleTask(project, newFactory, actionContexts, listener);
     }
 
-    private static GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {
+    private GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {
         GradleTaskDef taskDef = commandSpec.getProcessed();
         if (taskDef == null) {
             taskDef = updateGradleTaskDef(commandSpec.getSource());

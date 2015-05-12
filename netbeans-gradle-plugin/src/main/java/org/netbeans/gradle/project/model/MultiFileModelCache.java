@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.model;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +22,11 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     @Override
-    public NbGradleModel tryGetModel(NbGradleProject project) throws IOException {
-        NbGradleModel currentModel = project.currentModel().getValue();
-        Path cacheFilePath = getCacheFilePath(currentModel, getMD5());
+    public NbGradleModel tryGetModel(NbGradleProject project, File rootProjectDir) throws IOException {
+        Path cacheFilePath = getCacheFilePath(
+                rootProjectDir,
+                project.getProjectDirectoryAsFile(),
+                getMD5());
 
         if (!Files.isRegularFile(cacheFilePath)) {
             return null;
@@ -54,19 +57,42 @@ public final class MultiFileModelCache implements PersistentModelCache {
         return str.length() > maxLength ? str.substring(0, maxLength) : str;
     }
 
-    private static String getCacheFileName(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
-        String cacheKey = SingleFileModelCache.getCacheKey(model);
+    private static String getCacheKey(File rootProjectDir, File projectDir) throws IOException {
+        File rootDir = rootProjectDir.getCanonicalFile();
+
+        String rootDirStr = rootDir.getPath();
+        String projectDirStr = projectDir.getCanonicalFile().getPath();
+        if (projectDirStr.startsWith(rootDirStr)) {
+            projectDirStr = projectDirStr.substring(rootDirStr.length());
+        }
+        return projectDirStr;
+    }
+
+    private static String getCacheFileName(
+            File rootProjectDir,
+            File projectDir,
+            MessageDigest hashCalculator) throws IOException {
+
+        String cacheKey = getCacheKey(rootProjectDir, projectDir);
 
         // We do this to limit the key length and make it usable as part of a file name.
         hashCalculator.reset();
         String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(StringUtils.UTF8)));
-        return limitLength(model.getProjectDir().getName(), 16) + "-" + keyHash;
+        return limitLength(projectDir.getName(), 16) + "-" + keyHash;
     }
 
     private static Path getCacheFilePath(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
-        String fileName = getCacheFileName(model, hashCalculator);
+        return getCacheFilePath(model.getRootProjectDir(), model.getProjectDir(), hashCalculator);
+    }
 
-        return SettingsFiles.getCacheDir(model.getRootProjectDir().toPath()).resolve(fileName);
+    private static Path getCacheFilePath(
+            File rootProjectDir,
+            File projectDir,
+            MessageDigest hashCalculator) throws IOException {
+
+        String fileName = getCacheFileName(rootProjectDir, projectDir, hashCalculator);
+
+        return SettingsFiles.getCacheDir(rootProjectDir.toPath()).resolve(fileName);
     }
 
     private void saveGradleModel(
