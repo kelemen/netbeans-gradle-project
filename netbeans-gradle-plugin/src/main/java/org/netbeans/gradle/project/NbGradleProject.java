@@ -121,7 +121,7 @@ public final class NbGradleProject implements Project {
             throw new IOException("Project directory does not exist.");
         }
         this.serviceObjectsRef = new AtomicReference<>(null);
-        this.preferredSettingsFileRef = new AtomicReference<>(RootProjectRegistry.getDefault().tryGetSettingsFile(projectDirAsFile));
+        this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
 
         this.mergedCommandQueryRef = new AtomicReference<>(null);
         this.combinedExtensionLookup = new DynamicLookup();
@@ -148,6 +148,16 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
+    }
+
+    private static Path tryGetPreferredSettingsFile(File projectDir) {
+        Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
+        if (explicitSettingsFile != null) {
+            return explicitSettingsFile;
+        }
+
+        File result = NbGradleModel.findSettingsGradle(projectDir);
+        return result != null ? result.toPath() : null;
     }
 
     private void initServiceObjects(ProjectState state) {
@@ -404,7 +414,7 @@ public final class NbGradleProject implements Project {
     }
 
     public void updateSettingsFile() {
-        updateSettingsFile(RootProjectRegistry.getDefault().tryGetSettingsFile(getProjectDirectoryAsFile()));
+        updateSettingsFile(tryGetPreferredSettingsFile(getProjectDirectoryAsFile()));
     }
 
     public boolean hasLoadedProject() {
