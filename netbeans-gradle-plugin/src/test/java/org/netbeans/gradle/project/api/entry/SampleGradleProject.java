@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.api.entry;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.gradle.util.GradleVersion;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
@@ -91,6 +92,23 @@ public final class SampleGradleProject implements Closeable {
 
     @Override
     public void close() throws IOException {
-        ZipUtils.recursiveDelete(tempFolder);
+        tryDelete(tempFolder);
+    }
+
+    private static void tryDelete(File folder) throws IOException {
+        long startTime = System.nanoTime();
+        long maxWaitNanos = TimeUnit.SECONDS.toNanos(60);
+
+        while (true) {
+            try {
+                ZipUtils.recursiveDelete(folder);
+                return;
+            } catch (IOException ex) {
+                long elapsed = System.nanoTime() - startTime;
+                if (elapsed >= maxWaitNanos) {
+                    throw ex;
+                }
+            }
+        }
     }
 }
