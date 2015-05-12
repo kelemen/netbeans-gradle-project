@@ -77,11 +77,17 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         return openFileAction(file);
     }
 
-    private Action openFileAction(File file) {
+    private static Action openFileAction(File file) {
         String actionCaption = NbStrings.getOpenFileCaption(file.getName());
         Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
 
         return result;
+    }
+
+    private static void addOpenFileAction(File file, List<Action> actions) {
+        if (file != null) {
+            actions.add(openFileAction(file));
+        }
     }
 
     @Override
@@ -90,9 +96,9 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         NbGradleModel currentModel = project.currentModel().getValue();
         if (currentModel.isRootProject()) {
-            actions.add(openFileAction(currentModel.getSettingsFile()));
+            addOpenFileAction(currentModel.getSettingsFile(), actions);
         }
-        actions.add(openFileAction(currentModel.getBuildFile()));
+        addOpenFileAction(currentModel.getBuildFile(), actions);
         actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
         actions.add(null);
         actions.add(NodeUtils.getRefreshNodeAction(this));

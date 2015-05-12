@@ -81,13 +81,19 @@ public final class BuildScriptsNode extends AbstractNode {
         return result;
     }
 
+    private static void addOpenFileAction(File file, List<Action> actions) {
+        if (file != null) {
+            actions.add(openFileAction(file));
+        }
+    }
+
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
 
         NbGradleModel currentModel = project.currentModel().getValue();
-        actions.add(openFileAction(currentModel.getSettingsFile()));
-        actions.add(openFileAction(currentModel.getBuildFile()));
+        addOpenFileAction(currentModel.getSettingsFile(), actions);
+        addOpenFileAction(currentModel.getBuildFile(), actions);
         actions.add(null);
         actions.add(new OpenOrCreateBuildSrc(
                 NbStrings.getOpenBuildSrcCaption(),
