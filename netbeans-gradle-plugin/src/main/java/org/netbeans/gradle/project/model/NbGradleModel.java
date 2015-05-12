@@ -178,8 +178,12 @@ public final class NbGradleModel {
         }
     }
 
+    public static boolean isBuildSrcDirectory(File projectDir) {
+        return projectDir.getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+    }
+
     public boolean isBuildSrc() {
-        return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+        return isBuildSrcDirectory(getProjectDir());
     }
 
     public boolean isRootProject() {

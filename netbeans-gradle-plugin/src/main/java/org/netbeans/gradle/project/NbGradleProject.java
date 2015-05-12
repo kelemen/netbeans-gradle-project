@@ -151,6 +151,10 @@ public final class NbGradleProject implements Project {
     }
 
     private static Path tryGetPreferredSettingsFile(File projectDir) {
+        if (NbGradleModel.isBuildSrcDirectory(projectDir)) {
+            return null;
+        }
+
         Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
         if (explicitSettingsFile != null) {
             return explicitSettingsFile;
