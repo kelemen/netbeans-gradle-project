@@ -55,11 +55,11 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static NbGradleProject tryLoadSafeGradleProject(Path projectDir) {
-        return asGradleProject(tryLoadSafeGradleProject(projectDir));
+        return asGradleProject(tryLoadSafeProject(projectDir));
     }
 
     public static NbGradleProject tryLoadSafeGradleProject(File projectDir) {
-        return asGradleProject(tryLoadSafeGradleProject(projectDir));
+        return asGradleProject(tryLoadSafeProject(projectDir));
     }
 
     public static Project tryLoadSafeProject(Path projectDir) {
