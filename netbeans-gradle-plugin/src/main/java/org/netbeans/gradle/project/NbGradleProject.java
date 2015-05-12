@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,6 +112,8 @@ public final class NbGradleProject implements Project {
 
     private final ModelRetrievedListener modelLoadListener;
 
+    private final AtomicReference<Path> preferredSettingsFileRef;
+
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
@@ -118,6 +121,7 @@ public final class NbGradleProject implements Project {
             throw new IOException("Project directory does not exist.");
         }
         this.serviceObjectsRef = new AtomicReference<>(null);
+        this.preferredSettingsFileRef = new AtomicReference<>(RootProjectRegistry.getDefault().tryGetSettingsFile(projectDirAsFile));
 
         this.mergedCommandQueryRef = new AtomicReference<>(null);
         this.combinedExtensionLookup = new DynamicLookup();
@@ -191,6 +195,7 @@ public final class NbGradleProject implements Project {
         project.setExtensions(ExtensionLoader.loadExtensions(project));
 
         LoadedProjectManager.getDefault().addProject(project);
+        project.updateSettingsFile();
         return project;
     }
 
@@ -386,26 +391,21 @@ public final class NbGradleProject implements Project {
         loadProject(false, mayUseCache);
     }
 
-    public void updateSettingsFile(final File settingsFile) {
-        if (settingsFile == null) {
-            // This means, that we can use whatever settings file we want
-            // so don't update stay with the current one.
+    public Path getPreferredSettingsFile() {
+        return preferredSettingsFileRef.get();
+    }
+
+    private void updateSettingsFile(Path settingsFile) {
+        Path prevSettingsFile = preferredSettingsFileRef.getAndSet(settingsFile);
+        if (Objects.equals(prevSettingsFile, settingsFile)) {
             return;
         }
 
-        // TODO: Try to be a little more lazy but beware of outstanding project loading.
-        //       That is, it might be the case that currently we are in a good state
-        //       and there is an outstanding request with a different settingsFile.
+        reloadProject(true);
+    }
 
-        GradleModelLoader.fetchModel(this, true, new ModelRetrievedListener() {
-            @Override
-            public void onComplete(NbGradleModel model, Throwable error) {
-                File currentSettingsFile = currentModel().getValue().getSettingsFile();
-                if (!Objects.equals(currentSettingsFile, settingsFile)) {
-                    modelLoadListener.onComplete(model, error);
-                }
-            }
-        });
+    public void updateSettingsFile() {
+        updateSettingsFile(RootProjectRegistry.getDefault().tryGetSettingsFile(getProjectDirectoryAsFile()));
     }
 
     public boolean hasLoadedProject() {

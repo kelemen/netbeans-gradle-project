@@ -46,7 +46,6 @@ import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
-import org.netbeans.gradle.project.RootProjectRegistry;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
@@ -160,8 +159,7 @@ public final class GradleModelLoader {
     }
 
     private static ProjectLoadRequest getProjectLoadKey(NbGradleProject project) {
-        File projectDir = project.getProjectDirectoryAsFile();
-        Path settingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
+        Path settingsFile = project.getPreferredSettingsFile();
         return new ProjectLoadRequest(project, settingsFile);
     }
 

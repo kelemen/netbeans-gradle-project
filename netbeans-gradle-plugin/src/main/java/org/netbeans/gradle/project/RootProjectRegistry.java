@@ -79,7 +79,7 @@ public final class RootProjectRegistry {
         for (NbGradleProjectTree child: projectTree.getChildren()) {
             NbGradleProject childProject = loadedProjects.tryGetLoadedProject(child.getProjectDir());
             if (childProject != null) {
-                childProject.updateSettingsFile(settingsFile);
+                childProject.updateSettingsFile();
             }
 
             updateProjects(loadedProjects, settingsFile, child);
