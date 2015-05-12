@@ -273,12 +273,10 @@ public final class GradleModelLoader {
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
 
-        final ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
-
         // TODO: If we already loaded model from the persistent cache for this
         //       project, skip loading from persistent cache.
         if (!mayFetchFromCache || project.hasLoadedProject()) {
-            fetchModelWithoutPersistentCache(projectLoadKey, mayFetchFromCache, listener);
+            fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
             return;
         }
 
@@ -289,6 +287,7 @@ public final class GradleModelLoader {
                 boolean needLoadFromScripts = true;
 
                 try {
+                    ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
                     model = tryGetFromCache(projectLoadKey);
                     if (model == null || hasUnloadedExtension(project, model)) {
                         if (project.hasLoadedProject()) {
@@ -304,7 +303,7 @@ public final class GradleModelLoader {
                 } finally {
                     onModelLoaded(model, null, listener);
                     if (needLoadFromScripts) {
-                        fetchModelWithoutPersistentCache(projectLoadKey, mayFetchFromCache, listener);
+                        fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
                     }
                 }
             }
@@ -312,13 +311,13 @@ public final class GradleModelLoader {
     }
 
     private static void fetchModelWithoutPersistentCache(
-            final ProjectLoadRequest projectLoadKey,
+            final NbGradleProject project,
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
-        ExceptionHelper.checkNotNullArgument(projectLoadKey, "projectLoadKey");
+        ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final NbGradleProject project = projectLoadKey.project;
+        final ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
 
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
