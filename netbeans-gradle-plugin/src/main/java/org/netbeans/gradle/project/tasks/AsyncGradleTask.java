@@ -719,8 +719,7 @@ public final class AsyncGradleTask implements Runnable {
 
         @Override
         public void repeatExecution() {
-            DaemonTaskDef newTaskDef = processedCommandSpec.newBuildExecutionItem().getDaemonTaskDef();
-            GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, newTaskDef, listener);
+            adjust(processedCommandSpec.getProcessedTaskDef()).run();
         }
 
         public void markFinished() {
