@@ -111,7 +111,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
-        return getIcon(type);
+        return NbIcons.getOpenFolderIcon();
     }
 
     @Override
