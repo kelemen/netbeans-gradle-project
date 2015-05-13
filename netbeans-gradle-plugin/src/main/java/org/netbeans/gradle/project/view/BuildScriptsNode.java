@@ -73,16 +73,9 @@ public final class BuildScriptsNode extends AbstractNode {
         return new NodeFactoryImpl(project);
     }
 
-    private static Action openFileAction(Path file) {
-        String actionCaption = NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file));
-        Action result = new OpenAlwaysFileAction(actionCaption, file);
-
-        return result;
-    }
-
     private static void addOpenFileAction(Path file, List<Action> actions) {
         if (file != null) {
-            actions.add(openFileAction(file));
+            actions.add(new OpenAlwaysFileAction(file));
         }
     }
 

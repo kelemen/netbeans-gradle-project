@@ -13,7 +13,6 @@ import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
@@ -75,19 +74,12 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     private Action openProjectFileAction(String name) {
         Path file = project.getProjectDirectoryAsPath().resolve(name);
-        return openFileAction(file);
-    }
-
-    private static Action openFileAction(Path file) {
-        String actionCaption = NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file));
-        Action result = new OpenAlwaysFileAction(actionCaption, file);
-
-        return result;
+        return new OpenAlwaysFileAction(file);
     }
 
     private static void addOpenFileAction(Path file, List<Action> actions) {
         if (file != null) {
-            actions.add(openFileAction(file));
+            actions.add(new OpenAlwaysFileAction(file));
         }
     }
 

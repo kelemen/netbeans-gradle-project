@@ -72,8 +72,7 @@ public final class GradleHomeNode extends AbstractNode {
         File userHome = getGradleUserHome();
         File file = userHome != null ? new File(userHome, name) : new File(name);
 
-        String caption = NbStrings.getOpenFileCaption(name);
-        Action result = new OpenAlwaysFileAction(caption, file.toPath());
+        Action result = new OpenAlwaysFileAction(file.toPath());
         if (userHome == null) {
             result.setEnabled(false);
         }
