@@ -102,7 +102,7 @@ public final class GradleHomeNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
-        return getIcon(type);
+        return NbIcons.getOpenFolderIcon();
     }
 
     @Override
