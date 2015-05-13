@@ -679,7 +679,8 @@ public final class GlobalGradleSettings {
             Map<String, String> result = new HashMap<>();
             for (Map.Entry<String, String> entry: values.entrySet()) {
                 if (entry.getKey().startsWith(prefix)) {
-                    result.put(entry.getKey(), entry.getValue());
+                    String rawKey = entry.getKey().substring(prefix.length());
+                    result.put(rawKey, entry.getValue());
                 }
             }
             return result;
