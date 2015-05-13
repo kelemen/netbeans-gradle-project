@@ -25,6 +25,9 @@ public final class NbIcons {
     private static final String LIBRARIES_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/libraries-badge.png";
 
     @StaticResource
+    private static final String PACKAGE_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/package-badge.png";
+
+    @StaticResource
     private static final String LIBRARY_ICON_PATH = "org/netbeans/gradle/project/resources/libraries.png";
 
     @StaticResource
@@ -47,6 +50,10 @@ public final class NbIcons {
 
     public static Image getLibraryIcon() {
         return ImageUtilities.loadImage(LIBRARY_ICON_PATH);
+    }
+
+    public static Image getPackageBadge() {
+        return ImageUtilities.loadImage(PACKAGE_BADGE_ICON_PATH);
     }
 
     public static Image getLibrariesBadge() {
@@ -110,6 +117,30 @@ public final class NbIcons {
 
     public static Image getFolderIcon() {
         return FolderIconHolder.IMAGE;
+    }
+
+    private static class PackageIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            return mergeFolderWithBadge(false, getPackageBadge());
+        }
+    }
+
+    private static class OpenPackageIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            return mergeFolderWithBadge(true, getPackageBadge());
+        }
+    }
+
+    public static Image getOpenPackageIcon() {
+        return OpenPackageIconHolder.IMAGE;
+    }
+
+    public static Image getPackageIcon() {
+        return PackageIconHolder.IMAGE;
     }
 
     private static class LibrariesIconHolder {
