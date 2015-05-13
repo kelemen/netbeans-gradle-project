@@ -99,8 +99,8 @@ public final class GradleModelLoader {
     }
 
     private static boolean hasWrapper(NbGradleProject project) {
-        File rootDir = getProjectLoadKey(project).getAppliedRootProjectDir();
-        Path wrapperPropertiesFile = rootDir.toPath()
+        Path rootDir = getProjectLoadKey(project).getAppliedRootProjectDir();
+        Path wrapperPropertiesFile = rootDir
                 .resolve("gradle")
                 .resolve("wrapper")
                 .resolve("gradle-wrapper.properties");
@@ -603,7 +603,7 @@ public final class GradleModelLoader {
             return NbGradleModel.findSettingsGradle(project.getProjectDirectoryAsFile());
         }
 
-        public File getAppliedRootProjectDir() {
+        public Path getAppliedRootProjectDir() {
             Path appliedSettingsFile = settingsFile;
             if (appliedSettingsFile == null) {
                 appliedSettingsFile = findAppliedSettingsFile();
@@ -612,11 +612,11 @@ public final class GradleModelLoader {
             if (appliedSettingsFile != null) {
                 Path settingsFileDir = appliedSettingsFile.getParent();
                 if (settingsFileDir != null) {
-                    return settingsFileDir.toFile();
+                    return settingsFileDir;
                 }
             }
 
-            return project.getProjectDirectoryAsFile();
+            return project.getProjectDirectoryAsPath();
         }
     }
 

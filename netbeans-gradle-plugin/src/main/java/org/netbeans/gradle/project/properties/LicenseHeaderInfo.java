@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
 import org.jtrim.utils.ExceptionHelper;
@@ -39,8 +38,8 @@ public final class LicenseHeaderInfo {
             return licenseTemplateFile;
         }
 
-        File rootProjectDir = project.currentModel().getValue().getSettingsDir();
-        return rootProjectDir.toPath().resolve(licenseTemplateFile);
+        Path rootProjectDir = project.currentModel().getValue().getSettingsDir();
+        return rootProjectDir.resolve(licenseTemplateFile);
     }
 
     public String getLicenseName() {

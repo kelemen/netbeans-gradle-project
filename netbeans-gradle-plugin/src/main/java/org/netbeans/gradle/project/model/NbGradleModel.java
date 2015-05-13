@@ -216,7 +216,7 @@ public final class NbGradleModel {
      * @return the directory containing the {@code settings.gradle} file.
      *   This method never returns {@code null}.
      */
-    public File getSettingsDir() {
+    public Path getSettingsDir() {
         return genericInfo.getSettingsDir();
     }
 

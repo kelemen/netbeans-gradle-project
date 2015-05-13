@@ -92,14 +92,14 @@ public final class NbGenericModelInfo implements Serializable {
      * @return the directory containing the {@code settings.gradle} file.
      *   This method never returns {@code null}.
      */
-    public File getSettingsDir() {
-        File result = null;
+    public Path getSettingsDir() {
+        Path result = null;
         if (settingsFile != null) {
-            result = settingsFile.toFile().getParentFile();
+            result = settingsFile.getParent();
         }
 
         if (result == null) {
-            result = getProjectDir();
+            result = getProjectDir().toPath();
         }
         return result;
     }

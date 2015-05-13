@@ -22,7 +22,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     @Override
-    public NbGradleModel tryGetModel(NbGradleProject project, File rootProjectDir) throws IOException {
+    public NbGradleModel tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException {
         Path cacheFilePath = getCacheFilePath(
                 rootProjectDir,
                 project.getProjectDirectoryAsFile(),
@@ -57,10 +57,10 @@ public final class MultiFileModelCache implements PersistentModelCache {
         return str.length() > maxLength ? str.substring(0, maxLength) : str;
     }
 
-    private static String getCacheKey(File rootProjectDir, File projectDir) throws IOException {
-        File rootDir = rootProjectDir.getCanonicalFile();
+    private static String getCacheKey(Path rootProjectDir, File projectDir) throws IOException {
+        Path rootDir = rootProjectDir.normalize();
 
-        String rootDirStr = rootDir.getPath();
+        String rootDirStr = rootDir.toString();
         String projectDirStr = projectDir.getCanonicalFile().getPath();
         if (projectDirStr.startsWith(rootDirStr)) {
             projectDirStr = projectDirStr.substring(rootDirStr.length());
@@ -69,7 +69,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     private static String getCacheFileName(
-            File rootProjectDir,
+            Path rootProjectDir,
             File projectDir,
             MessageDigest hashCalculator) throws IOException {
 
@@ -86,13 +86,13 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     private static Path getCacheFilePath(
-            File rootProjectDir,
+            Path rootProjectDir,
             File projectDir,
             MessageDigest hashCalculator) throws IOException {
 
         String fileName = getCacheFileName(rootProjectDir, projectDir, hashCalculator);
 
-        return SettingsFiles.getCacheDir(rootProjectDir.toPath()).resolve(fileName);
+        return SettingsFiles.getCacheDir(rootProjectDir).resolve(fileName);
     }
 
     private void saveGradleModel(

@@ -15,7 +15,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class SettingsFiles {
     private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
@@ -153,7 +152,7 @@ public final class SettingsFiles {
 
     public static Path getRootDirectory(NbGradleProject project) {
         NbGradleModel model = project.currentModel().getValue();
-        return NbFileUtils.asPath(model.getSettingsDir());
+        return model.getSettingsDir();
     }
 
     private SettingsFiles() {

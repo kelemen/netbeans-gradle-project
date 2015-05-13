@@ -19,7 +19,6 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
@@ -103,7 +102,7 @@ public final class BuildScriptsNode extends AbstractNode {
         if (!currentModel.isRootProject()) {
             actions.add(OpenProjectsAction.createFromProjectDirs(
                     NbStrings.getOpenRootProjectsCaption(),
-                    Collections.singleton(currentModel.getSettingsDir())));
+                    Collections.singleton(currentModel.getSettingsDir().toFile())));
         }
 
         actions.add(null);
@@ -127,13 +126,12 @@ public final class BuildScriptsNode extends AbstractNode {
         return NbStrings.getBuildScriptsNodeCaption();
     }
 
-    private static File getBuildSrcDir(NbGradleProject project) {
+    private static Path getBuildSrcDir(NbGradleProject project) {
          return getBuildSrcDir(project.currentModel().getValue());
     }
 
-    private static File getBuildSrcDir(NbGradleModel currentModel) {
-        File rootProjectDir = currentModel.getSettingsDir();
-        return new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
+    private static Path getBuildSrcDir(NbGradleModel currentModel) {
+        return currentModel.getSettingsDir().resolve(SettingsFiles.BUILD_SRC_NAME);
     }
 
     private static class BuildScriptChildFactory
@@ -179,12 +177,9 @@ public final class BuildScriptsNode extends AbstractNode {
                 String caption,
                 File projectDir,
                 List<SingleNodeFactory> toPopulate) {
-            Project project = NbGradleProjectFactory.tryLoadSafeProject(projectDir);
+            NbGradleProject project = NbGradleProjectFactory.tryLoadSafeGradleProject(projectDir);
             if (project != null) {
-                NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-                if (gradleProject != null) {
-                    toPopulate.add(ProjectScriptFilesNode.getFactory(caption, gradleProject));
-                }
+                toPopulate.add(ProjectScriptFilesNode.getFactory(caption, project));
             }
         }
 
@@ -192,8 +187,8 @@ public final class BuildScriptsNode extends AbstractNode {
             NbGradleModel currentModel = project.currentModel().getValue();
 
             if (!currentModel.isBuildSrc()) {
-                final File buildSrc = getBuildSrcDir(currentModel);
-                if (buildSrc.isDirectory()) {
+                Path buildSrc = getBuildSrcDir(currentModel);
+                if (Files.isDirectory(buildSrc)) {
                     toPopulate.add(new BuildSrcNodeFactory(buildSrc));
                 }
             }
@@ -201,7 +196,7 @@ public final class BuildScriptsNode extends AbstractNode {
             File projectDir = currentModel.getProjectDir();
             addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
 
-            File rootProjectDir = currentModel.getSettingsDir();
+            File rootProjectDir = currentModel.getSettingsDir().toFile();
             if (!Objects.equals(projectDir, rootProjectDir)) {
                 addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }
@@ -314,17 +309,16 @@ public final class BuildScriptsNode extends AbstractNode {
             NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) throws Exception {
-                    Path buildSrcDir = getBuildSrcDir(project).toPath();
-                    doActionNow(buildSrcDir);
+                    doActionNow(getBuildSrcDir(project));
                 }
             }, null);
         }
     }
 
     private static class BuildSrcNodeFactory implements SingleNodeFactory {
-        private final File buildSrcDir;
+        private final Path buildSrcDir;
 
-        public BuildSrcNodeFactory(File buildSrcDir) {
+        public BuildSrcNodeFactory(Path buildSrcDir) {
             this.buildSrcDir = buildSrcDir;
         }
 
@@ -351,9 +345,9 @@ public final class BuildScriptsNode extends AbstractNode {
     }
 
     private static class BuildSrcNode extends FilterNode {
-        private final File buildSrcDir;
+        private final Path buildSrcDir;
 
-        public BuildSrcNode(File buildSrcDir) {
+        public BuildSrcNode(Path buildSrcDir) {
             super(Node.EMPTY.cloneNode(), null, Lookups.fixed(buildSrcDir));
             this.buildSrcDir = buildSrcDir;
         }
@@ -369,13 +363,13 @@ public final class BuildScriptsNode extends AbstractNode {
         public Action getPreferredAction() {
             return OpenProjectsAction.createFromProjectDirs(
                     NbStrings.getOpenBuildSrcCaption(),
-                    Collections.singleton(buildSrcDir));
+                    Collections.singleton(buildSrcDir.toFile()));
         }
 
         @Override
         public String getName() {
-            File parentFile = buildSrcDir.getParentFile();
-            return "BuildSrc_" + (parentFile != null ? parentFile.getName() : "unknown");
+            Path parentFile = buildSrcDir.getParent();
+            return "BuildSrc_" + (parentFile != null ? NbFileUtils.getFileNameStr(parentFile) : "unknown");
         }
         @Override
         public String getDisplayName() {

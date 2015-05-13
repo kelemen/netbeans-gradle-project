@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -237,8 +236,7 @@ public final class LicenseManager {
         }
 
         public Path getAbsoluteSrcFile(NbGradleModel currentModel) {
-            File rootProjectDir = currentModel.getSettingsDir();
-            return rootProjectDir.toPath().resolve(srcFile);
+            return currentModel.getSettingsDir().resolve(srcFile);
         }
 
         @Override
