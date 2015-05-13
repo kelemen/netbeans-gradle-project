@@ -79,6 +79,15 @@ public final class NamedSourceRoot {
         return result;
     }
 
+    public static String getSourceGroupDisplayName(JavaSourceGroup sourceGroup) {
+        JavaSourceGroupName groupName = sourceGroup.getGroupName();
+        if (groupName == JavaSourceGroupName.RESOURCES) {
+            return NbStrings.getResourcesPackageCaption();
+        }
+
+        return StringUtils.capitalizeFirstCharacter(groupName.toString().toLowerCase(Locale.ROOT));
+    }
+
     public static List<NamedSourceRoot> getAllSourceRoots(NbJavaModule module) {
         List<NamedSourceRoot> result = new LinkedList<>();
 
@@ -118,8 +127,7 @@ public final class NamedSourceRoot {
                             : NbStrings.getOtherPackageCaption(displaySourceSetName);
                 }
                 else {
-                    String groupDisplayName = StringUtils.capitalizeFirstCharacter(
-                            groupName.toString().toLowerCase(Locale.ROOT));
+                    String groupDisplayName = getSourceGroupDisplayName(sourceGroup);
                     groupNamePrefix = mainName != null
                             ? mainName + " [" + groupDisplayName + "]"
                             :  NbStrings.getOtherPackageCaption(displaySourceSetName + "/" + groupDisplayName);
@@ -198,7 +206,7 @@ public final class NamedSourceRoot {
         return order1 - order2;
     }
 
-    private static int compareSourceSetNames(String name1, String name2) {
+    public static int compareSourceSetNames(String name1, String name2) {
         if (JavaSourceSet.NAME_MAIN.equals(name1)) {
             return -1;
         }
@@ -227,7 +235,7 @@ public final class NamedSourceRoot {
         valueList.add(value);
     }
 
-    private static List<NamedFile> nameSourceRoots(Collection<File> files) {
+    public static List<NamedFile> nameSourceRoots(Collection<File> files) {
         // The common case
         if (files.size() == 1) {
             File file = files.iterator().next();
