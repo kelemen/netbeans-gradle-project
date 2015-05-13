@@ -121,6 +121,26 @@ public final class JavaSourceGroup implements Serializable {
                 : SourceIncludePatterns.ALLOW_ALL;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 11 * hash + (this.groupName != null ? this.groupName.hashCode() : 0);
+        hash = 11 * hash + (this.sourceRoots != null ? this.sourceRoots.hashCode() : 0);
+        hash = 11 * hash + (this.excludePatterns != null ? this.excludePatterns.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+
+        final JavaSourceGroup other = (JavaSourceGroup)obj;
+        if (this.groupName != other.groupName) return false;
+        if (this.sourceRoots != other.sourceRoots && (this.sourceRoots == null || !this.sourceRoots.equals(other.sourceRoots))) return false;
+        return this.excludePatterns == other.excludePatterns || (this.excludePatterns != null && this.excludePatterns.equals(other.excludePatterns));
+    }
+
     private Object readResolve() throws ObjectStreamException {
         // The null check is there for backward compatibility.
         // That is, when this object was serialized with a previous version
