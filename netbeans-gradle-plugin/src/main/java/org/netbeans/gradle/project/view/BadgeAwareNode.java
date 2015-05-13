@@ -34,7 +34,6 @@ import org.openide.nodes.Node;
 
 import static org.jtrim.property.PropertyFactory.*;
 
-
 public final class BadgeAwareNode extends FilterNode {
     private static final Logger LOGGER = Logger.getLogger(BadgeAwareNode.class.getName());
 
