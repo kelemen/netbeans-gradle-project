@@ -31,6 +31,9 @@ public final class GlobalSettingsPanelTestUtils {
 
                     panel.updateSettings(input);
 
+                    SettingsEditorProperties properties = panel.getProperties();
+                    Assert.assertTrue("Initial form must be valid.", properties.valid().getValue());
+
                     GlobalGradleSettings output = new GlobalGradleSettings("output");
 
                     panel.saveSettings(output);
