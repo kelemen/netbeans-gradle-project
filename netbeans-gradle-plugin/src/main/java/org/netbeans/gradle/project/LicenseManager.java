@@ -230,7 +230,7 @@ public final class LicenseManager {
         private final String name;
 
         public LicenseKey(NbGradleProject project, LicenseHeaderInfo headerInfo) {
-            this.projectDir = project.getProjectDirectoryAsFile().toPath();
+            this.projectDir = project.getProjectDirectoryAsPath();
             this.srcFile = headerInfo.getLicenseTemplateFile();
             this.name = headerInfo.getLicenseName();
         }

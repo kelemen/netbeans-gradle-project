@@ -19,7 +19,7 @@ public final class LoadedProjectManager {
     }
 
     public void addProject(NbGradleProject project) {
-        Path projectDir = project.getProjectDirectoryAsFile().toPath();
+        Path projectDir = project.getProjectDirectoryAsPath();
         projects.put(projectDir, project);
     }
 
