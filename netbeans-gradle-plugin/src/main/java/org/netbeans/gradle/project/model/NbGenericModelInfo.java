@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
@@ -133,28 +132,6 @@ public final class NbGenericModelInfo implements Serializable {
         }
         else {
             return findSettingsGradle(projectDir.getParent());
-        }
-    }
-
-    private String findDisplayName() {
-        if (isBuildSrc()) {
-            File parentFile = getProjectDir().getParentFile();
-            String parentName = parentFile != null ? parentFile.getName() : "?";
-            return NbStrings.getBuildSrcMarker(parentName);
-        }
-        else {
-            String scriptName = getMainProject().getProjectName();
-            scriptName = scriptName.trim();
-            if (scriptName.isEmpty()) {
-                scriptName = getProjectDir().getName();
-            }
-
-            if (isRootProject()) {
-                return NbStrings.getRootProjectMarker(scriptName);
-            }
-            else {
-                return scriptName;
-            }
         }
     }
 
