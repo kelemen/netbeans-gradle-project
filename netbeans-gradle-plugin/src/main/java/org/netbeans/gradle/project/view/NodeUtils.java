@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.util.RefreshableChildren;
+import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -105,6 +106,20 @@ public final class NodeUtils {
         return false;
     }
 
+    public static Node askChildrenPackageViewsForTarget(Children children, Object target) {
+        ExceptionHelper.checkNotNullArgument(children, "children");
+        ExceptionHelper.checkNotNullArgument(target, "target");
+
+        for (Node child: children.getNodes(true)) {
+            Node result = PackageView.findPath(child, target);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
     public static Node askChildrenForTarget(Children children, Object target) {
         ExceptionHelper.checkNotNullArgument(children, "children");
         ExceptionHelper.checkNotNullArgument(target, "target");
@@ -127,6 +142,10 @@ public final class NodeUtils {
 
     public static PathFinder askChildrenNodeFinder() {
         return AskChildrenNodeFinder.INSTANCE;
+    }
+
+    public static PathFinder askChildrenPackageViewsFinder() {
+        return AskChildrenPackageViewsFinder.INSTANCE;
     }
 
     public static Node findChildFileOfFolderNode(Node folderNode, FileObject file) {
@@ -270,6 +289,15 @@ public final class NodeUtils {
             return this.icon == other.icon
                     && Objects.equals(this.name, other.name)
                     && Objects.equals(this.fileDataKey, other.fileDataKey);
+        }
+    }
+
+    private enum AskChildrenPackageViewsFinder implements PathFinder {
+        INSTANCE;
+
+        @Override
+        public Node findPath(Node root, Object target) {
+            return askChildrenPackageViewsForTarget(root.getChildren(), target);
         }
     }
 
