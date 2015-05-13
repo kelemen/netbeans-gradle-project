@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
@@ -11,14 +14,13 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.GradleProjectExtensionNodes;
 import org.netbeans.gradle.project.api.nodes.ManualRefreshedNodes;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.event.ChangeListenerManager;
-import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -27,38 +29,26 @@ import org.openide.nodes.Node;
 @ManualRefreshedNodes
 public final class JavaExtensionNodes
 implements
-        GradleProjectExtensionNodes,
-        JavaModelChangeListener {
+        GradleProjectExtensionNodes {
 
     private final JavaExtension javaExt;
-    private final ChangeListenerManager nodeChangeListeners;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-        this.nodeChangeListeners = new GenericChangeListenerManager();
-
-        javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
-            @Override
-            public void run() {
-                fireNodeChangeEvent();
-            }
-        });
     }
 
-    private void fireNodeChangeEvent() {
-        nodeChangeListeners.fireEventually();
-    }
-
-    @Override
-    public void onModelChange() {
-        fireNodeChangeEvent();
+    private static PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
+        return GlobalGradleSettings.getDefault().javaSourcesDisplayMode();
     }
 
     @Override
     public NbListenerRef addNodeChangeListener(Runnable listener) {
-        return NbListenerRefs.asNbRef(nodeChangeListeners.registerListener(listener));
+        ListenerRef ref1 = javaExt.addModelChangeListener(listener);
+        ListenerRef ref2 = javaExt.getSourceDirsHandler().addDirsCreatedListener(listener);
+        ListenerRef ref3 = javaSourcesDisplayMode().addChangeListener(listener);
+        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3));
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {
@@ -123,9 +113,16 @@ implements
     }
 
     private void addSourceRoots(List<SingleNodeFactory> toPopulate) {
-        addSourceRootsStandard(toPopulate);
-        // TODO: Let the user change how the nodes are displayed
-        //addSourceRootsBySourceSet(toPopulate);
+        switch (javaSourcesDisplayMode().getValue()) {
+            case DEFAULT_MODE:
+                addSourceRootsStandard(toPopulate);
+                break;
+            case GROUP_BY_SOURCESET:
+                addSourceRootsBySourceSet(toPopulate);
+                break;
+            default:
+                throw new AssertionError(javaSourcesDisplayMode().getValue().name());
+        }
     }
 
     @Override

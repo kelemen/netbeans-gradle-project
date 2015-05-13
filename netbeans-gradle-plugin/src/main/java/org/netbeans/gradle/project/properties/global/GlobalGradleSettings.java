@@ -62,6 +62,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> compileOnSave;
     private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
     private final StringBasedProperty<String> displayNamePattern;
+    private final StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -116,6 +117,9 @@ public final class GlobalGradleSettings {
                 withNS(namespace, "display-name-pattern"),
                 new StringConverter(DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant())
         );
+        javaSourcesDisplayMode = new GlobalProperty<>(
+                withNS(namespace, "java-sources-display-mode"),
+                new EnumConverter<>(JavaSourcesDisplayMode.DEFAULT_MODE));
     }
 
     public static void setDefaultPreference() {
@@ -206,6 +210,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<String> displayNamePattern() {
         return displayNamePattern;
+    }
+
+    public StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
+        return javaSourcesDisplayMode;
     }
 
     public static GlobalGradleSettings getDefault() {
