@@ -81,7 +81,7 @@ public final class JavaDependenciesNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
-        return getIcon(type);
+        return NbIcons.getOpenLibrariesIcon();
     }
 
     @Override
