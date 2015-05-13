@@ -206,8 +206,17 @@ public final class NbGradleModel {
         return genericInfo.getProjectDir();
     }
 
-    public File getRootProjectDir() {
-        return genericInfo.getRootProjectDir();
+    /**
+     * Returns the directory containing the {@code settings.gradle} file.
+     * This method also works for the {@code buildSrc} project, for which this
+     * returns the directory of the root project this {@code buildSrc} project
+     * belongs to.
+     *
+     * @return the directory containing the {@code settings.gradle} file.
+     *   This method never returns {@code null}.
+     */
+    public File getSettingsDir() {
+        return genericInfo.getSettingsDir();
     }
 
     public File getBuildFile() {

@@ -44,7 +44,7 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
         }
 
         NbGradleModel model = project.currentModel().getValue();
-        Path rootProjectDir = model.getRootProjectDir().toPath();
+        Path rootProjectDir = model.getSettingsDir().toPath();
 
         if (isInBuildDir(model, queriedPath)) {
             return Sharability.NOT_SHARABLE;

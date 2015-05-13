@@ -198,7 +198,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
     }
 
     private void jBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseButtonActionPerformed
-        File initialDir = project.currentModel().getValue().getRootProjectDir();
+        File initialDir = project.currentModel().getValue().getSettingsDir();
 
         FileChooserBuilder dlgChooser = new FileChooserBuilder(
                 LicenseHeaderPanel.class.getName() + "-" + initialDir.getName());
@@ -210,7 +210,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         }
 
         File file = f.getAbsoluteFile();
-        String relPath = tryMakeRelative(project.currentModel().getValue().getRootProjectDir(), file);
+        String relPath = tryMakeRelative(project.currentModel().getValue().getSettingsDir(), file);
         jLicenseTemplateEdit.setText(relPath != null ? relPath : file.getPath());
 
     }//GEN-LAST:event_jBrowseButtonActionPerformed

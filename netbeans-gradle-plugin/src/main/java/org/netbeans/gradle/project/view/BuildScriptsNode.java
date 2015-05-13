@@ -103,7 +103,7 @@ public final class BuildScriptsNode extends AbstractNode {
         if (!currentModel.isRootProject()) {
             actions.add(OpenProjectsAction.createFromProjectDirs(
                     NbStrings.getOpenRootProjectsCaption(),
-                    Collections.singleton(currentModel.getRootProjectDir())));
+                    Collections.singleton(currentModel.getSettingsDir())));
         }
 
         actions.add(null);
@@ -132,7 +132,7 @@ public final class BuildScriptsNode extends AbstractNode {
     }
 
     private static File getBuildSrcDir(NbGradleModel currentModel) {
-        File rootProjectDir = currentModel.getRootProjectDir();
+        File rootProjectDir = currentModel.getSettingsDir();
         return new File(rootProjectDir, SettingsFiles.BUILD_SRC_NAME);
     }
 
@@ -201,7 +201,7 @@ public final class BuildScriptsNode extends AbstractNode {
             File projectDir = currentModel.getProjectDir();
             addProjectScriptsNode(NbStrings.getProjectScriptNodeCaption(), projectDir, toPopulate);
 
-            File rootProjectDir = currentModel.getRootProjectDir();
+            File rootProjectDir = currentModel.getSettingsDir();
             if (!Objects.equals(projectDir, rootProjectDir)) {
                 addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }

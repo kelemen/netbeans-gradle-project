@@ -82,7 +82,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     private static Path getCacheFilePath(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
-        return getCacheFilePath(model.getRootProjectDir(), model.getProjectDir(), hashCalculator);
+        return getCacheFilePath(model.getSettingsDir(), model.getProjectDir(), hashCalculator);
     }
 
     private static Path getCacheFilePath(

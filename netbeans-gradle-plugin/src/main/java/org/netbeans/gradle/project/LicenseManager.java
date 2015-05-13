@@ -237,7 +237,7 @@ public final class LicenseManager {
         }
 
         public Path getAbsoluteSrcFile(NbGradleModel currentModel) {
-            File rootProjectDir = currentModel.getRootProjectDir();
+            File rootProjectDir = currentModel.getSettingsDir();
             return rootProjectDir.toPath().resolve(srcFile);
         }
 

@@ -132,7 +132,7 @@ implements
     @Override
     public void onModelChanged() {
         NbGradleModel currentModel = project.currentModel().getValue();
-        Path newRootDir = currentModel.getRootProjectDir().toPath();
+        Path newRootDir = currentModel.getSettingsDir().toPath();
         Path prevRootDir = currentRootDir.getAndSet(newRootDir);
 
         if (!Objects.equals(prevRootDir, newRootDir)) {
