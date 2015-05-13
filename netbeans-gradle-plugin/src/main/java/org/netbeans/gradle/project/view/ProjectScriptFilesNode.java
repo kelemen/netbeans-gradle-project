@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -73,18 +74,18 @@ public final class ProjectScriptFilesNode extends AbstractNode {
     }
 
     private Action openProjectFileAction(String name) {
-        File file = new File(project.getProjectDirectoryAsFile(), name);
+        Path file = project.getProjectDirectoryAsPath().resolve(name);
         return openFileAction(file);
     }
 
-    private static Action openFileAction(File file) {
-        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
-        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
+    private static Action openFileAction(Path file) {
+        String actionCaption = NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file));
+        Action result = new OpenAlwaysFileAction(actionCaption, file);
 
         return result;
     }
 
-    private static void addOpenFileAction(File file, List<Action> actions) {
+    private static void addOpenFileAction(Path file, List<Action> actions) {
         if (file != null) {
             actions.add(openFileAction(file));
         }
@@ -98,7 +99,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         if (currentModel.isRootProject()) {
             addOpenFileAction(currentModel.getSettingsFile(), actions);
         }
-        addOpenFileAction(currentModel.getBuildFile(), actions);
+        addOpenFileAction(currentModel.getBuildFile().toPath(), actions);
         actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
         actions.add(null);
         actions.add(NodeUtils.getRefreshNodeAction(this));

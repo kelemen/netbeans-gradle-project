@@ -40,12 +40,8 @@ public final class RootProjectRegistry {
             return false;
         }
 
-        File settingsFile = input.getSettingsFile();
-        if (settingsFile == null) {
-            return false;
-        }
-
-        return Files.isRegularFile(settingsFile.toPath());
+        Path settingsFile = input.getSettingsFile();
+        return settingsFile != null ? Files.isRegularFile(settingsFile) : false;
     }
 
     private CloseableAction.Ref registerAndUpdateProjects(NbGradleModel input) {
@@ -73,7 +69,7 @@ public final class RootProjectRegistry {
 
     private static void updateProjects(
             LoadedProjectManager loadedProjects,
-            File settingsFile,
+            Path settingsFile,
             NbGradleProjectTree projectTree) {
 
         for (NbGradleProjectTree child: projectTree.getChildren()) {
@@ -181,8 +177,8 @@ public final class RootProjectRegistry {
             this(model.getSettingsFile(), model.getProjectDir());
         }
 
-        public RootProjectKey(File settingsFile, File projectDir) {
-            this(NbFileUtils.asPath(settingsFile), NbFileUtils.asPath(projectDir));
+        public RootProjectKey(Path settingsFile, File projectDir) {
+            this(settingsFile, NbFileUtils.asPath(projectDir));
         }
 
         public RootProjectKey(Path settingsFile, Path projectDir) {

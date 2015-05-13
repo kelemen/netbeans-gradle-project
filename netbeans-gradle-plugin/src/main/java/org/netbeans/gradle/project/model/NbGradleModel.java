@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -119,7 +120,7 @@ public final class NbGradleModel {
         return NbGenericModelInfo.getBuildFile(projectDir);
     }
 
-    public static File findSettingsGradle(File projectDir) {
+    public static Path findSettingsGradle(File projectDir) {
         return NbGenericModelInfo.findSettingsGradle(projectDir);
     }
 
@@ -223,7 +224,7 @@ public final class NbGradleModel {
         return genericInfo.getBuildFile();
     }
 
-    public File getSettingsFile() {
+    public Path getSettingsFile() {
         return genericInfo.getSettingsFile();
     }
 

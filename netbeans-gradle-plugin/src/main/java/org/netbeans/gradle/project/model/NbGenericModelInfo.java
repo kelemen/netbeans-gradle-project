@@ -5,6 +5,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.nio.file.Path;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -15,13 +16,13 @@ public final class NbGenericModelInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final NbGradleMultiProjectDef projectDef;
-    private final File settingsFile;
+    private final Path settingsFile;
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef) {
         this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
     }
 
-    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, File settingsFile) {
+    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile) {
         ExceptionHelper.checkNotNullArgument(projectDef, "projectDef");
 
         this.settingsFile = settingsFile;
@@ -44,7 +45,11 @@ public final class NbGenericModelInfo implements Serializable {
         return projectDef.getMainProject().getGenericProperties().getBuildScript();
     }
 
-    public File getSettingsFile() {
+    private File getSettingsFileAsFile() {
+        return settingsFile.toFile();
+    }
+
+    public Path getSettingsFile() {
         return settingsFile;
     }
 
@@ -75,7 +80,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public FileObject tryGetSettingsFileObj() {
-        return NbFileUtils.asFileObject(settingsFile);
+        return NbFileUtils.asFileObject(getSettingsFileAsFile());
     }
 
     /**
@@ -90,7 +95,7 @@ public final class NbGenericModelInfo implements Serializable {
     public File getSettingsDir() {
         File result = null;
         if (settingsFile != null) {
-            result = settingsFile.getParentFile();
+            result = settingsFile.toFile().getParentFile();
         }
 
         if (result == null) {
@@ -113,12 +118,17 @@ public final class NbGenericModelInfo implements Serializable {
         return null;
     }
 
-    public static File findSettingsGradle(File projectDir) {
+    private static File findSettingsGradleAsFile(File projectDir) {
         FileObject projectDirObj = FileUtil.toFileObject(projectDir);
         FileObject resultObj = findSettingsGradle(projectDirObj);
         return resultObj != null
                 ? FileUtil.toFile(resultObj)
                 : null;
+    }
+
+    public static Path findSettingsGradle(File projectDir) {
+        File result = findSettingsGradleAsFile(projectDir);
+        return result != null ? result.toPath() : null;
     }
 
     public static FileObject findSettingsGradle(FileObject projectDir) {
@@ -147,15 +157,25 @@ public final class NbGenericModelInfo implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final NbGradleMultiProjectDef projectDef;
-        private final File settingsFile;
+        private final File settingsFile; // for backward compatibility
+        private final Path settingsPath;
 
         public SerializedFormat(NbGenericModelInfo source) {
             this.projectDef = source.projectDef;
-            this.settingsFile = source.settingsFile;
+            this.settingsFile = null;
+            this.settingsPath = source.settingsFile;
+        }
+
+        public Path getSettingsPath() {
+            if (settingsPath != null) {
+                return settingsPath;
+            }
+
+            return settingsFile.toPath();
         }
 
         private Object readResolve() throws ObjectStreamException {
-            return new NbGenericModelInfo(projectDef, settingsFile);
+            return new NbGenericModelInfo(projectDef, getSettingsPath());
         }
     }
 }

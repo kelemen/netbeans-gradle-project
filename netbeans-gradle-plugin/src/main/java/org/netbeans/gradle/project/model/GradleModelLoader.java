@@ -600,8 +600,7 @@ public final class GradleModelLoader {
                 return settingsFile;
             }
 
-            File result = NbGradleModel.findSettingsGradle(project.getProjectDirectoryAsFile());
-            return result != null ? result.toPath() : null;
+            return NbGradleModel.findSettingsGradle(project.getProjectDirectoryAsFile());
         }
 
         public File getAppliedRootProjectDir() {

@@ -87,6 +87,7 @@ public final class NbGradleProject implements Project {
 
     private final FileObject projectDir;
     private final File projectDirAsFile;
+    private final Path projectDirAsPath;
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
 
@@ -117,6 +118,7 @@ public final class NbGradleProject implements Project {
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
+        this.projectDirAsPath = projectDirAsFile.toPath();
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
@@ -160,8 +162,7 @@ public final class NbGradleProject implements Project {
             return explicitSettingsFile;
         }
 
-        File result = NbGradleModel.findSettingsGradle(projectDir);
-        return result != null ? result.toPath() : null;
+        return NbGradleModel.findSettingsGradle(projectDir);
     }
 
     private void initServiceObjects(ProjectState state) {
@@ -546,6 +547,11 @@ public final class NbGradleProject implements Project {
 
     public PropertySource<String> description() {
         return description;
+    }
+
+    @Nonnull
+    public Path getProjectDirectoryAsPath() {
+        return projectDirAsPath;
     }
 
     @Nonnull

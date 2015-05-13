@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -16,6 +15,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class SettingsFiles {
     private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
@@ -153,15 +153,7 @@ public final class SettingsFiles {
 
     public static Path getRootDirectory(NbGradleProject project) {
         NbGradleModel model = project.currentModel().getValue();
-        File settingsFile = model.getSettingsFile();
-        File dir = settingsFile != null
-                ? settingsFile.getParentFile()
-                : project.getProjectDirectoryAsFile();
-        if (dir == null) {
-            dir = project.getProjectDirectoryAsFile();
-        }
-
-        return dir.toPath();
+        return NbFileUtils.asPath(model.getSettingsDir());
     }
 
     private SettingsFiles() {

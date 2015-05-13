@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -326,7 +327,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     }
 
     private static final class ProjectModelFetcher {
-        private final File settingsFile;
+        private final Path settingsFile;
         private final Map<String, List<Class<?>>> toolingModelNeeds;
         private final GenericModelFetcher modelFetcher;
 
@@ -360,7 +361,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             return modelFetcher.getModels(connection, init);
         }
 
-        public File getSettingsFile() {
+        public Path getSettingsFile() {
             return settingsFile;
         }
 

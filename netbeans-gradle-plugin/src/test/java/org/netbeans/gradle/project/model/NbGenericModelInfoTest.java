@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.File;
+import java.nio.file.Paths;
 import org.junit.Test;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
@@ -11,7 +11,7 @@ public class NbGenericModelInfoTest {
     @Test
     public void testSerialization() throws ClassNotFoundException {
         NbGradleMultiProjectDef projectDef = createTestMultiProject();
-        NbGenericModelInfo source = new NbGenericModelInfo(projectDef, new File("settings.gradle"));
+        NbGenericModelInfo source = new NbGenericModelInfo(projectDef, Paths.get("settings.gradle"));
 
         byte[] serialized = SerializationUtils.serializeObject(source);
         NbGenericModelInfo deserialized = (NbGenericModelInfo)SerializationUtils.deserializeObject(serialized);

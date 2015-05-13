@@ -74,14 +74,14 @@ public final class BuildScriptsNode extends AbstractNode {
         return new NodeFactoryImpl(project);
     }
 
-    private static Action openFileAction(File file) {
-        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
-        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
+    private static Action openFileAction(Path file) {
+        String actionCaption = NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file));
+        Action result = new OpenAlwaysFileAction(actionCaption, file);
 
         return result;
     }
 
-    private static void addOpenFileAction(File file, List<Action> actions) {
+    private static void addOpenFileAction(Path file, List<Action> actions) {
         if (file != null) {
             actions.add(openFileAction(file));
         }
@@ -93,7 +93,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         NbGradleModel currentModel = project.currentModel().getValue();
         addOpenFileAction(currentModel.getSettingsFile(), actions);
-        addOpenFileAction(currentModel.getBuildFile(), actions);
+        addOpenFileAction(currentModel.getBuildFile().toPath(), actions);
         actions.add(null);
         actions.add(new OpenOrCreateBuildSrc(
                 NbStrings.getOpenBuildSrcCaption(),
