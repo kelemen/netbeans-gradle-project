@@ -5,21 +5,16 @@ import javax.swing.SwingUtilities;
 import junit.framework.Assert;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.NbSupplier;
 
 public final class GlobalSettingsPanelTestUtils {
     public static void testInitAndReadBack(
-            final Class<? extends GlobalSettingsEditor> panelClass,
+            final NbSupplier<? extends GlobalSettingsEditor> panelFactory,
             final NbConsumer<? super GlobalGradleSettings> initializer) throws Exception {
-
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
             public void run() {
-                GlobalSettingsEditor panel;
-                try {
-                    panel = panelClass.newInstance();
-                } catch (Exception ex) {
-                    throw Exceptions.throwUnchecked(ex);
-                }
+                GlobalSettingsEditor panel = panelFactory.get();
 
                 GlobalGradleSettings.PreferenceContainer preference
                         = GlobalGradleSettings.setCleanMemoryPreference();
@@ -45,6 +40,23 @@ public final class GlobalSettingsPanelTestUtils {
                 }
             }
         });
+    }
+
+    public static void testInitAndReadBack(
+            final Class<? extends GlobalSettingsEditor> panelClass,
+            NbConsumer<? super GlobalGradleSettings> initializer) throws Exception {
+
+        NbSupplier<GlobalSettingsEditor> panelFactory = new NbSupplier<GlobalSettingsEditor>() {
+            @Override
+            public GlobalSettingsEditor get() {
+                try {
+                    return panelClass.newInstance();
+                } catch (Exception ex) {
+                    throw Exceptions.throwUnchecked(ex);
+                }
+            }
+        };
+        testInitAndReadBack(panelFactory, initializer);
     }
 
     private GlobalSettingsPanelTestUtils() {
