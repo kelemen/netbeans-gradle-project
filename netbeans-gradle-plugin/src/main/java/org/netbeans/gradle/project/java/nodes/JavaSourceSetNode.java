@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.BadgeAwareNode;
 import org.netbeans.gradle.project.view.NodeUtils;
@@ -33,6 +34,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class JavaSourceSetNode extends AbstractNode {
@@ -43,12 +45,24 @@ public final class JavaSourceSetNode extends AbstractNode {
     }
 
     private JavaSourceSetNode(String sourceSetName, JavaSourceSetNodeChildFactory childFactory) {
-        super(createChildren(childFactory),
-                Lookups.fixed(NodeUtils.askChildrenPackageViewsFinder()));
+        this(sourceSetName, childFactory, createChildren(childFactory));
+    }
+
+    private JavaSourceSetNode(
+            String sourceSetName,
+            JavaSourceSetNodeChildFactory childFactory,
+            Children children) {
+        super(children, createLookup(childFactory, children));
 
         this.displayName = StringUtils.capitalizeFirstCharacter(sourceSetName);
 
         setName("java.sourceset." + sourceSetName);
+    }
+
+    private static Lookup createLookup(JavaSourceSetNodeChildFactory childFactory, Children children) {
+        return Lookups.fixed(
+                NodeUtils.askChildrenPackageViewsFinder(),
+                NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
     private static Children createChildren(JavaSourceSetNodeChildFactory childFactory) {
@@ -76,7 +90,9 @@ public final class JavaSourceSetNode extends AbstractNode {
 
     private static class JavaSourceSetNodeChildFactory
     extends
-            ChildFactory.Detachable<SingleNodeFactory> {
+            ChildFactory.Detachable<SingleNodeFactory>
+    implements
+            RefreshableChildren {
 
         private final JavaExtension javaExt;
         private final String sourceSetName;
@@ -90,6 +106,11 @@ public final class JavaSourceSetNode extends AbstractNode {
             this.javaExt = javaExt;
             this.sourceSetName = sourceSetName;
             this.listenerRegs = new ListenerRegistrations();
+        }
+
+        @Override
+        public void refreshChildren() {
+            refresh(false);
         }
 
         @Override
