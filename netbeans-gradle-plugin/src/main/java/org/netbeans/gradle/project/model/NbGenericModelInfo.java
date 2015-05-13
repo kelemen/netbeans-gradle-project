@@ -149,28 +149,6 @@ public final class NbGenericModelInfo implements Serializable {
         }
     }
 
-    private String findDescription() {
-        if (isBuildSrc()) {
-          // TODO(radimk) need some better description
-          return findDisplayName();
-        }
-        else {
-            String scriptName = getMainProject().getProjectFullName();
-            scriptName = scriptName.trim();
-            if (scriptName.isEmpty()) {
-                scriptName = getProjectDir().getName();
-            }
-
-            String path = getMainProject().getProjectDir().getAbsolutePath();
-            if (isRootProject()) {
-                return NbStrings.getRootProjectDescription(scriptName, path);
-            }
-            else {
-                return NbStrings.getSubProjectDescription(scriptName, path);
-            }
-        }
-    }
-
     private Object writeReplace() {
         return new SerializedFormat(this);
     }
