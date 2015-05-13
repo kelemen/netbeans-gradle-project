@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -158,17 +159,17 @@ public final class NbGenericModelInfo implements Serializable {
 
         private final NbGradleMultiProjectDef projectDef;
         private final File settingsFile; // for backward compatibility
-        private final Path settingsPath;
+        private final String settingsPath;
 
         public SerializedFormat(NbGenericModelInfo source) {
             this.projectDef = source.projectDef;
             this.settingsFile = null;
-            this.settingsPath = source.settingsFile;
+            this.settingsPath = source.settingsFile.toString();
         }
 
         public Path getSettingsPath() {
             if (settingsPath != null) {
-                return settingsPath;
+                return Paths.get(settingsPath);
             }
 
             return settingsFile.toPath();
