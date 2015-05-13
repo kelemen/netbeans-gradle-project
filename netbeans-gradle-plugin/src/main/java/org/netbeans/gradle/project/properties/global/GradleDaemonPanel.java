@@ -36,7 +36,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
 
         int displayTimeoutSec = timeout != null ? timeout : DEFAULT_TIMEOUT_SEC;
 
-        jDaemonTimeoutSpinner.setValue(DISPLAY_UNIT.convert(displayTimeoutSec, TimeUnit.SECONDS));
+        jDaemonTimeoutSpinner.setValue(longToInt(DISPLAY_UNIT.convert(displayTimeoutSec, TimeUnit.SECONDS)));
     }
 
     @Override
