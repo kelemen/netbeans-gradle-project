@@ -99,7 +99,7 @@ public final class GradleModelLoader {
     }
 
     private static boolean hasWrapper(NbGradleProject project) {
-        File rootDir = project.currentModel().getValue().getRootProjectDir();
+        File rootDir = getProjectLoadKey(project).getAppliedRootProjectDir();
         Path wrapperPropertiesFile = rootDir.toPath()
                 .resolve("gradle")
                 .resolve("wrapper")
