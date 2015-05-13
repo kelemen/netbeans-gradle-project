@@ -23,20 +23,23 @@ public final class GlobalSettingsPanelTestUtils {
 
                 GlobalGradleSettings.PreferenceContainer preference
                         = GlobalGradleSettings.setCleanMemoryPreference();
+                try {
+                    GlobalGradleSettings input = new GlobalGradleSettings("input");
 
-                GlobalGradleSettings input = new GlobalGradleSettings("input");
+                    initializer.accept(input);
+                    Map<String, String> inputValues = preference.getKeyValues("input");
 
-                initializer.accept(input);
-                Map<String, String> inputValues = preference.getKeyValues("input");
+                    panel.updateSettings(input);
 
-                panel.updateSettings(input);
+                    GlobalGradleSettings output = new GlobalGradleSettings("output");
 
-                GlobalGradleSettings output = new GlobalGradleSettings("output");
+                    panel.saveSettings(output);
+                    Map<String, String> outputValues = preference.getKeyValues("output");
 
-                panel.saveSettings(output);
-                Map<String, String> outputValues = preference.getKeyValues("output");
-
-                Assert.assertEquals(inputValues, outputValues);
+                    Assert.assertEquals(inputValues, outputValues);
+                } finally {
+                    GlobalGradleSettings.setDefaultPreference();
+                }
             }
         });
     }
