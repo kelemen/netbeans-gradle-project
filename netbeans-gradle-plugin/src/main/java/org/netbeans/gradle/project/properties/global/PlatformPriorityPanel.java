@@ -57,7 +57,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel.setSize(platforms.length);
         jPlatformListModel.setSize(0);
 
-        for (JavaPlatform platform: GlobalGradleSettings.getDefault().orderPlatforms(platforms)) {
+        for (JavaPlatform platform: globalSettings.orderPlatforms(platforms)) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }
 
