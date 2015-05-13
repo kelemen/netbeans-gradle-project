@@ -4,10 +4,14 @@ import java.awt.Image;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
@@ -23,6 +27,7 @@ import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.gradle.project.view.BadgeAwareNode;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -182,9 +187,42 @@ public final class JavaSourceSetNode extends AbstractNode {
         }
     }
 
+    private static class SourceSetFilesProperty implements PropertySource<Set<File>> {
+        private final JavaExtension javaExt;
+        private final String sourceSetName;
+
+        public SourceSetFilesProperty(JavaExtension javaExt, String sourceSetName) {
+            this.javaExt = javaExt;
+            this.sourceSetName = sourceSetName;
+        }
+
+        @Override
+        public Set<File> getValue() {
+            JavaSourceSet sourceSet = javaExt.getCurrentModel().getMainModule().tryGetSourceSetByName(sourceSetName);
+            if (sourceSet == null) {
+                return Collections.emptySet();
+            }
+
+            Set<File> roots = new HashSet<>();
+            for (JavaSourceGroup group: sourceSet.getSourceGroups()) {
+                for (File root: group.getSourceRoots()) {
+                    roots.add(root);
+                }
+            }
+            return roots;
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return javaExt.addModelChangeListener(listener);
+        }
+
+    }
+
     private static class JavaSourceSetNodeFactory implements SingleNodeFactory {
         private final JavaExtension javaExt;
         private final String sourceSetName;
+        private final PropertySource<Set<File>> sourceSetFiles;
 
         public JavaSourceSetNodeFactory(JavaExtension javaExt, String sourceSetName) {
             ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
@@ -192,11 +230,12 @@ public final class JavaSourceSetNode extends AbstractNode {
 
             this.javaExt = javaExt;
             this.sourceSetName = sourceSetName;
+            this.sourceSetFiles = new SourceSetFilesProperty(javaExt, sourceSetName);
         }
 
         @Override
         public Node createNode() {
-            return new JavaSourceSetNode(javaExt, sourceSetName);
+            return BadgeAwareNode.makeBadgeAware(new JavaSourceSetNode(javaExt, sourceSetName), sourceSetFiles);
         }
 
         @Override
