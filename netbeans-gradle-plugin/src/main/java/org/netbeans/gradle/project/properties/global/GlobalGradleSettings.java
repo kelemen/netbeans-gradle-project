@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -127,8 +128,10 @@ public final class GlobalGradleSettings {
     }
 
     // Testing only
-    public static void setCleanMemoryPreference() {
-        PREFERENCE = new MemPreference();
+    public static PreferenceContainer setCleanMemoryPreference() {
+        MemPreference newPreference = new MemPreference();
+        PREFERENCE = newPreference;
+        return newPreference;
     }
 
     private static String withNS(String namespace, String name) {
@@ -647,7 +650,7 @@ public final class GlobalGradleSettings {
         }
     }
 
-    private static final class MemPreference implements BasicPreference {
+    private static final class MemPreference implements BasicPreference, PreferenceContainer {
         private final Map<String, String> values;
         private final ListenerManager<PreferenceChangeListener> listeners;
 
@@ -666,6 +669,20 @@ public final class GlobalGradleSettings {
                     eventListener.preferenceChange(arg);
                 }
             }, evt);
+        }
+
+        @Override
+        public Map<String, String> getKeyValues(String namespace) {
+            ExceptionHelper.checkNotNullArgument(namespace, "namespace");
+
+            String prefix = namespace + ".";
+            Map<String, String> result = new HashMap<>();
+            for (Map.Entry<String, String> entry: values.entrySet()) {
+                if (entry.getKey().startsWith(prefix)) {
+                    result.put(entry.getKey(), entry.getValue());
+                }
+            }
+            return result;
         }
 
         @Override
@@ -694,6 +711,10 @@ public final class GlobalGradleSettings {
         public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl) {
             return listeners.registerListener(pcl);
         }
+    }
+
+    public interface PreferenceContainer {
+        public Map<String, String> getKeyValues(String namespace);
     }
 
     private interface BasicPreference {
