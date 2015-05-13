@@ -104,12 +104,7 @@ public final class JavaSourceSetNode extends AbstractNode {
         }
 
         private JavaSourceSet tryGetSourceSet() {
-            for (JavaSourceSet sourceSet: javaExt.getCurrentModel().getMainModule().getSources()) {
-                if (Objects.equals(sourceSetName, sourceSet.getName())) {
-                    return sourceSet;
-                }
-            }
-            return null;
+            return javaExt.getCurrentModel().getMainModule().tryGetSourceSetByName(sourceSetName);
         }
 
         private static int compareGroupNames(JavaSourceGroupName groupName1, JavaSourceGroupName groupName2) {
