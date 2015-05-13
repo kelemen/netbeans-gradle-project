@@ -97,7 +97,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
 
         for (int i = itemCount - 1; i >= 0; i--) {
             NamePatternItem patternItem = jDisplayNameCombo.getItemAt(i);
-            if (patternItem == null) {
+            if (patternItem.pattern == null) {
                 jDisplayNameCombo.setSelectedIndex(i);
                 return;
             }
