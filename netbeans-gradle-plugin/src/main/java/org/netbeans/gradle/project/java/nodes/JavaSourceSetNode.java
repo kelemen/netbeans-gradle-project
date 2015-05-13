@@ -33,7 +33,7 @@ import org.openide.util.lookup.Lookups;
 public final class JavaSourceSetNode extends AbstractNode {
     private final String displayName;
 
-    public JavaSourceSetNode(JavaExtension javaExt, String sourceSetName) {
+    private JavaSourceSetNode(JavaExtension javaExt, String sourceSetName) {
         this(sourceSetName, new JavaSourceSetNodeChildFactory(javaExt, sourceSetName));
     }
 
