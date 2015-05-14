@@ -3,9 +3,12 @@ package org.netbeans.gradle.project.properties.global;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 
 @SuppressWarnings("serial")
@@ -44,9 +47,34 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     private void fillJavaSourcesDisplayModeCombo() {
         jSourcesDisplayMode.removeAllItems();
 
-        // TODO: I18N
-        jSourcesDisplayMode.addItem(new SourcesDisplayModeItem("Default", JavaSourcesDisplayMode.DEFAULT_MODE));
-        jSourcesDisplayMode.addItem(new SourcesDisplayModeItem("Group by sourceset", JavaSourcesDisplayMode.GROUP_BY_SOURCESET));
+        JavaSourcesDisplayMode[] displayModes = JavaSourcesDisplayMode.values();
+        SourcesDisplayModeItem[] items = new SourcesDisplayModeItem[displayModes.length];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = new SourcesDisplayModeItem(displayModes[i]);
+        }
+
+        Arrays.sort(items, new Comparator<SourcesDisplayModeItem>() {
+            @Override
+            public int compare(SourcesDisplayModeItem o1, SourcesDisplayModeItem o2) {
+                JavaSourcesDisplayMode mode1 = o1.displayMode;
+                JavaSourcesDisplayMode mode2 = o2.displayMode;
+                if (mode1 == mode2) {
+                    return 0;
+                }
+                if (mode1 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                    return -1;
+                }
+                if (mode2 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                    return 1;
+                }
+
+                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+            }
+        });
+
+        for (SourcesDisplayModeItem item: items) {
+            jSourcesDisplayMode.addItem(item);
+        }
     }
 
     private void fillPatternCombo() {
@@ -79,7 +107,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     }
 
     private void selectSourcesDisplayMode(JavaSourcesDisplayMode newMode) {
-        jSourcesDisplayMode.setSelectedItem(new SourcesDisplayModeItem("", newMode));
+        jSourcesDisplayMode.setSelectedItem(new SourcesDisplayModeItem(newMode));
     }
 
     private void selectPattern(String namePattern) {
@@ -165,8 +193,8 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         private final String displayName;
         private final JavaSourcesDisplayMode displayMode;
 
-        public SourcesDisplayModeItem(String displayName, JavaSourcesDisplayMode displayMode) {
-            this.displayName = displayName;
+        public SourcesDisplayModeItem(JavaSourcesDisplayMode displayMode) {
+            this.displayName = NbStrings.getJavaSourcesDisplayMode(displayMode);
             this.displayMode = displayMode;
         }
 
