@@ -52,6 +52,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
+import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
@@ -107,6 +108,14 @@ public final class GradleModelLoader {
         return Files.isRegularFile(wrapperPropertiesFile);
     }
 
+    private static boolean shouldRelyOnWrapper(NbGradleProject project, GradleLocationDef locationDef) {
+        if (locationDef.getLocation() == GradleLocationDefault.INSTANCE) {
+            return true;
+        }
+
+        return locationDef.isPreferWrapper() && hasWrapper(project);
+    }
+
     public static GradleConnector createGradleConnector(
             CancellationToken cancelToken,
             final Project project) {
@@ -132,7 +141,7 @@ public final class GradleModelLoader {
         NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
 
         GradleLocationDef gradleLocation = commonProperties.gradleLocation().getActiveValue();
-        if (!gradleLocation.isPreferWrapper() || !hasWrapper(gradleProject)) {
+        if (!shouldRelyOnWrapper(gradleProject, gradleLocation)) {
             gradleLocation.getLocation().applyLocation(new GradleLocation.Applier() {
                 @Override
                 public void applyVersion(String versionStr) {
