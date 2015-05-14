@@ -15,7 +15,7 @@ public final class ProfileSettingsKey {
     private final ProfileKey key;
 
     public ProfileSettingsKey(@Nonnull NbGradleProject project, @Nullable ProfileKey key) {
-        this(project.currentModel().getValue().getRootProjectDir().toPath(), key);
+        this(project.currentModel().getValue().getSettingsDir(), key);
     }
 
     public ProfileSettingsKey(@Nonnull Path projectDir, @Nullable ProfileKey key) {

@@ -24,9 +24,9 @@ import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.WarFoldersModel;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
-import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.others.OtherPlugins;
 import org.openide.util.Lookup;
 
@@ -177,7 +177,7 @@ public final class JavaParsingUtils {
     }
 
     private static NbGradleProject getProject(File projectDir) {
-        return GradleModelLoader.tryFindGradleProject(projectDir);
+        return NbGradleProjectFactory.tryLoadSafeGradleProject(projectDir);
     }
 
     private static List<NbListedDir> getListedDirs(ModelLoadResult retrievedModels, Lookup projectInfo) {

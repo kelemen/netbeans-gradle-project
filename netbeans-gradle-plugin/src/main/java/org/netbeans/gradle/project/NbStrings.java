@@ -7,6 +7,7 @@ import java.util.List;
 import org.gradle.util.GradleVersion;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.openide.util.NbBundle;
 
 public final class NbStrings {
@@ -433,6 +434,10 @@ public final class NbStrings {
 
     public static String getModelLoadStrategy(ModelLoadingStrategy strategy) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ModelLoadStrategy." + strategy.name());
+    }
+
+    public static String getJavaSourcesDisplayMode(JavaSourcesDisplayMode displayMode) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.JavaSourcesDisplayMode." + displayMode.name());
     }
 
     public static String getGlobalErrorReporterTitle() {

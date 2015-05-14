@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.model;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -189,8 +190,8 @@ public final class GradleModelCache {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 89 * hash + this.projectDir.hashCode();
-            hash = 89 * hash + (this.settingsFile != null ? this.settingsFile.hashCode() : 0);
+            hash = 89 * hash + projectDir.hashCode();
+            hash = 89 * hash + Objects.hashCode(settingsFile);
             return hash;
         }
 
@@ -202,11 +203,8 @@ public final class GradleModelCache {
 
             final CacheKey other = (CacheKey)obj;
 
-            if (this.projectDir != other.projectDir && (!this.projectDir.equals(other.projectDir))) {
-                return false;
-            }
-            return this.settingsFile == other.settingsFile
-                    || (this.settingsFile != null && this.settingsFile.equals(other.settingsFile));
+            return Objects.equals(this.settingsFile, other.settingsFile)
+                    && Objects.equals(this.projectDir, other.projectDir);
         }
     }
 

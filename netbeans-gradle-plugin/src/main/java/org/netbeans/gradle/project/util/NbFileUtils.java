@@ -95,6 +95,11 @@ public final class NbFileUtils {
         }
     }
 
+    public static String getFileNameStr(Path path) {
+        Path result = path.getFileName();
+        return result != null ? result.toString() : "";
+    }
+
     public static FileObject asArchiveOrDir(File file) {
         FileObject result = FileUtil.toFileObject(file);
         return asArchiveOrDir(result);

@@ -90,7 +90,7 @@ public final class GradleFolderNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
-        return getIcon(type);
+        return NbIcons.getOpenFolderIcon();
     }
 
     @Override

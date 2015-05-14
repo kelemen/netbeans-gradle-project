@@ -3,14 +3,17 @@ package org.netbeans.gradle.project.properties.global;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 
 @SuppressWarnings("serial")
 public class AppearancePanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Appearance");
 
     private String defaultValue;
 
@@ -20,6 +23,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         initComponents();
 
         fillPatternCombo();
+        fillJavaSourcesDisplayModeCombo();
 
         jDisplayNameCombo.addItemListener(new ItemListener() {
             @Override
@@ -38,6 +42,39 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         }
 
         jCustomDisplayNameEdit.setVisible(selected.pattern == null);
+    }
+
+    private void fillJavaSourcesDisplayModeCombo() {
+        jSourcesDisplayMode.removeAllItems();
+
+        JavaSourcesDisplayMode[] displayModes = JavaSourcesDisplayMode.values();
+        SourcesDisplayModeItem[] items = new SourcesDisplayModeItem[displayModes.length];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = new SourcesDisplayModeItem(displayModes[i]);
+        }
+
+        Arrays.sort(items, new Comparator<SourcesDisplayModeItem>() {
+            @Override
+            public int compare(SourcesDisplayModeItem o1, SourcesDisplayModeItem o2) {
+                JavaSourcesDisplayMode mode1 = o1.displayMode;
+                JavaSourcesDisplayMode mode2 = o2.displayMode;
+                if (mode1 == mode2) {
+                    return 0;
+                }
+                if (mode1 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                    return -1;
+                }
+                if (mode2 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                    return 1;
+                }
+
+                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+            }
+        });
+
+        for (SourcesDisplayModeItem item: items) {
+            jSourcesDisplayMode.addItem(item);
+        }
     }
 
     private void fillPatternCombo() {
@@ -64,6 +101,13 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         String namePattern = globalSettings.displayNamePattern().getValue();
         defaultValue = namePattern;
         selectPattern(namePattern);
+
+        JavaSourcesDisplayMode sourcesDisplayMode = globalSettings.javaSourcesDisplayMode().getValue();
+        selectSourcesDisplayMode(sourcesDisplayMode);
+    }
+
+    private void selectSourcesDisplayMode(JavaSourcesDisplayMode newMode) {
+        jSourcesDisplayMode.setSelectedItem(new SourcesDisplayModeItem(newMode));
     }
 
     private void selectPattern(String namePattern) {
@@ -81,7 +125,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
 
         for (int i = itemCount - 1; i >= 0; i--) {
             NamePatternItem patternItem = jDisplayNameCombo.getItemAt(i);
-            if (patternItem == null) {
+            if (patternItem.pattern == null) {
                 jDisplayNameCombo.setSelectedIndex(i);
                 return;
             }
@@ -91,7 +135,16 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     @Override
     public void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.displayNamePattern().setValue(getNamePattern());
+        globalSettings.javaSourcesDisplayMode().setValue(javaSourcesDisplayMode());
 
+    }
+
+    private JavaSourcesDisplayMode javaSourcesDisplayMode() {
+        SourcesDisplayModeItem selected = (SourcesDisplayModeItem)jSourcesDisplayMode.getSelectedItem();
+        if (selected == null) {
+            return JavaSourcesDisplayMode.DEFAULT_MODE;
+        }
+        return selected.displayMode;
     }
 
     private String getNamePattern() {
@@ -136,23 +189,58 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         }
     }
 
+    private static class SourcesDisplayModeItem {
+        private final String displayName;
+        private final JavaSourcesDisplayMode displayMode;
+
+        public SourcesDisplayModeItem(JavaSourcesDisplayMode displayMode) {
+            this.displayName = NbStrings.getJavaSourcesDisplayMode(displayMode);
+            this.displayMode = displayMode;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 29 * hash + Objects.hashCode(this.displayMode);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final SourcesDisplayModeItem other = (SourcesDisplayModeItem)obj;
+            return this.displayMode == other.displayMode;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
     /**
      * This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
      * always regenerated by the Form Editor.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "Convert2Diamond"})
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jDisplayNameCaption = new javax.swing.JLabel();
         jDisplayNameCombo = new javax.swing.JComboBox<NamePatternItem>();
         jCustomDisplayNameEdit = new javax.swing.JTextField();
+        jSourcesDisplayCaption = new javax.swing.JLabel();
+        jSourcesDisplayMode = new javax.swing.JComboBox<SourcesDisplayModeItem>();
 
         org.openide.awt.Mnemonics.setLocalizedText(jDisplayNameCaption, org.openide.util.NbBundle.getMessage(AppearancePanel.class, "AppearancePanel.jDisplayNameCaption.text")); // NOI18N
 
         jCustomDisplayNameEdit.setText(org.openide.util.NbBundle.getMessage(AppearancePanel.class, "AppearancePanel.jCustomDisplayNameEdit.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jSourcesDisplayCaption, org.openide.util.NbBundle.getMessage(AppearancePanel.class, "AppearancePanel.jSourcesDisplayCaption.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -160,11 +248,17 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jDisplayNameCaption)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCustomDisplayNameEdit)
-                    .addComponent(jDisplayNameCombo, 0, 275, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jDisplayNameCaption)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCustomDisplayNameEdit)
+                            .addComponent(jDisplayNameCombo, 0, 275, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jSourcesDisplayCaption)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSourcesDisplayMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -176,6 +270,10 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
                     .addComponent(jDisplayNameCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jCustomDisplayNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jSourcesDisplayCaption)
+                    .addComponent(jSourcesDisplayMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -185,5 +283,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     private javax.swing.JTextField jCustomDisplayNameEdit;
     private javax.swing.JLabel jDisplayNameCaption;
     private javax.swing.JComboBox<NamePatternItem> jDisplayNameCombo;
+    private javax.swing.JLabel jSourcesDisplayCaption;
+    private javax.swing.JComboBox<SourcesDisplayModeItem> jSourcesDisplayMode;
     // End of variables declaration//GEN-END:variables
 }

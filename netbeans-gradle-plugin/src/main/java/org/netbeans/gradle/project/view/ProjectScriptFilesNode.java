@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,7 +13,6 @@ import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
@@ -73,15 +73,14 @@ public final class ProjectScriptFilesNode extends AbstractNode {
     }
 
     private Action openProjectFileAction(String name) {
-        File file = new File(project.getProjectDirectoryAsFile(), name);
-        return openFileAction(file);
+        Path file = project.getProjectDirectoryAsPath().resolve(name);
+        return new OpenAlwaysFileAction(file);
     }
 
-    private Action openFileAction(File file) {
-        String actionCaption = NbStrings.getOpenFileCaption(file.getName());
-        Action result = new OpenAlwaysFileAction(actionCaption, file.toPath());
-
-        return result;
+    private static void addOpenFileAction(Path file, List<Action> actions) {
+        if (file != null) {
+            actions.add(new OpenAlwaysFileAction(file));
+        }
     }
 
     @Override
@@ -90,9 +89,9 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         NbGradleModel currentModel = project.currentModel().getValue();
         if (currentModel.isRootProject()) {
-            actions.add(openFileAction(currentModel.getSettingsFile()));
+            addOpenFileAction(currentModel.getSettingsFile(), actions);
         }
-        actions.add(openFileAction(currentModel.getBuildFile()));
+        addOpenFileAction(currentModel.getBuildFile().toPath(), actions);
         actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
         actions.add(null);
         actions.add(NodeUtils.getRefreshNodeAction(this));
@@ -107,7 +106,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
-        return getIcon(type);
+        return NbIcons.getOpenFolderIcon();
     }
 
     @Override

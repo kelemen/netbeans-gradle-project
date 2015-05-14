@@ -26,7 +26,6 @@ import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
-import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -320,7 +319,7 @@ public final class ExtensionLoader {
                 return parseModelUsingExtension(projectDir, extension, models);
             }
 
-            NbGradleProject project = GradleModelLoader.tryFindGradleProject(projectDir);
+            NbGradleProject project = NbGradleProjectFactory.tryLoadSafeGradleProject(projectDir);
             if (project == null) {
                 LOGGER.log(Level.WARNING, "Could not load Gradle project: {0}", projectDir);
                 return ParsedModel.noModels();

@@ -42,7 +42,10 @@ public final class OutputUrlConsumer implements OutputLinkFinder {
     @Override
     public OutputLinkDef tryFindLink(String line) {
         for (String prefix: URL_PREFIXES) {
-            return tryGetUrlWithPrefix(prefix, line);
+            OutputLinkDef result = tryGetUrlWithPrefix(prefix, line);
+            if (result != null) {
+                return result;
+            }
         }
         return null;
     }

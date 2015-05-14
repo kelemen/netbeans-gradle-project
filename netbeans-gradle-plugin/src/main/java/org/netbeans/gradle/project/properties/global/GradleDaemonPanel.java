@@ -11,7 +11,7 @@ import static org.jtrim.property.swing.SwingProperties.*;
 
 @SuppressWarnings("serial")
 public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Gradle-Daemon");
 
     private static final int DEFAULT_TIMEOUT_SEC = longToInt(TimeUnit.HOURS.toSeconds(3));
     private static final TimeUnit DISPLAY_UNIT = TimeUnit.MINUTES;
@@ -36,7 +36,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
 
         int displayTimeoutSec = timeout != null ? timeout : DEFAULT_TIMEOUT_SEC;
 
-        jDaemonTimeoutSpinner.setValue(DISPLAY_UNIT.convert(displayTimeoutSec, TimeUnit.SECONDS));
+        jDaemonTimeoutSpinner.setValue(longToInt(DISPLAY_UNIT.convert(displayTimeoutSec, TimeUnit.SECONDS)));
     }
 
     @Override

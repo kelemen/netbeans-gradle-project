@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -231,14 +230,13 @@ public final class LicenseManager {
         private final String name;
 
         public LicenseKey(NbGradleProject project, LicenseHeaderInfo headerInfo) {
-            this.projectDir = project.getProjectDirectoryAsFile().toPath();
+            this.projectDir = project.getProjectDirectoryAsPath();
             this.srcFile = headerInfo.getLicenseTemplateFile();
             this.name = headerInfo.getLicenseName();
         }
 
         public Path getAbsoluteSrcFile(NbGradleModel currentModel) {
-            File rootProjectDir = currentModel.getRootProjectDir();
-            return rootProjectDir.toPath().resolve(srcFile);
+            return currentModel.getSettingsDir().resolve(srcFile);
         }
 
         @Override
