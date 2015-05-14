@@ -119,6 +119,8 @@ public final class BadgeAwareNode extends FilterNode {
                 updateFiles();
             }
         }));
+        updateFiles();
+
         listenerRegs.add(NbProperties.weakListenerProperty(statusProperty).addChangeListener(new Runnable() {
             @Override
             public void run() {
