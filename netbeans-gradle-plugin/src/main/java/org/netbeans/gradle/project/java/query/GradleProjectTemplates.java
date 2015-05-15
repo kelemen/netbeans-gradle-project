@@ -11,6 +11,7 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "java-forms",
         "java-beans",
         "j2ee-types",
+        "javafx",
         "gui-java-application",
         "java-beans",
         "oasis-XML-catalogs",
