@@ -174,7 +174,7 @@ public final class NbGenericModelInfo implements Serializable {
                 return Paths.get(settingsPath);
             }
 
-            return settingsFile.toPath();
+            return settingsFile != null ? settingsFile.toPath() : null;
         }
 
         private Object readResolve() throws ObjectStreamException {
