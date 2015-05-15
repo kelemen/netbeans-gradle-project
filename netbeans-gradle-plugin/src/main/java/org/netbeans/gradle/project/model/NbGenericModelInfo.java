@@ -47,7 +47,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     private File getSettingsFileAsFile() {
-        return settingsFile.toFile();
+        return settingsFile != null ? settingsFile.toFile() : null;
     }
 
     public Path getSettingsFile() {
