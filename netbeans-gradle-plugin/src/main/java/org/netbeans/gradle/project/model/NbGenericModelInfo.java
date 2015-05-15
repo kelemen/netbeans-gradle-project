@@ -164,7 +164,9 @@ public final class NbGenericModelInfo implements Serializable {
         public SerializedFormat(NbGenericModelInfo source) {
             this.projectDef = source.projectDef;
             this.settingsFile = null;
-            this.settingsPath = source.settingsFile.toString();
+            this.settingsPath = source.settingsFile != null
+                    ? source.settingsFile.toString()
+                    : null;
         }
 
         public Path getSettingsPath() {
