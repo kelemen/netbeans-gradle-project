@@ -132,7 +132,10 @@ public final class StringUtils {
     public static String replaceLFWithPreferredLineSeparator(String str, Project ownerProject) {
         String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(ownerProject);
         if (lineSeparator == null) {
-            lineSeparator = FileSystems.getDefault().getSeparator();
+            lineSeparator = System.getProperty("line.separator");
+            if (lineSeparator == null) {
+                return str;
+            }
         }
         if ("\n".equals(lineSeparator)) {
             return str;
