@@ -7,11 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.standard.UserBuildScriptPath;
 
 public final class GradleArguments {
     private static final Logger LOGGER = Logger.getLogger(GradleArguments.class.getName());
@@ -82,6 +84,16 @@ public final class GradleArguments {
         });
     }
 
+    private static Path tryGetUserInitScript(Project project) {
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            return null;
+        }
+
+        UserBuildScriptPath path = gradleProject.getCommonProperties().userBuildScriptPath().getActiveValue();
+        return path != null ? path.getPath(gradleProject) : null;
+    }
+
     public static List<String> getExtraArgs(Path preferredSettings, DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
@@ -92,6 +104,12 @@ public final class GradleArguments {
         if (preferredSettings != null) {
             result.add("-c");
             result.add(preferredSettings.toString());
+        }
+
+        Path userInitScript = tryGetUserInitScript(context.getProject());
+        if (userInitScript != null) {
+            result.add("--init-script");
+            result.add(userInitScript.toString());
         }
 
         if (context.isModelLoading()) {
