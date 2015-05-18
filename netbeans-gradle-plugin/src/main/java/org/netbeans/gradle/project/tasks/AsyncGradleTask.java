@@ -44,6 +44,7 @@ import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
@@ -71,6 +72,8 @@ import org.openide.LifecycleManager;
 import org.openide.windows.OutputWriter;
 
 public final class AsyncGradleTask implements Runnable {
+    private static final DaemonTaskContext DAEMON_CONTEXT = new DaemonTaskContext(false);
+
     private static final TaskExecutor TASK_EXECUTOR
             = NbTaskExecutors.newExecutor("Gradle-Task-Executor", Integer.MAX_VALUE);
     private static final TaskExecutor CANCEL_EXECUTOR
@@ -549,22 +552,15 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static <V> List<V> emptyIfNull(List<V> list) {
-        return list != null ? list : Collections.<V>emptyList();
-    }
-
     private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
-        List<String> globalArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue());
-        List<String> globalJvmArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue());
-
-        List<String> projectLoadArguments = GradleModelLoader.getProjectLoadArguments(project);
+        List<String> extraArgs = GradleArguments.getExtraArgs(project, project.getPreferredSettingsFile(), DAEMON_CONTEXT);
+        List<String> extraJvmArgs = GradleArguments.getExtraJvmArgs(project, DAEMON_CONTEXT);
 
         GradleTaskDef result;
-        if (!globalJvmArgs.isEmpty() || !globalArgs.isEmpty() || !projectLoadArguments.isEmpty()) {
+        if (!extraArgs.isEmpty() || !extraJvmArgs.isEmpty()) {
             GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-            builder.addJvmArguments(globalJvmArgs);
-            builder.addArguments(projectLoadArguments);
-            builder.addArguments(globalArgs);
+            builder.addJvmArguments(extraJvmArgs);
+            builder.addArguments(extraArgs);
             result = builder.create();
         }
         else {

@@ -47,6 +47,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssues;
@@ -57,6 +58,7 @@ import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.tasks.DaemonTask;
+import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
@@ -67,6 +69,7 @@ import org.openide.modules.SpecificationVersion;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
+    private static final DaemonTaskContext DAEMON_CONTEXT = new DaemonTaskContext(true);
 
     private static final TaskExecutor PROJECT_LOADER
             = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
@@ -439,11 +442,15 @@ public final class GradleModelLoader {
         args.setupLongRunningOP(op);
     }
 
+    private static List<String> getModelEvaluateJvmArguments(Project project) {
+        return GradleArguments.getExtraJvmArgs(project, DAEMON_CONTEXT);
+    }
+
     private static ModelBuilderSetup modelBuilderSetup(ProjectLoadRequest projectLoadKey, ProgressHandle progress) {
         return new ModelBuilderSetup(
                 projectLoadKey.project,
                 getModelEvaluateArguments(projectLoadKey),
-                getModelEvaluateJvmArguments(),
+                getModelEvaluateJvmArguments(projectLoadKey.project),
                 progress);
     }
 
@@ -462,8 +469,8 @@ public final class GradleModelLoader {
         // project is being interpreted as a Gradle project.
         return new ModelBuilderSetup(
                 project,
-                getModelEvaluateArguments(null),
-                getModelEvaluateJvmArguments(),
+                getModelEvaluateArguments(project, null),
+                getModelEvaluateJvmArguments(project),
                 progress);
     }
 
@@ -569,23 +576,12 @@ public final class GradleModelLoader {
         return Arrays.asList("-c", projectLoadKey.settingsFile.toString());
     }
 
-    private static List<String> getModelEvaluateArguments(ProjectLoadRequest projectLoadKey) {
-        List<String> globalArgs = GlobalGradleSettings.getDefault().gradleArgs().getValue();
-        if (globalArgs == null) {
-            globalArgs = Collections.emptyList();
-        }
-
-        List<String> projectLoadArguments = getProjectLoadArguments(projectLoadKey);
-
-        List<String> result = new ArrayList<>(globalArgs.size() + projectLoadArguments.size() + 1);
-        result.add("-PevaluatingIDE=NetBeans");
-        result.addAll(projectLoadArguments);
-        result.addAll(globalArgs);
-        return result;
+    private static List<String> getModelEvaluateArguments(Project project, Path settingsFile) {
+        return GradleArguments.getExtraArgs(project, settingsFile, DAEMON_CONTEXT);
     }
 
-    private static List<String> getModelEvaluateJvmArguments() {
-        return GlobalGradleSettings.getDefault().gradleJvmArgs().getValue();
+    private static List<String> getModelEvaluateArguments(ProjectLoadRequest projectLoadKey) {
+        return GradleArguments.getExtraArgs(projectLoadKey.project, projectLoadKey.settingsFile, DAEMON_CONTEXT);
     }
 
     private static final class ProjectLoadRequest {
