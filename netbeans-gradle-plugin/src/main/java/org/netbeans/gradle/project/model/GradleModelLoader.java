@@ -328,12 +328,12 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
-
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
         GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {
+                ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
+
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
