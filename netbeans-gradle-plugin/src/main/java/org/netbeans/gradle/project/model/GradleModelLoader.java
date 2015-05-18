@@ -62,6 +62,7 @@ import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
+import org.netbeans.gradle.project.tasks.PriorityAwareExecutor;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -70,8 +71,14 @@ import org.openide.modules.SpecificationVersion;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    private static final TaskExecutor PROJECT_LOADER
-            = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
+    private static final PriorityAwareExecutor PROJECT_LOADER
+            = new PriorityAwareExecutor(NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1));
+
+    private static final TaskExecutor PROJECT_LOADER_HP
+            = PROJECT_LOADER.getHighPriorityExecutor();
+
+    private static final TaskExecutor PROJECT_LOADER_LP
+            = PROJECT_LOADER.getLowPriorityExecutor();
 
     private static final MonitorableTaskExecutorService MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
@@ -229,6 +236,16 @@ public final class GradleModelLoader {
         }
     }
 
+    private static TaskExecutor getProjectLoader(ProjectLoadRequest projectLoadKey) {
+        return projectLoadKey.settingsFile != null
+                ? PROJECT_LOADER_HP
+                : PROJECT_LOADER_LP;
+    }
+
+    private static TaskExecutor getProjectLoader(NbGradleProject project) {
+        return getProjectLoader(getProjectLoadKey(project));
+    }
+
     public static void tryUpdateFromCache(
             final NbGradleProject project,
             final NbGradleModel baseModel,
@@ -237,7 +254,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
-        GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
+        GradleDaemonManager.submitGradleTask(getProjectLoader(project), caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {
                 NbGradleModel model = tryGetFromCache(getProjectLoadKey(project));
@@ -329,7 +346,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
-        GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
+        GradleDaemonManager.submitGradleTask(getProjectLoader(project), caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {
                 ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
