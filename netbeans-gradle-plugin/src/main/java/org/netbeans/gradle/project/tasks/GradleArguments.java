@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
@@ -48,12 +47,11 @@ public final class GradleArguments {
     }
 
     private static void addExtensionArgs(
-            Project project,
             DaemonTaskContext context,
             List<String> result,
             ArgGetter argGetter) {
 
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        NbGradleProject gradleProject = context.getProject().getLookup().lookup(NbGradleProject.class);
         if (gradleProject == null) {
             return;
         }
@@ -66,8 +64,8 @@ public final class GradleArguments {
         }
     }
 
-    private static void addExtensionArgs(Project project, DaemonTaskContext context, List<String> result) {
-        addExtensionArgs(project, context, result, new ArgGetter() {
+    private static void addExtensionArgs(DaemonTaskContext context, List<String> result) {
+        addExtensionArgs(context, result, new ArgGetter() {
             @Override
             public List<String> getArgs(GradleArgumentQuery query, DaemonTaskContext context) {
                 return query.getExtraArgs(context);
@@ -75,8 +73,8 @@ public final class GradleArguments {
         });
     }
 
-    private static void addExtensionJvmArgs(Project project, DaemonTaskContext context, List<String> result) {
-        addExtensionArgs(project, context, result, new ArgGetter() {
+    private static void addExtensionJvmArgs(DaemonTaskContext context, List<String> result) {
+        addExtensionArgs(context, result, new ArgGetter() {
             @Override
             public List<String> getArgs(GradleArgumentQuery query, DaemonTaskContext context) {
                 return query.getExtraJvmArgs(context);
@@ -84,16 +82,12 @@ public final class GradleArguments {
         });
     }
 
-    public static List<String> getExtraArgs(
-            Project project,
-            Path preferredSettings,
-            DaemonTaskContext context) {
-
+    public static List<String> getExtraArgs(Path preferredSettings, DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
         result.addAll(emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue()));
 
-        addExtensionArgs(project, context, result);
+        addExtensionArgs(context, result);
 
         if (preferredSettings != null) {
             result.add("-c");
@@ -107,14 +101,11 @@ public final class GradleArguments {
         return result;
     }
 
-    public static List<String> getExtraJvmArgs(
-            Project project,
-            DaemonTaskContext context) {
-
+    public static List<String> getExtraJvmArgs(DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
         result.addAll(emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue()));
-        addExtensionJvmArgs(project, context, result);
+        addExtensionJvmArgs(context, result);
 
         return result;
     }

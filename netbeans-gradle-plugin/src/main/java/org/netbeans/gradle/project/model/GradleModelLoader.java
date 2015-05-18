@@ -69,7 +69,6 @@ import org.openide.modules.SpecificationVersion;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
-    private static final DaemonTaskContext DAEMON_CONTEXT = new DaemonTaskContext(true);
 
     private static final TaskExecutor PROJECT_LOADER
             = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
@@ -442,8 +441,12 @@ public final class GradleModelLoader {
         args.setupLongRunningOP(op);
     }
 
+    private static DaemonTaskContext daemonTaskContext(Project project) {
+        return new DaemonTaskContext(project, false);
+    }
+
     private static List<String> getModelEvaluateJvmArguments(Project project) {
-        return GradleArguments.getExtraJvmArgs(project, DAEMON_CONTEXT);
+        return GradleArguments.getExtraJvmArgs(daemonTaskContext(project));
     }
 
     private static ModelBuilderSetup modelBuilderSetup(ProjectLoadRequest projectLoadKey, ProgressHandle progress) {
@@ -577,11 +580,13 @@ public final class GradleModelLoader {
     }
 
     private static List<String> getModelEvaluateArguments(Project project, Path settingsFile) {
-        return GradleArguments.getExtraArgs(project, settingsFile, DAEMON_CONTEXT);
+        return GradleArguments.getExtraArgs(settingsFile, daemonTaskContext(project));
     }
 
     private static List<String> getModelEvaluateArguments(ProjectLoadRequest projectLoadKey) {
-        return GradleArguments.getExtraArgs(projectLoadKey.project, projectLoadKey.settingsFile, DAEMON_CONTEXT);
+        return GradleArguments.getExtraArgs(
+                projectLoadKey.settingsFile,
+                daemonTaskContext(projectLoadKey.project));
     }
 
     private static final class ProjectLoadRequest {

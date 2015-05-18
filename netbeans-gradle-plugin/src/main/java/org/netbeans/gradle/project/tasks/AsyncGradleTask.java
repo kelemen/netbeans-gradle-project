@@ -72,8 +72,6 @@ import org.openide.LifecycleManager;
 import org.openide.windows.OutputWriter;
 
 public final class AsyncGradleTask implements Runnable {
-    private static final DaemonTaskContext DAEMON_CONTEXT = new DaemonTaskContext(false);
-
     private static final TaskExecutor TASK_EXECUTOR
             = NbTaskExecutors.newExecutor("Gradle-Task-Executor", Integer.MAX_VALUE);
     private static final TaskExecutor CANCEL_EXECUTOR
@@ -552,9 +550,14 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private DaemonTaskContext daemonTaskContext() {
+        return new DaemonTaskContext(project, false);
+    }
+
     private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
-        List<String> extraArgs = GradleArguments.getExtraArgs(project, project.getPreferredSettingsFile(), DAEMON_CONTEXT);
-        List<String> extraJvmArgs = GradleArguments.getExtraJvmArgs(project, DAEMON_CONTEXT);
+        DaemonTaskContext context = daemonTaskContext();
+        List<String> extraArgs = GradleArguments.getExtraArgs(project.getPreferredSettingsFile(), context);
+        List<String> extraJvmArgs = GradleArguments.getExtraJvmArgs(context);
 
         GradleTaskDef result;
         if (!extraArgs.isEmpty() || !extraJvmArgs.isEmpty()) {
