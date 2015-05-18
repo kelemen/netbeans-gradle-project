@@ -32,6 +32,11 @@ public final class GradleArguments {
     }
 
     private static List<String> fixArguments(String extensionName, List<String> args) {
+        if (args == null) {
+            LOGGER.log(Level.WARNING, "Extension {0} returned null argument list.", extensionName);
+            return Collections.emptyList();
+        }
+
         for (String arg: args) {
             if (arg == null) {
                 LOGGER.log(Level.WARNING, "Extension {0} returned a null argument.", extensionName);
