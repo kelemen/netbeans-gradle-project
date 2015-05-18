@@ -22,7 +22,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.global.PlatformPriorityPanel;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
-import org.netbeans.gradle.project.properties.standard.UserBuildScriptPath;
+import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -122,7 +122,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         public Charset sourceEncoding;
         public ProjectPlatform targetPlatform;
         public String sourceLevel;
-        public UserBuildScriptPath userInitScript;
+        public UserInitScriptPath userInitScript;
 
         public PropertyValues(NbGradleProject ownerProject, ActiveSettingsQuery settings) {
             this(new NbGradleCommonProperties(ownerProject, settings));
@@ -136,7 +136,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
             this.sourceEncoding = commonProperties.sourceEncoding().tryGetValueWithoutFallback();
             this.targetPlatform = commonProperties.targetPlatform().tryGetValueWithoutFallback();
             this.sourceLevel = commonProperties.sourceLevel().tryGetValueWithoutFallback();
-            this.userInitScript = commonProperties.userBuildScriptPath().tryGetValueWithoutFallback();
+            this.userInitScript = commonProperties.userInitScriptPath().tryGetValueWithoutFallback();
         }
 
         public void refreshPlatformCombos() {
@@ -166,13 +166,13 @@ public class CommonProjectPropertiesPanel extends JPanel {
             return defaultEncoding;
         }
 
-        private UserBuildScriptPath getGuiUserInitScript() {
+        private UserInitScriptPath getGuiUserInitScript() {
             String userInitScriptStr = jUserInitScript.getText().trim();
             if (userInitScriptStr.isEmpty()) {
                 return null;
             }
 
-            return new UserBuildScriptPath(Paths.get(userInitScriptStr));
+            return new UserInitScriptPath(Paths.get(userInitScriptStr));
         }
 
         @Override
@@ -205,7 +205,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
             commonProperties.targetPlatform().trySetValue(targetPlatform);
             commonProperties.sourceEncoding().trySetValue(sourceEncoding);
             commonProperties.sourceLevel().trySetValue(sourceLevel);
-            commonProperties.userBuildScriptPath().trySetValue(userInitScript);
+            commonProperties.userInitScriptPath().trySetValue(userInitScript);
         }
 
         private void displayGradleLocation() {
@@ -263,9 +263,9 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
 
         private void displayUserInitScript() {
-            UserBuildScriptPath value = setInheritAndGetValue(
+            UserInitScriptPath value = setInheritAndGetValue(
                     userInitScript,
-                    commonProperties.userBuildScriptPath(),
+                    commonProperties.userInitScriptPath(),
                     jUserInitScriptInherit);
             if (value != null) {
                 jUserInitScript.setText(value.getRelPath().toString());

@@ -4,10 +4,10 @@ import java.nio.file.Path;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 
-public final class UserBuildScriptPath {
+public final class UserInitScriptPath {
     private final Path relPath;
 
-    public UserBuildScriptPath(Path relPath) {
+    public UserInitScriptPath(Path relPath) {
         ExceptionHelper.checkNotNullArgument(relPath, "relPath");
         this.relPath = relPath;
     }

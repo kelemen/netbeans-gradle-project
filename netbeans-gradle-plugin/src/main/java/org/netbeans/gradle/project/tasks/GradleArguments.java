@@ -13,7 +13,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
-import org.netbeans.gradle.project.properties.standard.UserBuildScriptPath;
+import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 
 public final class GradleArguments {
     private static final Logger LOGGER = Logger.getLogger(GradleArguments.class.getName());
@@ -90,7 +90,7 @@ public final class GradleArguments {
             return null;
         }
 
-        UserBuildScriptPath path = gradleProject.getCommonProperties().userBuildScriptPath().getActiveValue();
+        UserInitScriptPath path = gradleProject.getCommonProperties().userInitScriptPath().getActiveValue();
         return path != null ? path.getPath(gradleProject) : null;
     }
 

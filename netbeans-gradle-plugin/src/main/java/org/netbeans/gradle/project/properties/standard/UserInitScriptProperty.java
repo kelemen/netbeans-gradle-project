@@ -6,35 +6,35 @@ import org.netbeans.gradle.project.properties.ConfigTree;
 import org.netbeans.gradle.project.properties.PropertyDef;
 import org.netbeans.gradle.project.properties.PropertyKeyEncodingDef;
 
-public final class UserBuildScriptProperty {
-    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("user-build-script");
+public final class UserInitScriptProperty {
+    private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("user-init-script");
 
     private static final String CONFIG_KEY_PATH = "path";
 
-    public static final PropertyDef<?, UserBuildScriptPath> PROPERTY_DEF = createPropertyDef();
+    public static final PropertyDef<?, UserInitScriptPath> PROPERTY_DEF = createPropertyDef();
 
-    private static PropertyDef<?, UserBuildScriptPath> createPropertyDef() {
-        PropertyDef.Builder<UserBuildScriptPath, UserBuildScriptPath> result
+    private static PropertyDef<?, UserInitScriptPath> createPropertyDef() {
+        PropertyDef.Builder<UserInitScriptPath, UserInitScriptPath> result
                 = new PropertyDef.Builder<>(CONFIG_ROOT);
         result.setKeyEncodingDef(getKeyEncoding());
-        result.setValueDef(CommonProperties.<UserBuildScriptPath>getIdentityValueDef());
+        result.setValueDef(CommonProperties.<UserInitScriptPath>getIdentityValueDef());
         return result.create();
     }
 
-    private static UserBuildScriptPath toBuildScriptPath(Path path) {
-        return path != null ? new UserBuildScriptPath(path) : null;
+    private static UserInitScriptPath toBuildScriptPath(Path path) {
+        return path != null ? new UserInitScriptPath(path) : null;
     }
 
-    private static PropertyKeyEncodingDef<UserBuildScriptPath> getKeyEncoding() {
-        return new PropertyKeyEncodingDef<UserBuildScriptPath>() {
+    private static PropertyKeyEncodingDef<UserInitScriptPath> getKeyEncoding() {
+        return new PropertyKeyEncodingDef<UserInitScriptPath>() {
             @Override
-            public UserBuildScriptPath decode(ConfigTree config) {
+            public UserInitScriptPath decode(ConfigTree config) {
                 String pathStr = config.getChildTree(CONFIG_KEY_PATH).getValue(null);
                 return toBuildScriptPath(CommonProperties.tryReadFilePath(pathStr));
             }
 
             @Override
-            public ConfigTree encode(UserBuildScriptPath value) {
+            public ConfigTree encode(UserInitScriptPath value) {
                 String normalizeFilePath = CommonProperties.normalizeFilePath(value.getRelPath());
                 ConfigTree.Builder result = new ConfigTree.Builder();
                 result.addChildBuilder(CONFIG_KEY_PATH).setValue(normalizeFilePath);
