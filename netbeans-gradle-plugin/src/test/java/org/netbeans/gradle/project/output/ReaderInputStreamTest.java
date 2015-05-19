@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
 
 public class ReaderInputStreamTest {
     private static final Charset[] UNIVERSAL_CHARSETS = new Charset[] {
+        Charset.forName("UTF-16"),
         StringUtils.UTF8,
         Charset.forName("UTF-16LE"),
     };
