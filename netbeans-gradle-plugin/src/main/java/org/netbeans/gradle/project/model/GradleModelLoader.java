@@ -442,7 +442,7 @@ public final class GradleModelLoader {
     }
 
     private static DaemonTaskContext daemonTaskContext(Project project) {
-        return new DaemonTaskContext(project, false);
+        return new DaemonTaskContext(project, true);
     }
 
     private static List<String> getModelEvaluateJvmArguments(Project project) {
