@@ -15,6 +15,7 @@ import org.jtrim.cancel.CancellationSource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
@@ -35,6 +36,7 @@ import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.java.test.TestXmlDisplayer;
 import org.netbeans.gradle.project.output.DebugTextListener;
@@ -255,7 +257,26 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
-    private static String getTestName(ExecutedCommandContext executedCommandContext) {
+    private static String filterTestTaskName(JavaExtension javaExt, List<String> taskNames) {
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+
+        // TODO: Allow multiple test task names
+        for (String taskName: taskNames) {
+            JavaTestTask testTask = mainModule.tryGetTestModelByName(taskName);
+            if (testTask != null) {
+                return testTask.getName();
+            }
+        }
+
+        return null;
+    }
+
+    private static String getTestName(JavaExtension javaExt, ExecutedCommandContext executedCommandContext) {
+        String requestedTaskName = filterTestTaskName(javaExt, executedCommandContext.getTaskNames());
+        if (requestedTaskName != null) {
+            return requestedTaskName;
+        }
+
         TaskVariableMap variables = executedCommandContext.getTaskVariables();
         String value = variables.tryGetValueForVariable(JavaGradleTaskVariableQuery.TEST_TASK_NAME);
         if (value == null) {
@@ -267,11 +288,12 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static ContextAwareCommandCompleteListener displayTestResults(
             final Project project,
+            final JavaExtension javaExt,
             final Lookup startContext) {
         return new ContextAwareCommandCompleteListener() {
             @Override
             public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
-                displayTestReports(project, executedCommandContext, startContext, error);
+                displayTestReports(project, javaExt, executedCommandContext, startContext, error);
             }
         };
     }
@@ -286,11 +308,12 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static void displayTestReports(
             Project project,
+            JavaExtension javaExt,
             ExecutedCommandContext executedCommandContext,
             Lookup startContext,
             Throwable error) {
 
-        String testName = getTestName(executedCommandContext);
+        String testName = getTestName(javaExt, executedCommandContext);
 
         TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
         if (!xmlDisplayer.displayReport(startContext)) {
@@ -300,11 +323,11 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         }
     }
 
-    private static ContextAwareCommandCompleteAction displayTestAction() {
+    private static ContextAwareCommandCompleteAction displayTestAction(final JavaExtension javaExt) {
         return new ContextAwareCommandCompleteAction() {
             @Override
             public ContextAwareCommandCompleteListener startCommand(Project project, Lookup commandContext) {
-                return displayTestResults(project, commandContext);
+                return displayTestResults(project, javaExt, commandContext);
             }
         };
     }
@@ -313,7 +336,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new CustomCommandAdjuster() {
             @Override
             public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setContextAwareFinalizer(displayTestAction());
+                customActions.setContextAwareFinalizer(displayTestAction(javaExt));
             }
         };
     }
