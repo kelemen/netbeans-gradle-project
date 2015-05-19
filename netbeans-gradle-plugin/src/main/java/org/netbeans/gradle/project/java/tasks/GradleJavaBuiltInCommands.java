@@ -257,24 +257,24 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
-    private static String filterTestTaskName(JavaExtension javaExt, List<String> taskNames) {
+    private static List<String> filterTestTaskNames(JavaExtension javaExt, List<String> taskNames) {
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
-        // TODO: Allow multiple test task names
+        List<String> result = new ArrayList<>();
         for (String taskName: taskNames) {
             JavaTestTask testTask = mainModule.tryGetTestModelByName(taskName);
             if (testTask != null) {
-                return testTask.getName();
+                result.add(testTask.getName());
             }
         }
 
-        return null;
+        return result;
     }
 
-    private static String getTestName(JavaExtension javaExt, ExecutedCommandContext executedCommandContext) {
-        String requestedTaskName = filterTestTaskName(javaExt, executedCommandContext.getTaskNames());
-        if (requestedTaskName != null) {
-            return requestedTaskName;
+    private static List<String> getTestNames(JavaExtension javaExt, ExecutedCommandContext executedCommandContext) {
+        List<String> requestedTaskNames = filterTestTaskNames(javaExt, executedCommandContext.getTaskNames());
+        if (!requestedTaskNames.isEmpty()) {
+            return requestedTaskNames;
         }
 
         TaskVariableMap variables = executedCommandContext.getTaskVariables();
@@ -283,7 +283,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             LOGGER.warning("Could not find test task name variable.");
             value = TestTaskName.DEFAULT_TEST_TASK_NAME;
         }
-        return value;
+        return Collections.singletonList(value);
     }
 
     private static ContextAwareCommandCompleteListener displayTestResults(
@@ -313,12 +313,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Lookup startContext,
             Throwable error) {
 
-        String testName = getTestName(javaExt, executedCommandContext);
+        List<String> testNames = getTestNames(javaExt, executedCommandContext);
 
-        TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
-        if (!xmlDisplayer.displayReport(startContext)) {
-            if (error == null) {
-                displayErrorDueToNoTestReportsFound(xmlDisplayer);
+        for (String testName: testNames) {
+            TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
+            if (!xmlDisplayer.displayReport(startContext)) {
+                if (error == null) {
+                    displayErrorDueToNoTestReportsFound(xmlDisplayer);
+                }
             }
         }
     }
