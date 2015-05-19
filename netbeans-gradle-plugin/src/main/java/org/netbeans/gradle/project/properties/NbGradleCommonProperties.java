@@ -19,6 +19,8 @@ import org.netbeans.gradle.project.properties.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.properties.standard.TargetPlatformProperty;
+import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
+import org.netbeans.gradle.project.properties.standard.UserInitScriptProperty;
 
 public final class NbGradleCommonProperties {
     private final NbGradleProject ownerProject;
@@ -32,6 +34,7 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<Charset> sourceEncoding;
     private final PropertyReference<ProjectPlatform> targetPlatform;
     private final PropertyReference<String> sourceLevel;
+    private final PropertyReference<UserInitScriptPath> userInitScriptPath;
 
     public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
         ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
@@ -51,6 +54,7 @@ public final class NbGradleCommonProperties {
         sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
         targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
+        userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
     }
 
     public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
@@ -115,6 +119,10 @@ public final class NbGradleCommonProperties {
 
     public PropertyReference<String> sourceLevel() {
         return sourceLevel;
+    }
+
+    public PropertyReference<UserInitScriptPath> userInitScriptPath() {
+        return userInitScriptPath;
     }
 
     private <ValueType> PropertyReference<ValueType> get(

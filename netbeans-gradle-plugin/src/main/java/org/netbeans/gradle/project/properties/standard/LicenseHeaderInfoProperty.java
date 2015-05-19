@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.properties.standard;
 
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +19,6 @@ public final class LicenseHeaderInfoProperty {
     private static final String CONFIG_KEY_FILE = "template";
     private static final String CONFIG_KEY_PROPERTY = "property";
     private static final String CONFIG_KEY_PROPERTY_NAME = "#attr-name";
-    private static final String SAVE_FILE_NAME_SEPARATOR = "/";
 
     public static final PropertyDef<ConfigTree, LicenseHeaderInfo> PROPERTY_DEF = createPropertyDef();
 
@@ -47,22 +44,6 @@ public final class LicenseHeaderInfoProperty {
         };
     }
 
-    private static Path tryReadFilePath(String normalizedPath) {
-        if (normalizedPath == null) {
-            return null;
-        }
-
-        String separator = FileSystems.getDefault().getSeparator();
-        String nativePath = normalizedPath.replace(SAVE_FILE_NAME_SEPARATOR, separator);
-        return Paths.get(nativePath);
-    }
-
-    private static String normalizeFilePath(Path file) {
-        String result = file.toString();
-        String separator = file.getFileSystem().getSeparator();
-        return result.replace(separator, SAVE_FILE_NAME_SEPARATOR);
-    }
-
     private static ConfigTree writeLicenseHeader(LicenseHeaderInfo licenseHeader) {
         ConfigTree.Builder result = new ConfigTree.Builder();
 
@@ -70,7 +51,7 @@ public final class LicenseHeaderInfoProperty {
 
         Path licenseTemplateFile = licenseHeader.getLicenseTemplateFile();
         if (licenseTemplateFile != null) {
-            result.getChildBuilder(CONFIG_KEY_FILE).setValue(normalizeFilePath(licenseTemplateFile));
+            result.getChildBuilder(CONFIG_KEY_FILE).setValue(CommonProperties.normalizeFilePath(licenseTemplateFile));
         }
 
         for (Map.Entry<String, String> entry: licenseHeader.getProperties().entrySet()) {
@@ -92,7 +73,7 @@ public final class LicenseHeaderInfoProperty {
             return null;
         }
 
-        Path licenseTemplate = tryReadFilePath(licenseNode.getChildTree(CONFIG_KEY_FILE).getValue(null));
+        Path licenseTemplate = CommonProperties.tryReadFilePath(licenseNode.getChildTree(CONFIG_KEY_FILE).getValue(null));
 
         Map<String, String> properties = new HashMap<>();
         List<ConfigTree> propertyNodes = licenseNode.getChildTrees(CONFIG_KEY_PROPERTY);
