@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.MalformedInputException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 
@@ -58,6 +59,29 @@ public final class ReaderInputStream extends InputStream {
             // reached.
             return false;
         }
+
+        if (Character.isHighSurrogate(readChars[readCount - 1])) {
+            // We have to read another character to complete the UTF-16
+            // character.
+            int ch = reader.read();
+            if (ch < 0) {
+                throw new MalformedInputException(1);
+            }
+
+            if (readCount < readChars.length) {
+                readChars[readCount] = (char)ch;
+            }
+            else {
+                char[] newReadChars = new char[readCount + 1];
+
+                System.arraycopy(readChars, 0, newReadChars, 0, readCount);
+                newReadChars[newReadChars.length - 1] = (char)ch;
+
+                readChars = newReadChars;
+                readCount = newReadChars.length;
+            }
+        }
+
         ByteBuffer encodedBuffer = encoder.encode(CharBuffer.wrap(readChars, 0, readCount));
         byte[] encoded = new byte[encodedBuffer.remaining()];
         encodedBuffer.get(encoded);
