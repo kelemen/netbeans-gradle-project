@@ -705,10 +705,15 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         public ExecutedCommandContext getCommandContext() {
-            TaskVariableMap taskVariables = processedCommandSpec
-                    .getProcessedTaskDef()
-                    .getNonUserTaskVariables();
-            return new ExecutedCommandContext(taskVariables);
+            GradleTaskDef taskDef = processedCommandSpec.getProcessedTaskDef();
+
+            ExecutedCommandContext.Builder result = new ExecutedCommandContext.Builder();
+            result.setTaskVariables(taskDef.getNonUserTaskVariables());
+            result.setTaskNames(taskDef.getTaskNames());
+            result.setArguments(taskDef.getArguments());
+            result.setJvmArgument(taskDef.getJvmArguments());
+
+            return result.create();
         }
 
         @Override
