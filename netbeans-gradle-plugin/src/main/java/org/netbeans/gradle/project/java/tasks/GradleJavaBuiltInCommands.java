@@ -257,14 +257,47 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
+    private static String removeLeadingColons(String str) {
+        if (!str.startsWith(":")) {
+            return str;
+        }
+
+        int i;
+        for (i = 0; i < str.length(); i++) {
+            if (str.charAt(i) != ':') {
+                break;
+            }
+        }
+
+        return str.substring(i);
+    }
+
+    private static String tryRelativizeTaskName(String projectPath, String taskName) {
+        if (taskName.startsWith(":")) {
+            if (!taskName.startsWith(projectPath)) {
+                return null;
+            }
+
+            return removeLeadingColons(taskName.substring(projectPath.length()));
+        }
+        else {
+            return taskName;
+        }
+    }
+
     private static List<String> filterTestTaskNames(JavaExtension javaExt, List<String> taskNames) {
         NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
 
         List<String> result = new ArrayList<>();
         for (String taskName: taskNames) {
-            JavaTestTask testTask = mainModule.tryGetTestModelByName(taskName);
-            if (testTask != null) {
-                result.add(testTask.getName());
+            String projectPath = mainModule.getProperties().getProjectFullName();
+            String relativeTaskName = tryRelativizeTaskName(projectPath, taskName);
+
+            if (relativeTaskName != null) {
+                JavaTestTask testTask = mainModule.tryGetTestModelByName(relativeTaskName);
+                if (testTask != null) {
+                    result.add(testTask.getName());
+                }
             }
         }
 
