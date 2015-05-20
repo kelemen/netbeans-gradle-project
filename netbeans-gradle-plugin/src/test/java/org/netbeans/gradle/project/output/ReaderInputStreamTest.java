@@ -24,6 +24,34 @@ public class ReaderInputStreamTest {
         Charset.forName("ISO-8859-2"),
     };
 
+    private static byte[] readAllBytesWithOffsets(InputStream input, int expected) throws IOException {
+        byte[] buffer = new byte[1024];
+
+        ByteArrayOutputStream result = new ByteArrayOutputStream(4096);
+        boolean oddCycle = true;
+        int sumReadCount = 0;
+        while (true) {
+            int readCount;
+            int offset = oddCycle ? 0 : 1;
+
+            int expectedRemaining = expected - sumReadCount;
+            if (expectedRemaining > 0 && expectedRemaining < buffer.length) {
+                offset = buffer.length - expectedRemaining;
+            }
+
+            readCount = input.read(buffer, offset, buffer.length - offset);
+            if (readCount <= 0) {
+                break;
+            }
+
+            sumReadCount += readCount;
+            result.write(buffer, offset, readCount);
+            oddCycle = !oddCycle;
+        }
+
+        return result.toByteArray();
+    }
+
     private static byte[] readAllBytes(InputStream input, int copyBatchSize) throws IOException {
         byte[] buffer = new byte[copyBatchSize];
 
@@ -141,5 +169,29 @@ public class ReaderInputStreamTest {
         }
 
         doTestForAllCharsets(str.toString());
+    }
+
+    @Test
+    public void testForAsciiLongString2() throws IOException {
+        int charCount = 20_000;
+        StringBuilder str = new StringBuilder(charCount);
+        for (int i = 0; i < 100000; i++) {
+            char ch;
+            if (i % 16 == 15) {
+                ch = '\n';
+            }
+            else {
+                ch = (char)((i % ('z' - 'a')) + 'a');
+            }
+            str.append(ch);
+        }
+
+        String text = str.toString();
+        Charset charset = Charset.forName("ISO-8859-1");
+
+        ReaderInputStream reader = new ReaderInputStream(new StringReader(text), charset);
+
+        byte[] bytes = readAllBytesWithOffsets(reader, charCount);
+        assertEquals(text, new String(bytes, charset));
     }
 }
