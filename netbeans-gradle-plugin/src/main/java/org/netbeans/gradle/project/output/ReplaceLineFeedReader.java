@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.util.StringUtils;
 
 public final class ReplaceLineFeedReader extends Reader {
     private final Reader src;
@@ -21,14 +22,7 @@ public final class ReplaceLineFeedReader extends Reader {
     }
 
     public static Reader replaceLfWithOsLineSeparator(Reader src) {
-        ExceptionHelper.checkNotNullArgument(src, "src");
-
-        String lineSeparator = System.getProperty("line.separator");
-        if (lineSeparator == null) {
-            return src;
-        }
-
-        return replaceLf(src, lineSeparator);
+        return replaceLf(src, StringUtils.getOsLineSeparator());
     }
 
     public static Reader replaceLf(Reader src, String newLineSeparator) {
