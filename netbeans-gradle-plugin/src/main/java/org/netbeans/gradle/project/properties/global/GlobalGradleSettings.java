@@ -64,6 +64,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<PlatformOrder> platformPreferenceOrder;
     private final StringBasedProperty<String> displayNamePattern;
     private final StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode;
+    private final StringBasedProperty<Boolean> replaceLfOnStdIn;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -121,6 +122,9 @@ public final class GlobalGradleSettings {
         javaSourcesDisplayMode = new GlobalProperty<>(
                 withNS(namespace, "java-sources-display-mode"),
                 new EnumConverter<>(JavaSourcesDisplayMode.DEFAULT_MODE));
+        replaceLfOnStdIn = new GlobalProperty<>(
+                withNS(namespace, "replace-lf-on-stdin"),
+                new BooleanConverter(true));
     }
 
     public static void setDefaultPreference() {
@@ -217,6 +221,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
         return javaSourcesDisplayMode;
+    }
+
+    public StringBasedProperty<Boolean> replaceLfOnStdIn() {
+        return replaceLfOnStdIn;
     }
 
     public static GlobalGradleSettings getDefault() {
