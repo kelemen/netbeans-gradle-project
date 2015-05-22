@@ -124,6 +124,11 @@ public final class StringUtils {
         }
     }
 
+    public static String getOsLineSeparator() {
+        String result = System.getProperty("line.separator");
+        return result != null ? result : "\n";
+    }
+
     public static String replaceLFWithPreferredLineSeparator(String str) {
         return replaceLFWithPreferredLineSeparator(str, null);
     }
@@ -131,10 +136,7 @@ public final class StringUtils {
     public static String replaceLFWithPreferredLineSeparator(String str, Project ownerProject) {
         String lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(ownerProject);
         if (lineSeparator == null) {
-            lineSeparator = System.getProperty("line.separator");
-            if (lineSeparator == null) {
-                return str;
-            }
+            lineSeparator = getOsLineSeparator();
         }
         if ("\n".equals(lineSeparator)) {
             return str;
