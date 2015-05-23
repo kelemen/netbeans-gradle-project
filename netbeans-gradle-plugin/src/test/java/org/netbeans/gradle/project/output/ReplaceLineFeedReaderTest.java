@@ -81,4 +81,12 @@ public class ReplaceLineFeedReaderTest {
     public void testEmptyLines() throws Exception {
         testReadStringWithConstBuffer("First line\n\n\n\nEND\n\n");
     }
+
+    @Test
+    public void testDoNotReplaceCrLf() throws Exception {
+        String text = "\r\nFirst Line\r\nSecond Line\nThird Line\r\n";
+        String lineSeparator = "\r\n";
+        String output = readString(text, lineSeparator, 0, 1);
+        assertEquals("\r\nFirst Line\r\nSecond Line\r\nThird Line\r\n", output);
+    }
 }

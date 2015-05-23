@@ -73,11 +73,13 @@ public final class ReplaceLineFeedReader extends Reader {
 
         private int charCount;
         private char[] chars;
+        private char lastChar;
 
         public LfReplacingBuffer(String newLineSeparator) {
             this.newLineSeparatorChars = newLineSeparator.toCharArray();
             this.charCount = 0;
             this.chars = NO_CHARS;
+            this.lastChar = '\0';
         }
 
         public int getCharCount() {
@@ -117,11 +119,12 @@ public final class ReplaceLineFeedReader extends Reader {
 
             int destOffset = charCount;
 
+            char prevChar = lastChar;
             int endSrcIndex = off + len;
             for (int i = off; i < endSrcIndex; i++) {
                 char ch = cbuf[i];
 
-                if (ch == '\n') {
+                if (prevChar != '\r' && ch == '\n') {
                     System.arraycopy(newLineSeparatorChars, 0, buffer, destOffset, newLineSeparatorChars.length);
                     destOffset += newLineSeparatorChars.length;
                 }
@@ -129,8 +132,11 @@ public final class ReplaceLineFeedReader extends Reader {
                     buffer[destOffset] = ch;
                     destOffset++;
                 }
+
+                prevChar = ch;
             }
 
+            lastChar = prevChar;
             charCount = destOffset;
         }
 
