@@ -47,7 +47,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     private File getSettingsFileAsFile() {
-        return settingsFile.toFile();
+        return settingsFile != null ? settingsFile.toFile() : null;
     }
 
     public Path getSettingsFile() {
@@ -164,7 +164,9 @@ public final class NbGenericModelInfo implements Serializable {
         public SerializedFormat(NbGenericModelInfo source) {
             this.projectDef = source.projectDef;
             this.settingsFile = null;
-            this.settingsPath = source.settingsFile.toString();
+            this.settingsPath = source.settingsFile != null
+                    ? source.settingsFile.toString()
+                    : null;
         }
 
         public Path getSettingsPath() {
@@ -172,7 +174,7 @@ public final class NbGenericModelInfo implements Serializable {
                 return Paths.get(settingsPath);
             }
 
-            return settingsFile.toPath();
+            return settingsFile != null ? settingsFile.toPath() : null;
         }
 
         private Object readResolve() throws ObjectStreamException {

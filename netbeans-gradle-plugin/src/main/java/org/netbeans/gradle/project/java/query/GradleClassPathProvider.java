@@ -8,10 +8,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -63,6 +66,7 @@ implements
     private static final Logger LOGGER = Logger.getLogger(GradleClassPathProvider.class.getName());
 
     private final JavaExtension javaExt;
+    private volatile Object classpathResourcesChangeId;
     private final ConcurrentMap<ClassPathKey, List<PathResourceImplementation>> classpathResources;
     private final ConcurrentMap<ClassPathKey, ClassPath> classpaths;
 
@@ -88,6 +92,7 @@ implements
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
 
+        this.classpathResourcesChangeId = new Object();
         this.classpathResources = new ConcurrentHashMap<>();
         this.classpaths = new ConcurrentHashMap<>();
         this.allSources = Collections.emptyList();
@@ -470,6 +475,8 @@ implements
         }
 
         for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
+            dependency.ensureProjectLoaded();
+
             NbJavaModule module = dependency.tryGetModule();
             if (module != null) {
                 for (JavaSourceSet sourceSet: module.getSources()) {
@@ -486,6 +493,11 @@ implements
     private void loadPathResources(NbJavaModel projectModel) {
         // TODO: This method must be called whenever any of the dependent projects
         //   is reloaded.
+
+        Object newChangeId = new Object();
+        classpathResourcesChangeId = newChangeId;
+
+        Map<?, ?> classpathResourcesSnapshot = new HashMap<>(classpathResources);
 
         Set<File> missing = new HashSet<>();
 
@@ -517,12 +529,16 @@ implements
 
         updateAllSources();
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
-            }
-        });
+        boolean changed = newChangeId != classpathResourcesChangeId
+                || !classpathResourcesSnapshot.equals(new HashMap<>(classpathResources));
+        if (changed) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+                }
+            });
+        }
 
         loadedOnce = true;
     }
@@ -719,6 +735,25 @@ implements
             String normPath = resource.replace("/", root.getFileSystem().getSeparator());
             Path resourcePath = root.resolve(normPath);
             return includeRules.isIncluded(root, resourcePath);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 43 * hash + Objects.hashCode(this.root);
+            hash = 43 * hash + Objects.hashCode(this.includeRules);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (obj == this) return true;
+            if (getClass() != obj.getClass()) return false;
+
+            final ExcludeAwarePathResource other = (ExcludeAwarePathResource)obj;
+            return Objects.equals(this.root, other.root)
+                    && Objects.equals(this.includeRules, other.includeRules);
         }
 
         @Override

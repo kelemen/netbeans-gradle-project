@@ -28,6 +28,25 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class NbFileUtils {
+    public static String tryMakeRelative(File parent, File file) {
+        File normParent = FileUtil.normalizeFile(parent);
+        File normFile = FileUtil.normalizeFile(file);
+
+        if (normParent == null || normFile == null) {
+            return null;
+        }
+
+        FileObject parentObj = FileUtil.toFileObject(normParent);
+        FileObject fileObj = FileUtil.toFileObject(normFile);
+
+        if (fileObj == null || parentObj == null) {
+            return null;
+        }
+
+        String relPath = FileUtil.getRelativePath(parentObj, fileObj);
+        return relPath != null ? relPath.replace("/", File.separator) : null;
+    }
+
     private static boolean isSafeChar(char ch) {
         if (ch >= 'A' && ch <= 'Z') return true;
         if (ch >= 'a' && ch <= 'z') return true;

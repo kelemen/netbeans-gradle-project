@@ -15,6 +15,7 @@ import org.jtrim.cancel.CancellationSource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.GlobalConfig;
@@ -35,6 +36,7 @@ import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.java.test.TestXmlDisplayer;
 import org.netbeans.gradle.project.output.DebugTextListener;
@@ -255,23 +257,76 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
-    private static String getTestName(ExecutedCommandContext executedCommandContext) {
+    private static String removeLeadingColons(String str) {
+        if (!str.startsWith(":")) {
+            return str;
+        }
+
+        int i;
+        for (i = 0; i < str.length(); i++) {
+            if (str.charAt(i) != ':') {
+                break;
+            }
+        }
+
+        return str.substring(i);
+    }
+
+    private static String tryRelativizeTaskName(String projectPath, String taskName) {
+        if (taskName.startsWith(":")) {
+            if (!taskName.startsWith(projectPath)) {
+                return null;
+            }
+
+            return removeLeadingColons(taskName.substring(projectPath.length()));
+        }
+        else {
+            return taskName;
+        }
+    }
+
+    private static List<String> filterTestTaskNames(JavaExtension javaExt, List<String> taskNames) {
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+
+        List<String> result = new ArrayList<>();
+        for (String taskName: taskNames) {
+            String projectPath = mainModule.getProperties().getProjectFullName();
+            String relativeTaskName = tryRelativizeTaskName(projectPath, taskName);
+
+            if (relativeTaskName != null) {
+                JavaTestTask testTask = mainModule.tryGetTestModelByName(relativeTaskName);
+                if (testTask != null) {
+                    result.add(testTask.getName());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static List<String> getTestNames(JavaExtension javaExt, ExecutedCommandContext executedCommandContext) {
+        List<String> requestedTaskNames = filterTestTaskNames(javaExt, executedCommandContext.getTaskNames());
+        if (!requestedTaskNames.isEmpty()) {
+            return requestedTaskNames;
+        }
+
         TaskVariableMap variables = executedCommandContext.getTaskVariables();
         String value = variables.tryGetValueForVariable(JavaGradleTaskVariableQuery.TEST_TASK_NAME);
         if (value == null) {
             LOGGER.warning("Could not find test task name variable.");
             value = TestTaskName.DEFAULT_TEST_TASK_NAME;
         }
-        return value;
+        return Collections.singletonList(value);
     }
 
     private static ContextAwareCommandCompleteListener displayTestResults(
             final Project project,
+            final JavaExtension javaExt,
             final Lookup startContext) {
         return new ContextAwareCommandCompleteListener() {
             @Override
             public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
-                displayTestReports(project, executedCommandContext, startContext, error);
+                displayTestReports(project, javaExt, executedCommandContext, startContext, error);
             }
         };
     }
@@ -286,25 +341,28 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static void displayTestReports(
             Project project,
+            JavaExtension javaExt,
             ExecutedCommandContext executedCommandContext,
             Lookup startContext,
             Throwable error) {
 
-        String testName = getTestName(executedCommandContext);
+        List<String> testNames = getTestNames(javaExt, executedCommandContext);
 
-        TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
-        if (!xmlDisplayer.displayReport(startContext)) {
-            if (error == null) {
-                displayErrorDueToNoTestReportsFound(xmlDisplayer);
+        for (String testName: testNames) {
+            TestXmlDisplayer xmlDisplayer = new TestXmlDisplayer(project, testName);
+            if (!xmlDisplayer.displayReport(startContext)) {
+                if (error == null) {
+                    displayErrorDueToNoTestReportsFound(xmlDisplayer);
+                }
             }
         }
     }
 
-    private static ContextAwareCommandCompleteAction displayTestAction() {
+    private static ContextAwareCommandCompleteAction displayTestAction(final JavaExtension javaExt) {
         return new ContextAwareCommandCompleteAction() {
             @Override
             public ContextAwareCommandCompleteListener startCommand(Project project, Lookup commandContext) {
-                return displayTestResults(project, commandContext);
+                return displayTestResults(project, javaExt, commandContext);
             }
         };
     }
@@ -313,7 +371,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return new CustomCommandAdjuster() {
             @Override
             public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setContextAwareFinalizer(displayTestAction());
+                customActions.setContextAwareFinalizer(displayTestAction(javaExt));
             }
         };
     }

@@ -19,6 +19,7 @@ public class NbPropertiesTest {
         Runtime.getRuntime().runFinalization();
         System.gc();
         System.gc();
+        Runtime.getRuntime().runFinalization();
     }
 
     private static void addWeakListener(
