@@ -5,15 +5,23 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class ReaderInputStream extends InputStream {
     private final Reader reader;
-    private final Charset encoding;
     private final AtomicReference<byte[]> cacheRef;
+
+    private final Lock encoderLock;
+    private final CharsetEncoder encoder;
+    private boolean eofReached;
+    private char[] remainingChars;
 
     public ReaderInputStream(Reader reader) {
         this(reader, Charset.defaultCharset());
@@ -24,7 +32,10 @@ public final class ReaderInputStream extends InputStream {
         ExceptionHelper.checkNotNullArgument(encoding, "encoding");
 
         this.reader = reader;
-        this.encoding = encoding;
+        this.encoderLock = new ReentrantLock();
+        this.encoder = encoding.newEncoder();
+        this.remainingChars = null;
+        this.eofReached = false;
         this.cacheRef = new AtomicReference<>(new byte[0]);
     }
 
@@ -42,34 +53,144 @@ public final class ReaderInputStream extends InputStream {
         return toRead;
     }
 
+    private ByteBuffer encodeChars(char[] chars, int charCount) throws CharacterCodingException {
+        return encodeChars(chars, charCount, false);
+    }
+
+    private ByteBuffer encodeChars(char[] chars, int charCount, boolean finalBytes) throws CharacterCodingException {
+        encoderLock.lock();
+        try {
+            CharBuffer input;
+            if (remainingChars == null || remainingChars.length == 0) {
+                input = CharBuffer.wrap(chars, 0, charCount);
+            }
+            else {
+                char[] toPrepend = remainingChars;
+                remainingChars = null;
+
+                char[] newChars = new char[charCount + toPrepend.length];
+                System.arraycopy(toPrepend, 0, newChars, 0, toPrepend.length);
+                System.arraycopy(chars, 0, newChars, toPrepend.length, charCount);
+
+                input = CharBuffer.wrap(newChars);
+            }
+
+            int n = (int)(input.remaining() * encoder.averageBytesPerChar());
+            ByteBuffer out = ByteBuffer.allocate(n);
+
+            while (true) {
+                CoderResult result = encoder.encode(input, out, finalBytes);
+                if (result.isOverflow()) {
+                    n = 2 * n + 1;
+                    ByteBuffer newOut = ByteBuffer.allocate(n);
+                    out.flip();
+                    newOut.put(out);
+                    out = newOut;
+                }
+                else if (result.isError()) {
+                    result.throwException();
+                }
+                else {
+                    int remainingCount = input.remaining();
+                    if (remainingCount > 0) {
+                        char[] currentRemaining = new char[remainingCount];
+                        input.get(currentRemaining);
+                        remainingChars = currentRemaining;
+                    }
+                    break;
+                }
+            }
+
+            out.flip();
+            return out;
+        } finally {
+            encoderLock.unlock();
+        }
+    }
+
+    private ByteBuffer completeStream() throws CharacterCodingException {
+        encoderLock.lock();
+        try {
+            if (eofReached) {
+                return null;
+            }
+            eofReached = true;
+
+            char[] finalChars = remainingChars;
+            remainingChars = null;
+
+            if (finalChars == null) {
+                finalChars = new char[0];
+            }
+
+            ByteBuffer out = encodeChars(finalChars, finalChars.length, true);
+            int n = out.capacity();
+
+            while (true) {
+                CoderResult result = encoder.flush(out);
+                if (result.isUnderflow()) {
+                    break;
+                }
+
+                if (result.isOverflow()) {
+                    n = 2 * n + 1;
+                    ByteBuffer newOut = ByteBuffer.allocate(n);
+                    out.flip();
+                    newOut.put(out);
+                    out = newOut;
+                }
+                else {
+                    result.throwException();
+                }
+            }
+
+            out.flip();
+            return out;
+        } finally {
+            encoderLock.unlock();
+        }
+    }
+
     private boolean readToCache(int requiredBytes) throws IOException {
         assert requiredBytes > 0;
         // We rely on the encoder to choose the number of bytes to read but
         // it does not have to be actually accurate, it only matters
         // performance wise but this is not a performance critical code.
-        CharsetEncoder encoder = encoding.newEncoder();
         int toRead = (int)((float)requiredBytes / encoder.averageBytesPerChar()) + 1;
         toRead = Math.max(toRead, requiredBytes);
         char[] readChars = new char[toRead];
         int readCount = reader.read(readChars);
+
+        ByteBuffer encodedBuffer;
         if (readCount <= 0) {
             // readCount should never be zero but if reader returns zero
             // regardless, assume that it believes that EOF has been
             // reached.
-            return false;
+
+            encodedBuffer = completeStream();
+            if (encodedBuffer == null || encodedBuffer.remaining() <= 0) {
+                return false;
+            }
         }
-        ByteBuffer encodedBuffer = encoder.encode(CharBuffer.wrap(readChars, 0, readCount));
+        else {
+            encodedBuffer = encodeChars(readChars, readCount);
+        }
+
         byte[] encoded = new byte[encodedBuffer.remaining()];
         encodedBuffer.get(encoded);
+        appendToCache(encoded);
+        return true;
+    }
+
+    private void appendToCache(byte[] newBytes) {
         byte[] oldCache;
         byte[] newCache;
         do {
             oldCache = cacheRef.get();
-            newCache = new byte[oldCache.length + encoded.length];
+            newCache = new byte[oldCache.length + newBytes.length];
             System.arraycopy(oldCache, 0, newCache, 0, oldCache.length);
-            System.arraycopy(encoded, 0, newCache, oldCache.length, encoded.length);
+            System.arraycopy(newBytes, 0, newCache, oldCache.length, newBytes.length);
         } while (!cacheRef.compareAndSet(oldCache, newCache));
-        return true;
     }
 
     @Override

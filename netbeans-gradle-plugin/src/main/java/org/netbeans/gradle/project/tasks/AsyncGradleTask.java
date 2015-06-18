@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
+import org.netbeans.gradle.project.output.ReplaceLineFeedReader;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
@@ -250,7 +252,13 @@ public final class AsyncGradleTask implements Runnable {
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
-        buildLauncher.setStandardInput(new ReaderInputStream(tab.getIo().getInRef()));
+
+        Reader input = tab.getIo().getInRef();
+        if (GlobalGradleSettings.getDefault().replaceLfOnStdIn().getValue()) {
+            input = ReplaceLineFeedReader.replaceLfWithOsLineSeparator(input);
+        }
+
+        buildLauncher.setStandardInput(new ReaderInputStream(input));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
@@ -705,10 +713,15 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         public ExecutedCommandContext getCommandContext() {
-            TaskVariableMap taskVariables = processedCommandSpec
-                    .getProcessedTaskDef()
-                    .getNonUserTaskVariables();
-            return new ExecutedCommandContext(taskVariables);
+            GradleTaskDef taskDef = processedCommandSpec.getProcessedTaskDef();
+
+            ExecutedCommandContext.Builder result = new ExecutedCommandContext.Builder();
+            result.setTaskVariables(taskDef.getNonUserTaskVariables());
+            result.setTaskNames(taskDef.getTaskNames());
+            result.setArguments(taskDef.getArguments());
+            result.setJvmArgument(taskDef.getJvmArguments());
+
+            return result.create();
         }
 
         @Override

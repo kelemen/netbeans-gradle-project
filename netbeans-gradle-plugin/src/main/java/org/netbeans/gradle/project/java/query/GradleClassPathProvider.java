@@ -475,6 +475,8 @@ implements
         }
 
         for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
+            dependency.ensureProjectLoaded();
+
             NbJavaModule module = dependency.tryGetModule();
             if (module != null) {
                 for (JavaSourceSet sourceSet: module.getSources()) {

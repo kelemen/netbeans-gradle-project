@@ -6,12 +6,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.junit.MockServices;
 
 import static org.junit.Assert.*;
 
 public class StringUtilsTest {
     @BeforeClass
     public static void setUpClass() {
+        MockServices.setServices();
     }
 
     @AfterClass
