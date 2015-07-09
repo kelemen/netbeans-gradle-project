@@ -28,7 +28,9 @@ import org.openide.filesystems.FileStateInvalidException;
 import org.openide.filesystems.FileStatusEvent;
 import org.openide.filesystems.FileStatusListener;
 import org.openide.filesystems.FileSystem;
+import org.openide.filesystems.FileUIUtils;
 import org.openide.filesystems.FileUtil;
+import org.openide.filesystems.ImageDecorator;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
@@ -38,7 +40,7 @@ public final class BadgeAwareNode extends FilterNode {
     private static final Logger LOGGER = Logger.getLogger(BadgeAwareNode.class.getName());
 
     private final PropertySource<? extends Collection<File>> files;
-    private final PropertySource<FileSystem.Status> statusProperty;
+    private final PropertySource<ImageDecorator> statusProperty;
 
     private final UpdateTaskExecutor fileUpdater;
     private final UpdateTaskExecutor iconChangeNotifier;
@@ -55,9 +57,9 @@ public final class BadgeAwareNode extends FilterNode {
         this.fileUpdater = NbTaskExecutors.newDefaultUpdateExecutor();
         this.iconChangeNotifier = new SwingUpdateTaskExecutor(true);
 
-        this.statusProperty = NbProperties.propertyOfProperty(fileObjs, new NbFunction<FileObjects, PropertySource<FileSystem.Status>>() {
+        this.statusProperty = NbProperties.propertyOfProperty(fileObjs, new NbFunction<FileObjects, PropertySource<ImageDecorator>>() {
             @Override
-            public PropertySource<FileSystem.Status> apply(FileObjects arg) {
+            public PropertySource<ImageDecorator> apply(FileObjects arg) {
                 return new FileSystemStatusProperty(arg).toStandard();
             }
         });
@@ -130,7 +132,7 @@ public final class BadgeAwareNode extends FilterNode {
     }
 
     private Image annotate(Image src) {
-        FileSystem.Status status = statusProperty.getValue();
+        ImageDecorator status = statusProperty.getValue();
         return status != null ? status.annotateIcon(src, BeanInfo.ICON_COLOR_16x16, fileObjs.getValue().fileObjs) : src;
     }
 
@@ -191,7 +193,7 @@ public final class BadgeAwareNode extends FilterNode {
         }
     }
 
-    private static final class FileSystemStatusProperty implements SwingPropertySource<FileSystem.Status, FileStatusListener> {
+    private static final class FileSystemStatusProperty implements SwingPropertySource<ImageDecorator, FileStatusListener> {
         private final FileObjects fileObjects;
 
         public FileSystemStatusProperty(FileObjects fileObjects) {
@@ -199,7 +201,7 @@ public final class BadgeAwareNode extends FilterNode {
             this.fileObjects = fileObjects;
         }
 
-        public PropertySource<FileSystem.Status> toStandard() {
+        public PropertySource<ImageDecorator> toStandard() {
             return SwingProperties.fromSwingSource(this, new SwingForwarderFactory<FileStatusListener>() {
                 @Override
                 public FileStatusListener createForwarder(final Runnable listener) {
@@ -227,9 +229,9 @@ public final class BadgeAwareNode extends FilterNode {
         }
 
         @Override
-        public FileSystem.Status getValue() {
+        public ImageDecorator getValue() {
             FileSystem fs = fileObjects.fileSystem;
-            return fs != null ? fs.getStatus() : null;
+            return FileUIUtils.getImageDecorator(fs);
         }
 
         @Override
