@@ -5,7 +5,7 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
 public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Task-Execution");
 
     public TaskExecutionPanel() {
         initComponents();
@@ -17,6 +17,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         jDontAddInitScriptCheck.setSelected(globalSettings.omitInitScript().getValue());
         jSkipTestsCheck.setSelected(globalSettings.skipTests().getValue());
         jSkipCheckCheckBox.setSelected(globalSettings.skipCheck().getValue());
+        jReplaceLfOnStdIn.setSelected(globalSettings.replaceLfOnStdIn().getValue());
     }
 
     @Override
@@ -25,6 +26,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         globalSettings.skipCheck().setValue(jSkipCheckCheckBox.isSelected());
         globalSettings.alwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
         globalSettings.omitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
+        globalSettings.replaceLfOnStdIn().setValue(jReplaceLfOnStdIn.isSelected());
     }
 
     @Override
@@ -47,6 +49,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         jSkipCheckCheckBox = new javax.swing.JCheckBox();
         jAlwayClearOutput = new javax.swing.JCheckBox();
         jDontAddInitScriptCheck = new javax.swing.JCheckBox();
+        jReplaceLfOnStdIn = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSkipTestsCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jSkipTestsCheck.text")); // NOI18N
 
@@ -55,6 +58,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         org.openide.awt.Mnemonics.setLocalizedText(jAlwayClearOutput, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAlwayClearOutput.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jDontAddInitScriptCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jDontAddInitScriptCheck.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jReplaceLfOnStdIn, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jReplaceLfOnStdIn.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -66,7 +71,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
                     .addComponent(jSkipTestsCheck)
                     .addComponent(jAlwayClearOutput)
                     .addComponent(jDontAddInitScriptCheck)
-                    .addComponent(jSkipCheckCheckBox))
+                    .addComponent(jSkipCheckCheckBox)
+                    .addComponent(jReplaceLfOnStdIn))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -80,6 +86,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
                 .addComponent(jAlwayClearOutput)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jDontAddInitScriptCheck)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jReplaceLfOnStdIn)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -88,6 +96,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
     private javax.swing.JCheckBox jDontAddInitScriptCheck;
+    private javax.swing.JCheckBox jReplaceLfOnStdIn;
     private javax.swing.JCheckBox jSkipCheckCheckBox;
     private javax.swing.JCheckBox jSkipTestsCheck;
     // End of variables declaration//GEN-END:variables

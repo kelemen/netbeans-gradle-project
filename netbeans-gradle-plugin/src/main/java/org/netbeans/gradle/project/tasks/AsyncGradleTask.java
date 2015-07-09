@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
+import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
@@ -60,6 +62,7 @@ import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
 import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
+import org.netbeans.gradle.project.output.ReplaceLineFeedReader;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
@@ -249,7 +252,13 @@ public final class AsyncGradleTask implements Runnable {
 
         buildLauncher.setStandardOutput(new WriterOutputStream(forwardedStdOut));
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
-        buildLauncher.setStandardInput(new ReaderInputStream(tab.getIo().getInRef()));
+
+        Reader input = tab.getIo().getInRef();
+        if (GlobalGradleSettings.getDefault().replaceLfOnStdIn().getValue()) {
+            input = ReplaceLineFeedReader.replaceLfWithOsLineSeparator(input);
+        }
+
+        buildLauncher.setStandardInput(new ReaderInputStream(input));
 
         return new OutputRef(forwardedStdOut, forwardedStdErr);
     }
@@ -549,19 +558,20 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    private static <V> List<V> emptyIfNull(List<V> list) {
-        return list != null ? list : Collections.<V>emptyList();
+    private DaemonTaskContext daemonTaskContext() {
+        return new DaemonTaskContext(project, false);
     }
 
-    private static GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
-        List<String> globalArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue());
-        List<String> globalJvmArgs = emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue());
+    private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
+        DaemonTaskContext context = daemonTaskContext();
+        List<String> extraArgs = GradleArguments.getExtraArgs(project.getPreferredSettingsFile(), context);
+        List<String> extraJvmArgs = GradleArguments.getExtraJvmArgs(context);
 
         GradleTaskDef result;
-        if (!globalJvmArgs.isEmpty() || !globalArgs.isEmpty()) {
+        if (!extraArgs.isEmpty() || !extraJvmArgs.isEmpty()) {
             GradleTaskDef.Builder builder = new GradleTaskDef.Builder(taskDef);
-            builder.addJvmArguments(globalJvmArgs);
-            builder.addArguments(globalArgs);
+            builder.addJvmArguments(extraJvmArgs);
+            builder.addArguments(extraArgs);
             result = builder.create();
         }
         else {
@@ -604,14 +614,15 @@ public final class AsyncGradleTask implements Runnable {
                 taskDefFactroy,
                 taskDef.getTaskNames(),
                 taskDef.getArguments(),
-                taskDef.getJvmArguments()));
+                taskDef.getJvmArguments(),
+                false));
     }
 
     private AsyncGradleTask adjust(GradleCommandSpecFactory newFactory) {
         return new AsyncGradleTask(project, newFactory, actionContexts, listener);
     }
 
-    private static GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {
+    private GradleTaskDef createTaskDef(GradleCommandSpec commandSpec) {
         GradleTaskDef taskDef = commandSpec.getProcessed();
         if (taskDef == null) {
             taskDef = updateGradleTaskDef(commandSpec.getSource());
@@ -702,10 +713,15 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         public ExecutedCommandContext getCommandContext() {
-            TaskVariableMap taskVariables = processedCommandSpec
-                    .getProcessedTaskDef()
-                    .getNonUserTaskVariables();
-            return new ExecutedCommandContext(taskVariables);
+            GradleTaskDef taskDef = processedCommandSpec.getProcessedTaskDef();
+
+            ExecutedCommandContext.Builder result = new ExecutedCommandContext.Builder();
+            result.setTaskVariables(taskDef.getNonUserTaskVariables());
+            result.setTaskNames(taskDef.getTaskNames());
+            result.setArguments(taskDef.getArguments());
+            result.setJvmArgument(taskDef.getJvmArguments());
+
+            return result.create();
         }
 
         @Override
@@ -715,8 +731,7 @@ public final class AsyncGradleTask implements Runnable {
 
         @Override
         public void repeatExecution() {
-            DaemonTaskDef newTaskDef = processedCommandSpec.newBuildExecutionItem().getDaemonTaskDef();
-            GradleDaemonManager.submitGradleTask(TASK_EXECUTOR, newTaskDef, listener);
+            adjust(processedCommandSpec.getProcessedTaskDef()).run();
         }
 
         public void markFinished() {

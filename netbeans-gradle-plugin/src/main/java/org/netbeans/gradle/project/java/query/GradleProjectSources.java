@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -25,6 +26,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.JavaSourceGroupID;
@@ -34,8 +36,10 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.nodes.Node;
 import org.openide.util.ChangeSupport;
 
 public final class GradleProjectSources implements Sources, JavaModelChangeListener {
@@ -66,6 +70,15 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
                 scanForSources();
             }
         });
+    }
+
+    public static SingleNodeFactory tryCreateSourceGroupNodeFactory(NamedSourceRoot root) {
+        SourceGroup group = tryCreateSourceGroup(root);
+        return group != null ? createSourceGroupNodeFactory(root, group) : null;
+    }
+
+    public static SingleNodeFactory createSourceGroupNodeFactory(Object sourceGroupKey, SourceGroup group) {
+        return new SourceRootNodeFactory(sourceGroupKey, group);
     }
 
     public static SourceGroup tryCreateSourceGroup(NamedSourceRoot root) {
@@ -219,6 +232,39 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
     @Override
     public void removeChangeListener(ChangeListener listener) {
         changeSupport.removeChangeListener(listener);
+    }
+
+    private static class SourceRootNodeFactory implements SingleNodeFactory {
+        private final Object sourceGroupKey;
+        private final SourceGroup group;
+
+        public SourceRootNodeFactory(Object sourceGroupKey, SourceGroup group) {
+            ExceptionHelper.checkNotNullArgument(group, "group");
+
+            this.sourceGroupKey = sourceGroupKey;
+            this.group = group;
+        }
+
+        @Override
+        public Node createNode() {
+            return PackageView.createPackageView(group);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 89 * hash + Objects.hashCode(this.sourceGroupKey);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null)return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final SourceRootNodeFactory other = (SourceRootNodeFactory)obj;
+            return Objects.equals(this.sourceGroupKey, other.sourceGroupKey);
+        }
     }
 
     private static class GradleSourceGroup implements SourceGroup {

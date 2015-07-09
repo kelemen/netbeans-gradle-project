@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 
@@ -30,6 +31,20 @@ public final class JavaProjectReference implements Serializable {
 
         this.projectRef = new AtomicReference<>(null);
         this.javaExtensionRef = new AtomicReference<>(null);
+    }
+
+    public void ensureProjectLoaded() {
+        Project project = tryGetProject();
+        if (project == null) {
+            return;
+        }
+
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            return;
+        }
+
+        gradleProject.ensureLoadRequested();
     }
 
     public File getProjectDir() {

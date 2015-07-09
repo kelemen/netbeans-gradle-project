@@ -18,6 +18,8 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.AuxiliaryConfiguration;
+import org.netbeans.spi.project.AuxiliaryProperties;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
@@ -99,6 +101,8 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(ClassPathProvider.class.getName(), Lookups.singleton(new UnimportantRootClassPathProvider()));
 
             Lookup wrappedLookup = lookupContainer.getLookup();
+            typeActions.put(AuxiliaryProperties.class.getName(), wrappedLookup);
+            typeActions.put(AuxiliaryConfiguration.class.getName(), wrappedLookup);
             typeActions.put(GradleClassPathProvider.class.getName(), wrappedLookup);
             typeActions.put(NbGradleProject.class.getName(), wrappedLookup);
             typeActions.put(FileEncodingQueryImplementation.class.getName(), wrappedLookup);

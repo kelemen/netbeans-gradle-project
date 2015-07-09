@@ -25,6 +25,9 @@ public final class NbIcons {
     private static final String LIBRARIES_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/libraries-badge.png";
 
     @StaticResource
+    private static final String PACKAGE_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/package-badge.png";
+
+    @StaticResource
     private static final String LIBRARY_ICON_PATH = "org/netbeans/gradle/project/resources/libraries.png";
 
     @StaticResource
@@ -47,6 +50,10 @@ public final class NbIcons {
 
     public static Image getLibraryIcon() {
         return ImageUtilities.loadImage(LIBRARY_ICON_PATH);
+    }
+
+    public static Image getPackageBadge() {
+        return ImageUtilities.loadImage(PACKAGE_BADGE_ICON_PATH);
     }
 
     public static Image getLibrariesBadge() {
@@ -76,6 +83,20 @@ public final class NbIcons {
         return UIManager.getIcon("OptionPane.errorIcon");
     }
 
+    private static class OpenFolderIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            Node n = DataFolder.findFolder(FileUtil.getConfigRoot()).getNodeDelegate();
+            ImageIcon original = new ImageIcon(n.getOpenedIcon(BeanInfo.ICON_COLOR_16x16));
+            Image result = original.getImage();
+            if (result == null) {
+                LOGGER.warning("Failed to load the open folder icon.");
+            }
+            return result;
+        }
+    }
+
     private static class FolderIconHolder {
         public static final Image IMAGE = loadIcon();
 
@@ -90,24 +111,66 @@ public final class NbIcons {
         }
     }
 
+    public static Image getOpenFolderIcon() {
+        return OpenFolderIconHolder.IMAGE;
+    }
+
     public static Image getFolderIcon() {
         return FolderIconHolder.IMAGE;
+    }
+
+    private static class PackageIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            return mergeFolderWithBadge(false, getPackageBadge());
+        }
+    }
+
+    private static class OpenPackageIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            return mergeFolderWithBadge(true, getPackageBadge());
+        }
+    }
+
+    public static Image getOpenPackageIcon() {
+        return OpenPackageIconHolder.IMAGE;
+    }
+
+    public static Image getPackageIcon() {
+        return PackageIconHolder.IMAGE;
     }
 
     private static class LibrariesIconHolder {
         public static final Image IMAGE = loadIcon();
 
         private static Image loadIcon() {
-            Image folderIcon = getFolderIcon();
-            Image badge = getLibrariesBadge();
-            if (folderIcon != null && badge != null) {
-                return ImageUtilities.mergeImages(folderIcon, badge, 7, 7);
-            }
-            else {
-                LOGGER.warning("Failed to load the libraries icon.");
-                return null;
-            }
+            return mergeFolderWithBadge(false, getLibrariesBadge());
         }
+    }
+
+    private static class OpenLibrariesIconHolder {
+        public static final Image IMAGE = loadIcon();
+
+        private static Image loadIcon() {
+            return mergeFolderWithBadge(true, getLibrariesBadge());
+        }
+    }
+
+    private static Image mergeFolderWithBadge(boolean opened, Image badge) {
+        Image folderIcon = opened ? getOpenFolderIcon() : getFolderIcon();
+        if (folderIcon != null && badge != null) {
+            return ImageUtilities.mergeImages(folderIcon, badge, 7, 7);
+        }
+        else {
+            return null;
+        }
+    }
+
+    public static Image getOpenLibrariesIcon() {
+        return OpenLibrariesIconHolder.IMAGE;
     }
 
     public static Image getLibrariesIcon() {

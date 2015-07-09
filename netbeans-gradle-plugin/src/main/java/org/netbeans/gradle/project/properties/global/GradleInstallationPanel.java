@@ -10,7 +10,7 @@ import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
 public class GradleInstallationPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
-    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Global-Settings");
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Gradle-Installation");
 
     private GradleLocation selectedGradleLocation;
 

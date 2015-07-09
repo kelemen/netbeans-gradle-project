@@ -6,12 +6,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.StringUtils;
+import org.netbeans.junit.MockServices;
 
 import static org.junit.Assert.*;
 
 public class StringUtilsTest {
     @BeforeClass
     public static void setUpClass() {
+        MockServices.setServices();
     }
 
     @AfterClass
@@ -138,5 +140,17 @@ public class StringUtilsTest {
         assertArrayEquals(
                 new String[]{"one", "two:"},
                 StringUtils.unescapedSplit("one:two:", ':', 2));
+    }
+
+    @Test
+    public void testReplaceLFWithPreferredLineSeparator1() {
+        String sep = System.getProperty("line.separator");
+        String str = "\nFirst Line\nSecond Line\nThird Line";
+        assertEquals(str.replace("\n", sep), StringUtils.replaceLFWithPreferredLineSeparator(str));
+    }
+
+    @Test
+    public void testReplaceLFWithPreferredLineSeparator2() {
+        assertEquals("", StringUtils.replaceLFWithPreferredLineSeparator(""));
     }
 }

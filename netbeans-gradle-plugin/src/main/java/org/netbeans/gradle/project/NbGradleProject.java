@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +35,6 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.model.GradleModelLoader;
-import org.netbeans.gradle.project.model.ModelLoadListener;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -63,6 +63,7 @@ import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.CombinedTaskVariableMap;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
+import org.netbeans.gradle.project.tasks.EnvTaskVariableMap;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
@@ -86,6 +87,7 @@ public final class NbGradleProject implements Project {
 
     private final FileObject projectDir;
     private final File projectDirAsFile;
+    private final Path projectDirAsPath;
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
 
@@ -109,13 +111,19 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
+    private final ModelRetrievedListener modelLoadListener;
+
+    private final AtomicReference<Path> preferredSettingsFileRef;
+
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
+        this.projectDirAsPath = projectDirAsFile.toPath();
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
         this.serviceObjectsRef = new AtomicReference<>(null);
+        this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
 
         this.mergedCommandQueryRef = new AtomicReference<>(null);
         this.combinedExtensionLookup = new DynamicLookup();
@@ -132,6 +140,7 @@ public final class NbGradleProject implements Project {
         this.extensionNames = Collections.emptySet();
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
+        this.modelLoadListener = new ModelRetrievedListenerImpl();
 
         this.displayName = getDisplayName(currentModel, GlobalGradleSettings.getDefault().displayNamePattern());
 
@@ -141,6 +150,19 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
+    }
+
+    private static Path tryGetPreferredSettingsFile(File projectDir) {
+        if (NbGradleModel.isBuildSrcDirectory(projectDir)) {
+            return null;
+        }
+
+        Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
+        if (explicitSettingsFile != null) {
+            return explicitSettingsFile;
+        }
+
+        return NbGradleModel.findSettingsGradle(projectDir);
     }
 
     private void initServiceObjects(ProjectState state) {
@@ -186,6 +208,9 @@ public final class NbGradleProject implements Project {
         NbGradleProject project = new NbGradleProject(projectDir);
         project.initServiceObjects(state);
         project.setExtensions(ExtensionLoader.loadExtensions(project));
+
+        LoadedProjectManager.getDefault().addProject(project);
+        project.updateSettingsFile();
         return project;
     }
 
@@ -254,7 +279,6 @@ public final class NbGradleProject implements Project {
 
     private static Lookup getLookupMergers() {
         return Lookups.fixed(
-                LookupProviderSupport.createActionProviderMerger(),
                 UILookupMergerSupport.createPrivilegedTemplatesMerger(),
                 UILookupMergerSupport.createProjectProblemsProviderMerger(),
                 UILookupMergerSupport.createRecommendedTemplatesMerger()
@@ -350,6 +374,7 @@ public final class NbGradleProject implements Project {
 
         // Allow extensions to redefine variables.
         maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
+        maps.add(EnvTaskVariableMap.DEFAULT);
 
         return new CombinedTaskVariableMap(maps);
     }
@@ -369,7 +394,7 @@ public final class NbGradleProject implements Project {
             return;
         }
 
-        GradleModelLoader.tryUpdateFromCache(this, baseModel, new ModelRetrievedListenerImpl());
+        GradleModelLoader.tryUpdateFromCache(this, baseModel, modelLoadListener);
     }
 
     public void reloadProject() {
@@ -378,6 +403,23 @@ public final class NbGradleProject implements Project {
 
     private void reloadProject(boolean mayUseCache) {
         loadProject(false, mayUseCache);
+    }
+
+    public Path getPreferredSettingsFile() {
+        return preferredSettingsFileRef.get();
+    }
+
+    private void updateSettingsFile(Path settingsFile) {
+        Path prevSettingsFile = preferredSettingsFileRef.getAndSet(settingsFile);
+        if (Objects.equals(prevSettingsFile, settingsFile)) {
+            return;
+        }
+
+        reloadProject(true);
+    }
+
+    public void updateSettingsFile() {
+        updateSettingsFile(tryGetPreferredSettingsFile(getProjectDirectoryAsFile()));
     }
 
     public boolean hasLoadedProject() {
@@ -435,7 +477,7 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, new ModelRetrievedListenerImpl());
+        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, modelLoadListener);
     }
 
     public NbGradleCommonProperties getCommonProperties() {
@@ -508,6 +550,11 @@ public final class NbGradleProject implements Project {
     }
 
     @Nonnull
+    public Path getProjectDirectoryAsPath() {
+        return projectDirAsPath;
+    }
+
+    @Nonnull
     public File getProjectDirectoryAsFile() {
         return projectDirAsFile;
     }
@@ -554,6 +601,12 @@ public final class NbGradleProject implements Project {
         return this.projectDir.equals(other.projectDir);
     }
 
+    public void tryReplaceModel(NbGradleModel model) {
+        if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
+            modelLoadListener.onComplete(model, null);
+        }
+    }
+
     private class OpenHook extends ProjectOpenedHook {
         private final CloseableActionContainer closeableActions;
         private final AtomicBoolean initialized;
@@ -572,15 +625,7 @@ public final class NbGradleProject implements Project {
                     NbGradleProject.this,
                     getCommonProperties().licenseHeaderInfo().getActiveSource()));
 
-            final ModelRetrievedListenerImpl modelRetrievedListenerImpl = new ModelRetrievedListenerImpl();
-            this.closeableActions.defineEventAction(GradleModelLoader.getModelLoadListenerRegistry(), new ModelLoadListener() {
-                @Override
-                public void modelLoaded(NbGradleModel model) {
-                    if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-                        modelRetrievedListenerImpl.onComplete(model, null);
-                    }
-                }
-            });
+            this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(NbGradleProject.this));
         }
 
         @Override

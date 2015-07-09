@@ -42,8 +42,6 @@ public final class JavaTestMethodNode extends TestMethodNode {
         this.javaExt = javaExt;
         this.testTaskName = testTaskName;
         this.specificTestcase = toSpecificTestcase(testcase);
-
-        setName(specificTestcase.getTestMethodName());
     }
 
     private static SpecificTestcase toSpecificTestcase(Testcase testcase) {

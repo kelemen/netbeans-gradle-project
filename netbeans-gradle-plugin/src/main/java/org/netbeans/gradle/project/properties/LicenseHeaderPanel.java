@@ -6,9 +6,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel {
@@ -178,27 +177,9 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private static String tryMakeRelative(File parent, File file) {
-        File normParent = FileUtil.normalizeFile(parent);
-        File normFile = FileUtil.normalizeFile(file);
-
-        if (normParent == null || normFile == null) {
-            return null;
-        }
-
-        FileObject parentObj = FileUtil.toFileObject(normParent);
-        FileObject fileObj = FileUtil.toFileObject(normFile);
-
-        if (fileObj == null || parentObj == null) {
-            return null;
-        }
-
-        String relPath = FileUtil.getRelativePath(parentObj, fileObj);
-        return relPath != null ? relPath.replace("/", File.separator) : null;
-    }
-
     private void jBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseButtonActionPerformed
-        File initialDir = project.currentModel().getValue().getRootProjectDir();
+        File settingsDir = project.currentModel().getValue().getSettingsDir().toFile();
+        File initialDir = settingsDir;
 
         FileChooserBuilder dlgChooser = new FileChooserBuilder(
                 LicenseHeaderPanel.class.getName() + "-" + initialDir.getName());
@@ -210,7 +191,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         }
 
         File file = f.getAbsoluteFile();
-        String relPath = tryMakeRelative(project.currentModel().getValue().getRootProjectDir(), file);
+        String relPath = NbFileUtils.tryMakeRelative(settingsDir, file);
         jLicenseTemplateEdit.setText(relPath != null ? relPath : file.getPath());
 
     }//GEN-LAST:event_jBrowseButtonActionPerformed

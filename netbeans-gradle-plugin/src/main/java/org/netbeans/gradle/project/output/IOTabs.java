@@ -142,7 +142,8 @@ public final class IOTabs {
                     source,
                     template.getTasks(),
                     template.getArguments(),
-                    template.getJvmArguments());
+                    template.getJvmArguments(),
+                    true);
         }
 
         @Override

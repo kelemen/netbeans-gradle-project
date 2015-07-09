@@ -11,14 +11,20 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 @SuppressWarnings("serial")
 public final class OpenAlwaysFileAction extends AbstractAction {
     private final Path file;
+
+    public OpenAlwaysFileAction(Path file) {
+        this(NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file)), file);
+    }
 
     public OpenAlwaysFileAction(String name, Path file) {
         super(name);

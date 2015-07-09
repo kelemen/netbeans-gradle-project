@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -119,7 +120,7 @@ public final class NbGradleModel {
         return NbGenericModelInfo.getBuildFile(projectDir);
     }
 
-    public static File findSettingsGradle(File projectDir) {
+    public static Path findSettingsGradle(File projectDir) {
         return NbGenericModelInfo.findSettingsGradle(projectDir);
     }
 
@@ -178,8 +179,12 @@ public final class NbGradleModel {
         }
     }
 
+    public static boolean isBuildSrcDirectory(File projectDir) {
+        return projectDir.getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+    }
+
     public boolean isBuildSrc() {
-        return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+        return isBuildSrcDirectory(getProjectDir());
     }
 
     public boolean isRootProject() {
@@ -202,15 +207,24 @@ public final class NbGradleModel {
         return genericInfo.getProjectDir();
     }
 
-    public File getRootProjectDir() {
-        return genericInfo.getRootProjectDir();
+    /**
+     * Returns the directory containing the {@code settings.gradle} file.
+     * This method also works for the {@code buildSrc} project, for which this
+     * returns the directory of the root project this {@code buildSrc} project
+     * belongs to.
+     *
+     * @return the directory containing the {@code settings.gradle} file.
+     *   This method never returns {@code null}.
+     */
+    public Path getSettingsDir() {
+        return genericInfo.getSettingsDir();
     }
 
     public File getBuildFile() {
         return genericInfo.getBuildFile();
     }
 
-    public File getSettingsFile() {
+    public Path getSettingsFile() {
         return genericInfo.getSettingsFile();
     }
 

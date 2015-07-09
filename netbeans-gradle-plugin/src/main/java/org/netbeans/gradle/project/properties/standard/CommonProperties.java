@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.properties.standard;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.properties.ConfigTree;
@@ -9,6 +12,8 @@ import org.netbeans.gradle.project.properties.ValueMerger;
 import org.netbeans.gradle.project.properties.ValueReference;
 
 public final class CommonProperties {
+    private static final String SAVE_FILE_NAME_SEPARATOR = "/";
+
     @SuppressWarnings("unchecked")
     public static <T> PropertyValueDef<T, T> getIdentityValueDef() {
         return (PropertyValueDef<T, T>)IdentityValueDef.INSTANCE;
@@ -25,6 +30,22 @@ public final class CommonProperties {
 
     public static PropertyKeyEncodingDef<ConfigTree> getIdentityTreeKeyEncodingDef() {
         return IdentityTreeKeyEncodingDef.INSTANCE;
+    }
+
+    public static Path tryReadFilePath(String normalizedPath) {
+        if (normalizedPath == null) {
+            return null;
+        }
+
+        String separator = FileSystems.getDefault().getSeparator();
+        String nativePath = normalizedPath.replace(SAVE_FILE_NAME_SEPARATOR, separator);
+        return Paths.get(nativePath);
+    }
+
+    public static String normalizeFilePath(Path file) {
+        String result = file.toString();
+        String separator = file.getFileSystem().getSeparator();
+        return result.replace(separator, SAVE_FILE_NAME_SEPARATOR);
     }
 
     private enum IdentityTreeKeyEncodingDef implements PropertyKeyEncodingDef<ConfigTree> {
