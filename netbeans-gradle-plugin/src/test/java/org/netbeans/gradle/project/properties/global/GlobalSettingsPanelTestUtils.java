@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.util.Map;
 import javax.swing.SwingUtilities;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
