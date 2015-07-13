@@ -127,6 +127,7 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-modules-options-api')
     providedCompile netbeansApi('org-netbeans-modules-projectapi')
     providedCompile netbeansApi('org-netbeans-modules-projectuiapi')
+    providedCompile netbeansApi('org-netbeans-modules-projectuiapi-base')
     providedCompile netbeansApi('org-netbeans-modules-queries')
     providedCompile netbeansApi('org-openide-actions')
     providedCompile netbeansApi('org-openide-awt')
