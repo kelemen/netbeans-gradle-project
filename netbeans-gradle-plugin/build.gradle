@@ -133,6 +133,7 @@ dependencies {
     providedCompile netbeansApi('org-openide-awt')
     providedCompile netbeansApi('org-openide-dialogs')
     providedCompile netbeansApi('org-openide-filesystems')
+    providedCompile netbeansApi('org-openide-filesystems-nb')    
     providedCompile netbeansApi('org-openide-io')
     providedCompile netbeansApi('org-openide-loaders')
     providedCompile netbeansApi('org-openide-modules')
