@@ -13,6 +13,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.ProjectFactory2;
 import org.netbeans.spi.project.ProjectState;
@@ -137,12 +138,12 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     public static boolean isSafeToOpen(FileObject projectDir) {
-        File projectDirFile = FileUtil.toFile(projectDir);
-        if (projectDirFile == null) {
+        Path projectDirPath = NbFileUtils.asPath(FileUtil.toFile(projectDir));
+        if (projectDirPath == null) {
             return false;
         }
 
-        return SAFE_TO_OPEN_PROJECTS.containsKey(projectDirFile.toPath());
+        return SAFE_TO_OPEN_PROJECTS.containsKey(projectDirPath);
     }
 
     private static boolean hasBuildFile(FileObject directory) {
