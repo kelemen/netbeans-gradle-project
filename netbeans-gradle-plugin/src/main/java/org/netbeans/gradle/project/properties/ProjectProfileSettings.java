@@ -62,7 +62,9 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
         Path projectDir = key.getProjectDir();
         FileObject projectDirObj = FileUtil.toFileObject(projectDir.toFile());
 
-        return ProjectManager.getDefault().findProject(projectDirObj);
+        return projectDirObj != null
+                ? ProjectManager.getDefault().findProject(projectDirObj)
+                : null;
     }
 
     private Path tryGetProfileFile() {

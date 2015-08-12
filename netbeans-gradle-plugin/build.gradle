@@ -127,11 +127,13 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-modules-options-api')
     providedCompile netbeansApi('org-netbeans-modules-projectapi')
     providedCompile netbeansApi('org-netbeans-modules-projectuiapi')
+    providedCompile netbeansApi('org-netbeans-modules-projectuiapi-base')
     providedCompile netbeansApi('org-netbeans-modules-queries')
     providedCompile netbeansApi('org-openide-actions')
     providedCompile netbeansApi('org-openide-awt')
     providedCompile netbeansApi('org-openide-dialogs')
     providedCompile netbeansApi('org-openide-filesystems')
+    providedCompile netbeansApi('org-openide-filesystems-nb')    
     providedCompile netbeansApi('org-openide-io')
     providedCompile netbeansApi('org-openide-loaders')
     providedCompile netbeansApi('org-openide-modules')
@@ -157,6 +159,9 @@ dependencies {
     testCompile 'junit:junit:4.10'
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'
+    
+    providedRuntime netbeansModule('org.netbeans.modules', 'org-netbeans-modules-projectapi-nb')
+    
 }
 
 task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {

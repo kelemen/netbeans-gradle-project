@@ -5,4 +5,4 @@ jdk:
 script: "./gradlew check testAllFiltered"
 branches:
   only:
-    - master
+    - NetBeans_nightly
