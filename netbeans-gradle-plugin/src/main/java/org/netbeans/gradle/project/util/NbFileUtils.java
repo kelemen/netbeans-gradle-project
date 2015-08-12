@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
@@ -164,7 +165,11 @@ public final class NbFileUtils {
     }
 
     public static Path asPath(File file) {
-        return file != null ? file.toPath() : null;
+        try {
+            return file != null ? file.toPath() : null;
+        } catch (InvalidPathException ex) {
+            return null;
+        }
     }
 
     public static File asFile(FileObject fileObj) {

@@ -1,6 +1,8 @@
 Downloads
 ---------
 
+**Nightly build of NetBeans**: The "master" branch is incompatible with the the current nightly build of NetBeans. A compatible version is found on the branch: "NetBeans_nightly". Also, you can download the latest build for nightly (won't work with NetBeans 8.0.X) from [https://bintray.com/artifact/download/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.3.7.1.0/netbeans-gradle-plugin-1.3.7.1.0.nbm](https://bintray.com/artifact/download/kelemen/maven/com/github/kelemen/netbeans-gradle-plugin/1.3.7.1.0/netbeans-gradle-plugin-1.3.7.1.0.nbm).
+
 The latest release can be downloaded from
 [http://plugins.netbeans.org/plugin/44510/gradle-support](http://plugins.netbeans.org/plugin/44510/gradle-support) and is also
 available via the Update Center (Tools/Plugins: Look for "Gradle Support").

@@ -134,12 +134,7 @@ public final class GradleFileUtils {
     }
 
     public static Path toPath(FileObject fileObj) {
-        File file = FileUtil.toFile(fileObj);
-        if (file == null) {
-            return null;
-        }
-
-        return file.toPath();
+        return NbFileUtils.asPath(FileUtil.toFile(fileObj));
     }
 
     private GradleFileUtils() {
