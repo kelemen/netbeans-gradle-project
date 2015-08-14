@@ -9,11 +9,11 @@ ext.scriptFile = { String fileName ->
 apply from: scriptFile('compiler-settings.gradle');
 configureJavaCompilers(7);
 
-String netbeansVersion = 'dev-SNAPSHOT'
+String netbeansVersion = 'RELEASE81-BETA'
 
 repositories {
     mavenCentral()
-    maven { url 'http://bits.netbeans.org/nexus/content/repositories/snapshots' }
+    maven { url 'http://bits.netbeans.org/nexus/content/groups/netbeans' }
     maven { url 'http://bits.netbeans.org/maven2/' }
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
     maven { url 'http://dl.bintray.com/kelemen/maven' }
@@ -133,7 +133,7 @@ dependencies {
     providedCompile netbeansApi('org-openide-awt')
     providedCompile netbeansApi('org-openide-dialogs')
     providedCompile netbeansApi('org-openide-filesystems')
-    providedCompile netbeansApi('org-openide-filesystems-nb')    
+    providedCompile netbeansApi('org-openide-filesystems-nb')
     providedCompile netbeansApi('org-openide-io')
     providedCompile netbeansApi('org-openide-loaders')
     providedCompile netbeansApi('org-openide-modules')
@@ -159,9 +159,9 @@ dependencies {
     testCompile 'junit:junit:4.10'
     testCompile 'com.google.guava:guava:14.0.1'
     testCompile 'org.mockito:mockito-core:1.9.5'
-    
+
     providedRuntime netbeansModule('org.netbeans.modules', 'org-netbeans-modules-projectapi-nb')
-    
+
 }
 
 task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
