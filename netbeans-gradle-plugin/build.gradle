@@ -1,6 +1,13 @@
 import java.nio.file.*
 
 apply plugin: 'nbm'
+apply plugin: 'jacoco'
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
 
 ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName);
@@ -147,6 +154,7 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-libs-junit4')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')
+    providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-codecoverage')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
 
     compile 'org.slf4j:slf4j-api:1.7.2'

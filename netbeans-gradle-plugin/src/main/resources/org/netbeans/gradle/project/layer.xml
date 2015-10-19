@@ -7,4 +7,21 @@
             <attr name="position" intvalue="1903"/>
         </folder>
     </folder>
+    <folder name="Editors">
+        <folder name="text">
+            <folder name="x-java">
+                <file name="org-netbeans-modules-gsf-codecoverage-CoverageHighlightsLayerFactory.instance">
+                    <attr name="instanceOf" stringvalue="org.netbeans.spi.editor.highlighting.HighlightsLayerFactory"/>
+                    <attr name="instanceCreate" newvalue="org.netbeans.modules.gsf.codecoverage.CoverageHighlightsLayerFactory"/>
+                </file>
+                <folder name="SideBar">
+                    <file name="org-netbeans-modules-gsf-codecoverage-CoverageSideBar$Factory.instance">
+                        <attr name="position" intvalue="1308"/>
+                        <attr name="location" stringvalue="South"/>
+                        <attr name="scrollable" boolvalue="false"/>
+                    </file>
+                </folder>
+            </folder>
+        </folder>
+    </folder>    
 </filesystem>
