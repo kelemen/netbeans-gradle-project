@@ -13,12 +13,14 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.java.JavaTestTask;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
+import org.netbeans.gradle.project.coverage.CoveragePopup;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -52,7 +54,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         }
         result.add(createJavaDocAction());
         result.add(sourcesDirsAction());
-
+        result.add(new CoveragePopup());
         return result;
     }
 
