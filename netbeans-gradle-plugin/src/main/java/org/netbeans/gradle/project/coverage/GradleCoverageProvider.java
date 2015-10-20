@@ -186,8 +186,8 @@ public class GradleCoverageProvider implements CoverageProvider {
             });
             LOG.log(Level.FINE, "parsed {0}", r);
             return Pair.of(r, report);
-        } catch (/*IO,SAX*/Exception x) {
-            LOG.log(Level.INFO, "Could not parse " + r, x);
+        } catch (IOException | SAXException ex) {
+            LOG.log(Level.INFO, "Could not parse " + r, ex);
             return null;
         }
     }
