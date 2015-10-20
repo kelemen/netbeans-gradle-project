@@ -31,6 +31,7 @@ public final class NbJavaModule implements Serializable {
     private final List<JavaSourceSet> sources;
     private final List<NbListedDir> listedDirs;
     private final JavaTestModel testTasks;
+    private final NbCodeCoverage codeCoverage;
 
     private final AtomicReference<JavaSourceSet> mainSourceSetRef;
     private final AtomicReference<JavaSourceSet> testSourceSetRef;
@@ -46,19 +47,22 @@ public final class NbJavaModule implements Serializable {
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
             List<NbListedDir> listedDirs,
-            JavaTestModel testTasks) {
+            JavaTestModel testTasks,
+            NbCodeCoverage codeCoverage) {
 
         ExceptionHelper.checkNotNullArgument(properties, "properties");
         ExceptionHelper.checkNotNullArgument(compatibilityModel, "compatibilityModel");
         ExceptionHelper.checkNotNullElements(sources, "sources");
         ExceptionHelper.checkNotNullElements(listedDirs, "listedDirs");
         ExceptionHelper.checkNotNullArgument(testTasks, "testTasks");
+        ExceptionHelper.checkNotNullArgument(codeCoverage, "codeCoverage");
 
         this.properties = properties;
         this.compatibilityModel = compatibilityModel;
         this.sources = CollectionUtils.copyNullSafeList(sources);
         this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
         this.testTasks = testTasks;
+        this.codeCoverage = codeCoverage;
 
         this.mainSourceSetRef = new AtomicReference<>(null);
         this.testSourceSetRef = new AtomicReference<>(null);
@@ -72,6 +76,10 @@ public final class NbJavaModule implements Serializable {
 
     public GenericProjectProperties getProperties() {
         return properties;
+    }
+
+    public NbCodeCoverage getCodeCoverage() {
+        return codeCoverage;
     }
 
     public JavaTestModel getTestTasks() {
@@ -335,6 +343,7 @@ public final class NbJavaModule implements Serializable {
         private final List<JavaSourceSet> sources;
         private final List<NbListedDir> listedDirs;
         private final JavaTestModel testTasks;
+        private final NbCodeCoverage codeCoverage;
 
         public SerializedFormat(NbJavaModule source) {
             this.properties = source.properties;
@@ -342,10 +351,21 @@ public final class NbJavaModule implements Serializable {
             this.sources = source.sources;
             this.listedDirs = source.listedDirs;
             this.testTasks = source.testTasks;
+            this.codeCoverage = source.codeCoverage;
+        }
+
+        private NbCodeCoverage getCodeCoverage() {
+            return codeCoverage != null ? codeCoverage : NbCodeCoverage.NO_CODE_COVERAGE;
         }
 
         private Object readResolve() throws ObjectStreamException {
-            return new NbJavaModule(properties, compatibilityModel, sources, listedDirs, testTasks);
+            return new NbJavaModule(
+                    properties,
+                    compatibilityModel,
+                    sources,
+                    listedDirs,
+                    testTasks,
+                    getCodeCoverage());
         }
     }
 

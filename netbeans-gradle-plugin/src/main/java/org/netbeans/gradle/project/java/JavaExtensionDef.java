@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.java.JacocoModelBuilder;
 import org.netbeans.gradle.model.java.JarOutputsModelBuilder;
 import org.netbeans.gradle.model.java.JavaCompatibilityModelBuilder;
 import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
@@ -140,13 +141,15 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
                 JavaSourcesModelBuilder.COMPLETE,
                 JavaCompatibilityModelBuilder.INSTANCE,
                 JavaTestModelBuilder.INSTANCE,
+                JacocoModelBuilder.INSTANCE,
                 WarFoldersModelBuilder.INSTANCE);
 
         private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders(
                 JarOutputsModelBuilder.INSTANCE,
                 JavaSourcesModelBuilder.COMPLETE,
                 JavaCompatibilityModelBuilder.INSTANCE,
-                JavaTestModelBuilder.INSTANCE);
+                JavaTestModelBuilder.INSTANCE,
+                JacocoModelBuilder.INSTANCE);
 
         @Override
         public GradleModelDef getModelDef(GradleTarget gradleTarget) {

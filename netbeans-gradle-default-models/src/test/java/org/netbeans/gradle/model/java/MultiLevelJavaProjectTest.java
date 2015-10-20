@@ -440,6 +440,17 @@ public class MultiLevelJavaProjectTest {
         });
     }
 
+    @Test
+    public void testMissingJacocoPluginIsNotAProblem() throws IOException {
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                JacocoModel jacocoModel
+                        = fetchSingleProjectInfo(connection, JacocoModelBuilder.INSTANCE);
+                assertNull("apps:app1 must not have a JacocoModel.", jacocoModel);
+            }
+        });
+    }
+
     private static String getProjectVersion(String name) {
         return "app1".equals(name) ? "5.95.3-beta" : "3.5.78-alpha";
     }

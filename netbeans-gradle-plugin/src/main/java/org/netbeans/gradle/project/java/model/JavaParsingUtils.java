@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.model.java.JacocoModel;
 import org.netbeans.gradle.model.java.JarOutput;
 import org.netbeans.gradle.model.java.JarOutputsModel;
 import org.netbeans.gradle.model.java.JavaClassPaths;
@@ -233,11 +234,18 @@ public final class JavaParsingUtils {
                 testModel = JavaTestModel.getDefaulTestModel(retrievedModels.getMainProjectDir());
             }
 
-            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs, testModel);
+            NbCodeCoverage codeCoverage = getCodeCoverage(projectInfo);
+
+            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs, testModel, codeCoverage);
             result.add(module);
         }
 
         return result;
+    }
+
+    private static NbCodeCoverage getCodeCoverage(Lookup projectInfo) {
+        JacocoModel jacocoModel = projectInfo.lookup(JacocoModel.class);
+        return new NbCodeCoverage(jacocoModel);
     }
 
     public static Map<File, JavaProjectDependency> asDependencies(Collection<NbJavaModule> modules) {
