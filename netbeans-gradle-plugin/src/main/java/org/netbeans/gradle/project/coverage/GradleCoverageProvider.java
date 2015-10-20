@@ -11,10 +11,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.text.Document;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.annotations.common.CheckForNull;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageManager;
@@ -41,18 +43,18 @@ import org.xml.sax.SAXException;
  * Actual implementation suppors jacoco (cobertura TBD)
  * @author sven
  */
-@ProjectServiceProvider(service=CoverageProvider.class, projectType="org.netbeans.gradle.project")
 public class GradleCoverageProvider implements CoverageProvider {
-
     private static final Logger LOG = Logger.getLogger(GradleCoverageProvider.class.getName());
 
-
+    private final JavaExtension javaExt;
     private final Project p;
     private Map<String, GradleSummary> summaryCache;
     private FileChangeListener listener;
 
-    public GradleCoverageProvider(Project p) {
-        this.p = p;
+    public GradleCoverageProvider(JavaExtension javaExt) {
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        this.javaExt = javaExt;
+        this.p = javaExt.getProject();
         this.summaryCache = null;
         this.listener = null;
     }

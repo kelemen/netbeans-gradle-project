@@ -32,6 +32,7 @@ import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
+import org.netbeans.gradle.project.coverage.GradleCoverageProvider;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
@@ -198,6 +199,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     LookupProviderSupport.createSourcesMerger(),
                     new GradleProjectSources(this),
                     cpProvider,
+                    new GradleCoverageProvider(this),
                     new GradleSourceLevelQueryImplementation(this),
                     new GradleUnitTestFinder(this),
                     new GradleAnnotationProcessingQuery(),
