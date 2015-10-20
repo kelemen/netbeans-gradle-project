@@ -7,7 +7,9 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import org.netbeans.gradle.model.java.JacocoModel;
 
-public final class NbCodeCoverage {
+public final class NbCodeCoverage implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public static final NbCodeCoverage NO_CODE_COVERAGE = new NbCodeCoverage(null);
 
     private final JacocoModel jacocoModel;
