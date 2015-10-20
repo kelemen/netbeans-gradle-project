@@ -15,10 +15,10 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.annotations.common.CheckForNull;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.model.java.JacocoModel;
 import org.netbeans.gradle.project.java.JavaExtension;
+import org.netbeans.gradle.project.java.model.NbCodeCoverage;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
-import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageManager;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageProvider;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageType;
@@ -68,9 +68,12 @@ public class GradleCoverageProvider implements CoverageProvider {
         return false;
     }
 
+    private NbCodeCoverage getModel() {
+        return javaExt.getCurrentModel().getMainModule().getCodeCoverage();
+    }
+
     private boolean hasPlugin() {
-        // To do: figure out if jacoco is available
-        return true;
+        return getModel().hasCodeCoverage();
     }
 
     @Override
@@ -99,11 +102,13 @@ public class GradleCoverageProvider implements CoverageProvider {
     }
 
     private @CheckForNull File report() {
-        NbGradleProject prj = p.getLookup().lookup(NbGradleProject.class);
-        NbGradleModel nbGradleModel = prj.currentModel().getValue();
-        File buildDir = nbGradleModel.getGenericInfo().getBuildDir();
-        // Todo - determine real path from gradle model
-        return FileUtil.normalizeFile(new File(buildDir, "reports/jacoco/test/jacocoTestReport.xml"));
+        JacocoModel jacocoModel = getModel().tryGetJacocoModel();
+        if (jacocoModel == null) {
+            return null;
+        }
+
+        File result = jacocoModel.getReport().getXml();
+        return FileUtil.normalizeFile(result);
     }
 
     public @Override synchronized void clear() {
@@ -116,7 +121,6 @@ public class GradleCoverageProvider implements CoverageProvider {
 
     @Override
     public FileCoverageDetails getDetails(FileObject fo, Document doc) {
-        NbGradleProject prj = p.getLookup().lookup(NbGradleProject.class);
         String path = srcPath().getResourceName(fo);
         if (path == null) {
             return null;

@@ -20,6 +20,10 @@ public final class NbCodeCoverage {
         return jacocoModel;
     }
 
+    public boolean hasCodeCoverage() {
+        return jacocoModel != null;
+    }
+
     private Object writeReplace() {
         return new SerializedFormat(this);
     }
