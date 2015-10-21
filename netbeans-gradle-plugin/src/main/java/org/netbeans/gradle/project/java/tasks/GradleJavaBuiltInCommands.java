@@ -69,7 +69,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_TEST_WITH_COVERAGE_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks(projectTask(JavaGradleTaskVariableQuery.COVERAGE_REPORT_TASK_NAME.getScriptReplaceConstant()))),
-            Collections.<String>emptyList(),
+            Arrays.asList("-PenableJacocoXmlReport=true"),
             displayTestResults(),
             hideTestFailures());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(

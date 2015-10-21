@@ -59,4 +59,14 @@ afterProject { org.gradle.api.Project project ->
             }
         }
     }
+
+    if (project.hasProperty('enableJacocoXmlReport') &&  project.plugins.hasPlugin('jacoco')) {
+        String enableXml = project.enableJacocoXmlReport?.toString();
+        if (enableXml != null && enableXml.equalsIgnoreCase('true')) {
+            def task = project.tasks.findByName('jacocoTestReport')
+            if (task != null) {
+                task.reports.xml.enabled true
+            }
+        }
+    }
 }
