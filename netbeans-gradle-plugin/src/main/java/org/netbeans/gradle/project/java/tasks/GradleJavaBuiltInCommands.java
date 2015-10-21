@@ -52,6 +52,8 @@ import org.openide.windows.OutputWriter;
 public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuery {
     private static final Logger LOGGER = Logger.getLogger(GradleJavaBuiltInCommands.class.getName());
 
+    public static final String TEST_WITH_COVERAGE = "test/coverage";
+
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList("build"),
@@ -61,6 +63,12 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_TEST_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks()),
+            Collections.<String>emptyList(),
+            displayTestResults(),
+            hideTestFailures());
+    private static final CommandWithActions DEFAULT_TEST_WITH_COVERAGE_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
+            Arrays.asList(cleanAndTestTasks(projectTask(JavaGradleTaskVariableQuery.COVERAGE_REPORT_TASK_NAME.getScriptReplaceConstant()))),
             Collections.<String>emptyList(),
             displayTestResults(),
             hideTestFailures());
@@ -136,6 +144,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         DEFAULT_TASKS = new HashMap<>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
+        addToDefaults(TEST_WITH_COVERAGE, DEFAULT_TEST_WITH_COVERAGE_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
         addToDefaults(ActionProvider.COMMAND_DEBUG, DEFAULT_DEBUG_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
@@ -207,6 +216,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     @Override
     public String tryGetDisplayNameOfCommand(String command) {
+        if (TEST_WITH_COVERAGE.equals(command)) {
+            return NbStrings.getTestWithCoverageCommandCaption();
+        }
+
         // The contract of this method allows us to rely on the defaults.
         return null;
     }

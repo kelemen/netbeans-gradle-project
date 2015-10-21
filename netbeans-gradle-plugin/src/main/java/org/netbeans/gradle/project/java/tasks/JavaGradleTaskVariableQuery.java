@@ -35,6 +35,8 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     public static final TaskVariable TEST_TASK_NAME = StandardTaskVariable.TEST_TASK_NAME.getVariable();
     public static final TaskVariable TEST_TASK_NAME_CAPITAL = StandardTaskVariable.TEST_TASK_NAME_CAPITAL.getVariable();
 
+    public static final TaskVariable COVERAGE_REPORT_TASK_NAME = new TaskVariable("coverage-report-task");
+
     private static final AtomicReference<VariableDefMap<JavaExtension>> VARIABLE_DEF_MAP_REF
             = new AtomicReference<>(null);
 
@@ -118,6 +120,15 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
             @Override
             public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
                 return getCapitalized(variables, TEST_TASK_NAME);
+            }
+        });
+
+        addVariable(varMap, COVERAGE_REPORT_TASK_NAME, new ValueGetter<JavaExtension>() {
+            @Override
+            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
+                boolean hasCodeCoverage = project.getCurrentModel().getMainModule().getCodeCoverage().hasCodeCoverage();
+                // TODO: It should be somehow determined by the build script
+                return new VariableValue(hasCodeCoverage ? "jacocoTestReport" : "");
             }
         });
     }

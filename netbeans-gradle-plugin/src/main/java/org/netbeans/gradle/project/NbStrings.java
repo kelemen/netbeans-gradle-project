@@ -99,6 +99,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.Test");
     }
 
+    public static String getTestWithCoverageCommandCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TestWithCoverage");
+    }
+
     public static String getCustomTestsAction() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTestsAction");
     }

@@ -19,6 +19,7 @@ import org.netbeans.gradle.model.java.JacocoModel;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbCodeCoverage;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageManager;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageProvider;
 import org.netbeans.modules.gsf.codecoverage.api.CoverageType;
@@ -273,7 +274,7 @@ public class GradleCoverageProvider implements CoverageProvider {
 
     @Override
     public String getTestAllAction() {
-            return "test";
+        return GradleJavaBuiltInCommands.TEST_WITH_COVERAGE;
     }
 
     private static class GradleSummary extends FileCoverageSummary {
