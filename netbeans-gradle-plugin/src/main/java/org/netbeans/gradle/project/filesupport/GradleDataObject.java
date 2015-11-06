@@ -2,8 +2,6 @@ package org.netbeans.gradle.project.filesupport;
 
 import java.io.IOException;
 import org.netbeans.core.api.multiview.MultiViews;
-import org.netbeans.core.spi.multiview.MultiViewElement;
-import org.netbeans.core.spi.multiview.text.MultiViewEditorElement;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.openide.awt.ActionID;
@@ -31,9 +29,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.text.CloneableEditorSupport;
 import org.openide.text.DataEditorSupport;
-import org.openide.util.Lookup;
 import org.openide.windows.CloneableOpenSupport;
-import org.openide.windows.TopComponent;
 
 @MIMEResolver.ExtensionRegistration(
         displayName = "#LBL_GradleFile",
@@ -107,18 +103,6 @@ public final class GradleDataObject extends MultiDataObject {
     @Override
     protected Node createNodeDelegate() {
         return new DataNode(this, Children.LEAF, getLookup());
-    }
-
-    @MultiViewElement.Registration(
-        mimeType = GROOVY_MIME_TYPE,
-        displayName = "Source",
-        iconBase = NbIcons.PROJECT_ICON_PATH,
-        persistenceType = TopComponent.PERSISTENCE_ONLY_OPENED,
-        preferredID = "gradle.sourceID",
-        position = 1
-    )
-    public static MultiViewEditorElement createEditor(Lookup lkp) {
-        return new MultiViewEditorElement(lkp);
     }
 
     private class GradleDataEditor
