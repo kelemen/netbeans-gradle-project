@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
@@ -381,11 +382,13 @@ public final class JavaDependenciesNode extends AbstractNode {
             for (JavaSourceSet sourceSet: mainModule.getSources()) {
                 String sourceSetName = sourceSet.getName();
 
+                Set<File> compileClasspaths = sourceSet.getClasspaths().getCompileClasspaths();
                 Set<File> runtimeClasspaths = sourceSet.getClasspaths().getRuntimeClasspaths();
 
                 Set<String> dependencies = new HashSet<>();
                 for (Map.Entry<File, String> entry: buildOutput.entrySet()) {
-                    if (runtimeClasspaths.contains(entry.getKey())) {
+                    File classesOutputDir = entry.getKey();
+                    if (runtimeClasspaths.contains(classesOutputDir) || compileClasspaths.contains(classesOutputDir)) {
                         String dependencyName = entry.getValue();
                         if (!sourceSetName.equals(dependencyName)) {
                             dependencies.add(entry.getValue());

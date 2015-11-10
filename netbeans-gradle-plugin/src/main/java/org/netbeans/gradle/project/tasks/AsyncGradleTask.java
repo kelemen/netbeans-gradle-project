@@ -430,6 +430,9 @@ public final class AsyncGradleTask implements Runnable {
                                         buildOutput,
                                         io.getErrRef());
                             }
+                        } finally {
+                            // Fixes memory leak: #256355 (netbeans.org/bugzilla)
+                            tab.getIo().getInRef().close();
                         }
                     } catch (Throwable ex) {
                         Level logLevel;

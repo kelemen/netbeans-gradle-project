@@ -2,6 +2,8 @@ package org.netbeans.gradle.project.query;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +11,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -82,7 +85,13 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             return new URL[0];
         }
 
-        return GradleHomeClassPathProvider.getGradleBinaries(gradleHome);
+        return GradleHomeClassPathProvider.getGradleLibs(gradleHome, new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                String lowerCaseName = name.toLowerCase(Locale.US);
+                return !lowerCaseName.startsWith("groovy-") && lowerCaseName.endsWith(".jar");
+            }
+        });
     }
 
     private void updateClassPathResources() {
