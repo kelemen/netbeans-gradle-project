@@ -16,7 +16,7 @@ ext.scriptFile = { String fileName ->
 apply from: scriptFile('compiler-settings.gradle');
 configureJavaCompilers(7);
 
-String netbeansVersion = 'RELEASE81-BETA'
+String netbeansVersion = 'RELEASE81'
 
 repositories {
     mavenCentral()
