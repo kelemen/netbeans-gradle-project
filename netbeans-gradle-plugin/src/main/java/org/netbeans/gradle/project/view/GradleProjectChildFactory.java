@@ -52,6 +52,8 @@ implements
     private final AtomicBoolean lastHasSubprojects;
     private final ListenerRegistrations listenerRefs;
     private final PausableChangeListenerManager refreshNotifier;
+    // Nodes comming from the NodeFactory.Registration annotation
+    private final AnnotationChildNodes annotationChildNodes;
     private volatile boolean createdOnce;
 
     public GradleProjectChildFactory(NbGradleProject project, GradleProjectLogicalViewProvider parent) {
@@ -63,6 +65,7 @@ implements
         this.nodeExtensionsRef = new AtomicReference<>(NodeExtensions.EMPTY);
         this.lastHasSubprojects = new AtomicBoolean(false);
         this.listenerRefs = new ListenerRegistrations();
+        this.annotationChildNodes = new AnnotationChildNodes(project);
         this.createdOnce = false;
 
         this.refreshNotifier = new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
@@ -162,6 +165,9 @@ implements
             }
         };
 
+        annotationChildNodes.addNotify();
+        listenerRefs.add(annotationChildNodes.nodeFactories().addChangeListener(simpleChangeListener));
+
         listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
             @Override
             public void run() {
@@ -193,6 +199,7 @@ implements
     @Override
     protected void removeNotify() {
         listenerRefs.unregisterAll();
+        annotationChildNodes.removeNotify();
     }
 
     @Override
@@ -239,6 +246,8 @@ implements
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
+        toPopulate.addAll(annotationChildNodes.nodeFactories().getValue());
+
         final NbGradleModel shownModule = getShownModule();
         final Collection<NbGradleProjectTree> immediateChildren
                 = shownModule.getMainProject().getChildren();
