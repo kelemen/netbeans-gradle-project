@@ -246,8 +246,6 @@ implements
     }
 
     private void addChildren(List<SingleNodeFactory> toPopulate) {
-        toPopulate.addAll(annotationChildNodes.nodeFactories().getValue());
-
         final NbGradleModel shownModule = getShownModule();
         final Collection<NbGradleProjectTree> immediateChildren
                 = shownModule.getMainProject().getChildren();
@@ -302,6 +300,8 @@ implements
     }
 
     private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
+        toPopulate.addAll(annotationChildNodes.nodeFactories().getValue());
+
         List<GradleProjectExtensionNodes> extensionNodes = getExtensionNodes();
         if (extensionNodes != null) {
             for (GradleProjectExtensionNodes nodes: extensionNodes) {
