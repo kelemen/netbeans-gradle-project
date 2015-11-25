@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +16,7 @@ import javax.swing.JPanel;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.modules.editor.indent.project.api.Customizers;
 import org.netbeans.spi.project.ui.CustomizerProvider;
@@ -22,6 +24,7 @@ import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.implspi.NamedServicesProvider;
 
 public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
@@ -80,6 +83,11 @@ public final class GradleCustomizer implements CustomizerProvider {
                 LicenseHeaderPanel.createProfileBasedPanel(project));
     }
 
+    private static Collection<? extends ProjectCustomizer.CompositeCategoryProvider> getAnnotationBasedProviders() {
+        Lookup customizerLookup = NamedServicesProvider.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Customizer");
+        return customizerLookup.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
+    }
+
     private ProjectCustomizer.CompositeCategoryProvider[] getAllCustomizers() {
         ProjectCustomizer.CompositeCategoryProvider[] externalCategories
                 = getExternalCustomizers();
@@ -94,6 +102,7 @@ public final class GradleCustomizer implements CustomizerProvider {
                 .getCombinedExtensionLookup()
                 .lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
         allCategoriesList.addAll(Arrays.asList(externalCategories));
+        allCategoriesList.addAll(getAnnotationBasedProviders());
 
         return allCategoriesList.toArray(new ProjectCustomizer.CompositeCategoryProvider[allCategoriesList.size()]);
     }
