@@ -77,6 +77,7 @@ import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.openide.util.lookup.implspi.NamedServicesProvider;
 
 public final class GradleProjectLogicalViewProvider
 implements
@@ -234,6 +235,13 @@ implements
         return result;
     }
 
+    private static void tryAddActionObj(String objectPath, List<? super Action> actionList) {
+        Action action = NamedServicesProvider.getConfigObject(objectPath, Action.class);
+        if (action != null) {
+            actionList.add(action);
+        }
+    }
+
     private static Action createProjectAction(String command, String label) {
         return ProjectSensitiveActions.projectCommandAction(command, label, null);
     }
@@ -301,6 +309,7 @@ implements
             projectActions.add(null);
             projectActions.add(new DeleteProjectAction(project));
             projectActions.add(null);
+            tryAddActionObj("Actions/Edit/org-openide-actions-FindAction.instance", projectActions);
             projectActions.addAll(Utilities.actionsForPath("Projects/Actions"));
             projectActions.add(null);
             projectActions.add(CommonProjectActions.customizeProjectAction());
