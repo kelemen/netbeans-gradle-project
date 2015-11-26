@@ -1,4 +1,6 @@
-ext.configureJavaCompilers = {int javaVersion ->
+import java.nio.file.*
+
+ext.configureJavaCompilers = { int javaVersion ->
     def requiredVersion = JavaVersion.toVersion("1.${javaVersion}");
 
     sourceCompatibility = requiredVersion
@@ -10,10 +12,10 @@ ext.configureJavaCompilers = {int javaVersion ->
     compilerOptions*.compilerArgs = ['-Xlint'];
 
     if (JavaVersion.current() != requiredVersion) {
-        String jdkProperty = "jdk${javaVersion}Compiler";
-        if (project.hasProperty(jdkProperty)) {
+        String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, javaVersion);
+        if (explicitJavaCompiler != null) {
             compilerOptions*.fork = true;
-            compilerOptions*.forkOptions*.executable = project.property(jdkProperty).toString().trim();
+            compilerOptions*.forkOptions*.executable = explicitJavaCompiler;
         }
         else {
             compileTasks*.doFirst {
@@ -21,5 +23,63 @@ ext.configureJavaCompilers = {int javaVersion ->
             }
         }
     }
+}
 
+ext.findToolsJar = { int javaVersion ->
+    String explicitToolsJarProperty = "jdk${javaVersion}ToolsJar";
+    if (project.hasProperty(explicitToolsJarProperty)) {
+        return new File(project.property(explicitToolsJarProperty).toString().trim());
+    }
+
+    String foundToolsJar = null;
+    String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, javaVersion);
+    if (explicitJavaCompiler != null) {
+        foundToolsJar = extractToolsJarFromCompiler(explicitJavaCompiler);
+    }
+
+    if (foundToolsJar == null) {
+        String javaHome = System.getProperty('java.home');
+        foundToolsJar = extractToolsJarFromJavaHome(javaHome);
+    }
+
+    if (foundToolsJar == null) {
+        throw new IllegalStateException("Unable to find the JDK's tools.jar.");
+    }
+
+    return new File(foundToolsJar);
+}
+
+String extractToolsJarFromJDKHome(Path jdkHome) {
+    Path toolsJar = jdkHome?.resolve('lib')?.resolve('tools.jar');
+    if (toolsJar == null) {
+        return null;
+    }
+
+    if (!Files.isRegularFile(toolsJar)) {
+        return null;
+    }
+
+    return toolsJar.toString();
+}
+
+String extractToolsJarFromJavaHome(String javaHome) {
+    Path javaHomePath = javaHome != null ? Paths.get(javaHome) : null;
+    Path jdkHome = javaHomePath?.parent;
+    return extractToolsJarFromJDKHome(jdkHome);
+}
+
+String extractToolsJarFromCompiler(String javac) {
+    Path javacPath = javac != null ? Paths.get(javac) : null;
+    Path jdkHome = javacPath?.parent.parent;
+    return extractToolsJarFromJDKHome(jdkHome);
+}
+
+String tryGetExplicitJdkCompiler(def project, int javaVersion) {
+    String jdkProperty = "jdk${javaVersion}Compiler";
+    if (project.hasProperty(jdkProperty)) {
+        return project.property(jdkProperty).toString().trim();
+    }
+    else {
+        return null;
+    }
 }
