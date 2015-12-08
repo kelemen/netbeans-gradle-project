@@ -81,6 +81,7 @@ public final class CustomCommandActions {
         private ContextAwareGradleTargetVerifier contextAwareGradleTargetVerifier;
         private CommandExceptionHider commandExceptionHider;
         private CancellationToken cancelToken;
+        private GradleCommandServiceFactory commandServiceFactory;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -110,6 +111,13 @@ public final class CustomCommandActions {
             this.singleExecutionStdOutProcessor = null;
             this.singleExecutionStdErrProcessor = null;
             this.cancelToken = Cancellation.UNCANCELABLE_TOKEN;
+            this.commandServiceFactory = null;
+        }
+
+        /**
+         */
+        public void setCommandServiceFactory(@Nullable GradleCommandServiceFactory commandServiceFactory) {
+            this.commandServiceFactory = commandServiceFactory;
         }
 
         /**
@@ -391,6 +399,7 @@ public final class CustomCommandActions {
     private final CommandExceptionHider commandExceptionHider;
     private final ContextAwareCommandArguments contextAwareCommandArguments;
     private final CancellationToken cancelToken;
+    private final GradleCommandServiceFactory commandServiceFactory;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -406,6 +415,14 @@ public final class CustomCommandActions {
         this.commandExceptionHider = builder.commandExceptionHider;
         this.contextAwareCommandArguments = builder.contextAwareCommandArguments;
         this.cancelToken = builder.cancelToken;
+        this.commandServiceFactory = builder.commandServiceFactory;
+    }
+
+    /**
+     */
+    @Nullable
+    public GradleCommandServiceFactory getCommandServiceFactory() {
+        return commandServiceFactory;
     }
 
     /**

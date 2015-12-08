@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,6 +49,9 @@ import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
+import org.netbeans.gradle.project.api.task.GradleCommandContext;
+import org.netbeans.gradle.project.api.task.GradleCommandService;
+import org.netbeans.gradle.project.api.task.GradleCommandServiceFactory;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -354,6 +358,17 @@ public final class AsyncGradleTask implements Runnable {
         doGradleTasksWithProgressIgnoreTaskDefCancel(cancellation, progress, buildItem);
     }
 
+    private static String getDisplayableCommand(GradleTaskDef taskDef) {
+        StringBuilder commandBuilder = new StringBuilder(128);
+        commandBuilder.append("gradle");
+        for (String task : taskDef.getTaskNames()) {
+            commandBuilder.append(' ');
+            commandBuilder.append(task);
+        }
+
+        return commandBuilder.toString();
+    }
+
     // TODO: This method is extremly nasty and is in a dire need of refactoring.
     private void doGradleTasksWithProgressIgnoreTaskDefCancel(
             CancellationSource cancellation,
@@ -363,15 +378,7 @@ public final class AsyncGradleTask implements Runnable {
         GradleTaskDef taskDef = buildItem.getProcessedTaskDef();
         Objects.requireNonNull(taskDef, "command.processed");
 
-        StringBuilder commandBuilder = new StringBuilder(128);
-        commandBuilder.append("gradle");
-        for (String task : taskDef.getTaskNames()) {
-            commandBuilder.append(' ');
-            commandBuilder.append(task);
-        }
-
-        String command = commandBuilder.toString();
-
+        String command = getDisplayableCommand(taskDef);
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, "Executing: {0}, Args = {1}, JvmArg = {2}",
                     new Object[]{command, taskDef.getArguments(), taskDef.getJvmArguments()});
@@ -392,8 +399,6 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher = projectConnection.newBuild();
             List<TemporaryFileRef> initScripts = getAllInitScriptFiles(project);
             try {
-                configureBuildLauncher(targetSetup, buildLauncher, taskDef, initScripts);
-
                 TaskOutputDef outputDef = taskDef.getOutputDef();
 
                 TaskOutputKey outputDefKey = outputDef.getKey();
@@ -415,7 +420,11 @@ public final class AsyncGradleTask implements Runnable {
                         }
                         printCommand(buildOutput, command, taskDef);
 
-                        try (OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab)) {
+                        GradleCommandServiceFactory commandServiceFactory = taskDef.getCommandServiceFactory();
+                        GradleCommandContext commandContext = new GradleCommandContext(project, tab.getIo().getIo());
+
+                        try (OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab);
+                                GradleCommandService commandService = commandServiceFactory.startService(commandContext)) {
                             assert outputRef != null; // Avoid warning
 
                             InputOutputWrapper io = tab.getIo();
@@ -424,6 +433,14 @@ public final class AsyncGradleTask implements Runnable {
                             }
 
                             if (checkTaskExecutable(projectConnection, taskDef, targetSetup, io)) {
+                                TaskVariableMap serviceVariables = commandService.getTaskVariables();
+
+                                // Shouldn't be null but check anyway.
+                                GradleTaskDef finalTaskDef = serviceVariables != null
+                                        ? taskDef.updateTaskVariables(serviceVariables)
+                                        : taskDef;
+
+                                configureBuildLauncher(targetSetup, buildLauncher, finalTaskDef, initScripts);
                                 runBuild(cancellation.getToken(), buildLauncher);
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
@@ -524,6 +541,17 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private static void filterServiceVariables(GradleTaskDef taskDef, Collection<DisplayedTaskVariable> taskVars) {
+        GradleCommandServiceFactory commandServiceFactory = taskDef.getCommandServiceFactory();
+        Iterator<DisplayedTaskVariable> itr = taskVars.iterator();
+        while (itr.hasNext()) {
+            DisplayedTaskVariable var = itr.next();
+            if (commandServiceFactory.isServiceTaskVariable(var.getVariable())) {
+                itr.remove();
+            }
+        }
+    }
+
     private static GradleTaskDef queryUserDefinedInputOfTask(GradleTaskDef taskDef) {
         String[] taskNames = taskDef.getTaskNamesArray();
         String[] arguments = taskDef.getArgumentArray();
@@ -533,6 +561,8 @@ public final class AsyncGradleTask implements Runnable {
         collectTaskVars(taskNames, taskVars);
         collectTaskVars(arguments, taskVars);
         collectTaskVars(jvmArguments, taskVars);
+
+        filterServiceVariables(taskDef, taskVars);
 
         if (taskVars.isEmpty()) {
             return taskDef;

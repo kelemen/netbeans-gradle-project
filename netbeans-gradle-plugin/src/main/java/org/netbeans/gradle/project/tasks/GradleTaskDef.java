@@ -22,6 +22,7 @@ import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.ContextAwareGradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
+import org.netbeans.gradle.project.api.task.GradleCommandServiceFactory;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
@@ -49,6 +50,7 @@ public final class GradleTaskDef {
         private TaskVariableMap nonUserTaskVariables;
         private CommandExceptionHider commandExceptionHider;
         private CancellationToken cancelToken;
+        private GradleCommandServiceFactory commandServiceFactory;
 
         private boolean cleanOutput;
         private boolean nonBlocking;
@@ -69,6 +71,7 @@ public final class GradleTaskDef {
             this.nonUserTaskVariables = taskDef.getNonUserTaskVariables();
             this.commandExceptionHider = taskDef.getCommandExceptionHider();
             this.cancelToken = taskDef.getCancelToken();
+            this.commandServiceFactory = taskDef.getCommandServiceFactory();
         }
 
         public Builder(TaskOutputDef outputDef, String taskName) {
@@ -97,10 +100,20 @@ public final class GradleTaskDef {
             this.nonUserTaskVariables = EmptyTaskVarMap.INSTANCE;
             this.commandExceptionHider = NoOpExceptionHider.INSTANCE;
             this.cancelToken = Cancellation.UNCANCELABLE_TOKEN;
+            this.commandServiceFactory = GradleCommandServiceFactory.NO_SERVICE;
 
             if (this.taskNames.isEmpty()) {
                 throw new IllegalArgumentException("At least one task is required.");
             }
+        }
+
+        public GradleCommandServiceFactory getCommandServiceFactory() {
+            return commandServiceFactory;
+        }
+
+        public void setCommandServiceFactory(GradleCommandServiceFactory commandServiceFactory) {
+            ExceptionHelper.checkNotNullArgument(commandServiceFactory, "commandServiceFactory");
+            this.commandServiceFactory = commandServiceFactory;
         }
 
         public CancellationToken getCancelToken() {
@@ -288,6 +301,7 @@ public final class GradleTaskDef {
     private final boolean nonBlocking;
     private final boolean cleanOutput;
     private final CancellationToken cancelToken;
+    private final GradleCommandServiceFactory commandServiceFactory;
 
     private GradleTaskDef(Builder builder) {
         this.commandName = builder.getCommandName();
@@ -305,6 +319,11 @@ public final class GradleTaskDef {
         this.nonUserTaskVariables = builder.getNonUserTaskVariables();
         this.commandExceptionHider = builder.getCommandExceptionHider();
         this.cancelToken = builder.getCancelToken();
+        this.commandServiceFactory = builder.getCommandServiceFactory();
+    }
+
+    public GradleCommandServiceFactory getCommandServiceFactory() {
+        return commandServiceFactory;
     }
 
     public CancellationToken getCancelToken() {
@@ -393,6 +412,14 @@ public final class GradleTaskDef {
 
     public ContextAwareCommandCompleteListener getCommandFinalizer() {
         return commandFinalizer;
+    }
+
+    public GradleTaskDef updateTaskVariables(TaskVariableMap varReplaceMap) {
+        Builder builder = new Builder(this);
+        builder.setTaskNames(processList(getTaskNames(), varReplaceMap));
+        builder.setArguments(processList(getArguments(), varReplaceMap));
+        builder.setJvmArguments(processList(getJvmArguments(), varReplaceMap));
+        return builder.create();
     }
 
     private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
@@ -571,6 +598,11 @@ public final class GradleTaskDef {
         builder.setStdErrListener(outputProcessor(
                 customActions.getStdErrProcessor(),
                 customActions.getSingleExecutionStdErrProcessor()));
+
+        GradleCommandServiceFactory commandServiceFactory = customActions.getCommandServiceFactory();
+        if (commandServiceFactory != null) {
+            builder.setCommandServiceFactory(commandServiceFactory);
+        }
 
         ContextAwareCommandAction contextAwareAction = customActions.getContextAwareAction();
         if (contextAwareAction != null) {
