@@ -65,6 +65,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<String> displayNamePattern;
     private final StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode;
     private final StringBasedProperty<Boolean> replaceLfOnStdIn;
+    private final StringBasedProperty<DebugMode> debugMode;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -125,6 +126,9 @@ public final class GlobalGradleSettings {
         replaceLfOnStdIn = new GlobalProperty<>(
                 withNS(namespace, "replace-lf-on-stdin"),
                 new BooleanConverter(true));
+        debugMode = new GlobalProperty<>(
+                withNS(namespace, "debug-mode"),
+                new EnumConverter<>(DebugMode.DEBUGGER_ATTACHES));
     }
 
     public static void setDefaultPreference() {
@@ -225,6 +229,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<Boolean> replaceLfOnStdIn() {
         return replaceLfOnStdIn;
+    }
+
+    public StringBasedProperty<DebugMode> debugMode() {
+        return debugMode;
     }
 
     public static GlobalGradleSettings getDefault() {
