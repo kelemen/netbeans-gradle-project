@@ -19,6 +19,7 @@ ext.configureJavaCompilers = { int javaVersion ->
         }
         else {
             compileTasks*.doFirst {
+                String jdkProperty = getJdkPropertyName(javaVersion);
                 logger.warn "Warning: ${jdkProperty} property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
             }
         }
@@ -74,8 +75,12 @@ String extractToolsJarFromCompiler(String javac) {
     return extractToolsJarFromJDKHome(jdkHome);
 }
 
+String getJdkPropertyName(int javaVersion) {
+    return "jdk${javaVersion}Compiler";
+}
+
 String tryGetExplicitJdkCompiler(def project, int javaVersion) {
-    String jdkProperty = "jdk${javaVersion}Compiler";
+    String jdkProperty = getJdkPropertyName(javaVersion);
     if (project.hasProperty(jdkProperty)) {
         return project.property(jdkProperty).toString().trim();
     }
