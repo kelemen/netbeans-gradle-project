@@ -523,6 +523,7 @@ implements
 
             List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
             List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);
+            newTasks.addAll(currentTasks);
             newTasks.add(newTaskDef);
 
             commonTasks.setValue(new PredefinedTasks(newTasks));
