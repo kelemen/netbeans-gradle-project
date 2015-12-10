@@ -2,16 +2,19 @@ package org.netbeans.gradle.project.java.tasks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationSource;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
@@ -34,12 +37,15 @@ import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
+import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.java.test.TestXmlDisplayer;
 import org.netbeans.gradle.project.output.DebugTextListener;
+import org.netbeans.gradle.project.properties.global.DebugMode;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
@@ -51,6 +57,9 @@ import org.openide.windows.OutputWriter;
 
 public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuery {
     private static final Logger LOGGER = Logger.getLogger(GradleJavaBuiltInCommands.class.getName());
+
+    private static final String MAIN_CLASS_PROPERTY_NAME = "mainClass";
+    private static final String JPDA_PORT_PROPERTY_NAME = "debuggerJpdaPort";
 
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -68,11 +77,16 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.RUN,
             Arrays.asList("run"),
             Collections.<String>emptyList());
-    private static final CommandWithActions DEFAULT_DEBUG_TASK = blockingCommand(
+    private static final CommandWithActions DEFAULT_DEBUG_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList("debug"),
             Collections.<String>emptyList(),
             attachDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_TASK_2 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList("run"),
+            Arrays.asList(gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            listenDebugger());
     private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList("javadoc"),
@@ -114,30 +128,38 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
-            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
+            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable())),
             true,
             true);
-    private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK = blockingCommand(
+    private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("debug")),
-            Arrays.asList("-PmainClass=" + StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant()),
+            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable())),
             true,
             true,
             attachDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK_2 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList(projectTask("run")),
+            Arrays.asList(
+                    gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR),
+                    gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable())),
+            true,
+            true,
+            listenDebugger());
     private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = blockingCommand(
             TaskKind.BUILD,
             Arrays.asList(projectTask("classes")),
             Collections.<String>emptyList(),
             applyClassesActions());
 
-    private static final Map<String, CommandWithActions> DEFAULT_TASKS;
+    private static final Map<String, CommandWithActionsRef> DEFAULT_TASKS;
 
     static {
         DEFAULT_TASKS = new HashMap<>();
         addToDefaults(ActionProvider.COMMAND_BUILD, DEFAULT_BUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST, DEFAULT_TEST_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG, DEFAULT_DEBUG_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, DEFAULT_TEST_SINGLE_TASK);
@@ -145,16 +167,65 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
         addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG_SINGLE, DEFAULT_DEBUG_SINGLE_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
+
+        addToDefaults(ActionProvider.COMMAND_DEBUG, debugModeSelector(), Arrays.asList(
+                new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TASK_1),
+                new CommandChoice<>(DebugMode.DEBUGGER_LISTENS, DEFAULT_DEBUG_TASK_2)
+        ));
+        addToDefaults(ActionProvider.COMMAND_DEBUG_SINGLE, debugModeSelector(), Arrays.asList(
+                new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_SINGLE_TASK_1),
+                new CommandChoice<>(DebugMode.DEBUGGER_LISTENS, DEFAULT_DEBUG_SINGLE_TASK_2)
+        ));
     }
 
-    private static void addToDefaults(String command, CommandWithActions task) {
-        addToMap(command, task, DEFAULT_TASKS);
+    private static String gradlePropertyArg(String propertyName, TaskVariable taskVar) {
+        return gradlePropertyArg(propertyName, taskVar.getScriptReplaceConstant());
     }
 
-    private static void addToMap(String command, CommandWithActions task, Map<String, CommandWithActions> map) {
-        map.put(command, task);
+    private static String gradlePropertyArg(String propertyName, String value) {
+        // TODO: Escape value
+        return "-P" + propertyName + "=" + value;
+    }
+
+    private static CommandSelector<DebugMode> debugModeSelector() {
+        return new CommandSelector<DebugMode>() {
+            @Override
+            public DebugMode choose() {
+                return GlobalGradleSettings.getDefault().debugMode().getValue();
+            }
+        };
+    }
+
+    private static <ChoiceType> void addToDefaults(
+            String command,
+            final CommandSelector<? extends ChoiceType> selector,
+            Collection<CommandChoice<ChoiceType>> choices) {
+        final List<CommandChoice<ChoiceType>> choicesCopy = CollectionsEx.readOnlyCopy(choices);
+        ExceptionHelper.checkNotNullArgument(selector, "selector");
+        ExceptionHelper.checkNotNullElements(choicesCopy, "choices");
+
+        DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
+            @Override
+            public CommandWithActions get() {
+                ChoiceType choice = selector.choose();
+                for (CommandChoice<ChoiceType> candidate: choicesCopy) {
+                    if (Objects.equals(candidate.getChoice(), choice)) {
+                        return candidate.getCommandWithActions();
+                    }
+                }
+                return choicesCopy.get(0).getCommandWithActions();
+            }
+        });
+    }
+
+    private static void addToDefaults(String command, final CommandWithActions task) {
+        DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
+            @Override
+            public CommandWithActions get() {
+                return task;
+            }
+        });
     }
 
     private static String debugTestArgument() {
@@ -211,15 +282,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return null;
     }
 
+    private CommandWithActions tryGetDefaultCommandWithActions(String command) {
+        CommandWithActionsRef ref = DEFAULT_TASKS.get(command);
+        return ref != null ? ref.get() : null;
+    }
+
     @Override
     public GradleCommandTemplate tryGetDefaultGradleCommand(ProfileDef profileDef, String command) {
-        CommandWithActions task = DEFAULT_TASKS.get(command);
+        CommandWithActions task = tryGetDefaultCommandWithActions(command);
         return task != null ? task.getCommand() : null;
     }
 
     @Override
     public CustomCommandActions tryGetCommandDefs(ProfileDef profileDef, String command) {
-        CommandWithActions task = DEFAULT_TASKS.get(command);
+        CommandWithActions task = tryGetDefaultCommandWithActions(command);
         return task != null ? task.getCustomActions(javaExt) : null;
     }
 
@@ -414,6 +490,15 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         };
     }
 
+    private static CustomCommandAdjuster listenDebugger() {
+        return new CustomCommandAdjuster() {
+            @Override
+            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
+                customActions.setCommandServiceFactory(new DebuggerServiceFactory(javaExt));
+            }
+        };
+    }
+
     private static CustomCommandAdjuster attachDebugger() {
         return new CustomCommandAdjuster() {
             @Override
@@ -505,6 +590,35 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             adjuster.adjust(javaExt, result);
         }
         return result.create();
+    }
+
+    private static final class CommandChoice<ChoiceType> {
+        private final ChoiceType choice;
+        private final CommandWithActions commandWithActions;
+
+        public CommandChoice(ChoiceType choice, CommandWithActions commandWithActions) {
+            ExceptionHelper.checkNotNullArgument(choice, "choice");
+            ExceptionHelper.checkNotNullArgument(commandWithActions, "commandWithActions");
+
+            this.choice = choice;
+            this.commandWithActions = commandWithActions;
+        }
+
+        public ChoiceType getChoice() {
+            return choice;
+        }
+
+        public CommandWithActions getCommandWithActions() {
+            return commandWithActions;
+        }
+    }
+
+    private static interface CommandSelector<ChoiceType> {
+        public ChoiceType choose();
+    }
+
+    private static interface CommandWithActionsRef {
+        public CommandWithActions get();
     }
 
     private static final class CommandWithActions {

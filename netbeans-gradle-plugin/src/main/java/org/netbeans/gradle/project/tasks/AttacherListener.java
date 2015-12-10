@@ -64,14 +64,14 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         }
     }
 
-    private void getBinaryRuntimeDependencies(NbJavaModule module, Set<File> binaries) {
+    private static void getBinaryRuntimeDependencies(NbJavaModule module, Set<File> binaries) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             Set<File> runtimeClasspath = sourceSet.getClasspaths().getRuntimeClasspaths();
             binaries.addAll(runtimeClasspath);
         }
     }
 
-    private void addSourcesOfBinaries(Collection<File> binaries, Set<FileObject> result) {
+    private static void addSourcesOfBinaries(Collection<File> binaries, Set<FileObject> result) {
         for (File binary: binaries) {
             URL url = FileUtil.urlForArchiveOrDir(binary);
             if (url == null) continue;
@@ -86,7 +86,7 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         }
     }
 
-    private ClassPath getSources() {
+    private static ClassPath getSources(JavaExtension javaExt) {
         NbJavaModel currentModel = javaExt.getCurrentModel();
 
         NbJavaModule mainModule = currentModel.getMainModule();
@@ -109,21 +109,26 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         return ClassPathSupport.createClassPath(srcRoots.toArray(new FileObject[0]));
     }
 
-    private ClassPath getJdkSources() {
+    private static ClassPath getJdkSources(JavaExtension javaExt) {
         GradleProperty.BuildPlatform platformProperty
                 = javaExt.getOwnerProjectLookup().lookup(GradleProperty.BuildPlatform.class);
         ProjectPlatform platform = platformProperty.getValue();
         return ClassPathSupport.createClassPath(platform.getSourcePaths().toArray(new URL[0]));
     }
 
+    public static Map<String, Object> getJpdaServiceObjects(JavaExtension javaExt) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("name", javaExt.getCurrentModel().getMainModule().getUniqueName());
+        result.put("baseDir", javaExt.getProjectDirectoryAsFile());
+        result.put("jdksources", getJdkSources(javaExt));
+        result.put("sourcepath", getSources(javaExt));
+        return result;
+    }
+
     private void doAttach(int port) throws DebuggerStartException {
         LOGGER.log(Level.INFO, "Attempting to attach to debugee on port: {0}", port);
 
-        Map<String, Object> services = new HashMap<>();
-        services.put("name", javaExt.getCurrentModel().getMainModule().getUniqueName());
-        services.put("baseDir", javaExt.getProjectDirectoryAsFile());
-        services.put("jdksources", getJdkSources());
-        services.put("sourcepath", getSources());
+        Map<String, Object> services = getJpdaServiceObjects(javaExt);
 
         final JPDADebugger debugger = JPDADebugger.attach("127.0.0.1", port, new Object[]{services});
         debugger.addPropertyChangeListener("state", new PropertyChangeListener() {

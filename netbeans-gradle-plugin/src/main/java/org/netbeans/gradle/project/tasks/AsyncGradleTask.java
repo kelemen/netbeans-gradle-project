@@ -418,7 +418,6 @@ public final class AsyncGradleTask implements Runnable {
                             // at least this is what NetBeans tells you in its
                             // logs if you do.
                         }
-                        printCommand(buildOutput, command, taskDef);
 
                         GradleCommandServiceFactory commandServiceFactory = taskDef.getCommandServiceFactory();
                         GradleCommandContext commandContext = new GradleCommandContext(project, tab.getIo().getIo());
@@ -440,6 +439,7 @@ public final class AsyncGradleTask implements Runnable {
                                         ? taskDef.updateTaskVariables(serviceVariables)
                                         : taskDef;
 
+                                printCommand(buildOutput, command, finalTaskDef);
                                 configureBuildLauncher(targetSetup, buildLauncher, finalTaskDef, initScripts);
                                 runBuild(cancellation.getToken(), buildLauncher);
 
