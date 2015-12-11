@@ -44,6 +44,9 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
     private void initComponents() {
 
         jDebugMode = new javax.swing.JComboBox<>();
+        jDebugModeCaption = new javax.swing.JLabel();
+
+        org.openide.awt.Mnemonics.setLocalizedText(jDebugModeCaption, org.openide.util.NbBundle.getMessage(DebuggerPanel.class, "DebuggerPanel.jDebugModeCaption.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -51,14 +54,18 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jDebugMode, 0, 380, Short.MAX_VALUE)
+                .addComponent(jDebugModeCaption)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jDebugMode, 0, 309, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jDebugMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jDebugModeCaption)
+                    .addComponent(jDebugMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -66,5 +73,6 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<DebugModeCombo.Item> jDebugMode;
+    private javax.swing.JLabel jDebugModeCaption;
     // End of variables declaration//GEN-END:variables
 }
