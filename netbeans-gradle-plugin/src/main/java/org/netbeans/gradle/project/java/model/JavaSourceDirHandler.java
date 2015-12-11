@@ -1,6 +1,10 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,29 +54,34 @@ public final class JavaSourceDirHandler {
         return created;
     }
 
-    private static boolean isEmptyAndExist(File dir) {
-        if (!dir.isDirectory()) {
+    private static boolean isEmptyAndExist(Path dir) throws IOException {
+        if (!Files.isDirectory(dir)) {
             return false;
         }
 
-        // FIXME: Use a more efficient solution in Java 7.
-        File[] files = dir.listFiles();
-        return files != null && files.length == 0;
+        try (DirectoryStream<Path> dirContent = Files.newDirectoryStream(dir)) {
+            return !dirContent.iterator().hasNext();
+        }
+    }
+
+    private static boolean deleteDirIfEmpty(Path dir) throws IOException {
+        if (isEmptyAndExist(dir)) {
+            Files.deleteIfExists(dir);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     private static boolean deleteDirIfEmpty(File dir) {
-        if (!isEmptyAndExist(dir)) {
+        try {
+            return deleteDirIfEmpty(dir.toPath());
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO, "Failed to delete: " + dir, ex);
             return false;
         }
-
-        boolean deleted = dir.delete();
-        if (!deleted) {
-            LOGGER.log(Level.INFO, "Failed to delete an empty directory: {0}", dir);
-        }
-
-        return deleted;
     }
-
 
     private static boolean deleteDirsIfEmpty(Collection<File> dirs) {
         boolean deleted = false;
