@@ -388,9 +388,10 @@ public final class AsyncGradleTask implements Runnable {
 
         GradleModelLoader.ModelBuilderSetup targetSetup = createTargetSetup(taskDef, progress);
 
+        CancellationToken cancelToken = cancellation.getToken();
         Throwable commandError = null;
 
-        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancellation.getToken(), project);
+        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancelToken, project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {
@@ -423,7 +424,7 @@ public final class AsyncGradleTask implements Runnable {
                         GradleCommandContext commandContext = new GradleCommandContext(project, tab.getIo().getIo());
 
                         try (OutputRef outputRef = configureOutput(project, taskDef, buildLauncher, tab);
-                                GradleCommandService commandService = commandServiceFactory.startService(commandContext)) {
+                                GradleCommandService commandService = commandServiceFactory.startService(cancelToken, commandContext)) {
                             assert outputRef != null; // Avoid warning
 
                             InputOutputWrapper io = tab.getIo();
@@ -441,7 +442,7 @@ public final class AsyncGradleTask implements Runnable {
 
                                 printCommand(buildOutput, command, finalTaskDef);
                                 configureBuildLauncher(targetSetup, buildLauncher, finalTaskDef, initScripts);
-                                runBuild(cancellation.getToken(), buildLauncher);
+                                runBuild(cancelToken, buildLauncher);
 
                                 taskDef.getSuccessfulCommandFinalizer().finalizeSuccessfulCommand(
                                         buildOutput,
