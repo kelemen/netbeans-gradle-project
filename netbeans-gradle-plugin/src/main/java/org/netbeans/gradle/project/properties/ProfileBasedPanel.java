@@ -44,6 +44,7 @@ import static org.jtrim.property.BoolProperties.*;
 import static org.jtrim.property.PropertyFactory.*;
 import static org.jtrim.property.swing.AutoDisplayState.*;
 import static org.jtrim.property.swing.SwingProperties.*;
+import org.netbeans.api.project.Project;
 import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
@@ -116,6 +117,18 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     public static ProfileBasedPanel createPanel(
+            Project project,
+            JComponent customPanel,
+            ProfileValuesEditorFactory snapshotCreator) {
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
+        }
+
+        return createPanel(gradleProject, customPanel, snapshotCreator);
+    }
+
+    private static ProfileBasedPanel createPanel(
             NbGradleProject project,
             JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
