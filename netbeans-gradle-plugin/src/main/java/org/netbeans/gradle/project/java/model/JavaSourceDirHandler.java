@@ -30,16 +30,23 @@ public final class JavaSourceDirHandler {
         return dirsCreatedListeners.registerListener(listener);
     }
 
-    private static boolean createDir(File dir) {
-        if (dir.isDirectory()) {
+    private static boolean createDir(Path dir) throws IOException {
+        if (Files.isDirectory(dir)) {
             return false;
         }
-        boolean created = dir.mkdirs();
-        if (!created) {
-            LOGGER.log(Level.INFO, "Failed to create new directory: {0}", dir);
+        else {
+            Files.createDirectories(dir);
+            return true;
         }
+    }
 
-        return created;
+    private static boolean createDir(File dir) {
+        try {
+            return createDir(dir.toPath());
+        } catch (IOException ex) {
+            LOGGER.log(Level.INFO, "Failed to create new directory: " + dir, ex);
+            return false;
+        }
     }
 
     private static boolean createDirs(Collection<File> dirs) {
