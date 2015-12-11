@@ -40,6 +40,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
+import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
@@ -223,7 +224,8 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
             lookup = Lookups.fixed(new JavaExtensionNodes(this),
                     new JavaProjectContextActions(this),
                     new GradleJavaBuiltInCommands(this),
-                    new JavaInitScriptQuery());
+                    new JavaInitScriptQuery(),
+                    JavaDebuggingPanel.createDebuggingCustomizer(project));
 
             if (extensionLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);

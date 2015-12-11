@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +39,13 @@ public final class ConfigPath {
         return keys.isEmpty()
                 ? ROOT
                 : new ConfigPath(keys.toArray(NO_KEYS));
+    }
+
+    public ConfigPath getChildPath(String... childKeys) {
+        List<String> newKeys = new ArrayList<>(keys.length + childKeys.length);
+        newKeys.addAll(keysAsList);
+        newKeys.addAll(Arrays.asList(childKeys));
+        return ConfigPath.fromKeys(newKeys);
     }
 
     public int getKeyCount() {
