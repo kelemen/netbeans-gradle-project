@@ -28,6 +28,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScriptAndTasks(), new ScriptAndTasksPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryScript(), new BuildScriptParsingPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryTasks(), new TaskExecutionPanel()));
+        categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryDebug(), new DebuggerPanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryAppearance(), new AppearancePanel()));
         categoriesModel.addElement(new CategoryItem(NbStrings.getSettingsCategoryOther(), new OtherOptionsPanel()));
 
