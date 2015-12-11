@@ -115,6 +115,17 @@ public final class CustomCommandActions {
         }
 
         /**
+         * Sets the {@code GradleCommandServiceFactory} which might define a
+         * service which lives during the execution of the associated Gradle command.
+         * The service may also provide {@link TaskVariable task variables} as
+         * a last chance to replace task variables in Gradle command templates.
+         * <P>
+         * The default value of this property is {@code null}.
+         *
+         * @param commandServiceFactory the {@code GradleCommandServiceFactory}
+         *   which might define a service which lives during the execution of
+         *   the associated Gradle command. This argument can be {@code null}
+         *   if no such service is required.
          */
         public void setCommandServiceFactory(@Nullable GradleCommandServiceFactory commandServiceFactory) {
             this.commandServiceFactory = commandServiceFactory;
@@ -419,6 +430,15 @@ public final class CustomCommandActions {
     }
 
     /**
+     * Returns the {@code GradleCommandServiceFactory} which might define a
+     * service which lives during the execution of the associated Gradle command.
+     * The service may also provide {@link TaskVariable task variables} as
+     * a last chance to replace task variables in Gradle command templates.
+     *
+     * @return the {@code GradleCommandServiceFactory}
+     *   which might define a service which lives during the execution of
+     *   the associated Gradle command. This method may return {@code null}
+     *   if no such service is required.
      */
     @Nullable
     public GradleCommandServiceFactory getCommandServiceFactory() {
