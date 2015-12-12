@@ -363,29 +363,29 @@ public class CommonProjectPropertiesPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSourceLevelCombo = new javax.swing.JComboBox<String>();
+        jSourceLevelCombo = new javax.swing.JComboBox<>();
         jGradleHomeEdit = new javax.swing.JTextField();
         jGradleHomeInherit = new javax.swing.JCheckBox();
         jSourceEncodingInherit = new javax.swing.JCheckBox();
         jPlatformComboInherit = new javax.swing.JCheckBox();
-        jScriptPlatformCombo = new javax.swing.JComboBox<JavaPlatformComboItem>();
+        jScriptPlatformCombo = new javax.swing.JComboBox<>();
         jSourceLevelComboInherit = new javax.swing.JCheckBox();
         jScriptPlatformInherit = new javax.swing.JCheckBox();
         jPlatformPreferenceButton = new javax.swing.JButton();
-        jPlatformCombo = new javax.swing.JComboBox<ProjectPlatformComboItem>();
+        jPlatformCombo = new javax.swing.JComboBox<>();
         jGradleHomeCaption = new javax.swing.JLabel();
         jSourceEncodingCaption = new javax.swing.JLabel();
         jTargetPlatformCaption = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jSourceLevelCaption = new javax.swing.JLabel();
         jGradleHomeChangeButton = new javax.swing.JButton();
-        jSourceEncoding = new javax.swing.JComboBox<Charset>();
+        jSourceEncoding = new javax.swing.JComboBox<>();
         jUserInitScriptCaption = new javax.swing.JLabel();
         jUserInitScript = new javax.swing.JTextField();
         jUserInitScriptInherit = new javax.swing.JCheckBox();
         jUserInitScriptBrowseButton = new javax.swing.JButton();
 
-        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
+        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
 
         jGradleHomeEdit.setEditable(false);
         jGradleHomeEdit.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeEdit.text")); // NOI18N
