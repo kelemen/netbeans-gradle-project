@@ -10,16 +10,27 @@ import org.openide.util.Lookup;
 public final class ProfileBasedCustomizer implements ProjectCustomizer.CompositeCategoryProvider {
     private final String categoryName;
     private final String displayName;
-    private final ProfileBasedPanel panel;
+    private final PanelFactory panelFactory;
 
-    public ProfileBasedCustomizer(String categoryName, String displayName, ProfileBasedPanel panel) {
+    public ProfileBasedCustomizer(String categoryName, String displayName, final ProfileBasedPanel panel) {
+        this(categoryName, displayName, new PanelFactory() {
+            @Override
+            public ProfileBasedPanel createPanel() {
+                return panel;
+            }
+        });
+
+        ExceptionHelper.checkNotNullArgument(panel, "panel");
+    }
+
+    public ProfileBasedCustomizer(String categoryName, String displayName, PanelFactory panelFactory) {
         ExceptionHelper.checkNotNullArgument(categoryName, "categoryName");
         ExceptionHelper.checkNotNullArgument(displayName, "displayName");
-        ExceptionHelper.checkNotNullArgument(panel, "panel");
+        ExceptionHelper.checkNotNullArgument(panelFactory, "panelFactory");
 
         this.categoryName = categoryName;
         this.displayName = displayName;
-        this.panel = panel;
+        this.panelFactory = panelFactory;
     }
 
     @Override
@@ -29,6 +40,7 @@ public final class ProfileBasedCustomizer implements ProjectCustomizer.Composite
 
     @Override
     public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
+        final ProfileBasedPanel panel = panelFactory.createPanel();
         category.setOkButtonListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -36,5 +48,9 @@ public final class ProfileBasedCustomizer implements ProjectCustomizer.Composite
             }
         });
         return panel;
+    }
+
+    public static interface PanelFactory {
+        public ProfileBasedPanel createPanel();
     }
 }

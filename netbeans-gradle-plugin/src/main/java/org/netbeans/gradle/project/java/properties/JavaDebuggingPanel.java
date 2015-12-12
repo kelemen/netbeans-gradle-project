@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.java.properties;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.properties.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
@@ -39,12 +40,20 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
-    public static ProfileBasedCustomizer createDebuggingCustomizer(Project project) {
+    public static ProfileBasedCustomizer createDebuggingCustomizer(final Project project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        ProfileBasedCustomizer.PanelFactory panelFactory = new ProfileBasedCustomizer.PanelFactory() {
+            @Override
+            public ProfileBasedPanel createPanel() {
+                return createProfileBasedPanel(project);
+            }
+        };
+
         return new ProfileBasedCustomizer(
                 JavaDebuggingPanel.class.getName(),
                 // TODO: I18N
                 "Debugging - Java",
-                createProfileBasedPanel(project));
+                panelFactory);
     }
 
     public static ProfileBasedPanel createProfileBasedPanel(Project project) {
