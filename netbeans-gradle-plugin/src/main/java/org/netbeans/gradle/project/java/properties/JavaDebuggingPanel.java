@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.java.properties;
 
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.properties.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
@@ -9,6 +11,7 @@ import org.netbeans.gradle.project.properties.ProfileValuesEditor;
 import org.netbeans.gradle.project.properties.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.PropertyReference;
 import org.netbeans.gradle.project.properties.global.DebugMode;
+import org.netbeans.gradle.project.util.NbGuiUtils;
 
 public class JavaDebuggingPanel extends javax.swing.JPanel {
     private final DebugModeCombo debugModeComboHandler;
@@ -16,6 +19,24 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
     public JavaDebuggingPanel() {
         initComponents();
         debugModeComboHandler = new DebugModeCombo(jDebugMode);
+
+        setupEnableDisable();
+    }
+
+    private void setupEnableDisable() {
+        setupInheritCheck(jDebugModeInherit, jDebugMode);
+    }
+
+    private static void setupInheritCheck(JCheckBox inheritCheck, JComponent... components) {
+        NbGuiUtils.enableBasedOnCheck(inheritCheck, false, components);
+    }
+
+    private static <Value> Value setInheritAndGetValue(
+            Value value,
+            PropertyReference<? extends Value> valueWithFallbacks,
+            JCheckBox inheritCheck) {
+        inheritCheck.setSelected(value == null);
+        return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
     public static ProfileBasedCustomizer createDebuggingCustomizer(Project project) {
@@ -47,12 +68,13 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
 
         @Override
         public void displayValues() {
-            debugModeComboHandler.setSelectedDebugMode(currentDebugMode);
+            DebugMode activeDebugMode = setInheritAndGetValue(currentDebugMode, debugModeRef, jDebugModeInherit);
+            debugModeComboHandler.setSelectedDebugMode(activeDebugMode);
         }
 
         @Override
         public void readFromGui() {
-            currentDebugMode = debugModeComboHandler.getSelectedDebugMode();
+            currentDebugMode = jDebugModeInherit.isSelected() ? null : debugModeComboHandler.getSelectedDebugMode();
         }
 
         @Override
@@ -73,8 +95,11 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
 
         jDebugMode = new javax.swing.JComboBox<>();
         jDebugModeCaption = new javax.swing.JLabel();
+        jDebugModeInherit = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jDebugModeCaption, org.openide.util.NbBundle.getMessage(JavaDebuggingPanel.class, "JavaDebuggingPanel.jDebugModeCaption.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jDebugModeInherit, org.openide.util.NbBundle.getMessage(JavaDebuggingPanel.class, "JavaDebuggingPanel.jDebugModeInherit.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -84,7 +109,9 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jDebugModeCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jDebugMode, 0, 244, Short.MAX_VALUE)
+                .addComponent(jDebugMode, 0, 185, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jDebugModeInherit)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -93,7 +120,8 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jDebugModeCaption)
-                    .addComponent(jDebugMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jDebugMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jDebugModeInherit))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -102,5 +130,6 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<DebugModeCombo.Item> jDebugMode;
     private javax.swing.JLabel jDebugModeCaption;
+    private javax.swing.JCheckBox jDebugModeInherit;
     // End of variables declaration//GEN-END:variables
 }

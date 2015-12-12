@@ -20,7 +20,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jDebugModeCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jDebugMode" pref="244" max="32767" attributes="0"/>
+              <Component id="jDebugMode" pref="185" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jDebugModeInherit" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -32,6 +34,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jDebugModeCaption" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jDebugMode" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jDebugModeInherit" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -53,6 +56,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/netbeans/gradle/project/java/properties/Bundle.properties" key="JavaDebuggingPanel.jDebugModeCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="jDebugModeInherit">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/java/properties/Bundle.properties" key="JavaDebuggingPanel.jDebugModeInherit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
