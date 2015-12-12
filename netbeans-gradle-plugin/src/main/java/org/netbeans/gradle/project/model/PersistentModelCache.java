@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
