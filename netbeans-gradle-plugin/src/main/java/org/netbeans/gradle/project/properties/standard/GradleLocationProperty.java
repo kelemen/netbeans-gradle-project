@@ -3,9 +3,9 @@ package org.netbeans.gradle.project.properties.standard;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ConfigPath;
-import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.properties.GradleLocationDef;
 
 public final class GradleLocationProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("gradle-home");

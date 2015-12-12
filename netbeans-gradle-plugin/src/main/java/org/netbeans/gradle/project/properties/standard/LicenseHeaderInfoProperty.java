@@ -8,9 +8,9 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
-import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 
 public final class LicenseHeaderInfoProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("license-header");

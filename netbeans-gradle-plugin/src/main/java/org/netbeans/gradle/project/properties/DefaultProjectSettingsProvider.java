@@ -1,10 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.api.config.ProfileKey;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +10,12 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 
 public final class DefaultProjectSettingsProvider implements ProjectSettingsProvider {
     private final NbGradleProject project;

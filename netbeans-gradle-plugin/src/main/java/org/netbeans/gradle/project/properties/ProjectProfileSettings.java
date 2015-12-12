@@ -1,7 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.api.config.ProfileKey;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -18,6 +16,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

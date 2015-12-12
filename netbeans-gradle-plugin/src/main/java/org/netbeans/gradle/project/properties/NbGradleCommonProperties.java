@@ -1,7 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.nio.charset.Charset;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -9,6 +7,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;

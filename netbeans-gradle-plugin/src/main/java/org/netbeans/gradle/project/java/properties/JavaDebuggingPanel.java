@@ -5,6 +5,8 @@ import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
 import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
 import org.netbeans.gradle.project.properties.ProfileBasedPanel;
@@ -40,12 +42,12 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
-    public static ProfileBasedCustomizer createDebuggingCustomizer(final Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    public static ProfileBasedCustomizer createDebuggingCustomizer(final JavaExtension javaExt) {
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
         ProfileBasedCustomizer.PanelFactory panelFactory = new ProfileBasedCustomizer.PanelFactory() {
             @Override
             public ProfileBasedPanel createPanel() {
-                return createProfileBasedPanel(project);
+                return createProfileBasedPanel(javaExt);
             }
         };
 
@@ -56,9 +58,11 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
                 panelFactory);
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(Project project) {
+    public static ProfileBasedPanel createProfileBasedPanel(JavaExtension javaExt) {
+        Project project = javaExt.getProject();
+        ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
         final JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
+        return ProfileBasedPanel.createPanel(project, extensionSettings, customPanel, new ProfileValuesEditorFactory() {
             @Override
             public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
                 return customPanel.new PropertyValues(profileQuery);

@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +13,7 @@ import javax.swing.event.ListSelectionListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;

@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
@@ -26,6 +27,30 @@ public final class CommonProperties {
 
     public static PropertyKeyEncodingDef<String> getIdentityKeyEncodingDef() {
         return IdentityKeyEncodingDef.INSTANCE;
+    }
+
+    public static <T extends Enum<T>> PropertyKeyEncodingDef<T> enumKeyEncodingDef(final Class<T> enumType) {
+        ExceptionHelper.checkNotNullArgument(enumType, "enumType");
+        return new PropertyKeyEncodingDef<T>() {
+            @Override
+            public T decode(ConfigTree config) {
+                String strValue = config.getValue("").trim();
+                if (strValue.isEmpty()) {
+                    return null;
+                }
+
+                try {
+                    return Enum.valueOf(enumType, strValue);
+                } catch (IllegalArgumentException ex) {
+                    return null;
+                }
+            }
+
+            @Override
+            public ConfigTree encode(T value) {
+                return ConfigTree.singleValue(value.name());
+            }
+        };
     }
 
     public static PropertyKeyEncodingDef<ConfigTree> getIdentityTreeKeyEncodingDef() {

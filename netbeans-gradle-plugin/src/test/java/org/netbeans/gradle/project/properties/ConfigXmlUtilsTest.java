@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ConfigTree;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -16,6 +15,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.junit.Test;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

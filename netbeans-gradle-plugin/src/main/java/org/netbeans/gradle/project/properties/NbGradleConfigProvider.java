@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ProfileKey;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +30,7 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.SerializationUtils2;

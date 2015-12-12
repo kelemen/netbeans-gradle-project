@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ConfigTree;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 
 final class CompatibleRootNodeProperty extends AbstractFixedOrderNodeProperty {
     private static final String[] ROOT_KEYS = {

@@ -1,15 +1,15 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ValueReference;
-import org.netbeans.gradle.project.api.config.ValueMerger;
-import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.ValueReference;
 
 public final class PropertyReference<ValueType> {
     private final PropertyDef<?, ValueType> propertyDef;

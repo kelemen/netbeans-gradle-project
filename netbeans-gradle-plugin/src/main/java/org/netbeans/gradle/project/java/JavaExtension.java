@@ -31,6 +31,7 @@ import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
@@ -56,7 +57,6 @@ import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
-import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.spi.project.support.LookupProviderSupport;
@@ -87,6 +87,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private final ChangeListenerManager modelChangeListeners;
     private final AtomicReference<JavaProjectProperties> projectPropertiesRef;
+    private final AtomicReference<ProjectSettingsProvider.ExtensionSettings> extensionSettingsRef;
 
     private JavaExtension(Project project) throws IOException {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -108,19 +109,30 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
         this.modelChangeListeners = new GenericChangeListenerManager();
         this.projectPropertiesRef = new AtomicReference<>(null);
+        this.extensionSettingsRef = new AtomicReference<>(null);
     }
 
-    public JavaProjectProperties getProjectProperties() {
-        JavaProjectProperties result = projectPropertiesRef.get();
+    public ProjectSettingsProvider.ExtensionSettings getExtensionSettings() {
+        ProjectSettingsProvider.ExtensionSettings result = extensionSettingsRef.get();
         if (result == null) {
             ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
             if (settingsProvider == null) {
                 throw new IllegalArgumentException("Not a Gradle project.");
             }
 
-            ProjectSettingsProvider.ExtensionSettings extensionSettings
-                    = settingsProvider.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME);
+            result = settingsProvider.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME);
 
+            if (!extensionSettingsRef.compareAndSet(null, result)) {
+                result = extensionSettingsRef.get();
+            }
+        }
+        return result;
+    }
+
+    public JavaProjectProperties getProjectProperties() {
+        JavaProjectProperties result = projectPropertiesRef.get();
+        if (result == null) {
+            ProjectSettingsProvider.ExtensionSettings extensionSettings = getExtensionSettings();
             result = new JavaProjectProperties(extensionSettings.getActiveSettings());
             if (!projectPropertiesRef.compareAndSet(null, result)) {
                 result = projectPropertiesRef.get();
@@ -248,7 +260,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new JavaProjectContextActions(this),
                     new GradleJavaBuiltInCommands(this),
                     new JavaInitScriptQuery(),
-                    JavaDebuggingPanel.createDebuggingCustomizer(project));
+                    JavaDebuggingPanel.createDebuggingCustomizer(this));
 
             if (extensionLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);

@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -18,6 +17,7 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;

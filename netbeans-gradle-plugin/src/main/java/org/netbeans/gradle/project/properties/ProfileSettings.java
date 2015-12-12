@@ -1,10 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.PropertyValueDef;
-import org.netbeans.gradle.project.api.config.ConfigPath;
-import org.netbeans.gradle.project.api.config.ConfigTree;
-import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
-import org.netbeans.gradle.project.api.config.PropertyDef;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +36,11 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySourceProxy;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.ConfigTree;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

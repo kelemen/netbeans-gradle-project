@@ -1,12 +1,12 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ConfigTree;
-import org.netbeans.gradle.project.api.config.ConfigPath;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assume;
 import org.junit.Test;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 
 import static org.junit.Assert.*;
 

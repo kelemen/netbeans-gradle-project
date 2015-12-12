@@ -1,8 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import org.netbeans.gradle.project.api.config.ValueReference;
-import org.netbeans.gradle.project.api.config.ValueMerger;
-import org.netbeans.gradle.project.api.config.PropertyDef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,6 +13,9 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.ValueReference;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.NbFunction;

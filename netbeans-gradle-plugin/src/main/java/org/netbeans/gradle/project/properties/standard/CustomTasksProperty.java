@@ -5,12 +5,12 @@ import java.util.List;
 import org.jtrim.collections.CollectionsEx;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
-import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.api.config.ValueMerger;
 import org.netbeans.gradle.project.api.config.ValueReference;
+import org.netbeans.gradle.project.properties.PredefinedTask;
 
 public final class CustomTasksProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("common-tasks");
