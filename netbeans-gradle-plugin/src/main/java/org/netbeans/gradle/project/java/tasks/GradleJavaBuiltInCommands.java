@@ -45,7 +45,6 @@ import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.java.test.TestXmlDisplayer;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.properties.global.DebugMode;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
@@ -191,8 +190,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static CommandSelector<DebugMode> debugModeSelector() {
         return new CommandSelector<DebugMode>() {
             @Override
-            public DebugMode choose() {
-                return GlobalGradleSettings.getDefault().debugMode().getValue();
+            public DebugMode choose(JavaExtension javaExt) {
+                return javaExt.getProjectProperties().debugMode().getActiveValue();
             }
         };
     }
@@ -207,8 +206,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
         DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
             @Override
-            public CommandWithActions get() {
-                ChoiceType choice = selector.choose();
+            public CommandWithActions get(JavaExtension javaExt) {
+                ChoiceType choice = selector.choose(javaExt);
                 for (CommandChoice<ChoiceType> candidate: choicesCopy) {
                     if (Objects.equals(candidate.getChoice(), choice)) {
                         return candidate.getCommandWithActions();
@@ -222,7 +221,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static void addToDefaults(String command, final CommandWithActions task) {
         DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
             @Override
-            public CommandWithActions get() {
+            public CommandWithActions get(JavaExtension javaExt) {
                 return task;
             }
         });
@@ -284,7 +283,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private CommandWithActions tryGetDefaultCommandWithActions(String command) {
         CommandWithActionsRef ref = DEFAULT_TASKS.get(command);
-        return ref != null ? ref.get() : null;
+        return ref != null ? ref.get(javaExt) : null;
     }
 
     @Override
@@ -614,11 +613,11 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     }
 
     private static interface CommandSelector<ChoiceType> {
-        public ChoiceType choose();
+        public ChoiceType choose(JavaExtension javaExt);
     }
 
     private static interface CommandWithActionsRef {
-        public CommandWithActions get();
+        public CommandWithActions get(JavaExtension javaExt);
     }
 
     private static final class CommandWithActions {

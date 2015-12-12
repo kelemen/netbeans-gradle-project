@@ -41,6 +41,7 @@ import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
+import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.java.query.GradleAnnotationProcessingQuery;
 import org.netbeans.gradle.project.java.query.GradleBinaryForSourceQuery;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
@@ -84,6 +85,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final AtomicReference<Lookup> combinedLookupRef;
 
     private final ChangeListenerManager modelChangeListeners;
+    private final AtomicReference<JavaProjectProperties> projectPropertiesRef;
 
     private JavaExtension(Project project) throws IOException {
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -104,6 +106,24 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.sourceDirsHandlerRef = new AtomicReference<>(null);
         this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
         this.modelChangeListeners = new GenericChangeListenerManager();
+        this.projectPropertiesRef = new AtomicReference<>(null);
+    }
+
+    public JavaProjectProperties getProjectProperties() {
+        JavaProjectProperties result = projectPropertiesRef.get();
+        if (result == null) {
+            // TODO: Create an API and use it.
+            NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+            if (gradleProject == null) {
+                throw new IllegalArgumentException("Not a Gradle project.");
+            }
+
+            result = new JavaProjectProperties(gradleProject.getActiveSettingsQuery());
+            if (!projectPropertiesRef.compareAndSet(null, result)) {
+                result = projectPropertiesRef.get();
+            }
+        }
+        return result;
     }
 
     public static JavaExtension getJavaExtensionOfProject(Project project) {
