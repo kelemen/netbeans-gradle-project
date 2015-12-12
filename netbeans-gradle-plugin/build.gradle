@@ -22,7 +22,7 @@ repositories {
 
 compileJava {
     String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator);
-    options.compilerArgs = ['-sourcepath', resDirsPath]
+    options.compilerArgs = ['-Xlint', '-sourcepath', resDirsPath]
 }
 
 def tryGetProperty = {String name, String defaultValue ->
