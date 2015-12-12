@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.properties.PropertyReference;
 import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 
+@SuppressWarnings("serial")
 public class JavaDebuggingPanel extends javax.swing.JPanel {
     private final DebugModeCombo debugModeComboHandler;
 
