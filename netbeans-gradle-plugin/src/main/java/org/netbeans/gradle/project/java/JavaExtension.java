@@ -56,6 +56,7 @@ import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.gradle.project.properties.ProjectSettingsProvider;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.spi.project.support.LookupProviderSupport;
@@ -112,13 +113,15 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public JavaProjectProperties getProjectProperties() {
         JavaProjectProperties result = projectPropertiesRef.get();
         if (result == null) {
-            // TODO: Create an API and use it.
-            NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-            if (gradleProject == null) {
+            ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
+            if (settingsProvider == null) {
                 throw new IllegalArgumentException("Not a Gradle project.");
             }
 
-            result = new JavaProjectProperties(gradleProject.getActiveSettingsQuery());
+            ProjectSettingsProvider.ExtensionSettings extensionSettings
+                    = settingsProvider.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME);
+
+            result = new JavaProjectProperties(extensionSettings.getActiveSettings());
             if (!projectPropertiesRef.compareAndSet(null, result)) {
                 result = projectPropertiesRef.get();
             }

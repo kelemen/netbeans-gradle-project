@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -72,6 +73,22 @@ public final class PropertyDef<ValueKey, ValueType> {
         this.valueMerger = builder.valueMerger;
         this.valueKeyEquality = builder.valueKeyEquality;
         this.configPaths = builder.configPaths;
+    }
+
+    private PropertyDef(PropertyDef baseDef, List<ConfigPath> newConfigPaths) {
+        this.keyEncodingDef = baseDef.keyEncodingDef;
+        this.valueDef = baseDef.valueDef;
+        this.valueMerger = baseDef.valueMerger;
+        this.valueKeyEquality = baseDef.valueKeyEquality;
+        this.configPaths = newConfigPaths;
+    }
+
+    public PropertyDef<ValueKey, ValueType> withParentConfigPath(String... parentKeys) {
+        List<ConfigPath> newConfigPaths = new ArrayList<>(configPaths.size());
+        for (ConfigPath path: configPaths) {
+            newConfigPaths.add(path.withParentPath(parentKeys));
+        }
+        return new PropertyDef<>(this, Collections.unmodifiableList(newConfigPaths));
     }
 
     @Nonnull

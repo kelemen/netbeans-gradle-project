@@ -42,6 +42,7 @@ import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryListener;
+import org.netbeans.gradle.project.properties.DefaultProjectSettingsProvider;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
@@ -54,6 +55,7 @@ import org.netbeans.gradle.project.properties.ProfileKey;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
+import org.netbeans.gradle.project.properties.ProjectSettingsProvider;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
@@ -780,6 +782,7 @@ public final class NbGradleProject implements Project {
         public final GradleTemplateAttrProvider templateAttrProvider;
         public final DefaultGradleCommandExecutor commandExecutor;
         public final ProjectInfoManager projectInfoManager;
+        public final ProjectSettingsProvider projectSettingsProvider;
 
         public final Lookup services;
 
@@ -800,6 +803,7 @@ public final class NbGradleProject implements Project {
             this.templateAttrProvider = add(new GradleTemplateAttrProvider(project), serviceObjects);
             this.commandExecutor = add(new DefaultGradleCommandExecutor(project), serviceObjects);
             this.projectInfoManager = add(new ProjectInfoManager(), serviceObjects);
+            this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);
 
             add(project.new OpenHook(), serviceObjects);
 

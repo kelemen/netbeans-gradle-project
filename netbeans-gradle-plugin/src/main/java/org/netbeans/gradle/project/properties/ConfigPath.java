@@ -41,6 +41,13 @@ public final class ConfigPath {
                 : new ConfigPath(keys.toArray(NO_KEYS));
     }
 
+    public ConfigPath withParentPath(String... parentKeys) {
+        List<String> newKeys = new ArrayList<>(keys.length + parentKeys.length);
+        newKeys.addAll(Arrays.asList(parentKeys));
+        newKeys.addAll(keysAsList);
+        return ConfigPath.fromKeys(newKeys);
+    }
+
     public ConfigPath getChildPath(String... childKeys) {
         List<String> newKeys = new ArrayList<>(keys.length + childKeys.length);
         newKeys.addAll(keysAsList);

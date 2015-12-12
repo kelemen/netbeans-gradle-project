@@ -35,6 +35,9 @@ import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = GradleProjectExtensionDef.class, position = 1000)
 public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaModel> {
+    // Do not return JavaExtension.class.getName() because this string must
+    // remain the same even if this class is renamed.
+    public static final String EXTENSION_NAME = "org.netbeans.gradle.project.java.JavaExtension";
     private final Lookup lookup;
 
     public JavaExtensionDef() {
@@ -43,9 +46,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
 
     @Override
     public String getName() {
-        // Do not return JavaExtension.class.getName() because this string must
-        // remain the same even if this class is renamed.
-        return "org.netbeans.gradle.project.java.JavaExtension";
+        return EXTENSION_NAME;
     }
 
     @Override
