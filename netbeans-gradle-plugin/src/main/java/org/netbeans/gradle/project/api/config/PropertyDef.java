@@ -75,7 +75,7 @@ public final class PropertyDef<ValueKey, ValueType> {
         this.configPaths = builder.configPaths;
     }
 
-    private PropertyDef(PropertyDef baseDef, List<ConfigPath> newConfigPaths) {
+    private PropertyDef(PropertyDef<ValueKey, ValueType> baseDef, List<ConfigPath> newConfigPaths) {
         this.keyEncodingDef = baseDef.keyEncodingDef;
         this.valueDef = baseDef.valueDef;
         this.valueMerger = baseDef.valueMerger;
