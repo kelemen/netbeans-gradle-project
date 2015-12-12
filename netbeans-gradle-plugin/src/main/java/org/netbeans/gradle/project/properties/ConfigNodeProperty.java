@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import java.util.Comparator;
 
 public interface ConfigNodeProperty extends Comparator<String> {

@@ -1,5 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ValueReference;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;

@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.netbeans.gradle.project.properties.ConfigPath;
-import org.netbeans.gradle.project.properties.ConfigTree;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
-import org.netbeans.gradle.project.properties.PropertyDef;
-import org.netbeans.gradle.project.properties.PropertyValueDef;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
 
 public final class LicenseHeaderInfoProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("license-header");

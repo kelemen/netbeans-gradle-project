@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Arrays;

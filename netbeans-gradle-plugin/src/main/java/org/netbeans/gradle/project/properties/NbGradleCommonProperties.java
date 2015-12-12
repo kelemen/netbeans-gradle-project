@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.nio.charset.Charset;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;

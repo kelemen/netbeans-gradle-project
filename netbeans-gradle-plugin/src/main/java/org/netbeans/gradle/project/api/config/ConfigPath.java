@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

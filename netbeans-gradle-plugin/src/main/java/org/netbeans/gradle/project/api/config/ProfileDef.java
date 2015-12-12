@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.netbeans.gradle.project.properties.ProfileKey;
 
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that

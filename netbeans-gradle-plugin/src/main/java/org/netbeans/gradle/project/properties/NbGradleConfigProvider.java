@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

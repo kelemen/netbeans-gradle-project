@@ -1,10 +1,9 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config;
 
 import java.util.Collection;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.cancel.CancellationToken;
-import org.netbeans.gradle.project.api.config.ProfileDef;
 
 public interface ProjectSettingsProvider {
     @Nonnull

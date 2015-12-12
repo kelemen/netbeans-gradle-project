@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;

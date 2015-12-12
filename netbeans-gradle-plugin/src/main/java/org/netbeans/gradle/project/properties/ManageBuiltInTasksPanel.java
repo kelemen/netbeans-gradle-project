@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ItemEvent;

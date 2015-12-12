@@ -4,7 +4,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.properties.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
 import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
 import org.netbeans.gradle.project.properties.ProfileBasedPanel;

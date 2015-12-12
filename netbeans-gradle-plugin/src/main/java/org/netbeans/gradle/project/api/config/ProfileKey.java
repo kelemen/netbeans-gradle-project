@@ -1,10 +1,9 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config;
 
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.api.config.ProfileDef;
 
 public final class ProfileKey {
     public static final ProfileKey DEFAULT_PROFILE = null;

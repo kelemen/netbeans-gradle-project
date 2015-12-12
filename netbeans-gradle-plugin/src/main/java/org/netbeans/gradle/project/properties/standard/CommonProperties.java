@@ -5,11 +5,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.netbeans.gradle.project.properties.ConfigTree;
-import org.netbeans.gradle.project.properties.PropertyKeyEncodingDef;
-import org.netbeans.gradle.project.properties.PropertyValueDef;
-import org.netbeans.gradle.project.properties.ValueMerger;
-import org.netbeans.gradle.project.properties.ValueReference;
+import org.netbeans.gradle.project.api.config.ConfigTree;
+import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.ValueReference;
 
 public final class CommonProperties {
     private static final String SAVE_FILE_NAME_SEPARATOR = "/";

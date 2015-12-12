@@ -56,7 +56,7 @@ import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
-import org.netbeans.gradle.project.properties.ProjectSettingsProvider;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.spi.project.support.LookupProviderSupport;

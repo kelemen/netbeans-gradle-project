@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;

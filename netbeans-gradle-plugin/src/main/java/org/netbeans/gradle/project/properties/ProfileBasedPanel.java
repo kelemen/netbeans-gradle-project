@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;

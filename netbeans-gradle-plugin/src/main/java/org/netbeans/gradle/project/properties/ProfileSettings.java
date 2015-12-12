@@ -1,5 +1,10 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.ConfigTree;
+import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,5 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ValueReference;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
