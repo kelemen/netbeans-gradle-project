@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
+import org.netbeans.gradle.project.properties.ProjectSettingsProvider;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
@@ -114,6 +115,7 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(ProjectConfigurationProvider.class.getName(), wrappedLookup);
             typeActions.put(JavaExtension.class.getName(), wrappedLookup);
             typeActions.put(SharabilityQueryImplementation2.class.getName(), wrappedLookup);
+            typeActions.put(ProjectSettingsProvider.class.getName(), wrappedLookup);
             typeActions.put("org.netbeans.modules.maven.NbMavenProjectImpl", wrappedLookup);
             typeActions.put("org.netbeans.modules.web.browser.spi.ProjectBrowserProvider", wrappedLookup);
             typeActions.put("org.netbeans.spi.project.ui.ProjectProblemsProvider", wrappedLookup);
