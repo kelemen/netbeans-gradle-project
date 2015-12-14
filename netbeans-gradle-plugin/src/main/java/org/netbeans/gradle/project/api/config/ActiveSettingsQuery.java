@@ -21,6 +21,11 @@ public interface ActiveSettingsQuery {
      * The returned property does not need to be re-requested. That is, calling
      * this method multiple times with the same argument returns effectively
      * the same property (note that this does not necessarily means reference equality).
+     * <P>
+     * <B>Note</B>: The value of this property can easily be {@code null} if the
+     * property is not defined anywhere. That is, neither in this profile or
+     * in its fallback profiles (which is currently only the default profile).
+     * <B>Therefore, you must always expect a {@code null} value for this property.</B>
      *
      * @param <ValueType> the type of the value of the property
      * @param propertyDef the definition of property defining how to parse or
