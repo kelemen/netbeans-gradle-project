@@ -9,6 +9,5 @@ public interface SingleProfileSettings {
     @Nullable
     public ProfileKey getKey();
 
-    // FIXME: ValueKey should be ?
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef);
+    public <ValueType> MutableProperty<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef);
 }

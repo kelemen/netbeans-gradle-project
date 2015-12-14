@@ -348,8 +348,8 @@ public final class ProfileSettings {
         }
     }
 
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(
-            PropertyDef<ValueKey, ValueType> propertyDef) {
+    public <ValueType> MutableProperty<ValueType> getProperty(
+            PropertyDef<?, ValueType> propertyDef) {
         return new DomTrackingProperty<>(propertyDef);
     }
 

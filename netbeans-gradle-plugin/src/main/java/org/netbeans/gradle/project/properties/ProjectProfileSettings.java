@@ -217,7 +217,7 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
     }
 
     @Override
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
+    public <ValueType> MutableProperty<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
         final MutableProperty<ValueType> result = settings.getProperty(propertyDef);
         return new MutableProperty<ValueType>() {
             @Override

@@ -132,7 +132,7 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
         }
 
         @Override
-        public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
+        public <ValueType> MutableProperty<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
             return rootSettings.getProperty(toExtensionDef(propertyDef, extensionName));
         }
     }
