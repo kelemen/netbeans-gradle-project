@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jtrim.utils.ExceptionHelper;
 
 /**
  * Defines a specific profile (configuration) for a Gradle project. Note that
@@ -56,9 +57,35 @@ public final class ProfileDef {
             @Nullable String groupName,
             @Nonnull String fileName,
             @Nonnull String displayName) {
+        this(new ProfileKey(groupName, fileName), displayName);
+    }
 
-        this.profileKey = new ProfileKey(groupName, fileName);
+    /**
+     * Creates a new {@code ProfileDef} instance with the specified properties.
+     *
+     * @param profileKey the key identifying the profile within a particular
+     *   project. This argument cannot be {@code null}.
+     * @param displayName the name to be displayed to the user on the GUI. This
+     *   argument cannot be {@code null}.
+     */
+    public ProfileDef(
+            @Nonnull ProfileKey profileKey,
+            @Nonnull String displayName) {
+        ExceptionHelper.checkNotNullArgument(profileKey, "profileKey");
+        ExceptionHelper.checkNotNullArgument(displayName, "displayName");
+
+        this.profileKey = profileKey;
         this.displayName = displayName;
+    }
+
+    /**
+     * Returns the key identifying the profile within a particular project.
+     *
+     * @return the key identifying the profile within a particular project.
+     *   This method never returns {@code null}.
+     */
+    public ProfileKey getProfileKey() {
+        return profileKey;
     }
 
     /**
