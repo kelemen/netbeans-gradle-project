@@ -103,7 +103,7 @@ public final class ConfigPath {
      *   returns {@code null}.
      */
     @Nonnull
-    public ConfigPath getChildPath(@Nonnull String... childKeys) {
+    public ConfigPath withChildPath(@Nonnull String... childKeys) {
         List<String> newKeys = new ArrayList<>(keys.length + childKeys.length);
         newKeys.addAll(keysAsList);
         newKeys.addAll(Arrays.asList(childKeys));
