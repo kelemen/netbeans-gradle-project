@@ -8,6 +8,7 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.config.ValueMerger;
 import org.netbeans.gradle.project.api.config.ValueReference;
 

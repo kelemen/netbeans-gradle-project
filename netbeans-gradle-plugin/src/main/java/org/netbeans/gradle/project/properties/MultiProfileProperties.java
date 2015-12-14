@@ -14,6 +14,7 @@ import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.config.ValueMerger;
 import org.netbeans.gradle.project.api.config.ValueReference;
 import org.netbeans.gradle.project.event.ChangeListenerManager;

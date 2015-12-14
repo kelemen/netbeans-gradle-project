@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 
 public final class DefaultProjectSettingsProvider implements ProjectSettingsProvider {
     private final NbGradleProject project;

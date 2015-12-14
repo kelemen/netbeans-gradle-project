@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
