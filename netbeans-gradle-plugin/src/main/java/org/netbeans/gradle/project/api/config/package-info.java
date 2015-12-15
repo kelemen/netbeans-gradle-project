@@ -7,5 +7,6 @@
  *
  * @see org.netbeans.gradle.project.api.config.CustomProfileQuery
  * @see org.netbeans.gradle.project.api.config.GlobalConfig
+ * @see org.netbeans.gradle.project.api.config.ProjectSettingsProvider
  */
 package org.netbeans.gradle.project.api.config;
