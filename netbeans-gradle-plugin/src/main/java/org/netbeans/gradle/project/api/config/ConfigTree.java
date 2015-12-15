@@ -15,7 +15,7 @@ import org.jtrim.utils.ExceptionHelper;
 /**
  * Defines a tree based configuration store. The edges in the tree are identified
  * by a string and also each node may store a string value (there is no
- * restriciton on what characters the strings may contain). In most practical
+ * restriction on what characters the strings may contain). In most practical
  * use-cases, you can think of edges as {@literal XML} tags and values as their
  * {@literal CDATA} content. All strings are treated as case sensitive.
  * <P>
