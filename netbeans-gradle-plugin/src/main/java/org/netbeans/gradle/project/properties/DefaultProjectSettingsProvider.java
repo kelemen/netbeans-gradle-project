@@ -51,6 +51,10 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
     public ExtensionSettings getExtensionSettings(final String extensionName) {
         ExceptionHelper.checkNotNullArgument(extensionName, "extensionName");
 
+        if (extensionName.isEmpty()) {
+            return new RootExtensionSettings(project);
+        }
+
         final ExtensionActiveSettingsQuery activeSettings = new ExtensionActiveSettingsQuery(project.getActiveSettingsQuery(), extensionName);
         return new ExtensionSettings() {
             @Override
@@ -135,6 +139,30 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
         @Override
         public <ValueType> MutableProperty<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
             return rootSettings.getProperty(toExtensionDef(propertyDef, extensionName));
+        }
+    }
+
+    private static final class RootExtensionSettings implements ExtensionSettings {
+        private final NbGradleProject project;
+
+        public RootExtensionSettings(NbGradleProject project) {
+            ExceptionHelper.checkNotNullArgument(project, "project");
+            this.project = project;
+        }
+
+        @Override
+        public ActiveSettingsQuery getActiveSettings() {
+            return project.getActiveSettingsQuery();
+        }
+
+        @Override
+        public ActiveSettingsQuery loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile) {
+            return project.loadActiveSettingsForProfile(profile);
+        }
+
+        @Override
+        public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, ActiveSettingsQueryListener settingsQueryListener) {
+            project.loadActiveSettingsForProfile(profile, settingsQueryListener);
         }
     }
 }
