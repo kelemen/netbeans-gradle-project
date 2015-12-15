@@ -11,6 +11,7 @@ import org.jtrim.property.PropertySource;
  * The view of the project properties always assumes a selected profile.
  *
  * @see ProjectSettingsProvider
+ * @see PropertyReference
  */
 public interface ActiveSettingsQuery {
     /**

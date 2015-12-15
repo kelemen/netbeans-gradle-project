@@ -19,6 +19,7 @@ import org.jtrim.cancel.CancellationToken;
  * method.
  *
  * @see ProfileDef
+ * @see PropertyReference
  */
 public interface ProjectSettingsProvider {
     /**
