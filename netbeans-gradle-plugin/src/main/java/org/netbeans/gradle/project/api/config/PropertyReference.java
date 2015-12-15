@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -8,11 +8,6 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.api.config.SingleProfileSettings;
-import org.netbeans.gradle.project.api.config.ValueMerger;
-import org.netbeans.gradle.project.api.config.ValueReference;
 
 /**
  * Defines a complete project property definition with every fallbacks.
@@ -22,7 +17,7 @@ import org.netbeans.gradle.project.api.config.ValueReference;
  * @param <ValueType> the type of the value of the property
  *
  * @see ActiveSettingsQuery
- * @see org.netbeans.gradle.project.api.config.ProjectSettingsProvider
+ * @see ProjectSettingsProvider
  */
 public final class PropertyReference<ValueType> {
     private final PropertyDef<?, ValueType> propertyDef;

@@ -6,13 +6,13 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
 import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
 import org.netbeans.gradle.project.properties.ProfileBasedPanel;
 import org.netbeans.gradle.project.properties.ProfileValuesEditor;
 import org.netbeans.gradle.project.properties.ProfileValuesEditorFactory;
-import org.netbeans.gradle.project.properties.PropertyReference;
 import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 
