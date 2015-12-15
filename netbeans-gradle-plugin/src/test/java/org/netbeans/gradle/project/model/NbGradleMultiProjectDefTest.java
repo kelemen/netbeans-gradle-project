@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
-import static org.netbeans.gradle.project.model.NbGradleProjectTreeTest.createTree;
+import static org.netbeans.gradle.project.model.NbGradleProjectTreeTest.*;
 
 public class NbGradleMultiProjectDefTest {
     public static NbGradleMultiProjectDef createTestMultiProject() {

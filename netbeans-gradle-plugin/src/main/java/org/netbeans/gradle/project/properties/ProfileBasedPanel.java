@@ -45,12 +45,11 @@ import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
-import static org.jtrim.property.BoolProperties.isNull;
-import static org.jtrim.property.BoolProperties.not;
-import static org.jtrim.property.PropertyFactory.convert;
+import static org.jtrim.property.BoolProperties.*;
+import static org.jtrim.property.PropertyFactory.*;
 import static org.jtrim.property.swing.AutoDisplayState.*;
-import static org.jtrim.property.swing.SwingProperties.comboBoxSelection;
-import static org.netbeans.gradle.project.properties.NbProperties.lessThanOrEqual;
+import static org.jtrim.property.swing.SwingProperties.*;
+import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
 public class ProfileBasedPanel extends javax.swing.JPanel {

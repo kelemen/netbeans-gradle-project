@@ -10,7 +10,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
-import static org.netbeans.gradle.project.java.query.AutoJavaBinaryForSourceQuery.SOURCES_SUFFIX;
+import static org.netbeans.gradle.project.java.query.AutoJavaBinaryForSourceQuery.*;
 
 @ServiceProviders({
     @ServiceProvider(service = SourceForBinaryQueryImplementation2.class),

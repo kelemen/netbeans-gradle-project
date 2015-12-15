@@ -57,8 +57,8 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
-import static org.netbeans.spi.project.ActionProvider.*;
 import static org.junit.Assert.*;
+import static org.netbeans.spi.project.ActionProvider.*;
 
 @SuppressWarnings("deprecation")
 public class SimpleJavaProjectTest {

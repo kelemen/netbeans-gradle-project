@@ -17,7 +17,7 @@ import org.jtrim.property.swing.DelayedGlassPane;
 import org.jtrim.property.swing.GlassPaneFactory;
 import org.jtrim.utils.ExceptionHelper;
 
-import static org.jtrim.property.swing.AutoDisplayState.invisibleGlassPane;
+import static org.jtrim.property.swing.AutoDisplayState.*;
 
 public final class GlassPanes {
     private static final Color LOADING_PANEL_BASE_BCKG = Color.GRAY;
