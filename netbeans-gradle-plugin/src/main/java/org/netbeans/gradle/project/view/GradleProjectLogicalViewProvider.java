@@ -39,7 +39,6 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfo.Kind;
-import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
@@ -50,7 +49,6 @@ import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties.AddNewTaskPanel;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
@@ -514,12 +512,8 @@ implements
         }
 
         private void addNewCommonTaskTask(final PredefinedTask newTaskDef) {
-            ActiveSettingsQueryEx activeSettings = project.getActiveSettingsQuery();
-
-            SingleProfileSettings profile = activeSettings.currentProfileSettings().getValue();
             NbGradleCommonProperties commonProperties = project.getCommonProperties();
-
-            MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().forProfile(profile);
+            MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().tryGetForActiveProfile();
 
             List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
             List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);
