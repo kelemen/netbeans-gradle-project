@@ -5,9 +5,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.netbeans.gradle.project.properties.ConfigPath;
-import org.netbeans.gradle.project.properties.PropertyDef;
-import org.netbeans.gradle.project.properties.PropertyValueDef;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class SourceEncodingProperty {

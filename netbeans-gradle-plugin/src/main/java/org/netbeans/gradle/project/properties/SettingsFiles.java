@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.model.NbGradleModel;
 
 public final class SettingsFiles {

@@ -1,5 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
+import org.netbeans.gradle.project.api.config.ConfigTree;
+
 public abstract class AbstractConfigNodeProperty implements ConfigNodeProperty {
     @Override
     public ConfigNodeProperty getChildSorter(String keyName) {

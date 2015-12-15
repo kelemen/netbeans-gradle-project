@@ -13,6 +13,10 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.ValueReference;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -26,14 +30,14 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
 
     public MultiProfileProperties(List<SingleProfileSettingsEx> initialProfiles) {
         this.currentProfileSettingsList = PropertyFactory.memPropertyConcurrent(
-                CollectionsEx.readOnlyCopy(initialProfiles),
+                CollectionsEx.readOnlyCopy(copySettings(initialProfiles)),
                 SwingTaskExecutor.getStrictExecutor(false));
 
         this.currentProfileChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentProfileSettingsEx = new PropertySource<SingleProfileSettingsEx>() {
             @Override
             public SingleProfileSettingsEx getValue() {
-                return tryGetCurrentProfileSettings();
+                return getCurrentProfileSettings();
             }
 
             @Override
@@ -62,9 +66,20 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         return null;
     }
 
-    private SingleProfileSettingsEx tryGetCurrentProfileSettings() {
+    private static List<SingleProfileSettingsEx> copySettings(List<? extends SingleProfileSettingsEx> settings) {
+        List<SingleProfileSettingsEx> result = CollectionsEx.readOnlyCopy(settings);
+
+        ExceptionHelper.checkNotNullElements(result, "settings");
+        ExceptionHelper.checkArgumentInRange(result.size(), 1, Integer.MAX_VALUE, "settings.size()");
+        return result;
+    }
+
+    private SingleProfileSettingsEx getCurrentProfileSettings() {
         List<SingleProfileSettingsEx> allProfileSettings = currentProfileSettingsList.getValue();
-        return allProfileSettings.isEmpty() ? null : allProfileSettings.get(0);
+        if (allProfileSettings.isEmpty()) {
+            throw new AssertionError("No profile was set.");
+        }
+        return allProfileSettings.get(0);
     }
 
     @Override
@@ -78,12 +93,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
     }
 
     public void setProfileSettings(List<? extends SingleProfileSettingsEx> newSettings) {
-        List<SingleProfileSettingsEx> settingsCopy = CollectionsEx.readOnlyCopy(newSettings);
-
-        ExceptionHelper.checkNotNullElements(settingsCopy, "newSettings");
-        ExceptionHelper.checkArgumentInRange(settingsCopy.size(), 1, Integer.MAX_VALUE, "newSettings.size()");
-
-        currentProfileSettingsList.setValue(settingsCopy);
+        currentProfileSettingsList.setValue(copySettings(newSettings));
         currentProfileChangeListeners.fireEventually();
     }
 

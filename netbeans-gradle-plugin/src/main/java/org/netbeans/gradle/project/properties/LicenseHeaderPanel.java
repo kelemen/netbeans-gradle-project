@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
@@ -88,7 +90,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            licenseHeaderInfoRef.trySetValue(currentInfo);
+            licenseHeaderInfoRef.setValue(currentInfo);
         }
     }
 

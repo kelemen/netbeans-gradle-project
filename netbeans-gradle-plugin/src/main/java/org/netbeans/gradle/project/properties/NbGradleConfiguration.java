@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ProjectConfiguration;
 

@@ -1,10 +1,10 @@
 package org.netbeans.gradle.project.properties.standard;
 
 import java.nio.file.Path;
-import org.netbeans.gradle.project.properties.ConfigPath;
-import org.netbeans.gradle.project.properties.ConfigTree;
-import org.netbeans.gradle.project.properties.PropertyDef;
-import org.netbeans.gradle.project.properties.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.api.config.ConfigPath;
+import org.netbeans.gradle.project.api.config.ConfigTree;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 
 public final class UserInitScriptProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("user-init-script");

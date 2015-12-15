@@ -7,6 +7,7 @@ import java.util.List;
 import org.gradle.util.GradleVersion;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.openide.util.NbBundle;
 
@@ -437,7 +438,15 @@ public final class NbStrings {
     }
 
     public static String getModelLoadStrategy(ModelLoadingStrategy strategy) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.ModelLoadStrategy." + strategy.name());
+        return getEnumDisplayValue(strategy);
+    }
+
+    public static String getDebugMode(DebugMode debugMode) {
+        return getEnumDisplayValue(debugMode);
+    }
+
+    private static String getEnumDisplayValue(Enum<?> value) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings." + value.getClass().getSimpleName() + "." + value.name());
     }
 
     public static String getJavaSourcesDisplayMode(JavaSourcesDisplayMode displayMode) {
@@ -563,6 +572,10 @@ public final class NbStrings {
 
     public static String getSettingsCategoryTasks() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Tasks");
+    }
+
+    public static String getSettingsCategoryDebug() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Debug");
     }
 
     public static String getSettingsCategoryOther() {

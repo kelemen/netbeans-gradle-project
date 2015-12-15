@@ -16,6 +16,8 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -215,7 +217,7 @@ final class ProjectProfileSettings implements SingleProfileSettingsEx {
     }
 
     @Override
-    public <ValueKey, ValueType> MutableProperty<ValueType> getProperty(PropertyDef<ValueKey, ValueType> propertyDef) {
+    public <ValueType> MutableProperty<ValueType> getProperty(PropertyDef<?, ValueType> propertyDef) {
         final MutableProperty<ValueType> result = settings.getProperty(propertyDef);
         return new MutableProperty<ValueType>() {
             @Override

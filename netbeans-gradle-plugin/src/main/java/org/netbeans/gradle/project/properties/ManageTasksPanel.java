@@ -13,6 +13,8 @@ import javax.swing.event.ListSelectionListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
@@ -204,7 +206,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            customTasksRef.trySetValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
+            customTasksRef.setValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
         }
     }
 

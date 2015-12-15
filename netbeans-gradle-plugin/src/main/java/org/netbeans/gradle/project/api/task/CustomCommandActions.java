@@ -81,6 +81,7 @@ public final class CustomCommandActions {
         private ContextAwareGradleTargetVerifier contextAwareGradleTargetVerifier;
         private CommandExceptionHider commandExceptionHider;
         private CancellationToken cancelToken;
+        private GradleCommandServiceFactory commandServiceFactory;
 
         /**
          * Creates a new {@code Builder} with the specified task kind and with
@@ -110,6 +111,24 @@ public final class CustomCommandActions {
             this.singleExecutionStdOutProcessor = null;
             this.singleExecutionStdErrProcessor = null;
             this.cancelToken = Cancellation.UNCANCELABLE_TOKEN;
+            this.commandServiceFactory = null;
+        }
+
+        /**
+         * Sets the {@code GradleCommandServiceFactory} which might define a
+         * service which lives during the execution of the associated Gradle command.
+         * The service may also provide {@link TaskVariable task variables} as
+         * a last chance to replace task variables in Gradle command templates.
+         * <P>
+         * The default value of this property is {@code null}.
+         *
+         * @param commandServiceFactory the {@code GradleCommandServiceFactory}
+         *   which might define a service which lives during the execution of
+         *   the associated Gradle command. This argument can be {@code null}
+         *   if no such service is required.
+         */
+        public void setCommandServiceFactory(@Nullable GradleCommandServiceFactory commandServiceFactory) {
+            this.commandServiceFactory = commandServiceFactory;
         }
 
         /**
@@ -391,6 +410,7 @@ public final class CustomCommandActions {
     private final CommandExceptionHider commandExceptionHider;
     private final ContextAwareCommandArguments contextAwareCommandArguments;
     private final CancellationToken cancelToken;
+    private final GradleCommandServiceFactory commandServiceFactory;
 
     private CustomCommandActions(Builder builder) {
         this.taskKind = builder.taskKind;
@@ -406,6 +426,23 @@ public final class CustomCommandActions {
         this.commandExceptionHider = builder.commandExceptionHider;
         this.contextAwareCommandArguments = builder.contextAwareCommandArguments;
         this.cancelToken = builder.cancelToken;
+        this.commandServiceFactory = builder.commandServiceFactory;
+    }
+
+    /**
+     * Returns the {@code GradleCommandServiceFactory} which might define a
+     * service which lives during the execution of the associated Gradle command.
+     * The service may also provide {@link TaskVariable task variables} as
+     * a last chance to replace task variables in Gradle command templates.
+     *
+     * @return the {@code GradleCommandServiceFactory}
+     *   which might define a service which lives during the execution of
+     *   the associated Gradle command. This method may return {@code null}
+     *   if no such service is required.
+     */
+    @Nullable
+    public GradleCommandServiceFactory getCommandServiceFactory() {
+        return commandServiceFactory;
     }
 
     /**

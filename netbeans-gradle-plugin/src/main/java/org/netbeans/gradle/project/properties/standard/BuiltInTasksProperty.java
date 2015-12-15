@@ -13,18 +13,18 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.PropertyDef;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.api.config.SingleProfileSettings;
+import org.netbeans.gradle.project.api.config.ValueMerger;
+import org.netbeans.gradle.project.api.config.ValueReference;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.properties.ActiveSettingsQuery;
-import org.netbeans.gradle.project.properties.ConfigPath;
 import org.netbeans.gradle.project.properties.PredefinedTask;
-import org.netbeans.gradle.project.properties.ProfileKey;
-import org.netbeans.gradle.project.properties.PropertyDef;
-import org.netbeans.gradle.project.properties.PropertyValueDef;
-import org.netbeans.gradle.project.properties.SingleProfileSettings;
-import org.netbeans.gradle.project.properties.ValueMerger;
-import org.netbeans.gradle.project.properties.ValueReference;
 
 public final class BuiltInTasksProperty {
     private static final ConfigPath CONFIG_ROOT_BUILT_IN_TASKS = ConfigPath.fromKeys("built-in-tasks");
@@ -103,7 +103,7 @@ public final class BuiltInTasksProperty {
         SingleProfileSettings settings = settingsQuery.currentProfileSettings().getValue();
         ProfileKey key = settings != null ? settings.getKey() : null;
         return key != null
-                ? new ProfileDef(key.getGroupName(), key.getFileName(), key.getFileName())
+                ? new ProfileDef(key, key.getFileName())
                 : null;
     }
 

@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
@@ -114,6 +115,7 @@ public final class ProjectLookupHack extends ProxyLookup {
             typeActions.put(ProjectConfigurationProvider.class.getName(), wrappedLookup);
             typeActions.put(JavaExtension.class.getName(), wrappedLookup);
             typeActions.put(SharabilityQueryImplementation2.class.getName(), wrappedLookup);
+            typeActions.put(ProjectSettingsProvider.class.getName(), wrappedLookup);
             typeActions.put("org.netbeans.modules.maven.NbMavenProjectImpl", wrappedLookup);
             typeActions.put("org.netbeans.modules.web.browser.spi.ProjectBrowserProvider", wrappedLookup);
             typeActions.put("org.netbeans.spi.project.ui.ProjectProblemsProvider", wrappedLookup);

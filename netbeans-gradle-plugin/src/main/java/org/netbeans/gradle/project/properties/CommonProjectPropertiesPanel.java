@@ -17,6 +17,8 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
@@ -200,12 +202,12 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         @Override
         public void applyValues() {
-            commonProperties.scriptPlatform().trySetValue(scriptPlatform);
-            commonProperties.gradleLocation().trySetValue(gradleLocation);
-            commonProperties.targetPlatform().trySetValue(targetPlatform);
-            commonProperties.sourceEncoding().trySetValue(sourceEncoding);
-            commonProperties.sourceLevel().trySetValue(sourceLevel);
-            commonProperties.userInitScriptPath().trySetValue(userInitScript);
+            commonProperties.scriptPlatform().setValue(scriptPlatform);
+            commonProperties.gradleLocation().setValue(gradleLocation);
+            commonProperties.targetPlatform().setValue(targetPlatform);
+            commonProperties.sourceEncoding().setValue(sourceEncoding);
+            commonProperties.sourceLevel().setValue(sourceLevel);
+            commonProperties.userInitScriptPath().setValue(userInitScript);
         }
 
         private void displayGradleLocation() {
@@ -362,29 +364,29 @@ public class CommonProjectPropertiesPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSourceLevelCombo = new javax.swing.JComboBox<String>();
+        jSourceLevelCombo = new javax.swing.JComboBox<>();
         jGradleHomeEdit = new javax.swing.JTextField();
         jGradleHomeInherit = new javax.swing.JCheckBox();
         jSourceEncodingInherit = new javax.swing.JCheckBox();
         jPlatformComboInherit = new javax.swing.JCheckBox();
-        jScriptPlatformCombo = new javax.swing.JComboBox<JavaPlatformComboItem>();
+        jScriptPlatformCombo = new javax.swing.JComboBox<>();
         jSourceLevelComboInherit = new javax.swing.JCheckBox();
         jScriptPlatformInherit = new javax.swing.JCheckBox();
         jPlatformPreferenceButton = new javax.swing.JButton();
-        jPlatformCombo = new javax.swing.JComboBox<ProjectPlatformComboItem>();
+        jPlatformCombo = new javax.swing.JComboBox<>();
         jGradleHomeCaption = new javax.swing.JLabel();
         jSourceEncodingCaption = new javax.swing.JLabel();
         jTargetPlatformCaption = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jSourceLevelCaption = new javax.swing.JLabel();
         jGradleHomeChangeButton = new javax.swing.JButton();
-        jSourceEncoding = new javax.swing.JComboBox<Charset>();
+        jSourceEncoding = new javax.swing.JComboBox<>();
         jUserInitScriptCaption = new javax.swing.JLabel();
         jUserInitScript = new javax.swing.JTextField();
         jUserInitScriptInherit = new javax.swing.JCheckBox();
         jUserInitScriptBrowseButton = new javax.swing.JButton();
 
-        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
+        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
 
         jGradleHomeEdit.setEditable(false);
         jGradleHomeEdit.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeEdit.text")); // NOI18N

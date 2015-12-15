@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
-import static org.netbeans.gradle.project.model.NbGradleMultiProjectDefTest.createTestMultiProject;
+import static org.netbeans.gradle.project.model.NbGradleMultiProjectDefTest.*;
 
 public class NbGenericModelInfoTest {
     @Test

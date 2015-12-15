@@ -14,7 +14,9 @@ ext.scriptFile = { String fileName ->
 }
 
 apply from: scriptFile('compiler-settings.gradle');
-configureJavaCompilers(7);
+int javaVersion = 7;
+
+configureJavaCompilers(javaVersion);
 
 String netbeansVersion = 'RELEASE81'
 
@@ -28,7 +30,7 @@ repositories {
 
 compileJava {
     String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator);
-    options.compilerArgs = ['-sourcepath', resDirsPath]
+    options.compilerArgs = ['-Xlint', '-sourcepath', resDirsPath]
 }
 
 def tryGetProperty = {String name, String defaultValue ->
@@ -156,6 +158,7 @@ dependencies {
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-codecoverage')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
+    providedCompile files(findToolsJar(javaVersion))
 
     compile 'org.slf4j:slf4j-api:1.7.2'
     compile 'com.google.code.findbugs:jsr305:2.0.1'

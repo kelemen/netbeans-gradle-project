@@ -33,10 +33,15 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
@@ -51,6 +56,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     private static final Logger LOGGER = Logger.getLogger(ProfileBasedPanel.class.getName());
 
     private final NbGradleProject project;
+    private final ProjectSettingsProvider.ExtensionSettings extensionSettings;
     private final ProfileValuesEditorFactory snapshotCreator;
     private final AtomicIntProperty profileLoadCounter;
     private final Map<ProfileItem, ProfileValuesEditor> snapshots;
@@ -60,14 +66,17 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private ProfileBasedPanel(
             NbGradleProject project,
+            ProjectSettingsProvider.ExtensionSettings extensionSettings,
             final JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
 
         ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
         ExceptionHelper.checkNotNullArgument(customPanel, "customPanel");
         ExceptionHelper.checkNotNullArgument(snapshotCreator, "snapshotCreator");
 
         this.project = project;
+        this.extensionSettings = extensionSettings;
         this.snapshotCreator = snapshotCreator;
         this.profileLoadCounter = new AtomicIntProperty(SwingTaskExecutor.getStrictExecutor(false));
         this.currentlyShownProfile = null;
@@ -116,10 +125,37 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     public static ProfileBasedPanel createPanel(
-            NbGradleProject project,
+            Project project,
             JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
-        ProfileBasedPanel result = new ProfileBasedPanel(project, customPanel, snapshotCreator);
+
+        final ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
+        if (settingsProvider == null) {
+            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
+        }
+
+        return createPanel(project, settingsProvider.getExtensionSettings(""), customPanel, snapshotCreator);
+    }
+
+    public static ProfileBasedPanel createPanel(
+            Project project,
+            ProjectSettingsProvider.ExtensionSettings extensionSettings,
+            JComponent customPanel,
+            ProfileValuesEditorFactory snapshotCreator) {
+        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        if (gradleProject == null) {
+            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
+        }
+
+        return createPanel(gradleProject, extensionSettings, customPanel, snapshotCreator);
+    }
+
+    private static ProfileBasedPanel createPanel(
+            NbGradleProject project,
+            ProjectSettingsProvider.ExtensionSettings extensionSettings,
+            JComponent customPanel,
+            ProfileValuesEditorFactory snapshotCreator) {
+        ProfileBasedPanel result = new ProfileBasedPanel(project, extensionSettings, customPanel, snapshotCreator);
         result.fetchProfilesAndSelect();
         return result;
     }
@@ -244,7 +280,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         }
 
         final PanelLockRef lock = lockPanel();
-        project.loadActiveSettingsForProfile(selected.getProfileKey(), new ActiveSettingsQueryListener() {
+        extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, selected.getProfileKey(), new ActiveSettingsQueryListener() {
             @Override
             public void onLoad(final ActiveSettingsQuery settings) {
                 String displayName = selected.config.getDisplayName();

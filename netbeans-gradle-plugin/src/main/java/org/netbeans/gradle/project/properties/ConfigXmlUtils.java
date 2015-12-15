@@ -32,6 +32,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
