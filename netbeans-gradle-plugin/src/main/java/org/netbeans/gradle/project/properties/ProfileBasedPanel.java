@@ -130,27 +130,12 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
 
-        final NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
+        final ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
+        if (settingsProvider == null) {
             throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
         }
-        ProjectSettingsProvider.ExtensionSettings extensionSettings = new ProjectSettingsProvider.ExtensionSettings() {
-            @Override
-            public ActiveSettingsQuery getActiveSettings() {
-                return gradleProject.getActiveSettingsQuery();
-            }
 
-            @Override
-            public ActiveSettingsQuery loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile) {
-                return gradleProject.loadActiveSettingsForProfile(profile);
-            }
-
-            @Override
-            public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, ActiveSettingsQueryListener settingsQueryListener) {
-                gradleProject.loadActiveSettingsForProfile(profile, settingsQueryListener);
-            }
-        };
-        return createPanel(project, extensionSettings, customPanel, snapshotCreator);
+        return createPanel(project, settingsProvider.getExtensionSettings(""), customPanel, snapshotCreator);
     }
 
     public static ProfileBasedPanel createPanel(
