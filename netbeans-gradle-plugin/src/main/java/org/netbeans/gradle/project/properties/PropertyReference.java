@@ -151,8 +151,7 @@ public final class PropertyReference<ValueType> {
      */
     @Nullable
     public ValueType tryGetValueWithoutFallback() {
-        MutableProperty<ValueType> property = tryGetForActiveProfile();
-        return property != null ? property.getValue() : null;
+        return getForActiveProfile().getValue();
     }
 
     /**
@@ -162,17 +161,9 @@ public final class PropertyReference<ValueType> {
      * @param value the value to which this property is set. This argument
      *   can be {@code null}. Setting a property to {@code null} means setting
      *   it to the default value.
-     * @return always returs {@code true}
      */
-    public boolean trySetValue(ValueType value) {
-        // FIXME: This property should never be null, so the check is pointless.
-        MutableProperty<ValueType> property = tryGetForActiveProfile();
-        if (property == null) {
-            return false;
-        }
-
-        property.setValue(value);
-        return true;
+    public void setValue(ValueType value) {
+        getForActiveProfile().setValue(value);
     }
 
     /**
@@ -188,23 +179,9 @@ public final class PropertyReference<ValueType> {
      *   the value of this property not considering fallback values. This method
      *   never returns {@code null}.
      */
-    @Nullable
-    public MutableProperty<ValueType> tryGetForActiveProfile() {
-         // FIXME: This property should never be null, so the check is pointless.
-        SingleProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
-        return settings != null ? forProfile(settings) : null;
-    }
-
-    /**
-     * Returns the {@code MutableProperty} which can be used to access and alter
-     * the value of this property from the given profile.
-     *
-     * @returnthe {@code MutableProperty} which can be used to access and alter
-     *   the value of this property from the given profile. This method
-     *   never returns {@code null}.
-     */
     @Nonnull
-    public MutableProperty<ValueType> forProfile(SingleProfileSettings settings) {
+    public MutableProperty<ValueType> getForActiveProfile() {
+        SingleProfileSettings settings = activeSettingsQuery.currentProfileSettings().getValue();
         return settings.getProperty(propertyDef);
     }
 }

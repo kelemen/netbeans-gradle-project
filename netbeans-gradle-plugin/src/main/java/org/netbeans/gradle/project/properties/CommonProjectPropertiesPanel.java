@@ -201,12 +201,12 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         @Override
         public void applyValues() {
-            commonProperties.scriptPlatform().trySetValue(scriptPlatform);
-            commonProperties.gradleLocation().trySetValue(gradleLocation);
-            commonProperties.targetPlatform().trySetValue(targetPlatform);
-            commonProperties.sourceEncoding().trySetValue(sourceEncoding);
-            commonProperties.sourceLevel().trySetValue(sourceLevel);
-            commonProperties.userInitScriptPath().trySetValue(userInitScript);
+            commonProperties.scriptPlatform().setValue(scriptPlatform);
+            commonProperties.gradleLocation().setValue(gradleLocation);
+            commonProperties.targetPlatform().setValue(targetPlatform);
+            commonProperties.sourceEncoding().setValue(sourceEncoding);
+            commonProperties.sourceLevel().setValue(sourceLevel);
+            commonProperties.userInitScriptPath().setValue(userInitScript);
         }
 
         private void displayGradleLocation() {

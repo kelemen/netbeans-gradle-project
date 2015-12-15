@@ -358,7 +358,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
                 }
             }
 
-            builtInTasksRef.trySetValue(BuiltInTasksProperty.createValue(taskMap.values()));
+            builtInTasksRef.setValue(BuiltInTasksProperty.createValue(taskMap.values()));
         }
     }
 

@@ -93,7 +93,7 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            debugModeRef.trySetValue(currentDebugMode);
+            debugModeRef.setValue(currentDebugMode);
         }
     }
 

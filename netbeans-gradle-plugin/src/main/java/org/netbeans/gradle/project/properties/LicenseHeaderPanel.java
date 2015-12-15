@@ -89,7 +89,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            licenseHeaderInfoRef.trySetValue(currentInfo);
+            licenseHeaderInfoRef.setValue(currentInfo);
         }
     }
 

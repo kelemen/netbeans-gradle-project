@@ -513,7 +513,7 @@ implements
 
         private void addNewCommonTaskTask(final PredefinedTask newTaskDef) {
             NbGradleCommonProperties commonProperties = project.getCommonProperties();
-            MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().tryGetForActiveProfile();
+            MutableProperty<PredefinedTasks> commonTasks = commonProperties.customTasks().getForActiveProfile();
 
             List<PredefinedTask> currentTasks = commonTasks.getValue().getTasks();
             List<PredefinedTask> newTasks = new ArrayList<>(currentTasks.size() + 1);

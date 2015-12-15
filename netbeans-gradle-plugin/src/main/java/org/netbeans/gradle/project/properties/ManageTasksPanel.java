@@ -205,7 +205,7 @@ public class ManageTasksPanel extends javax.swing.JPanel {
 
         @Override
         public void applyValues() {
-            customTasksRef.trySetValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
+            customTasksRef.setValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
         }
     }
 
