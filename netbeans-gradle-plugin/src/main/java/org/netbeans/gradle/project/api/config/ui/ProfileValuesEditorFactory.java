@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config.ui;
 
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 

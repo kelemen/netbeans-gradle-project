@@ -26,6 +26,8 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
