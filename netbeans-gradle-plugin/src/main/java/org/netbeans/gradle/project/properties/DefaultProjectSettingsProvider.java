@@ -54,35 +54,9 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
         if (extensionName.isEmpty()) {
             return new RootExtensionSettings(project);
         }
-
-        final ExtensionActiveSettingsQuery activeSettings = new ExtensionActiveSettingsQuery(project.getActiveSettingsQuery(), extensionName);
-        return new ExtensionSettings() {
-            @Override
-            public ActiveSettingsQuery getActiveSettings() {
-                return activeSettings;
-            }
-
-            @Override
-            public ActiveSettingsQuery loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile) {
-                ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-
-                ActiveSettingsQueryEx rootSettings = project.loadActiveSettingsForProfile(profile);
-                return new ExtensionActiveSettingsQuery(rootSettings, extensionName);
-            }
-
-            @Override
-            public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, final ActiveSettingsQueryListener settingsQueryListener) {
-                ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
-                ExceptionHelper.checkNotNullArgument(settingsQueryListener, "settingsQueryListener");
-
-                project.loadActiveSettingsForProfile(profile, new ActiveSettingsQueryListener() {
-                    @Override
-                    public void onLoad(ActiveSettingsQuery settings) {
-                        settingsQueryListener.onLoad(new ExtensionActiveSettingsQuery(settings, extensionName));
-                    }
-                });
-            }
-        };
+        else {
+            return new ExtensionSettingsImpl(project, extensionName);
+        }
     }
 
     private static <ValueKey, ValueType> PropertyDef<ValueKey, ValueType> toExtensionDef(
@@ -163,6 +137,44 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
         @Override
         public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, ActiveSettingsQueryListener settingsQueryListener) {
             project.loadActiveSettingsForProfile(profile, settingsQueryListener);
+        }
+    }
+
+    private static final class ExtensionSettingsImpl implements ExtensionSettings {
+        private final NbGradleProject project;
+        private final ExtensionActiveSettingsQuery activeSettings;
+        private final String extensionName;
+
+        public ExtensionSettingsImpl(NbGradleProject project, String extensionName) {
+            this.project = project;
+            this.activeSettings = new ExtensionActiveSettingsQuery(project.getActiveSettingsQuery(), extensionName);
+            this.extensionName = extensionName;
+        }
+
+        @Override
+        public ActiveSettingsQuery getActiveSettings() {
+            return activeSettings;
+        }
+
+        @Override
+        public ActiveSettingsQuery loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile) {
+            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+
+            ActiveSettingsQueryEx rootSettings = project.loadActiveSettingsForProfile(profile);
+            return new ExtensionActiveSettingsQuery(rootSettings, extensionName);
+        }
+
+        @Override
+        public void loadSettingsForProfile(CancellationToken cancelToken, ProfileKey profile, final ActiveSettingsQueryListener settingsQueryListener) {
+            ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
+            ExceptionHelper.checkNotNullArgument(settingsQueryListener, "settingsQueryListener");
+
+            project.loadActiveSettingsForProfile(profile, new ActiveSettingsQueryListener() {
+                @Override
+                public void onLoad(ActiveSettingsQuery settings) {
+                    settingsQueryListener.onLoad(new ExtensionActiveSettingsQuery(settings, extensionName));
+                }
+            });
         }
     }
 }
