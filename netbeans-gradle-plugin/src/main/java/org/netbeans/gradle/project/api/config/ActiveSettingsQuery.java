@@ -53,7 +53,9 @@ public interface ActiveSettingsQuery {
      * changed by the user.
      *
      * @return the settings of the currently selected profile. This method never
-     *   returns {@code null} and the value of the property is never {@code null}.
+     *   returns {@code null} but the value of the property might be {@code null}
+     *   in some rare cases while the profile has not been completely loaded.
+     *   The value will never be {@code null} for already loaded profiles.
      */
     @Nonnull
     public PropertySource<SingleProfileSettings> currentProfileSettings();
