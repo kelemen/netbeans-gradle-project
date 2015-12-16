@@ -9,7 +9,31 @@ import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
 import org.netbeans.gradle.project.properties.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
+/**
+ * Defines utility methods for creating profile based configuration pages.
+ */
 public final class ProfileBasedConfigurations {
+    /**
+     * Creates a {@code ProjectCustomizer.CompositeCategoryProvider} which might
+     * be added to the extension's lookup.
+     *
+     * @param project the project whose properties the created customizer is
+     *   used to edit. This argument cannot be {@code null}.
+     * @param categoryId the {@code CustomizerCategoryId} defining the page
+     *   titles in the project property dialog. This argument cannot be
+     *   {@code null}.
+     * @param extensionSettings the settings to be adjusted by the customizer.
+     *   This argument cannot be {@code null}.
+     * @param pageFactory a factory to create the component and to display the
+     *   editor of the properties and the logic of setting the properties in
+     *   the settings. This argument cannot be {@code null}.
+     * @return a {@code ProjectCustomizer.CompositeCategoryProvider} which is
+     *   able to adjust the (implicitly) given properties. This argument cannot
+     *   be {@code null}.
+     *
+     * @see org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() GradleProjectExtension2.getExtensionLookup
+     */
+    @Nonnull
     public static ProjectCustomizer.CompositeCategoryProvider createProfileBasedCustomizer(
             @Nonnull final Project project,
             @Nonnull final CustomizerCategoryId categoryId,
