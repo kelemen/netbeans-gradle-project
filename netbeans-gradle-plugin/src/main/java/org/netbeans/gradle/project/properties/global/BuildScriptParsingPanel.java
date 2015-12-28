@@ -27,12 +27,14 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
         jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
                 globalSettings.modelLoadingStrategy().getValue()));
         jLoadRootProjectFirst.setSelected(globalSettings.loadRootProjectFirst().getValue());
+        jReliableJavaVersionCheck.setSelected(globalSettings.mayRelyOnJavaOfScript().getValue());
     }
 
     @Override
     public void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.modelLoadingStrategy().setValue(getModelLoadingStrategy());
         globalSettings.loadRootProjectFirst().setValue(jLoadRootProjectFirst.isSelected());
+        globalSettings.mayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
     }
 
     @Override
