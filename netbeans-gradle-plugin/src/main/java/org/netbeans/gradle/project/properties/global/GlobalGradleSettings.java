@@ -66,6 +66,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode;
     private final StringBasedProperty<Boolean> replaceLfOnStdIn;
     private final StringBasedProperty<DebugMode> debugMode;
+    private final StringBasedProperty<Boolean> loadRootProjectFirst;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -129,6 +130,9 @@ public final class GlobalGradleSettings {
         debugMode = new GlobalProperty<>(
                 withNS(namespace, "debug-mode"),
                 new EnumConverter<>(DebugMode.DEBUGGER_ATTACHES));
+        loadRootProjectFirst = new GlobalProperty<>(
+                withNS(namespace, "load-root-first"),
+                new BooleanConverter(true));
     }
 
     public static void setDefaultPreference() {
@@ -233,6 +237,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<DebugMode> debugMode() {
         return debugMode;
+    }
+
+    public StringBasedProperty<Boolean> loadRootProjectFirst() {
+        return loadRootProjectFirst;
     }
 
     public static GlobalGradleSettings getDefault() {

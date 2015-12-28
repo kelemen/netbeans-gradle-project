@@ -345,8 +345,9 @@ public final class GradleModelLoader {
             NbGradleProject project,
             ProjectLoadRequest projectLoadKey,
             ProgressHandle progress) throws IOException, GradleModelLoadError {
-        // TODO: This method should be optionally disabled by the user in the
-        //       global settings.
+        if (!GlobalGradleSettings.getDefault().loadRootProjectFirst().getValue()) {
+            return projectLoadKey;
+        }
 
         Path rootProjectDir = projectLoadKey.getAppliedRootProjectDir();
         NbGradleProject rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
