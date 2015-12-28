@@ -17,15 +17,19 @@ public final class SerializedNbGradleModels implements Serializable {
     // Maps extension name to serialized extension model
     private final Map<String, byte[]> extensionModels;
 
+    private final boolean rootWithoutSettingsGradle;
+
     private SerializedNbGradleModels(
             NbGenericModelInfo genericInfo,
-            Map<String, byte[]> extensionModels) {
+            Map<String, byte[]> extensionModels,
+            boolean rootWithoutSettingsGradle) {
 
         assert genericInfo != null;
         assert extensionModels != null;
 
         this.genericInfo = genericInfo;
         this.extensionModels = extensionModels;
+        this.rootWithoutSettingsGradle = rootWithoutSettingsGradle;
     }
 
     public static SerializedNbGradleModels createSerialized(NbGradleModel model) {
@@ -51,7 +55,7 @@ public final class SerializedNbGradleModels implements Serializable {
             serializedModels.put(extensionName, serializedModel);
         }
 
-        return new SerializedNbGradleModels(model.getGenericInfo(), serializedModels);
+        return new SerializedNbGradleModels(model.getGenericInfo(), serializedModels, model.isRootWithoutSettingsGradle());
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
@@ -73,6 +77,6 @@ public final class SerializedNbGradleModels implements Serializable {
             }
         }
 
-        return new NbGradleModel(genericInfo, deserializedModels);
+        return new NbGradleModel(genericInfo, deserializedModels, rootWithoutSettingsGradle);
     }
 }

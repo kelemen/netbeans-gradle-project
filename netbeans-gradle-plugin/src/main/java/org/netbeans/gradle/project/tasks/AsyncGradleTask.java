@@ -598,7 +598,7 @@ public final class AsyncGradleTask implements Runnable {
 
     private GradleTaskDef updateGradleTaskDef(GradleTaskDef taskDef) {
         DaemonTaskContext context = daemonTaskContext();
-        List<String> extraArgs = GradleArguments.getExtraArgs(project.getPreferredSettingsFile(), context);
+        List<String> extraArgs = GradleArguments.getExtraArgs(project.getPreferredSettingsGradleDef(), context);
         List<String> extraJvmArgs = GradleArguments.getExtraJvmArgs(context);
 
         GradleTaskDef result;

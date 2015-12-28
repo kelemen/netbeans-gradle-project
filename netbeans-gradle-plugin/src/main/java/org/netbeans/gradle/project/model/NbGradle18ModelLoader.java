@@ -39,13 +39,16 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class NbGradle18ModelLoader implements NbModelLoader {
+    private final SettingsGradleDef settingsGradleDef;
     private final GradleTarget gradleTarget;
     private final OperationInitializer setup;
 
-    public NbGradle18ModelLoader(OperationInitializer setup, GradleTarget gradleTarget) {
+    public NbGradle18ModelLoader(SettingsGradleDef settingsGradleDef, OperationInitializer setup, GradleTarget gradleTarget) {
+        ExceptionHelper.checkNotNullArgument(settingsGradleDef, "settingsGradleDef");
         ExceptionHelper.checkNotNullArgument(setup, "setup");
         ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
 
+        this.settingsGradleDef = settingsGradleDef;
         this.gradleTarget = gradleTarget;
         this.setup = setup;
     }
@@ -74,7 +77,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
         progress.progress(NbStrings.getParsingModel());
 
-        ProjectModelParser parser = new ProjectModelParser(project, modelFetcher);
+        ProjectModelParser parser = new ProjectModelParser(project, settingsGradleDef, modelFetcher);
         return parser.parseModel(fetchedModels);
     }
 
@@ -93,9 +96,15 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final ExtensionModelCache cache;
         private final List<ModelLoadIssue> issues;
         private final Map<String, ModelLoadResult> modelLoadResultCache;
+        private final SettingsGradleDef settingsGradleDef;
 
-        public ProjectModelParser(NbGradleProject mainProject, ProjectModelFetcher modelFetcher) {
+        public ProjectModelParser(
+                NbGradleProject mainProject,
+                SettingsGradleDef settingsGradleDef,
+                ProjectModelFetcher modelFetcher) {
+
             this.mainProject = mainProject;
+            this.settingsGradleDef = settingsGradleDef;
             this.extensions = mainProject.getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
@@ -222,6 +231,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             NbGradleMultiProjectDef projectDef = new NbGradleMultiProjectDef(projectModels.getProjectDef());
             NbGenericModelInfo genericInfo = new NbGenericModelInfo(projectDef, modelFetcher.getSettingsFile());
             NbGradleModel.Builder result = new NbGradleModel.Builder(genericInfo);
+            result.setRootWithoutSettingsGradle(!settingsGradleDef.isMaySearchUpwards());
 
             File projectDir = genericInfo.getProjectDir();
 
