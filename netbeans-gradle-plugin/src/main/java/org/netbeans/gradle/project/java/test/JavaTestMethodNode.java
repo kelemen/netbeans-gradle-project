@@ -11,7 +11,6 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
@@ -181,7 +180,7 @@ public final class JavaTestMethodNode extends TestMethodNode {
         @Override
         public void actionPerformed(final ActionEvent e) {
             final CancellationSource cancel = Cancellation.createCancellationSource();
-            final ProgressHandle progress = ProgressHandleFactory.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
+            final ProgressHandle progress = ProgressHandle.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
                 @Override
                 public boolean cancel() {
                     cancel.getController().cancel();

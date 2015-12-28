@@ -17,6 +17,7 @@ import org.openide.util.Lookup;
 @ActionRegistration(displayName="Gradle Coverage", lazy=false) // NOI18N
 @ActionReference(path="Projects/org.netbeans.gradle.project/Actions", position=1205)
 public class CoveragePopup extends AbstractAction implements ContextAwareAction {
+    private static final long serialVersionUID = 1L;
 
     public CoveragePopup() {
         putValue(DynamicMenuContent.HIDE_WHEN_DISABLED, true);

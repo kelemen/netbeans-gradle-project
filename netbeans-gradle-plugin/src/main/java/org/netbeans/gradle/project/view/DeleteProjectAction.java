@@ -70,7 +70,7 @@ public final class DeleteProjectAction extends AbstractAction {
 
     private ProgressHandle createProgress(final CancellationController cancelController) {
         String caption = NbStrings.getDeleteProjectProgress(project.displayName().getValue());
-        return ProgressHandleFactory.createHandle(caption, new Cancellable() {
+        return ProgressHandle.createHandle(caption, new Cancellable() {
             @Override
             public boolean cancel() {
                 cancelController.cancel();

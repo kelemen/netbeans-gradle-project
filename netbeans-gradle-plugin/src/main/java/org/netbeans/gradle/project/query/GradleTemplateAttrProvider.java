@@ -5,16 +5,15 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.templates.CreateDescriptor;
+import org.netbeans.api.templates.CreateFromTemplateAttributes;
 import org.netbeans.gradle.project.LicenseManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
-import org.openide.loaders.CreateFromTemplateAttributesProvider;
-import org.openide.loaders.DataFolder;
-import org.openide.loaders.DataObject;
 
-public final class GradleTemplateAttrProvider implements CreateFromTemplateAttributesProvider {
+public final class GradleTemplateAttrProvider implements CreateFromTemplateAttributes {
     private final NbGradleProject project;
 
     public GradleTemplateAttrProvider(NbGradleProject project) {
@@ -24,7 +23,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
     }
 
     @Override
-    public Map<String, ?> attributesFor(DataObject template, DataFolder target, String name) {
+    public Map<String, ?> attributesFor(CreateDescriptor desc) {
         Map<String, Object> values = new TreeMap<>();
 
         LicenseHeaderInfo licenseHeader = project.getCommonProperties().licenseHeaderInfo().getActiveValue();
@@ -39,7 +38,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
         }
 
         FileEncodingQueryImplementation enc = project.getLookup().lookup(FileEncodingQueryImplementation.class);
-        Charset encoding = enc.getEncoding(target.getPrimaryFile());
+        Charset encoding = enc.getEncoding(desc.getTarget());
         if (encoding == null) {
             encoding = SourceEncodingProperty.DEFAULT_SOURCE_ENCODING;
         }

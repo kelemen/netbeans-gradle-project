@@ -16,7 +16,6 @@ import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.openide.util.Cancellable;
 
@@ -159,7 +158,7 @@ public final class GradleDaemonManager {
         }
 
         public void start(String displayName) {
-            ProgressHandle newHandle = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            ProgressHandle newHandle = ProgressHandle.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
                     cancelController.cancel();
