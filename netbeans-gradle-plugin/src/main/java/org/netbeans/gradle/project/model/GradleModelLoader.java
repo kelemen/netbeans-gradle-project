@@ -6,12 +6,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -44,6 +44,7 @@ import org.netbeans.gradle.project.GradleVersions;
 import org.netbeans.gradle.project.LoadedProjectManager;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
@@ -170,7 +171,7 @@ public final class GradleModelLoader {
     }
 
     private static ProjectLoadRequest getProjectLoadKey(NbGradleProject project) {
-        Path settingsFile = project.getPreferredSettingsFile();
+        SettingsGradleDef settingsFile = project.getPreferredSettingsGradleDef();
         return new ProjectLoadRequest(project, settingsFile);
     }
 
@@ -321,6 +322,56 @@ public final class GradleModelLoader {
         }, null);
     }
 
+    private static boolean isInProjectTree(NbGradleProject project, NbGradleModel rootModel) {
+        NbGradleProjectTree projectTree = rootModel.getGenericInfo().getProjectDef().getRootProject();
+        return isInProjectTree(project.getProjectDirectoryAsFile(), projectTree);
+    }
+
+    private static boolean isInProjectTree(File projectDir, NbGradleProjectTree projectTree) {
+        if (Objects.equals(projectDir, projectTree.getProjectDir())) {
+            return true;
+        }
+
+        for (NbGradleProjectTree child: projectTree.getChildren()) {
+            if (isInProjectTree(projectDir, child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static ProjectLoadRequest fixProjectLoadKey(
+            CancellationToken cancelToken,
+            NbGradleProject project,
+            ProjectLoadRequest projectLoadKey,
+            ProgressHandle progress) throws IOException, GradleModelLoadError {
+        if (!GlobalGradleSettings.getDefault().loadRootProjectFirst().getValue()) {
+            return projectLoadKey;
+        }
+
+        Path rootProjectDir = projectLoadKey.getAppliedRootProjectDir();
+        NbGradleProject rootProject = NbGradleProjectFactory.tryLoadSafeGradleProject(rootProjectDir);
+        if (rootProject == null) {
+            LOGGER.log(Level.INFO, "Failed to load root project for {0}.", project.getProjectDirectoryAsPath());
+            return projectLoadKey;
+        }
+
+        ProjectLoadRequest rootLoadKey = new ProjectLoadRequest(rootProject, projectLoadKey.settingsGradleDef);
+        NbGradleModel rootModel = tryGetFromCache(rootLoadKey);
+        if (rootModel == null) {
+            rootModel = loadModelWithProgress(cancelToken, rootLoadKey, progress, null);
+            assert rootModel != null;
+        }
+
+        if (!isInProjectTree(project, rootModel)) {
+            LOGGER.log(Level.INFO, "Project ({0}) is not found in the project tree of {1}. Assuming the project to be a single separate project.",
+                    new Object[]{project.getProjectDirectoryAsFile(), rootModel.getProjectDir()});
+            return new ProjectLoadRequest(project, SettingsGradleDef.NO_SETTINGS);
+        }
+
+        return projectLoadKey;
+    }
+
     private static void fetchModelWithoutPersistentCache(
             final NbGradleProject project,
             final boolean mayFetchFromCache,
@@ -337,11 +388,12 @@ public final class GradleModelLoader {
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
+                    ProjectLoadRequest fixedLoadKey = fixProjectLoadKey(cancelToken, project, projectLoadKey, progress);
                     if (mayFetchFromCache) {
-                        model = tryGetFromCache(projectLoadKey);
+                        model = tryGetFromCache(fixedLoadKey);
                     }
                     if (model == null || hasUnloadedExtension(project, model)) {
-                        model = loadModelWithProgress(cancelToken, projectLoadKey, progress, model);
+                        model = loadModelWithProgress(cancelToken, fixedLoadKey, progress, model);
                     }
                 } catch (IOException | BuildException ex) {
                     error = ex;
@@ -472,7 +524,7 @@ public final class GradleModelLoader {
         // project is being interpreted as a Gradle project.
         return new ModelBuilderSetup(
                 project,
-                getModelEvaluateArguments(project, null),
+                getModelEvaluateArguments(project, SettingsGradleDef.DEFAULT),
                 getModelEvaluateJvmArguments(project),
                 progress);
     }
@@ -488,7 +540,7 @@ public final class GradleModelLoader {
 
         LOGGER.log(Level.INFO,
                 "Loading Gradle project from directory: {0}, settings.gradle: {1}",
-                new Object[]{projectDir, projectLoadKey.settingsFile});
+                new Object[]{projectDir, projectLoadKey.settingsGradleDef});
 
         GradleConnector gradleConnector = createGradleConnector(cancelToken, project);
         gradleConnector.forProjectDirectory(projectDir);
@@ -509,7 +561,7 @@ public final class GradleModelLoader {
             GradleTarget gradleTarget = new GradleTarget(
                     setup.getJDKVersion(),
                     GradleVersion.version(env.getGradle().getGradleVersion()));
-            NbModelLoader modelLoader = chooseModel(gradleTarget, cachedEntry, setup);
+            NbModelLoader modelLoader = chooseModel(projectLoadKey.settingsGradleDef, gradleTarget, cachedEntry, setup);
 
             loadedModels = modelLoader.loadModels(project, projectConnection, progress);
         } finally {
@@ -544,6 +596,7 @@ public final class GradleModelLoader {
     }
 
     private static NbModelLoader chooseModel(
+            SettingsGradleDef settingsGradleDef,
             GradleTarget gradleTarget,
             NbGradleModel cachedModel,
             OperationInitializer setup) {
@@ -552,8 +605,8 @@ public final class GradleModelLoader {
 
         ModelLoadingStrategy modelLoadingStrategy = GlobalGradleSettings.getDefault().modelLoadingStrategy().getValue();
         NbModelLoader result = modelLoadingStrategy.canUse18Api(version)
-                ? new NbGradle18ModelLoader(setup, gradleTarget)
-                : new NbCompatibleModelLoader(cachedModel, setup, gradleTarget);
+                ? new NbGradle18ModelLoader(settingsGradleDef, setup, gradleTarget)
+                : new NbCompatibleModelLoader(settingsGradleDef, cachedModel, setup, gradleTarget);
 
         LOGGER.log(Level.INFO, "Using model loader: {0}", result.getClass().getSimpleName());
         return result;
@@ -563,41 +616,26 @@ public final class GradleModelLoader {
         return new NbGradleModel(NbGradleMultiProjectDef.createEmpty(projectDir));
     }
 
-    public static List<String> getProjectLoadArguments(Project project) {
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            return Collections.emptyList();
-        }
-
-        return getProjectLoadArguments(getProjectLoadKey(gradleProject));
-    }
-
-    private static List<String> getProjectLoadArguments(ProjectLoadRequest projectLoadKey) {
-        if (projectLoadKey == null || projectLoadKey.settingsFile == null) {
-            return Collections.emptyList();
-        }
-        return Arrays.asList("-c", projectLoadKey.settingsFile.toString());
-    }
-
-    private static List<String> getModelEvaluateArguments(Project project, Path settingsFile) {
-        return GradleArguments.getExtraArgs(settingsFile, daemonTaskContext(project));
+    private static List<String> getModelEvaluateArguments(Project project, SettingsGradleDef settingsDef) {
+        return GradleArguments.getExtraArgs(settingsDef, daemonTaskContext(project));
     }
 
     private static List<String> getModelEvaluateArguments(ProjectLoadRequest projectLoadKey) {
         return GradleArguments.getExtraArgs(
-                projectLoadKey.settingsFile,
+                projectLoadKey.settingsGradleDef,
                 daemonTaskContext(projectLoadKey.project));
     }
 
     private static final class ProjectLoadRequest {
         public final NbGradleProject project;
-        public final Path settingsFile;
+        public final SettingsGradleDef settingsGradleDef;
 
-        public ProjectLoadRequest(NbGradleProject project, Path settingsFile) {
+        public ProjectLoadRequest(NbGradleProject project, SettingsGradleDef settingsGradleDef) {
             assert project != null;
+            assert settingsGradleDef != null;
 
             this.project = project;
-            this.settingsFile = settingsFile;
+            this.settingsGradleDef = settingsGradleDef;
         }
 
         public File findAppliedSettingsFileAsFile() {
@@ -606,6 +644,8 @@ public final class GradleModelLoader {
         }
 
         public Path findAppliedSettingsFile() {
+            Path settingsFile = settingsGradleDef.getSettingsGradle();
+
             if (settingsFile != null) {
                 return settingsFile;
             }
@@ -614,7 +654,7 @@ public final class GradleModelLoader {
         }
 
         public Path getAppliedRootProjectDir() {
-            Path appliedSettingsFile = settingsFile;
+            Path appliedSettingsFile = settingsGradleDef.getSettingsGradle();
             if (appliedSettingsFile == null) {
                 appliedSettingsFile = findAppliedSettingsFile();
             }

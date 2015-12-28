@@ -26,11 +26,15 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
     public void updateSettings(GlobalGradleSettings globalSettings) {
         jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
                 globalSettings.modelLoadingStrategy().getValue()));
+        jLoadRootProjectFirst.setSelected(globalSettings.loadRootProjectFirst().getValue());
+        jReliableJavaVersionCheck.setSelected(globalSettings.mayRelyOnJavaOfScript().getValue());
     }
 
     @Override
     public void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.modelLoadingStrategy().setValue(getModelLoadingStrategy());
+        globalSettings.loadRootProjectFirst().setValue(jLoadRootProjectFirst.isSelected());
+        globalSettings.mayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
     }
 
     @Override
@@ -84,13 +88,16 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jModelLoadStrategy = new javax.swing.JComboBox<ModelLoadStrategyItem>();
+        jModelLoadStrategy = new javax.swing.JComboBox<>();
         jModelLoadStrategyLabel = new javax.swing.JLabel();
         jReliableJavaVersionCheck = new javax.swing.JCheckBox();
+        jLoadRootProjectFirst = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jModelLoadStrategyLabel, org.openide.util.NbBundle.getMessage(BuildScriptParsingPanel.class, "BuildScriptParsingPanel.jModelLoadStrategyLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jReliableJavaVersionCheck, org.openide.util.NbBundle.getMessage(BuildScriptParsingPanel.class, "BuildScriptParsingPanel.jReliableJavaVersionCheck.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLoadRootProjectFirst, org.openide.util.NbBundle.getMessage(BuildScriptParsingPanel.class, "BuildScriptParsingPanel.jLoadRootProjectFirst.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -103,7 +110,8 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
                         .addComponent(jModelLoadStrategyLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jModelLoadStrategy, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jReliableJavaVersionCheck))
+                    .addComponent(jReliableJavaVersionCheck)
+                    .addComponent(jLoadRootProjectFirst))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -113,7 +121,9 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jModelLoadStrategy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jModelLoadStrategyLabel))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLoadRootProjectFirst)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jReliableJavaVersionCheck)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -121,6 +131,7 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox jLoadRootProjectFirst;
     private javax.swing.JComboBox<ModelLoadStrategyItem> jModelLoadStrategy;
     private javax.swing.JLabel jModelLoadStrategyLabel;
     private javax.swing.JCheckBox jReliableJavaVersionCheck;

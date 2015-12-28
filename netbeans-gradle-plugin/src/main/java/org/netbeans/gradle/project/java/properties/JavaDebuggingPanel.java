@@ -7,14 +7,17 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedConfigurations;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPageFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.DebugModeCombo;
-import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
-import org.netbeans.gradle.project.properties.ProfileBasedPanel;
-import org.netbeans.gradle.project.properties.ProfileValuesEditor;
-import org.netbeans.gradle.project.properties.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.util.NbGuiUtils;
+import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
 @SuppressWarnings("serial")
 public class JavaDebuggingPanel extends javax.swing.JPanel {
@@ -43,27 +46,25 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
-    public static ProfileBasedCustomizer createDebuggingCustomizer(final JavaExtension javaExt) {
+    public static ProjectCustomizer.CompositeCategoryProvider createDebuggingCustomizer(final JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-        ProfileBasedCustomizer.PanelFactory panelFactory = new ProfileBasedCustomizer.PanelFactory() {
-            @Override
-            public ProfileBasedPanel createPanel() {
-                return createProfileBasedPanel(javaExt);
-            }
-        };
 
-        return new ProfileBasedCustomizer(
-                JavaDebuggingPanel.class.getName(),
-                // TODO: I18N
-                "Debugging - Java",
-                panelFactory);
+        Project project = javaExt.getProject();
+        // TODO: I18N
+        CustomizerCategoryId categoryId = new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
+        ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
+
+        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, categoryId, extensionSettings, new ProfileBasedProjectSettingsPageFactory() {
+            @Override
+            public ProfileBasedProjectSettingsPage createSettingsPage() {
+                return createDebuggingSettingsPage();
+            }
+        });
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(JavaExtension javaExt) {
-        Project project = javaExt.getProject();
-        ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
+    private static ProfileBasedProjectSettingsPage createDebuggingSettingsPage() {
         final JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
-        return ProfileBasedPanel.createPanel(project, extensionSettings, customPanel, new ProfileValuesEditorFactory() {
+        return new ProfileBasedProjectSettingsPage(customPanel, new ProfileValuesEditorFactory() {
             @Override
             public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
                 return customPanel.new PropertyValues(profileQuery);

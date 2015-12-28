@@ -42,6 +42,8 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 

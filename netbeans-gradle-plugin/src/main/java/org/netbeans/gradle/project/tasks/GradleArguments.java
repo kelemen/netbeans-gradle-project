@@ -12,6 +12,7 @@ import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
+import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 
@@ -94,16 +95,22 @@ public final class GradleArguments {
         return path != null ? path.getPath(gradleProject) : null;
     }
 
-    public static List<String> getExtraArgs(Path preferredSettings, DaemonTaskContext context) {
+    public static List<String> getExtraArgs(
+            SettingsGradleDef preferredSettings,
+            DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
         result.addAll(emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue()));
 
         addExtensionArgs(context, result);
 
-        if (preferredSettings != null) {
+        Path settingsGradle = preferredSettings.getSettingsGradle();
+        if (settingsGradle != null) {
             result.add("-c");
-            result.add(preferredSettings.toString());
+            result.add(settingsGradle.toString());
+        }
+        else if (!preferredSettings.isMaySearchUpwards()) {
+            result.add("-u");
         }
 
         Path userInitScript = tryGetUserInitScript(context.getProject());

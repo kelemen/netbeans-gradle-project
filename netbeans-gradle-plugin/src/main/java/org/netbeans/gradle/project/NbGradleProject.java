@@ -41,6 +41,7 @@ import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
@@ -409,6 +410,12 @@ public final class NbGradleProject implements Project {
 
     public Path getPreferredSettingsFile() {
         return preferredSettingsFileRef.get();
+    }
+
+    public SettingsGradleDef getPreferredSettingsGradleDef() {
+        return new SettingsGradleDef(
+                getPreferredSettingsFile(),
+                !currentModel.getValue().isRootWithoutSettingsGradle());
     }
 
     private void updateSettingsFile(Path settingsFile) {

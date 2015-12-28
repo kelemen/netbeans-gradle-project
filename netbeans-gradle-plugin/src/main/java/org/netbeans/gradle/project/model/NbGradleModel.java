@@ -22,12 +22,14 @@ public final class NbGradleModel {
     public static final class Builder {
         private final NbGenericModelInfo genericInfo;
         private final Map<String, Object> extensionModels;
+        private boolean rootWithoutSettingsGradle;
 
         public Builder(NbGenericModelInfo genericInfo) {
             ExceptionHelper.checkNotNullArgument(genericInfo, "genericInfo");
 
             this.genericInfo = genericInfo;
             this.extensionModels = new HashMap<>();
+            this.rootWithoutSettingsGradle = false;
         }
 
         public Builder(NbGradleModel base) {
@@ -39,6 +41,10 @@ public final class NbGradleModel {
             return genericInfo.getProjectDir();
         }
 
+        public void setRootWithoutSettingsGradle(boolean rootWithoutSettingsGradle) {
+            this.rootWithoutSettingsGradle = rootWithoutSettingsGradle;
+        }
+
         public void setModelForExtension(NbGradleExtensionRef extension, Object model) {
             setModelForExtension(extension.getName(), model);
         }
@@ -48,7 +54,7 @@ public final class NbGradleModel {
         }
 
         public NbGradleModel create() {
-            return new NbGradleModel(genericInfo, extensionModels);
+            return new NbGradleModel(genericInfo, extensionModels, rootWithoutSettingsGradle);
         }
     }
 
@@ -57,20 +63,25 @@ public final class NbGradleModel {
     // Maps extension name to extension model
     private final Map<String, Object> extensionModels;
 
+    // If true, we must instruct Gradle not to search for a settings.gradle.
+    private final boolean rootWithoutSettingsGradle;
+
     public NbGradleModel(NbGradleMultiProjectDef projectDef) {
-        this(new NbGenericModelInfo(projectDef), Collections.<String, Object>emptyMap(), false);
+        this(new NbGenericModelInfo(projectDef), Collections.<String, Object>emptyMap(), false, false);
     }
 
     public NbGradleModel(
             NbGenericModelInfo genericInfo,
-            Map<String, Object> extensionModels) {
-        this(genericInfo, extensionModels, true);
+            Map<String, Object> extensionModels,
+            boolean rootWithoutSettingsGradle) {
+        this(genericInfo, extensionModels, true, rootWithoutSettingsGradle);
     }
 
     private NbGradleModel(
             NbGenericModelInfo genericInfo,
             Map<String, Object> extensionModels,
-            boolean copyMap) {
+            boolean copyMap,
+            boolean rootWithoutSettingsGradle) {
 
         ExceptionHelper.checkNotNullArgument(genericInfo, "genericInfo");
 
@@ -78,6 +89,7 @@ public final class NbGradleModel {
         this.extensionModels = copyMap
                 ? CollectionUtils.copyNullSafeHashMapWithNullValues(extensionModels)
                 : extensionModels;
+        this.rootWithoutSettingsGradle = rootWithoutSettingsGradle;
     }
 
     public static List<NbGradleModel> createAll(Collection<? extends Builder> builders) {
@@ -86,6 +98,10 @@ public final class NbGradleModel {
             result.add(builder.create());
         }
         return result;
+    }
+
+    public boolean isRootWithoutSettingsGradle() {
+        return rootWithoutSettingsGradle;
     }
 
     public NbGenericModelInfo getGenericInfo() {
@@ -200,7 +216,7 @@ public final class NbGradleModel {
     }
 
     public NbGradleModel createNonDirtyCopy() {
-        return new NbGradleModel(genericInfo, extensionModels);
+        return new NbGradleModel(genericInfo, extensionModels, rootWithoutSettingsGradle);
     }
 
     public File getProjectDir() {
@@ -226,6 +242,10 @@ public final class NbGradleModel {
 
     public Path getSettingsFile() {
         return genericInfo.getSettingsFile();
+    }
+
+    public SettingsGradleDef getSettingsGradleDef() {
+        return new SettingsGradleDef(getSettingsFile(), !rootWithoutSettingsGradle);
     }
 
     public FileObject tryGetProjectDirAsObj() {

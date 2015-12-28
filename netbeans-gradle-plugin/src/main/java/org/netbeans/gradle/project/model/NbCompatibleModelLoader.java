@@ -38,17 +38,21 @@ import org.openide.util.lookup.Lookups;
 public final class NbCompatibleModelLoader implements NbModelLoader {
     private static final Logger LOGGER = Logger.getLogger(NbCompatibleModelLoader.class.getName());
 
+    private final SettingsGradleDef settingsGradleDef;
     private final NbGradleModel baseModels;
     private final OperationInitializer setup;
     private final GradleTarget gradleTarget;
 
     public NbCompatibleModelLoader(
+            SettingsGradleDef settingsGradleDef,
             NbGradleModel baseModels,
             OperationInitializer setup,
             GradleTarget gradleTarget) {
+        ExceptionHelper.checkNotNullArgument(settingsGradleDef, "settingsGradleDef");
         ExceptionHelper.checkNotNullArgument(setup, "setup");
         ExceptionHelper.checkNotNullArgument(gradleTarget, "gradleTarget");
 
+        this.settingsGradleDef = settingsGradleDef;
         this.gradleTarget = gradleTarget;
         this.baseModels = baseModels;
         this.setup = setup;
@@ -68,6 +72,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         }
         else {
             mainModel = new NbGradleModel.Builder(baseModels);
+            initBuilder(mainModel);
         }
 
         Map<File, NbGradleModel.Builder> otherModelsMap = CollectionUtils.newHashMap(otherModels.size());
@@ -215,15 +220,23 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return parseMainModel(project, ideaProject, otherModels);
     }
 
-    private static NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef) {
-        return new NbGradleModel.Builder(new NbGenericModelInfo(projectDef));
+    private void initBuilder(NbGradleModel.Builder builder) {
+        builder.setRootWithoutSettingsGradle(!settingsGradleDef.isMaySearchUpwards());
     }
 
-    private static NbGradleModel.Builder toBuilder(NbGradleModel model) {
-        return new NbGradleModel.Builder(model);
+    private NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef) {
+        NbGradleModel.Builder result = new NbGradleModel.Builder(new NbGenericModelInfo(projectDef));
+        initBuilder(result);
+        return result;
     }
 
-    private static NbGradleModel.Builder parseMainModel(
+    private NbGradleModel.Builder toBuilder(NbGradleModel model) {
+        NbGradleModel.Builder result = new NbGradleModel.Builder(model);
+        initBuilder(result);
+        return result;
+    }
+
+    private NbGradleModel.Builder parseMainModel(
             NbGradleProject project,
             IdeaProject ideaProject,
             List<NbGradleModel.Builder> otherModels) throws IOException {
