@@ -16,12 +16,6 @@ afterProject { org.gradle.api.Project project ->
         debuggerAttachArgs = ['-Xdebug', "-Xrunjdwp:transport=dt_socket,server=n,address=${debuggerPort}".toString()]
     }
 
-    if (debuggerAttachArgs != null) {
-        for (Test testTask: project.tasks.withType(Test.class)) {
-            testTask.jvmArgs(debuggerAttachArgs)
-        }
-    }
-
     if (tasks.findByName('classes') != null && project.hasProperty('sourceSets')) {
         def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
         if (definedMainClass == null) definedMainClass = '';
@@ -31,9 +25,6 @@ afterProject { org.gradle.api.Project project ->
             task.main = definedMainClass
             task.classpath = project.sourceSets.main.runtimeClasspath
             task.standardInput = System.in
-            if (debuggerAttachArgs != null) {
-                task.jvmArgs = debuggerAttachArgs
-            }
         }
 
         if (!hasRun) {
@@ -75,4 +66,25 @@ afterProject { org.gradle.api.Project project ->
             }
         }
     }
+
+    if (debuggerAttachArgs != null && project.hasProperty('debuggedTaskName')) {
+        def debuggedTaskName = project.debuggedTaskName.toString()
+
+        def task = debuggedTaskName.indexOf(':') >= 0 ? project.rootProject.tasks.findByPath(debuggedTaskName) : project.tasks.findByName(debuggedTaskName)
+        if (task?.project == project) {
+            if ((task instanceof JavaExec) || (task instanceof Test)) {
+                updateJvmArgs(task, debuggerAttachArgs)
+            }
+        }
+    }
+}
+
+void updateJvmArgs(def task, List additionalArgs) {
+    // Note: The list might contain non-string instances, so first convert them.
+    Set additionalArgsSet = new LinkedHashSet(additionalArgs*.toString())
+    List currentArgs = task.jvmArgs;
+    for (def arg: task.jvmArgs) {
+        additionalArgsSet.remove(arg?.toString())
+    }
+    task.jvmArgs(additionalArgsSet)
 }

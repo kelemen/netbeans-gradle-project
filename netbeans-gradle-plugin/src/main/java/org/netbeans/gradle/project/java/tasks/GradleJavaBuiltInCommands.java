@@ -59,6 +59,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static final String MAIN_CLASS_PROPERTY_NAME = "mainClass";
     private static final String JPDA_PORT_PROPERTY_NAME = "debuggerJpdaPort";
+    private static final String DEBUGGED_TASK_PROPERTY_NAME = "debuggedTaskName";
 
     private static final CommandWithActions DEFAULT_BUILD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -84,7 +85,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_DEBUG_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList("run"),
-            Arrays.asList(gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            debuggeeAttachesArguments(projectTask("run")),
             listenDebugger());
     private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -112,7 +113,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestTasks()),
-            Arrays.asList(testSingleArgument(), gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            debuggeeAttachesArguments(testTask(), testSingleArgument()),
             displayTestResults(),
             hideTestFailures(),
             listenDebugger());
@@ -134,7 +135,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestMethodTasks()),
-            Arrays.asList(gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            debuggeeAttachesArguments(testTask()),
             needsGradle("1.10"),
             displayTestResults(),
             hideTestFailures(),
@@ -155,9 +156,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("run")),
-            Arrays.asList(
-                    gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR),
-                    gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable())),
+            debuggeeAttachesArguments(projectTask("run"), gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable())),
             true,
             true,
             listenDebugger());
@@ -247,6 +246,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
                 return task;
             }
         });
+    }
+
+    private static List<String> debuggeeAttachesArguments(String taskName, String... additionalArgs) {
+        List<String> result = new ArrayList<>(additionalArgs.length + 2);
+        result.addAll(Arrays.asList(additionalArgs));
+        result.add(gradlePropertyArg(DEBUGGED_TASK_PROPERTY_NAME, taskName));
+        result.add(gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR));
+        return result;
     }
 
     private static String debugTestArgument() {
