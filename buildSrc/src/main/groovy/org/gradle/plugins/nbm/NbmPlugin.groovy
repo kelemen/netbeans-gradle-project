@@ -102,7 +102,16 @@ public class NbmPlugin implements Plugin<Project> {
                 List args = new LinkedList()
                 args.addAll([ project.netBeansExecutable, '--userdir', testUserDir])
 
-                if (debug) {
+                String debuggerPort = null;
+                if (project.hasProperty('debuggerJpdaPort')) {
+                    debuggerPort = project.debuggerJpdaPort
+                }
+
+                if (debuggerPort != null) {
+                    args.add('-J-Xdebug')
+                    args.add("-J-Xrunjdwp:transport=dt_socket,server=n,address=${debuggerPort}")
+                }
+                else if (debug) {
                     def nbmDebugPort = '5006'
                     if (project.hasProperty(nbmDebugPort)) {
                         nbmDebugPort = project.nbmDebugPort.trim()

@@ -112,7 +112,7 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
 
         String portStr = extractPort(address);
         output.println("Port: " + portStr);
-        final TaskVariableMap varMap = singleVar(JPDA_PORT_VAR, quoteStr(portStr));
+        final TaskVariableMap varMap = singleVar(JPDA_PORT_VAR, portStr);
 
         startListening(cancelToken, connector, defaultArgs);
 
@@ -133,15 +133,6 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
         };
     }
 
-    private static String fixLocalAddress(String addr) {
-        int sepIndex = addr.lastIndexOf(':');
-        if (sepIndex < 0) {
-            return addr;
-        }
-
-        return "localhost" + addr.substring(sepIndex);
-    }
-
     private static String extractPort(String addr) {
         int sepIndex = addr.lastIndexOf(':');
         if (sepIndex < 0) {
@@ -149,10 +140,6 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
         }
 
         return addr.substring(sepIndex + 1);
-    }
-
-    private static String quoteStr(String str) {
-        return "\"" + str + "\"";
     }
 
     private static TaskVariableMap singleVar(final TaskVariable mapVar, final String mapValue) {
