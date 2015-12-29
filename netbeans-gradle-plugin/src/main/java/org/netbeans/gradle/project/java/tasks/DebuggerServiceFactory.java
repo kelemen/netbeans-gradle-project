@@ -86,6 +86,7 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
                 });
                 try {
                     JPDADebugger.startListening(connector, defaultArgs, new Object[]{services});
+                    LOGGER.log(Level.INFO, "JPDADebugger.startListening has successfully connected to the debugee.");
                 } catch (DebuggerStartException ex) {
                     LOGGER.log(Level.INFO, "JPDADebugger.startListening failed.", ex);
                  }finally {
