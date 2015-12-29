@@ -119,6 +119,15 @@ public final class InputOutputWrapper implements Closeable {
         }
     }
 
+    public void closeStreamsForNow() throws IOException {
+        ioLock.lock();
+        try {
+            closeAll(in, out, err);
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
     @Override
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {
