@@ -34,6 +34,7 @@ public final class TaskIOTab implements IOTabDef {
         for (TaskTabAction action: actions) {
             action.taskCompleted();
         }
+        io.getIo().getOut().close();
     }
 
     public InputOutputWrapper getIo() {
