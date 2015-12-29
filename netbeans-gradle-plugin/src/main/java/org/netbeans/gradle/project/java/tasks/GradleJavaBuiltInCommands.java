@@ -102,13 +102,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Arrays.asList(testSingleArgument()),
             displayTestResults(),
             hideTestFailures());
-    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK = blockingCommand(
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList(testSingleArgument(), debugTestArgument()),
             displayTestResults(),
             hideTestFailures(),
             attachDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_2 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList(cleanAndTestTasks()),
+            Arrays.asList(testSingleArgument(), gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            displayTestResults(),
+            hideTestFailures(),
+            listenDebugger());
     private static final CommandWithActions DEFAULT_TEST_SINGLE_METHOD_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestMethodTasks()),
@@ -116,7 +123,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             needsGradle("1.10"),
             displayTestResults(),
             hideTestFailures());
-    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK = blockingCommand(
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestMethodTasks()),
             Arrays.asList(debugTestArgument()),
@@ -124,6 +131,14 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             displayTestResults(),
             hideTestFailures(),
             attachDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_2 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList(cleanAndTestMethodTasks()),
+            Arrays.asList(gradlePropertyArg(JPDA_PORT_PROPERTY_NAME, DebuggerServiceFactory.JPDA_PORT_VAR)),
+            needsGradle("1.10"),
+            displayTestResults(),
+            hideTestFailures(),
+            listenDebugger());
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
@@ -162,11 +177,18 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
         addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, DEFAULT_TEST_SINGLE_TASK);
-        addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, DEFAULT_DEBUG_TEST_SINGLE_TASK);
         addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
-        addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
+
+        addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, debugModeSelector(), Arrays.asList(
+                new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TEST_SINGLE_TASK_1),
+                new CommandChoice<>(DebugMode.DEBUGGER_LISTENS, DEFAULT_DEBUG_TEST_SINGLE_TASK_2)
+        ));
+        addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, debugModeSelector(), Arrays.asList(
+                new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_1),
+                new CommandChoice<>(DebugMode.DEBUGGER_LISTENS, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_2)
+        ));
 
         addToDefaults(ActionProvider.COMMAND_DEBUG, debugModeSelector(), Arrays.asList(
                 new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TASK_1),
