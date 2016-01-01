@@ -6,6 +6,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -22,10 +25,12 @@ import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.event.NbListenerManagers;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.RefreshableChildren;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ui.PathFinder;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -268,6 +273,43 @@ public final class GradleHomeNode extends AbstractNode {
             }
         }
 
+        private void addOtherGradleFiles(File userHome, List<SingleNodeFactory> toPopulate) {
+            FileObject userHomeObj = FileUtil.toFileObject(userHome);
+            if (userHomeObj == null) {
+                return;
+            }
+
+            FileObject initD = userHomeObj.getFileObject(INIT_GRADLE_NAME);
+
+            List<FileObject> gradleFiles = new LinkedList<>();
+            for (FileObject file: userHomeObj.getChildren()) {
+                if (file.equals(initD)) {
+                    continue;
+                }
+
+                if (GradleFilesClassPathProvider.isGradleFile(file)) {
+                    gradleFiles.add(file);
+                }
+            }
+
+            Collections.sort(gradleFiles, new Comparator<FileObject>() {
+                @Override
+                public int compare(FileObject o1, FileObject o2) {
+                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
+                }
+            });
+
+            for (FileObject file: gradleFiles) {
+                SingleNodeFactory node = NodeUtils.tryGetFileNode(
+                        file,
+                        file.getNameExt(),
+                        NbIcons.getGradleIcon());
+                if (node != null) {
+                    toPopulate.add(node);
+                }
+            }
+        }
+
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             hasInitDDirDisplayed = false;
 
@@ -279,6 +321,8 @@ public final class GradleHomeNode extends AbstractNode {
             addGradleProperties(userHome, toPopulate);
             addInitGradle(userHome, toPopulate);
             addInitDDir(userHome, toPopulate);
+
+            addOtherGradleFiles(userHome, toPopulate);
         }
 
         @Override
