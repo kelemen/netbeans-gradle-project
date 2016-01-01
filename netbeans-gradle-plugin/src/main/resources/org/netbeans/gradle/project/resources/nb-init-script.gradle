@@ -10,12 +10,6 @@ afterProject { org.gradle.api.Project project ->
     boolean hasRun = tasks.findByName('run') != null
     boolean hasDebug = tasks.findByName('debug') != null
 
-    List debuggerAttachArgs = null;
-    if (project.hasProperty('debuggerJpdaPort')) {
-        def debuggerPort = project.debuggerJpdaPort
-        debuggerAttachArgs = ['-Xdebug', "-Xrunjdwp:transport=dt_socket,server=n,address=${debuggerPort}".toString()]
-    }
-
     if (tasks.findByName('classes') != null && project.hasProperty('sourceSets')) {
         def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
         if (definedMainClass == null) definedMainClass = '';
@@ -67,16 +61,62 @@ afterProject { org.gradle.api.Project project ->
         }
     }
 
-    if (debuggerAttachArgs != null && project.hasProperty('debuggedTaskName')) {
-        def debuggedTaskName = project.debuggedTaskName.toString()
+    updateDebugTaskArgs(project)
+}
 
-        def task = debuggedTaskName.indexOf(':') >= 0 ? project.rootProject.tasks.findByPath(debuggedTaskName) : project.tasks.findByName(debuggedTaskName)
-        if (task?.project == project) {
-            if ((task instanceof JavaExec) || (task instanceof Test)) {
-                updateJvmArgs(task, debuggerAttachArgs)
-            }
-        }
+void updateDebugTaskArgs(def project) {
+    List debuggerAttachArgs = null;
+    if (project.hasProperty('debuggerJpdaPort')) {
+        def debuggerPort = project.debuggerJpdaPort
+        debuggerAttachArgs = ['-Xdebug', "-Xrunjdwp:transport=dt_socket,server=n,address=${debuggerPort}".toString()]
     }
+
+    if (debuggerAttachArgs == null || !project.hasProperty('debuggedTaskName')) {
+        return
+    }
+
+    String debuggedTaskName = project.debuggedTaskName.toString()
+    String localTaskName = debuggedTaskName
+
+    int projectPathSepIndex = debuggedTaskName.lastIndexOf(':')
+    if (projectPathSepIndex >= 0) {
+        String projectPath = normalizePath(debuggedTaskName.substring(0, projectPathSepIndex).trim())
+        if (projectPath != project.path) {
+            return
+        }
+
+        localTaskName = debuggedTaskName.substring(projectPathSepIndex + 1).trim()
+    }
+
+    def task = project.tasks.findByName(localTaskName)
+    if ((task instanceof JavaExec) || (task instanceof Test)) {
+        updateJvmArgs(task, debuggerAttachArgs)
+    }
+}
+
+String normalizePath(String rawPath) {
+    boolean changed = false
+
+    StringBuilder result = new StringBuilder(rawPath.length())
+    if (!rawPath.startsWith(':')) {
+        result.append(':')
+        changed = true
+    }
+
+    boolean prevColon = false
+    for (int i = 0; i < rawPath.length(); i++) {
+        char ch = rawPath.getAt(i)
+        boolean colon = ch == ':'
+        if (!colon || !prevColon) {
+            result.append(ch)
+        }
+        else {
+            changed = true
+        }
+        prevColon = colon
+    }
+
+    return changed ? result.toString() : rawPath
 }
 
 void updateJvmArgs(def task, List additionalArgs) {
