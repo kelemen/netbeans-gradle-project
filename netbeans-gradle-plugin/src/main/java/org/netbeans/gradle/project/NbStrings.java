@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import org.gradle.util.GradleVersion;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
-import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.openide.util.NbBundle;
 
@@ -430,10 +429,6 @@ public final class NbStrings {
 
     public static String getReRunDiffDescription() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ReRunDiffDescription");
-    }
-
-    public static String getModelLoadStrategy(ModelLoadingStrategy strategy) {
-        return getEnumDisplayValue(strategy);
     }
 
     public static String getEnumDisplayValue(Enum<?> value) {
