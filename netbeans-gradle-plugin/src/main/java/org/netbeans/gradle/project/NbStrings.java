@@ -441,7 +441,7 @@ public final class NbStrings {
         return getEnumDisplayValue(debugMode);
     }
 
-    private static String getEnumDisplayValue(Enum<?> value) {
+    public static String getEnumDisplayValue(Enum<?> value) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings." + value.getClass().getSimpleName() + "." + value.name());
     }
 
