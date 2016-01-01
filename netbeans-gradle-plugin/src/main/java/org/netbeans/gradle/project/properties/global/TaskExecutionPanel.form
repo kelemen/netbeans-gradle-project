@@ -19,13 +19,26 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jSkipTestsCheck" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jAlwayClearOutput" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jDontAddInitScriptCheck" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jSkipCheckCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jReplaceLfOnStdIn" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jAutoTasksCaption" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jAutoTasks" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jSkipTestsCheck" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jAlwayClearOutput" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jSkipCheckCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                      <Component id="jReplaceLfOnStdIn" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -39,9 +52,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jAlwayClearOutput" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jDontAddInitScriptCheck" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
               <Component id="jReplaceLfOnStdIn" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jAutoTasksCaption" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jAutoTasks" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -69,19 +85,29 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="jDontAddInitScriptCheck">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="TaskExecutionPanel.jDontAddInitScriptCheck.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JCheckBox" name="jReplaceLfOnStdIn">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="TaskExecutionPanel.jReplaceLfOnStdIn.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jAutoTasksCaption">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="TaskExecutionPanel.jAutoTasksCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="jAutoTasks">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;EnumCombo.Item&lt;SelfMaintainedTasks&gt;&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

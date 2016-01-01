@@ -58,7 +58,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> skipCheck;
     private final StringBasedProperty<Integer> projectCacheSize;
     private final StringBasedProperty<Boolean> alwaysClearOutput;
-    private final StringBasedProperty<Boolean> omitInitScript;
+    private final StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks;
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
@@ -100,9 +100,9 @@ public final class GlobalGradleSettings {
         alwaysClearOutput = new GlobalProperty<>(
                 withNS(namespace, "always-clear-output"),
                 new BooleanConverter(false));
-        omitInitScript = new GlobalProperty<>(
+        selfMaintainedTasks = new GlobalProperty<>(
                 withNS(namespace, "omit-init-script"),
-                new BooleanConverter(false));
+                new EnumConverter<>(SelfMaintainedTasks.FALSE));
         mayRelyOnJavaOfScript = new GlobalProperty<>(
                 withNS(namespace, "rely-on-java-of-script"),
                 new BooleanConverter(false));
@@ -205,8 +205,8 @@ public final class GlobalGradleSettings {
         return alwaysClearOutput;
     }
 
-    public StringBasedProperty<Boolean> omitInitScript() {
-        return omitInitScript;
+    public StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks() {
+        return selfMaintainedTasks;
     }
 
     public StringBasedProperty<Boolean> mayRelyOnJavaOfScript() {
