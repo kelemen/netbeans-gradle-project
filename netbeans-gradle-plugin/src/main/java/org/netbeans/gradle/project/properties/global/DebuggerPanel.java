@@ -1,29 +1,29 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
-import org.netbeans.gradle.project.properties.DebugModeCombo;
+import org.netbeans.gradle.project.properties.EnumCombo;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
 public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Debug-Settings");
 
-    private final DebugModeCombo debugModeHandler;
+    private final EnumCombo<DebugMode> debugModeHandler;
 
     public DebuggerPanel() {
         initComponents();
-        this.debugModeHandler = new DebugModeCombo(jDebugMode);
+        this.debugModeHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
     }
 
     @Override
     public void updateSettings(GlobalGradleSettings globalSettings) {
         DebugMode debugMode = globalSettings.debugMode().getValue();
-        debugModeHandler.setSelectedDebugMode(debugMode);
+        debugModeHandler.setSelectedValue(debugMode);
     }
 
     @Override
     public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.debugMode().setValue(debugModeHandler.getSelectedDebugMode());
+        globalSettings.debugMode().setValue(debugModeHandler.getSelectedValue());
     }
 
     @Override
@@ -72,7 +72,7 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<DebugModeCombo.Item> jDebugMode;
+    private javax.swing.JComboBox<EnumCombo.Item<DebugMode>> jDebugMode;
     private javax.swing.JLabel jDebugModeCaption;
     // End of variables declaration//GEN-END:variables
 }

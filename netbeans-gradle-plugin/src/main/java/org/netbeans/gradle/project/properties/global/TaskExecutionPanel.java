@@ -1,20 +1,25 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
+import org.netbeans.gradle.project.properties.EnumCombo;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
 public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Task-Execution");
 
+    private final EnumCombo<SelfMaintainedTasks> selfMaintainedTasks;
+
     public TaskExecutionPanel() {
         initComponents();
+
+        selfMaintainedTasks = new EnumCombo<>(SelfMaintainedTasks.class, SelfMaintainedTasks.FALSE, jAutoTasks);
     }
 
     @Override
     public void updateSettings(GlobalGradleSettings globalSettings) {
         jAlwayClearOutput.setSelected(globalSettings.alwaysClearOutput().getValue());
-        jDontAddInitScriptCheck.setSelected(globalSettings.omitInitScript().getValue());
+        selfMaintainedTasks.setSelectedValue(globalSettings.selfMaintainedTasks().getValue());
         jSkipTestsCheck.setSelected(globalSettings.skipTests().getValue());
         jSkipCheckCheckBox.setSelected(globalSettings.skipCheck().getValue());
         jReplaceLfOnStdIn.setSelected(globalSettings.replaceLfOnStdIn().getValue());
@@ -25,7 +30,7 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         globalSettings.skipTests().setValue(jSkipTestsCheck.isSelected());
         globalSettings.skipCheck().setValue(jSkipCheckCheckBox.isSelected());
         globalSettings.alwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
-        globalSettings.omitInitScript().setValue(jDontAddInitScriptCheck.isSelected());
+        globalSettings.selfMaintainedTasks().setValue(selfMaintainedTasks.getSelectedValue());
         globalSettings.replaceLfOnStdIn().setValue(jReplaceLfOnStdIn.isSelected());
     }
 
@@ -48,8 +53,9 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         jSkipTestsCheck = new javax.swing.JCheckBox();
         jSkipCheckCheckBox = new javax.swing.JCheckBox();
         jAlwayClearOutput = new javax.swing.JCheckBox();
-        jDontAddInitScriptCheck = new javax.swing.JCheckBox();
         jReplaceLfOnStdIn = new javax.swing.JCheckBox();
+        jAutoTasksCaption = new javax.swing.JLabel();
+        jAutoTasks = new javax.swing.JComboBox<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(jSkipTestsCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jSkipTestsCheck.text")); // NOI18N
 
@@ -57,9 +63,9 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
 
         org.openide.awt.Mnemonics.setLocalizedText(jAlwayClearOutput, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAlwayClearOutput.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jDontAddInitScriptCheck, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jDontAddInitScriptCheck.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(jReplaceLfOnStdIn, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jReplaceLfOnStdIn.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jAutoTasksCaption, org.openide.util.NbBundle.getMessage(TaskExecutionPanel.class, "TaskExecutionPanel.jAutoTasksCaption.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -68,12 +74,21 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSkipTestsCheck)
-                    .addComponent(jAlwayClearOutput)
-                    .addComponent(jDontAddInitScriptCheck)
-                    .addComponent(jSkipCheckCheckBox)
-                    .addComponent(jReplaceLfOnStdIn))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jAutoTasksCaption)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jAutoTasks, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jSkipTestsCheck)
+                            .addComponent(jAlwayClearOutput)
+                            .addComponent(jSkipCheckCheckBox))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 0, 0)
+                        .addComponent(jReplaceLfOnStdIn)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -85,9 +100,11 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jAlwayClearOutput)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jDontAddInitScriptCheck)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jReplaceLfOnStdIn)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jAutoTasksCaption)
+                    .addComponent(jAutoTasks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -95,7 +112,8 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jAlwayClearOutput;
-    private javax.swing.JCheckBox jDontAddInitScriptCheck;
+    private javax.swing.JComboBox<EnumCombo.Item<SelfMaintainedTasks>> jAutoTasks;
+    private javax.swing.JLabel jAutoTasksCaption;
     private javax.swing.JCheckBox jReplaceLfOnStdIn;
     private javax.swing.JCheckBox jSkipCheckCheckBox;
     private javax.swing.JCheckBox jSkipTestsCheck;

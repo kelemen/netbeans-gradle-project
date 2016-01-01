@@ -10,7 +10,7 @@ public class TaskExecutionPanelTest {
             @Override
             public void accept(GlobalGradleSettings input) {
                 input.alwaysClearOutput().setValue(true);
-                input.omitInitScript().setValue(true);
+                input.selfMaintainedTasks().setValue(SelfMaintainedTasks.TRUE);
                 input.skipTests().setValue(true);
                 input.skipCheck().setValue(true);
             }
@@ -23,7 +23,7 @@ public class TaskExecutionPanelTest {
             @Override
             public void accept(GlobalGradleSettings input) {
                 input.alwaysClearOutput().setValue(false);
-                input.omitInitScript().setValue(false);
+                input.selfMaintainedTasks().setValue(SelfMaintainedTasks.FALSE);
                 input.skipTests().setValue(false);
                 input.skipCheck().setValue(false);
             }

@@ -15,11 +15,15 @@ import javax.annotation.Nonnull;
  * script breaks the build, users may be forced to disable the init script
  * completely.
  * <P>
+ * <B>Note</B>: You should consider implementing {@link InitScriptQueryEx} instead.
+ * <P>
  * Instances of this interface are expected to be found on the lookup of the extension
  * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtension2#getExtensionLookup() (getExtensionLookup)}.
  * <P>
  * Instances of this interface are required to be safe to be accessed by
  * multiple threads concurrently.
+ *
+ * @see InitScriptQueryEx
  */
 public interface InitScriptQuery {
     /**

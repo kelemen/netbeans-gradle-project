@@ -14,18 +14,18 @@ import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPage
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.DebugModeCombo;
+import org.netbeans.gradle.project.properties.EnumCombo;
 import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
 @SuppressWarnings("serial")
 public class JavaDebuggingPanel extends javax.swing.JPanel {
-    private final DebugModeCombo debugModeComboHandler;
+    private final EnumCombo<DebugMode> debugModeComboHandler;
 
     public JavaDebuggingPanel() {
         initComponents();
-        debugModeComboHandler = new DebugModeCombo(jDebugMode);
+        debugModeComboHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
 
         setupEnableDisable();
     }
@@ -84,12 +84,12 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         @Override
         public void displayValues() {
             DebugMode activeDebugMode = setInheritAndGetValue(currentDebugMode, debugModeRef, jDebugModeInherit);
-            debugModeComboHandler.setSelectedDebugMode(activeDebugMode);
+            debugModeComboHandler.setSelectedValue(activeDebugMode);
         }
 
         @Override
         public void readFromGui() {
-            currentDebugMode = jDebugModeInherit.isSelected() ? null : debugModeComboHandler.getSelectedDebugMode();
+            currentDebugMode = jDebugModeInherit.isSelected() ? null : debugModeComboHandler.getSelectedValue();
         }
 
         @Override
@@ -143,7 +143,7 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<DebugModeCombo.Item> jDebugMode;
+    private javax.swing.JComboBox<EnumCombo.Item<DebugMode>> jDebugMode;
     private javax.swing.JLabel jDebugModeCaption;
     private javax.swing.JCheckBox jDebugModeInherit;
     // End of variables declaration//GEN-END:variables

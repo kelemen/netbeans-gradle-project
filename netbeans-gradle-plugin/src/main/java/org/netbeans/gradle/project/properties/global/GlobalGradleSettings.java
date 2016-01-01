@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +19,7 @@ import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
@@ -56,7 +58,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> skipCheck;
     private final StringBasedProperty<Integer> projectCacheSize;
     private final StringBasedProperty<Boolean> alwaysClearOutput;
-    private final StringBasedProperty<Boolean> omitInitScript;
+    private final StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks;
     private final StringBasedProperty<Boolean> mayRelyOnJavaOfScript;
     private final StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy;
     private final StringBasedProperty<Integer> gradleDaemonTimeoutSec;
@@ -98,9 +100,9 @@ public final class GlobalGradleSettings {
         alwaysClearOutput = new GlobalProperty<>(
                 withNS(namespace, "always-clear-output"),
                 new BooleanConverter(false));
-        omitInitScript = new GlobalProperty<>(
+        selfMaintainedTasks = new GlobalProperty<>(
                 withNS(namespace, "omit-init-script"),
-                new BooleanConverter(false));
+                new EnumConverter<>(SelfMaintainedTasks.FALSE));
         mayRelyOnJavaOfScript = new GlobalProperty<>(
                 withNS(namespace, "rely-on-java-of-script"),
                 new BooleanConverter(false));
@@ -203,8 +205,8 @@ public final class GlobalGradleSettings {
         return alwaysClearOutput;
     }
 
-    public StringBasedProperty<Boolean> omitInitScript() {
-        return omitInitScript;
+    public StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks() {
+        return selfMaintainedTasks;
     }
 
     public StringBasedProperty<Boolean> mayRelyOnJavaOfScript() {
@@ -421,11 +423,18 @@ public final class GlobalGradleSettings {
 
         private final EnumType defaultValue;
         private final Class<EnumType> enumClass;
+        private final Map<String, EnumType> byNameValues;
 
         @SuppressWarnings("unchecked")
         public EnumConverter(EnumType defaultValue) {
             this.defaultValue = defaultValue;
             this.enumClass = (Class<EnumType>)defaultValue.getClass();
+
+            EnumType[] allValues = enumClass.getEnumConstants();
+            byNameValues = CollectionsEx.newHashMap(allValues.length);
+            for (EnumType value: allValues) {
+                byNameValues.put(value.name().toUpperCase(Locale.ROOT), value);
+            }
         }
 
         @Override
@@ -434,14 +443,14 @@ public final class GlobalGradleSettings {
                 return defaultValue;
             }
 
-            try {
-                return Enum.valueOf(enumClass, strValue);
-            } catch (IllegalArgumentException ex) {
+            EnumType result = byNameValues.get(strValue.toUpperCase(Locale.ROOT));
+            if (result == null) {
                 LOGGER.log(Level.INFO,
-                        "Illegal enum value for config: " + strValue + " expected an instance of " + enumClass.getSimpleName(),
-                        ex);
-                return defaultValue;
+                        "Illegal enum value for config: {0} expected an instance of {1}",
+                        new Object[]{strValue, enumClass.getSimpleName()});
+                result = defaultValue;
             }
+            return result;
         }
 
         @Override

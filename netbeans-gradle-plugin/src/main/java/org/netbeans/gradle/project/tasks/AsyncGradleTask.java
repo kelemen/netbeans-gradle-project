@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.tasks;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
@@ -44,6 +45,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.InitScriptQuery;
+import org.netbeans.gradle.project.api.config.InitScriptQueryEx;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
@@ -72,6 +74,8 @@ import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
+import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;
@@ -141,8 +145,31 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private static TemporaryFileRef getManualInitScript(File baseDir, InitScriptQueryEx scriptQuery) throws IOException {
+        final File scriptFile = new File(baseDir, scriptQuery.getBaseFileName() + ".gradle");
+        if (!scriptFile.isFile()) {
+            String content = scriptQuery.getInitScript();
+            try (RandomAccessFile editor = new RandomAccessFile(scriptFile, "rw")) {
+                editor.write(content.getBytes(StringUtils.UTF8));
+            }
+        }
+
+        return new TemporaryFileRef() {
+            @Override
+            public File getFile() {
+                return scriptFile;
+            }
+
+            @Override
+            public void close() throws IOException {
+            }
+        };
+    }
+
     private static List<TemporaryFileRef> getAllInitScriptFiles(NbGradleProject project) {
-        if (GlobalGradleSettings.getDefault().omitInitScript().getValue()) {
+        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+        SelfMaintainedTasks selfMaintainedTasks = globalSettings.selfMaintainedTasks().getValue();
+        if (selfMaintainedTasks == SelfMaintainedTasks.TRUE) {
             return Collections.emptyList();
         }
 
@@ -151,11 +178,27 @@ public final class AsyncGradleTask implements Runnable {
 
         List<TemporaryFileRef> results = new ArrayList<>(scriptQueries.size());
         try {
+            File userHome = null;
             for (InitScriptQuery scriptQuery: scriptQueries) {
                 try {
-                    String scriptContent = scriptQuery.getInitScript();
-                    results.add(TemporaryFileManager.getDefault().createFile(
-                            "task-init-script", scriptContent, StringUtils.UTF8));
+                    if (selfMaintainedTasks == SelfMaintainedTasks.MANUAL && scriptQuery instanceof InitScriptQueryEx) {
+                        InitScriptQueryEx scriptQueryEx = (InitScriptQueryEx)scriptQuery;
+
+                        if (userHome == null) {
+                            userHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
+                            if (userHome == null) {
+                                LOGGER.log(Level.WARNING, "Gradle home is unavailable for init script: {0}.", scriptQueryEx.getBaseFileName());
+                                continue;
+                            }
+                        }
+
+                        results.add(getManualInitScript(userHome, scriptQueryEx));
+                    }
+                    else {
+                        String scriptContent = scriptQuery.getInitScript();
+                        results.add(TemporaryFileManager.getDefault().createFile(
+                                "task-init-script", scriptContent, StringUtils.UTF8));
+                    }
                 } catch (Throwable ex) {
                     LOGGER.log(Level.SEVERE,
                             "Failed to create initialization script provided by " + scriptQuery.getClass().getName(),

@@ -56,7 +56,7 @@
         </Property>
       </Properties>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ModelLoadStrategyItem&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;EnumCombo.Item&lt;ModelLoadingStrategy&gt;&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="jModelLoadStrategyLabel">

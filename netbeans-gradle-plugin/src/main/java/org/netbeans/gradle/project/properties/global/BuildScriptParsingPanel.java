@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.net.URL;
-import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.EnumCombo;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
@@ -9,30 +9,24 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 public class BuildScriptParsingPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Build-Script-Parsing");
 
+    private final EnumCombo<ModelLoadingStrategy> modelLoadingStrategy;
+
     public BuildScriptParsingPanel() {
         initComponents();
 
-        fillModelLoadStrategyCombo();
-    }
-
-    private void fillModelLoadStrategyCombo() {
-        jModelLoadStrategy.removeAllItems();
-        for (ModelLoadingStrategy strategy: ModelLoadingStrategy.values()) {
-            jModelLoadStrategy.addItem(new ModelLoadStrategyItem(strategy));
-        }
+        modelLoadingStrategy = new EnumCombo<>(ModelLoadingStrategy.class, ModelLoadingStrategy.NEWEST_POSSIBLE, jModelLoadStrategy);
     }
 
     @Override
     public void updateSettings(GlobalGradleSettings globalSettings) {
-        jModelLoadStrategy.setSelectedItem(new ModelLoadStrategyItem(
-                globalSettings.modelLoadingStrategy().getValue()));
+        modelLoadingStrategy.setSelectedValue(globalSettings.modelLoadingStrategy().getValue());
         jLoadRootProjectFirst.setSelected(globalSettings.loadRootProjectFirst().getValue());
         jReliableJavaVersionCheck.setSelected(globalSettings.mayRelyOnJavaOfScript().getValue());
     }
 
     @Override
     public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.modelLoadingStrategy().setValue(getModelLoadingStrategy());
+        globalSettings.modelLoadingStrategy().setValue(modelLoadingStrategy.getSelectedValue());
         globalSettings.loadRootProjectFirst().setValue(jLoadRootProjectFirst.isSelected());
         globalSettings.mayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
     }
@@ -43,41 +37,6 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
         result.setHelpUrl(HELP_URL);
 
         return result.create();
-    }
-
-    private ModelLoadingStrategy getModelLoadingStrategy() {
-        ModelLoadStrategyItem selected = (ModelLoadStrategyItem)jModelLoadStrategy.getSelectedItem();
-        return selected != null
-                ? selected.strategy
-                : ModelLoadingStrategy.NEWEST_POSSIBLE;
-    }
-
-    private static final class ModelLoadStrategyItem {
-        public final ModelLoadingStrategy strategy;
-        private final String displayName;
-
-        public ModelLoadStrategyItem(ModelLoadingStrategy strategy) {
-            this.strategy = strategy;
-            this.displayName = NbStrings.getModelLoadStrategy(strategy);
-        }
-
-        @Override
-        public int hashCode() {
-            return 235 + strategy.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-            final ModelLoadStrategyItem other = (ModelLoadStrategyItem)obj;
-            return this.strategy == other.strategy;
-        }
-
-        @Override
-        public String toString() {
-            return displayName;
-        }
     }
 
     /**
@@ -132,7 +91,7 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jLoadRootProjectFirst;
-    private javax.swing.JComboBox<ModelLoadStrategyItem> jModelLoadStrategy;
+    private javax.swing.JComboBox<EnumCombo.Item<ModelLoadingStrategy>> jModelLoadStrategy;
     private javax.swing.JLabel jModelLoadStrategyLabel;
     private javax.swing.JCheckBox jReliableJavaVersionCheck;
     // End of variables declaration//GEN-END:variables
