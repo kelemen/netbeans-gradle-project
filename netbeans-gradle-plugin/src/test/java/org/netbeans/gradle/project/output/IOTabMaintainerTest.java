@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.output;
 
+import java.io.IOException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -35,7 +36,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testReturnsSameTabAfterClose() {
+    public void testReturnsSameTabAfterClose() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         String caption = "my-tab";
@@ -52,7 +53,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testReturnsDifferentTabForDifferentKeys() {
+    public void testReturnsDifferentTabForDifferentKeys() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         Tab tab1;
@@ -76,7 +77,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testDoesNotReturnClosedTab() {
+    public void testDoesNotReturnClosedTab() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         Tab tab1;
@@ -108,7 +109,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testLowestIndexIsUsedWhenThereAreMultipleOpen1() {
+    public void testLowestIndexIsUsedWhenThereAreMultipleOpen1() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1");
@@ -130,7 +131,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testLowestIndexIsUsedWhenThereAreMultipleOpen2() {
+    public void testLowestIndexIsUsedWhenThereAreMultipleOpen2() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1");
@@ -152,7 +153,7 @@ public class IOTabMaintainerTest {
     }
 
     @Test
-    public void testCloseIsIdempotent() {
+    public void testCloseIsIdempotent() throws IOException {
         IOTabMaintainer<Integer, Tab> maintainer = create();
 
         IOTabRef<Tab> tabRef1 = maintainer.getTab(1, "tab1");
