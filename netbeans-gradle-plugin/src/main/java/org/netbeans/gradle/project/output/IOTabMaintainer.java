@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.output;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -174,7 +175,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
         }
 
         @Override
-        public void close() {
+        public void close() throws IOException {
             if (!closed.compareAndSet(false, true)) {
                 return;
             }
@@ -191,6 +192,10 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
                 tabList.add(tab);
             } finally {
                 mainLock.unlock();
+
+                // Fixes memory leak: #256355 (netbeans.org/bugzilla)
+                // Also, removes the boldness from the caption of the output tab.
+                getTab().close();
             }
         }
     }

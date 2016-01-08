@@ -398,7 +398,11 @@ public final class AsyncGradleTask implements Runnable {
             ProgressHandle progress,
             BuildExecutionItem buildItem) {
         CancellationSource cancellation = Cancellation.createChildCancellationSource(cancelToken);
-        doGradleTasksWithProgressIgnoreTaskDefCancel(cancellation, progress, buildItem);
+        try {
+            doGradleTasksWithProgressIgnoreTaskDefCancel(cancellation, progress, buildItem);
+        } catch (IOException ex) {
+            throw new RuntimeException("Unexpected IOException", ex);
+        }
     }
 
     private static String getDisplayableCommand(GradleTaskDef taskDef) {
@@ -416,7 +420,7 @@ public final class AsyncGradleTask implements Runnable {
     private void doGradleTasksWithProgressIgnoreTaskDefCancel(
             CancellationSource cancellation,
             final ProgressHandle progress,
-            BuildExecutionItem buildItem) {
+            BuildExecutionItem buildItem) throws IOException {
 
         GradleTaskDef taskDef = buildItem.getProcessedTaskDef();
         Objects.requireNonNull(taskDef, "command.processed");
@@ -491,9 +495,6 @@ public final class AsyncGradleTask implements Runnable {
                                         buildOutput,
                                         io.getErrRef());
                             }
-                        } finally {
-                            // Fixes memory leak: #256355 (netbeans.org/bugzilla)
-                            tab.getIo().closeStreamsForNow();
                         }
                     } catch (Throwable ex) {
                         Level logLevel;

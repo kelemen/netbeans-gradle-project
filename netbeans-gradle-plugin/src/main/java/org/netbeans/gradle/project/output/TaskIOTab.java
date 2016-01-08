@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.output;
 
+import java.io.IOException;
 import java.util.Arrays;
 import org.jtrim.cancel.CancellationSource;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -43,5 +44,10 @@ public final class TaskIOTab implements IOTabDef {
     @Override
     public boolean isClosed() {
         return io.getIo().isClosed();
+    }
+
+    @Override
+    public void close() throws IOException {
+        getIo().closeStreamsForNow();
     }
 }
