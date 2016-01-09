@@ -42,7 +42,7 @@ public final class TaskIOTab implements IOTabDef {
     }
 
     @Override
-    public boolean isClosed() {
+    public boolean isDestroyed() {
         return io.getIo().isClosed();
     }
 

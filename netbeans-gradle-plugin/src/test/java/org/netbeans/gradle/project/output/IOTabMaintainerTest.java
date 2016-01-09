@@ -185,10 +185,6 @@ public class IOTabMaintainerTest {
             this.destroyed = true;
         }
 
-        boolean isDestroyed() {
-            return destroyed;
-        }
-
         boolean isClosedForNow() {
             return closed;
         }
@@ -199,7 +195,7 @@ public class IOTabMaintainerTest {
         }
 
         @Override
-        public boolean isClosed() {
+        public boolean isDestroyed() {
             return destroyed;
         }
 
