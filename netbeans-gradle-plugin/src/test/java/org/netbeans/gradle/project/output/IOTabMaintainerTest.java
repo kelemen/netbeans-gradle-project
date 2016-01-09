@@ -46,6 +46,7 @@ public class IOTabMaintainerTest {
             originalTab = tabRef.getTab();
         }
 
+        assertTrue("Must be closed.", originalTab.isClosedForNow());
         assertEquals(caption, originalTab.caption);
 
         IOTabRef<Tab> tabRef2 = maintainer.getTab(1, caption);
@@ -85,7 +86,7 @@ public class IOTabMaintainerTest {
             tab1 = tabRef1.getTab();
         }
 
-        tab1.close();
+        tab1.destroy();
 
         IOTabRef<Tab> tabRef2 = maintainer.getTab(1, "tab2");
         Tab tab2 = tabRef2.getTab();
@@ -171,25 +172,40 @@ public class IOTabMaintainerTest {
 
     private static final class Tab implements IOTabDef {
         public final String caption;
+        private volatile boolean destroyed;
         private volatile boolean closed;
 
         public Tab(String caption) {
             this.caption = caption;
+            this.destroyed = false;
             this.closed = false;
         }
 
-        public void close() {
+        void destroy() {
+            this.destroyed = true;
+        }
+
+        boolean isDestroyed() {
+            return destroyed;
+        }
+
+        boolean isClosedForNow() {
+            return closed;
+        }
+
+        @Override
+        public void close() throws IOException {
             this.closed = true;
         }
 
         @Override
         public boolean isClosed() {
-            return closed;
+            return destroyed;
         }
 
         @Override
         public String toString() {
-            return "Tab{" + "caption=" + caption + ", closed=" + closed + '}';
+            return "Tab{" + "caption=" + caption + ", closed for now: " + closed + ", destroyed=" + destroyed + '}';
         }
     }
 }
