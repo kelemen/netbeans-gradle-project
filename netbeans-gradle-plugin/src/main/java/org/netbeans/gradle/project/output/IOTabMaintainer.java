@@ -210,7 +210,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
         }
 
         public boolean isClosed() {
-            return tab.isClosed();
+            return tab.isDestroyed();
         }
     }
 }
