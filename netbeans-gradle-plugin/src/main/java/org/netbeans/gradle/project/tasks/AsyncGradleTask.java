@@ -79,6 +79,7 @@ import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ui.support.BuildExecutionSupport;
 import org.openide.LifecycleManager;
+import org.openide.filesystems.FileObject;
 import org.openide.windows.OutputWriter;
 
 public final class AsyncGradleTask implements Runnable {
@@ -756,8 +757,7 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
-    // TODO: (netbeans7.4): change to BuildExecutionSupport.ActionItem with ref to project
-    private class BuildExecutionItem implements BuildExecutionSupport.Item {
+    private class BuildExecutionItem implements BuildExecutionSupport.ActionItem {
         private final ProcessedCommandSpec processedCommandSpec;
         private final DaemonTaskDef daemonTaskDef;
         private volatile boolean running;
@@ -800,6 +800,16 @@ public final class AsyncGradleTask implements Runnable {
             result.setJvmArgument(taskDef.getJvmArguments());
 
             return result.create();
+        }
+
+        @Override
+        public String getAction() {
+            return processedCommandSpec.getSourceTaskDef().getSafeCommandName();
+        }
+
+        @Override
+        public FileObject getProjectDirectory() {
+            return project.getProjectDirectory();
         }
 
         @Override
