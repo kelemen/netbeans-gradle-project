@@ -175,11 +175,10 @@ implements
         return result;
     }
 
-    private Lookup createLookup(Node rootNode, GradleProjectChildFactory childFactory, Children children) {
+    private Lookup createLookup(GradleProjectChildFactory childFactory, Children children) {
         NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
         return new ProxyLookup(
                 project.getLookup(),
-                rootNode.getLookup(),
                 Lookups.fixed(nodeRefresher));
     }
 
@@ -260,7 +259,8 @@ implements
                 Node node,
                 GradleProjectChildFactory childFactory,
                 org.openide.nodes.Children children) {
-            super(node, children, createLookup(node, childFactory, children));
+            // Do not add lookup of "node" because that might fool NB to believe that multiple projects are selected.
+            super(node, children, createLookup(childFactory, children));
 
             updateActionsList();
         }
