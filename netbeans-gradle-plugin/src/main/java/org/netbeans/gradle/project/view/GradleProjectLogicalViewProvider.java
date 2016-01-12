@@ -277,35 +277,15 @@ implements
             List<Action> projectActions = new LinkedList<>();
             projectActions.add(CommonProjectActions.newFileAction());
             projectActions.add(null);
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_RUN,
-                    NbStrings.getRunCommandCaption()));
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_DEBUG,
-                    NbStrings.getDebugCommandCaption()));
-            projectActions.add(null);
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_BUILD,
-                    NbStrings.getBuildCommandCaption()));
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_TEST,
-                    NbStrings.getTestCommandCaption()));
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_CLEAN,
-                    NbStrings.getCleanCommandCaption()));
-            projectActions.add(createProjectAction(
-                    ActionProvider.COMMAND_REBUILD,
-                    NbStrings.getRebuildCommandCaption()));
-
+            projectActions.addAll(Utilities.actionsForPath("Actions/GradleProject"));
+            
             ExtensionActions extActions = getExtensionActions();
             projectActions.addAll(extActions.getBuildActions());
 
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
             projectActions.add(null);
-            projectActions.add(createProjectAction(
-                    GradleActionProvider.COMMAND_RELOAD,
-                    NbStrings.getReloadCommandCaption()));
+            projectActions.addAll(Utilities.actionsForPath("Gradle"));
             projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
             projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
