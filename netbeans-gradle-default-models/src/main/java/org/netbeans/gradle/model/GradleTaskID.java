@@ -20,4 +20,13 @@ public final class GradleTaskID implements Serializable {
     public String getFullName() {
         return fullName;
     }
+    
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof GradleTaskID) {
+            GradleTaskID otherTaskId = ((GradleTaskID) other);
+            return String.valueOf(name).equals(String.valueOf(otherTaskId.name));
+        }
+        return false;
+    }
 }

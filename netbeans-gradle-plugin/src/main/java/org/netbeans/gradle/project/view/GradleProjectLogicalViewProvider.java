@@ -10,10 +10,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -69,10 +71,13 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
+import org.openide.util.HelpCtx;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.Utilities;
+import org.openide.util.actions.CookieAction;
 import org.openide.util.actions.Presenter;
+import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.openide.util.lookup.implspi.NamedServicesProvider;
@@ -266,7 +271,7 @@ implements
         }
 
         private void updateActionsList() {
-            TasksActionMenu tasksAction = new TasksActionMenu(project);
+            TasksActionMenu tasksAction = SystemAction.get(TasksActionMenu.class); 
             CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
 
             List<Action> projectActions = new LinkedList<>();
@@ -450,12 +455,20 @@ implements
     private static void executeCommandTemplate(
             NbGradleProject project,
             GradleCommandTemplate command) {
+        executeCommandTemplate(Arrays.asList(project), command);
+    }
+
+    private static void executeCommandTemplate(
+            List<NbGradleProject> projects,
+            GradleCommandTemplate command) {
         CustomCommandActions actions = command.isBlocking()
                 ? CustomCommandActions.OTHER
                 : CustomCommandActions.BUILD;
 
-        project.getLookup().lookup(GradleCommandExecutor.class)
-                .executeCommand(command, actions);
+        for (NbGradleProject project : projects) {
+            project.getLookup().lookup(GradleCommandExecutor.class)
+                    .executeCommand(command, actions);
+        }
     }
 
     @SuppressWarnings("serial") // don't care about serialization
@@ -685,29 +698,33 @@ implements
     }
 
     @SuppressWarnings("serial") // don't care about serialization
-    private static class TasksActionMenu extends AbstractAction implements Presenter.Popup {
-        private final NbGradleProject project;
-        private JMenu cachedMenu;
-
-        public TasksActionMenu(NbGradleProject project) {
-            this.project = project;
-            this.cachedMenu = null;
+    private static class TasksActionMenu extends CookieAction implements Presenter.Popup {
+        private List<NbGradleProject> activeProjects;
+        private static TasksActionMenu instance;
+        
+        public TasksActionMenu getInstance() {
+            if (instance == null) {
+                instance = new TasksActionMenu();
+            }
+            return instance;
+        }
+        
+        public TasksActionMenu() {
+            activeProjects = new ArrayList<>();
         }
 
         @Override
         public JMenuItem getPopupPresenter() {
-            if (cachedMenu == null) {
-                cachedMenu = createMenu();
-            }
-            return cachedMenu;
+            return createMenu();
         }
 
         private JMenu createMenu() {
-            JMenu menu = new JMenu(NbStrings.getTasksMenuCaption());
-            final TasksMenuBuilder builder = new TasksMenuBuilder(project, menu);
+            final JMenu menu = new JMenu(NbStrings.getTasksMenuCaption());
             menu.addMenuListener(new MenuListener() {
                 @Override
                 public void menuSelected(MenuEvent e) {
+                    menu.removeAll();
+                    final TasksMenuBuilder builder = new TasksMenuBuilder(activeProjects, menu);
                     builder.updateMenuContent();
                 }
 
@@ -723,22 +740,52 @@ implements
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        protected boolean enable(Node[] activatedNodes) {
+            activeProjects = new ArrayList<>();
+            for (Node node : activatedNodes) {
+                NbGradleProject project = node.getLookup().lookup(NbGradleProject.class);
+                if (project != null) {
+                    activeProjects.add(project);
+                }
+            }
+            return true;
+        }
+
+        @Override
+        protected void performAction(Node[] activatedNodes) {
+        }
+
+        @Override
+        public HelpCtx getHelpCtx() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+
+        @Override
+        protected int mode() {
+            return CookieAction.MODE_ALL;
+        }
+
+        @Override
+        protected Class<?>[] cookieClasses() {
+            return new Class<?>[]{NbGradleCommonProperties.class};
         }
     }
 
     private static class TasksMenuBuilder {
-        private final NbGradleProject project;
+        private final List<NbGradleProject> projects;
         private final JMenu menu;
-        private NbGradleModel lastUsedModel;
 
-        public TasksMenuBuilder(NbGradleProject project, JMenu menu) {
-            ExceptionHelper.checkNotNullArgument(project, "project");
+        public TasksMenuBuilder(List<NbGradleProject> projects, JMenu menu) {
+            ExceptionHelper.checkNotNullArgument(projects, "project");
             ExceptionHelper.checkNotNullArgument(menu, "menu");
 
-            this.project = project;
+            this.projects = projects;
             this.menu = menu;
-            this.lastUsedModel = null;
         }
 
         private void addToMenu(JMenu rootMenu, List<GradleTaskTree> rootNodes) {
@@ -761,9 +808,9 @@ implements
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             GradleCommandTemplate.Builder command
-                                    = new GradleCommandTemplate.Builder("", Arrays.asList(taskID.getFullName()));
+                                    = new GradleCommandTemplate.Builder(taskID.getName(), Arrays.asList(taskID.getFullName()));
 
-                            executeCommandTemplate(project, command.create());
+                            executeCommandTemplate(projects, command.create());
                         }
                     });
                 }
@@ -773,17 +820,26 @@ implements
         }
 
         public void updateMenuContent() {
-            NbGradleModel projectModel = project.currentModel().getValue();
-            if (lastUsedModel == projectModel) {
-                return;
+            Set<GradleTaskID> tasks = null;
+            for (NbGradleProject project : projects) {
+                NbGradleModel projectModel = project.currentModel().getValue();
+                if (tasks == null) { //The first set of tasks will be fully added
+                    tasks = new HashSet<>(projectModel.getMainProject().getTasks());
+                } else { //The subsequent sets will be intersected
+                    tasks.retainAll(projectModel.getMainProject().getTasks());
+                }
             }
+            List<GradleTaskID> taskList = new ArrayList<>(tasks);
+            Collections.sort(taskList, new Comparator<GradleTaskID>() {
+                @Override
+                public int compare(GradleTaskID o1, GradleTaskID o2) {
+                    String name1 = o1.getName();
+                    String name2 = o2.getName();
+                    return StringUtils.STR_CMP.compare(name1, name2);
+                }
+            });
 
-            lastUsedModel = projectModel;
-
-            Collection<GradleTaskID> tasks = projectModel.getMainProject().getTasks();
-
-            menu.removeAll();
-            addToMenu(menu, GradleTaskTree.createTaskTree(tasks));
+            addToMenu(menu, GradleTaskTree.createTaskTree(taskList));
         }
     }
 
