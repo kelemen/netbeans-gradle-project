@@ -54,6 +54,17 @@ public enum StandardTaskVariable {
             return getClassNameForFile(project, file);
         }
     }),
+    SELECTED_FILE("selected-file", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            FileObject file = getFileOfContext(actionContext);
+            if (file == null) {
+                return VariableValue.NULL_VALUE;
+            }
+
+            return new VariableValue(file.getPath());
+        }
+    }),
     TEST_FILE_PATH("test-file-path", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
