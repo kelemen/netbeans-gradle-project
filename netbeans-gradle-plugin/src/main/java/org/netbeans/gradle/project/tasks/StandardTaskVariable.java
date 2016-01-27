@@ -62,12 +62,12 @@ public enum StandardTaskVariable {
             if (fileObject == null) {
                 return VariableValue.NULL_VALUE;
             }
-            
+
             File file = FileUtil.toFile(fileObject);
             if (file == null) {
                 return VariableValue.NULL_VALUE;
             }
-            
+
             return new VariableValue(file.getPath());
         }
     }),
