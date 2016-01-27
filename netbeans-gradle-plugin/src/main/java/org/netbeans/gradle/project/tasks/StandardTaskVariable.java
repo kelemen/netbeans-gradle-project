@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,22 @@ public enum StandardTaskVariable {
             }
 
             return getClassNameForFile(project, file);
+        }
+    }),
+    SELECTED_FILE("selected-file", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            FileObject fileObject = getFileOfContext(actionContext);
+            if (fileObject == null) {
+                return VariableValue.NULL_VALUE;
+            }
+            
+            File file = FileUtil.toFile(fileObject);
+            if (file == null) {
+                return VariableValue.NULL_VALUE;
+            }
+            
+            return new VariableValue(file.getPath());
         }
     }),
     TEST_FILE_PATH("test-file-path", new ValueGetter<NbGradleProject>() {
