@@ -32,8 +32,9 @@ public final class DebugTextListener implements TaskOutputProcessor {
         }
 
         String trimmedLine = line.trim().toLowerCase(Locale.US);
-        if (trimmedLine.startsWith(LISTEN_TEXT)) {
-            int portSeparatorIndex = trimmedLine.indexOf(':');
+        int listenTextStartIndex = trimmedLine.indexOf(LISTEN_TEXT);
+        if (listenTextStartIndex >= 0) {
+            int portSeparatorIndex = trimmedLine.indexOf(':', listenTextStartIndex + LISTEN_TEXT.length());
 
             if (portSeparatorIndex >= 0) {
                 String portStr = trimmedLine.substring(portSeparatorIndex + 1).trim();
