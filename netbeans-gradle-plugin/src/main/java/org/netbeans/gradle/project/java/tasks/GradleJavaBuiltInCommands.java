@@ -83,16 +83,16 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             hideTestFailures());
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
             TaskKind.RUN,
-            Arrays.asList("run"),
+            Arrays.asList(projectTask("run")),
             Collections.<String>emptyList());
     private static final CommandWithActions DEFAULT_DEBUG_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
-            Arrays.asList("debug"),
+            Arrays.asList(projectTask("debug")),
             Collections.<String>emptyList(),
             attachDebugger());
     private static final CommandWithActions DEFAULT_DEBUG_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
-            Arrays.asList("run"),
+            Arrays.asList(projectTask("run")),
             debuggeeAttachesArguments(projectTask("run")),
             listenDebugger());
     private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
