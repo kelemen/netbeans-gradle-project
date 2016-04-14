@@ -372,7 +372,7 @@ implements
     private static List<PathResourceImplementation> getBuildOutputDirsAsPathResources(JavaSourceSet sourceSet) {
         JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
         PathResourceImplementation classesDir = toPathResource(outputDirs.getClassesDir());
-        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getClassesDir());
+        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getResourcesDir());
 
         List<PathResourceImplementation> result = new ArrayList<>(2);
         if (classesDir != null) result.add(classesDir);
