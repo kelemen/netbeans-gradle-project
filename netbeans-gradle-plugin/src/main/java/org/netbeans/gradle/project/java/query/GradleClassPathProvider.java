@@ -380,18 +380,22 @@ implements
         return result;
     }
 
-    private void loadPathResources(JavaSourceSet sourceSet, Set<File> invalid) {
+    private void loadCompilePathResources(JavaSourceSet sourceSet, Set<File> invalid) {
         Set<File> compileCP = sourceSet.getClasspaths().getCompileClasspaths();
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.COMPILE),
                 getPathResources(compileCP, invalid));
+    }
 
+    private void loadRuntimePathResources(JavaSourceSet sourceSet, Set<File> invalid) {
         Set<File> runtimeCP = sourceSet.getClasspaths().getRuntimeClasspaths();
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.RUNTIME),
                 getPathResources(runtimeCP, invalid),
                 getBuildOutputDirsAsPathResources(sourceSet));
+    }
 
+    private void loadSourcePathResources(JavaSourceSet sourceSet, Set<File> invalid) {
         List<PathResourceImplementation> sourcePaths = new LinkedList<>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
             Set<File> sourceRoots = sourceGroup.getSourceRoots();
@@ -403,6 +407,12 @@ implements
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.SOURCES),
                 sourcePaths);
+    }
+
+    private void loadPathResources(JavaSourceSet sourceSet, Set<File> invalid) {
+        loadCompilePathResources(sourceSet, invalid);
+        loadRuntimePathResources(sourceSet, invalid);
+        loadSourcePathResources(sourceSet, invalid);
     }
 
     private void loadBootClassPath() {
