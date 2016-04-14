@@ -386,7 +386,7 @@ implements
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.COMPILE),
                 getPathResources(compileCP, invalid));
 
-        Set<File> runtimeCP = sourceSet.getClasspaths().getCompileClasspaths();
+        Set<File> runtimeCP = sourceSet.getClasspaths().getRuntimeClasspaths();
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.RUNTIME),
                 getPathResources(runtimeCP, invalid),
