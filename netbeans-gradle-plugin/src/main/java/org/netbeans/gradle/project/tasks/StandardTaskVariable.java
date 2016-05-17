@@ -29,6 +29,13 @@ import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
 
 public enum StandardTaskVariable {
+    PROJECT_PATH_NOT_NORMALIZED("project-path", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
+            return new VariableValue(uniqueName);
+        }
+    }),
     PROJECT_PATH_NORMALIZED("project", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
