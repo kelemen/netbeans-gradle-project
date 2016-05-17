@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -41,6 +42,7 @@ import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.Cl
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
@@ -188,6 +190,15 @@ implements
             @Override
             public void run() {
                 onPlatformChange();
+            }
+        }));
+
+        PropertySource<Boolean> detectProjectDependenciesByJarName
+                = NbProperties.weakListenerProperty(PropertyFactory.lazilyNotifiedProperty(GlobalGradleSettings.getDefault().detectProjectDependenciesByJarName()));
+        propertyListenerRefs.add(detectProjectDependenciesByJarName.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                scheduleReloadPathResources();
             }
         }));
     }
