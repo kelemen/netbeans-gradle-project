@@ -69,6 +69,7 @@ public final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> replaceLfOnStdIn;
     private final StringBasedProperty<DebugMode> debugMode;
     private final StringBasedProperty<Boolean> loadRootProjectFirst;
+    private final StringBasedProperty<Boolean> detectProjectDependenciesByJarName;
 
     public GlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
@@ -135,6 +136,9 @@ public final class GlobalGradleSettings {
         loadRootProjectFirst = new GlobalProperty<>(
                 withNS(namespace, "load-root-first"),
                 new BooleanConverter(true));
+        detectProjectDependenciesByJarName = new GlobalProperty<>(
+                withNS(namespace, "detect-project-dep-by-jar-name"),
+                new BooleanConverter(false));
     }
 
     public static void setDefaultPreference() {
@@ -199,6 +203,10 @@ public final class GlobalGradleSettings {
 
     public StringBasedProperty<Integer> projectCacheSize() {
         return projectCacheSize;
+    }
+
+    public StringBasedProperty<Boolean> detectProjectDependenciesByJarName() {
+        return detectProjectDependenciesByJarName;
     }
 
     public StringBasedProperty<Boolean> alwaysClearOutput() {

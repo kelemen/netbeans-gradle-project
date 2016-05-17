@@ -31,6 +31,7 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -110,8 +111,10 @@ public final class ProjectClassPathResourceBuilder {
     }
 
     private static Map<ProjectArtifactId, File> findOpenedProjectsOutput() {
-        // TODO: Check if this feature is enabled in the global settings.
-        //       If not, return null.
+        if (!GlobalGradleSettings.getDefault().detectProjectDependenciesByJarName().getValue()) {
+            return null;
+        }
+
         Collection<JavaExtension> javaExts = getAllOpenedGradleJavaProjects();
         Map<ProjectArtifactId, File> result = CollectionsEx.newHashMap(javaExts.size());
         for (JavaExtension javaExt: javaExts) {

@@ -16,6 +16,7 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
 
     @Override
     public void updateSettings(GlobalGradleSettings globalSettings) {
+        jDetectProjectDependenciesByName.setSelected(globalSettings.detectProjectDependenciesByJarName().getValue());
         jCompileOnSaveCheckbox.setSelected(globalSettings.compileOnSave().getValue());
         jProjectCacheSize.setValue(globalSettings.projectCacheSize().getValue());
     }
@@ -24,6 +25,7 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
     public void saveSettings(GlobalGradleSettings globalSettings) {
         globalSettings.projectCacheSize().setValue(getProjectCacheSize(globalSettings));
         globalSettings.compileOnSave().setValue(jCompileOnSaveCheckbox.isSelected());
+        globalSettings.detectProjectDependenciesByJarName().setValue(jDetectProjectDependenciesByName.isSelected());
     }
 
     @Override
@@ -57,10 +59,13 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
         jCompileOnSaveCheckbox = new javax.swing.JCheckBox();
         jProjectCacheSizeLabel = new javax.swing.JLabel();
         jProjectCacheSize = new javax.swing.JSpinner();
+        jDetectProjectDependenciesByName = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jCompileOnSaveCheckbox, org.openide.util.NbBundle.getMessage(OtherOptionsPanel.class, "OtherOptionsPanel.jCompileOnSaveCheckbox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jProjectCacheSizeLabel, org.openide.util.NbBundle.getMessage(OtherOptionsPanel.class, "OtherOptionsPanel.jProjectCacheSizeLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jDetectProjectDependenciesByName, org.openide.util.NbBundle.getMessage(OtherOptionsPanel.class, "OtherOptionsPanel.jDetectProjectDependenciesByName.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -73,7 +78,8 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
                         .addComponent(jProjectCacheSizeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jCompileOnSaveCheckbox))
+                    .addComponent(jCompileOnSaveCheckbox)
+                    .addComponent(jDetectProjectDependenciesByName))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -85,6 +91,8 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
                     .addComponent(jProjectCacheSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jCompileOnSaveCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jDetectProjectDependenciesByName)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -92,6 +100,7 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox jCompileOnSaveCheckbox;
+    private javax.swing.JCheckBox jDetectProjectDependenciesByName;
     private javax.swing.JSpinner jProjectCacheSize;
     private javax.swing.JLabel jProjectCacheSizeLabel;
     // End of variables declaration//GEN-END:variables
