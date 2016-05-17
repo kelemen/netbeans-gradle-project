@@ -39,6 +39,7 @@ import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbCodeCoverage;
+import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
@@ -112,6 +113,7 @@ public final class IdeaJavaModelUtils {
                 compatibilityModel,
                 Collections.<JavaSourceSet>emptyList(),
                 Collections.<NbListedDir>emptyList(),
+                Collections.<NbJarOutput>emptyList(),
                 JavaTestModel.getDefaulTestModel(projectDir),
                 NbCodeCoverage.NO_CODE_COVERAGE
         );
@@ -342,7 +344,13 @@ public final class IdeaJavaModelUtils {
         List<NbListedDir> listedDirs = lookupListedDirs(sourceSets);
         JavaTestModel testModel = JavaTestModel.getDefaulTestModel(moduleDir);
 
-        return new NbJavaModule(properties, compatibilityModel, sourceSets, listedDirs, testModel, NbCodeCoverage.NO_CODE_COVERAGE);
+        return new NbJavaModule(
+                properties,
+                compatibilityModel,
+                sourceSets,
+                listedDirs,
+                Collections.<NbJarOutput>emptyList(),
+                testModel, NbCodeCoverage.NO_CODE_COVERAGE);
     }
 
     public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {

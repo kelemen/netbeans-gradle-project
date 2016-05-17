@@ -30,6 +30,7 @@ public final class NbJavaModule implements Serializable {
     private final JavaCompatibilityModel compatibilityModel;
     private final List<JavaSourceSet> sources;
     private final List<NbListedDir> listedDirs;
+    private final List<NbJarOutput> jarOutputs;
     private final JavaTestModel testTasks;
     private final NbCodeCoverage codeCoverage;
 
@@ -47,6 +48,7 @@ public final class NbJavaModule implements Serializable {
             JavaCompatibilityModel compatibilityModel,
             Collection<JavaSourceSet> sources,
             List<NbListedDir> listedDirs,
+            List<NbJarOutput> jarOutputs,
             JavaTestModel testTasks,
             NbCodeCoverage codeCoverage) {
 
@@ -54,6 +56,7 @@ public final class NbJavaModule implements Serializable {
         ExceptionHelper.checkNotNullArgument(compatibilityModel, "compatibilityModel");
         ExceptionHelper.checkNotNullElements(sources, "sources");
         ExceptionHelper.checkNotNullElements(listedDirs, "listedDirs");
+        ExceptionHelper.checkNotNullElements(jarOutputs, "jarOutputs");
         ExceptionHelper.checkNotNullArgument(testTasks, "testTasks");
         ExceptionHelper.checkNotNullArgument(codeCoverage, "codeCoverage");
 
@@ -61,6 +64,7 @@ public final class NbJavaModule implements Serializable {
         this.compatibilityModel = compatibilityModel;
         this.sources = CollectionUtils.copyNullSafeList(sources);
         this.listedDirs = CollectionUtils.copyNullSafeList(listedDirs);
+        this.jarOutputs = CollectionUtils.copyNullSafeList(jarOutputs);
         this.testTasks = testTasks;
         this.codeCoverage = codeCoverage;
 
@@ -108,6 +112,10 @@ public final class NbJavaModule implements Serializable {
 
     public List<NbListedDir> getListedDirs() {
         return listedDirs;
+    }
+
+    public List<NbJarOutput> getJarOutputs() {
+        return jarOutputs;
     }
 
     private JavaSourceSet emptySourceSet(String name) {
@@ -342,6 +350,7 @@ public final class NbJavaModule implements Serializable {
         private final JavaCompatibilityModel compatibilityModel;
         private final List<JavaSourceSet> sources;
         private final List<NbListedDir> listedDirs;
+        private final List<NbJarOutput> jarOutputs;
         private final JavaTestModel testTasks;
         private final NbCodeCoverage codeCoverage;
 
@@ -350,6 +359,7 @@ public final class NbJavaModule implements Serializable {
             this.compatibilityModel = source.compatibilityModel;
             this.sources = source.sources;
             this.listedDirs = source.listedDirs;
+            this.jarOutputs = source.jarOutputs;
             this.testTasks = source.testTasks;
             this.codeCoverage = source.codeCoverage;
         }
@@ -358,12 +368,18 @@ public final class NbJavaModule implements Serializable {
             return codeCoverage != null ? codeCoverage : NbCodeCoverage.NO_CODE_COVERAGE;
         }
 
+        private List<NbJarOutput> jarOutputs() {
+            return jarOutputs != null ? jarOutputs : Collections.<NbJarOutput>emptyList();
+        }
+
+
         private Object readResolve() throws ObjectStreamException {
             return new NbJavaModule(
                     properties,
                     compatibilityModel,
                     sources,
                     listedDirs,
+                    jarOutputs(),
                     testTasks,
                     getCodeCoverage());
         }

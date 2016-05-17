@@ -39,7 +39,13 @@ public class NbJavaModelTest {
                 new NbListedDir("my-listed-dir", new File("listed-dir")));
         JavaTestModel testModel = JavaTestModel.getDefaulTestModel(properties.getProjectDir());
 
-        return new NbJavaModule(properties, compatibility, sources, listedDirs, testModel, NbCodeCoverage.NO_CODE_COVERAGE);
+        List<NbJarOutput> jarOutputs = Arrays.asList(
+                new NbJarOutput("jar",
+                        new File(properties.getBuildDir(), "myproject.jar"),
+                        Arrays.asList(sources.get(0).getOutputDirs().getClassesDir()))
+        );
+
+        return new NbJavaModule(properties, compatibility, sources, listedDirs, jarOutputs, testModel, NbCodeCoverage.NO_CODE_COVERAGE);
     }
 
     @Test

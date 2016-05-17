@@ -21,7 +21,6 @@ import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ui.OpenProjects;
-import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
@@ -29,6 +28,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
@@ -48,7 +48,8 @@ public final class ProjectClassPathResourceBuilder {
     private Set<File> missing;
     private Map<ClassPathKey, List<PathResourceImplementation>> classpathResources;
 
-    private Map<ProjectArtifactId, File> openedProjectsOutput;
+    // Maps JAR name to source set output directory.
+    private Map<String, Set<File>> openedProjectsOutput;
 
     public ProjectClassPathResourceBuilder(NbJavaModel projectModel, ProjectPlatform currentPlatform) {
         ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
@@ -110,19 +111,23 @@ public final class ProjectClassPathResourceBuilder {
         return new ArrayList<>(result.values());
     }
 
-    private static Map<ProjectArtifactId, File> findOpenedProjectsOutput() {
+    private static Map<String, Set<File>> findOpenedProjectsOutput() {
         if (!GlobalGradleSettings.getDefault().detectProjectDependenciesByJarName().getValue()) {
             return null;
         }
 
         Collection<JavaExtension> javaExts = getAllOpenedGradleJavaProjects();
-        Map<ProjectArtifactId, File> result = CollectionsEx.newHashMap(javaExts.size());
+        Map<String, Set<File>> result = CollectionsEx.newHashMap(javaExts.size());
         for (JavaExtension javaExt: javaExts) {
             NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-            File outputDir = mainModule.getMainSourceSet().getOutputDirs().getClassesDir();
+            for (NbJarOutput jarOutput: mainModule.getJarOutputs()) {
+                String key = jarOutput.getJar().getName().toLowerCase(Locale.ROOT);
+                Set<File> classDirs = jarOutput.getClassDirs();
 
-            ProjectId projectId = mainModule.getProperties().getProjectId();
-            result.put(new ProjectArtifactId(projectId.getName(), projectId.getVersion()), outputDir);
+                if (!classDirs.isEmpty() && (!result.containsKey(key) || jarOutput.isDefaultJar())) {
+                    result.put(key, jarOutput.getClassDirs());
+                }
+            }
         }
         return result;
     }
@@ -138,13 +143,10 @@ public final class ProjectClassPathResourceBuilder {
         return result;
     }
 
-    private File updateDependency(File original) {
-        if (openedProjectsOutput == null) {
-            return original;
-        }
-
-        File translated = openedProjectsOutput.get(new ProjectArtifactId(original.getName()));
-        return translated != null ? translated : original;
+    private Set<File> tryUpdateDependency(File original) {
+        return openedProjectsOutput != null
+                ? openedProjectsOutput.get(original.getName().toLowerCase(Locale.ROOT))
+                : null;
     }
 
     private Collection<File> updateDependencies(Collection<File> original) {
@@ -155,14 +157,17 @@ public final class ProjectClassPathResourceBuilder {
         boolean changed = false;
         Collection<File> result = new ArrayList<>(original.size());
         for (File file: original) {
-            File translated = updateDependency(file);
-            if (translated != file) {
+            Set<File> translated = tryUpdateDependency(file);
+            if (translated != null) {
                 // Reference comparison is fine because updateDependency
                 // will return the same reference if it cannot update the
                 // dependency.
                 changed = true;
+                result.addAll(translated);
             }
-            result.add(translated);
+            else {
+                result.add(file);
+            }
         }
 
         return changed ? result : original;

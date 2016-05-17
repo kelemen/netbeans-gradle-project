@@ -1,6 +1,8 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,7 +62,7 @@ public final class JavaParsingUtils {
 
     private static JavaSourceSet tryGetSourceSetForJarWithHeuristic(JarOutput jar, JavaSourcesModel sources) {
         String taskName = jar.getTaskName().toLowerCase(Locale.ROOT);
-        if ("jar".equals(taskName)) {
+        if (NbJarOutput.DEFAULT_JAR_TASK_NAME.equals(taskName)) {
             for (JavaSourceSet sourceSet: sources.getSourceSets()) {
                 if (JavaSourceSet.NAME_MAIN.equals(sourceSet.getName())) {
                     return sourceSet;
@@ -234,10 +236,32 @@ public final class JavaParsingUtils {
                 testModel = JavaTestModel.getDefaulTestModel(retrievedModels.getMainProjectDir());
             }
 
-            NbCodeCoverage codeCoverage = getCodeCoverage(projectInfo);
-
-            NbJavaModule module = new NbJavaModule(properties, versions, sourceSets, listedDirs, testModel, codeCoverage);
+            NbJavaModule module = new NbJavaModule(
+                    properties,
+                    versions,
+                    sourceSets,
+                    listedDirs,
+                    getJarOutputs(projectInfo, jarsToBuildDirs),
+                    testModel,
+                    getCodeCoverage(projectInfo));
             result.add(module);
+        }
+
+        return result;
+    }
+
+    private static List<NbJarOutput> getJarOutputs(Lookup projectInfo, Map<File, Set<File>> jarsToBuildDirs) {
+        JarOutputsModel model = projectInfo.lookup(JarOutputsModel.class);
+        Collection<JarOutput> jars = model.getJars();
+        List<NbJarOutput> result = new ArrayList<>(jars.size());
+
+        for (JarOutput output: jars) {
+            Set<File> buildDirs = jarsToBuildDirs.get(output.getJar());
+            if (buildDirs == null) {
+                buildDirs = Collections.emptySet();
+            }
+
+            result.add(new NbJarOutput(output.getTaskName(), output.getJar(), buildDirs));
         }
 
         return result;
