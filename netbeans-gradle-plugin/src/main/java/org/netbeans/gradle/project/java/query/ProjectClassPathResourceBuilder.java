@@ -161,7 +161,6 @@ public final class ProjectClassPathResourceBuilder {
                 // will return the same reference if it cannot update the
                 // dependency.
                 changed = true;
-                System.out.println("Replacing dependency " + file + " with " + translated);
             }
             result.add(translated);
         }
