@@ -180,8 +180,13 @@ public final class GradleDataObject extends MultiDataObject {
             return name != null ? annotateWithFolder(name) : null;
         }
 
+        private boolean shouldAnnotate(String baseFileName) {
+            return SettingsFiles.BUILD_FILE_NAME.equalsIgnoreCase(baseFileName)
+                    || SettingsFiles.SETTINGS_GRADLE.equalsIgnoreCase(baseFileName);
+        }
+
         private String annotateWithFolder(String name) {
-            if (SettingsFiles.BUILD_FILE_NAME.equals(getPrimaryFile().getNameExt())) {
+            if (shouldAnnotate(getPrimaryFile().getNameExt())) {
                 FileObject parent = getPrimaryFile().getParent();
                 if (parent != null) {
                     String folderName = parent.getNameExt();
