@@ -166,6 +166,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.Tasks");
     }
 
+    public static String getSetAsMainCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SetAsMain");
+    }
+
     public static String getReloadCommandCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ReloadProject");
     }
