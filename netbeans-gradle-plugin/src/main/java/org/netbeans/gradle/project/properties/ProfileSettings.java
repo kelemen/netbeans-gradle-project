@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,7 +24,6 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.gradle.jarjar.com.google.common.base.Objects;
 import org.jtrim.collections.EqualityComparator;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
@@ -204,7 +204,7 @@ public final class ProfileSettings {
         int childCount = children.getLength();
         for (int i = 0; i < childCount; i++) {
             Node child = children.item(i);
-            if (Objects.equal(child.getNodeName(), childName)) {
+            if (Objects.equals(child.getNodeName(), childName)) {
                 return child;
             }
         }

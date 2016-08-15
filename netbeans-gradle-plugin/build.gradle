@@ -155,6 +155,8 @@ dependencies {
     providedCompile netbeansApi('org-netbeans-libs-javacapi')
     providedCompile netbeansApi('org-netbeans-modules-nbjunit')
     providedCompile netbeansApi('org-netbeans-libs-junit4')
+    providedCompile netbeansApi('org-netbeans-core-multitabs')
+    providedCompile netbeansApi('org-netbeans-swing-tabcontrol')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-codecoverage')
