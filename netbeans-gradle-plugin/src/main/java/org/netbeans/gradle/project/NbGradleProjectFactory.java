@@ -147,13 +147,10 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static boolean hasBuildFile(FileObject directory) {
-        if (directory.getFileObject(SettingsFiles.BUILD_FILE_NAME) != null) {
-            return true;
-        }
-        if (directory.getFileObject(SettingsFiles.SETTINGS_GRADLE) != null) {
-            return true;
-        }
-        return directory.getFileObject(directory.getNameExt() + SettingsFiles.DEFAULT_GRADLE_EXTENSION) != null;
+        return directory.getFileObject(SettingsFiles.BUILD_FILE_NAME) != null
+                || directory.getFileObject(SettingsFiles.SETTINGS_GRADLE) != null
+                || directory.getFileObject(directory.getNameExt() + SettingsFiles.DEFAULT_GRADLE_EXTENSION) != null
+                || directory.getFileObject(directory.getNameExt() + "-" + SettingsFiles.BUILD_FILE_NAME) != null;
     }
 
     @Override
