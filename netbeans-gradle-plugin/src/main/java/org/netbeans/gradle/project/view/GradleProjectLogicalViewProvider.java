@@ -179,7 +179,7 @@ implements
         NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
         return new ProxyLookup(
                 project.getLookup(),
-                Lookups.fixed(nodeRefresher));
+                Lookups.fixed(nodeRefresher, project.getProjectDirectory()));
     }
 
     private static <T> List<T> trimNulls(List<T> list) {
