@@ -387,6 +387,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleProjectLicenseCategoryName");
     }
 
+    public static String getAppearanceCategoryName() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.AppearanceCategoryName");
+    }
+
     public static String getDownloadSourcesProgressCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DownloadSourcesProgressCaption");
     }

@@ -18,6 +18,7 @@ import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.properties.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
+import org.netbeans.gradle.project.properties.standard.ProjectDisplayNameProperty;
 import org.netbeans.gradle.project.properties.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
@@ -38,6 +39,7 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<ProjectPlatform> targetPlatform;
     private final PropertyReference<String> sourceLevel;
     private final PropertyReference<UserInitScriptPath> userInitScriptPath;
+    private final PropertyReference<String> displayNamePattern;
 
     public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
         ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
@@ -58,6 +60,7 @@ public final class NbGradleCommonProperties {
         targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
         userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
+        displayNamePattern = displayNamePattern(activeSettingsQuery);
     }
 
     public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
@@ -82,6 +85,13 @@ public final class NbGradleCommonProperties {
                 CustomTasksProperty.PROPERTY_DEF,
                 activeSettingsQuery,
                 PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
+    }
+
+    public static PropertyReference<String> displayNamePattern(ActiveSettingsQuery activeSettingsQuery) {
+        return new PropertyReference<>(
+                ProjectDisplayNameProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                ProjectDisplayNameProperty.defaultValue());
     }
 
     public Project getOwnerProject() {
@@ -126,6 +136,10 @@ public final class NbGradleCommonProperties {
 
     public PropertyReference<UserInitScriptPath> userInitScriptPath() {
         return userInitScriptPath;
+    }
+
+    public PropertyReference<String> displayNamePattern() {
+        return displayNamePattern;
     }
 
     private <ValueType> PropertyReference<ValueType> get(

@@ -102,7 +102,7 @@ public final class NbGradleProject implements Project {
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
-    private final PropertySource<String> displayName;
+    private final AtomicReference<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
@@ -145,7 +145,7 @@ public final class NbGradleProject implements Project {
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelLoadListener = new ModelRetrievedListenerImpl();
 
-        this.displayName = getDisplayName(currentModel, GlobalGradleSettings.getDefault().displayNamePattern());
+        this.displayNameRef = new AtomicReference<>(null);
 
         this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
             @Override
@@ -551,7 +551,14 @@ public final class NbGradleProject implements Project {
     }
 
     public PropertySource<String> displayName() {
-        return displayName;
+        PropertySource<String> result = displayNameRef.get();
+        if (result == null) {
+            result = getDisplayName(currentModel, getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
+            if (!displayNameRef.compareAndSet(null, result)) {
+                result = displayNameRef.get();
+            }
+        }
+        return result;
     }
 
     public PropertySource<String> description() {

@@ -18,7 +18,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     public AppearancePanel() {
         initComponents();
 
-        nodeNamePanel = new ProjectNodeNamePanel();
+        nodeNamePanel = new ProjectNodeNamePanel(false);
         jProjectNodeNameHolder.add(nodeNamePanel);
         fillJavaSourcesDisplayModeCombo();
     }
@@ -58,7 +58,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
 
     @Override
     public void updateSettings(GlobalGradleSettings globalSettings) {
-        nodeNamePanel.updatePattern(globalSettings.displayNamePattern().getValue());
+        nodeNamePanel.updatePattern(globalSettings.displayNamePattern().getValue(), null);
 
         JavaSourcesDisplayMode sourcesDisplayMode = globalSettings.javaSourcesDisplayMode().getValue();
         selectSourcesDisplayMode(sourcesDisplayMode);
