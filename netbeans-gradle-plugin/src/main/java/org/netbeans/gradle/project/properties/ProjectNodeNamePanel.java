@@ -114,6 +114,9 @@ public class ProjectNodeNamePanel extends javax.swing.JPanel {
                         + DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant()
                         + "-"
                         + DisplayableTaskVariable.PROJECT_VERSION.getScriptReplaceConstant()));
+        jDisplayNameCombo.addItem(new NamePatternItem(DisplayableTaskVariable.PARENT_NAME.getScriptReplaceConstant()
+                        + "."
+                        + DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant()));
         jDisplayNameCombo.addItem(new NamePatternItem(NbStrings.getCustomNamePatternLabel(), null));
     }
 

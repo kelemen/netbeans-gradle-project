@@ -24,6 +24,8 @@ public final class NbGradleProjectTree implements Serializable {
     private final Collection<GradleTaskID> tasks;
     private final Collection<NbGradleProjectTree> children;
 
+    private final AtomicReference<NbGradleProjectTree> parentRef;
+
     private final AtomicReference<Map<String, NbGradleProjectTree>> childrenMap;
 
     public NbGradleProjectTree(
@@ -37,6 +39,7 @@ public final class NbGradleProjectTree implements Serializable {
         this.children = CollectionUtils.copyNullSafeList(children);
 
         this.childrenMap = new AtomicReference<>(null);
+        this.parentRef = new AtomicReference<>(null);
     }
 
     public NbGradleProjectTree(GradleProjectTree tree) {
@@ -47,6 +50,41 @@ public final class NbGradleProjectTree implements Serializable {
         this.children = fromModels(tree.getChildren());
 
         this.childrenMap = new AtomicReference<>(null);
+        this.parentRef = new AtomicReference<>(null);
+    }
+
+    public NbGradleProjectTree getParent(NbGradleProjectTree root) {
+        if (root == this) {
+            return null;
+        }
+
+        NbGradleProjectTree result = parentRef.get();
+        if (result == null) {
+            root.updateParentRefOfChildren();
+            result = parentRef.get();
+        }
+        return result;
+    }
+
+    private void updateParentRefOfChildren() {
+        for (NbGradleProjectTree child: children) {
+            child.parentRef.set(this);
+            child.updateParentRefOfChildren();
+        }
+    }
+
+    private static NbGradleProjectTree findParent(NbGradleProjectTree root, NbGradleProjectTree project) {
+        // TODO: We could optimize this by first guessing by the project path.
+        for (NbGradleProjectTree child: root.getChildren()) {
+            if (child == project) {
+                return root;
+            }
+            NbGradleProjectTree candidate = findParent(child, project);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private static Collection<NbGradleProjectTree> fromModels(Collection<GradleProjectTree> models) {

@@ -48,6 +48,10 @@ public final class NbGradleMultiProjectDef implements Serializable {
         }
     }
 
+    public NbGradleProjectTree getParentTree() {
+        return mainProject.getParent(rootProject);
+    }
+
     // Just a sanity check, not a complete recursive one.
     private static boolean cmpTrees(NbGradleProjectTree parsed, GradleProjectTree model) {
         if (parsed == null) {

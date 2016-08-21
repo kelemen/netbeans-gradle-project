@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.view;
 
 import java.io.File;
 import java.util.Map;
+import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.task.TaskVariable;
@@ -41,9 +42,53 @@ public enum DisplayableTaskVariable {
             ProjectId projectId = model.getProjectId();
             return new VariableValue(projectId.getVersion());
         }
+    }),
+    PARENT_PATH("parent.path", new ValueGetter<NbGradleModel>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            return new VariableValue(getProjectPath(parent(model)));
+        }
+    }),
+    PARENT_GROUP("parent.group", new ValueGetter<NbGradleModel>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            ProjectId projectId = parentId(model);
+            return new VariableValue(projectId != null ? projectId.getGroup() : "");
+        }
+    }),
+    PARENT_NAME("parent.name", new ValueGetter<NbGradleModel>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            return new VariableValue(getProjectName(parent(model)));
+        }
+    }),
+    PARENT_VERSION("parent.version", new ValueGetter<NbGradleModel>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
+            ProjectId projectId = parentId(model);
+            return new VariableValue(projectId != null ? projectId.getVersion() : "");
+        }
     });
 
+    private static NbGradleProjectTree parent(NbGradleModel model) {
+        return model.getProjectDef().getParentTree();
+    }
+
+    private static GenericProjectProperties parentProperties(NbGradleModel model) {
+        NbGradleProjectTree parent = parent(model);
+        return parent != null ? parent.getGenericProperties() : null;
+    }
+
+    private static ProjectId parentId(NbGradleModel model) {
+        GenericProjectProperties properties = parentProperties(model);
+        return properties != null ? properties.getProjectId() : null;
+    }
+
     private static String getProjectName(NbGradleProjectTree model) {
+        if (model == null) {
+            return "";
+        }
+
         ProjectId projectId = model.getGenericProperties().getProjectId();
         String name = projectId.getName();
         if (name.isEmpty()) {
@@ -65,6 +110,10 @@ public enum DisplayableTaskVariable {
     }
 
     private static String getProjectPath(NbGradleProjectTree model) {
+        if (model == null) {
+            return "";
+        }
+
         String path = model.getProjectFullName();
         if (path.isEmpty() || path.equals(":")) {
             return getProjectName(model);
