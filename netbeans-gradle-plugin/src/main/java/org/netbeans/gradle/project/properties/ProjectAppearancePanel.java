@@ -11,7 +11,7 @@ import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 public class ProjectAppearancePanel extends javax.swing.JPanel {
     private final ProjectNodeNamePanel nodeNamePanel;
 
-    public ProjectAppearancePanel() {
+    private ProjectAppearancePanel() {
         initComponents();
 
         nodeNamePanel = new ProjectNodeNamePanel(true);
