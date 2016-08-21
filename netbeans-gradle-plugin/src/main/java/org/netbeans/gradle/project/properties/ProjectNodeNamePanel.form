@@ -17,52 +17,50 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jDisplayNameCaption" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jProjectNodeNameHolder" max="32767" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <Component id="jSourcesDisplayCaption" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jSourcesDisplayMode" pref="275" max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="jDisplayNameCombo" pref="281" max="32767" attributes="0"/>
+                  <Component id="jCustomDisplayNameEdit" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="jProjectNodeNameHolder" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jSourcesDisplayCaption" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jSourcesDisplayMode" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jDisplayNameCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jDisplayNameCaption" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jCustomDisplayNameEdit" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="jSourcesDisplayCaption">
+    <Component class="javax.swing.JTextField" name="jCustomDisplayNameEdit">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/global/Bundle.properties" key="AppearancePanel.jSourcesDisplayCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="ProjectNodeNamePanel.jCustomDisplayNameEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="jSourcesDisplayMode">
+    <Component class="javax.swing.JLabel" name="jDisplayNameCaption">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/netbeans/gradle/project/properties/Bundle.properties" key="ProjectNodeNamePanel.jDisplayNameCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="jDisplayNameCombo">
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;SourcesDisplayModeItem&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;NamePatternItem&gt;"/>
       </AuxValues>
     </Component>
-    <Container class="javax.swing.JPanel" name="jProjectNodeNameHolder">
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridLayout">
-        <Property name="columns" type="int" value="1"/>
-        <Property name="rows" type="int" value="1"/>
-      </Layout>
-    </Container>
   </SubComponents>
 </Form>
