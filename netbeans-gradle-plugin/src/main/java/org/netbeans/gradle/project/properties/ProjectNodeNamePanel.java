@@ -90,7 +90,12 @@ public class ProjectNodeNamePanel extends javax.swing.JPanel {
             return;
         }
 
-        jCustomDisplayNameEdit.setVisible(selected.pattern == null);
+        boolean newVisible = selected.pattern == null;
+        if (newVisible != jCustomDisplayNameEdit.isVisible()) {
+            jCustomDisplayNameEdit.setVisible(newVisible);
+            validate();
+            repaint();
+        }
     }
 
     private void fillPatternCombo() {
@@ -183,12 +188,12 @@ public class ProjectNodeNamePanel extends javax.swing.JPanel {
                 .addComponent(jDisplayNameCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCustomDisplayNameEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jDisplayNameCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jDisplayNameCombo, 0, 257, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jInheritCheck)
-                        .addContainerGap())))
+                        .addComponent(jInheritCheck))
+                    .addComponent(jCustomDisplayNameEdit))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

@@ -21,14 +21,14 @@
               <Component id="jDisplayNameCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jCustomDisplayNameEdit" pref="358" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="jDisplayNameCombo" max="32767" attributes="0"/>
+                      <Component id="jDisplayNameCombo" pref="257" max="32767" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jInheritCheck" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
+                  <Component id="jCustomDisplayNameEdit" max="32767" attributes="0"/>
               </Group>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
