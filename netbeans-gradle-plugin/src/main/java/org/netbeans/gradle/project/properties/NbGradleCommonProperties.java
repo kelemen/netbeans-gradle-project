@@ -15,6 +15,8 @@ import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
+import org.netbeans.gradle.project.properties.standard.CustomVariables;
+import org.netbeans.gradle.project.properties.standard.CustomVariablesProperty;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.properties.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
@@ -40,6 +42,7 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<String> sourceLevel;
     private final PropertyReference<UserInitScriptPath> userInitScriptPath;
     private final PropertyReference<String> displayNamePattern;
+    private final PropertyReference<CustomVariables> customVariables;
 
     public NbGradleCommonProperties(NbGradleProject ownerProject, ActiveSettingsQuery activeSettingsQuery) {
         ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
@@ -61,6 +64,7 @@ public final class NbGradleCommonProperties {
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
         userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
         displayNamePattern = displayNamePattern(activeSettingsQuery);
+        customVariables = get(CustomVariablesProperty.PROPERTY_DEF, CustomVariablesProperty.defaultValue());
     }
 
     public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
@@ -140,6 +144,10 @@ public final class NbGradleCommonProperties {
 
     public PropertyReference<String> displayNamePattern() {
         return displayNamePattern;
+    }
+
+    public PropertyReference<CustomVariables> customVariables() {
+        return customVariables;
     }
 
     private <ValueType> PropertyReference<ValueType> get(
