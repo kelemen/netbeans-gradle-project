@@ -34,6 +34,7 @@ import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
+import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
@@ -58,7 +59,7 @@ import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
@@ -365,9 +366,34 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
+    private static TaskVariableMap asTaskVariableMap(PropertySource<? extends CustomVariables> varsProperty) {
+        final CustomVariables vars = varsProperty.getValue();
+        if (vars == null || vars.isEmpty()) {
+            return null;
+        }
+
+        return new TaskVariableMap() {
+            @Override
+            public String tryGetValueForVariable(TaskVariable variable) {
+                return vars.tryGetValue(variable.getVariableName());
+            }
+        };
+    }
+
+    private static void addAsTaskVariableMap(
+            PropertySource<? extends CustomVariables> varsProperty,
+            List<? super TaskVariableMap> result) {
+        TaskVariableMap vars = asTaskVariableMap(varsProperty);
+        if (vars != null) {
+            result.add(vars);
+        }
+    }
+
     @Nonnull
     public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
-        final List<TaskVariableMap> maps = new LinkedList<>();
+        final List<TaskVariableMap> maps = new ArrayList<>();
+
+        addAsTaskVariableMap(getCommonProperties().customVariables().getActiveSource(), maps);
 
         Collection<? extends GradleTaskVariableQuery> taskVariables
                 = getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
