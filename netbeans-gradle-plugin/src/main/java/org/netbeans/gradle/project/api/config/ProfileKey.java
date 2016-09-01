@@ -29,6 +29,11 @@ public final class ProfileKey {
      */
     public static final ProfileKey PRIVATE_PROFILE = new ProfileKey("private", "aux-config");
 
+    /**
+     * Defines the key to access the global profile.
+     */
+    public static final ProfileKey GLOBAL_PROFILE = new ProfileKey("*", "global");
+
     private final String groupName;
     private final String fileName;
 

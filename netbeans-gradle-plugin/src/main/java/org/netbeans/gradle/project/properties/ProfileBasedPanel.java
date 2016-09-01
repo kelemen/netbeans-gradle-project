@@ -8,6 +8,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +46,7 @@ import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
@@ -170,11 +173,11 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         }
     }
 
-    private PropertySource<ProfileKey> selectedProfileKey() {
-        return convert(comboBoxSelection(jProfileCombo), new ValueConverter<ProfileItem, ProfileKey>() {
+    private PropertySource<Boolean> selectedRemovable() {
+        return convert(comboBoxSelection(jProfileCombo), new ValueConverter<ProfileItem, Boolean>() {
             @Override
-            public ProfileKey convert(ProfileItem input) {
-                return input != null ? input.getProfileKey() : null;
+            public Boolean convert(ProfileItem input) {
+                return input != null && input.isRemovable();
             }
         });
     }
@@ -183,8 +186,21 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         addSwingStateListener(lessThanOrEqual(profileLoadCounter, 0),
                 glassPaneSwitcher(customPanelLayer, GlassPanes.delayedLoadingPanel(NbStrings.getLoading())));
 
-        addSwingStateListener(not(isNull(selectedProfileKey())),
-                componentDisabler(jRemoveProfileButton));
+        addSwingStateListener(not(selectedRemovable()), componentDisabler(jRemoveProfileButton));
+    }
+
+    private List<ProfileItem> getProfileItems() {
+        Collection<NbGradleConfiguration> projectConfigs = project
+                .getLookup()
+                .lookup(NbGradleSingleProjectConfigProvider.class)
+                .getConfigurations();
+        List<ProfileItem> result = new ArrayList<>(projectConfigs.size() + 1);
+        for (NbGradleConfiguration config: projectConfigs) {
+            result.add(new ProfileItem(config.getProfileDef()));
+        }
+        result.add(ProfileItem.GLOBAL_DEFAULT);
+        Collections.sort(result, ProfileItem.ALPHABETICAL_ORDER);
+        return result;
     }
 
     private void fetchProfilesAndSelect() {
@@ -193,17 +209,13 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
-                final Collection<NbGradleConfiguration> profiles = project
-                        .getLookup()
-                        .lookup(NbGradleSingleProjectConfigProvider.class)
-                        .getConfigurations();
-
+                final List<ProfileItem> profileItems = getProfileItems();
                 final PanelLockRef swingLock = lockRef.getAndSet(null);
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            fillProfileCombo(profiles);
+                            fillProfileCombo(profileItems);
                         } finally {
                             swingLock.release();
                         }
@@ -222,18 +234,9 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         });
     }
 
-    private void fillProfileCombo(Collection<NbGradleConfiguration> profiles) {
-        List<ProfileItem> profileItems = new ArrayList<>(profiles.size() + 1);
-
-        NbGradleConfiguration[] profileArray = profiles.toArray(new NbGradleConfiguration[0]);
-        NbGradleConfiguration.sortProfiles(profileArray);
-
-        for (NbGradleConfiguration profile: profileArray) {
-            profileItems.add(new ProfileItem(profile));
-        }
-
+    private void fillProfileCombo(Collection<ProfileItem> profileItems) {
         jProfileCombo.setModel(new DefaultComboBoxModel<>(profileItems.toArray(new ProfileItem[profileItems.size()])));
-        jProfileCombo.setSelectedItem(new ProfileItem(project.getCurrentProfile()));
+        jProfileCombo.setSelectedItem(new ProfileItem(project.getCurrentProfile().getProfileDef()));
         loadSelectedProfile();
     }
 
@@ -285,7 +288,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, selected.getProfileKey(), new ActiveSettingsQueryListener() {
             @Override
             public void onLoad(final ActiveSettingsQuery settings) {
-                String displayName = selected.config.getDisplayName();
+                String displayName = selected.toString();
                 final ProfileValuesEditor snapshot = snapshotCreator.startEditingProfile(displayName, settings);
                 snapshots.put(selected, snapshot);
 
@@ -307,23 +310,18 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     private void sortProfileComboItems() {
         ComboBoxModel<ProfileItem> model = jProfileCombo.getModel();
         int itemCount = model.getSize();
-        List<NbGradleConfiguration> configs = new ArrayList<>(itemCount);
+        List<ProfileItem> configs = new ArrayList<>(itemCount);
 
         for (int i = 0; i < itemCount; i++) {
             Object element = model.getElementAt(i);
             if (element instanceof ProfileItem) {
-                configs.add(((ProfileItem)element).getConfig());
+                configs.add((ProfileItem)element);
             }
         }
 
-        NbGradleConfiguration[] configArray = configs.toArray(new NbGradleConfiguration[0]);
-        NbGradleConfiguration.sortProfiles(configArray);
+        Collections.sort(configs, ProfileItem.ALPHABETICAL_ORDER);
 
-        ProfileItem[] profiles = new ProfileItem[configArray.length];
-        for (int i = 0; i < profiles.length; i++) {
-            profiles[i] = new ProfileItem(configArray[i]);
-        }
-        jProfileCombo.setModel(new DefaultComboBoxModel<>(profiles));
+        jProfileCombo.setModel(new DefaultComboBoxModel<>(configs.toArray(new ProfileItem[0])));
     }
 
     private ProfileItem getSelectedProfile() {
@@ -354,32 +352,54 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private static final class ProfileItem {
-        private static final ProfileItem DEFAULT
-                = new ProfileItem(NbGradleConfiguration.DEFAULT_CONFIG);
+        private static final ProfileItem DEFAULT = new ProfileItem(null);
 
-        private final NbGradleConfiguration config;
+        private static final ProfileItem GLOBAL_DEFAULT
+                = new ProfileItem(new ProfileDef(ProfileKey.GLOBAL_PROFILE, NbStrings.getGlobalProfileName()));
 
-        public ProfileItem(NbGradleConfiguration config) {
-            ExceptionHelper.checkNotNullArgument(config, "config");
-            this.config = config;
+        private static final Comparator<ProfileItem> ALPHABETICAL_ORDER = new Comparator<ProfileItem>() {
+            @Override
+            public int compare(ProfileItem o1, ProfileItem o2) {
+                if (GLOBAL_DEFAULT.equals(o1)) {
+                    return GLOBAL_DEFAULT.equals(o2) ? 0 : -1;
+                }
+                if (GLOBAL_DEFAULT.equals(o2)) {
+                    return GLOBAL_DEFAULT.equals(o1) ? 0 : 1;
+                }
+
+                if (DEFAULT.equals(o1)) {
+                    return DEFAULT.equals(o2) ? 0 : -1;
+                }
+                if (DEFAULT.equals(o2)) {
+                    return DEFAULT.equals(o1) ? 0 : 1;
+                }
+
+                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+            }
+        };
+
+        private final ProfileDef profileDef;
+
+        public ProfileItem(ProfileDef profileDef) {
+            this.profileDef = profileDef;
+        }
+
+        public boolean isRemovable() {
+            return profileDef != null && !ProfileKey.GLOBAL_PROFILE.equals(profileDef.getProfileKey());
         }
 
         public ProfileKey getProfileKey() {
-            return config.getProfileKey();
+            return profileDef != null ? profileDef.getProfileKey() : null;
         }
 
         public ProfileDef getProfileDef() {
-            return config.getProfileDef();
-        }
-
-        public NbGradleConfiguration getConfig() {
-            return config;
+            return profileDef;
         }
 
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 47 * hash + Objects.hashCode(config);
+            hash = 47 * hash + Objects.hashCode(profileDef);
             return hash;
         }
 
@@ -389,12 +409,14 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             if (getClass() != obj.getClass()) return false;
 
             final ProfileItem other = (ProfileItem)obj;
-            return Objects.equals(this.config, other.config);
+            return Objects.equals(this.profileDef, other.profileDef);
         }
 
         @Override
         public String toString() {
-            return config.getDisplayName();
+            return profileDef != null
+                    ? profileDef.getDisplayName()
+                    : NbStrings.getDefaultProfileName();
         }
     }
 
@@ -499,7 +521,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         }
         ProfileDef profileDef = SettingsFiles.getStandardProfileDef(profileName);
         NbGradleConfiguration newConfig = new NbGradleConfiguration(profileDef);
-        ProfileItem newProfile = new ProfileItem(newConfig);
+        ProfileItem newProfile = new ProfileItem(profileDef);
 
         project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).addConfiguration(newConfig);
 
@@ -521,12 +543,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private void jRemoveProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRemoveProfileButtonActionPerformed
         ProfileItem profileItem = getSelectedProfile();
-        if (profileItem == null) {
-            return;
-        }
-        NbGradleConfiguration config = profileItem.getConfig();
-        if (NbGradleConfiguration.DEFAULT_CONFIG.equals(config)) {
-            // Cannot remove the default profile.
+        if (profileItem == null || !profileItem.isRemovable()) {
             return;
         }
 
@@ -534,7 +551,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         String no = UIManager.getString("OptionPane.noButtonText", Locale.getDefault());
         int confirmResult = JOptionPane.showOptionDialog(
             this,
-            NbStrings.getConfirmRemoveProfile(config.getDisplayName()),
+            NbStrings.getConfirmRemoveProfile(profileItem.toString()),
             "",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE,
@@ -552,6 +569,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         jProfileCombo.removeItem(profileItem);
         jProfileCombo.setSelectedItem(ProfileItem.DEFAULT);
 
+        NbGradleConfiguration config = new NbGradleConfiguration(profileItem.profileDef);
         project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeConfiguration(config);
     }//GEN-LAST:event_jRemoveProfileButtonActionPerformed
 

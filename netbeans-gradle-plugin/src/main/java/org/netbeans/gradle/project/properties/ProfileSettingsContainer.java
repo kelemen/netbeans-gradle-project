@@ -17,7 +17,7 @@ public final class ProfileSettingsContainer {
     private static final AtomicReference<ProfileSettingsContainer> DEFAULT_REF = new AtomicReference<>(null);
 
     private final Lock mainLock;
-    private final WeakValueHashMap<ProfileSettingsKey, ProjectProfileSettings> loaded;
+    private final WeakValueHashMap<ProfileSettingsKey, LoadableSingleProfileSettingsEx> loaded;
 
     private ProfileSettingsContainer() {
         this.mainLock = new ReentrantLock();
@@ -45,7 +45,7 @@ public final class ProfileSettingsContainer {
     }
 
     private void saveAllProfilesNow() {
-        List<ProjectProfileSettings> toSave;
+        List<LoadableSingleProfileSettingsEx> toSave;
         mainLock.lock();
         try {
             toSave = new ArrayList<>(loaded.values());
@@ -53,21 +53,21 @@ public final class ProfileSettingsContainer {
             mainLock.unlock();
         }
 
-        for (ProjectProfileSettings settings: toSave) {
+        for (LoadableSingleProfileSettingsEx settings: toSave) {
             settings.saveAndWait();
         }
     }
 
-    private ProjectProfileSettings getUnloadedProfileSettings(ProfileSettingsKey key) {
+    private LoadableSingleProfileSettingsEx getUnloadedProfileSettings(ProfileSettingsKey key) {
         ExceptionHelper.checkNotNullArgument(key, "key");
 
-        ProjectProfileSettings result;
+        LoadableSingleProfileSettingsEx result;
 
         mainLock.lock();
         try {
             result = loaded.get(key);
             if (result == null) {
-                result = new ProjectProfileSettings(key);
+                result = key.openUnloadedProfileSettings();
                 loaded.put(key, result);
             }
         } finally {
@@ -78,7 +78,7 @@ public final class ProfileSettingsContainer {
     }
 
     public SingleProfileSettingsEx loadProfileSettings(ProfileSettingsKey key) {
-        ProjectProfileSettings result = getUnloadedProfileSettings(key);
+        LoadableSingleProfileSettingsEx result = getUnloadedProfileSettings(key);
         result.ensureLoadedAndWait();
         return result;
     }
@@ -88,7 +88,7 @@ public final class ProfileSettingsContainer {
             final NbConsumer<? super SingleProfileSettingsEx> listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final ProjectProfileSettings result = getUnloadedProfileSettings(key);
+        final LoadableSingleProfileSettingsEx result = getUnloadedProfileSettings(key);
         result.ensureLoaded();
         return result.notifyWhenLoaded(new Runnable() {
             @Override
@@ -104,7 +104,7 @@ public final class ProfileSettingsContainer {
         ExceptionHelper.checkNotNullElements(keys, "keys");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final List<ProjectProfileSettings> result = new ArrayList<>(keys.size());
+        final List<LoadableSingleProfileSettingsEx> result = new ArrayList<>(keys.size());
         for (ProfileSettingsKey key: keys) {
             result.add(getUnloadedProfileSettings(key));
         }
@@ -112,7 +112,7 @@ public final class ProfileSettingsContainer {
         List<ListenerRef> resultRefs = new ArrayList<>(result.size());
 
         final AtomicInteger loadCount = new AtomicInteger(result.size());
-        for (ProjectProfileSettings settings: result) {
+        for (LoadableSingleProfileSettingsEx settings: result) {
             settings.ensureLoaded();
             ListenerRef notifyRef = settings.notifyWhenLoaded(Tasks.runOnceTask(new Runnable() {
                 @Override

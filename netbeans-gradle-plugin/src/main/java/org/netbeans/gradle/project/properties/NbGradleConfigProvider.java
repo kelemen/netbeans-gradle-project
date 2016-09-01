@@ -346,7 +346,7 @@ public final class NbGradleConfigProvider {
             ProfileSettingsContainer settingsContainer,
             ProfileKey profileKey) {
 
-        ProfileSettingsKey key = new ProfileSettingsKey(rootDirectory, profileKey);
+        ProfileSettingsKey key = ProjectProfileSettingsKey.getForProject(rootDirectory, profileKey);
         List<SingleProfileSettingsEx> profileSettings
                 = settingsContainer.loadAllProfileSettings(key.getWithFallbacks());
         return profileSettings;

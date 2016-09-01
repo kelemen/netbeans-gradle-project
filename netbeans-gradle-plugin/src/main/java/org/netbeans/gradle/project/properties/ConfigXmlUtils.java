@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -34,6 +33,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -516,49 +516,6 @@ final class ConfigXmlUtils {
         }
     }
 
-    private static boolean isLineEndingByte(byte ch) {
-        return ch == 13 || ch == 10;
-    }
-
-    private static String tryGetLineSeparator(Path file) {
-        if (!Files.isRegularFile(file)) {
-            return null;
-        }
-
-        // This method won't work with every encoding but we save properties
-        // file with UTF-8, with which this should be fine.
-        byte prevChar = 0;
-        byte[] buffer = new byte[FILE_BUFFER_SIZE];
-        try (InputStream input = Files.newInputStream(file)) {
-            int readCount = input.read(buffer);
-            while (readCount > 0) {
-                for (int i = 0; i < readCount; i++) {
-                    byte ch = buffer[i];
-                    if (isLineEndingByte(prevChar)) {
-                        switch (ch) {
-                            case 10:
-                                return prevChar == 13 ? "\r\n" : "\n";
-                            case 13:
-                                // \n\r is not valid, returning null is safer.
-                                return prevChar == 10 ? null : "\r";
-                            default:
-                                return Character.toString((char)prevChar);
-                        }
-                    }
-
-                    prevChar = ch;
-                }
-
-                input.read(buffer);
-            }
-
-            return isLineEndingByte(prevChar) ? Character.toString((char)prevChar) : null;
-        } catch (IOException ex) {
-            LOGGER.log(Level.INFO, "Failed to read config file for determining its line separator", ex);
-            return null;
-        }
-    }
-
     private static void saveDocument(Result result, Document document) throws IOException {
         Source source = new DOMSource(document);
 
@@ -575,7 +532,7 @@ final class ConfigXmlUtils {
     }
 
     public static ConfigSaveOptions getSaveOptions(Project project, Path output) {
-        String lineSeparator = tryGetLineSeparator(output);
+        String lineSeparator = NbFileUtils.tryGetLineSeparatorForTextFile(output);
         if (lineSeparator == null) {
             lineSeparator = ChangeLFPlugin.getPreferredLineSeparator(project);
         }

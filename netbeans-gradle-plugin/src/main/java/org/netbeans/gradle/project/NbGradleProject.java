@@ -56,6 +56,7 @@ import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvide
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
+import org.netbeans.gradle.project.properties.ProjectProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
@@ -533,7 +534,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
-        return new ProfileSettingsKey(this, profileKey);
+        return ProjectProfileSettingsKey.getForProject(this, profileKey);
     }
 
     public SingleProfileSettingsEx loadPropertiesForProfile(ProfileKey profileKey) {

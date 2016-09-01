@@ -28,8 +28,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
@@ -40,14 +38,13 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.NbPreferences;
 import org.openide.util.Utilities;
 
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
     private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
-    private static volatile BasicPreference PREFERENCE = new DefaultPreference();
+    private static volatile BasicPreference PREFERENCE = NbGlobalPreference.DEFAULT;
 
     private final StringBasedProperty<GradleLocationDef> gradleLocation;
     private final StringBasedProperty<File> gradleUserHomeDir;
@@ -142,7 +139,7 @@ public final class GlobalGradleSettings {
     }
 
     public static void setDefaultPreference() {
-        PREFERENCE = new DefaultPreference();
+        PREFERENCE = NbGlobalPreference.DEFAULT;
     }
 
     // Testing only
@@ -656,44 +653,9 @@ public final class GlobalGradleSettings {
         }
     }
 
-    private static final class DefaultPreference implements BasicPreference {
-        private static Preferences getPreferences() {
-            return NbPreferences.forModule(NbGradleProjectFactory.class);
-        }
-
-        @Override
-        public void put(String key, String value) {
-            getPreferences().put(key, value);
-        }
-
-        @Override
-        public void remove(String key) {
-            getPreferences().remove(key);
-        }
-
-        @Override
-        public String get(String key) {
-            return getPreferences().get(key, null);
-        }
-
-        @Override
-        public ListenerRef addPreferenceChangeListener(final PreferenceChangeListener pcl) {
-            final Preferences preferences = getPreferences();
-
-            // To be super safe, we could wrap the listener
-            preferences.addPreferenceChangeListener(pcl);
-            return NbListenerRefs.fromRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    preferences.removePreferenceChangeListener(pcl);
-                }
-            });
-        }
-    }
-
     private static final class MemPreference implements BasicPreference, PreferenceContainer {
-        private final Map<String, String> values;
-        private final ListenerManager<PreferenceChangeListener> listeners;
+        final Map<String, String> values;
+        final ListenerManager<PreferenceChangeListener> listeners;
 
         public MemPreference() {
             this.values = new ConcurrentHashMap<>();
@@ -757,14 +719,6 @@ public final class GlobalGradleSettings {
 
     public interface PreferenceContainer {
         public Map<String, String> getKeyValues(String namespace);
-    }
-
-    private interface BasicPreference {
-        public void put(String key, String value);
-        public void remove(String key);
-        public String get(String key);
-
-        public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl);
     }
 
     private static final class NameAndVersion {

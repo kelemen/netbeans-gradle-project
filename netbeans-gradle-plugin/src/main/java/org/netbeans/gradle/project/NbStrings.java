@@ -343,6 +343,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DefaultProfile");
     }
 
+    public static String getGlobalProfileName() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GlobalProfile");
+    }
+
     public static String getAddNewProfileCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewProfileCaption");
     }
