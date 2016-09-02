@@ -39,6 +39,14 @@ public final class StringUtils {
         return result.toString();
     }
 
+    public static void appendHexFixedLength(char ch, StringBuilder result) {
+        int value = (int)ch;
+        result.append(HEX_TABLE.charAt((value >>> 12) & 0xF));
+        result.append(HEX_TABLE.charAt((value >>> 8) & 0xF));
+        result.append(HEX_TABLE.charAt((value >>> 4) & 0xF));
+        result.append(HEX_TABLE.charAt(value & 0xF));
+    }
+
     public static String emptyForNull(String str) {
         return str != null ? str : "";
     }
