@@ -34,6 +34,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     private static final String CUSTOM_TASKS_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-custom-tasks";
     private static final String LICENSE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-license";
     private static final String APPEARANCE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".appearance";
+    private static final String CUSTOM_VARIABLES_CATEGORY_NAME = GradleCustomizer.class.getName() + ".customVars";
 
     private final NbGradleProject project;
 
@@ -91,6 +92,13 @@ public final class GradleCustomizer implements CustomizerProvider {
                 ProjectAppearancePanel.createProfileBasedPanel(project));
     }
 
+    private static ProfileBasedCustomizer newCustomVariablesCustomizer(NbGradleProject project) {
+        return new ProfileBasedCustomizer(
+                CUSTOM_VARIABLES_CATEGORY_NAME,
+                NbStrings.getCustomVariablesCategoryName(),
+                CustomVariablesPanel.createProfileBasedPanel(project));
+    }
+
     private static Collection<? extends ProjectCustomizer.CompositeCategoryProvider> getAnnotationBasedProviders() {
         Lookup customizerLookup = NamedServicesProvider.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Customizer");
         return customizerLookup.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
@@ -105,6 +113,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         allCategoriesList.add(newMainCustomizer(project));
         allCategoriesList.add(newBuiltInTasksCustomizer(project));
         allCategoriesList.add(newCustomTasksCustomizer(project));
+        allCategoriesList.add(newCustomVariablesCustomizer(project));
         allCategoriesList.add(newLicenseCustomizer(project));
         allCategoriesList.addAll(project
                 .getCombinedExtensionLookup()

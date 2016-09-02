@@ -64,7 +64,7 @@ public final class NbGradleCommonProperties {
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
         userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
         displayNamePattern = displayNamePattern(activeSettingsQuery);
-        customVariables = get(CustomVariablesProperty.PROPERTY_DEF, CustomVariablesProperty.defaultValue());
+        customVariables = customVariables(activeSettingsQuery);
     }
 
     public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
@@ -96,6 +96,13 @@ public final class NbGradleCommonProperties {
                 ProjectDisplayNameProperty.PROPERTY_DEF,
                 activeSettingsQuery,
                 ProjectDisplayNameProperty.defaultValue());
+    }
+
+    public static PropertyReference<CustomVariables> customVariables(ActiveSettingsQuery activeSettingsQuery) {
+        return new PropertyReference<>(
+                CustomVariablesProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                CustomVariablesProperty.defaultValue());
     }
 
     public Project getOwnerProject() {
