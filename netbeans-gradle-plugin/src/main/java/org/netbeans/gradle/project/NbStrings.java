@@ -391,6 +391,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.AppearanceCategoryName");
     }
 
+    public static String getCustomVariablesCategoryName() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomVariablesCategoryName");
+    }
+
     public static String getDownloadSourcesProgressCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DownloadSourcesProgressCaption");
     }
