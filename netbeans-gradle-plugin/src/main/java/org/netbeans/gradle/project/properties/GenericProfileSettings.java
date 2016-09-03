@@ -14,6 +14,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
@@ -49,6 +50,29 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
         this.loadedListeners = OneShotChangeListenerManager.getSwingNotifier();
         this.saveExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
         this.loadExecutor = new GenericUpdateTaskExecutor(SAVE_LOAD_EXECUTOR);
+    }
+
+    public static GenericProfileSettings createTestMemorySettings() {
+        return new GenericProfileSettings(new ProfileLocationProvider() {
+            @Override
+            public ProfileKey getKey() {
+                return new ProfileKey("?", "test");
+            }
+
+            @Override
+            public Path tryGetOutputPath() throws IOException {
+                return null;
+            }
+
+            @Override
+            public ProfileFileDef tryGetOutputDef() throws IOException {
+                return null;
+            }
+        });
+    }
+
+    public ConfigTree getContentSnapshot() {
+        return settings.getContentSnapshot();
     }
 
     @Override
