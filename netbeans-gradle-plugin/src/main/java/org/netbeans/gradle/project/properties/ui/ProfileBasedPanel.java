@@ -55,7 +55,6 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
-import static org.jtrim.property.BoolProperties.*;
 import static org.jtrim.property.PropertyFactory.*;
 import static org.jtrim.property.swing.AutoDisplayState.*;
 import static org.jtrim.property.swing.SwingProperties.*;
@@ -191,7 +190,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         addSwingStateListener(lessThanOrEqual(profileLoadCounter, 0),
                 glassPaneSwitcher(customPanelLayer, GlassPanes.delayedLoadingPanel(NbStrings.getLoading())));
 
-        addSwingStateListener(not(selectedRemovable()), componentDisabler(jRemoveProfileButton));
+        addSwingStateListener(selectedRemovable(), componentDisabler(jRemoveProfileButton));
     }
 
     private List<ProfileItem> getProfileItems() {
