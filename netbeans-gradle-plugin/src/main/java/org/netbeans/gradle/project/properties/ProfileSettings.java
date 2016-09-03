@@ -155,10 +155,11 @@ public final class ProfileSettings {
         loadFromDocument(document);
     }
 
-    public void saveToFile(Path xmlFile, ConfigSaveOptions saveOptions) throws IOException {
-        ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
-        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
+    public ConfigTree getContentSnapshot() {
+        return ConfigXmlUtils.parseDocument(toXml()).create();
+    }
 
+    private Document toXml() {
         ConfigTree configTree;
         List<Element> auxConfigList;
 
@@ -178,6 +179,15 @@ public final class ProfileSettings {
         }
 
         ConfigXmlUtils.addAuxiliary(document, auxConfigList.toArray(new Element[auxConfigList.size()]));
+
+        return document;
+    }
+
+    public void saveToFile(Path xmlFile, ConfigSaveOptions saveOptions) throws IOException {
+        ExceptionHelper.checkNotNullArgument(xmlFile, "xmlFile");
+        ExceptionHelper.checkNotNullArgument(saveOptions, "saveOptions");
+
+        Document document = toXml();
 
         Path outputDir = xmlFile.getParent();
         if (outputDir != null) {
