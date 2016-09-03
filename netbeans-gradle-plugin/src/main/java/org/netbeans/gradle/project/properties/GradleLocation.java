@@ -4,9 +4,6 @@ import java.io.File;
 import java.net.URI;
 
 public interface GradleLocation {
-    // When creating new implementations of GradleLocation, don't forget to
-    // update AbstractProjectProperties.getGradleLocationFromString.
-
     public static interface Applier {
         public void applyVersion(String versionStr);
         public void applyDirectory(File gradleHome);
