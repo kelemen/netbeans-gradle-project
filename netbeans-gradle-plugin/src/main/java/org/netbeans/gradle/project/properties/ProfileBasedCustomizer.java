@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 import org.openide.util.Lookup;
 

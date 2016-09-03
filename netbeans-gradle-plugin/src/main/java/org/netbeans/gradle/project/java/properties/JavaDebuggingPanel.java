@@ -14,8 +14,8 @@ import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPage
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.EnumCombo;
 import org.netbeans.gradle.project.properties.global.DebugMode;
+import org.netbeans.gradle.project.properties.ui.EnumCombo;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 

@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

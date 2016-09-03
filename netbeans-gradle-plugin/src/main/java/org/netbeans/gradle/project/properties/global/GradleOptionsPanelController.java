@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
+import org.netbeans.gradle.project.properties.ui.GlobalGradleSettingsPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;

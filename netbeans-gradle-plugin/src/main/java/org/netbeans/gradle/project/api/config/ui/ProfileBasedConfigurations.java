@@ -6,7 +6,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
-import org.netbeans.gradle.project.properties.ProfileBasedPanel;
+import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
 /**
