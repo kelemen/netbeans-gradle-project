@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaPlatformUtils {
@@ -275,15 +276,20 @@ public final class JavaPlatformUtils {
     }
 
     public static PropertySource<JavaPlatform> findPlatformSource(
+            NbFunction<JavaPlatform[], JavaPlatform> platformSelector) {
+        return new JavaPlatformSource<>(platformSelector);
+    }
+
+    public static PropertySource<JavaPlatform> findPlatformSource(
             final String specName,
             final String versionStr) {
 
         ExceptionHelper.checkNotNullArgument(specName, "specName");
         ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
 
-        return new JavaPlatformSource<JavaPlatform>() {
+        return findPlatformSource(new NbFunction<JavaPlatform[], JavaPlatform>() {
             @Override
-            protected JavaPlatform chooseFromPlatforms(JavaPlatform[] platforms) {
+            public JavaPlatform apply(JavaPlatform[] platforms) {
                 JavaPlatform bestMatch = tryChooseFromPlatforms(specName, versionStr, platforms);
 
                 if (bestMatch == null) {
@@ -294,7 +300,7 @@ public final class JavaPlatformUtils {
                     return bestMatch;
                 }
             }
-        };
+        });
     }
 
     private static final class InstalledPlatformSource implements PropertySource<JavaPlatform[]> {
@@ -326,21 +332,23 @@ public final class JavaPlatformUtils {
         }
     }
 
-    private static abstract class JavaPlatformSource<ValueType>
+    private static final class JavaPlatformSource<ValueType>
     implements
             PropertySource<ValueType> {
 
+        private final NbFunction<JavaPlatform[], ValueType> selector;
         private final PropertySource<JavaPlatform[]> installedPlatforms;
 
-        public JavaPlatformSource() {
-            this.installedPlatforms = new InstalledPlatformSource();
-        }
+        public JavaPlatformSource(NbFunction<JavaPlatform[], ValueType> selector) {
+            ExceptionHelper.checkNotNullArgument(selector, "selector");
 
-        protected abstract ValueType chooseFromPlatforms(JavaPlatform[] platforms);
+            this.installedPlatforms = new InstalledPlatformSource();
+            this.selector = selector;
+        }
 
         @Override
         public ValueType getValue() {
-            return chooseFromPlatforms(JavaPlatformManager.getDefault().getInstalledPlatforms());
+            return selector.apply(JavaPlatformManager.getDefault().getInstalledPlatforms());
         }
 
         @Override
