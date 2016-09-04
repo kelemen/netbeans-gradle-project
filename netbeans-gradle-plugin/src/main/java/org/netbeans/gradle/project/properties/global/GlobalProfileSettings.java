@@ -28,12 +28,18 @@ import org.w3c.dom.Element;
 
 final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
     private static final Logger LOGGER = Logger.getLogger(GlobalProfileSettings.class.getName());
+    private static final GlobalProfileSettings DEFAULT = new GlobalProfileSettings();
 
     private final GenericProfileSettings impl;
 
-    public GlobalProfileSettings() {
+    private GlobalProfileSettings() {
         this.impl = new GenericProfileSettings(new GlobalProfileLocationProvider());
-        LegacyUtils.moveLegacyConfig(this.impl);
+    }
+
+    public static GlobalProfileSettings getInstance() {
+        GlobalProfileSettings result = DEFAULT;
+        LegacyUtils.moveLegacyConfig(result.impl);
+        return result;
     }
 
     @Override
@@ -134,6 +140,7 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
 
     private static class LegacyUtils {
         private static final Lock MOVE_LOCK = new ReentrantLock();
+        private static volatile boolean moveInProgress = false;
         private static volatile boolean moved = false;
 
         public static void moveLegacyConfig(GenericProfileSettings settings) {
@@ -160,8 +167,14 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
 
             MOVE_LOCK.lock();
             try {
-                if (!moved) {
-                    moveToNewSettings(globalSettings);
+                if (!moved && !moveInProgress) {
+                    try {
+                        // moveInProgress prevents infinite recursion and possible cycles in initialization
+                        moveInProgress = true;
+                        moveToNewSettings(globalSettings);
+                    } finally {
+                        moveInProgress = false;
+                    }
                     moved = true;
                 }
             } finally {

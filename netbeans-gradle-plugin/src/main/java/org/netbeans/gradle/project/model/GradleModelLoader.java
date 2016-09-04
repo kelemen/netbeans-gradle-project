@@ -57,6 +57,7 @@ import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.tasks.DaemonTask;
@@ -419,9 +420,10 @@ public final class GradleModelLoader {
 
         NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
 
-        return gradleProject != null
+        ScriptPlatform result = gradleProject != null
                 ? gradleProject.getCommonProperties().scriptPlatform().getActiveValue()
                 : null;
+        return result != null ? result.getJavaPlatform() : null;
     }
 
     private static File getScriptJavaHome(JavaPlatform platform) {

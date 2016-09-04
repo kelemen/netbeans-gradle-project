@@ -25,12 +25,13 @@ public final class ProjectPropertiesApi {
         };
     }
 
-    public static GradleProperty.ScriptPlatform scriptPlatform(final PropertySource<JavaPlatform> property) {
+    public static GradleProperty.ScriptPlatform scriptPlatform(final PropertySource<ScriptPlatform> property) {
         ExceptionHelper.checkNotNullArgument(property, "property");
         return new GradleProperty.ScriptPlatform() {
             @Override
             public JavaPlatform getValue() {
-                return property.getValue();
+                ScriptPlatform result = property.getValue();
+                return result != null ? result.getJavaPlatform() : null;
             }
 
             @Override

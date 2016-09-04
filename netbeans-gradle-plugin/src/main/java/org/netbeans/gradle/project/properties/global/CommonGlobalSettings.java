@@ -6,9 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.gradle.impldep.com.google.common.base.Objects;
 import org.jtrim.property.PropertyFactory;
-import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -17,7 +15,6 @@ import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.java.properties.DebugModeProjectProperty;
 import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -26,25 +23,22 @@ import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
-import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.properties.standard.ProjectDisplayNameProperty;
+import org.netbeans.gradle.project.properties.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.util.NbConsumer;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 import static org.netbeans.gradle.project.properties.standard.CommonProperties.*;
 
 public final class CommonGlobalSettings {
-    private static final CommonGlobalSettings DEFAULT_STORED = new CommonGlobalSettings(loadDefaultActiveSettings());
-    private static volatile CommonGlobalSettings DEFAULT = DEFAULT_STORED;
-
     private final ActiveSettingsQuery activeSettingsQuery;
 
-    private final PropertyReference<JavaPlatform> defaultJdk;
+    private final PropertyReference<ScriptPlatform> defaultJdk;
 
     private final PropertyReference<GradleLocationDef> gradleLocation;
     private final PropertyReference<File> gradleUserHomeDir;
@@ -76,10 +70,10 @@ public final class CommonGlobalSettings {
         ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
         this.activeSettingsQuery = activeSettingsQuery;
 
-        this.defaultJdk = defaultJdk(activeSettingsQuery);
+        this.platformPreferenceOrder = platformPreferenceOrder(activeSettingsQuery);
+        this.defaultJdk = defaultJdk(activeSettingsQuery, this.platformPreferenceOrder);
         this.gradleLocation = gradleLocation(activeSettingsQuery);
         this.gradleUserHomeDir = gradleUserHomeDir(activeSettingsQuery);
-        this.platformPreferenceOrder = platformPreferenceOrder(activeSettingsQuery);
         this.gradleArgs = gradleArgs(activeSettingsQuery);
         this.gradleJvmArgs = gradleJvmArgs(activeSettingsQuery);
         this.skipTests = skipTests(activeSettingsQuery);
@@ -99,11 +93,20 @@ public final class CommonGlobalSettings {
         this.displayNamePattern = displayNamePattern(activeSettingsQuery);
     }
 
-    public static PropertyReference<JavaPlatform> defaultJdk(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(defineJavaPlatformDef("default-jdk"), activeSettingsQuery, JavaPlatform.getDefault());
+    public static PropertyReference<ScriptPlatform> defaultJdk(ActiveSettingsQuery activeSettingsQuery) {
+        return defaultJdk(activeSettingsQuery, platformPreferenceOrder(activeSettingsQuery));
     }
 
-    public PropertyReference<JavaPlatform> defaultJdk() {
+    private static PropertyReference<ScriptPlatform> defaultJdk(
+            ActiveSettingsQuery activeSettingsQuery,
+            PropertyReference<PlatformOrder> orderRef) {
+        return propertyRef(
+                ScriptPlatformProperty.getPropertyDef(orderRef),
+                activeSettingsQuery,
+                ScriptPlatform.getDefault());
+    }
+
+    public PropertyReference<ScriptPlatform> defaultJdk() {
         return defaultJdk;
     }
 
@@ -323,18 +326,11 @@ public final class CommonGlobalSettings {
 
     // For testing purposes
     public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {
-        ExceptionHelper.checkNotNullArgument(task, "task");
-        try {
-            GenericProfileSettings settings = GenericProfileSettings.createTestMemorySettings();
-            DEFAULT = new CommonGlobalSettings(new MultiProfileProperties(Collections.<SingleProfileSettingsEx>singletonList(settings)));
-            task.accept(settings);
-        } finally {
-            DEFAULT = DEFAULT_STORED;
-        }
+        DefaultHolder.withCleanMemorySettings(task);
     }
 
     public static CommonGlobalSettings getDefault() {
-        return DEFAULT;
+        return DefaultHolder.DEFAULT;
     }
 
     public ActiveSettingsQuery getActiveSettingsQuery() {
@@ -352,13 +348,6 @@ public final class CommonGlobalSettings {
         PropertyDef.Builder<PlatformOrder, PlatformOrder> result = new PropertyDef.Builder<>(ConfigPath.fromKeys(keyPath));
         result.setValueDef(CommonProperties.<PlatformOrder>getIdentityValueDef());
         result.setKeyEncodingDef(PlatformOrderKeyEncodingDef.INSTANCE);
-        return result.create();
-    }
-
-    private static PropertyDef<?, JavaPlatform> defineJavaPlatformDef(String... keyPath) {
-        PropertyDef.Builder<List<String>, JavaPlatform> result = new PropertyDef.Builder<>(ConfigPath.fromKeys(keyPath));
-        result.setValueDef(JavaPlatformValueDef.INSTANCE);
-        result.setKeyEncodingDef(stringListEncodingDef("install-dir"));
         return result.create();
     }
 
@@ -389,40 +378,19 @@ public final class CommonGlobalSettings {
         }
     }
 
-    private enum JavaPlatformValueDef implements PropertyValueDef<List<String>, JavaPlatform> {
-        INSTANCE;
+    private static class DefaultHolder {
+        private static final CommonGlobalSettings DEFAULT_STORED = new CommonGlobalSettings(loadDefaultActiveSettings());
+        private static volatile CommonGlobalSettings DEFAULT = DEFAULT_STORED;
 
-        @Override
-        public PropertySource<JavaPlatform> property(final List<String> valueKey) {
-            if (valueKey == null) {
-                return PropertyFactory.constSource(null);
+        public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {
+            ExceptionHelper.checkNotNullArgument(task, "task");
+            try {
+                GenericProfileSettings settings = GenericProfileSettings.createTestMemorySettings();
+                DEFAULT = new CommonGlobalSettings(new MultiProfileProperties(Collections.<SingleProfileSettingsEx>singletonList(settings)));
+                task.accept(settings);
+            } finally {
+                DEFAULT = DEFAULT_STORED;
             }
-
-            return JavaPlatformUtils.findPlatformSource(new NbFunction<JavaPlatform[], JavaPlatform>() {
-                @Override
-                public JavaPlatform apply(JavaPlatform[] platforms) {
-                    for (JavaPlatform platform: platforms) {
-                        getKeyFromValue(platform);
-                        if (Objects.equal(valueKey, getKeyFromValue(platform))) {
-                            return platform;
-                        }
-                    }
-                    return null;
-                }
-            });
-        }
-
-        @Override
-        public List<String> getKeyFromValue(JavaPlatform value) {
-            Collection<FileObject> installFolders = value.getInstallFolders();
-            List<String> result = new ArrayList<>(installFolders.size());
-
-            for (FileObject installFolder: value.getInstallFolders()) {
-                String path = installFolder.getPath();
-                result.add(path);
-            }
-
-            return Collections.unmodifiableList(result);
         }
     }
 }

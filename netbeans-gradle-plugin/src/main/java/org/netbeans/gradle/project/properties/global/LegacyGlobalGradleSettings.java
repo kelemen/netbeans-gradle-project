@@ -22,6 +22,8 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.properties.PlatformSelectionMode;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
@@ -137,6 +139,17 @@ final class LegacyGlobalGradleSettings {
         }
     }
 
+    private void moveJdkToNewSettings(
+            StringBasedProperty<? extends JavaPlatform> oldProperty,
+            PropertyReference<? super ScriptPlatform> newProperty) {
+        if (oldProperty.getValueAsString() != null) {
+            JavaPlatform platform = oldProperty.getValue();
+            newProperty.setValue(platform != null
+                    ? new ScriptPlatform(platform, PlatformSelectionMode.BY_LOCATION)
+                    : null);
+        }
+    }
+
     public static void moveDefaultToNewSettings(CommonGlobalSettings newSettings) {
         DEFAULT.moveToNewSettings(newSettings);
     }
@@ -146,7 +159,7 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(gradleUserHomeDir, newSettings.gradleUserHomeDir());
         moveToNewSettings(gradleArgs, newSettings.gradleArgs());
         moveToNewSettings(gradleJvmArgs, newSettings.gradleJvmArgs());
-        moveToNewSettings(gradleJdk, newSettings.defaultJdk());
+        moveJdkToNewSettings(gradleJdk, newSettings.defaultJdk());
         moveToNewSettings(skipTests, newSettings.skipTests());
         moveToNewSettings(skipCheck, newSettings.skipCheck());
         moveToNewSettings(projectCacheSize, newSettings.projectCacheSize());

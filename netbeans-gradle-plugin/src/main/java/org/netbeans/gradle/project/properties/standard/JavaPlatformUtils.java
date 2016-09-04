@@ -12,9 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
@@ -24,7 +22,6 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
@@ -49,45 +46,6 @@ public final class JavaPlatformUtils {
 
     public static PropertySource<List<JavaPlatform>> javaPlatforms() {
         return PropertyHolder.JAVA_PLATFORMS;
-    }
-
-    public static PropertyValueDef<PlatformId, JavaPlatform> getPlatformIdValueDef() {
-        return new PropertyValueDef<PlatformId, JavaPlatform>() {
-            @Override
-            public PropertySource<JavaPlatform> property(PlatformId valueKey) {
-                return javaPlatform(valueKey);
-            }
-
-            @Override
-            public PlatformId getKeyFromValue(JavaPlatform value) {
-                Specification specification = value != null
-                        ? value.getSpecification()
-                        : null;
-
-                if (specification == null) {
-                    return null;
-                }
-
-                String name = specification.getName();
-                String version = specification.getVersion().toString();
-                return new PlatformId(name, version);
-            }
-        };
-    }
-
-    private static PropertySource<JavaPlatform> javaPlatform(final PlatformId valueKey) {
-        if (valueKey == null) {
-            return PropertyFactory.constSource(null);
-        }
-
-        PropertySource<List<JavaPlatform>> javaPlatforms = javaPlatforms();
-
-        return PropertyFactory.convert(javaPlatforms, new ValueConverter<List<JavaPlatform>, JavaPlatform>() {
-            @Override
-            public JavaPlatform convert(List<JavaPlatform> input) {
-                return tryChooseFromPlatforms(valueKey.getName(), valueKey.getVersion(), input);
-            }
-        });
     }
 
     private static SwingPropertySource<JavaPlatform[], PropertyChangeListener> rawUnorderedJavaPlatforms() {
@@ -190,10 +148,10 @@ public final class JavaPlatformUtils {
         return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
     }
 
-    private static JavaPlatform tryChooseFromOrderedPlatforms(
+    public static JavaPlatform tryChooseFromOrderedPlatforms(
             String specName,
             String versionStr,
-            Collection<JavaPlatform> platforms) {
+            Collection<? extends JavaPlatform> platforms) {
 
         ExceptionHelper.checkNotNullArgument(specName, "specName");
         ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");

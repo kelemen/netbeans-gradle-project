@@ -51,7 +51,7 @@ public final class PlatformOrder {
         return platformIds;
     }
 
-    public List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> src) {
+    public List<JavaPlatform> orderPlatforms(Collection<? extends JavaPlatform> src) {
         List<PlatformAndOrder> srcWithOrder = new ArrayList<>(src.size());
         for (JavaPlatform platform: src) {
             Integer order = pathToOrder.get(getPlatformId(platform));

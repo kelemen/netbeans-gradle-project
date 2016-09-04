@@ -1,48 +1,105 @@
 package org.netbeans.gradle.project.properties.standard;
 
+import java.util.List;
+import org.jtrim.property.PropertyFactory;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.ValueConverter;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
+import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.properties.PlatformSelector;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
+
+import static org.netbeans.gradle.project.properties.standard.JavaPlatformUtils.*;
 
 public final class ScriptPlatformProperty {
     private static final ConfigPath CONFIG_KEY_SCRIPT_PLATFORM = ConfigPath.fromKeys("script-platform");
 
-    private static final String GENERIC_PLATFORM_NAME_NODE = "spec-name";
-    private static final String GENERIC_PLATFORM_VERSION_NODE = "spec-version";
+    public static PropertyDef<?, ScriptPlatform> getPropertyDef(PropertyReference<? extends PlatformOrder> orderRef) {
+        return getPropertyDef(orderRef.getActiveSource());
+    }
 
-    public static final PropertyDef<PlatformId, JavaPlatform> PROPERTY_DEF = createPropertyDef();
-
-    private static PropertyDef<PlatformId, JavaPlatform> createPropertyDef() {
-        PropertyDef.Builder<PlatformId, JavaPlatform> result
+    public static PropertyDef<?, ScriptPlatform> getPropertyDef(PropertySource<? extends PlatformOrder> orderRef) {
+        PropertyDef.Builder<PlatformSelector, ScriptPlatform> result
                 = new PropertyDef.Builder<>(CONFIG_KEY_SCRIPT_PLATFORM);
 
         result.setKeyEncodingDef(getEncodingDef());
-        result.setValueDef(JavaPlatformUtils.getPlatformIdValueDef());
+        result.setValueDef(getPlatformIdValueDef(orderRef));
         return result.create();
     }
 
-    private static PropertyKeyEncodingDef<PlatformId> getEncodingDef() {
-        return new PropertyKeyEncodingDef<PlatformId>() {
+    private static PropertyKeyEncodingDef<PlatformSelector> getEncodingDef() {
+        return new PropertyKeyEncodingDef<PlatformSelector>() {
             @Override
-            public PlatformId decode(ConfigTree config) {
-                ConfigTree name = config.getChildTree(GENERIC_PLATFORM_NAME_NODE);
-                ConfigTree version = config.getChildTree(GENERIC_PLATFORM_VERSION_NODE);
-
-                String versionStr = version.getValue(null);
-                if (versionStr == null) {
-                    return null;
+            public PlatformSelector decode(ConfigTree config) {
+                PlatformSelector result = ExplicitPlatformRef.tryParse(config);
+                if (result != null) {
+                    return result;
                 }
-                return new PlatformId(name.getValue(PlatformId.DEFAULT_NAME), versionStr);
+
+                return PlatformId.tryDecode(config);
             }
 
             @Override
-            public ConfigTree encode(PlatformId value) {
-                ConfigTree.Builder result = new ConfigTree.Builder();
-                result.getChildBuilder(GENERIC_PLATFORM_NAME_NODE).setValue(value.getName());
-                result.getChildBuilder(GENERIC_PLATFORM_VERSION_NODE).setValue(value.getVersion());
-                return result.create();
+            public ConfigTree encode(PlatformSelector value) {
+                return value.toConfig();
+            }
+        };
+    }
+
+    private static PropertySource<ScriptPlatform> javaPlatform(
+            final PlatformSelector selector,
+            final PropertySource<? extends PlatformOrder> orderRef) {
+        if (selector == null) {
+            return PropertyFactory.constSource(null);
+        }
+
+        return PropertyFactory.convert(javaPlatforms(), new ValueConverter<List<JavaPlatform>, ScriptPlatform>() {
+            @Override
+            public ScriptPlatform convert(List<JavaPlatform> input) {
+                return selector.selectPlatform(input, orderRef.getValue());
+            }
+        });
+    }
+
+    private static PropertyValueDef<PlatformSelector, ScriptPlatform> getPlatformIdValueDef(
+            final PropertySource<? extends PlatformOrder> orderRef) {
+        ExceptionHelper.checkNotNullArgument(orderRef, "orderRef");
+
+        return new PropertyValueDef<PlatformSelector, ScriptPlatform>() {
+            @Override
+            public PropertySource<ScriptPlatform> property(PlatformSelector valueKey) {
+                return javaPlatform(valueKey, orderRef);
+            }
+
+            @Override
+            public PlatformSelector getKeyFromValue(ScriptPlatform value) {
+                if (value == null) {
+                    return null;
+                }
+
+                switch (value.getSelectionMode()) {
+                    case BY_VERSION:
+                        Specification specification = value.getJavaPlatform().getSpecification();
+                        if (specification == null) {
+                            return null;
+                        }
+
+                        String name = specification.getName();
+                        String version = specification.getVersion().toString();
+                        return new PlatformId(name, version);
+                    case BY_LOCATION:
+                        return new ExplicitPlatformRef(value.getJavaPlatform());
+                    default:
+                        throw new AssertionError(value.getSelectionMode().name());
+                }
             }
         };
     }

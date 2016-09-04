@@ -15,6 +15,6 @@ public enum GlobalProfileSettingsKey implements ProfileSettingsKey {
 
     @Override
     public LoadableSingleProfileSettingsEx openUnloadedProfileSettings() {
-        return new GlobalProfileSettings();
+        return GlobalProfileSettings.getInstance();
     }
 }

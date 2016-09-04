@@ -3,6 +3,8 @@ package org.netbeans.gradle.project.properties.ui;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +20,7 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
@@ -26,6 +29,8 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.PlatformSelectionMode;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
@@ -106,15 +111,30 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new ProjectPlatformComboItem[comboItems.size()])));
     }
 
-    private void fillScriptPlatformCombo() {
+    private List<JavaPlatform> getPlatforms(boolean selectByVersion) {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<JavaPlatformComboItem> comboItems = new LinkedList<>();
+        if (selectByVersion) {
+            return JavaPlatformUtils.filterIndistinguishable(platforms);
+        }
+        else {
+            return Arrays.asList(platforms);
+        }
+    }
 
+    private static PlatformSelectionMode toSelectionMode(boolean selectByVersion) {
+        return selectByVersion ? PlatformSelectionMode.BY_VERSION : PlatformSelectionMode.BY_LOCATION;
+    }
 
-        for (JavaPlatform platform: JavaPlatformUtils.filterIndistinguishable(platforms)) {
+    private void fillScriptPlatformCombo(boolean selectByVersion) {
+        PlatformSelectionMode selectionMode = toSelectionMode(selectByVersion);
+
+        List<JavaPlatform> platforms = getPlatforms(selectByVersion);
+        List<JavaPlatformComboItem> comboItems = new ArrayList<>(platforms.size());
+
+        for (JavaPlatform platform: platforms) {
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
-                comboItems.add(new JavaPlatformComboItem(platform));
+                comboItems.add(new JavaPlatformComboItem(platform, selectionMode));
             }
         }
 
@@ -125,7 +145,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         public NbGradleCommonProperties commonProperties;
 
         public GradleLocationDef gradleLocation;
-        public JavaPlatform scriptPlatform;
+        public ScriptPlatform scriptPlatform;
         public Charset sourceEncoding;
         public ProjectPlatform targetPlatform;
         public String sourceLevel;
@@ -189,7 +209,14 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
             JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
             if (selectedScriptPlatform != null) {
-                scriptPlatform = jScriptPlatformInherit.isSelected() ? null : selectedScriptPlatform.getPlatform();
+                PlatformSelectionMode selectionMode = toSelectionMode(isSelectByVersion());
+
+                JavaPlatform rawScriptPlatform = jScriptPlatformInherit.isSelected()
+                        ? null
+                        : selectedScriptPlatform.getPlatform();
+                scriptPlatform = rawScriptPlatform != null
+                        ? new ScriptPlatform(rawScriptPlatform, selectionMode)
+                        : null;
             }
 
             ProjectPlatformComboItem selected = (ProjectPlatformComboItem)jPlatformCombo.getSelectedItem();
@@ -226,15 +253,26 @@ public class CommonProjectPropertiesPanel extends JPanel {
             }
         }
 
+        private boolean isSelectByVersion() {
+            ProfileKey key = commonProperties.getActiveSettingsQuery().currentProfileSettings().getValue().getKey();
+            return !Objects.equals(key, ProfileKey.GLOBAL_PROFILE)
+                    && !Objects.equals(key, ProfileKey.PRIVATE_PROFILE);
+        }
+
         private void displayScriptPlatform() {
-            JavaPlatform value = setInheritAndGetValue(
+            displayScriptPlatform(isSelectByVersion());
+        }
+
+        private void displayScriptPlatform(boolean selectByVersion) {
+            ScriptPlatform value = setInheritAndGetValue(
                     scriptPlatform,
                     commonProperties.scriptPlatform(),
                     jScriptPlatformInherit);
 
-            fillScriptPlatformCombo();
+            fillScriptPlatformCombo(selectByVersion);
             if (value != null) {
-                jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(value));
+                PlatformSelectionMode selectionMode = toSelectionMode(selectByVersion);
+                jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(value.getJavaPlatform(), selectionMode));
             }
         }
 
@@ -287,35 +325,54 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
     private static class JavaPlatformComboItem {
         private final JavaPlatform platform;
+        private final PlatformSelectionMode selectionMode;
 
-        public JavaPlatformComboItem(JavaPlatform platform) {
+        public JavaPlatformComboItem(JavaPlatform platform, PlatformSelectionMode selectionMode) {
             ExceptionHelper.checkNotNullArgument(platform, "platform");
+            ExceptionHelper.checkNotNullArgument(selectionMode, "selectionMode");
+
             this.platform = platform;
+            this.selectionMode = selectionMode;
         }
 
         public JavaPlatform getPlatform() {
             return platform;
         }
 
+        private SpecificationVersion tryGetVersion() {
+            Specification specification = platform.getSpecification();
+            return specification != null ? specification.getVersion() : null;
+        }
+
         @Override
         public int hashCode() {
-            int hash = 5;
-            hash = 41 * hash + (this.platform.getSpecification().getVersion().hashCode());
+            int hash = 205;
+            if (selectionMode == PlatformSelectionMode.BY_VERSION) {
+                hash += Objects.hashCode(tryGetVersion());
+            }
+            else {
+                hash += platform.hashCode();
+            }
+            hash = 41 * hash + Objects.hashCode(selectionMode);
             return hash;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
             final JavaPlatformComboItem other = (JavaPlatformComboItem)obj;
-            SpecificationVersion thisVersion = this.platform.getSpecification().getVersion();
-            SpecificationVersion otherVersion = other.platform.getSpecification().getVersion();
-            return thisVersion.equals(otherVersion);
+            if (other.selectionMode != this.selectionMode) {
+                return false;
+            }
+
+            if (selectionMode == PlatformSelectionMode.BY_VERSION) {
+                return Objects.equals(this.tryGetVersion(), other.tryGetVersion());
+            }
+            else {
+                return Objects.equals(this.platform, other.platform);
+            }
         }
 
         @Override

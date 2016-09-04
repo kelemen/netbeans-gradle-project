@@ -22,8 +22,8 @@ import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
@@ -110,10 +110,10 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         classpathResources.put(ClassPathType.COMPILE, jarResources);
         classpathResources.put(ClassPathType.RUNTIME, jarResources);
 
-        JavaPlatform platform = CommonGlobalSettings.getDefault().defaultJdk().getActiveValue();
+        ScriptPlatform platform = CommonGlobalSettings.getDefault().defaultJdk().getActiveValue();
         if (platform != null) {
             List<PathResourceImplementation> platformResources = new LinkedList<>();
-            for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
+            for (ClassPath.Entry entry: platform.getJavaPlatform().getBootstrapLibraries().entries()) {
                 platformResources.add(ClassPathSupport.createResource(entry.getURL()));
             }
             classpathResources.put(ClassPathType.BOOT, platformResources);

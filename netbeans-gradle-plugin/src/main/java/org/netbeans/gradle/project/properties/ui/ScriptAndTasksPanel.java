@@ -13,6 +13,8 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.PlatformSelectionMode;
+import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -74,16 +76,16 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     public final void updateSettings(ActiveSettingsQuery globalSettings) {
         PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
         PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
-        PropertyReference<JavaPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
+        PropertyReference<ScriptPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
 
         fillPlatformCombo();
 
         jGradleArgs.setText(argListToText(gradleArgs.getActiveValue()));
         jGradleJVMArgs.setText(argListToText(gradleJvmArgs.getActiveValue()));
 
-        JavaPlatform currentJdk = defaultJdk.getActiveValue();
+        ScriptPlatform currentJdk = defaultJdk.getActiveValue();
         if (currentJdk != null) {
-            jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk));
+            jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk.getJavaPlatform()));
         }
     }
 
@@ -91,11 +93,11 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     public final void saveSettings(ActiveSettingsQuery globalSettings) {
         PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
         PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
-        PropertyReference<JavaPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
+        PropertyReference<ScriptPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
 
         gradleArgs.setValue(textToArgsList(getGradleArgs()));
         gradleJvmArgs.setValue(textToArgsList(getGradleJvmArgs()));
-        defaultJdk.setValue(getJdk());
+        defaultJdk.setValue(getScriptJdk());
     }
 
     @Override
@@ -104,6 +106,11 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private ScriptPlatform getScriptJdk() {
+        JavaPlatform result = getJdk();
+        return result != null ? new ScriptPlatform(result, PlatformSelectionMode.BY_LOCATION) : null;
     }
 
     private JavaPlatform getJdk() {

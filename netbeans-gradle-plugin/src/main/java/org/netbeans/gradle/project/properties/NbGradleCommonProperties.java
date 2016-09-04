@@ -4,7 +4,6 @@ import java.nio.charset.Charset;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -37,7 +36,7 @@ public final class NbGradleCommonProperties {
     private final PropertyReference<PredefinedTasks> customTasks;
     private final PropertyReference<GradleLocationDef> gradleLocation;
     private final PropertyReference<LicenseHeaderInfo> licenseHeaderInfo;
-    private final PropertyReference<JavaPlatform> scriptPlatform;
+    private final PropertyReference<ScriptPlatform> scriptPlatform;
     private final PropertyReference<Charset> sourceEncoding;
     private final PropertyReference<ProjectPlatform> targetPlatform;
     private final PropertyReference<String> sourceLevel;
@@ -57,12 +56,20 @@ public final class NbGradleCommonProperties {
 
         builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
         customTasks = customTasks(activeSettingsQuery);
-        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, PropertyFactory.constSource(GradleLocationDef.DEFAULT));
+        gradleLocation = get(
+                GradleLocationProperty.PROPERTY_DEF,
+                PropertyFactory.constSource(GradleLocationDef.DEFAULT));
         licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
-        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, globalSettings.defaultJdk().getActiveSource());
-        sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
+        scriptPlatform = get(
+                ScriptPlatformProperty.getPropertyDef(globalSettings.platformPreferenceOrder()),
+                PropertyFactory.constSource(ScriptPlatform.getDefault()));
+        sourceEncoding = get(
+                SourceEncodingProperty.PROPERTY_DEF,
+                PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
         targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
-        sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
+        sourceLevel = get(
+                SourceLevelProperty.PROPERTY_DEF,
+                SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
         userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
         displayNamePattern = displayNamePattern(activeSettingsQuery);
         customVariables = customVariables(activeSettingsQuery);
@@ -130,7 +137,7 @@ public final class NbGradleCommonProperties {
         return licenseHeaderInfo;
     }
 
-    public PropertyReference<JavaPlatform> scriptPlatform() {
+    public PropertyReference<ScriptPlatform> scriptPlatform() {
         return scriptPlatform;
     }
 
