@@ -2,13 +2,10 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -292,15 +289,6 @@ public final class CommonGlobalSettings {
 
     public PropertyReference<String> displayNamePattern() {
         return displayNamePattern;
-    }
-
-    public List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
-        return orderPlatforms(Arrays.asList(platforms));
-    }
-
-    public List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
-        PlatformOrder order = platformPreferenceOrder().getActiveValue();
-        return order.orderPlatforms(platforms);
     }
 
     public File tryGetGradleInstallationAsFile() {

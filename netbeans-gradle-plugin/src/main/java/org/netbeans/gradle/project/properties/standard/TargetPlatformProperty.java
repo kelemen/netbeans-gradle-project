@@ -47,12 +47,6 @@ public final class TargetPlatformProperty {
         final CachedLookupValue<JavaExtension> javaExtRef
                 = new CachedLookupValue<>(project, JavaExtension.class);
 
-        // This is here only to register and remove listeners because
-        // it can detect changes in the list of platforms defined in
-        // NetBeans. We will never request the value of this property
-        // source, so the actual parameters do not matter.
-        final PropertySource<?> platformListHelper
-                = JavaPlatformUtils.findPlatformSource("j2se", "1.3");
         return new PropertySource<ProjectPlatform>() {
             @Override
             public ProjectPlatform getValue() {
@@ -71,7 +65,7 @@ public final class TargetPlatformProperty {
 
                 ListenerRef ref1 = CommonGlobalSettings.getDefault().mayRelyOnJavaOfScript().getActiveSource().addChangeListener(listener);
                 ListenerRef ref2 = project.currentModel().addChangeListener(listener);
-                ListenerRef ref3 = platformListHelper.addChangeListener(listener);
+                ListenerRef ref3 = JavaPlatformUtils.installedPlatforms().addChangeListener(listener);
 
                 return ListenerRegistries.combineListenerRefs(ref1, ref2, ref3);
             }
@@ -141,13 +135,7 @@ public final class TargetPlatformProperty {
 
             @Override
             public PlatformId getKeyFromValue(ProjectPlatform value) {
-                if (value == null) {
-                    return null;
-                }
-
-                String name = value.getName();
-                String version = value.getVersion();
-                return new PlatformId(name, version);
+                return value != null ? new PlatformId(value) : null;
             }
         };
     }

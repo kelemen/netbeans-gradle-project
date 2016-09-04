@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.Window;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import javax.swing.DefaultListModel;
@@ -68,7 +69,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel.setSize(0);
 
         List<JavaPlatform> orderedPlatforms
-                = JavaPlatformUtils.orderPlatforms(platformPreferenceOrder.getActiveValue(), platforms);
+                = platformPreferenceOrder.getActiveValue().orderPlatforms(Arrays.asList(platforms));
         for (JavaPlatform platform: orderedPlatforms) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }

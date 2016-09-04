@@ -1,12 +1,11 @@
 package org.netbeans.gradle.project.properties.standard;
 
-import java.util.List;
+import java.util.Arrays;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
@@ -61,10 +60,10 @@ public final class ScriptPlatformProperty {
             return PropertyFactory.constSource(null);
         }
 
-        return PropertyFactory.convert(javaPlatforms(), new ValueConverter<List<JavaPlatform>, ScriptPlatform>() {
+        return PropertyFactory.convert(installedPlatforms(), new ValueConverter<JavaPlatform[], ScriptPlatform>() {
             @Override
-            public ScriptPlatform convert(List<JavaPlatform> input) {
-                return selector.selectPlatform(input, orderRef.getValue());
+            public ScriptPlatform convert(JavaPlatform[] input) {
+                return selector.selectPlatform(Arrays.asList(input), orderRef.getValue());
             }
         });
     }
@@ -87,14 +86,7 @@ public final class ScriptPlatformProperty {
 
                 switch (value.getSelectionMode()) {
                     case BY_VERSION:
-                        Specification specification = value.getJavaPlatform().getSpecification();
-                        if (specification == null) {
-                            return null;
-                        }
-
-                        String name = specification.getName();
-                        String version = specification.getVersion().toString();
-                        return new PlatformId(name, version);
+                        return PlatformId.tryGetIdOfPlatform(value.getJavaPlatform());
                     case BY_LOCATION:
                         return new ExplicitPlatformRef(value.getJavaPlatform());
                     default:

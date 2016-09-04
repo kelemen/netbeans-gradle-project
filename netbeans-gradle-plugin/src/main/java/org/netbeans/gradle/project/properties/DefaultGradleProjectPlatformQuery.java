@@ -1,7 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -33,34 +31,17 @@ implements
         this.knownPlatforms = new HashSet<>(Arrays.asList("j2se"));
     }
 
+    private static PropertySource<PlatformOrder> orderProperty() {
+        return CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveSource();
+    }
+
     @Override
     public NbListenerRef addPlatformChangeListener(final Runnable listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final PropertyChangeListener changeListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
-                    listener.run();
-                }
-            }
-        };
-
-        final JavaPlatformManager manager = JavaPlatformManager.getDefault();
-        manager.addPropertyChangeListener(changeListener);
-
-        PropertySource<PlatformOrder> order
-                = CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveSource();
-
-        final ListenerRef orderListenerRef = order.addChangeListener(listener);
-
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                manager.removePropertyChangeListener(changeListener);
-                orderListenerRef.unregister();
-            }
-        });
+        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(
+                JavaPlatformUtils.installedPlatforms().addChangeListener(listener),
+                orderProperty().addChangeListener(listener)));
     }
 
     @Override
@@ -70,10 +51,11 @@ implements
 
     @Override
     public Collection<ProjectPlatform> getAvailablePlatforms() {
-        JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
-        List<ProjectPlatform> result = new ArrayList<>(platforms.length);
+        JavaPlatform[] allPlatforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
+        List<JavaPlatform> platforms = orderProperty().getValue().filterIndistinguishable(allPlatforms);
+        List<ProjectPlatform> result = new ArrayList<>(platforms.size());
 
-        for (JavaPlatform platform: JavaPlatformUtils.filterIndistinguishable(platforms)) {
+        for (JavaPlatform platform: platforms) {
             result.add(JavaPlatformUtils.getJavaPlatform(platform));
         }
         return result;
@@ -81,7 +63,7 @@ implements
 
     @Override
     public ProjectPlatform tryFindPlatformByName(String name, String version) {
-        JavaPlatform platform = JavaPlatformUtils.tryFindPlatform(name, version);
+        JavaPlatform platform = JavaPlatformUtils.tryFindPlatform(name, version, orderProperty().getValue());
         return platform != null
                 ? JavaPlatformUtils.getJavaPlatform(platform)
                 : null;

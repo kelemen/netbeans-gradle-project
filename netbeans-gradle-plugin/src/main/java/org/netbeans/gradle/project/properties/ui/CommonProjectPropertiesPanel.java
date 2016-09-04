@@ -31,7 +31,8 @@ import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
-import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -111,10 +112,14 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new ProjectPlatformComboItem[comboItems.size()])));
     }
 
+    private static PlatformOrder order() {
+        return CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveValue();
+    }
+
     private List<JavaPlatform> getPlatforms(boolean selectByVersion) {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         if (selectByVersion) {
-            return JavaPlatformUtils.filterIndistinguishable(platforms);
+            return order().filterIndistinguishable(platforms);
         }
         else {
             return Arrays.asList(platforms);
