@@ -11,12 +11,12 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("deprecation")
-public class GlobalGradleSettingsTest {
-    private GlobalGradleSettings settings;
+public class LegacyGlobalGradleSettingsTest {
+    private LegacyGlobalGradleSettings settings;
 
     @Before
     public void setUp() {
-        settings = new GlobalGradleSettings("GlobalGradleSettingsTest");
+        settings = new LegacyGlobalGradleSettings("GlobalGradleSettingsTest");
     }
 
     @After

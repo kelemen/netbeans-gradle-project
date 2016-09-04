@@ -38,10 +38,10 @@ import org.openide.util.Utilities;
  * @deprecated Use {@link CommonGlobalSettings} instead.
  */
 @Deprecated
-final class GlobalGradleSettings {
-    private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
+final class LegacyGlobalGradleSettings {
+    private static final Logger LOGGER = Logger.getLogger(LegacyGlobalGradleSettings.class.getName());
 
-    private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
+    private static final LegacyGlobalGradleSettings DEFAULT = new LegacyGlobalGradleSettings(null);
     private static final BasicPreference PREFERENCE = NbGlobalPreference.DEFAULT;
 
     private final StringBasedProperty<GradleLocationDef> gradleLocation;
@@ -66,7 +66,7 @@ final class GlobalGradleSettings {
     private final StringBasedProperty<Boolean> loadRootProjectFirst;
     private final StringBasedProperty<Boolean> detectProjectDependenciesByJarName;
 
-    public GlobalGradleSettings(String namespace) {
+    public LegacyGlobalGradleSettings(String namespace) {
         // "gradle-home" is probably not the best name but it must remain so
         // for backward compatibility reason.
         gradleLocation = new GlobalProperty<>(
@@ -631,7 +631,7 @@ final class GlobalGradleSettings {
         public String getValueAsString();
     }
 
-    private GlobalGradleSettings() {
+    private LegacyGlobalGradleSettings() {
         throw new AssertionError();
     }
 }
