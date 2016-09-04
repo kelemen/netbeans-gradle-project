@@ -12,7 +12,7 @@ import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 
 public final class SampleGradleProject implements Closeable {
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
@@ -28,7 +28,7 @@ public final class SampleGradleProject implements Closeable {
     }
 
     public static SampleGradleProject createProject(String resourceRelPath) throws IOException {
-        GlobalGradleSettings.getDefault().gradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
+        CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
         return createProject(SampleGradleProject.class, resourceRelPath);
     }
 

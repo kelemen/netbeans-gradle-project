@@ -14,7 +14,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -42,7 +42,7 @@ public final class GradleModelCache {
     public static GradleModelCache getDefault() {
         GradleModelCache result = DEFAULT_REF.get();
         if (result == null) {
-            final PropertySource<Integer> cacheSize = GlobalGradleSettings.getDefault().projectCacheSize();
+            final PropertySource<Integer> cacheSize = CommonGlobalSettings.getDefault().projectCacheSize().getActiveSource();
             result = new GradleModelCache(cacheSize.getValue());
             if (DEFAULT_REF.compareAndSet(null, result)) {
                 final GradleModelCache cache = result;

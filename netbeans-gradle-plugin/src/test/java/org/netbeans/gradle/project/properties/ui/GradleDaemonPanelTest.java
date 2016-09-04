@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.NbConsumer;
 
 
@@ -29,9 +29,9 @@ public class GradleDaemonPanelTest {
 
     @Test
     public void testInitAndReadBack() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleDaemonPanel.class, new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleDaemonPanel.class, new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.gradleDaemonTimeoutSec().setValue((int)TimeUnit.MINUTES.toSeconds(37));
             }
         });

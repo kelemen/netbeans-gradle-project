@@ -25,7 +25,7 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -80,7 +80,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private static URL[] getGradleBinaries() {
-        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
+        FileObject gradleHome = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
         if (gradleHome == null) {
             return new URL[0];
         }
@@ -110,7 +110,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         classpathResources.put(ClassPathType.COMPILE, jarResources);
         classpathResources.put(ClassPathType.RUNTIME, jarResources);
 
-        JavaPlatform platform = GlobalGradleSettings.getDefault().gradleJdk().getValue();
+        JavaPlatform platform = CommonGlobalSettings.getDefault().defaultJdk().getActiveValue();
         if (platform != null) {
             List<PathResourceImplementation> platformResources = new LinkedList<>();
             for (ClassPath.Entry entry: platform.getBootstrapLibraries().entries()) {
@@ -169,8 +169,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             }
         };
 
-        GlobalGradleSettings.getDefault().gradleLocation().addChangeListener(changeListener);
-        GlobalGradleSettings.getDefault().gradleJdk().addChangeListener(changeListener);
+        CommonGlobalSettings defaultSettings = CommonGlobalSettings.getDefault();
+        defaultSettings.gradleLocation().getActiveSource().addChangeListener(changeListener);
+        defaultSettings.defaultJdk().getActiveSource().addChangeListener(changeListener);
 
         setupClassPaths();
     }

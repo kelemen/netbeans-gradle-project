@@ -8,6 +8,7 @@ import org.netbeans.gradle.project.properties.standard.CommonProperties;
 public final class DebugModeProjectProperty {
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("debug-mode", "type");
 
+    public static final DebugMode DEFAULT = DebugMode.DEBUGGER_ATTACHES;
     public static final PropertyDef<?, DebugMode> PROPERTY_DEF = createPropertyDef();
 
     private static PropertyDef<?, DebugMode> createPropertyDef() {

@@ -8,7 +8,7 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.openide.awt.HtmlBrowser;
@@ -77,7 +77,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }
 
     @Override
-    public final void updateSettings(GlobalGradleSettings globalSettings) {
+    public final void updateSettings(ActiveSettingsQuery globalSettings) {
         ListModel<CategoryItem> model = jCategoriesList.getModel();
         int categoryCount = model.getSize();
         for (int i = 0; i < categoryCount; i++) {
@@ -86,7 +86,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }
 
     @Override
-    public final void saveSettings(GlobalGradleSettings globalSettings) {
+    public final void saveSettings(ActiveSettingsQuery globalSettings) {
         ListModel<CategoryItem> model = jCategoriesList.getModel();
         int categoryCount = model.getSize();
         for (int i = 0; i < categoryCount; i++) {

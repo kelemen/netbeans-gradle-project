@@ -12,6 +12,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.TestDetectUtils;
 
 public final class ProfileSettingsContainer {
     private static final AtomicReference<ProfileSettingsContainer> DEFAULT_REF = new AtomicReference<>(null);
@@ -29,13 +30,17 @@ public final class ProfileSettingsContainer {
         if (result == null) {
             result = new ProfileSettingsContainer();
             if (DEFAULT_REF.compareAndSet(null, result)) {
-                final ProfileSettingsContainer toPersistBeforeTerminate = result;
-                Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        toPersistBeforeTerminate.saveAllProfilesNow();
-                    }
-                }));
+                if (!TestDetectUtils.isRunningTests()) {
+                    // We must not add this shutdown hook when running tests because
+                    // it would cause a dead-lock in NetBeans.
+                    final ProfileSettingsContainer toPersistBeforeTerminate = result;
+                    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            toPersistBeforeTerminate.saveAllProfilesNow();
+                        }
+                    }));
+                }
             }
             else {
                 result = DEFAULT_REF.get();

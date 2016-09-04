@@ -11,11 +11,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.nodes.Node;
@@ -23,7 +22,7 @@ import org.openide.nodes.Node;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("deprecation")
-public final class EmptyProjectTest {
+public final class EmptyProjectTest extends ConfigAwareTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;
 
@@ -35,17 +34,11 @@ public final class EmptyProjectTest {
     public static void setUpClass() throws Exception {
         MockServices.setServices(SingleModelExtensionQuery.class);
 
-        GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
-
         sampleProject = createEmptyProject();
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        GlobalGradleSettings.setDefaultPreference();
-
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 

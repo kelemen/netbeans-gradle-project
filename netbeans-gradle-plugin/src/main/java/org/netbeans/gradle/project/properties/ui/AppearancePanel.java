@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -60,11 +62,12 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        nodeNamePanel.updatePattern(globalSettings.displayNamePattern().getValue(), null);
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<String> displayNamePattern = CommonGlobalSettings.displayNamePattern(globalSettings);
+        PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
 
-        JavaSourcesDisplayMode sourcesDisplayMode = globalSettings.javaSourcesDisplayMode().getValue();
-        selectSourcesDisplayMode(sourcesDisplayMode);
+        nodeNamePanel.updatePattern(displayNamePattern.getActiveValue(), null);
+        selectSourcesDisplayMode(javaSourcesDisplayMode.getActiveValue());
     }
 
     private void selectSourcesDisplayMode(JavaSourcesDisplayMode newMode) {
@@ -72,9 +75,12 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.displayNamePattern().setValue(nodeNamePanel.getNamePattern());
-        globalSettings.javaSourcesDisplayMode().setValue(javaSourcesDisplayMode());
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<String> displayNamePattern = CommonGlobalSettings.displayNamePattern(globalSettings);
+        PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
+
+        displayNamePattern.setValue(nodeNamePanel.getNamePattern());
+        javaSourcesDisplayMode.setValue(javaSourcesDisplayMode());
     }
 
     private JavaSourcesDisplayMode javaSourcesDisplayMode() {

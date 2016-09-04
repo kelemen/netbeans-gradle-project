@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.properties.ui;
 import java.util.Arrays;
 import org.junit.Test;
 import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
@@ -20,9 +20,9 @@ public class PlatformPriorityPanelTest {
 
     @Test
     public void testInitAndReadBack1() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(getFactory(false), new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(getFactory(false), new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.platformPreferenceOrder().setValue(new PlatformOrder(Arrays.asList(
                         JavaPlatform.getDefault())));
             }
@@ -31,9 +31,9 @@ public class PlatformPriorityPanelTest {
 
     @Test
     public void testInitAndReadBack2() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(getFactory(true), new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(getFactory(true), new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.platformPreferenceOrder().setValue(new PlatformOrder(Arrays.asList(
                         JavaPlatform.getDefault())));
             }

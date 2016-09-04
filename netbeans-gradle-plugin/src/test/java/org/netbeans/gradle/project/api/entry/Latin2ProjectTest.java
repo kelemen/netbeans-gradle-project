@@ -8,19 +8,29 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.util.ConfigAwareTest;
+import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.junit.MockServices;
 
 import static org.junit.Assert.*;
 
-public class Latin2ProjectTest {
+public class Latin2ProjectTest extends ConfigAwareTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;
+
+    public Latin2ProjectTest() {
+        super(new NbConsumer<CommonGlobalSettings>() {
+            @Override
+            public void accept(CommonGlobalSettings settings) {
+                settings.gradleJvmArgs().setValue(Arrays.asList("-Dfile.encoding=ISO-8859-2", "-Xmx128m"));
+            }
+        });
+    }
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -32,17 +42,11 @@ public class Latin2ProjectTest {
 
         MockServices.setServices();
 
-        GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
-        GlobalGradleSettings.getDefault().gradleJvmArgs().setValue(Arrays.asList("-Dfile.encoding=ISO-8859-2", "-Xmx128m"));
-
         sampleProject = SampleGradleProject.createProject("latin2-project.zip");
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        GlobalGradleSettings.setDefaultPreference();
         GenericModelFetcher.setDefaultPrefixes();
 
         SampleGradleProject toClose = sampleProject;

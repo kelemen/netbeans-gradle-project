@@ -8,7 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.NbConsumer;
 
 public class GradleInstallationPanelTest {
@@ -30,9 +30,9 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack1() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef("1.7", true));
                 input.gradleUserHomeDir().setValue(new File("my-user-home1"));
             }
@@ -41,9 +41,9 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack2() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef("1.9", false));
                 input.gradleUserHomeDir().setValue(new File("my-user-home2"));
             }
@@ -52,9 +52,9 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack3() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, false));
                 input.gradleUserHomeDir().setValue(new File("my-user-home3"));
             }
@@ -63,9 +63,9 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack4() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<GlobalGradleSettings>() {
+        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
             @Override
-            public void accept(GlobalGradleSettings input) {
+            public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, true));
                 input.gradleUserHomeDir().setValue(new File("my-user-home4"));
             }

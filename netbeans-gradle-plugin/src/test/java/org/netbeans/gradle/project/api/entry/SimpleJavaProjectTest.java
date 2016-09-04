@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.api.java.classpath.ClassPath;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
@@ -37,7 +36,7 @@ import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
@@ -61,24 +60,22 @@ import static org.junit.Assert.*;
 import static org.netbeans.spi.project.ActionProvider.*;
 
 @SuppressWarnings("deprecation")
-public class SimpleJavaProjectTest {
+public class SimpleJavaProjectTest extends ConfigAwareTest {
     private static SampleGradleProject sampleProject;
     private NbGradleProject rootProject;
+
+    public SimpleJavaProjectTest() {
+    }
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices(CustomSourcesMergerExtDef.class);
-
-        GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
 
         sampleProject = SampleGradleProject.createProject("gradle-sample.zip");
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        GlobalGradleSettings.setDefaultPreference();
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 

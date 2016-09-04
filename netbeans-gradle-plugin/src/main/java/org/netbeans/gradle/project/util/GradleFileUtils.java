@@ -12,7 +12,8 @@ import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -52,11 +53,15 @@ public final class GradleFileUtils {
         return new File(NORM_USER_HOME, ".gradle");
     }
 
+    private static PropertyReference<File> gradleUserHomeDir() {
+        return CommonGlobalSettings.getDefault().gradleUserHomeDir();
+    }
+
     private static PropertySource<File> getGradleUserHome() {
         return new PropertySource<File>() {
             @Override
             public File getValue() {
-                File value = GlobalGradleSettings.getDefault().gradleUserHomeDir().getValue();
+                File value = gradleUserHomeDir().getActiveValue();
                 if (value == null) {
                     value = getDefaultGradleUserHome();
                 }
@@ -65,7 +70,7 @@ public final class GradleFileUtils {
 
             @Override
             public ListenerRef addChangeListener(Runnable listener) {
-                return GlobalGradleSettings.getDefault().gradleUserHomeDir().addChangeListener(listener);
+                return gradleUserHomeDir().getActiveSource().addChangeListener(listener);
             }
         };
     }

@@ -1,8 +1,10 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -11,26 +13,34 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 public class BuildScriptParsingPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Build-Script-Parsing");
 
-    private final EnumCombo<ModelLoadingStrategy> modelLoadingStrategy;
+    private final EnumCombo<ModelLoadingStrategy> modelLoadingStrategyCombo;
 
     public BuildScriptParsingPanel() {
         initComponents();
 
-        modelLoadingStrategy = new EnumCombo<>(ModelLoadingStrategy.class, ModelLoadingStrategy.NEWEST_POSSIBLE, jModelLoadStrategy);
+        modelLoadingStrategyCombo = new EnumCombo<>(ModelLoadingStrategy.class, ModelLoadingStrategy.NEWEST_POSSIBLE, jModelLoadStrategy);
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        modelLoadingStrategy.setSelectedValue(globalSettings.modelLoadingStrategy().getValue());
-        jLoadRootProjectFirst.setSelected(globalSettings.loadRootProjectFirst().getValue());
-        jReliableJavaVersionCheck.setSelected(globalSettings.mayRelyOnJavaOfScript().getValue());
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<ModelLoadingStrategy> modelLoadingStrategy = CommonGlobalSettings.modelLoadingStrategy(globalSettings);
+        PropertyReference<Boolean> loadRootProjectFirst = CommonGlobalSettings.loadRootProjectFirst(globalSettings);
+        PropertyReference<Boolean> mayRelyOnJavaOfScript = CommonGlobalSettings.mayRelyOnJavaOfScript(globalSettings);
+
+        modelLoadingStrategyCombo.setSelectedValue(modelLoadingStrategy.getActiveValue());
+        jLoadRootProjectFirst.setSelected(loadRootProjectFirst.getActiveValue());
+        jReliableJavaVersionCheck.setSelected(mayRelyOnJavaOfScript.getActiveValue());
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.modelLoadingStrategy().setValue(modelLoadingStrategy.getSelectedValue());
-        globalSettings.loadRootProjectFirst().setValue(jLoadRootProjectFirst.isSelected());
-        globalSettings.mayRelyOnJavaOfScript().setValue(jReliableJavaVersionCheck.isSelected());
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<ModelLoadingStrategy> modelLoadingStrategy = CommonGlobalSettings.modelLoadingStrategy(globalSettings);
+        PropertyReference<Boolean> loadRootProjectFirst = CommonGlobalSettings.loadRootProjectFirst(globalSettings);
+        PropertyReference<Boolean> mayRelyOnJavaOfScript = CommonGlobalSettings.mayRelyOnJavaOfScript(globalSettings);
+
+        modelLoadingStrategy.setValue(modelLoadingStrategyCombo.getSelectedValue());
+        loadRootProjectFirst.setValue(jLoadRootProjectFirst.isSelected());
+        mayRelyOnJavaOfScript.setValue(jReliableJavaVersionCheck.isSelected());
     }
 
     @Override

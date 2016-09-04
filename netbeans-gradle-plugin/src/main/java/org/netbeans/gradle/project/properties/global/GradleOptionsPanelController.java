@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.ui.GlobalGradleSettingsPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
@@ -23,8 +24,8 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         return settingsPanel;
     }
 
-    private GlobalGradleSettings getSettings() {
-        return GlobalGradleSettings.getDefault();
+    private ActiveSettingsQuery getSettings() {
+        return CommonGlobalSettings.getDefault().getActiveSettingsQuery();
     }
 
     private void updateEditor(GlobalSettingsEditor editor) {

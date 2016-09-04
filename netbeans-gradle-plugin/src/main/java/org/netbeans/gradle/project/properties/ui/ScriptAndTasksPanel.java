@@ -1,12 +1,19 @@
 package org.netbeans.gradle.project.properties.ui;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import javax.swing.DefaultComboBoxModel;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -29,24 +36,66 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         jJdkCombo.setModel(new DefaultComboBoxModel<>(comboItems));
     }
 
+    private static String argListToText(List<String> args) {
+        if (args.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder(256);
+        for (String arg: args) {
+            result.append(arg);
+            result.append('\n');
+        }
+        return result.toString();
+    }
+
+    private static List<String> textToArgsList(String str) {
+        try {
+            return textToArgsListUnsafe(str);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static List<String> textToArgsListUnsafe(String str) throws IOException {
+        List<String> result = new ArrayList<>();
+
+        BufferedReader reader = new BufferedReader(new StringReader(str));
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+            if (!line.trim().isEmpty()) {
+                result.add(line);
+            }
+        }
+
+        return result;
+    }
+
     @Override
-    public final void updateSettings(GlobalGradleSettings globalSettings) {
+    public final void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
+        PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
+        PropertyReference<JavaPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
+
         fillPlatformCombo();
 
-        jGradleArgs.setText(globalSettings.gradleArgs().getValueAsString());
-        jGradleJVMArgs.setText(globalSettings.gradleJvmArgs().getValueAsString());
+        jGradleArgs.setText(argListToText(gradleArgs.getActiveValue()));
+        jGradleJVMArgs.setText(argListToText(gradleJvmArgs.getActiveValue()));
 
-        JavaPlatform currentJdk = globalSettings.gradleJdk().getValue();
+        JavaPlatform currentJdk = defaultJdk.getActiveValue();
         if (currentJdk != null) {
             jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk));
         }
     }
 
     @Override
-    public final void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.gradleArgs().setValueFromString(getGradleArgs());
-        globalSettings.gradleJvmArgs().setValueFromString(getGradleJvmArgs());
-        globalSettings.gradleJdk().setValue(getJdk());
+    public final void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
+        PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
+        PropertyReference<JavaPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
+
+        gradleArgs.setValue(textToArgsList(getGradleArgs()));
+        gradleJvmArgs.setValue(textToArgsList(getGradleJvmArgs()));
+        defaultJdk.setValue(getJdk());
     }
 
     @Override

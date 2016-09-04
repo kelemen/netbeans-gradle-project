@@ -11,7 +11,7 @@ import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.J2SEPlatformFromScriptQuery;
 import org.netbeans.gradle.project.util.CachedLookupValue;
 import org.openide.modules.SpecificationVersion;
@@ -33,7 +33,7 @@ public final class SourceLevelProperty {
     }
 
     private static PropertySource<Boolean> mayRelyOnJavaOfScript() {
-        return GlobalGradleSettings.getDefault().mayRelyOnJavaOfScript();
+        return CommonGlobalSettings.getDefault().mayRelyOnJavaOfScript().getActiveSource();
     }
 
     public static PropertySource<String> defaultValue(

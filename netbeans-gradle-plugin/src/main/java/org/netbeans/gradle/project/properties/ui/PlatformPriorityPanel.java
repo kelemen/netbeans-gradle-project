@@ -22,11 +22,14 @@ import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
@@ -53,7 +56,10 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }
 
     @Override
-    public final void updateSettings(GlobalGradleSettings globalSettings) {
+    public final void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<PlatformOrder> platformPreferenceOrder = CommonGlobalSettings.platformPreferenceOrder(globalSettings);
+
+
         JavaPlatform[] platforms
                 = JavaPlatformManager.getDefault().getInstalledPlatforms();
 
@@ -61,7 +67,9 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel.setSize(platforms.length);
         jPlatformListModel.setSize(0);
 
-        for (JavaPlatform platform: globalSettings.orderPlatforms(platforms)) {
+        List<JavaPlatform> orderedPlatforms
+                = JavaPlatformUtils.orderPlatforms(platformPreferenceOrder.getActiveValue(), platforms);
+        for (JavaPlatform platform: orderedPlatforms) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }
 
@@ -69,7 +77,9 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }
 
     @Override
-    public final void saveSettings(GlobalGradleSettings globalSettings) {
+    public final void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<PlatformOrder> platformPreferenceOrder = CommonGlobalSettings.platformPreferenceOrder(globalSettings);
+
         List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
 
         Enumeration<PlatformItem> listItems = jPlatformListModel.elements();
@@ -79,7 +89,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         }
 
         PlatformOrder newOrder = new PlatformOrder(platforms);
-        globalSettings.platformPreferenceOrder().setValue(newOrder);
+        platformPreferenceOrder.setValue(newOrder);
     }
 
     @Override
@@ -103,7 +113,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         contentPane.setLayout(new GridLayout(1, 1));
 
         PlatformPriorityPanel content = new PlatformPriorityPanel(true);
-        content.updateSettings(GlobalGradleSettings.getDefault());
+        content.updateSettings(CommonGlobalSettings.getDefault().getActiveSettingsQuery());
         contentPane.add(content);
 
         dlg.pack();
@@ -296,7 +306,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }//GEN-LAST:event_jCancelButtonActionPerformed
 
     private void jOkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOkButtonActionPerformed
-        saveSettings(GlobalGradleSettings.getDefault());
+        saveSettings(CommonGlobalSettings.getDefault().getActiveSettingsQuery());
 
         okPressed = true;
         closeWindow();

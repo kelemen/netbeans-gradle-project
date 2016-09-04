@@ -11,7 +11,7 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
@@ -19,6 +19,7 @@ import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.properties.standard.CustomVariablesProperty;
 import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
 import org.netbeans.gradle.project.properties.standard.LicenseHeaderInfoProperty;
+import org.netbeans.gradle.project.properties.standard.MemCustomVariables;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties.standard.ProjectDisplayNameProperty;
 import org.netbeans.gradle.project.properties.standard.ScriptPlatformProperty;
@@ -52,13 +53,13 @@ public final class NbGradleCommonProperties {
         this.activeSettingsQuery = activeSettingsQuery;
 
         // Warning: "get" uses the fields set above.
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
+        CommonGlobalSettings globalSettings = CommonGlobalSettings.getDefault();
 
         builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
         customTasks = customTasks(activeSettingsQuery);
-        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, globalSettings.gradleLocation());
+        gradleLocation = get(GradleLocationProperty.PROPERTY_DEF, PropertyFactory.constSource(GradleLocationDef.DEFAULT));
         licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
-        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, globalSettings.gradleJdk());
+        scriptPlatform = get(ScriptPlatformProperty.PROPERTY_DEF, globalSettings.defaultJdk().getActiveSource());
         sourceEncoding = get(SourceEncodingProperty.PROPERTY_DEF, PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
         targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
         sourceLevel = get(SourceLevelProperty.PROPERTY_DEF, SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
@@ -95,14 +96,14 @@ public final class NbGradleCommonProperties {
         return new PropertyReference<>(
                 ProjectDisplayNameProperty.PROPERTY_DEF,
                 activeSettingsQuery,
-                ProjectDisplayNameProperty.defaultValue());
+                PropertyFactory.constSource(ProjectDisplayNameProperty.DEFAULT_VALUE));
     }
 
     public static PropertyReference<CustomVariables> customVariables(ActiveSettingsQuery activeSettingsQuery) {
         return new PropertyReference<>(
                 CustomVariablesProperty.PROPERTY_DEF,
                 activeSettingsQuery,
-                CustomVariablesProperty.defaultValue());
+                PropertyFactory.constSource(MemCustomVariables.EMPTY));
     }
 
     public Project getOwnerProject() {

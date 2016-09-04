@@ -1,8 +1,10 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.DebugMode;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -19,14 +21,15 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        DebugMode debugMode = globalSettings.debugMode().getValue();
-        debugModeHandler.setSelectedValue(debugMode);
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<DebugMode> debugMode = CommonGlobalSettings.debugMode(globalSettings);
+        debugModeHandler.setSelectedValue(debugMode.getActiveValue());
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.debugMode().setValue(debugModeHandler.getSelectedValue());
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<DebugMode> debugMode = CommonGlobalSettings.debugMode(globalSettings);
+        debugMode.setValue(debugModeHandler.getSelectedValue());
     }
 
     @Override

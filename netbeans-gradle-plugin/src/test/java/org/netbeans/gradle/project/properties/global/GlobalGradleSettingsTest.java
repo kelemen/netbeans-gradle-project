@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.properties.global;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,10 +7,10 @@ import org.jtrim.property.MutableProperty;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
 
 import static org.junit.Assert.*;
 
+@SuppressWarnings("deprecation")
 public class GlobalGradleSettingsTest {
     private GlobalGradleSettings settings;
 

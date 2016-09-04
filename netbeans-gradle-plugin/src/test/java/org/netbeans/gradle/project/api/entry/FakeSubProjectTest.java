@@ -5,33 +5,37 @@ import java.util.concurrent.TimeoutException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.util.ConfigAwareTest;
+import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.junit.MockServices;
 
 import static org.junit.Assert.*;
 
-public final class FakeSubProjectTest {
+public final class FakeSubProjectTest extends ConfigAwareTest {
     private static SampleGradleProject sampleProject;
+
+    public FakeSubProjectTest() {
+        super(new NbConsumer<CommonGlobalSettings>() {
+            @Override
+            public void accept(CommonGlobalSettings settings) {
+                settings.loadRootProjectFirst().setValue(true);
+            }
+        });
+    }
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         MockServices.setServices();
-
-        GlobalGradleSettings.setCleanMemoryPreference();
-        GlobalGradleSettings.getDefault().gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-        GlobalGradleSettings.getDefault().gradleJdk().setValue(JavaPlatform.getDefault());
-        GlobalGradleSettings.getDefault().loadRootProjectFirst().setValue(true);
 
         sampleProject = SampleGradleProject.createProject("without-settings.zip");
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        GlobalGradleSettings.setDefaultPreference();
         SampleGradleProject toClose = sampleProject;
         sampleProject = null;
 

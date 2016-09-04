@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
@@ -17,7 +18,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRef;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.openide.util.lookup.ServiceProvider;
@@ -48,8 +49,8 @@ implements
         final JavaPlatformManager manager = JavaPlatformManager.getDefault();
         manager.addPropertyChangeListener(changeListener);
 
-        StringBasedProperty<PlatformOrder> order
-                = GlobalGradleSettings.getDefault().platformPreferenceOrder();
+        PropertySource<PlatformOrder> order
+                = CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveSource();
 
         final ListenerRef orderListenerRef = order.addChangeListener(listener);
 
@@ -72,7 +73,7 @@ implements
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<ProjectPlatform> result = new ArrayList<>(platforms.length);
 
-        for (JavaPlatform platform: GlobalGradleSettings.getDefault().filterIndistinguishable(platforms)) {
+        for (JavaPlatform platform: JavaPlatformUtils.filterIndistinguishable(platforms)) {
             result.add(JavaPlatformUtils.getJavaPlatform(platform));
         }
         return result;

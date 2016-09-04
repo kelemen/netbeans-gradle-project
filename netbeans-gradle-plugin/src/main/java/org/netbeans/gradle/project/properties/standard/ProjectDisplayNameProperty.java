@@ -1,11 +1,12 @@
 package org.netbeans.gradle.project.properties.standard;
 
-import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 
 public final class ProjectDisplayNameProperty {
+    public static final String DEFAULT_VALUE = DisplayableTaskVariable.PROJECT_NAME.getScriptReplaceConstant();
+
     private static final ConfigPath CONFIG_ROOT = ConfigPath.fromKeys("appearance", "display-name-pattern");
 
     public static final PropertyDef<String, String> PROPERTY_DEF = createPropertyDef();
@@ -17,10 +18,6 @@ public final class ProjectDisplayNameProperty {
         result.setValueDef(CommonProperties.<String>getIdentityValueDef());
         result.setValueMerger(CommonProperties.<String>getParentIfNullValueMerger());
         return result.create();
-    }
-
-    public static PropertySource<String> defaultValue() {
-        return GlobalGradleSettings.getDefault().displayNamePattern();
     }
 
     private ProjectDisplayNameProperty() {

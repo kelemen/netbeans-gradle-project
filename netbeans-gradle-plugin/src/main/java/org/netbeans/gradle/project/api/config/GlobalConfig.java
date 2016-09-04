@@ -3,17 +3,17 @@ package org.netbeans.gradle.project.api.config;
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 
 /**
  * Contains the values of some of the properties set in the global settings.
  */
 public final class GlobalConfig {
     private static final NbPropertySource<Boolean> SKIP_TESTS
-            = new NbPropertySourceWrapper<>(GlobalGradleSettings.getDefault().skipTests());
+            = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipTests().getActiveSource());
 
     private static final NbPropertySource<Boolean> SKIP_CHECK
-            = new NbPropertySourceWrapper<>(GlobalGradleSettings.getDefault().skipCheck());
+            = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipCheck().getActiveSource());
 
     /**
      * Returns the property indicating if tests should be skipped when executing

@@ -2,9 +2,11 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.io.File;
 import java.net.URL;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -28,8 +30,11 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     }
 
     @Override
-    public final void updateSettings(GlobalGradleSettings globalSettings) {
-        GradleLocationDef locationDef = globalSettings.gradleLocation().getValue();
+    public final void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<GradleLocationDef> gradleLocation = CommonGlobalSettings.gradleLocation(globalSettings);
+        PropertyReference<File> gradleUserHomeDir = CommonGlobalSettings.gradleUserHomeDir(globalSettings);
+
+        GradleLocationDef locationDef = gradleLocation.getActiveValue();
         if (locationDef != null) {
             selectGradleLocation(locationDef.getLocation());
             jPreferWrapperCheck.setSelected(locationDef.isPreferWrapper());
@@ -39,14 +44,17 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
             jPreferWrapperCheck.setSelected(false);
         }
 
-        File userHome = globalSettings.gradleUserHomeDir().getValue();
+        File userHome = gradleUserHomeDir.getActiveValue();
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
     }
 
     @Override
-    public final void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.gradleLocation().setValue(getGradleLocationDef());
-        globalSettings.gradleUserHomeDir().setValueFromString(getGradleUserHomeDir());
+    public final void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<GradleLocationDef> gradleLocation = CommonGlobalSettings.gradleLocation(globalSettings);
+        PropertyReference<File> gradleUserHomeDir = CommonGlobalSettings.gradleUserHomeDir(globalSettings);
+
+        gradleLocation.setValue(getGradleLocationDef());
+        gradleUserHomeDir.setValue(getGradleUserHomeDir());
     }
 
     @Override
@@ -65,9 +73,14 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
         return new GradleLocationDef(selectedGradleLocation, jPreferWrapperCheck.isSelected());
     }
 
-    private String getGradleUserHomeDir() {
+    private File getGradleUserHomeDir() {
         String result = jGradleUserHomeEdit.getText();
-        return result != null ? result.trim() : "";
+        if (result == null) {
+            return null;
+        }
+
+        result = result.trim();
+        return result.isEmpty() ? null : new File(result);
     }
 
     /**

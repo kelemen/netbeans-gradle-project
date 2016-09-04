@@ -2,7 +2,9 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
 import javax.swing.SpinnerNumberModel;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -18,17 +20,25 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        jDetectProjectDependenciesByName.setSelected(globalSettings.detectProjectDependenciesByJarName().getValue());
-        jCompileOnSaveCheckbox.setSelected(globalSettings.compileOnSave().getValue());
-        jProjectCacheSize.setValue(globalSettings.projectCacheSize().getValue());
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Boolean> detectProjectDependenciesByJarName = CommonGlobalSettings.detectProjectDependenciesByJarName(globalSettings);
+        PropertyReference<Boolean> compileOnSave = CommonGlobalSettings.compileOnSave(globalSettings);
+        PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.projectCacheSize(globalSettings);
+
+        jDetectProjectDependenciesByName.setSelected(detectProjectDependenciesByJarName.getActiveValue());
+        jCompileOnSaveCheckbox.setSelected(compileOnSave.getActiveValue());
+        jProjectCacheSize.setValue(projectCacheSize.getActiveValue());
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.projectCacheSize().setValue(getProjectCacheSize(globalSettings));
-        globalSettings.compileOnSave().setValue(jCompileOnSaveCheckbox.isSelected());
-        globalSettings.detectProjectDependenciesByJarName().setValue(jDetectProjectDependenciesByName.isSelected());
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Boolean> detectProjectDependenciesByJarName = CommonGlobalSettings.detectProjectDependenciesByJarName(globalSettings);
+        PropertyReference<Boolean> compileOnSave = CommonGlobalSettings.compileOnSave(globalSettings);
+        PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.projectCacheSize(globalSettings);
+
+        projectCacheSize.setValue(getProjectCacheSize(projectCacheSize));
+        compileOnSave.setValue(jCompileOnSaveCheckbox.isSelected());
+        detectProjectDependenciesByJarName.setValue(jDetectProjectDependenciesByName.isSelected());
     }
 
     @Override
@@ -39,14 +49,14 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
         return result.create();
     }
 
-    private int getProjectCacheSize(GlobalGradleSettings globalSettings) {
+    private int getProjectCacheSize(PropertyReference<Integer> projectCacheSize) {
         Object value = jProjectCacheSize.getValue();
         int result;
         if (value instanceof Number) {
             result = ((Number)value).intValue();
         }
         else {
-            result = globalSettings.projectCacheSize().getValue();
+            result = projectCacheSize.getActiveValue();
         }
         return result > 0 ? result : 1;
     }

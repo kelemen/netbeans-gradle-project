@@ -3,7 +3,9 @@ package org.netbeans.gradle.project.properties.ui;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import javax.swing.SpinnerNumberModel;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -33,8 +35,9 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        Integer timeout = globalSettings.gradleDaemonTimeoutSec().getValue();
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Integer> gradleDaemonTimeoutSec = CommonGlobalSettings.gradleDaemonTimeoutSec(globalSettings);
+        Integer timeout = gradleDaemonTimeoutSec.getActiveValue();
         jUseDefaultDaemonTimeoutCheck.setSelected(timeout == null);
 
         int displayTimeoutSec = timeout != null ? timeout : DEFAULT_TIMEOUT_SEC;
@@ -43,8 +46,9 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.gradleDaemonTimeoutSec().setValue(getDaemonTimeoutInSec(globalSettings));
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Integer> gradleDaemonTimeoutSec = CommonGlobalSettings.gradleDaemonTimeoutSec(globalSettings);
+        gradleDaemonTimeoutSec.setValue(getDaemonTimeoutInSec(gradleDaemonTimeoutSec));
     }
 
     private static int longToInt(long value) {
@@ -53,7 +57,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
         return (int)value;
     }
 
-    private Integer getDaemonTimeoutInSec(GlobalGradleSettings globalSettings) {
+    private Integer getDaemonTimeoutInSec(PropertyReference<Integer> gradleDaemonTimeoutSec) {
         if (jUseDefaultDaemonTimeoutCheck.isSelected()) {
             return null;
         }
@@ -67,7 +71,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
 
         return displayTimeout >= 0
                 ? longToInt(DISPLAY_UNIT.toSeconds(displayTimeout))
-                : globalSettings.gradleDaemonTimeoutSec().getValue();
+                : gradleDaemonTimeoutSec.getActiveValue();
     }
 
     @Override

@@ -57,7 +57,8 @@ import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
@@ -126,7 +127,7 @@ public final class GradleModelLoader {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
         final GradleConnector result = GradleConnector.newConnector();
-        Integer timeoutSec = GlobalGradleSettings.getDefault().gradleDaemonTimeoutSec().getValue();
+        Integer timeoutSec = CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().getActiveValue();
         if (timeoutSec != null && result instanceof DefaultGradleConnector) {
             ((DefaultGradleConnector)result).daemonMaxIdleTime(timeoutSec, TimeUnit.SECONDS);
         }
@@ -136,7 +137,7 @@ public final class GradleModelLoader {
             throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
         }
 
-        File gradleUserHome = GlobalGradleSettings.getDefault().gradleUserHomeDir().getValue();
+        File gradleUserHome = CommonGlobalSettings.getDefault().gradleUserHomeDir().getActiveValue();
         if (gradleUserHome != null) {
             result.useGradleUserHomeDir(gradleUserHome);
         }
@@ -345,7 +346,7 @@ public final class GradleModelLoader {
             NbGradleProject project,
             ProjectLoadRequest projectLoadKey,
             ProgressHandle progress) throws IOException, GradleModelLoadError {
-        if (!GlobalGradleSettings.getDefault().loadRootProjectFirst().getValue()) {
+        if (!CommonGlobalSettings.getDefault().loadRootProjectFirst().getActiveValue()) {
             return projectLoadKey;
         }
 
@@ -425,7 +426,7 @@ public final class GradleModelLoader {
 
     private static File getScriptJavaHome(JavaPlatform platform) {
         FileObject jdkHomeObj = platform != null
-                ? GlobalGradleSettings.getHomeFolder(platform)
+                ? JavaPlatformUtils.getHomeFolder(platform)
                 : null;
 
         if (jdkHomeObj != null) {
@@ -603,7 +604,7 @@ public final class GradleModelLoader {
 
         GradleVersion version = gradleTarget.getGradleVersion();
 
-        ModelLoadingStrategy modelLoadingStrategy = GlobalGradleSettings.getDefault().modelLoadingStrategy().getValue();
+        ModelLoadingStrategy modelLoadingStrategy = CommonGlobalSettings.getDefault().modelLoadingStrategy().getActiveValue();
         NbModelLoader result = modelLoadingStrategy.canUse18Api(version)
                 ? new NbGradle18ModelLoader(settingsGradleDef, setup, gradleTarget)
                 : new NbCompatibleModelLoader(settingsGradleDef, cachedModel, setup, gradleTarget);

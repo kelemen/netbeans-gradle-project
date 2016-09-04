@@ -19,7 +19,7 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.filesystems.FileObject;
@@ -40,7 +40,7 @@ implements
     }
 
     private static PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
-        return GlobalGradleSettings.getDefault().javaSourcesDisplayMode();
+        return CommonGlobalSettings.getDefault().javaSourcesDisplayMode().getActiveSource();
     }
 
     @Override

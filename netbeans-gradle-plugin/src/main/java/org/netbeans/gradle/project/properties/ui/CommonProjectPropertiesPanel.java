@@ -26,7 +26,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -110,7 +110,8 @@ public class CommonProjectPropertiesPanel extends JPanel {
         JavaPlatform[] platforms = JavaPlatformManager.getDefault().getInstalledPlatforms();
         List<JavaPlatformComboItem> comboItems = new LinkedList<>();
 
-        for (JavaPlatform platform: GlobalGradleSettings.getDefault().filterIndistinguishable(platforms)) {
+
+        for (JavaPlatform platform: JavaPlatformUtils.filterIndistinguishable(platforms)) {
             Specification specification = platform.getSpecification();
             if (specification != null && specification.getVersion() != null) {
                 comboItems.add(new JavaPlatformComboItem(platform));

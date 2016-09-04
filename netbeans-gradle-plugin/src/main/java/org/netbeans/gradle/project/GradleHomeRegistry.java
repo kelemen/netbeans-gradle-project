@@ -10,10 +10,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.GradleLocationDef;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.GradleHomeClassPathProvider;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -61,9 +63,13 @@ public final class GradleHomeRegistry {
         GlobalPathRegistry.getDefault().register(ClassPath.COMPILE, new ClassPath[]{classPath});
     }
 
+    private static PropertySource<GradleLocationDef> gradleLocation() {
+        return CommonGlobalSettings.getDefault().gradleLocation().getActiveSource();
+    }
+
     public static void requireGradlePaths() {
         if (USING_GLOBAL_PATHS.compareAndSet(false, true)) {
-            GlobalGradleSettings.getDefault().gradleLocation().addChangeListener(new Runnable() {
+            gradleLocation().addChangeListener(new Runnable() {
                 @Override
                 public void run() {
                     updateGradleHome();
@@ -75,7 +81,7 @@ public final class GradleHomeRegistry {
     }
 
     private static void updateGradleHome() {
-        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
+        FileObject gradleHome = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
         if (gradleHome != null) {
             setGradleHome(gradleHome);
         }

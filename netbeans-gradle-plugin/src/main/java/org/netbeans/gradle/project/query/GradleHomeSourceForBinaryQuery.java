@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import javax.swing.event.ChangeListener;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
@@ -25,7 +25,7 @@ public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinar
             return null;
         }
 
-        FileObject gradleHomeObj = GlobalGradleSettings.getDefault().getGradleLocation();
+        FileObject gradleHomeObj = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
         if (gradleHomeObj == null) {
             return null;
         }

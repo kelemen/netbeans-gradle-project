@@ -15,7 +15,7 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.GradleHomeRegistry;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -122,7 +122,7 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
             return null;
         }
 
-        FileObject gradleHome = GlobalGradleSettings.getDefault().getGradleLocation();
+        FileObject gradleHome = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
         if (gradleHome == null) {
             return null;
         }

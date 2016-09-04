@@ -28,6 +28,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
@@ -40,6 +41,10 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
+/**
+ * @deprecated Use {@link CommonGlobalSettings} instead.
+ */
+@Deprecated
 public final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
@@ -136,6 +141,39 @@ public final class GlobalGradleSettings {
         detectProjectDependenciesByJarName = new GlobalProperty<>(
                 withNS(namespace, "detect-project-dep-by-jar-name"),
                 new BooleanConverter(false));
+    }
+
+    private <T> void moveToNewSettings(
+            StringBasedProperty<? extends T> oldProperty,
+            PropertyReference<? super T> newProperty) {
+        if (oldProperty.getValueAsString() != null) {
+            newProperty.setValue(oldProperty.getValue());
+            oldProperty.setValueFromString(null);
+        }
+    }
+
+    public void moveToNewSettings(CommonGlobalSettings newSettings) {
+        moveToNewSettings(gradleLocation(), newSettings.gradleLocation());
+        moveToNewSettings(gradleUserHomeDir(), newSettings.gradleUserHomeDir());
+        moveToNewSettings(gradleArgs(), newSettings.gradleArgs());
+        moveToNewSettings(gradleJvmArgs(), newSettings.gradleJvmArgs());
+        moveToNewSettings(gradleJdk(), newSettings.defaultJdk());
+        moveToNewSettings(skipTests(), newSettings.skipTests());
+        moveToNewSettings(skipCheck(), newSettings.skipCheck());
+        moveToNewSettings(projectCacheSize(), newSettings.projectCacheSize());
+        moveToNewSettings(alwaysClearOutput(), newSettings.alwaysClearOutput());
+        moveToNewSettings(selfMaintainedTasks(), newSettings.selfMaintainedTasks());
+        moveToNewSettings(mayRelyOnJavaOfScript(), newSettings.mayRelyOnJavaOfScript());
+        moveToNewSettings(modelLoadingStrategy(), newSettings.modelLoadingStrategy());
+        moveToNewSettings(gradleDaemonTimeoutSec(), newSettings.gradleDaemonTimeoutSec());
+        moveToNewSettings(compileOnSave(), newSettings.compileOnSave());
+        moveToNewSettings(platformPreferenceOrder(), newSettings.platformPreferenceOrder());
+        moveToNewSettings(displayNamePattern(), newSettings.displayNamePattern());
+        moveToNewSettings(javaSourcesDisplayMode(), newSettings.javaSourcesDisplayMode());
+        moveToNewSettings(replaceLfOnStdIn(), newSettings.replaceLfOnStdIn());
+        moveToNewSettings(debugMode(), newSettings.debugMode());
+        moveToNewSettings(loadRootProjectFirst(), newSettings.loadRootProjectFirst());
+        moveToNewSettings(detectProjectDependenciesByJarName(), newSettings.detectProjectDependenciesByJarName());
     }
 
     public static void setDefaultPreference() {
@@ -354,13 +392,26 @@ public final class GlobalGradleSettings {
         @Override
         public PlatformOrder toValue(String strValue) {
             return strValue != null
-                    ? PlatformOrder.fromStringFormat(strValue)
+                    ? fromStringFormat(strValue)
                     : PlatformOrder.DEFAULT_ORDER;
         }
 
         @Override
         public String toString(PlatformOrder value) {
-            return value != null ? value.toStringFormat() : null;
+            return value != null ? toStringFormat(value) : null;
+        }
+
+
+        public static PlatformOrder fromStringFormat(String strValue) {
+            List<String> platformIds = stringToStringList(strValue);
+            if (platformIds == null) {
+                return null;
+            }
+            return PlatformOrder.fromPlatformIds(platformIds);
+        }
+
+        public String toStringFormat(PlatformOrder order) {
+            return stringListToString(order.getPlatformIds());
         }
     }
 

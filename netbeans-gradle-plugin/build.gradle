@@ -183,6 +183,8 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
     from sourceSets.main.allSource;
 }
 
+test.systemProperties['org.netbeans.gradle.runningTests'] = 'true'
+
 apply from: scriptFile('maven-publish.gradle');
 
 uploadArchives.dependsOn tasks.nbm;

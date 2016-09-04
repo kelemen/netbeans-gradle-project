@@ -73,7 +73,7 @@ import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -168,8 +168,8 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static List<TemporaryFileRef> getAllInitScriptFiles(NbGradleProject project) {
-        GlobalGradleSettings globalSettings = GlobalGradleSettings.getDefault();
-        SelfMaintainedTasks selfMaintainedTasks = globalSettings.selfMaintainedTasks().getValue();
+        CommonGlobalSettings globalSettings = CommonGlobalSettings.getDefault();
+        SelfMaintainedTasks selfMaintainedTasks = globalSettings.selfMaintainedTasks().getActiveValue();
         if (selfMaintainedTasks == SelfMaintainedTasks.TRUE) {
             return Collections.emptyList();
         }
@@ -302,7 +302,7 @@ public final class AsyncGradleTask implements Runnable {
         buildLauncher.setStandardError(new WriterOutputStream(forwardedStdErr));
 
         Reader input = tab.getIo().getInRef();
-        if (GlobalGradleSettings.getDefault().replaceLfOnStdIn().getValue()) {
+        if (CommonGlobalSettings.getDefault().replaceLfOnStdIn().getActiveValue()) {
             input = ReplaceLineFeedReader.replaceLfWithOsLineSeparator(input);
         }
 
@@ -460,7 +460,7 @@ public final class AsyncGradleTask implements Runnable {
 
                     try {
                         OutputWriter buildOutput = tab.getIo().getOutRef();
-                        if (GlobalGradleSettings.getDefault().alwaysClearOutput().getValue()
+                        if (CommonGlobalSettings.getDefault().alwaysClearOutput().getActiveValue()
                                 || taskDef.isCleanOutput()) {
                             buildOutput.reset();
                             // There is no need to reset buildErrOutput,

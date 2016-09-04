@@ -2,9 +2,12 @@ package org.netbeans.gradle.project.properties.standard;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
@@ -19,23 +22,22 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
+import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
-import org.netbeans.gradle.project.properties.StringBasedProperty;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.openide.filesystems.FileObject;
 import org.openide.modules.SpecificationVersion;
 
 public final class JavaPlatformUtils {
     private static final Logger LOGGER = Logger.getLogger(JavaPlatformUtils.class.getName());
 
     public static final String DEFAULT_PLATFORM_VERSION = getDefaultPlatformVersion("1.7");
-
-    private static final PropertySource<List<JavaPlatform>> JAVA_PLATFORMS
-            = createJavaPlatforms();
 
     public static ProjectPlatform getDefaultPlatform() {
         return getJavaPlatform(JavaPlatform.getDefault());
@@ -46,7 +48,7 @@ public final class JavaPlatformUtils {
     }
 
     public static PropertySource<List<JavaPlatform>> javaPlatforms() {
-        return JAVA_PLATFORMS;
+        return PropertyHolder.JAVA_PLATFORMS;
     }
 
     public static PropertyValueDef<PlatformId, JavaPlatform> getPlatformIdValueDef() {
@@ -125,14 +127,18 @@ public final class JavaPlatformUtils {
         });
     }
 
+    private static PropertyReference<PlatformOrder> platformPreferenceOrder() {
+        return CommonGlobalSettings.getDefault().platformPreferenceOrder();
+    }
+
     private static PropertySource<List<JavaPlatform>> createJavaPlatforms() {
         final PropertySource<JavaPlatform[]> unordered = unorderedJavaPlatforms();
-        final StringBasedProperty<PlatformOrder> order = GlobalGradleSettings.getDefault().platformPreferenceOrder();
+        final PropertySource<PlatformOrder> order = platformPreferenceOrder().getActiveSource();
         return new PropertySource<List<JavaPlatform>>() {
             @Override
             public List<JavaPlatform> getValue() {
                 JavaPlatform[] platforms = unordered.getValue();
-                return GlobalGradleSettings.getDefault().orderPlatforms(platforms);
+                return CommonGlobalSettings.getDefault().orderPlatforms(platforms);
             }
 
             @Override
@@ -180,7 +186,7 @@ public final class JavaPlatformUtils {
             String specName,
             String versionStr,
             List<JavaPlatform> platforms) {
-        List<JavaPlatform> orderedPlatforms = GlobalGradleSettings.getDefault().orderPlatforms(platforms);
+        List<JavaPlatform> orderedPlatforms = CommonGlobalSettings.getDefault().orderPlatforms(platforms);
         return tryChooseFromOrderedPlatforms(specName, versionStr, orderedPlatforms);
     }
 
@@ -303,6 +309,42 @@ public final class JavaPlatformUtils {
         });
     }
 
+    public static List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
+        return filterIndistinguishable(Arrays.asList(platforms));
+    }
+
+    public static List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
+        List<JavaPlatform> result = new ArrayList<>(platforms.size());
+        Set<NameAndVersion> foundVersions = CollectionUtils.newHashSet(platforms.size());
+
+        for (JavaPlatform platform: CommonGlobalSettings.getDefault().orderPlatforms(platforms)) {
+            if (foundVersions.add(new NameAndVersion(platform))) {
+                result.add(platform);
+            }
+        }
+
+        return result;
+    }
+
+    public static List<JavaPlatform> orderPlatforms(PlatformOrder order, JavaPlatform[] platforms) {
+        return order.orderPlatforms(Arrays.asList(platforms));
+    }
+
+    public static FileObject getHomeFolder(JavaPlatform platform) {
+        Collection<FileObject> installFolders = platform.getInstallFolders();
+        int numberOfFolder = installFolders.size();
+        if (numberOfFolder == 0) {
+            LOGGER.log(Level.WARNING, "Selected platform contains no installation folders: {0}", platform.getDisplayName());
+            return null;
+        }
+
+        if (numberOfFolder > 1) {
+            LOGGER.log(Level.WARNING, "Selected platform contains multiple installation folders: {0}", platform.getDisplayName());
+        }
+
+        return installFolders.iterator().next();
+    }
+
     private static final class InstalledPlatformSource implements PropertySource<JavaPlatform[]> {
         @Override
         public JavaPlatform[] getValue() {
@@ -354,9 +396,44 @@ public final class JavaPlatformUtils {
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
             return ListenerRegistries.combineListenerRefs(
-                    GlobalGradleSettings.getDefault().platformPreferenceOrder().addChangeListener(listener),
+                    platformPreferenceOrder().getActiveSource().addChangeListener(listener),
                     installedPlatforms.addChangeListener(listener));
         }
+    }
+
+    private static final class NameAndVersion {
+        private final String name;
+        private final String version;
+
+        public NameAndVersion(JavaPlatform platform) {
+            JavaProjectPlatform projectPlatform = new JavaProjectPlatform(platform);
+            this.name = projectPlatform.getName();
+            this.version = projectPlatform.getVersion();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 97 * hash + Objects.hashCode(this.name);
+            hash = 97 * hash + Objects.hashCode(this.version);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final NameAndVersion other = (NameAndVersion)obj;
+            return Objects.equals(this.name, other.name)
+                    && Objects.equals(this.version, other.version);
+        }
+    }
+
+    // This class is needed to lazily initialize this property because
+    // CommonGlobalSettings will reference JavaPlatformUtils.
+    private static class PropertyHolder {
+        private static final PropertySource<List<JavaPlatform>> JAVA_PLATFORMS = createJavaPlatforms();
     }
 
     private JavaPlatformUtils() {

@@ -13,7 +13,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 
 public final class GradleArguments {
@@ -100,7 +100,7 @@ public final class GradleArguments {
             DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
-        result.addAll(emptyIfNull(GlobalGradleSettings.getDefault().gradleArgs().getValue()));
+        result.addAll(emptyIfNull(CommonGlobalSettings.getDefault().gradleArgs().getActiveValue()));
 
         addExtensionArgs(context, result);
 
@@ -129,7 +129,7 @@ public final class GradleArguments {
     public static List<String> getExtraJvmArgs(DaemonTaskContext context) {
         List<String> result = new LinkedList<>();
 
-        result.addAll(emptyIfNull(GlobalGradleSettings.getDefault().gradleJvmArgs().getValue()));
+        result.addAll(emptyIfNull(CommonGlobalSettings.getDefault().gradleJvmArgs().getActiveValue()));
         addExtensionJvmArgs(context, result);
 
         return result;

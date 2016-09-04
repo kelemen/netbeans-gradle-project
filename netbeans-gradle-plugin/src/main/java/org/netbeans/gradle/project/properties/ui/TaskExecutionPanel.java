@@ -1,7 +1,9 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -11,30 +13,42 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Task-Execution");
 
-    private final EnumCombo<SelfMaintainedTasks> selfMaintainedTasks;
+    private final EnumCombo<SelfMaintainedTasks> selfMaintainedTasksCombo;
 
     public TaskExecutionPanel() {
         initComponents();
 
-        selfMaintainedTasks = new EnumCombo<>(SelfMaintainedTasks.class, SelfMaintainedTasks.FALSE, jAutoTasks);
+        selfMaintainedTasksCombo = new EnumCombo<>(SelfMaintainedTasks.class, SelfMaintainedTasks.FALSE, jAutoTasks);
     }
 
     @Override
-    public void updateSettings(GlobalGradleSettings globalSettings) {
-        jAlwayClearOutput.setSelected(globalSettings.alwaysClearOutput().getValue());
-        selfMaintainedTasks.setSelectedValue(globalSettings.selfMaintainedTasks().getValue());
-        jSkipTestsCheck.setSelected(globalSettings.skipTests().getValue());
-        jSkipCheckCheckBox.setSelected(globalSettings.skipCheck().getValue());
-        jReplaceLfOnStdIn.setSelected(globalSettings.replaceLfOnStdIn().getValue());
+    public void updateSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Boolean> alwaysClearOutput = CommonGlobalSettings.alwaysClearOutput(globalSettings);
+        PropertyReference<SelfMaintainedTasks> selfMaintainedTasks = CommonGlobalSettings.selfMaintainedTasks(globalSettings);
+        PropertyReference<Boolean> skipTests = CommonGlobalSettings.skipTests(globalSettings);
+        PropertyReference<Boolean> skipCheck = CommonGlobalSettings.skipCheck(globalSettings);
+        PropertyReference<Boolean> replaceLfOnStdIn = CommonGlobalSettings.replaceLfOnStdIn(globalSettings);
+
+        jAlwayClearOutput.setSelected(alwaysClearOutput.getActiveValue());
+        selfMaintainedTasksCombo.setSelectedValue(selfMaintainedTasks.getActiveValue());
+        jSkipTestsCheck.setSelected(skipTests.getActiveValue());
+        jSkipCheckCheckBox.setSelected(skipCheck.getActiveValue());
+        jReplaceLfOnStdIn.setSelected(replaceLfOnStdIn.getActiveValue());
     }
 
     @Override
-    public void saveSettings(GlobalGradleSettings globalSettings) {
-        globalSettings.skipTests().setValue(jSkipTestsCheck.isSelected());
-        globalSettings.skipCheck().setValue(jSkipCheckCheckBox.isSelected());
-        globalSettings.alwaysClearOutput().setValue(jAlwayClearOutput.isSelected());
-        globalSettings.selfMaintainedTasks().setValue(selfMaintainedTasks.getSelectedValue());
-        globalSettings.replaceLfOnStdIn().setValue(jReplaceLfOnStdIn.isSelected());
+    public void saveSettings(ActiveSettingsQuery globalSettings) {
+        PropertyReference<Boolean> alwaysClearOutput = CommonGlobalSettings.alwaysClearOutput(globalSettings);
+        PropertyReference<SelfMaintainedTasks> selfMaintainedTasks = CommonGlobalSettings.selfMaintainedTasks(globalSettings);
+        PropertyReference<Boolean> skipTests = CommonGlobalSettings.skipTests(globalSettings);
+        PropertyReference<Boolean> skipCheck = CommonGlobalSettings.skipCheck(globalSettings);
+        PropertyReference<Boolean> replaceLfOnStdIn = CommonGlobalSettings.replaceLfOnStdIn(globalSettings);
+
+        skipTests.setValue(jSkipTestsCheck.isSelected());
+        skipCheck.setValue(jSkipCheckCheckBox.isSelected());
+        alwaysClearOutput.setValue(jAlwayClearOutput.isSelected());
+        selfMaintainedTasks.setValue(selfMaintainedTasksCombo.getSelectedValue());
+        replaceLfOnStdIn.setValue(jReplaceLfOnStdIn.isSelected());
     }
 
     @Override

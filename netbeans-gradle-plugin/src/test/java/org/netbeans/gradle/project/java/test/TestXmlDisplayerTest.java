@@ -25,7 +25,7 @@ import org.netbeans.gradle.project.api.entry.SampleGradleProject;
 import org.netbeans.gradle.project.others.test.NbGradleTestManager;
 import org.netbeans.gradle.project.others.test.NbGradleTestSession;
 import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
 import org.netbeans.modules.gsf.testrunner.api.Status;
@@ -39,7 +39,7 @@ import org.openide.util.Lookup;
 
 import static org.junit.Assert.*;
 
-public class TestXmlDisplayerTest {
+public class TestXmlDisplayerTest extends ConfigAwareTest {
     private static final String PROJECT_NAME = "empty-project";
     private static final String TEST_NAME = "test";
     private static final String BUILD_DIR = "build";
@@ -47,15 +47,16 @@ public class TestXmlDisplayerTest {
     private static SampleGradleProject sampleProject;
     private Project rootProject;
 
+    public TestXmlDisplayerTest() {
+    }
+
     @BeforeClass
     public static void setUpClass() throws IOException {
-        GlobalGradleSettings.setCleanMemoryPreference();
         sampleProject = EmptyProjectTest.createEmptyProject();
     }
 
     @AfterClass
     public static void tearDownClass() throws IOException {
-        GlobalGradleSettings.setDefaultPreference();
         // To ensure that it can be removed wait until loaded.
         sampleProject.loadProject(PROJECT_NAME).tryWaitForLoadedProject(3, TimeUnit.MINUTES);
         sampleProject.close();

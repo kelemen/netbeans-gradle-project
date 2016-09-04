@@ -30,6 +30,7 @@ import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -42,7 +43,7 @@ import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.Cl
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
@@ -193,8 +194,9 @@ implements
             }
         }));
 
+        PropertyReference<Boolean> detectProjectDependenciesByJarNameRef = CommonGlobalSettings.getDefault().detectProjectDependenciesByJarName();
         PropertySource<Boolean> detectProjectDependenciesByJarName
-                = NbProperties.weakListenerProperty(PropertyFactory.lazilyNotifiedProperty(GlobalGradleSettings.getDefault().detectProjectDependenciesByJarName()));
+                = NbProperties.weakListenerProperty(PropertyFactory.lazilyNotifiedProperty(detectProjectDependenciesByJarNameRef.getForActiveProfile()));
         propertyListenerRefs.add(detectProjectDependenciesByJarName.addChangeListener(new Runnable() {
             @Override
             public void run() {

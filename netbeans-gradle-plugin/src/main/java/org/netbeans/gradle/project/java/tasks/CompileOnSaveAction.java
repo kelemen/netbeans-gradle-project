@@ -8,7 +8,7 @@ import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.modules.parsing.api.Source;
 import org.netbeans.spi.editor.document.OnSaveTask;
 import org.netbeans.spi.project.ActionProvider;
@@ -26,7 +26,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
 
     @Override
     public void performTask() {
-        if (!GlobalGradleSettings.getDefault().compileOnSave().getValue()) {
+        if (!CommonGlobalSettings.getDefault().compileOnSave().getActiveValue()) {
             return;
         }
 

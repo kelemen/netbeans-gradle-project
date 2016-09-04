@@ -34,11 +34,6 @@ public final class CustomVariablesProperty {
         return result.create();
     }
 
-    public static PropertySource<CustomVariables> defaultValue() {
-        // TODO: Use a global property
-        return PropertyFactory.constSource(MemCustomVariables.EMPTY);
-    }
-
     private enum CustomVariablesEncodingDef implements PropertyKeyEncodingDef<CustomVariables> {
         INSTANCE;
 

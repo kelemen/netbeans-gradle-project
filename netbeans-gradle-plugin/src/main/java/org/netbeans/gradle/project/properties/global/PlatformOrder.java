@@ -43,16 +43,12 @@ public final class PlatformOrder {
         }
     }
 
-    public static PlatformOrder fromStringFormat(String strValue) {
-        List<String> platformIds = GlobalGradleSettings.stringToStringList(strValue);
-        if (platformIds == null) {
-            return null;
-        }
+    public static PlatformOrder fromPlatformIds(List<String> platformIds) {
         return new PlatformOrder(platformIds, true);
     }
 
-    public String toStringFormat() {
-        return GlobalGradleSettings.stringListToString(platformIds);
+    public List<String> getPlatformIds() {
+        return platformIds;
     }
 
     public List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> src) {

@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URL;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.BinaryForSourceQuery.Result;
-import org.netbeans.gradle.project.properties.global.GlobalGradleSettings;
+import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
@@ -24,7 +24,7 @@ public final class GradleHomeBinaryForSourceQuery extends AbstractBinaryForSourc
             return null;
         }
 
-        FileObject gradleHomeObj = GlobalGradleSettings.getDefault().getGradleLocation();
+        FileObject gradleHomeObj = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
         if (gradleHomeObj == null) {
             return null;
         }
