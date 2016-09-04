@@ -301,7 +301,9 @@ implements
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
-            projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
+            // Add the commented code below to provide a "Refresh project node" action.
+            // It was removed because it confused many, users can't easily distinguish it from "Reload project".
+            // projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
             projectActions.addAll(extActions.getProjectManagementActions());
             projectActions.add(CommonProjectActions.closeProjectAction());
             projectActions.add(null);
