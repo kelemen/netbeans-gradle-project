@@ -134,7 +134,6 @@ final class LegacyGlobalGradleSettings {
             PropertyReference<? super T> newProperty) {
         if (oldProperty.getValueAsString() != null) {
             newProperty.setValue(oldProperty.getValue());
-            oldProperty.setValueFromString(null);
         }
     }
 
