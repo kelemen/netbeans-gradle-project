@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.properties.global;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,32 +21,28 @@ import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
-import org.netbeans.gradle.project.properties.StringBasedProperty;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 /**
  * @deprecated Use {@link CommonGlobalSettings} instead.
  */
 @Deprecated
-public final class GlobalGradleSettings {
+final class GlobalGradleSettings {
     private static final Logger LOGGER = Logger.getLogger(GlobalGradleSettings.class.getName());
 
     private static final GlobalGradleSettings DEFAULT = new GlobalGradleSettings(null);
-    private static volatile BasicPreference PREFERENCE = NbGlobalPreference.DEFAULT;
+    private static final BasicPreference PREFERENCE = NbGlobalPreference.DEFAULT;
 
     private final StringBasedProperty<GradleLocationDef> gradleLocation;
     private final StringBasedProperty<File> gradleUserHomeDir;
@@ -152,211 +145,43 @@ public final class GlobalGradleSettings {
         }
     }
 
-    public void moveToNewSettings(CommonGlobalSettings newSettings) {
-        moveToNewSettings(gradleLocation(), newSettings.gradleLocation());
-        moveToNewSettings(gradleUserHomeDir(), newSettings.gradleUserHomeDir());
-        moveToNewSettings(gradleArgs(), newSettings.gradleArgs());
-        moveToNewSettings(gradleJvmArgs(), newSettings.gradleJvmArgs());
-        moveToNewSettings(gradleJdk(), newSettings.defaultJdk());
-        moveToNewSettings(skipTests(), newSettings.skipTests());
-        moveToNewSettings(skipCheck(), newSettings.skipCheck());
-        moveToNewSettings(projectCacheSize(), newSettings.projectCacheSize());
-        moveToNewSettings(alwaysClearOutput(), newSettings.alwaysClearOutput());
-        moveToNewSettings(selfMaintainedTasks(), newSettings.selfMaintainedTasks());
-        moveToNewSettings(mayRelyOnJavaOfScript(), newSettings.mayRelyOnJavaOfScript());
-        moveToNewSettings(modelLoadingStrategy(), newSettings.modelLoadingStrategy());
-        moveToNewSettings(gradleDaemonTimeoutSec(), newSettings.gradleDaemonTimeoutSec());
-        moveToNewSettings(compileOnSave(), newSettings.compileOnSave());
-        moveToNewSettings(platformPreferenceOrder(), newSettings.platformPreferenceOrder());
-        moveToNewSettings(displayNamePattern(), newSettings.displayNamePattern());
-        moveToNewSettings(javaSourcesDisplayMode(), newSettings.javaSourcesDisplayMode());
-        moveToNewSettings(replaceLfOnStdIn(), newSettings.replaceLfOnStdIn());
-        moveToNewSettings(debugMode(), newSettings.debugMode());
-        moveToNewSettings(loadRootProjectFirst(), newSettings.loadRootProjectFirst());
-        moveToNewSettings(detectProjectDependenciesByJarName(), newSettings.detectProjectDependenciesByJarName());
+    public static void moveDefaultToNewSettings(CommonGlobalSettings newSettings) {
+        DEFAULT.moveToNewSettings(newSettings);
     }
 
-    public static void setDefaultPreference() {
-        PREFERENCE = NbGlobalPreference.DEFAULT;
-    }
-
-    // Testing only
-    public static PreferenceContainer setCleanMemoryPreference() {
-        MemPreference newPreference = new MemPreference();
-        PREFERENCE = newPreference;
-        return newPreference;
+    private void moveToNewSettings(CommonGlobalSettings newSettings) {
+        moveToNewSettings(gradleLocation, newSettings.gradleLocation());
+        moveToNewSettings(gradleUserHomeDir, newSettings.gradleUserHomeDir());
+        moveToNewSettings(gradleArgs, newSettings.gradleArgs());
+        moveToNewSettings(gradleJvmArgs, newSettings.gradleJvmArgs());
+        moveToNewSettings(gradleJdk, newSettings.defaultJdk());
+        moveToNewSettings(skipTests, newSettings.skipTests());
+        moveToNewSettings(skipCheck, newSettings.skipCheck());
+        moveToNewSettings(projectCacheSize, newSettings.projectCacheSize());
+        moveToNewSettings(alwaysClearOutput, newSettings.alwaysClearOutput());
+        moveToNewSettings(selfMaintainedTasks, newSettings.selfMaintainedTasks());
+        moveToNewSettings(mayRelyOnJavaOfScript, newSettings.mayRelyOnJavaOfScript());
+        moveToNewSettings(modelLoadingStrategy, newSettings.modelLoadingStrategy());
+        moveToNewSettings(gradleDaemonTimeoutSec, newSettings.gradleDaemonTimeoutSec());
+        moveToNewSettings(compileOnSave, newSettings.compileOnSave());
+        moveToNewSettings(platformPreferenceOrder, newSettings.platformPreferenceOrder());
+        moveToNewSettings(displayNamePattern, newSettings.displayNamePattern());
+        moveToNewSettings(javaSourcesDisplayMode, newSettings.javaSourcesDisplayMode());
+        moveToNewSettings(replaceLfOnStdIn, newSettings.replaceLfOnStdIn());
+        moveToNewSettings(debugMode, newSettings.debugMode());
+        moveToNewSettings(loadRootProjectFirst, newSettings.loadRootProjectFirst());
+        moveToNewSettings(detectProjectDependenciesByJarName, newSettings.detectProjectDependenciesByJarName());
     }
 
     private static String withNS(String namespace, String name) {
         return namespace == null ? name : namespace + "." + name;
     }
 
-    public void setAllToDefault() {
-        for (Field field: getClass().getDeclaredFields()) {
-            if (StringBasedProperty.class.isAssignableFrom(field.getType())) {
-                try {
-                    StringBasedProperty<?> property = (StringBasedProperty<?>)field.get(this);
-                    property.setValueFromString(null);
-                } catch (IllegalAccessException ex) {
-                    throw new AssertionError(ex);
-                }
-            }
-        }
-    }
-
-    public StringBasedProperty<Integer> gradleDaemonTimeoutSec() {
-        return gradleDaemonTimeoutSec;
-    }
-
-    public StringBasedProperty<GradleLocationDef> gradleLocation() {
-        return gradleLocation;
-    }
-
-    public StringBasedProperty<File> gradleUserHomeDir() {
-        return gradleUserHomeDir;
-    }
-
-    public StringBasedProperty<List<String>> gradleJvmArgs() {
+    MutableProperty<List<String>> gradleJvmArgs() {
         return gradleJvmArgs;
     }
 
-    public StringBasedProperty<List<String>> gradleArgs() {
-        return gradleArgs;
-    }
-
-    public StringBasedProperty<JavaPlatform> gradleJdk() {
-        return gradleJdk;
-    }
-
-    public StringBasedProperty<Boolean> skipTests() {
-        return skipTests;
-    }
-
-    public StringBasedProperty<Boolean> skipCheck() {
-        return skipCheck;
-    }
-
-    public StringBasedProperty<Integer> projectCacheSize() {
-        return projectCacheSize;
-    }
-
-    public StringBasedProperty<Boolean> detectProjectDependenciesByJarName() {
-        return detectProjectDependenciesByJarName;
-    }
-
-    public StringBasedProperty<Boolean> alwaysClearOutput() {
-        return alwaysClearOutput;
-    }
-
-    public StringBasedProperty<SelfMaintainedTasks> selfMaintainedTasks() {
-        return selfMaintainedTasks;
-    }
-
-    public StringBasedProperty<Boolean> mayRelyOnJavaOfScript() {
-        return mayRelyOnJavaOfScript;
-    }
-
-    public StringBasedProperty<ModelLoadingStrategy> modelLoadingStrategy() {
-        return modelLoadingStrategy;
-    }
-
-    public StringBasedProperty<Boolean> compileOnSave() {
-        return compileOnSave;
-    }
-
-    public StringBasedProperty<PlatformOrder> platformPreferenceOrder() {
-        return platformPreferenceOrder;
-    }
-
-    public StringBasedProperty<String> displayNamePattern() {
-        return displayNamePattern;
-    }
-
-    public StringBasedProperty<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
-        return javaSourcesDisplayMode;
-    }
-
-    public StringBasedProperty<Boolean> replaceLfOnStdIn() {
-        return replaceLfOnStdIn;
-    }
-
-    public StringBasedProperty<DebugMode> debugMode() {
-        return debugMode;
-    }
-
-    public StringBasedProperty<Boolean> loadRootProjectFirst() {
-        return loadRootProjectFirst;
-    }
-
-    public static GlobalGradleSettings getDefault() {
-        return DEFAULT;
-    }
-
-    public File getGradleInstallationAsFile() {
-        GradleLocationDef locationDef = gradleLocation.getValue();
-        GradleLocation location = locationDef.getLocation();
-        if (location instanceof GradleLocationDirectory) {
-            return ((GradleLocationDirectory)location).getGradleHome();
-        }
-        return null;
-    }
-
-    public FileObject getGradleLocation() {
-        File result = getGradleInstallationAsFile();
-        return result != null ? FileUtil.toFileObject(result) : null;
-    }
-
-    public List<JavaPlatform> filterIndistinguishable(JavaPlatform[] platforms) {
-        return filterIndistinguishable(Arrays.asList(platforms));
-    }
-
-    public List<JavaPlatform> filterIndistinguishable(Collection<JavaPlatform> platforms) {
-        List<JavaPlatform> result = new ArrayList<>(platforms.size());
-        Set<NameAndVersion> foundVersions = CollectionUtils.newHashSet(platforms.size());
-
-        for (JavaPlatform platform: orderPlatforms(platforms)) {
-            if (foundVersions.add(new NameAndVersion(platform))) {
-                result.add(platform);
-            }
-        }
-
-        return result;
-    }
-
-    public List<JavaPlatform> orderPlatforms(JavaPlatform[] platforms) {
-        return orderPlatforms(Arrays.asList(platforms));
-    }
-
-    public List<JavaPlatform> orderPlatforms(Collection<JavaPlatform> platforms) {
-        PlatformOrder order = platformPreferenceOrder().getValue();
-        return order.orderPlatforms(platforms);
-    }
-
-    public static FileObject getHomeFolder(JavaPlatform platform) {
-        Collection<FileObject> installFolders = platform.getInstallFolders();
-        int numberOfFolder = installFolders.size();
-        if (numberOfFolder == 0) {
-            LOGGER.log(Level.WARNING, "Selected platform contains no installation folders: {0}", platform.getDisplayName());
-            return null;
-        }
-
-        if (numberOfFolder > 1) {
-            LOGGER.log(Level.WARNING, "Selected platform contains multiple installation folders: {0}", platform.getDisplayName());
-        }
-
-        return installFolders.iterator().next();
-    }
-
-    public FileObject getCurrentGradleJdkHome() {
-        JavaPlatform platform = gradleJdk.getValue();
-        if (platform == null) {
-            return null;
-        }
-
-        return getHomeFolder(platform);
-    }
-
-    public static List<String> stringToStringList(String strValue) {
+    private static List<String> stringToStringList(String strValue) {
         if (strValue == null || strValue.isEmpty()) {
             return null;
         }
@@ -364,7 +189,7 @@ public final class GlobalGradleSettings {
         return Collections.unmodifiableList(Arrays.asList(StringUtils.splitLines(strValue)));
     }
 
-    public static String stringListToString(Collection<String> value) {
+    private static String stringListToString(Collection<String> value) {
         if (value == null || value.isEmpty()) {
             return null;
         }
@@ -799,6 +624,11 @@ public final class GlobalGradleSettings {
             return Objects.equals(this.name, other.name)
                     && Objects.equals(this.version, other.version);
         }
+    }
+
+    private interface StringBasedProperty<ValueType> extends MutableProperty<ValueType> {
+        public void setValueFromString(String strValue);
+        public String getValueAsString();
     }
 
     private GlobalGradleSettings() {

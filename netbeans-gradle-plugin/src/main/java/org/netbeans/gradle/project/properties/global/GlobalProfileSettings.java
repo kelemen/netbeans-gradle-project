@@ -173,7 +173,7 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
 
         @SuppressWarnings("deprecation")
         private static void moveToNewSettings(CommonGlobalSettings globalSettings) {
-            GlobalGradleSettings.getDefault().moveToNewSettings(globalSettings);
+            GlobalGradleSettings.moveDefaultToNewSettings(globalSettings);
         }
     }
 }
