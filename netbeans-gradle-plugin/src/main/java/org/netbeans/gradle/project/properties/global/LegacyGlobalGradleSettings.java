@@ -4,22 +4,16 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventDispatcher;
-import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
@@ -27,7 +21,6 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
-import org.netbeans.gradle.project.properties.JavaProjectPlatform;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
@@ -526,103 +519,6 @@ final class LegacyGlobalGradleSettings {
         @Override
         public String getValueAsString() {
             return PREFERENCE.get(settingsName);
-        }
-    }
-
-    private static final class MemPreference implements BasicPreference, PreferenceContainer {
-        final Map<String, String> values;
-        final ListenerManager<PreferenceChangeListener> listeners;
-
-        public MemPreference() {
-            this.values = new ConcurrentHashMap<>();
-            this.listeners = new CopyOnTriggerListenerManager<>();
-        }
-
-        private void fireChangeListener(String key, String newValue) {
-            PreferenceChangeEvent evt = new PreferenceChangeEvent(Preferences.systemRoot(), key, newValue);
-
-            // In Java 8, it can be PreferenceChangeListener::preferenceChange
-            listeners.onEvent(new EventDispatcher<PreferenceChangeListener, PreferenceChangeEvent>() {
-                @Override
-                public void onEvent(PreferenceChangeListener eventListener, PreferenceChangeEvent arg) {
-                    eventListener.preferenceChange(arg);
-                }
-            }, evt);
-        }
-
-        @Override
-        public Map<String, String> getKeyValues(String namespace) {
-            ExceptionHelper.checkNotNullArgument(namespace, "namespace");
-
-            String prefix = namespace + ".";
-            Map<String, String> result = new HashMap<>();
-            for (Map.Entry<String, String> entry: values.entrySet()) {
-                if (entry.getKey().startsWith(prefix)) {
-                    String rawKey = entry.getKey().substring(prefix.length());
-                    result.put(rawKey, entry.getValue());
-                }
-            }
-            return result;
-        }
-
-        @Override
-        public void put(String key, String value) {
-            if (value != null) {
-                values.put(key, value);
-                fireChangeListener(key, value);
-            }
-            else {
-                remove(key);
-            }
-        }
-
-        @Override
-        public void remove(String key) {
-            values.remove(key);
-            fireChangeListener(key, null);
-        }
-
-        @Override
-        public String get(String key) {
-            return values.get(key);
-        }
-
-        @Override
-        public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl) {
-            return listeners.registerListener(pcl);
-        }
-    }
-
-    public interface PreferenceContainer {
-        public Map<String, String> getKeyValues(String namespace);
-    }
-
-    private static final class NameAndVersion {
-        private final String name;
-        private final String version;
-
-        public NameAndVersion(JavaPlatform platform) {
-            JavaProjectPlatform projectPlatform = new JavaProjectPlatform(platform);
-            this.name = projectPlatform.getName();
-            this.version = projectPlatform.getVersion();
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 97 * hash + Objects.hashCode(this.name);
-            hash = 97 * hash + Objects.hashCode(this.version);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-
-            final NameAndVersion other = (NameAndVersion)obj;
-            return Objects.equals(this.name, other.name)
-                    && Objects.equals(this.version, other.version);
         }
     }
 
