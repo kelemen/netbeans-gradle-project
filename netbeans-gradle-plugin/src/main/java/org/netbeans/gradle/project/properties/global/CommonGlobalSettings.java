@@ -247,7 +247,7 @@ public final class CommonGlobalSettings {
 
     public static PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(
-                defineEnumProperty(JavaSourcesDisplayMode.class, "project-node", "display-mode"),
+                defineEnumProperty(JavaSourcesDisplayMode.class, "appearance", "project-node", "display-mode"),
                 activeSettingsQuery,
                 JavaSourcesDisplayMode.DEFAULT_MODE);
     }
