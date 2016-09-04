@@ -222,7 +222,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
                     jGradleHomeInherit);
 
             if (value != null) {
-                selectGradleLocation(value.getLocation());
+                selectGradleLocation(value);
             }
         }
 
@@ -280,10 +280,9 @@ public class CommonProjectPropertiesPanel extends JPanel {
         }
     }
 
-    private void selectGradleLocation(GradleLocation newLocation) {
-        GradleLocationDef newLocationDef = new GradleLocationDef(newLocation, false);
+    private void selectGradleLocation(GradleLocationDef newLocationDef) {
         selectedGradleLocation = newLocationDef;
-        jGradleHomeEdit.setText(newLocation != null ? newLocation.toLocalizedString() : "");
+        jGradleHomeEdit.setText(newLocationDef != null ? newLocationDef.getLocation().toLocalizedString() : "");
     }
 
     private static class JavaPlatformComboItem {
@@ -556,7 +555,8 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
         if (newLocation != null) {
-            selectGradleLocation(newLocation);
+            boolean preferWrapper = currentLocationDef != null ? currentLocationDef.isPreferWrapper() : false;
+            selectGradleLocation(new GradleLocationDef(newLocation, preferWrapper));
         }
     }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
 
