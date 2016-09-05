@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
@@ -63,7 +64,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
 
     @Override
     public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<String> displayNamePattern = CommonGlobalSettings.displayNamePattern(globalSettings);
+        PropertyReference<String> displayNamePattern = NbGradleCommonProperties.displayNamePattern(globalSettings);
         PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
 
         nodeNamePanel.updatePattern(displayNamePattern.getActiveValue(), null);
@@ -76,7 +77,7 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
 
     @Override
     public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<String> displayNamePattern = CommonGlobalSettings.displayNamePattern(globalSettings);
+        PropertyReference<String> displayNamePattern = NbGradleCommonProperties.displayNamePattern(globalSettings);
         PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
 
         displayNamePattern.setValue(nodeNamePanel.getNamePattern());

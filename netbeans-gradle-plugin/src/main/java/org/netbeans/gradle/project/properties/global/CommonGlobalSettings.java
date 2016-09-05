@@ -57,8 +57,6 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Integer> projectCacheSize;
     private final PropertyReference<Integer> gradleDaemonTimeoutSec;
 
-    private final PropertyReference<String> displayNamePattern;
-
     public CommonGlobalSettings(ActiveSettingsQuery activeSettingsQuery) {
         ExceptionHelper.checkNotNullArgument(activeSettingsQuery, "activeSettingsQuery");
         this.activeSettingsQuery = activeSettingsQuery;
@@ -82,7 +80,6 @@ public final class CommonGlobalSettings {
         this.javaSourcesDisplayMode = javaSourcesDisplayMode(activeSettingsQuery);
         this.projectCacheSize = projectCacheSize(activeSettingsQuery);
         this.gradleDaemonTimeoutSec = gradleDaemonTimeoutSec(activeSettingsQuery);
-        this.displayNamePattern = displayNamePattern(activeSettingsQuery);
     }
 
     public static PropertyReference<ScriptPlatform> defaultJdk(ActiveSettingsQuery activeSettingsQuery) {
@@ -262,14 +259,6 @@ public final class CommonGlobalSettings {
 
     public PropertyReference<Integer> gradleDaemonTimeoutSec() {
         return gradleDaemonTimeoutSec;
-    }
-
-    public static PropertyReference<String> displayNamePattern(ActiveSettingsQuery activeSettingsQuery) {
-        return NbGradleCommonProperties.displayNamePattern(activeSettingsQuery);
-    }
-
-    public PropertyReference<String> displayNamePattern() {
-        return displayNamePattern;
     }
 
     public File tryGetGradleInstallationAsFile() {

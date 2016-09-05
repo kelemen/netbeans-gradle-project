@@ -27,6 +27,7 @@ import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -175,7 +176,7 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(gradleDaemonTimeoutSec, newSettings.gradleDaemonTimeoutSec());
         moveToNewSettings(compileOnSave, newSettings.compileOnSave());
         moveToNewSettings(platformPreferenceOrder, newSettings.platformPreferenceOrder());
-        moveToNewSettings(displayNamePattern, newSettings.displayNamePattern());
+        moveToNewSettings(displayNamePattern, NbGradleCommonProperties.displayNamePattern(newSettings.getActiveSettingsQuery()));
         moveToNewSettings(javaSourcesDisplayMode, newSettings.javaSourcesDisplayMode());
         moveToNewSettings(replaceLfOnStdIn, newSettings.replaceLfOnStdIn());
         moveToNewSettings(loadRootProjectFirst, newSettings.loadRootProjectFirst());
