@@ -11,6 +11,7 @@ import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.CustomTasksProperty;
@@ -51,66 +52,17 @@ public final class NbGradleCommonProperties {
         this.ownerProject = ownerProject;
         this.activeSettingsQuery = activeSettingsQuery;
 
-        // Warning: "get" uses the fields set above.
-        CommonGlobalSettings globalSettings = CommonGlobalSettings.getDefault();
-
-        builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
-        customTasks = customTasks(activeSettingsQuery);
-        gradleLocation = get(
-                GradleLocationProperty.PROPERTY_DEF,
-                PropertyFactory.constSource(GradleLocationDef.DEFAULT));
-        licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
-        scriptPlatform = get(
-                ScriptPlatformProperty.getPropertyDef(globalSettings.platformPreferenceOrder()),
-                PropertyFactory.constSource(ScriptPlatform.getDefault()));
-        sourceEncoding = get(
-                SourceEncodingProperty.PROPERTY_DEF,
-                PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
-        targetPlatform = get(TargetPlatformProperty.PROPERTY_DEF, TargetPlatformProperty.defaultValue(ownerProject));
-        sourceLevel = get(
-                SourceLevelProperty.PROPERTY_DEF,
-                SourceLevelProperty.defaultValue(ownerProject, targetPlatform.getActiveSource()));
-        userInitScriptPath = new PropertyReference<>(UserInitScriptProperty.PROPERTY_DEF, activeSettingsQuery);
-        displayNamePattern = displayNamePattern(activeSettingsQuery);
-        customVariables = customVariables(activeSettingsQuery);
-    }
-
-    public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
-        return new PropertyReference<>(
-                LicenseHeaderInfoProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                PropertyFactory.<LicenseHeaderInfo>constSource(null));
-    }
-
-    public static PropertyReference<BuiltInTasks> builtInTasks(
-            NbGradleProject ownerProject,
-            ActiveSettingsQuery activeSettingsQuery) {
-
-        return new PropertyReference<>(
-                BuiltInTasksProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
-    }
-
-    public static PropertyReference<PredefinedTasks> customTasks(ActiveSettingsQuery activeSettingsQuery) {
-        return new PropertyReference<>(
-                CustomTasksProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
-    }
-
-    public static PropertyReference<String> displayNamePattern(ActiveSettingsQuery activeSettingsQuery) {
-        return new PropertyReference<>(
-                ProjectDisplayNameProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                PropertyFactory.constSource(ProjectDisplayNameProperty.DEFAULT_VALUE));
-    }
-
-    public static PropertyReference<CustomVariables> customVariables(ActiveSettingsQuery activeSettingsQuery) {
-        return new PropertyReference<>(
-                CustomVariablesProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                PropertyFactory.constSource(MemCustomVariables.EMPTY));
+        this.builtInTasks = builtInTasks(ownerProject, activeSettingsQuery);
+        this.customTasks = customTasks(activeSettingsQuery);
+        this.gradleLocation = gradleLocation(activeSettingsQuery);
+        this.licenseHeaderInfo = licenseHeaderInfo(activeSettingsQuery);
+        this.scriptPlatform = scriptPlatform(activeSettingsQuery);
+        this.sourceEncoding = sourceEncoding(activeSettingsQuery);
+        this.userInitScriptPath = userInitScriptPath(activeSettingsQuery);
+        this.targetPlatform = targetPlatform(ownerProject, activeSettingsQuery);
+        this.sourceLevel = sourceLevel(ownerProject, activeSettingsQuery, this.targetPlatform.getActiveSource());
+        this.displayNamePattern = displayNamePattern(activeSettingsQuery);
+        this.customVariables = customVariables(activeSettingsQuery);
     }
 
     public Project getOwnerProject() {
@@ -121,52 +73,146 @@ public final class NbGradleCommonProperties {
         return activeSettingsQuery;
     }
 
+    public static PropertyReference<BuiltInTasks> builtInTasks(
+            NbGradleProject ownerProject,
+            ActiveSettingsQuery activeSettingsQuery) {
+
+        return get(
+                BuiltInTasksProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                BuiltInTasksProperty.defaultValue(ownerProject, activeSettingsQuery));
+    }
+
     public PropertyReference<BuiltInTasks> builtInTasks() {
         return builtInTasks;
+    }
+
+    public static PropertyReference<PredefinedTasks> customTasks(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                CustomTasksProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.constSource(PredefinedTasks.NO_TASKS));
     }
 
     public PropertyReference<PredefinedTasks> customTasks() {
         return customTasks;
     }
 
+    public static PropertyReference<GradleLocationDef> gradleLocation(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                GradleLocationProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.constSource(GradleLocationDef.DEFAULT));
+    }
+
     public PropertyReference<GradleLocationDef> gradleLocation() {
         return gradleLocation;
+    }
+
+    public static PropertyReference<LicenseHeaderInfo> licenseHeaderInfo(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                LicenseHeaderInfoProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.<LicenseHeaderInfo>constSource(null));
     }
 
     public PropertyReference<LicenseHeaderInfo> licenseHeaderInfo() {
         return licenseHeaderInfo;
     }
 
+    public static PropertyReference<ScriptPlatform> scriptPlatform(ActiveSettingsQuery activeSettingsQuery) {
+        return scriptPlatform(
+                activeSettingsQuery,
+                CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveSource());
+    }
+
+    public static PropertyReference<ScriptPlatform> scriptPlatform(
+            ActiveSettingsQuery activeSettingsQuery,
+            PropertySource<? extends PlatformOrder> platformPreferenceOrder) {
+        return get(
+                ScriptPlatformProperty.getPropertyDef(platformPreferenceOrder),
+                activeSettingsQuery,
+                PropertyFactory.constSource(ScriptPlatform.getDefault()));
+    }
+
     public PropertyReference<ScriptPlatform> scriptPlatform() {
         return scriptPlatform;
+    }
+
+    public static PropertyReference<Charset> sourceEncoding(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                SourceEncodingProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.constSource(SourceEncodingProperty.DEFAULT_SOURCE_ENCODING));
     }
 
     public PropertyReference<Charset> sourceEncoding() {
         return sourceEncoding;
     }
 
+    public static PropertyReference<ProjectPlatform> targetPlatform(
+            NbGradleProject ownerProject,
+            ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                TargetPlatformProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                TargetPlatformProperty.defaultValue(ownerProject));
+    }
+
     public PropertyReference<ProjectPlatform> targetPlatform() {
         return targetPlatform;
+    }
+
+    public static PropertyReference<String> sourceLevel(
+            NbGradleProject ownerProject,
+            ActiveSettingsQuery activeSettingsQuery,
+            PropertySource<? extends ProjectPlatform> targetPlatform) {
+        return get(
+                SourceLevelProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                SourceLevelProperty.defaultValue(ownerProject, targetPlatform));
     }
 
     public PropertyReference<String> sourceLevel() {
         return sourceLevel;
     }
 
+    public static PropertyReference<UserInitScriptPath> userInitScriptPath(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                UserInitScriptProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.<UserInitScriptPath>constSource(null));
+    }
+
     public PropertyReference<UserInitScriptPath> userInitScriptPath() {
         return userInitScriptPath;
+    }
+
+    public static PropertyReference<String> displayNamePattern(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                ProjectDisplayNameProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.constSource(ProjectDisplayNameProperty.DEFAULT_VALUE));
     }
 
     public PropertyReference<String> displayNamePattern() {
         return displayNamePattern;
     }
 
+    public static PropertyReference<CustomVariables> customVariables(ActiveSettingsQuery activeSettingsQuery) {
+        return get(
+                CustomVariablesProperty.PROPERTY_DEF,
+                activeSettingsQuery,
+                PropertyFactory.constSource(MemCustomVariables.EMPTY));
+    }
+
     public PropertyReference<CustomVariables> customVariables() {
         return customVariables;
     }
 
-    private <ValueType> PropertyReference<ValueType> get(
+    private static <ValueType> PropertyReference<ValueType> get(
             PropertyDef<?, ValueType> propertyDef,
+            ActiveSettingsQuery activeSettingsQuery,
             PropertySource<? extends ValueType> defaultValue) {
 
         return new PropertyReference<>(propertyDef, activeSettingsQuery, defaultValue);

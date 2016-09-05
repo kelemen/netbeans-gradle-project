@@ -38,7 +38,7 @@ public final class SourceLevelProperty {
 
     public static PropertySource<String> defaultValue(
             final NbGradleProject project,
-            final PropertySource<ProjectPlatform> targetPlatform) {
+            final PropertySource<? extends ProjectPlatform> targetPlatform) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(targetPlatform, "targetPlatform");
 
