@@ -617,7 +617,9 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
         if (newLocation != null) {
-            boolean preferWrapper = currentLocationDef != null ? currentLocationDef.isPreferWrapper() : false;
+            GradleLocationDef currentlyActiveLocation
+                    = currentValues.commonProperties.gradleLocation().tryGetValueWithoutFallback();
+            boolean preferWrapper = currentlyActiveLocation != null ? currentlyActiveLocation.isPreferWrapper() : false;
             selectGradleLocation(new GradleLocationDef(newLocation, preferWrapper));
         }
     }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
