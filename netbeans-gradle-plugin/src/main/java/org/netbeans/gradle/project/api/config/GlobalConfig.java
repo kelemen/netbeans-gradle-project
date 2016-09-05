@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.global.DefaultGlobalSettingsProvider;
 
 /**
  * Contains the values of some of the properties set in the global settings.
@@ -14,6 +15,19 @@ public final class GlobalConfig {
 
     private static final NbPropertySource<Boolean> SKIP_CHECK
             = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipCheck().getActiveSource());
+
+    private static final GlobalSettingsProvider DEFAULT = new DefaultGlobalSettingsProvider();
+
+    /**
+     * Returns the provider for global settings associated with the extensions of this
+     * Gradle plugin.
+     *
+     * @return the provider for global settings associated with the extensions of this
+     *   Gradle plugin. This method never returns {@code null}.
+     */
+    public static GlobalSettingsProvider getDefault() {
+        return DEFAULT;
+    }
 
     /**
      * Returns the property indicating if tests should be skipped when executing
