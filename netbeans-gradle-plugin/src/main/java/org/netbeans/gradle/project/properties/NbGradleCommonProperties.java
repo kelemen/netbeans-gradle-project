@@ -165,6 +165,15 @@ public final class NbGradleCommonProperties {
 
     public static PropertyReference<String> sourceLevel(
             NbGradleProject ownerProject,
+            ActiveSettingsQuery activeSettingsQuery) {
+        return sourceLevel(
+                ownerProject,
+                activeSettingsQuery,
+                targetPlatform(ownerProject, activeSettingsQuery).getActiveSource());
+    }
+
+    private static PropertyReference<String> sourceLevel(
+            NbGradleProject ownerProject,
             ActiveSettingsQuery activeSettingsQuery,
             PropertySource<? extends ProjectPlatform> targetPlatform) {
         return get(
