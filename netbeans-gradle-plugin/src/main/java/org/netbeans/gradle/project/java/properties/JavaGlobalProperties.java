@@ -4,7 +4,6 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.GradleGlobalSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.java.JavaExtensionDef;
-import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.openide.util.Lookup;
 
 public class JavaGlobalProperties {

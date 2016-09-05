@@ -22,6 +22,7 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.java.JavaExtensionDef;
+import org.netbeans.gradle.project.java.properties.DebugMode;
 import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.GradleLocationDef;

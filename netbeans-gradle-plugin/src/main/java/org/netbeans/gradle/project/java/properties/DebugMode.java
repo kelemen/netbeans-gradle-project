@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties.global;
+package org.netbeans.gradle.project.java.properties;
 
 public enum DebugMode {
     DEBUGGER_LISTENS,

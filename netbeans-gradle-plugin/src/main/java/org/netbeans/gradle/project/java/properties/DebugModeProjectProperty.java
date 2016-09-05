@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.properties;
 
 import org.netbeans.gradle.project.api.config.ConfigPath;
 import org.netbeans.gradle.project.api.config.PropertyDef;
-import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
 
 public final class DebugModeProjectProperty {
