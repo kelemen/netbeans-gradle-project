@@ -18,13 +18,11 @@ import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.MultiProfileProperties;
+import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
-import org.netbeans.gradle.project.properties.standard.GradleLocationProperty;
-import org.netbeans.gradle.project.properties.standard.ProjectDisplayNameProperty;
-import org.netbeans.gradle.project.properties.standard.ScriptPlatformProperty;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -94,10 +92,7 @@ public final class CommonGlobalSettings {
     private static PropertyReference<ScriptPlatform> defaultJdk(
             ActiveSettingsQuery activeSettingsQuery,
             PropertyReference<PlatformOrder> orderRef) {
-        return propertyRef(
-                ScriptPlatformProperty.getPropertyDef(orderRef),
-                activeSettingsQuery,
-                ScriptPlatform.getDefault());
+        return NbGradleCommonProperties.scriptPlatform(activeSettingsQuery, orderRef.getActiveSource());
     }
 
     public PropertyReference<ScriptPlatform> defaultJdk() {
@@ -105,7 +100,7 @@ public final class CommonGlobalSettings {
     }
 
     public static PropertyReference<GradleLocationDef> gradleLocation(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(GradleLocationProperty.PROPERTY_DEF, activeSettingsQuery, GradleLocationDef.DEFAULT);
+        return NbGradleCommonProperties.gradleLocation(activeSettingsQuery);
     }
 
     public PropertyReference<GradleLocationDef> gradleLocation() {
@@ -270,10 +265,7 @@ public final class CommonGlobalSettings {
     }
 
     public static PropertyReference<String> displayNamePattern(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(
-                ProjectDisplayNameProperty.PROPERTY_DEF,
-                activeSettingsQuery,
-                ProjectDisplayNameProperty.DEFAULT_VALUE);
+        return NbGradleCommonProperties.displayNamePattern(activeSettingsQuery);
     }
 
     public PropertyReference<String> displayNamePattern() {
