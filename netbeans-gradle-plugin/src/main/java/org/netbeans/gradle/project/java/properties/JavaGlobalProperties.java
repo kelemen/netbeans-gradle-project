@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.java.properties;
 
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.GradleGlobalSettingsProvider;
+import org.netbeans.gradle.project.api.config.GlobalSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.java.JavaExtensionDef;
 import org.openide.util.Lookup;
@@ -28,7 +28,7 @@ public class JavaGlobalProperties {
         private static final JavaGlobalProperties DEFAULT;
 
         static {
-            GradleGlobalSettingsProvider globalSettings = Lookup.getDefault().lookup(GradleGlobalSettingsProvider.class);
+            GlobalSettingsProvider globalSettings = Lookup.getDefault().lookup(GlobalSettingsProvider.class);
             DEFAULT = globalSettings != null
                     ? new JavaGlobalProperties(globalSettings.getExtensionSettings(JavaExtensionDef.EXTENSION_NAME))
                     : null;
