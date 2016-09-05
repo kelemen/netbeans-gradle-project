@@ -3,7 +3,9 @@ package org.netbeans.gradle.project.properties.ui;
 import java.net.URL;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.java.JavaExtensionDef;
+import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
+import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.global.DebugMode;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -20,15 +22,25 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
         this.debugModeHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
     }
 
+    private static ActiveSettingsQuery javaSettings(ActiveSettingsQuery rootSettings) {
+        // FIXME: Once we allow extensions to define their own global settings page,
+        //        this explicit conversion won't be be needed anymore.
+        return new ExtensionActiveSettingsQuery(rootSettings, JavaExtensionDef.EXTENSION_NAME);
+    }
+
     @Override
     public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<DebugMode> debugMode = CommonGlobalSettings.debugMode(globalSettings);
+        ActiveSettingsQuery javaSettings = javaSettings(globalSettings);
+
+        PropertyReference<DebugMode> debugMode = JavaProjectProperties.debugMode(javaSettings);
         debugModeHandler.setSelectedValue(debugMode.getActiveValue());
     }
 
     @Override
     public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<DebugMode> debugMode = CommonGlobalSettings.debugMode(globalSettings);
+        ActiveSettingsQuery javaSettings = javaSettings(globalSettings);
+
+        PropertyReference<DebugMode> debugMode = JavaProjectProperties.debugMode(javaSettings);
         debugMode.setValue(debugModeHandler.getSelectedValue());
     }
 

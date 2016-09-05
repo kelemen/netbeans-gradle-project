@@ -12,7 +12,6 @@ import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.java.properties.DebugModeProjectProperty;
 import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
@@ -56,7 +55,6 @@ public final class CommonGlobalSettings {
     private final PropertyReference<SelfMaintainedTasks> selfMaintainedTasks;
     private final PropertyReference<ModelLoadingStrategy> modelLoadingStrategy;
     private final PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode;
-    private final PropertyReference<DebugMode> debugMode;
 
     private final PropertyReference<Integer> projectCacheSize;
     private final PropertyReference<Integer> gradleDaemonTimeoutSec;
@@ -84,7 +82,6 @@ public final class CommonGlobalSettings {
         this.selfMaintainedTasks = selfMaintainedTasks(activeSettingsQuery);
         this.modelLoadingStrategy = modelLoadingStrategy(activeSettingsQuery);
         this.javaSourcesDisplayMode = javaSourcesDisplayMode(activeSettingsQuery);
-        this.debugMode = debugMode(activeSettingsQuery);
         this.projectCacheSize = projectCacheSize(activeSettingsQuery);
         this.gradleDaemonTimeoutSec = gradleDaemonTimeoutSec(activeSettingsQuery);
         this.displayNamePattern = displayNamePattern(activeSettingsQuery);
@@ -256,14 +253,6 @@ public final class CommonGlobalSettings {
         return javaSourcesDisplayMode;
     }
 
-    public static PropertyReference<DebugMode> debugMode(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(DebugModeProjectProperty.PROPERTY_DEF, activeSettingsQuery, DebugModeProjectProperty.DEFAULT);
-    }
-
-    public PropertyReference<DebugMode> debugMode() {
-        return debugMode;
-    }
-
     public static PropertyReference<Integer> projectCacheSize(ActiveSettingsQuery activeSettingsQuery) {
         return propertyRef(defineIntProperty("cache", "size"), activeSettingsQuery, 100);
     }
@@ -321,6 +310,10 @@ public final class CommonGlobalSettings {
         return DefaultHolder.DEFAULT;
     }
 
+    public static ActiveSettingsQuery getDefaultActiveSettingsQuery() {
+        return DefaultHolder.DEFAULT_ACTIVE_SETTINGS;
+    }
+
     public ActiveSettingsQuery getActiveSettingsQuery() {
         return activeSettingsQuery;
     }
@@ -367,7 +360,8 @@ public final class CommonGlobalSettings {
     }
 
     private static class DefaultHolder {
-        private static final CommonGlobalSettings DEFAULT_STORED = new CommonGlobalSettings(loadDefaultActiveSettings());
+        private static final ActiveSettingsQuery DEFAULT_ACTIVE_SETTINGS = loadDefaultActiveSettings();
+        private static final CommonGlobalSettings DEFAULT_STORED = new CommonGlobalSettings(DEFAULT_ACTIVE_SETTINGS);
         private static volatile CommonGlobalSettings DEFAULT = DEFAULT_STORED;
 
         public static void withCleanMemorySettings(NbConsumer<? super GenericProfileSettings> task) {

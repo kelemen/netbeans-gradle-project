@@ -30,7 +30,6 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
-import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
@@ -114,7 +113,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         contentPane.setLayout(new GridLayout(1, 1));
 
         PlatformPriorityPanel content = new PlatformPriorityPanel(true);
-        content.updateSettings(CommonGlobalSettings.getDefault().getActiveSettingsQuery());
+        content.updateSettings(CommonGlobalSettings.getDefaultActiveSettingsQuery());
         contentPane.add(content);
 
         dlg.pack();
@@ -307,7 +306,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }//GEN-LAST:event_jCancelButtonActionPerformed
 
     private void jOkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOkButtonActionPerformed
-        saveSettings(CommonGlobalSettings.getDefault().getActiveSettingsQuery());
+        saveSettings(CommonGlobalSettings.getDefaultActiveSettingsQuery());
 
         okPressed = true;
         closeWindow();

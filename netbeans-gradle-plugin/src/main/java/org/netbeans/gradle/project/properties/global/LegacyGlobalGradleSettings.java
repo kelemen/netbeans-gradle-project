@@ -19,7 +19,11 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.java.JavaExtensionDef;
+import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
+import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
@@ -173,9 +177,13 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(displayNamePattern, newSettings.displayNamePattern());
         moveToNewSettings(javaSourcesDisplayMode, newSettings.javaSourcesDisplayMode());
         moveToNewSettings(replaceLfOnStdIn, newSettings.replaceLfOnStdIn());
-        moveToNewSettings(debugMode, newSettings.debugMode());
         moveToNewSettings(loadRootProjectFirst, newSettings.loadRootProjectFirst());
         moveToNewSettings(detectProjectDependenciesByJarName, newSettings.detectProjectDependenciesByJarName());
+
+        ActiveSettingsQuery javaExtQuery = new ExtensionActiveSettingsQuery(
+                newSettings.getActiveSettingsQuery(),
+                JavaExtensionDef.EXTENSION_NAME);
+        moveToNewSettings(debugMode, JavaProjectProperties.debugMode(javaExtQuery));
     }
 
     private static String withNS(String namespace, String name) {
