@@ -12,7 +12,7 @@ import org.jtrim.cancel.CancellationToken;
  * {@link org.netbeans.spi.project.AuxiliaryConfiguration AuxiliaryConfiguration}),
  * this query lets you access profile specific settings.
  * <P>
- * This executor is available on the
+ * This {@code ProjectSettingsProvider} is available on the
  * {@link org.netbeans.api.project.Project#getLookup() project's lookup}. It is
  * already available when loading extensions (i.e., maybe retrieved in the
  * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#createExtension(org.netbeans.api.project.Project) GradleProjectExtensionDef.createExtension}
