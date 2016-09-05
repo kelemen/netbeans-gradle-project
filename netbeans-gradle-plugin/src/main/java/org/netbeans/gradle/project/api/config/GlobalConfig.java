@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.api.config;
 
 import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.property.NbPropertySource;
+import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.NbPropertySourceWrapper;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.DefaultGlobalSettingsProvider;
 
 /**
  * Contains the values of some of the properties set in the global settings.
@@ -16,17 +16,23 @@ public final class GlobalConfig {
     private static final NbPropertySource<Boolean> SKIP_CHECK
             = new NbPropertySourceWrapper<>(CommonGlobalSettings.getDefault().skipCheck().getActiveSource());
 
-    private static final GlobalSettingsProvider DEFAULT = new DefaultGlobalSettingsProvider();
-
     /**
-     * Returns the provider for global settings associated with the extensions of this
-     * Gradle plugin.
+     * Returns a settings container for global settings associated with the specified extension
+     * of this Gradle plugin. The extensions must be identified by a globally unique string
+     * which is preferably the name of the extension as defined by
+     * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef GradleProjectExtensionDef}.
+     * Note that this name should also be the same as provided for {@link ProjectSettingsProvider},
+     * otherwise project properties will fail to inherit from the global properties.
      *
-     * @return the provider for global settings associated with the extensions of this
-     *   Gradle plugin. This method never returns {@code null}.
+     * @param extensionName the string identifying the extension in the
+     *   configuration. The preferred convention is to use the extension's name,
+     *   though it is not strictly required. This argument cannot be {@code null}.
+     * @return the global settings of the requested extension. This method
+     *   never returns {@code null}.
      */
-    public static GlobalSettingsProvider getDefault() {
-        return DEFAULT;
+    public static ActiveSettingsQuery getGlobalSettingsQuery(String extensionName) {
+        ActiveSettingsQuery rootQuery = CommonGlobalSettings.getDefaultActiveSettingsQuery();
+        return new ExtensionActiveSettingsQuery(rootQuery, extensionName);
     }
 
     /**

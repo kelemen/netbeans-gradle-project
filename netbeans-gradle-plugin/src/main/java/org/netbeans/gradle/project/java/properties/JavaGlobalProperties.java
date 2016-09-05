@@ -22,6 +22,6 @@ public class JavaGlobalProperties {
 
     private static class DefaultHolder {
         private static final JavaGlobalProperties DEFAULT = new JavaGlobalProperties(
-                GlobalConfig.getDefault().getExtensionSettings(JavaExtensionDef.EXTENSION_NAME));
+                GlobalConfig.getGlobalSettingsQuery(JavaExtensionDef.EXTENSION_NAME));
     }
 }
