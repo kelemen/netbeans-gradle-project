@@ -32,7 +32,7 @@ public final class ProfileKey {
     /**
      * Defines the key to access the global profile.
      */
-    public static final ProfileKey GLOBAL_PROFILE = new ProfileKey("*", "global");
+    public static final ProfileKey GLOBAL_PROFILE = new ProfileKey("*", "project-defaults");
 
     private final String groupName;
     private final String fileName;

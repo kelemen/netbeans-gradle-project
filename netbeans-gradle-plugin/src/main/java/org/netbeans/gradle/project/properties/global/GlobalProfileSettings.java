@@ -88,6 +88,8 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
     }
 
     private static final class GlobalProfileLocationProvider implements ProfileLocationProvider {
+        private static final String BASE_FILE_NAME = ProfileKey.GLOBAL_PROFILE.getFileName() + ".xml";
+
         public GlobalProfileLocationProvider() {
         }
 
@@ -117,7 +119,7 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
                 return null;
             }
 
-            return root.resolve("project-defaults.xml");
+            return root.resolve(BASE_FILE_NAME);
         }
 
         @Override
