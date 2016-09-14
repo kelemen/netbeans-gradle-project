@@ -71,6 +71,10 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
         });
     }
 
+    public void clearSettings() {
+        settings.clearSettings();
+    }
+
     public ConfigTree getContentSnapshot() {
         return settings.getContentSnapshot();
     }

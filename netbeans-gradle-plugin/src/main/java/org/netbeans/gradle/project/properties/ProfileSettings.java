@@ -244,6 +244,19 @@ public final class ProfileSettings {
         return result;
     }
 
+    public void clearSettings() {
+        configLock.lock();
+        try {
+            auxConfigs.clear();
+            currentConfig = new ConfigTree.Builder();
+            newConfigState();
+        } finally {
+            configLock.unlock();
+        }
+
+        fireDocumentUpdate(ROOT_PATH);
+    }
+
     private void loadFromDocument(final Document document) {
         ExceptionHelper.checkNotNullArgument(document, "document");
 
