@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
@@ -24,5 +25,17 @@ public class ProfileInfo {
     @Nonnull
     public String getDisplayName() {
         return displayName;
+    }
+
+    public boolean isSharedProfile() {
+        return !isGlobal() && !isPrivate();
+    }
+
+    public boolean isGlobal() {
+        return Objects.equals(profileKey, ProfileKey.GLOBAL_PROFILE);
+    }
+
+    public boolean isPrivate() {
+        return Objects.equals(profileKey, ProfileKey.PRIVATE_PROFILE);
     }
 }

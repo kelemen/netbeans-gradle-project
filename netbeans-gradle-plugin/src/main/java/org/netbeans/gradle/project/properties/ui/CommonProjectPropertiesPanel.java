@@ -20,7 +20,6 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
@@ -235,8 +234,6 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
     }
 
     private final class PropertyRefs implements ProfileEditor {
-        private final ActiveSettingsQuery settingsQuery;
-
         private final PropertyReference<GradleLocationDef> gradleLocationRef;
         private final PropertyReference<ScriptPlatform> scriptPlatformRef;
         private final PropertyReference<Charset> sourceEncodingRef;
@@ -248,9 +245,8 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
         public PropertyRefs(
                 NbGradleProject ownerProject,
-                ProfileInfo info,
+                ProfileInfo profileInfo,
                 ActiveSettingsQuery settingsQuery) {
-            this.settingsQuery = settingsQuery;
             this.gradleLocationRef = NbGradleCommonProperties.gradleLocation(settingsQuery);
             this.scriptPlatformRef = NbGradleCommonProperties.scriptPlatform(settingsQuery);
             this.sourceEncodingRef = NbGradleCommonProperties.sourceEncoding(settingsQuery);
@@ -258,9 +254,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
             this.targetPlatformRef = NbGradleCommonProperties.targetPlatform(ownerProject, settingsQuery);
             this.sourceLevelRef = NbGradleCommonProperties.sourceLevel(ownerProject, settingsQuery);
 
-            ProfileKey key = info.getProfileKey();
-            this.selectByVersion = !Objects.equals(key, ProfileKey.GLOBAL_PROFILE)
-                    && !Objects.equals(key, ProfileKey.PRIVATE_PROFILE);
+            this.selectByVersion = profileInfo.isSharedProfile();
         }
 
         @Override
