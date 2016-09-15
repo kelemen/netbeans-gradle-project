@@ -137,6 +137,12 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         setupEnableDisable();
     }
 
+    public static <T extends JComponent & ProfileEditorFactory> ProfileBasedPanel createPanel(
+            Project project,
+            T customPanel) {
+        return createPanel(project, customPanel, customPanel);
+    }
+
     public static ProfileBasedPanel createPanel(
             Project project,
             JComponent customPanel,
