@@ -22,15 +22,17 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
@@ -42,11 +44,12 @@ import org.openide.filesystems.FileChooserBuilder;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
+
 @SuppressWarnings("serial")
-public class CommonProjectPropertiesPanel extends JPanel {
+public class CommonProjectPropertiesPanel extends JPanel implements ProfileEditorFactory {
     private final NbGradleProject project;
 
-    private PropertyValues currentValues;
+    private PropertyRefs currentValues;
     private GradleLocationDef selectedGradleLocation;
 
     private CommonProjectPropertiesPanel(NbGradleProject project) {
@@ -65,19 +68,15 @@ public class CommonProjectPropertiesPanel extends JPanel {
         setupEnableDisable();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
+    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        final CommonProjectPropertiesPanel customPanel = new CommonProjectPropertiesPanel(project);
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                PropertyValues currentValues = customPanel.new PropertyValues(project, profileQuery);
-                customPanel.currentValues = currentValues;
+        return ProfileBasedPanel.createPanel(project, new CommonProjectPropertiesPanel(project));
+    }
 
-                return currentValues;
-            }
-        });
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(project, profileInfo, profileQuery);
     }
 
     private static <Value> Value setInheritAndGetValue(
@@ -112,6 +111,27 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new ProjectPlatformComboItem[comboItems.size()])));
     }
 
+    private void refreshScriptPlatformCombo(boolean selectByVersion) {
+        JavaPlatformComboItem currentSelection = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
+
+        fillScriptPlatformCombo(selectByVersion);
+
+        jScriptPlatformCombo.setSelectedItem(new JavaPlatformComboItem(
+                currentSelection.getPlatform(),
+                toSelectionMode(selectByVersion)));
+    }
+
+    private void refreshTargetPlatformCombo() {
+        Object currentSelection = jPlatformCombo.getSelectedItem();
+        fillProjectPlatformCombo();
+        jPlatformCombo.setSelectedItem(currentSelection);
+    }
+
+    private void refreshPlatformCombos(PropertyRefs properties) {
+        refreshScriptPlatformCombo(properties.isSelectByVersion());
+        refreshTargetPlatformCombo();
+    }
+
     private static PlatformOrder order() {
         return CommonGlobalSettings.getDefault().platformPreferenceOrder().getActiveValue();
     }
@@ -130,6 +150,11 @@ public class CommonProjectPropertiesPanel extends JPanel {
         return selectByVersion ? PlatformSelectionMode.BY_VERSION : PlatformSelectionMode.BY_LOCATION;
     }
 
+    private void selectGradleLocation(GradleLocationDef newLocationDef) {
+        selectedGradleLocation = newLocationDef;
+        jGradleHomeEdit.setText(newLocationDef != null ? newLocationDef.getLocation().toLocalizedString() : "");
+    }
+
     private void fillScriptPlatformCombo(boolean selectByVersion) {
         PlatformSelectionMode selectionMode = toSelectionMode(selectByVersion);
 
@@ -146,38 +171,148 @@ public class CommonProjectPropertiesPanel extends JPanel {
         jScriptPlatformCombo.setModel(new DefaultComboBoxModel<>(comboItems.toArray(new JavaPlatformComboItem[comboItems.size()])));
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
-        public NbGradleCommonProperties commonProperties;
-
-        public GradleLocationDef gradleLocation;
-        public ScriptPlatform scriptPlatform;
-        public Charset sourceEncoding;
-        public ProjectPlatform targetPlatform;
-        public String sourceLevel;
-        public UserInitScriptPath userInitScript;
-
-        public PropertyValues(NbGradleProject ownerProject, ActiveSettingsQuery settings) {
-            this(new NbGradleCommonProperties(ownerProject, settings));
+    private Charset getSelectedSourceEncoding(PropertyRefs properties) {
+        if (jSourceEncodingInherit.isSelected()) {
+            return null;
         }
 
-        public PropertyValues(NbGradleCommonProperties commonProperties) {
-            this.commonProperties = commonProperties;
+        Object selected = jSourceEncoding.getSelectedItem();
+        if (selected instanceof Charset) {
+            return (Charset)selected;
+        }
+        return properties.sourceEncodingRef.tryGetValueWithoutFallback();
+    }
 
-            this.gradleLocation = commonProperties.gradleLocation().tryGetValueWithoutFallback();
-            this.scriptPlatform = commonProperties.scriptPlatform().tryGetValueWithoutFallback();
-            this.sourceEncoding = commonProperties.sourceEncoding().tryGetValueWithoutFallback();
-            this.targetPlatform = commonProperties.targetPlatform().tryGetValueWithoutFallback();
-            this.sourceLevel = commonProperties.sourceLevel().tryGetValueWithoutFallback();
-            this.userInitScript = commonProperties.userInitScriptPath().tryGetValueWithoutFallback();
+    private GradleLocationDef getGradleLocation() {
+        GradleLocationDef gradleHome = selectedGradleLocation;
+        return jGradleHomeInherit.isSelected() ? null : gradleHome;
+    }
+
+    private String getSourceLevel() {
+        return jSourceLevelComboInherit.isSelected() ? null : (String)jSourceLevelCombo.getSelectedItem();
+    }
+
+    private UserInitScriptPath getUserInitScript() {
+        if (jUserInitScriptInherit.isSelected()) {
+            return null;
         }
 
-        public void refreshPlatformCombos() {
-            displayScriptPlatform();
-            displayTargetPlatform();
+        String userInitScriptStr = jUserInitScript.getText().trim();
+        if (userInitScriptStr.isEmpty()) {
+            return null;
+        }
+
+        return new UserInitScriptPath(Paths.get(userInitScriptStr));
+    }
+
+    private ProjectPlatform getTargetPlaform(PropertyRefs properties) {
+        if (jPlatformComboInherit.isSelected()) {
+            return null;
+        }
+        ProjectPlatformComboItem selected = (ProjectPlatformComboItem)jPlatformCombo.getSelectedItem();
+        return selected != null
+                ? selected.getPlatform()
+                : properties.targetPlatformRef.tryGetValueWithoutFallback();
+    }
+
+    private ScriptPlatform getScriptPlatform(PropertyRefs properties) {
+        if (jScriptPlatformInherit.isSelected()) {
+            return null;
+        }
+
+        JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
+        if (selectedScriptPlatform != null) {
+            PlatformSelectionMode selectionMode = toSelectionMode(properties.isSelectByVersion());
+
+            JavaPlatform rawScriptPlatform = selectedScriptPlatform.getPlatform();
+            return rawScriptPlatform != null
+                    ? new ScriptPlatform(rawScriptPlatform, selectionMode)
+                    : null;
+        }
+        else {
+            return properties.scriptPlatformRef.tryGetValueWithoutFallback();
+        }
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final ActiveSettingsQuery settingsQuery;
+
+        private final PropertyReference<GradleLocationDef> gradleLocationRef;
+        private final PropertyReference<ScriptPlatform> scriptPlatformRef;
+        private final PropertyReference<Charset> sourceEncodingRef;
+        private final PropertyReference<ProjectPlatform> targetPlatformRef;
+        private final PropertyReference<String> sourceLevelRef;
+        private final PropertyReference<UserInitScriptPath> userInitScriptPathRef;
+
+        private final boolean selectByVersion;
+
+        public PropertyRefs(
+                NbGradleProject ownerProject,
+                ProfileInfo info,
+                ActiveSettingsQuery settingsQuery) {
+            this.settingsQuery = settingsQuery;
+            this.gradleLocationRef = NbGradleCommonProperties.gradleLocation(settingsQuery);
+            this.scriptPlatformRef = NbGradleCommonProperties.scriptPlatform(settingsQuery);
+            this.sourceEncodingRef = NbGradleCommonProperties.sourceEncoding(settingsQuery);
+            this.userInitScriptPathRef = NbGradleCommonProperties.userInitScriptPath(settingsQuery);
+            this.targetPlatformRef = NbGradleCommonProperties.targetPlatform(ownerProject, settingsQuery);
+            this.sourceLevelRef = NbGradleCommonProperties.sourceLevel(ownerProject, settingsQuery);
+
+            ProfileKey key = info.getProfileKey();
+            this.selectByVersion = !Objects.equals(key, ProfileKey.GLOBAL_PROFILE)
+                    && !Objects.equals(key, ProfileKey.PRIVATE_PROFILE);
         }
 
         @Override
-        public void displayValues() {
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, CommonProjectPropertiesPanel.this);
+        }
+
+        public boolean isSelectByVersion() {
+            return selectByVersion;
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final GradleLocationDef gradleLocation;
+        private final ScriptPlatform scriptPlatform;
+        private final Charset sourceEncoding;
+        private final ProjectPlatform targetPlatform;
+        private final String sourceLevel;
+        private final UserInitScriptPath userInitScript;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.gradleLocation = properties.gradleLocationRef.tryGetValueWithoutFallback();
+            this.scriptPlatform = properties.scriptPlatformRef.tryGetValueWithoutFallback();
+            this.sourceEncoding = properties.sourceEncodingRef.tryGetValueWithoutFallback();
+            this.targetPlatform = properties.targetPlatformRef.tryGetValueWithoutFallback();
+            this.sourceLevel = properties.sourceLevelRef.tryGetValueWithoutFallback();
+            this.userInitScript = properties.userInitScriptPathRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, CommonProjectPropertiesPanel panel) {
+            this.properties = properties;
+
+            gradleLocation = panel.getGradleLocation();
+            scriptPlatform = panel.getScriptPlatform(properties);
+            targetPlatform = panel.getTargetPlaform(properties);
+            sourceEncoding = panel.getSelectedSourceEncoding(properties);
+            sourceLevel = panel.getSourceLevel();
+            userInitScript = panel.getUserInitScript();
+        }
+
+        @Override
+        public void displaySettings() {
+            CommonProjectPropertiesPanel.this.currentValues = properties;
+
             displayGradleLocation();
             displayScriptPlatform();
             displayTargetPlatform();
@@ -186,71 +321,20 @@ public class CommonProjectPropertiesPanel extends JPanel {
             displayUserInitScript();
         }
 
-        private Charset getSelectedSourceEncoding(Charset defaultEncoding) {
-            if (jSourceEncodingInherit.isSelected()) {
-                return null;
-            }
-
-            Object selected = jSourceEncoding.getSelectedItem();
-            if (selected instanceof Charset) {
-                return (Charset)selected;
-            }
-            return defaultEncoding;
-        }
-
-        private UserInitScriptPath getGuiUserInitScript() {
-            String userInitScriptStr = jUserInitScript.getText().trim();
-            if (userInitScriptStr.isEmpty()) {
-                return null;
-            }
-
-            return new UserInitScriptPath(Paths.get(userInitScriptStr));
-        }
-
         @Override
-        public void readFromGui() {
-            GradleLocationDef gradleHome = selectedGradleLocation;
-            gradleLocation = jGradleHomeInherit.isSelected() ? null : gradleHome;
-
-            JavaPlatformComboItem selectedScriptPlatform = (JavaPlatformComboItem)jScriptPlatformCombo.getSelectedItem();
-            if (selectedScriptPlatform != null) {
-                PlatformSelectionMode selectionMode = toSelectionMode(isSelectByVersion());
-
-                JavaPlatform rawScriptPlatform = jScriptPlatformInherit.isSelected()
-                        ? null
-                        : selectedScriptPlatform.getPlatform();
-                scriptPlatform = rawScriptPlatform != null
-                        ? new ScriptPlatform(rawScriptPlatform, selectionMode)
-                        : null;
-            }
-
-            ProjectPlatformComboItem selected = (ProjectPlatformComboItem)jPlatformCombo.getSelectedItem();
-            if (selected != null) {
-                targetPlatform = jPlatformComboInherit.isSelected() ? null : selected.getPlatform();
-            }
-
-            sourceEncoding = getSelectedSourceEncoding(sourceEncoding);
-
-            sourceLevel = jSourceLevelComboInherit.isSelected() ? null : (String)jSourceLevelCombo.getSelectedItem();
-
-            userInitScript = jUserInitScriptInherit.isSelected() ? null : getGuiUserInitScript();
-
-        }
-
-        @Override
-        public void applyValues() {
-            commonProperties.scriptPlatform().setValue(scriptPlatform);
-            commonProperties.gradleLocation().setValue(gradleLocation);
-            commonProperties.targetPlatform().setValue(targetPlatform);
-            commonProperties.sourceEncoding().setValue(sourceEncoding);
-            commonProperties.sourceLevel().setValue(sourceLevel);
-            commonProperties.userInitScriptPath().setValue(userInitScript);
+        public void saveSettings() {
+            properties.gradleLocationRef.setValue(gradleLocation);
+            properties.scriptPlatformRef.setValue(scriptPlatform);
+            properties.sourceEncodingRef.setValue(sourceEncoding);
+            properties.targetPlatformRef.setValue(targetPlatform);
+            properties.sourceLevelRef.setValue(sourceLevel);
+            properties.userInitScriptPathRef.setValue(userInitScript);
         }
 
         private void displayGradleLocation() {
             GradleLocationDef value = setInheritAndGetValue(
                     gradleLocation,
-                    commonProperties.gradleLocation(),
+                    properties.gradleLocationRef,
                     jGradleHomeInherit);
 
             if (value != null) {
@@ -258,20 +342,14 @@ public class CommonProjectPropertiesPanel extends JPanel {
             }
         }
 
-        private boolean isSelectByVersion() {
-            ProfileKey key = commonProperties.getActiveSettingsQuery().currentProfileSettings().getValue().getKey();
-            return !Objects.equals(key, ProfileKey.GLOBAL_PROFILE)
-                    && !Objects.equals(key, ProfileKey.PRIVATE_PROFILE);
-        }
-
         private void displayScriptPlatform() {
-            displayScriptPlatform(isSelectByVersion());
+            displayScriptPlatform(properties.isSelectByVersion());
         }
 
         private void displayScriptPlatform(boolean selectByVersion) {
             ScriptPlatform value = setInheritAndGetValue(
                     scriptPlatform,
-                    commonProperties.scriptPlatform(),
+                    properties.scriptPlatformRef,
                     jScriptPlatformInherit);
 
             fillScriptPlatformCombo(selectByVersion);
@@ -284,7 +362,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         private void displayTargetPlatform() {
             ProjectPlatform value = setInheritAndGetValue(
                     targetPlatform,
-                    commonProperties.targetPlatform(),
+                    properties.targetPlatformRef,
                     jPlatformComboInherit);
             fillProjectPlatformCombo();
             if (value != null) {
@@ -295,7 +373,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         private void displaySourceEncoding() {
             Charset value = setInheritAndGetValue(
                     sourceEncoding,
-                    commonProperties.sourceEncoding(),
+                    properties.sourceEncodingRef,
                     jSourceEncodingInherit);
             if (value != null) {
                 jSourceEncoding.setSelectedItem(value);
@@ -305,7 +383,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         private void displaySourceLevel() {
             String value = setInheritAndGetValue(
                     sourceLevel,
-                    commonProperties.sourceLevel(),
+                    properties.sourceLevelRef,
                     jSourceLevelComboInherit);
             if (value != null) {
                 jSourceLevelCombo.setSelectedItem(value);
@@ -315,17 +393,12 @@ public class CommonProjectPropertiesPanel extends JPanel {
         private void displayUserInitScript() {
             UserInitScriptPath value = setInheritAndGetValue(
                     userInitScript,
-                    commonProperties.userInitScriptPath(),
+                    properties.userInitScriptPathRef,
                     jUserInitScriptInherit);
             if (value != null) {
                 jUserInitScript.setText(value.getRelPath().toString());
             }
         }
-    }
-
-    private void selectGradleLocation(GradleLocationDef newLocationDef) {
-        selectedGradleLocation = newLocationDef;
-        jGradleHomeEdit.setText(newLocationDef != null ? newLocationDef.getLocation().toLocalizedString() : "");
     }
 
     private static class JavaPlatformComboItem {
@@ -598,7 +671,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
     private void jPlatformPreferenceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPlatformPreferenceButtonActionPerformed
         if (PlatformPriorityPanel.showDialog(this)) {
             if (currentValues != null) {
-                currentValues.refreshPlatformCombos();
+                refreshPlatformCombos(currentValues);
             }
         }
     }//GEN-LAST:event_jPlatformPreferenceButtonActionPerformed
@@ -610,7 +683,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
 
         GradleLocationDef currentLocationDef = selectedGradleLocation != null
                 ? selectedGradleLocation
-                : currentValues.commonProperties.gradleLocation().getActiveValue();
+                : currentValues.gradleLocationRef.getActiveValue();
         GradleLocation currentLocation = currentLocationDef != null
                 ? currentLocationDef.getLocation()
                 : null;
@@ -618,7 +691,7 @@ public class CommonProjectPropertiesPanel extends JPanel {
         GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
         if (newLocation != null) {
             GradleLocationDef currentlyActiveLocation
-                    = currentValues.commonProperties.gradleLocation().tryGetValueWithoutFallback();
+                    = currentValues.gradleLocationRef.tryGetValueWithoutFallback();
             boolean preferWrapper = currentlyActiveLocation != null ? currentlyActiveLocation.isPreferWrapper() : false;
             selectGradleLocation(new GradleLocationDef(newLocation, preferWrapper));
         }
