@@ -151,7 +151,7 @@ public class CustomVariablesPanel extends javax.swing.JPanel implements ProfileE
     }
 
     private final class PropertyRefs implements ProfileEditor {
-        public final PropertyReference<CustomVariables> customVariablesRef;
+        private final PropertyReference<CustomVariables> customVariablesRef;
 
         public PropertyRefs(ActiveSettingsQuery settingsQuery) {
             customVariablesRef = NbGradleCommonProperties.customVariables(settingsQuery);
