@@ -5,34 +5,32 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.standard.CustomVariable;
 import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.properties.standard.MemCustomVariables;
 import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial")
-public class CustomVariablesPanel extends javax.swing.JPanel {
-    public CustomVariablesPanel() {
+public class CustomVariablesPanel extends javax.swing.JPanel implements ProfileEditorFactory {
+    private CustomVariablesPanel() {
         initComponents();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
+        return ProfileBasedPanel.createPanel(project, new CustomVariablesPanel());
+    }
 
-        final CustomVariablesPanel customPanel = new CustomVariablesPanel();
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                return customPanel.new PropertyValues(profileQuery);
-            }
-        });
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private static boolean containsMustBeEscapedChar(String keyName) {
@@ -137,7 +135,7 @@ public class CustomVariablesPanel extends javax.swing.JPanel {
         }
     }
 
-    public static CustomVariables fromVariables(String propertiesStr) {
+    private static CustomVariables fromVariables(String propertiesStr) {
         List<CustomVariable> vars = new ArrayList<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(propertiesStr));
@@ -152,28 +150,46 @@ public class CustomVariablesPanel extends javax.swing.JPanel {
         return new MemCustomVariables(vars);
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
+    private final class PropertyRefs implements ProfileEditor {
         public final PropertyReference<CustomVariables> customVariablesRef;
-        private CustomVariables customVariables;
 
-        public PropertyValues(ActiveSettingsQuery settings) {
-            this.customVariablesRef = NbGradleCommonProperties.customVariables(settings);
-            this.customVariables = customVariablesRef.tryGetValueWithoutFallback();
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            customVariablesRef = NbGradleCommonProperties.customVariables(settingsQuery);
         }
 
         @Override
-        public void displayValues() {
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, CustomVariablesPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final CustomVariables customVariables;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.customVariables = properties.customVariablesRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, CustomVariablesPanel panel) {
+            this.properties = properties;
+            this.customVariables = fromVariables(panel.jPropertiesEdit.getText());
+        }
+
+        @Override
+        public void displaySettings() {
             jPropertiesEdit.setText(toProperties(customVariables));
         }
 
         @Override
-        public void readFromGui() {
-            customVariables = fromVariables(jPropertiesEdit.getText());
-        }
-
-        @Override
-        public void applyValues() {
-            customVariablesRef.setValue(customVariables);
+        public void saveSettings() {
+            properties.customVariablesRef.setValue(customVariables);
         }
     }
 
