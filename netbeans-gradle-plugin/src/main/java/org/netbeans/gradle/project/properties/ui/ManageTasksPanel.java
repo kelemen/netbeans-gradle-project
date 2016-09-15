@@ -15,10 +15,12 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
@@ -26,7 +28,7 @@ import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 
 @SuppressWarnings("serial")
-public class ManageTasksPanel extends javax.swing.JPanel {
+public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
@@ -46,16 +48,13 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         });
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
+        return ProfileBasedPanel.createPanel(project, new ManageTasksPanel());
+    }
 
-        final ManageTasksPanel customPanel = new ManageTasksPanel();
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                return customPanel.new PropertyValues(profileQuery);
-            }
-        });
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private void sortTasks() {
@@ -168,19 +167,53 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         }
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
-        public final PropertyReference<PredefinedTasks> customTasksRef;
-        private PredefinedTasks currentTasks;
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<PredefinedTasks> customTasksRef;
 
-        public PropertyValues(ActiveSettingsQuery settings) {
-            this.customTasksRef = NbGradleCommonProperties.customTasks(settings);
-            this.currentTasks = customTasksRef.tryGetValueWithoutFallback();
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            this.customTasksRef = NbGradleCommonProperties.customTasks(settingsQuery);
         }
 
         @Override
-        public void displayValues() {
-            PredefinedTasks customTasks = currentTasks;
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
 
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, ManageTasksPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final PredefinedTasks customTasks;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.customTasks = properties.customTasksRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, ManageTasksPanel panel) {
+            this.properties = properties;
+
+            panel.updateShownInList();
+
+            DefaultListModel<PredefinedTaskItem> listedTasks = panel.getModelOfTaskList();
+            int elementCount = listedTasks.getSize();
+
+            List<PredefinedTask> newTasks = new ArrayList<>(elementCount);
+            for (int i = 0; i < elementCount; i++) {
+                @SuppressWarnings("unchecked")
+                PredefinedTaskItem current = listedTasks.getElementAt(i);
+                newTasks.add(current.getTask());
+            }
+
+            customTasks = new PredefinedTasks(newTasks);
+        }
+
+        @Override
+        public void displaySettings() {
             DefaultListModel<PredefinedTaskItem> listModel = getModelOfTaskList();
             listModel.clear();
             if (customTasks != null) {
@@ -192,25 +225,8 @@ public class ManageTasksPanel extends javax.swing.JPanel {
         }
 
         @Override
-        public void readFromGui() {
-            updateShownInList();
-
-            DefaultListModel<PredefinedTaskItem> listedTasks = getModelOfTaskList();
-            int elementCount = listedTasks.getSize();
-
-            List<PredefinedTask> newTasks = new ArrayList<>(elementCount);
-            for (int i = 0; i < elementCount; i++) {
-                @SuppressWarnings("unchecked")
-                PredefinedTaskItem current = listedTasks.getElementAt(i);
-                newTasks.add(current.getTask());
-            }
-
-            currentTasks = new PredefinedTasks(newTasks);
-        }
-
-        @Override
-        public void applyValues() {
-            customTasksRef.setValue(currentTasks != null ? currentTasks : PredefinedTasks.NO_TASKS);
+        public void saveSettings() {
+            properties.customTasksRef.setValue(customTasks != null ? customTasks : PredefinedTasks.NO_TASKS);
         }
     }
 
