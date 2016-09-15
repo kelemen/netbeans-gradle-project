@@ -24,8 +24,12 @@ import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
@@ -39,10 +43,13 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Platform-Priority");
 
     private final DefaultListModel<PlatformItem> jPlatformListModel;
+    private ProfileEditor editor;
     private boolean okPressed;
+
 
     public PlatformPriorityPanel(boolean hasOwnButtons) {
         okPressed = false;
+        editor = null;
 
         initComponents();
 
@@ -55,11 +62,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         setupEnableDisable();
     }
 
-    @Override
-    public final void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<PlatformOrder> platformPreferenceOrder = CommonGlobalSettings.platformPreferenceOrder(globalSettings);
-
-
+    private void displayPlatformOrder(PlatformOrder platformOrder) {
         JavaPlatform[] platforms
                 = JavaPlatformManager.getDefault().getInstalledPlatforms();
 
@@ -67,19 +70,18 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformListModel.setSize(platforms.length);
         jPlatformListModel.setSize(0);
 
-        List<JavaPlatform> orderedPlatforms
-                = platformPreferenceOrder.getActiveValue().orderPlatforms(Arrays.asList(platforms));
+        List<JavaPlatform> orderedPlatforms = platformOrder.orderPlatforms(Arrays.asList(platforms));
         for (JavaPlatform platform: orderedPlatforms) {
             jPlatformListModel.addElement(new PlatformItem(platform));
         }
-
-        setupEnableDisable();
     }
 
     @Override
-    public final void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<PlatformOrder> platformPreferenceOrder = CommonGlobalSettings.platformPreferenceOrder(globalSettings);
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
+    }
 
+    private PlatformOrder getPlatformOrder() {
         List<JavaPlatform> platforms = new ArrayList<>(jPlatformListModel.size());
 
         Enumeration<PlatformItem> listItems = jPlatformListModel.elements();
@@ -88,8 +90,7 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
             platforms.add(item.platform);
         }
 
-        PlatformOrder newOrder = new PlatformOrder(platforms);
-        platformPreferenceOrder.setValue(newOrder);
+        return new PlatformOrder(platforms);
     }
 
     @Override
@@ -104,7 +105,21 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         return okPressed;
     }
 
+    private void startEditor(String title, ActiveSettingsQuery settingsQuery) {
+        ProfileKey key = settingsQuery.currentProfileSettings().getValue().getKey();
+
+        editor = startEditingProfile(
+                new ProfileInfo(key, title),
+                settingsQuery);
+        editor.readFromSettings().displaySettings();
+    }
+
     public static boolean showDialog(Component parent) {
+        return showDialog(parent, CommonGlobalSettings.getDefaultActiveSettingsQuery());
+    }
+
+    public static boolean showDialog(Component parent, ActiveSettingsQuery settingsQuery) {
+        // TODO: I18N
         String title = "Platform order";
         Window parentWindow = SwingUtilities.getWindowAncestor(parent);
         JDialog dlg = new JDialog(parentWindow, title, Dialog.ModalityType.DOCUMENT_MODAL);
@@ -113,7 +128,8 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         contentPane.setLayout(new GridLayout(1, 1));
 
         PlatformPriorityPanel content = new PlatformPriorityPanel(true);
-        content.updateSettings(CommonGlobalSettings.getDefaultActiveSettingsQuery());
+        content.startEditor(title, settingsQuery);
+
         contentPane.add(content);
 
         dlg.pack();
@@ -184,6 +200,52 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
 
     private void closeWindow() {
         SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<PlatformOrder> platformOrderRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            platformOrderRef = CommonGlobalSettings.platformPreferenceOrder(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, PlatformPriorityPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final PlatformOrder platformOrder;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.platformOrder = properties.platformOrderRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, PlatformPriorityPanel panel) {
+            this.properties = properties;
+            this.platformOrder = panel.getPlatformOrder();
+        }
+
+        @Override
+        public void displaySettings() {
+            displayPlatformOrder(platformOrder != null
+                    ? platformOrder
+                    : properties.platformOrderRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.platformOrderRef.setValue(platformOrder);
+        }
     }
 
     /**
@@ -306,7 +368,9 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
     }//GEN-LAST:event_jCancelButtonActionPerformed
 
     private void jOkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOkButtonActionPerformed
-        saveSettings(CommonGlobalSettings.getDefaultActiveSettingsQuery());
+        if (editor != null) {
+            editor.readFromGui().saveSettings();
+        }
 
         okPressed = true;
         closeWindow();

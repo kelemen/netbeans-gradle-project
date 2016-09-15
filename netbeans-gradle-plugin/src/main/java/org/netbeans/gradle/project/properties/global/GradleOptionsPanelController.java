@@ -3,6 +3,9 @@ package org.netbeans.gradle.project.properties.global;
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
 import org.netbeans.gradle.project.properties.ui.GlobalGradleSettingsPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
@@ -15,11 +18,12 @@ import org.openide.util.Lookup;
         keywordsCategory = "Advanced/Gradle")
 public final class GradleOptionsPanelController extends OptionsPanelController {
     private GlobalGradleSettingsPanel settingsPanel;
+    private ProfileEditor profileEditor;
 
     private GlobalGradleSettingsPanel getPanel() {
         if (settingsPanel == null) {
-            settingsPanel = new GlobalGradleSettingsPanel();
-            updateEditor(settingsPanel);
+            settingsPanel = new GlobalGradleSettingsPanel(getSettings());
+            update();
         }
         return settingsPanel;
     }
@@ -28,18 +32,26 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
         return CommonGlobalSettings.getDefault().getActiveSettingsQuery();
     }
 
-    private void updateEditor(GlobalSettingsEditor editor) {
-        editor.updateSettings(getSettings());
+    private ProfileEditor getEditor() {
+        ProfileEditor result = profileEditor;
+        if (result == null) {
+            result = getPanel().startEditingProfile(
+                    new ProfileInfo(ProfileKey.GLOBAL_PROFILE, "Global settings"),
+                    getSettings());
+        }
+        return result;
     }
 
     @Override
     public void update() {
-        updateEditor(getPanel());
+        ProfileEditor editor = getEditor();
+        editor.readFromSettings().displaySettings();
     }
 
     @Override
     public void applyChanges() {
-        getPanel().saveSettings(getSettings());
+        ProfileEditor editor = getEditor();
+        editor.readFromGui().saveSettings();
     }
 
     @Override

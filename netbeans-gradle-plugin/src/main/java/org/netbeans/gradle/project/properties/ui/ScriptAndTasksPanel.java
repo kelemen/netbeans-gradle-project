@@ -14,7 +14,10 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -39,7 +42,7 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     }
 
     private static String argListToText(List<String> args) {
-        if (args.isEmpty()) {
+        if (args == null || args.isEmpty()) {
             return "";
         }
 
@@ -73,31 +76,24 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
     }
 
     @Override
-    public final void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
-        PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
-        PropertyReference<ScriptPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
-
-        fillPlatformCombo();
-
-        jGradleArgs.setText(argListToText(gradleArgs.getActiveValue()));
-        jGradleJVMArgs.setText(argListToText(gradleJvmArgs.getActiveValue()));
-
-        ScriptPlatform currentJdk = defaultJdk.getActiveValue();
-        if (currentJdk != null) {
-            jJdkCombo.setSelectedItem(new JavaPlatformItem(currentJdk.getJavaPlatform()));
-        }
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
-    @Override
-    public final void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<List<String>> gradleArgs = CommonGlobalSettings.gradleArgs(globalSettings);
-        PropertyReference<List<String>> gradleJvmArgs = CommonGlobalSettings.gradleJvmArgs(globalSettings);
-        PropertyReference<ScriptPlatform> defaultJdk = CommonGlobalSettings.defaultJdk(globalSettings);
+    private void displayGradleArgs(List<String> args) {
+        jGradleArgs.setText(argListToText(args));
+    }
 
-        gradleArgs.setValue(textToArgsList(getGradleArgs()));
-        gradleJvmArgs.setValue(textToArgsList(getGradleJvmArgs()));
-        defaultJdk.setValue(getScriptJdk());
+    private void displayGradleJvmArgs(List<String> jvmArgs) {
+        jGradleJVMArgs.setText(argListToText(jvmArgs));
+    }
+
+    private void displayScriptPlatform(ScriptPlatform jdk) {
+        fillPlatformCombo();
+
+        if (jdk != null) {
+            jJdkCombo.setSelectedItem(new JavaPlatformItem(jdk.getJavaPlatform()));
+        }
     }
 
     @Override
@@ -167,6 +163,68 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
 
             final JavaPlatformItem other = (JavaPlatformItem)obj;
             return Objects.equals(this.platform, other.platform);
+        }
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<ScriptPlatform> defaultJdkRef;
+        private final PropertyReference<List<String>> gradleArgsRef;
+        private final PropertyReference<List<String>> gradleJvmArgsRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            defaultJdkRef = CommonGlobalSettings.defaultJdk(settingsQuery);
+            gradleArgsRef = CommonGlobalSettings.gradleArgs(settingsQuery);
+            gradleJvmArgsRef = CommonGlobalSettings.gradleJvmArgs(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, ScriptAndTasksPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final ScriptPlatform defaultJdk;
+        private final List<String> gradleArgs;
+        private final List<String> gradleJvmArgs;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+
+            this.defaultJdk = properties.defaultJdkRef.tryGetValueWithoutFallback();
+            this.gradleArgs = properties.gradleArgsRef.tryGetValueWithoutFallback();
+            this.gradleJvmArgs = properties.gradleJvmArgsRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, ScriptAndTasksPanel panel) {
+            this.properties = properties;
+
+            this.defaultJdk = panel.getScriptJdk();
+            this.gradleArgs = textToArgsList(panel.getGradleArgs());
+            this.gradleJvmArgs = textToArgsList(panel.getGradleJvmArgs());
+        }
+
+        @Override
+        public void displaySettings() {
+            displayGradleArgs(gradleArgs);
+            displayGradleJvmArgs(gradleJvmArgs);
+            displayScriptPlatform(defaultJdk != null
+                    ? defaultJdk
+                    : properties.defaultJdkRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.defaultJdkRef.setValue(defaultJdk);
+            properties.gradleArgsRef.setValue(gradleArgs);
+            properties.gradleJvmArgsRef.setValue(gradleJvmArgs);
         }
     }
 

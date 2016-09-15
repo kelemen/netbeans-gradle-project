@@ -1,9 +1,13 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
+import javax.swing.JCheckBox;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -22,25 +26,8 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
     }
 
     @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<ModelLoadingStrategy> modelLoadingStrategy = CommonGlobalSettings.modelLoadingStrategy(globalSettings);
-        PropertyReference<Boolean> loadRootProjectFirst = CommonGlobalSettings.loadRootProjectFirst(globalSettings);
-        PropertyReference<Boolean> mayRelyOnJavaOfScript = CommonGlobalSettings.mayRelyOnJavaOfScript(globalSettings);
-
-        modelLoadingStrategyCombo.setSelectedValue(modelLoadingStrategy.getActiveValue());
-        jLoadRootProjectFirst.setSelected(loadRootProjectFirst.getActiveValue());
-        jReliableJavaVersionCheck.setSelected(mayRelyOnJavaOfScript.getActiveValue());
-    }
-
-    @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<ModelLoadingStrategy> modelLoadingStrategy = CommonGlobalSettings.modelLoadingStrategy(globalSettings);
-        PropertyReference<Boolean> loadRootProjectFirst = CommonGlobalSettings.loadRootProjectFirst(globalSettings);
-        PropertyReference<Boolean> mayRelyOnJavaOfScript = CommonGlobalSettings.mayRelyOnJavaOfScript(globalSettings);
-
-        modelLoadingStrategy.setValue(modelLoadingStrategyCombo.getSelectedValue());
-        loadRootProjectFirst.setValue(jLoadRootProjectFirst.isSelected());
-        mayRelyOnJavaOfScript.setValue(jReliableJavaVersionCheck.isSelected());
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     @Override
@@ -49,6 +36,84 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private void displayModelLoadingStrategy(ModelLoadingStrategy value) {
+        if (value != null) {
+            modelLoadingStrategyCombo.setSelectedValue(value);
+        }
+    }
+
+    private void displayCheck(JCheckBox checkbox, Boolean value, PropertyReference<Boolean> propertyRef) {
+        displayCheck(checkbox, value != null ? value : propertyRef.getActiveValue());
+    }
+
+    private void displayCheck(JCheckBox checkbox, Boolean value) {
+        if (value != null) {
+            checkbox.setSelected(value);
+        }
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<ModelLoadingStrategy> modelLoadingStrategyRef;
+        private final PropertyReference<Boolean> loadRootProjectFirstRef;
+        private final PropertyReference<Boolean> mayRelyOnJavaOfScriptRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            modelLoadingStrategyRef = CommonGlobalSettings.modelLoadingStrategy(settingsQuery);
+            loadRootProjectFirstRef = CommonGlobalSettings.loadRootProjectFirst(settingsQuery);
+            mayRelyOnJavaOfScriptRef = CommonGlobalSettings.mayRelyOnJavaOfScript(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, BuildScriptParsingPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final ModelLoadingStrategy modelLoadingStrategy;
+        private final Boolean loadRootProjectFirst;
+        private final Boolean mayRelyOnJavaOfScript;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+
+            this.modelLoadingStrategy = properties.modelLoadingStrategyRef.tryGetValueWithoutFallback();
+            this.loadRootProjectFirst = properties.loadRootProjectFirstRef.tryGetValueWithoutFallback();
+            this.mayRelyOnJavaOfScript = properties.mayRelyOnJavaOfScriptRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, BuildScriptParsingPanel panel) {
+            this.properties = properties;
+
+            this.modelLoadingStrategy = panel.modelLoadingStrategyCombo.getSelectedValue();
+            this.loadRootProjectFirst = panel.jLoadRootProjectFirst.isSelected();
+            this.mayRelyOnJavaOfScript = panel.jReliableJavaVersionCheck.isSelected();
+        }
+
+        @Override
+        public void displaySettings() {
+            displayModelLoadingStrategy(modelLoadingStrategy != null
+                    ? modelLoadingStrategy
+                    : properties.modelLoadingStrategyRef.getActiveValue());
+            displayCheck(jLoadRootProjectFirst, loadRootProjectFirst, properties.loadRootProjectFirstRef);
+            displayCheck(jReliableJavaVersionCheck, mayRelyOnJavaOfScript, properties.mayRelyOnJavaOfScriptRef);
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.modelLoadingStrategyRef.setValue(modelLoadingStrategy);
+            properties.loadRootProjectFirstRef.setValue(loadRootProjectFirst);
+            properties.mayRelyOnJavaOfScriptRef.setValue(mayRelyOnJavaOfScript);
+        }
     }
 
     /**

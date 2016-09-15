@@ -1,10 +1,7 @@
 package org.netbeans.gradle.project.properties.global;
 
-import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
 
-public interface GlobalSettingsEditor {
-    public void updateSettings(ActiveSettingsQuery globalSettings);
-    public void saveSettings(ActiveSettingsQuery globalSettings);
-
+public interface GlobalSettingsEditor extends ProfileEditorFactory {
     public SettingsEditorProperties getProperties();
 }

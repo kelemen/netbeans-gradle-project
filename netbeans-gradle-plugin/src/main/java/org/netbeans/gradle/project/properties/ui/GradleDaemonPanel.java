@@ -5,6 +5,9 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -34,21 +37,25 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
                 componentDisabler(jDaemonTimeoutSpinner));
     }
 
-    @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Integer> gradleDaemonTimeoutSec = CommonGlobalSettings.gradleDaemonTimeoutSec(globalSettings);
-        Integer timeout = gradleDaemonTimeoutSec.getActiveValue();
-        jUseDefaultDaemonTimeoutCheck.setSelected(timeout == null);
+    private int getDisplayedTimeout(PropertyRefs properties, Integer seconds) {
+        if (seconds != null) {
+            return seconds;
+        }
 
-        int displayTimeoutSec = timeout != null ? timeout : DEFAULT_TIMEOUT_SEC;
+        Integer active = properties.gradleDaemonTimeoutSecRef.getActiveValue();
+        return active != null ? active : DEFAULT_TIMEOUT_SEC;
+    }
+
+    private void displayDaemonTimeout(PropertyRefs properties, Integer seconds) {
+        jUseDefaultDaemonTimeoutCheck.setSelected(seconds == null);
+        int displayTimeoutSec = getDisplayedTimeout(properties, seconds);
 
         jDaemonTimeoutSpinner.setValue(longToInt(DISPLAY_UNIT.convert(displayTimeoutSec, TimeUnit.SECONDS)));
     }
 
     @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Integer> gradleDaemonTimeoutSec = CommonGlobalSettings.gradleDaemonTimeoutSec(globalSettings);
-        gradleDaemonTimeoutSec.setValue(getDaemonTimeoutInSec(gradleDaemonTimeoutSec));
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private static int longToInt(long value) {
@@ -57,7 +64,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
         return (int)value;
     }
 
-    private Integer getDaemonTimeoutInSec(PropertyReference<Integer> gradleDaemonTimeoutSec) {
+    private Integer getDaemonTimeoutInSec(PropertyRefs properties) {
         if (jUseDefaultDaemonTimeoutCheck.isSelected()) {
             return null;
         }
@@ -71,7 +78,7 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
 
         return displayTimeout >= 0
                 ? longToInt(DISPLAY_UNIT.toSeconds(displayTimeout))
-                : gradleDaemonTimeoutSec.getActiveValue();
+                : properties.gradleDaemonTimeoutSecRef.tryGetValueWithoutFallback();
     }
 
     @Override
@@ -80,6 +87,50 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<Integer> gradleDaemonTimeoutSecRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            gradleDaemonTimeoutSecRef = CommonGlobalSettings.gradleDaemonTimeoutSec(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, GradleDaemonPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final Integer gradleDaemonTimeoutSec;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.gradleDaemonTimeoutSec = properties.gradleDaemonTimeoutSecRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, GradleDaemonPanel panel) {
+            this.properties = properties;
+            this.gradleDaemonTimeoutSec = panel.getDaemonTimeoutInSec(properties);
+        }
+
+        @Override
+        public void displaySettings() {
+            displayDaemonTimeout(properties, gradleDaemonTimeoutSec);
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.gradleDaemonTimeoutSecRef.setValue(gradleDaemonTimeoutSec);
+        }
     }
 
     /**

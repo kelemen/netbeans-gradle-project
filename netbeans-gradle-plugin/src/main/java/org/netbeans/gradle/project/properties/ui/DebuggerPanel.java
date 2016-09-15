@@ -7,6 +7,9 @@ import org.netbeans.gradle.project.java.JavaExtensionDef;
 import org.netbeans.gradle.project.java.properties.DebugMode;
 import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -22,26 +25,20 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
         this.debugModeHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
     }
 
-    private static ActiveSettingsQuery javaSettings(ActiveSettingsQuery rootSettings) {
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
         // FIXME: Once we allow extensions to define their own global settings page,
         //        this explicit conversion won't be be needed anymore.
-        return new ExtensionActiveSettingsQuery(rootSettings, JavaExtensionDef.EXTENSION_NAME);
+        //        Also, this conversion prevents this panel to be used from the project properties because we would
+        //        double wrap the settings query.
+        ActiveSettingsQuery javaSettings = new ExtensionActiveSettingsQuery(profileQuery, JavaExtensionDef.EXTENSION_NAME);
+        return new PropertyRefs(javaSettings);
     }
 
-    @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        ActiveSettingsQuery javaSettings = javaSettings(globalSettings);
-
-        PropertyReference<DebugMode> debugMode = JavaProjectProperties.debugMode(javaSettings);
-        debugModeHandler.setSelectedValue(debugMode.getActiveValue());
-    }
-
-    @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        ActiveSettingsQuery javaSettings = javaSettings(globalSettings);
-
-        PropertyReference<DebugMode> debugMode = JavaProjectProperties.debugMode(javaSettings);
-        debugMode.setValue(debugModeHandler.getSelectedValue());
+    private void displayDebugMode(DebugMode debugMode) {
+        if (debugMode != null) {
+            debugModeHandler.setSelectedValue(debugMode);
+        }
     }
 
     @Override
@@ -50,6 +47,52 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<DebugMode> debugModeRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            debugModeRef = JavaProjectProperties.debugMode(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, DebuggerPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final DebugMode debugMode;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.debugMode = properties.debugModeRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, DebuggerPanel panel) {
+            this.properties = properties;
+            this.debugMode = panel.debugModeHandler.getSelectedValue();
+        }
+
+        @Override
+        public void displaySettings() {
+            displayDebugMode(debugMode != null
+                    ? debugMode
+                    : properties.debugModeRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.debugModeRef.setValue(debugMode);
+        }
     }
 
     /**

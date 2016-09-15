@@ -1,9 +1,13 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
+import javax.swing.JCheckBox;
 import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -20,25 +24,8 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
     }
 
     @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Boolean> detectProjectDependenciesByJarName = CommonGlobalSettings.detectProjectDependenciesByJarName(globalSettings);
-        PropertyReference<Boolean> compileOnSave = CommonGlobalSettings.compileOnSave(globalSettings);
-        PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.projectCacheSize(globalSettings);
-
-        jDetectProjectDependenciesByName.setSelected(detectProjectDependenciesByJarName.getActiveValue());
-        jCompileOnSaveCheckbox.setSelected(compileOnSave.getActiveValue());
-        jProjectCacheSize.setValue(projectCacheSize.getActiveValue());
-    }
-
-    @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Boolean> detectProjectDependenciesByJarName = CommonGlobalSettings.detectProjectDependenciesByJarName(globalSettings);
-        PropertyReference<Boolean> compileOnSave = CommonGlobalSettings.compileOnSave(globalSettings);
-        PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.projectCacheSize(globalSettings);
-
-        projectCacheSize.setValue(getProjectCacheSize(projectCacheSize));
-        compileOnSave.setValue(jCompileOnSaveCheckbox.isSelected());
-        detectProjectDependenciesByJarName.setValue(jDetectProjectDependenciesByName.isSelected());
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     @Override
@@ -49,16 +36,92 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
         return result.create();
     }
 
-    private int getProjectCacheSize(PropertyReference<Integer> projectCacheSize) {
+    private void displayCheck(JCheckBox checkbox, Boolean value, PropertyReference<Boolean> propertyRef) {
+        displayCheck(checkbox, value != null ? value : propertyRef.getActiveValue());
+    }
+
+    private void displayCheck(JCheckBox checkbox, Boolean value) {
+        if (value != null) {
+            checkbox.setSelected(value);
+        }
+    }
+
+    private void displayProjectCacheSize(Integer value) {
+        if (value != null) {
+            jProjectCacheSize.setValue(value);
+        }
+    }
+
+    private int getProjectCacheSize(PropertyRefs properties) {
         Object value = jProjectCacheSize.getValue();
         int result;
         if (value instanceof Number) {
             result = ((Number)value).intValue();
         }
         else {
-            result = projectCacheSize.getActiveValue();
+            result = properties.projectCacheSizeRef.getActiveValue();
         }
         return result > 0 ? result : 1;
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<Boolean> detectProjectDependenciesByJarNameRef;
+        private final PropertyReference<Boolean> compileOnSaveRef;
+        private final PropertyReference<Integer> projectCacheSizeRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            detectProjectDependenciesByJarNameRef = CommonGlobalSettings.detectProjectDependenciesByJarName(settingsQuery);
+            compileOnSaveRef = CommonGlobalSettings.compileOnSave(settingsQuery);
+            projectCacheSizeRef = CommonGlobalSettings.projectCacheSize(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, OtherOptionsPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final Boolean detectProjectDependenciesByJarName;
+        private final Boolean compileOnSave;
+        private final Integer projectCacheSize;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.detectProjectDependenciesByJarName = properties.detectProjectDependenciesByJarNameRef.tryGetValueWithoutFallback();
+            this.compileOnSave = properties.compileOnSaveRef.tryGetValueWithoutFallback();
+            this.projectCacheSize = properties.projectCacheSizeRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, OtherOptionsPanel panel) {
+            this.properties = properties;
+            this.detectProjectDependenciesByJarName = panel.jDetectProjectDependenciesByName.isSelected();
+            this.compileOnSave = panel.jCompileOnSaveCheckbox.isSelected();
+            this.projectCacheSize = panel.getProjectCacheSize(properties);
+        }
+
+        @Override
+        public void displaySettings() {
+            displayCheck(jDetectProjectDependenciesByName, detectProjectDependenciesByJarName, properties.detectProjectDependenciesByJarNameRef);
+            displayCheck(jCompileOnSaveCheckbox, compileOnSave, properties.compileOnSaveRef);
+            displayProjectCacheSize(projectCacheSize != null
+                    ? projectCacheSize
+                    : properties.projectCacheSizeRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.detectProjectDependenciesByJarNameRef.setValue(detectProjectDependenciesByJarName);
+            properties.compileOnSaveRef.setValue(compileOnSave);
+            properties.projectCacheSizeRef.setValue(projectCacheSize);
+        }
     }
 
     /**

@@ -8,6 +8,9 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
@@ -27,6 +30,11 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         nodeNamePanel = new ProjectNodeNamePanel(false);
         jProjectNodeNameHolder.add(nodeNamePanel);
         fillJavaSourcesDisplayModeCombo();
+    }
+
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private void fillJavaSourcesDisplayModeCombo() {
@@ -62,29 +70,11 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         }
     }
 
-    @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<String> displayNamePattern = NbGradleCommonProperties.displayNamePattern(globalSettings);
-        PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
-
-        nodeNamePanel.updatePattern(displayNamePattern.getActiveValue(), null);
-        selectSourcesDisplayMode(javaSourcesDisplayMode.getActiveValue());
-    }
-
     private void selectSourcesDisplayMode(JavaSourcesDisplayMode newMode) {
         jSourcesDisplayMode.setSelectedItem(new SourcesDisplayModeItem(newMode));
     }
 
-    @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<String> displayNamePattern = NbGradleCommonProperties.displayNamePattern(globalSettings);
-        PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode = CommonGlobalSettings.javaSourcesDisplayMode(globalSettings);
-
-        displayNamePattern.setValue(nodeNamePanel.getNamePattern());
-        javaSourcesDisplayMode.setValue(javaSourcesDisplayMode());
-    }
-
-    private JavaSourcesDisplayMode javaSourcesDisplayMode() {
+    private JavaSourcesDisplayMode getJavaSourcesDisplayMode() {
         SourcesDisplayModeItem selected = (SourcesDisplayModeItem)jSourcesDisplayMode.getSelectedItem();
         if (selected == null) {
             return JavaSourcesDisplayMode.DEFAULT_MODE;
@@ -128,6 +118,59 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         @Override
         public String toString() {
             return displayName;
+        }
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<String> displayNamePatternRef;
+        private final PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayModeRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            displayNamePatternRef = NbGradleCommonProperties.displayNamePattern(settingsQuery);
+            javaSourcesDisplayModeRef = CommonGlobalSettings.javaSourcesDisplayMode(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, AppearancePanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final String displayNamePattern;
+        private final JavaSourcesDisplayMode javaSourcesDisplayMode;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.displayNamePattern = properties.displayNamePatternRef.tryGetValueWithoutFallback();
+            this.javaSourcesDisplayMode = properties.javaSourcesDisplayModeRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, AppearancePanel panel) {
+            this.properties = properties;
+            this.displayNamePattern = panel.nodeNamePanel.getNamePattern();
+            this.javaSourcesDisplayMode = panel.getJavaSourcesDisplayMode();
+        }
+
+        @Override
+        public void displaySettings() {
+            nodeNamePanel.updatePattern(displayNamePattern, properties.displayNamePatternRef);
+            selectSourcesDisplayMode(javaSourcesDisplayMode != null
+                    ? javaSourcesDisplayMode
+                    : properties.javaSourcesDisplayModeRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.displayNamePatternRef.setValue(displayNamePattern);
+            properties.javaSourcesDisplayModeRef.setValue(javaSourcesDisplayMode);
         }
     }
 

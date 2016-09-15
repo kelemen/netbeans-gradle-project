@@ -1,8 +1,12 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.net.URL;
+import javax.swing.JCheckBox;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
@@ -22,33 +26,24 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
     }
 
     @Override
-    public void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Boolean> alwaysClearOutput = CommonGlobalSettings.alwaysClearOutput(globalSettings);
-        PropertyReference<SelfMaintainedTasks> selfMaintainedTasks = CommonGlobalSettings.selfMaintainedTasks(globalSettings);
-        PropertyReference<Boolean> skipTests = CommonGlobalSettings.skipTests(globalSettings);
-        PropertyReference<Boolean> skipCheck = CommonGlobalSettings.skipCheck(globalSettings);
-        PropertyReference<Boolean> replaceLfOnStdIn = CommonGlobalSettings.replaceLfOnStdIn(globalSettings);
-
-        jAlwayClearOutput.setSelected(alwaysClearOutput.getActiveValue());
-        selfMaintainedTasksCombo.setSelectedValue(selfMaintainedTasks.getActiveValue());
-        jSkipTestsCheck.setSelected(skipTests.getActiveValue());
-        jSkipCheckCheckBox.setSelected(skipCheck.getActiveValue());
-        jReplaceLfOnStdIn.setSelected(replaceLfOnStdIn.getActiveValue());
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
-    @Override
-    public void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<Boolean> alwaysClearOutput = CommonGlobalSettings.alwaysClearOutput(globalSettings);
-        PropertyReference<SelfMaintainedTasks> selfMaintainedTasks = CommonGlobalSettings.selfMaintainedTasks(globalSettings);
-        PropertyReference<Boolean> skipTests = CommonGlobalSettings.skipTests(globalSettings);
-        PropertyReference<Boolean> skipCheck = CommonGlobalSettings.skipCheck(globalSettings);
-        PropertyReference<Boolean> replaceLfOnStdIn = CommonGlobalSettings.replaceLfOnStdIn(globalSettings);
+    private void displayCheck(JCheckBox checkbox, Boolean value, PropertyReference<Boolean> propertyRef) {
+        displayCheck(checkbox, value != null ? value : propertyRef.getActiveValue());
+    }
 
-        skipTests.setValue(jSkipTestsCheck.isSelected());
-        skipCheck.setValue(jSkipCheckCheckBox.isSelected());
-        alwaysClearOutput.setValue(jAlwayClearOutput.isSelected());
-        selfMaintainedTasks.setValue(selfMaintainedTasksCombo.getSelectedValue());
-        replaceLfOnStdIn.setValue(jReplaceLfOnStdIn.isSelected());
+    private void displayCheck(JCheckBox checkbox, Boolean value) {
+        if (value != null) {
+            checkbox.setSelected(value);
+        }
+    }
+
+    private void displaySelfMaintainedTask(SelfMaintainedTasks value) {
+        if (value != null) {
+            selfMaintainedTasksCombo.setSelectedValue(value);
+        }
     }
 
     @Override
@@ -57,6 +52,82 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         result.setHelpUrl(HELP_URL);
 
         return result.create();
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<Boolean> alwaysClearOutputRef;
+        private final PropertyReference<SelfMaintainedTasks> selfMaintainedTasksRef;
+        private final PropertyReference<Boolean> skipTestsRef;
+        private final PropertyReference<Boolean> skipCheckRef;
+        private final PropertyReference<Boolean> replaceLfOnStdInRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            alwaysClearOutputRef = CommonGlobalSettings.alwaysClearOutput(settingsQuery);
+            selfMaintainedTasksRef = CommonGlobalSettings.selfMaintainedTasks(settingsQuery);
+            skipTestsRef = CommonGlobalSettings.skipTests(settingsQuery);
+            skipCheckRef = CommonGlobalSettings.skipCheck(settingsQuery);
+            replaceLfOnStdInRef = CommonGlobalSettings.replaceLfOnStdIn(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, TaskExecutionPanel.this);
+        }
+    }
+
+    private class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+
+        private final Boolean alwaysClearOutput;
+        private final SelfMaintainedTasks selfMaintainedTasks;
+        private final Boolean skipTests;
+        private final Boolean skipCheck;
+        private final Boolean replaceLfOnStdIn;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+
+            this.alwaysClearOutput = properties.alwaysClearOutputRef.tryGetValueWithoutFallback();
+            this.selfMaintainedTasks = properties.selfMaintainedTasksRef.tryGetValueWithoutFallback();
+            this.skipTests = properties.skipTestsRef.tryGetValueWithoutFallback();
+            this.skipCheck = properties.skipCheckRef.tryGetValueWithoutFallback();
+            this.replaceLfOnStdIn = properties.replaceLfOnStdInRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, TaskExecutionPanel panel) {
+            this.properties = properties;
+
+            this.alwaysClearOutput = panel.jAlwayClearOutput.isSelected();
+            this.selfMaintainedTasks = panel.selfMaintainedTasksCombo.getSelectedValue();
+            this.skipTests = panel.jSkipTestsCheck.isSelected();
+            this.skipCheck = panel.jSkipCheckCheckBox.isSelected();
+            this.replaceLfOnStdIn = panel.jReplaceLfOnStdIn.isSelected();
+        }
+
+        @Override
+        public void displaySettings() {
+            displaySelfMaintainedTask(selfMaintainedTasks != null
+                    ? selfMaintainedTasks
+                    : properties.selfMaintainedTasksRef.getActiveValue());
+            displayCheck(jAlwayClearOutput, alwaysClearOutput, properties.alwaysClearOutputRef);
+            displayCheck(jSkipTestsCheck, skipTests, properties.skipTestsRef);
+            displayCheck(jSkipCheckCheckBox, skipCheck, properties.skipCheckRef);
+            displayCheck(jReplaceLfOnStdIn, replaceLfOnStdIn, properties.replaceLfOnStdInRef);
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.alwaysClearOutputRef.setValue(alwaysClearOutput);
+            properties.selfMaintainedTasksRef.setValue(selfMaintainedTasks);
+            properties.skipTestsRef.setValue(skipTests);
+            properties.skipCheckRef.setValue(skipCheck);
+            properties.replaceLfOnStdInRef.setValue(replaceLfOnStdIn);
+        }
     }
 
     /**

@@ -6,6 +6,9 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
 import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
@@ -24,17 +27,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
         initComponents();
     }
 
-    private void selectGradleLocation(GradleLocation newLocation) {
-        selectedGradleLocation = newLocation;
-        jGradleLocationDescription.setText(newLocation != null ? newLocation.toLocalizedString() : "");
-    }
-
-    @Override
-    public final void updateSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<GradleLocationDef> gradleLocation = CommonGlobalSettings.gradleLocation(globalSettings);
-        PropertyReference<File> gradleUserHomeDir = CommonGlobalSettings.gradleUserHomeDir(globalSettings);
-
-        GradleLocationDef locationDef = gradleLocation.getActiveValue();
+    private void displayLocationDef(GradleLocationDef locationDef) {
         if (locationDef != null) {
             selectGradleLocation(locationDef.getLocation());
             jPreferWrapperCheck.setSelected(locationDef.isPreferWrapper());
@@ -43,18 +36,20 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
             selectGradleLocation(null);
             jPreferWrapperCheck.setSelected(false);
         }
+    }
 
-        File userHome = gradleUserHomeDir.getActiveValue();
+    private void displayUserHome(File userHome) {
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
     }
 
-    @Override
-    public final void saveSettings(ActiveSettingsQuery globalSettings) {
-        PropertyReference<GradleLocationDef> gradleLocation = CommonGlobalSettings.gradleLocation(globalSettings);
-        PropertyReference<File> gradleUserHomeDir = CommonGlobalSettings.gradleUserHomeDir(globalSettings);
+    private void selectGradleLocation(GradleLocation newLocation) {
+        selectedGradleLocation = newLocation;
+        jGradleLocationDescription.setText(newLocation != null ? newLocation.toLocalizedString() : "");
+    }
 
-        gradleLocation.setValue(getGradleLocationDef());
-        gradleUserHomeDir.setValue(getGradleUserHomeDir());
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     @Override
@@ -81,6 +76,60 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
 
         result = result.trim();
         return result.isEmpty() ? null : new File(result);
+    }
+
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<GradleLocationDef> gradleLocationRef;
+        private final PropertyReference<File> gradleUserHomeDirRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            gradleLocationRef = CommonGlobalSettings.gradleLocation(settingsQuery);
+            gradleUserHomeDirRef = CommonGlobalSettings.gradleUserHomeDir(settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, GradleInstallationPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final GradleLocationDef locationDef;
+        private final File userHome;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.locationDef = properties.gradleLocationRef.tryGetValueWithoutFallback();
+            this.userHome = properties.gradleUserHomeDirRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, GradleInstallationPanel panel) {
+            this.properties = properties;
+            this.locationDef = panel.getGradleLocationDef();
+            this.userHome = panel.getGradleUserHomeDir();
+        }
+
+        @Override
+        public void displaySettings() {
+            displayLocationDef(locationDef != null
+                    ? locationDef
+                    : properties.gradleLocationRef.getActiveValue());
+            displayUserHome(userHome != null
+                    ? userHome
+                    : properties.gradleUserHomeDirRef.getActiveValue());
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.gradleLocationRef.setValue(locationDef);
+            properties.gradleUserHomeDirRef.setValue(userHome);
+        }
     }
 
     /**
