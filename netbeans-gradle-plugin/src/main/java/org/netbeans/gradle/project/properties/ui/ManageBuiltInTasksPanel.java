@@ -21,15 +21,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
@@ -39,14 +40,14 @@ import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
 @SuppressWarnings("serial")
-public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
+public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final Logger LOGGER = Logger.getLogger(ManageBuiltInTasksPanel.class.getName());
 
     private final NbGradleProject project;
     private final CustomActionPanel jActionPanel;
     private BuiltInTaskItem lastShownItem;
     private final Map<String, SavedTask> toSaveTasks;
-    private PropertyValues currentEditor;
+    private PropertyRefs currentEditor;
 
     private ManageBuiltInTasksPanel(NbGradleProject project) {
         this.project = project;
@@ -77,18 +78,12 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
     }
 
     public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        return ProfileBasedPanel.createPanel(project, new ManageBuiltInTasksPanel(project));
+    }
 
-        final ManageBuiltInTasksPanel customPanel = new ManageBuiltInTasksPanel(project);
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                PropertyValues currentEditor = customPanel.new PropertyValues(project, profileQuery);
-                customPanel.currentEditor = currentEditor;
-
-                return currentEditor;
-            }
-        });
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(project, profileQuery);
     }
 
     private void setEnableChildrenRecursive(Component component, boolean enabled) {
@@ -251,6 +246,77 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         setEnabledDisabledState();
     }
 
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<BuiltInTasks> builtInTasksRef;
+
+        public PropertyRefs(NbGradleProject ownerProject, ActiveSettingsQuery settingsQuery) {
+            this.builtInTasksRef = NbGradleCommonProperties.builtInTasks(ownerProject, settingsQuery);
+        }
+
+        @Override
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, ManageBuiltInTasksPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final Map<String, SavedTask> modifiedCommands;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.modifiedCommands = new HashMap<>();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, ManageBuiltInTasksPanel panel) {
+            this.properties = properties;
+
+            panel.saveLastShown();
+            this.modifiedCommands = new HashMap<>(panel.toSaveTasks);
+        }
+
+        @Override
+        public void displaySettings() {
+            ManageBuiltInTasksPanel.this.currentEditor = properties;
+
+            toSaveTasks.clear();
+            toSaveTasks.putAll(modifiedCommands);
+
+            showSelectedItem();
+        }
+
+        @Override
+        public void saveSettings() {
+            PropertyReference<BuiltInTasks> builtInTasksRef = properties.builtInTasksRef;
+            BuiltInTasks currentTasks = builtInTasksRef.tryGetValueWithoutFallback();
+            PredefinedTasks currentTaskList = currentTasks != null
+                    ? currentTasks.getAllTasks()
+                    : PredefinedTasks.NO_TASKS;
+
+            Map<String, PredefinedTask> taskMap = CollectionUtils.newLinkedHashMap(currentTaskList.getTasks().size());
+            for (PredefinedTask task: currentTaskList.getTasks()) {
+                String command = task.getDisplayName();
+                taskMap.put(command, task);
+            }
+
+            for (SavedTask task: modifiedCommands.values()) {
+                if (task.isInherited()) {
+                    taskMap.remove(task.getCommand());
+                }
+                else {
+                    taskMap.put(task.getCommand(), task.getTaskDef());
+                }
+            }
+
+            builtInTasksRef.setValue(BuiltInTasksProperty.createValue(taskMap.values()));
+        }
+    }
+
     private static class SavedTask {
         private final PredefinedTask taskDef;
         private final boolean inherited;
@@ -313,57 +379,6 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel {
         @Override
         public String toString() {
             return displayName;
-        }
-    }
-
-    private final class PropertyValues implements ProfileValuesEditor {
-        public final PropertyReference<BuiltInTasks> builtInTasksRef;
-        private final Map<String, SavedTask> modifiedCommands;
-
-        public PropertyValues(NbGradleProject ownerProject, ActiveSettingsQuery settings) {
-            this.builtInTasksRef = NbGradleCommonProperties.builtInTasks(ownerProject, settings);
-            this.modifiedCommands = new HashMap<>();
-        }
-
-        @Override
-        public void displayValues() {
-            toSaveTasks.clear();
-            toSaveTasks.putAll(modifiedCommands);
-
-            showSelectedItem();
-        }
-
-        @Override
-        public void readFromGui() {
-            saveLastShown();
-
-            modifiedCommands.clear();
-            modifiedCommands.putAll(toSaveTasks);
-        }
-
-        @Override
-        public void applyValues() {
-            BuiltInTasks currentTasks = builtInTasksRef.tryGetValueWithoutFallback();
-            PredefinedTasks currentTaskList = currentTasks != null
-                    ? currentTasks.getAllTasks()
-                    : PredefinedTasks.NO_TASKS;
-
-            Map<String, PredefinedTask> taskMap = CollectionUtils.newLinkedHashMap(currentTaskList.getTasks().size());
-            for (PredefinedTask task: currentTaskList.getTasks()) {
-                String command = task.getDisplayName();
-                taskMap.put(command, task);
-            }
-
-            for (SavedTask task: modifiedCommands.values()) {
-                if (task.isInherited()) {
-                    taskMap.remove(task.getCommand());
-                }
-                else {
-                    taskMap.put(task.getCommand(), task.getTaskDef());
-                }
-            }
-
-            builtInTasksRef.setValue(BuiltInTasksProperty.createValue(taskMap.values()));
         }
     }
 
