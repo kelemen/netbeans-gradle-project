@@ -49,7 +49,11 @@ import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.AtomicIntProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.util.GlassPanes;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
@@ -66,9 +70,9 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private final NbGradleProject project;
     private final ProjectSettingsProvider.ExtensionSettings extensionSettings;
-    private final ProfileValuesEditorFactory snapshotCreator;
+    private final ProfileValuesEditorFactory2 snapshotCreator;
     private final AtomicIntProperty profileLoadCounter;
-    private final Map<ProfileItem, ProfileValuesEditor> snapshots;
+    private final Map<ProfileItem, Snapshot> snapshots;
 
     private final JLayer<?> customPanelLayer;
     private ProfileItem currentlyShownProfile;
@@ -77,7 +81,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             final JComponent customPanel,
-            ProfileValuesEditorFactory snapshotCreator) {
+            ProfileValuesEditorFactory2 snapshotCreator) {
 
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
@@ -136,7 +140,37 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     public static ProfileBasedPanel createPanel(
             Project project,
             JComponent customPanel,
+            ProfileEditorFactory snapshotCreator) {
+        return createPanel(project, customPanel, convertFactory(snapshotCreator));
+    }
+
+    public static ProfileBasedPanel createPanel(
+            Project project,
+            ProjectSettingsProvider.ExtensionSettings extensionSettings,
+            JComponent customPanel,
+            ProfileEditorFactory snapshotCreator) {
+        return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
+    }
+
+    public static ProfileBasedPanel createPanel(
+            Project project,
+            JComponent customPanel,
             ProfileValuesEditorFactory snapshotCreator) {
+        return createPanel(project, customPanel, convertFactory(snapshotCreator));
+    }
+
+    public static ProfileBasedPanel createPanel(
+            Project project,
+            ProjectSettingsProvider.ExtensionSettings extensionSettings,
+            JComponent customPanel,
+            ProfileValuesEditorFactory snapshotCreator) {
+        return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
+    }
+
+    private static ProfileBasedPanel createPanel(
+            Project project,
+            JComponent customPanel,
+            ProfileValuesEditorFactory2 snapshotCreator) {
 
         final ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
         if (settingsProvider == null) {
@@ -146,11 +180,11 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         return createPanel(project, settingsProvider.getExtensionSettings(""), customPanel, snapshotCreator);
     }
 
-    public static ProfileBasedPanel createPanel(
+    private static ProfileBasedPanel createPanel(
             Project project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
-            ProfileValuesEditorFactory snapshotCreator) {
+            ProfileValuesEditorFactory2 snapshotCreator) {
         NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
         if (gradleProject == null) {
             throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
@@ -163,16 +197,78 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
-            ProfileValuesEditorFactory snapshotCreator) {
+            ProfileValuesEditorFactory2 snapshotCreator) {
         ProfileBasedPanel result = new ProfileBasedPanel(project, extensionSettings, customPanel, snapshotCreator);
         result.fetchProfilesAndSelect();
         return result;
     }
 
+    private static ProfileValuesEditorFactory2 convertFactory(final ProfileEditorFactory factory) {
+        return new ProfileValuesEditorFactory2() {
+            @Override
+            public ProfileValuesEditor2 startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+                ProfileEditor editor = factory.startEditingProfile(profileInfo, profileQuery);
+                return upgradeEditor(editor);
+            }
+        };
+    }
+
+    private static ProfileValuesEditor2 upgradeEditor(final ProfileEditor editor) {
+        StoredSettings initialSettings = editor.readFromSettings();
+        final AtomicReference<StoredSettings> currentSettingsRef = new AtomicReference<>(initialSettings);
+        return new ProfileValuesEditor2() {
+            @Override
+            public void displayValues() {
+                StoredSettings settings = currentSettingsRef.get();
+                settings.displaySettings();
+            }
+
+            @Override
+            public void readFromGui() {
+                currentSettingsRef.set(editor.readFromGui());
+            }
+
+            @Override
+            public void applyValues() {
+                StoredSettings settings = currentSettingsRef.get();
+                settings.saveSettings();
+            }
+        };
+    }
+
+    private static ProfileValuesEditorFactory2 convertFactory(final ProfileValuesEditorFactory factory) {
+        return new ProfileValuesEditorFactory2() {
+            @Override
+            public ProfileValuesEditor2 startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+                ProfileValuesEditor editor = factory.startEditingProfile(profileInfo.getDisplayName(), profileQuery);
+                return upgradeEditor(editor);
+            }
+        };
+    }
+
+    private static ProfileValuesEditor2 upgradeEditor(final ProfileValuesEditor editor) {
+        return new ProfileValuesEditor2() {
+            @Override
+            public void displayValues() {
+                editor.displayValues();
+            }
+
+            @Override
+            public void readFromGui() {
+                editor.readFromGui();
+            }
+
+            @Override
+            public void applyValues() {
+                editor.applyValues();
+            }
+        };
+    }
+
     public void saveProperties() {
         readShownProfiles();
-        for (Map.Entry<ProfileItem, ProfileValuesEditor> entry: snapshots.entrySet()) {
-            ProfileValuesEditor values = entry.getValue();
+        for (Map.Entry<ProfileItem, Snapshot> entry: snapshots.entrySet()) {
+            Snapshot values = entry.getValue();
             values.applyValues();
         }
     }
@@ -255,13 +351,13 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             return;
         }
 
-        ProfileValuesEditor values = getValuesForShownProfile();
+        Snapshot values = getValuesForShownProfile();
         if (values != null) {
             values.readFromGui();
         }
     }
 
-    private ProfileValuesEditor getValuesForShownProfile() {
+    private Snapshot getValuesForShownProfile() {
         ProfileItem profile = currentlyShownProfile;
         if (profile == null) {
             return null;
@@ -281,19 +377,22 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         // If we already have a store for the properties then we should have
         // already edited it.
-        ProfileValuesEditor storedProperties = snapshots.get(selected);
+        Snapshot storedProperties = snapshots.get(selected);
         if (storedProperties != null) {
             currentlyShownProfile = selected;
             storedProperties.displayValues();
             return;
         }
 
+        final ProfileKey profileKey = selected.getProfileKey();
         final PanelLockRef lock = lockPanel();
-        extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, selected.getProfileKey(), new ActiveSettingsQueryListener() {
+        extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, profileKey, new ActiveSettingsQueryListener() {
             @Override
             public void onLoad(final ActiveSettingsQuery settings) {
                 String displayName = selected.toString();
-                final ProfileValuesEditor snapshot = snapshotCreator.startEditingProfile(displayName, settings);
+                ProfileInfo profileInfo = new ProfileInfo(profileKey, displayName);
+                ProfileValuesEditor2 editor = snapshotCreator.startEditingProfile(profileInfo, settings);
+                final Snapshot snapshot = new Snapshot(editor);
                 snapshots.put(selected, snapshot);
 
                 SwingUtilities.invokeLater(new Runnable() {
@@ -422,6 +521,41 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                     ? profileDef.getDisplayName()
                     : NbStrings.getDefaultProfileName();
         }
+    }
+
+    private static final class Snapshot {
+        private final ProfileValuesEditor2 editor;
+
+        public Snapshot(ProfileValuesEditor2 editor) {
+            this.editor = editor;
+        }
+
+        private void displayValues() {
+            editor.displayValues();
+        }
+
+        private void readFromGui() {
+            editor.readFromGui();
+        }
+
+        private void applyValues() {
+            editor.applyValues();
+        }
+    }
+
+    // ProfileValuesEditorFactory2 and ProfileValuesEditor2 are provided because the original
+    // interfaces are considered obsolete.
+
+    private interface ProfileValuesEditorFactory2 {
+        public ProfileValuesEditor2 startEditingProfile(ProfileInfo info, ActiveSettingsQuery profileQuery);
+    }
+
+    private interface ProfileValuesEditor2 {
+        public void displayValues();
+
+        public void readFromGui();
+
+        public void applyValues();
     }
 
     /**
