@@ -8,15 +8,17 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
-public class LicenseHeaderPanel extends javax.swing.JPanel {
+public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
     private final NbGradleProject project;
@@ -29,14 +31,13 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
         initComponents();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        final LicenseHeaderPanel customPanel = new LicenseHeaderPanel(project);
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                return customPanel.new PropertyValues(profileQuery);
-            }
-        });
+    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
+        return ProfileBasedPanel.createPanel(project, new LicenseHeaderPanel(project));
+    }
+
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private void displayLicenseHeaderInfo(final LicenseHeaderInfo info) {
@@ -73,28 +74,46 @@ public class LicenseHeaderPanel extends javax.swing.JPanel {
                 templateFile);
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
-        public final PropertyReference<LicenseHeaderInfo> licenseHeaderInfoRef;
-        private LicenseHeaderInfo currentInfo;
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<LicenseHeaderInfo> licenseHeaderInfoRef;
 
-        public PropertyValues(ActiveSettingsQuery settings) {
-            this.licenseHeaderInfoRef = NbGradleCommonProperties.licenseHeaderInfo(settings);
-            this.currentInfo = licenseHeaderInfoRef.tryGetValueWithoutFallback();
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            this.licenseHeaderInfoRef = NbGradleCommonProperties.licenseHeaderInfo(settingsQuery);
         }
 
         @Override
-        public void displayValues() {
-            displayLicenseHeaderInfo(currentInfo);
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
         }
 
         @Override
-        public void readFromGui() {
-            currentInfo = getLicenseHeaderInfo();
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, LicenseHeaderPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final LicenseHeaderInfo licenseHeaderInfo;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.licenseHeaderInfo = properties.licenseHeaderInfoRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, LicenseHeaderPanel panel) {
+            this.properties = properties;
+            this.licenseHeaderInfo = panel.getLicenseHeaderInfo();
         }
 
         @Override
-        public void applyValues() {
-            licenseHeaderInfoRef.setValue(currentInfo);
+        public void displaySettings() {
+            displayLicenseHeaderInfo(licenseHeaderInfo);
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.licenseHeaderInfoRef.setValue(licenseHeaderInfo);
         }
     }
 
