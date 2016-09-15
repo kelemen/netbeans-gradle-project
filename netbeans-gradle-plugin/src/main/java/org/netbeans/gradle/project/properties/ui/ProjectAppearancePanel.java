@@ -1,15 +1,16 @@
 package org.netbeans.gradle.project.properties.ui;
 
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
+import org.netbeans.gradle.project.properties.ProfileEditor;
+import org.netbeans.gradle.project.properties.ProfileEditorFactory;
+import org.netbeans.gradle.project.properties.ProfileInfo;
+import org.netbeans.gradle.project.properties.StoredSettings;
 
 @SuppressWarnings("serial")
-public class ProjectAppearancePanel extends javax.swing.JPanel {
+public class ProjectAppearancePanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private final ProjectNodeNamePanel nodeNamePanel;
 
     private ProjectAppearancePanel() {
@@ -20,40 +21,55 @@ public class ProjectAppearancePanel extends javax.swing.JPanel {
         nodeNamePanel.setVisible(true);
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        final ProjectAppearancePanel customPanel = new ProjectAppearancePanel();
-        return ProfileBasedPanel.createPanel(project, customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                return customPanel.new PropertyValues(profileQuery);
-            }
-        });
+    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
+        return ProfileBasedPanel.createPanel(project, new ProjectAppearancePanel());
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
-        public final PropertyReference<String> displayNamePatternRef;
-        private String displayNamePattern;
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
+    }
 
-        public PropertyValues(ActiveSettingsQuery settings) {
-            this.displayNamePatternRef = NbGradleCommonProperties.displayNamePattern(settings);
-            this.displayNamePattern = displayNamePatternRef.tryGetValueWithoutFallback();
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<String> displayNamePatternRef;
+
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            this.displayNamePatternRef = NbGradleCommonProperties.displayNamePattern(settingsQuery);
         }
 
         @Override
-        public void displayValues() {
-            nodeNamePanel.updatePattern(displayNamePattern, displayNamePatternRef);
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
         }
 
         @Override
-        public void readFromGui() {
-            displayNamePattern = nodeNamePanel.getNamePattern();
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, ProjectAppearancePanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final String displayNamePattern;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.displayNamePattern = properties.displayNamePatternRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, ProjectAppearancePanel panel) {
+            this.properties = properties;
+            this.displayNamePattern = panel.nodeNamePanel.getNamePattern();
         }
 
         @Override
-        public void applyValues() {
-            displayNamePatternRef.setValue(displayNamePattern);
+        public void displaySettings() {
+            nodeNamePanel.updatePattern(displayNamePattern, properties.displayNamePatternRef);
+        }
+
+        @Override
+        public void saveSettings() {
+            properties.displayNamePatternRef.setValue(displayNamePattern);
         }
     }
 
