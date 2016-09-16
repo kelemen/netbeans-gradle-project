@@ -1,9 +1,5 @@
 package org.netbeans.gradle.project.properties.ui;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
@@ -12,22 +8,6 @@ import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 
 public class BuildScriptParsingPanelTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
         return new NbSupplier<GlobalSettingsPage>() {
             @Override

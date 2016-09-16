@@ -6,10 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
@@ -22,22 +18,6 @@ import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import static org.junit.Assert.*;
 
 public class PredefinedTaskTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private static List<PredefinedTask.Name> createTaskNames(boolean mustExist, String... names) {
         List<PredefinedTask.Name> result = new ArrayList<>(names.length);
         for (String name: names) {

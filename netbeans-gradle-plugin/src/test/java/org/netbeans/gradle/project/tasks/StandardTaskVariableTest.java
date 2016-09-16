@@ -5,10 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
@@ -16,22 +12,6 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import static org.junit.Assert.*;
 
 public class StandardTaskVariableTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
         return DisplayedTaskVariable.variableMap(map);
     }

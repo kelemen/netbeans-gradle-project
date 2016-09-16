@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -68,10 +67,6 @@ public class TestXmlDisplayerTest extends ConfigAwareTest {
 
         rootProject = sampleProject.getUnloadedProject(PROJECT_NAME);
         cleanDefaultBuildDirectory(rootProject);
-    }
-
-    @After
-    public void tearDown() {
     }
 
     private static File getProjectDirAsFile(Project project) {

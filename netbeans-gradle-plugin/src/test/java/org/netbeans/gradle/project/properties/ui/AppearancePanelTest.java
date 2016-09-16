@@ -1,9 +1,5 @@
 package org.netbeans.gradle.project.properties.ui;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
@@ -14,22 +10,6 @@ import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 
 public class AppearancePanelTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private static PropertyReference<String> displayNamePattern(CommonGlobalSettings input) {
         return NbGradleCommonProperties.displayNamePattern(input.getActiveSettingsQuery());
     }

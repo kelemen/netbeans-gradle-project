@@ -1,8 +1,5 @@
 package org.netbeans.gradle.project;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -14,18 +11,6 @@ public class StringUtilsTest {
     @BeforeClass
     public static void setUpClass() {
         MockServices.setServices();
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
     }
 
     @Test

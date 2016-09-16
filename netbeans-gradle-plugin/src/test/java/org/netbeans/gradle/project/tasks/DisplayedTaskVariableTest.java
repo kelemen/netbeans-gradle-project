@@ -1,31 +1,11 @@
 package org.netbeans.gradle.project.tasks;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 
 import static org.junit.Assert.*;
 
 public class DisplayedTaskVariableTest {
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     private DisplayedTaskVariable createVar(String name) {
         return new DisplayedTaskVariable(new TaskVariable(name), name, VariableTypeDescription.DEFAULT_TYPE);
     }

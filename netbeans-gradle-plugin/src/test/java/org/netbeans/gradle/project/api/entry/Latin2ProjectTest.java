@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.api.entry;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -65,10 +64,6 @@ public class Latin2ProjectTest extends ConfigAwareTest {
         if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     private static boolean isJavaExtensionActive(Project project) {

@@ -6,7 +6,6 @@ import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.gradle.tooling.model.eclipse.EclipseProject;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -59,10 +58,6 @@ public final class EmptyProjectTest extends ConfigAwareTest {
         if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     @Test

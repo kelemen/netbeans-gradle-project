@@ -15,7 +15,6 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -95,10 +94,6 @@ public class SimpleJavaProjectTest extends ConfigAwareTest {
         if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
             throw new TimeoutException("Project was not loaded until the timeout elapsed.");
         }
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     @Test
