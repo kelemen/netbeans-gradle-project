@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 
-public class ProfileInfo {
+public final class ProfileInfo {
     private final ProfileKey profileKey;
     private final String displayName;
 
