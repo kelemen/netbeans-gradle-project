@@ -5,16 +5,16 @@ import javax.swing.JCheckBox;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
-public class BuildScriptParsingPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class BuildScriptParsingPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Build-Script-Parsing");
 
     private final EnumCombo<ModelLoadingStrategy> modelLoadingStrategyCombo;
@@ -25,17 +25,15 @@ public class BuildScriptParsingPanel extends javax.swing.JPanel implements Globa
         modelLoadingStrategyCombo = new EnumCombo<>(ModelLoadingStrategy.class, ModelLoadingStrategy.NEWEST_POSSIBLE, jModelLoadStrategy);
     }
 
-    @Override
-    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
-        return new PropertyRefs(profileQuery);
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new BuildScriptParsingPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private void displayModelLoadingStrategy(ModelLoadingStrategy value) {

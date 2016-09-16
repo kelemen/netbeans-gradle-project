@@ -4,18 +4,18 @@ import java.net.URL;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.java.JavaExtensionDef;
 import org.netbeans.gradle.project.java.properties.DebugMode;
 import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
 import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
-public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class DebuggerPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Debug-Settings");
 
     private final EnumCombo<DebugMode> debugModeHandler;
@@ -23,6 +23,12 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
     public DebuggerPanel() {
         initComponents();
         this.debugModeHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new DebuggerPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
@@ -39,14 +45,6 @@ public class DebuggerPanel extends javax.swing.JPanel implements GlobalSettingsE
         if (debugMode != null) {
             debugModeHandler.setSelectedValue(debugMode);
         }
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private final class PropertyRefs implements ProfileEditor {

@@ -5,16 +5,16 @@ import javax.swing.JCheckBox;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
-public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class TaskExecutionPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Task-Execution");
 
     private final EnumCombo<SelfMaintainedTasks> selfMaintainedTasksCombo;
@@ -23,6 +23,12 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         initComponents();
 
         selfMaintainedTasksCombo = new EnumCombo<>(SelfMaintainedTasks.class, SelfMaintainedTasks.FALSE, jAutoTasks);
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new TaskExecutionPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
@@ -44,14 +50,6 @@ public class TaskExecutionPanel extends javax.swing.JPanel implements GlobalSett
         if (value != null) {
             selfMaintainedTasksCombo.setSelectedValue(value);
         }
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private final class PropertyRefs implements ProfileEditor {

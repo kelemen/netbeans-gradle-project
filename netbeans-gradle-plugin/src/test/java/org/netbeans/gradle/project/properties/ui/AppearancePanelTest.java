@@ -8,8 +8,10 @@ import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.NbSupplier;
 
 public class AppearancePanelTest {
     @BeforeClass
@@ -32,9 +34,18 @@ public class AppearancePanelTest {
         return NbGradleCommonProperties.displayNamePattern(input.getActiveSettingsQuery());
     }
 
+    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+        return new NbSupplier<GlobalSettingsPage>() {
+            @Override
+            public GlobalSettingsPage get() {
+                return AppearancePanel.createSettingsPage();
+            }
+        };
+    }
+
     @Test
     public void testInitAndReadBack1() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(AppearancePanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.name}");
@@ -45,7 +56,7 @@ public class AppearancePanelTest {
 
     @Test
     public void testInitAndReadBack2() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(AppearancePanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.path}-${project.version}-test");
@@ -56,7 +67,7 @@ public class AppearancePanelTest {
 
     @Test
     public void testInitAndReadBack3() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(AppearancePanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.path}");

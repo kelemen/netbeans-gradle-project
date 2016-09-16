@@ -5,18 +5,18 @@ import java.net.URL;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
-public class GradleInstallationPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class GradleInstallationPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Gradle-Installation");
 
     private GradleLocation selectedGradleLocation;
@@ -25,6 +25,12 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
         selectedGradleLocation = null;
 
         initComponents();
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new GradleInstallationPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     private void displayLocationDef(GradleLocationDef locationDef) {
@@ -50,14 +56,6 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Globa
     @Override
     public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
         return new PropertyRefs(profileQuery);
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private GradleLocationDef getGradleLocationDef() {

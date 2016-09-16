@@ -27,19 +27,19 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
-public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class PlatformPriorityPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Platform-Priority");
 
     private final DefaultListModel<PlatformItem> jPlatformListModel;
@@ -60,6 +60,12 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         jPlatformList.setModel(jPlatformListModel);
 
         setupEnableDisable();
+    }
+
+    public static GlobalSettingsPage createSettingsPage(boolean hasOwnButtons) {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new PlatformPriorityPanel(hasOwnButtons));
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     private void displayPlatformOrder(PlatformOrder platformOrder) {
@@ -91,14 +97,6 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements GlobalS
         }
 
         return new PlatformOrder(platforms);
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     public boolean isOkPressed() {

@@ -14,21 +14,27 @@ import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
-public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class ScriptAndTasksPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Script-and-Tasks");
 
     public ScriptAndTasksPanel() {
         initComponents();
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new ScriptAndTasksPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     private void fillPlatformCombo() {
@@ -94,14 +100,6 @@ public class ScriptAndTasksPanel extends javax.swing.JPanel implements GlobalSet
         if (jdk != null) {
             jJdkCombo.setSelectedItem(new JavaPlatformItem(jdk.getJavaPlatform()));
         }
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private ScriptPlatform getScriptJdk() {

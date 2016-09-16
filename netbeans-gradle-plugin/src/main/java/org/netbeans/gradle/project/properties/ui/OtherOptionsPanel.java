@@ -6,15 +6,15 @@ import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 @SuppressWarnings("serial")
-public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class OtherOptionsPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Other");
 
     public OtherOptionsPanel() {
@@ -23,17 +23,15 @@ public class OtherOptionsPanel extends javax.swing.JPanel implements GlobalSetti
         jProjectCacheSize.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
     }
 
-    @Override
-    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
-        return new PropertyRefs(profileQuery);
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new OtherOptionsPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
     private void displayCheck(JCheckBox checkbox, Boolean value, PropertyReference<Boolean> propertyRef) {

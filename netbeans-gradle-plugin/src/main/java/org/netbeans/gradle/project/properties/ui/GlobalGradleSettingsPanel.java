@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
 import javax.swing.ListModel;
 import org.jtrim.property.BoolProperties;
 import org.jtrim.property.PropertyFactory;
@@ -11,12 +12,11 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.awt.HtmlBrowser;
 
@@ -24,50 +24,41 @@ import static org.jtrim.property.swing.AutoDisplayState.*;
 import static org.netbeans.gradle.project.properties.NbProperties.*;
 
 @SuppressWarnings("serial")
-public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private final PropertySource<CategoryItem> categorySelection;
     private final PropertySource<URL> selectedHelpUrl;
 
-    public GlobalGradleSettingsPanel(ActiveSettingsQuery settingsQuery) {
+    public GlobalGradleSettingsPanel() {
         initComponents();
 
         DefaultListModel<CategoryItem> categoriesModel = new DefaultListModel<>();
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryGradleInstallation(),
-                new GradleInstallationPanel(),
-                settingsQuery));
+                GradleInstallationPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryPlatformPriority(),
-                new PlatformPriorityPanel(false),
-                settingsQuery));
+                PlatformPriorityPanel.createSettingsPage(false)));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryDaemon(),
-                new GradleDaemonPanel(),
-                settingsQuery));
+                GradleDaemonPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryScriptAndTasks(),
-                new ScriptAndTasksPanel(),
-                settingsQuery));
+                ScriptAndTasksPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryScript(),
-                new BuildScriptParsingPanel(),
-                settingsQuery));
+                BuildScriptParsingPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryTasks(),
-                new TaskExecutionPanel(),
-                settingsQuery));
+                TaskExecutionPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryDebug(),
-                new DebuggerPanel(),
-                settingsQuery));
+                DebuggerPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryAppearance(),
-                new AppearancePanel(),
-                settingsQuery));
+                AppearancePanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryOther(),
-                new OtherOptionsPanel(),
-                settingsQuery));
+                OtherOptionsPanel.createSettingsPage()));
 
         jCategoriesList.setModel(categoriesModel);
         jCategoriesList.setSelectedIndex(0);
@@ -76,7 +67,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         selectedHelpUrl = PropertyFactory.convert(categorySelection, new ValueConverter<CategoryItem, URL>() {
             @Override
             public URL convert(CategoryItem input) {
-                return input != null ? input.properties.getHelpUrl() : null;
+                return input != null ? input.getHelpUrl() : null;
             }
         });
 
@@ -91,6 +82,15 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         setupEnableDisable();
     }
 
+    public static GlobalSettingsPage createSettingsPanel() {
+        GlobalGradleSettingsPanel panel = new GlobalGradleSettingsPanel();
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(panel);
+
+        result.setValid(panel.valid());
+
+        return result.create();
+    }
+
     private void setupEnableDisable() {
         addSwingStateListener(isNotNull(selectedHelpUrl),
                 componentDisabler(jReadWikiButton));
@@ -101,9 +101,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
 
         CategoryItem selected = categorySelection.getValue();
         if (selected != null) {
-            SettingsEditorProperties properties = selected.properties;
-
-            jCurrentCategoryPanel.add(properties.getEditorComponent());
+            jCurrentCategoryPanel.add(selected.getEditorComponent());
         }
 
         jCurrentCategoryPanel.revalidate();
@@ -111,13 +109,11 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
     }
 
     private StoredSettings combineSettings(
+            List<ProfileEditor> editors,
             final NbFunction<? super ProfileEditor, ? extends StoredSettings> settingsGetter) {
 
-        ListModel<CategoryItem> model = jCategoriesList.getModel();
-        int categoryCount = model.getSize();
-        final List<StoredSettings> allSettings = new ArrayList<>(categoryCount);
-        for (int i = 0; i < categoryCount; i++) {
-            ProfileEditor profileEditor = model.getElementAt(i).profileEditor;
+        final List<StoredSettings> allSettings = new ArrayList<>(editors.size());
+        for (ProfileEditor profileEditor: editors) {
             StoredSettings settings = settingsGetter.apply(profileEditor);
             allSettings.add(settings);
         }
@@ -139,8 +135,8 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         };
     }
 
-    private StoredSettings readCombinedFromSettings() {
-        return combineSettings(new NbFunction<ProfileEditor, StoredSettings>() {
+    private StoredSettings readCombinedFromSettings(List<ProfileEditor> editors) {
+        return combineSettings(editors, new NbFunction<ProfileEditor, StoredSettings>() {
             @Override
             public StoredSettings apply(ProfileEditor editor) {
                 return editor.readFromSettings();
@@ -148,8 +144,8 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         });
     }
 
-    private StoredSettings readCombinedFromGui() {
-        return combineSettings(new NbFunction<ProfileEditor, StoredSettings>() {
+    private StoredSettings readCombinedFromGui(List<ProfileEditor> editors) {
+        return combineSettings(editors, new NbFunction<ProfileEditor, StoredSettings>() {
             @Override
             public StoredSettings apply(ProfileEditor editor) {
                 return editor.readFromGui();
@@ -159,25 +155,27 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
 
     @Override
     public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        ListModel<CategoryItem> model = jCategoriesList.getModel();
+        int categoryCount = model.getSize();
+        final List<ProfileEditor> editors = new ArrayList<>(categoryCount);
+        for (int i = 0; i < categoryCount; i++) {
+            GlobalSettingsPage editorDef = model.getElementAt(i).getEditorDef();
+            ProfileEditorFactory editorFactory = editorDef.getEditorFactory();
+            ProfileEditor editor = editorFactory.startEditingProfile(profileInfo, profileQuery);
+            editors.add(editor);
+        }
+
         return new ProfileEditor() {
             @Override
             public StoredSettings readFromSettings() {
-                return readCombinedFromSettings();
+                return readCombinedFromSettings(editors);
             }
 
             @Override
             public StoredSettings readFromGui() {
-                return readCombinedFromGui();
+                return readCombinedFromGui(editors);
             }
         };
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setValid(valid());
-
-        return result.create();
     }
 
     private PropertySource<Boolean> valid() {
@@ -187,7 +185,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
         @SuppressWarnings("unchecked")
         PropertySource<Boolean>[] subValids = (PropertySource<Boolean>[])new PropertySource<?>[categoryCount];
         for (int i = 0; i < categoryCount; i++) {
-            subValids[i] = model.getElementAt(i).properties.valid();
+            subValids[i] = model.getElementAt(i).valid();
         }
 
         return BoolProperties.or(subValids);
@@ -195,18 +193,27 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Glo
 
     private static final class CategoryItem {
         private final String caption;
-        public final GlobalSettingsEditor editor;
-        public final ProfileEditor profileEditor;
-        public final SettingsEditorProperties properties;
+        public final GlobalSettingsPage editorDef;
 
-        public CategoryItem(String caption, GlobalSettingsEditor editor, ActiveSettingsQuery settingsQuery) {
+        public CategoryItem(String caption, GlobalSettingsPage editorDef) {
             this.caption = caption;
-            this.editor = editor;
+            this.editorDef = editorDef;
+        }
 
-            ProfileInfo info = new ProfileInfo(ProfileKey.GLOBAL_PROFILE, caption);
-            this.profileEditor = editor.startEditingProfile(info, settingsQuery);
+        public GlobalSettingsPage getEditorDef() {
+            return editorDef;
+        }
 
-            this.properties = editor.getProperties();
+        public JComponent getEditorComponent() {
+            return editorDef.getSettingsPanel();
+        }
+
+        public URL getHelpUrl() {
+            return editorDef.getHelpUrl();
+        }
+
+        public PropertySource<Boolean> valid() {
+            return editorDef.valid();
         }
 
         @Override

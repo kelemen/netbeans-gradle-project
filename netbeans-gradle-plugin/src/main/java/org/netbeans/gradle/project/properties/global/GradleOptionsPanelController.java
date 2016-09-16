@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.properties.global;
 
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
@@ -22,22 +23,21 @@ public final class GradleOptionsPanelController extends OptionsPanelController {
 
     private GlobalGradleSettingsPanel getPanel() {
         if (settingsPanel == null) {
-            settingsPanel = new GlobalGradleSettingsPanel(getSettings());
+            settingsPanel = new GlobalGradleSettingsPanel();
             update();
         }
         return settingsPanel;
     }
 
-    private ActiveSettingsQuery getSettings() {
-        return CommonGlobalSettings.getDefault().getActiveSettingsQuery();
+    private static ActiveSettingsQuery getSettings() {
+        return CommonGlobalSettings.getDefaultActiveSettingsQuery();
     }
 
     private ProfileEditor getEditor() {
         ProfileEditor result = profileEditor;
         if (result == null) {
-            result = getPanel().startEditingProfile(
-                    new ProfileInfo(ProfileKey.GLOBAL_PROFILE, "Global settings"),
-                    getSettings());
+            ProfileInfo profileInfo = new ProfileInfo(ProfileKey.GLOBAL_PROFILE, NbStrings.getGlobalProfileName());
+            result = getPanel().startEditingProfile(profileInfo, getSettings());
         }
         return result;
     }

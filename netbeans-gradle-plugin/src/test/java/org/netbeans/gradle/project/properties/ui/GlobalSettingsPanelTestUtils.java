@@ -3,17 +3,17 @@ package org.netbeans.gradle.project.properties.ui;
 import java.util.Collections;
 import javax.swing.SwingUtilities;
 import org.junit.Assert;
-import org.netbeans.gradle.model.util.Exceptions;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.ProfileKey;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.properties.GenericProfileSettings;
 import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 
@@ -22,59 +22,74 @@ public final class GlobalSettingsPanelTestUtils {
         return new CommonGlobalSettings(new MultiProfileProperties(Collections.singletonList(rawSettings)));
     }
 
-    public static void testInitAndReadBack(
-            final NbSupplier<? extends GlobalSettingsEditor> panelFactory,
-            final NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
-        SwingUtilities.invokeAndWait(new Runnable() {
+    private static <T extends ProfileBasedSettingsPage> void testInitAndReadBackNow(
+            final NbSupplier<? extends T> pageFactory,
+            final NbConsumer<? super CommonGlobalSettings> initializer,
+            final NbConsumer<? super T> check) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            throw new IllegalStateException("Expected EDT");
+        }
+
+        CommonGlobalSettings.withCleanMemorySettings(new NbConsumer<GenericProfileSettings>() {
             @Override
-            public void run() {
-                CommonGlobalSettings.withCleanMemorySettings(new NbConsumer<GenericProfileSettings>() {
-                    @Override
-                    public void accept(GenericProfileSettings preference) {
-                        GenericProfileSettings input = GenericProfileSettings.createTestMemorySettings();
-                        CommonGlobalSettings inputSettings = toGlobalSettings(input);
+            public void accept(GenericProfileSettings preference) {
+                GenericProfileSettings input = GenericProfileSettings.createTestMemorySettings();
+                CommonGlobalSettings inputSettings = toGlobalSettings(input);
 
-                        GlobalSettingsEditor panel = panelFactory.get();
+                T page = pageFactory.get();
 
-                        initializer.accept(inputSettings);
-                        ConfigTree inputValues = input.getContentSnapshot();
+                initializer.accept(inputSettings);
+                ConfigTree inputValues = input.getContentSnapshot();
 
-                        ProfileEditor editor = panel.startEditingProfile(
-                                new ProfileInfo(ProfileKey.GLOBAL_PROFILE, "Test Settings"),
-                                inputSettings.getActiveSettingsQuery());
+                ProfileEditor editor = page.getEditorFactory().startEditingProfile(
+                        new ProfileInfo(ProfileKey.GLOBAL_PROFILE, NbStrings.getGlobalProfileName()),
+                        inputSettings.getActiveSettingsQuery());
 
-                        editor.readFromSettings().displaySettings();
+                editor.readFromSettings().displaySettings();
 
-                        SettingsEditorProperties properties = panel.getProperties();
-                        Assert.assertTrue("Initial form must be valid.", properties.valid().getValue());
+                check.accept(page);
 
-                        input.clearSettings();
-                        editor.readFromGui().saveSettings();
+                input.clearSettings();
+                editor.readFromGui().saveSettings();
 
-                        ConfigTree outputValues = input.getContentSnapshot();
+                ConfigTree outputValues = input.getContentSnapshot();
 
-                        Assert.assertEquals(inputValues, outputValues);
-                    }
-                });
+                Assert.assertEquals(inputValues, outputValues);
             }
         });
     }
 
-    public static void testInitAndReadBack(
-            final Class<? extends GlobalSettingsEditor> panelClass,
-            NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
-
-        NbSupplier<GlobalSettingsEditor> panelFactory = new NbSupplier<GlobalSettingsEditor>() {
+    public static <T extends ProfileBasedSettingsPage> void testInitAndReadBack(
+            final NbSupplier<? extends T> panelFactory,
+            final NbConsumer<? super CommonGlobalSettings> initializer,
+            final NbConsumer<? super T> check) throws Exception {
+        SwingUtilities.invokeAndWait(new Runnable() {
             @Override
-            public GlobalSettingsEditor get() {
-                try {
-                    return panelClass.newInstance();
-                } catch (Exception ex) {
-                    throw Exceptions.throwUnchecked(ex);
-                }
+            public void run() {
+                testInitAndReadBackNow(panelFactory, initializer, check);
             }
-        };
-        testInitAndReadBack(panelFactory, initializer);
+        });
+    }
+
+    public static void testGenericInitAndReadBack(
+            final NbSupplier<? extends ProfileBasedSettingsPage> pageFactory,
+            final NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
+        testInitAndReadBack(pageFactory, initializer, new NbConsumer<ProfileBasedSettingsPage>() {
+            @Override
+            public void accept(ProfileBasedSettingsPage page) {
+            }
+        });
+    }
+
+    public static void testGlobalInitAndReadBack(
+            final NbSupplier<? extends GlobalSettingsPage> pageFactory,
+            final NbConsumer<? super CommonGlobalSettings> initializer) throws Exception {
+        testInitAndReadBack(pageFactory, initializer, new NbConsumer<GlobalSettingsPage>() {
+            @Override
+            public void accept(GlobalSettingsPage page) {
+                Assert.assertTrue("Initial form must be valid.", page.valid().getValue());
+            }
+        });
     }
 
     private GlobalSettingsPanelTestUtils() {

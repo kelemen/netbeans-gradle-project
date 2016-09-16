@@ -6,11 +6,11 @@ import javax.swing.SpinnerNumberModel;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 import static org.jtrim.property.BoolProperties.*;
@@ -18,7 +18,7 @@ import static org.jtrim.property.swing.AutoDisplayState.*;
 import static org.jtrim.property.swing.SwingProperties.*;
 
 @SuppressWarnings("serial")
-public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class GradleDaemonPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Gradle-Daemon");
 
     private static final int DEFAULT_TIMEOUT_SEC = longToInt(TimeUnit.HOURS.toSeconds(3));
@@ -30,6 +30,12 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
         jDaemonTimeoutSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 30));
 
         setupEnableDisable();
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new GradleDaemonPanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     private void setupEnableDisable() {
@@ -79,14 +85,6 @@ public class GradleDaemonPanel extends javax.swing.JPanel implements GlobalSetti
         return displayTimeout >= 0
                 ? longToInt(DISPLAY_UNIT.toSeconds(displayTimeout))
                 : properties.gradleDaemonTimeoutSecRef.tryGetValueWithoutFallback();
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private final class PropertyRefs implements ProfileEditor {

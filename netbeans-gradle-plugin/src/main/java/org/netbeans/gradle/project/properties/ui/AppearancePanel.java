@@ -8,18 +8,18 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.global.GlobalSettingsEditor;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
-import org.netbeans.gradle.project.properties.global.SettingsEditorProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial")
-public class AppearancePanel extends javax.swing.JPanel implements GlobalSettingsEditor {
+public class AppearancePanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Appearance");
 
     private final ProjectNodeNamePanel nodeNamePanel;
@@ -30,6 +30,12 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
         nodeNamePanel = new ProjectNodeNamePanel(false);
         jProjectNodeNameHolder.add(nodeNamePanel);
         fillJavaSourcesDisplayModeCombo();
+    }
+
+    public static GlobalSettingsPage createSettingsPage() {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new AppearancePanel());
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
@@ -80,14 +86,6 @@ public class AppearancePanel extends javax.swing.JPanel implements GlobalSetting
             return JavaSourcesDisplayMode.DEFAULT_MODE;
         }
         return selected.displayMode;
-    }
-
-    @Override
-    public SettingsEditorProperties getProperties() {
-        SettingsEditorProperties.Builder result = new SettingsEditorProperties.Builder(this);
-        result.setHelpUrl(HELP_URL);
-
-        return result.create();
     }
 
     private static class SourcesDisplayModeItem {

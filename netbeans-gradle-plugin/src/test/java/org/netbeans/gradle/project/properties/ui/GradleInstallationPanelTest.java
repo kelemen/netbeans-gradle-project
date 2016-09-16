@@ -9,7 +9,9 @@ import org.junit.Test;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.NbSupplier;
 
 public class GradleInstallationPanelTest {
     @BeforeClass
@@ -28,9 +30,18 @@ public class GradleInstallationPanelTest {
     public void tearDown() {
     }
 
+    private static NbSupplier<GlobalSettingsPage> settingsPageFactory() {
+        return new NbSupplier<GlobalSettingsPage>() {
+            @Override
+            public GlobalSettingsPage get() {
+                return GradleInstallationPanel.createSettingsPage();
+            }
+        };
+    }
+
     @Test
     public void testInitAndReadBack1() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef("1.7", true));
@@ -41,7 +52,7 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack2() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef("1.9", false));
@@ -52,7 +63,7 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack3() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, false));
@@ -63,7 +74,7 @@ public class GradleInstallationPanelTest {
 
     @Test
     public void testInitAndReadBack4() throws Exception {
-        GlobalSettingsPanelTestUtils.testInitAndReadBack(GradleInstallationPanel.class, new NbConsumer<CommonGlobalSettings>() {
+        GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
                 input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, true));
