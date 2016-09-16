@@ -9,17 +9,19 @@ import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedConfigurations;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedProjectSettingsPageFactory;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
+import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.ui.EnumCombo;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
 @SuppressWarnings("serial")
-public class JavaDebuggingPanel extends javax.swing.JPanel {
+public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private final EnumCombo<DebugMode> debugModeComboHandler;
 
     public JavaDebuggingPanel() {
@@ -45,7 +47,7 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
-    public static ProjectCustomizer.CompositeCategoryProvider createDebuggingCustomizer(final JavaExtension javaExt) {
+    public static ProjectCustomizer.CompositeCategoryProvider createDebuggingCustomizer(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         Project project = javaExt.getProject();
@@ -53,50 +55,66 @@ public class JavaDebuggingPanel extends javax.swing.JPanel {
         CustomizerCategoryId categoryId = new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
         ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
 
-        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, categoryId, extensionSettings, new ProfileBasedProjectSettingsPageFactory() {
+        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, categoryId, extensionSettings, new ProfileBasedSettingsPageFactory() {
             @Override
-            public ProfileBasedProjectSettingsPage createSettingsPage() {
-                return createDebuggingSettingsPage();
+            public ProfileBasedSettingsPage createSettingsPage() {
+                JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
+                return new ProfileBasedSettingsPage(customPanel, customPanel);
             }
         });
     }
 
-    private static ProfileBasedProjectSettingsPage createDebuggingSettingsPage() {
-        final JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
-        return new ProfileBasedProjectSettingsPage(customPanel, new ProfileValuesEditorFactory() {
-            @Override
-            public ProfileValuesEditor startEditingProfile(String displayName, ActiveSettingsQuery profileQuery) {
-                return customPanel.new PropertyValues(profileQuery);
-            }
-        });
+    @Override
+    public ProfileEditor startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
+        return new PropertyRefs(profileQuery);
     }
 
-    private final class PropertyValues implements ProfileValuesEditor {
-        public final PropertyReference<DebugMode> debugModeRef;
-        private DebugMode currentDebugMode;
+    private final class PropertyRefs implements ProfileEditor {
+        private final PropertyReference<DebugMode> debugModeRef;
 
-        public PropertyValues(ActiveSettingsQuery settings) {
-            this.debugModeRef = JavaProjectProperties.debugMode(settings);
-            this.currentDebugMode = debugModeRef.tryGetValueWithoutFallback();
+        public PropertyRefs(ActiveSettingsQuery settingsQuery) {
+            this.debugModeRef = JavaProjectProperties.debugMode(settingsQuery);
         }
 
         @Override
-        public void displayValues() {
-            DebugMode activeDebugMode = setInheritAndGetValue(currentDebugMode, debugModeRef, jDebugModeInherit);
+        public StoredSettings readFromSettings() {
+            return new StoredSettingsImpl(this);
+        }
+
+        @Override
+        public StoredSettings readFromGui() {
+            return new StoredSettingsImpl(this, JavaDebuggingPanel.this);
+        }
+    }
+
+    private final class StoredSettingsImpl implements StoredSettings {
+        private final PropertyRefs properties;
+        private final DebugMode debugMode;
+
+        public StoredSettingsImpl(PropertyRefs properties) {
+            this.properties = properties;
+            this.debugMode = properties.debugModeRef.tryGetValueWithoutFallback();
+        }
+
+        public StoredSettingsImpl(PropertyRefs properties, JavaDebuggingPanel panel) {
+            this.properties = properties;
+
+            this.debugMode = panel.jDebugModeInherit.isSelected()
+                    ? null
+                    : panel.debugModeComboHandler.getSelectedValue();
+        }
+
+        @Override
+        public void displaySettings() {
+            DebugMode activeDebugMode = setInheritAndGetValue(debugMode, properties.debugModeRef, jDebugModeInherit);
             debugModeComboHandler.setSelectedValue(activeDebugMode);
         }
 
         @Override
-        public void readFromGui() {
-            currentDebugMode = jDebugModeInherit.isSelected() ? null : debugModeComboHandler.getSelectedValue();
-        }
-
-        @Override
-        public void applyValues() {
-            debugModeRef.setValue(currentDebugMode);
+        public void saveSettings() {
+            properties.debugModeRef.setValue(debugMode);
         }
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
