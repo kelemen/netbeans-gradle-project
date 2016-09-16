@@ -11,7 +11,7 @@ import org.jtrim.utils.ExceptionHelper;
  * @see ProfileBasedConfigurations
  * @see ProfileBasedSettingsPageFactory
  */
-public final class ProfileBasedSettingsPage {
+public class ProfileBasedSettingsPage {
     private final JComponent settingsPanel;
     private final ProfileEditorFactory editorFactory;
 
@@ -41,7 +41,7 @@ public final class ProfileBasedSettingsPage {
      *   properties to be adjusted. This method never returns {@code null}.
      */
     @Nonnull
-    public JComponent getSettingsPanel() {
+    public final JComponent getSettingsPanel() {
         return settingsPanel;
     }
 
@@ -52,7 +52,7 @@ public final class ProfileBasedSettingsPage {
      *   This method never returns {@code null}.
      */
     @Nonnull
-    public ProfileEditorFactory getEditorFactory() {
+    public final ProfileEditorFactory getEditorFactory() {
         return editorFactory;
     }
 }
