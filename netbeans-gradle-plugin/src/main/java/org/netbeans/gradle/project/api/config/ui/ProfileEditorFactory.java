@@ -4,30 +4,23 @@ import javax.annotation.Nonnull;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 
 /**
- * @deprecated Use the {@link ProfileBasedSettingsPageFactory} based configuration instead:
- *   {@link ProfileEditorFactory}.
- * <P>
  * Defines the logic of editing multiple profiles on the associated settings
  * panel.
  *
  * @see ProfileBasedConfigurations
- * @see ProfileBasedProjectSettingsPageFactory
+ * @see ProfileBasedSettingsPageFactory
  */
-@Deprecated
-public interface ProfileValuesEditorFactory {
+public interface ProfileEditorFactory {
     /**
      * Prepares editing the selected profile. This method is called lazily
      * when the user first selects a profile to edit. Note that this method
      * should not update UI, the UI should only be updated when the
-     * {@link ProfileValuesEditor#displayValues() displayValues} method of the
-     * returned {@code ProfileValuesEditor} gets called.
-     * <P>
-     * To retrieve the key of the profile to be edited, you can use the following
-     * call: {@code profileQuery.currentProfileSettings().getValue().getKey()}.
+     * {@link StoredSettings#displaySettings() displaySettings} method of the
+     * {@link StoredSettings} created by the returned {@code ProfileEditor} gets called.
      * <P>
      * <B>Note</B>: This method can be called from any thread.
      *
-     * @param displayName the display name of the profile to be edited. This
+     * @param profileInfo the {@code ProfileInfo} of the profile to be edited. This
      *   argument cannot be {@code null}.
      * @param profileQuery the {@code ActiveSettingsQuery} with the profile
      *   to be edited as a {@link ActiveSettingsQuery#currentProfileSettings() selected profile}.
@@ -37,5 +30,5 @@ public interface ProfileValuesEditorFactory {
      *   profile. This method may never return {@code null}.
      */
     @Nonnull
-    public ProfileValuesEditor startEditingProfile(@Nonnull String displayName, @Nonnull ActiveSettingsQuery profileQuery);
+    public ProfileEditor startEditingProfile(@Nonnull ProfileInfo profileInfo, @Nonnull ActiveSettingsQuery profileQuery);
 }

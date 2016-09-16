@@ -1,25 +1,21 @@
 package org.netbeans.gradle.project.api.config.ui;
 
 /**
- * @deprecated Use the {@link ProfileBasedSettingsPageFactory} based configuration instead:
- *   {@link ProfileBasedSettingsPageFactory}.
- * <P>
  * Defines a factory to create the component and to display the editor of the
  * properties and the logic of setting the properties in the settings.
  *
  * @see ProfileBasedConfigurations
  */
-@Deprecated
-public interface ProfileBasedProjectSettingsPageFactory {
+public interface ProfileBasedSettingsPageFactory {
     /**
-     * Creates a new project properties category page which is able to adjust
+     * Creates a new properties category page which is able to adjust
      * configuration of specific profiles.
      * <P>
      * This method is always called on the <I>Event Dispatch Thread</I>.
      *
-     * @return a new project properties category page which is able to adjust
+     * @return a new properties category page which is able to adjust
      *   configuration of specific profiles. This method may never return
      *   {@code null}.
      */
-    public ProfileBasedProjectSettingsPage createSettingsPage();
+    public ProfileBasedSettingsPage createSettingsPage();
 }

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.api.config.ui;
 
 public interface StoredSettings {
     public static final StoredSettings NOT_INITIALIZED = new StoredSettings() {

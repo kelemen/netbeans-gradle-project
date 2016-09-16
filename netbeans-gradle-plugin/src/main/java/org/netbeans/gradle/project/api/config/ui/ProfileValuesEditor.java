@@ -1,11 +1,15 @@
 package org.netbeans.gradle.project.api.config.ui;
 
 /**
+ * @deprecated Use the {@link ProfileBasedSettingsPageFactory} based configuration instead:
+ *   {@link ProfileEditor}.
+ * <P>
  * Defines the logic of editing and saving properties of an associated profile.
  *
  * @see ProfileBasedConfigurations
  * @see ProfileValuesEditorFactory
  */
+@Deprecated
 public interface ProfileValuesEditor {
     /**
      * Displays the last value of the properties to be edited on the associated

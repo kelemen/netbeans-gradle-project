@@ -5,22 +5,18 @@ import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 
 /**
- * @deprecated Use the {@link ProfileBasedSettingsPageFactory} based configuration instead:
- *   {@link ProfileBasedSettingsPage}.
- * <P>
- * Defines a profile based project property editor page. Instances of these
- * classes are usually created by a {@link ProfileBasedProjectSettingsPageFactory}.
+ * Defines a profile based property editor page. Instances of these
+ * classes are usually created by a {@link ProfileBasedSettingsPageFactory}.
  *
  * @see ProfileBasedConfigurations
- * @see ProfileBasedProjectSettingsPageFactory
+ * @see ProfileBasedSettingsPageFactory
  */
-@Deprecated
-public final class ProfileBasedProjectSettingsPage {
+public final class ProfileBasedSettingsPage {
     private final JComponent settingsPanel;
-    private final ProfileValuesEditorFactory editorFactory;
+    private final ProfileEditorFactory editorFactory;
 
     /**
-     * Creates a new {@code ProfileBasedProjectSettingsPage} with the
+     * Creates a new {@code ProfileBasedSettingsPageFactory} with the
      * given <I>Swing</I> component and the logic of saving and updating
      * properties on this component.
      *
@@ -29,7 +25,7 @@ public final class ProfileBasedProjectSettingsPage {
      * @param editorFactory the logic of saving and updating properties edited
      *   on this page. This argument cannot be {@code null}.
      */
-    public ProfileBasedProjectSettingsPage(@Nonnull JComponent settingsPanel, @Nonnull ProfileValuesEditorFactory editorFactory) {
+    public ProfileBasedSettingsPage(@Nonnull JComponent settingsPanel, @Nonnull ProfileEditorFactory editorFactory) {
         ExceptionHelper.checkNotNullArgument(settingsPanel, "settingsPanel");
         ExceptionHelper.checkNotNullArgument(editorFactory, "editorFactory");
 
@@ -56,7 +52,7 @@ public final class ProfileBasedProjectSettingsPage {
      *   This method never returns {@code null}.
      */
     @Nonnull
-    public ProfileValuesEditorFactory getEditorFactory() {
+    public ProfileEditorFactory getEditorFactory() {
         return editorFactory;
     }
 }

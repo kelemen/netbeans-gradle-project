@@ -44,16 +44,14 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor;
-import org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
+import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.AtomicIntProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
-import org.netbeans.gradle.project.properties.ProfileEditor;
-import org.netbeans.gradle.project.properties.ProfileEditorFactory;
-import org.netbeans.gradle.project.properties.ProfileInfo;
 import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.util.GlassPanes;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.DialogDescriptor;
@@ -158,18 +156,12 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
     }
 
-    public static ProfileBasedPanel createPanel(
-            Project project,
-            JComponent customPanel,
-            ProfileValuesEditorFactory snapshotCreator) {
-        return createPanel(project, customPanel, convertFactory(snapshotCreator));
-    }
-
+    @SuppressWarnings("deprecation")
     public static ProfileBasedPanel createPanel(
             Project project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
-            ProfileValuesEditorFactory snapshotCreator) {
+            org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory snapshotCreator) {
         return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
     }
 
@@ -242,17 +234,22 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         };
     }
 
-    private static ProfileValuesEditorFactory2 convertFactory(final ProfileValuesEditorFactory factory) {
+    @SuppressWarnings("deprecation")
+    private static ProfileValuesEditorFactory2 convertFactory(
+            final org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory factory) {
         return new ProfileValuesEditorFactory2() {
             @Override
             public ProfileValuesEditor2 startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
-                ProfileValuesEditor editor = factory.startEditingProfile(profileInfo.getDisplayName(), profileQuery);
+                org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor editor
+                        = factory.startEditingProfile(profileInfo.getDisplayName(), profileQuery);
                 return upgradeEditor(editor);
             }
         };
     }
 
-    private static ProfileValuesEditor2 upgradeEditor(final ProfileValuesEditor editor) {
+    @SuppressWarnings("deprecation")
+    private static ProfileValuesEditor2 upgradeEditor(
+            final org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor editor) {
         return new ProfileValuesEditor2() {
             @Override
             public void displayValues() {

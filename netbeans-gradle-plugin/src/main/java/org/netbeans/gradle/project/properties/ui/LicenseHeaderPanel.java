@@ -8,12 +8,12 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
+import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
+import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
+import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties.ProfileEditor;
-import org.netbeans.gradle.project.properties.ProfileEditorFactory;
-import org.netbeans.gradle.project.properties.ProfileInfo;
-import org.netbeans.gradle.project.properties.StoredSettings;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
