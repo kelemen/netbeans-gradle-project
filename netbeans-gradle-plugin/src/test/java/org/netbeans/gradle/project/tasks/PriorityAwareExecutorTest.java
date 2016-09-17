@@ -9,6 +9,7 @@ import org.jtrim.concurrent.ManualTaskExecutor;
 import org.junit.Test;
 import org.mockito.InOrder;
 
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 public class PriorityAwareExecutorTest {
