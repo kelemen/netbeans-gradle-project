@@ -68,8 +68,9 @@ public final class SampleGradleProject implements Closeable {
 
     public Project getSingleUnloadedProject() throws IOException {
         File[] dirs = tempFolder.listFiles();
-        if (dirs.length != 1) {
-            throw new IllegalStateException(tempFolder + " does not contain a single folder but " + dirs.length);
+        int dirsLength = dirs != null ? dirs.length : 0;
+        if (dirsLength != 1) {
+            throw new IllegalStateException(tempFolder + " does not contain a single folder but " + dirsLength);
         }
 
         return getUnloadedProject(dirs[0]);

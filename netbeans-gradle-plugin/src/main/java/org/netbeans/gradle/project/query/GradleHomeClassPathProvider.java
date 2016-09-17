@@ -52,6 +52,10 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         }
 
         File[] jars = libDir.listFiles(filter);
+        if (jars == null) {
+            return NO_URLS;
+        }
+
         List<URL> result = new ArrayList<>(jars.length);
         for (File jar: jars) {
             URL url = FileUtil.urlForArchiveOrDir(jar);
