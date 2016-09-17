@@ -22,6 +22,7 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 

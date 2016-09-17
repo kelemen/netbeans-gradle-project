@@ -25,13 +25,13 @@ import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.openide.util.lookup.Lookups;
 

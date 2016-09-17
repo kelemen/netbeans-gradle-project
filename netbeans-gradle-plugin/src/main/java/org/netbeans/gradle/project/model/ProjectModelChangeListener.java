@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.model;
 
 /**
  * Objects of this type on the project's lookup will be automatically

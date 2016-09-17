@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.lookups;
 
 import java.util.Collection;
 import java.util.List;

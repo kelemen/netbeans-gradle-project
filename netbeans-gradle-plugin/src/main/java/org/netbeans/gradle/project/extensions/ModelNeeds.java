@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.extensions;
 
 import java.util.Collection;
 import java.util.Collections;

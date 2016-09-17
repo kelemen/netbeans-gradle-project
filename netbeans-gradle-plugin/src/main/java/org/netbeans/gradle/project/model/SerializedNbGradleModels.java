@@ -6,8 +6,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationUtils;
-import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 
 public final class SerializedNbGradleModels implements Serializable {
     private static final long serialVersionUID = 1L;

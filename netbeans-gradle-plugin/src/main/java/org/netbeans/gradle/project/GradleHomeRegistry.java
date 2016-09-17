@@ -17,6 +17,7 @@ import org.netbeans.api.java.classpath.GlobalPathRegistry;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.GradleHomeClassPathProvider;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;

@@ -23,7 +23,7 @@ import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbTaskExecutors;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 import static org.jtrim.property.PropertyFactory.*;
 

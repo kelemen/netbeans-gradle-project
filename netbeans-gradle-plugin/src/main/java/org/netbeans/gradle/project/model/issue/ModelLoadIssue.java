@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.model.issue;
 
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 
 public final class ModelLoadIssue {
     private final NbGradleProject requestedProject;

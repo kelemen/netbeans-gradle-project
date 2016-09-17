@@ -3,8 +3,8 @@ package org.netbeans.gradle.project.model.issue;
 import org.netbeans.gradle.model.BuilderIssue;
 import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericProjectProperties;
-import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 
 public final class ModelLoadIssues {
     public static ModelLoadIssue projectModelLoadError(

@@ -12,9 +12,9 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 

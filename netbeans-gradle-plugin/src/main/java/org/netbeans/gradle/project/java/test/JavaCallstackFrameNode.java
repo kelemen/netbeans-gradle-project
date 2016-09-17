@@ -11,9 +11,9 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.modules.gsf.testrunner.ui.api.CallstackFrameNode;
 
 public final class JavaCallstackFrameNode extends CallstackFrameNode {

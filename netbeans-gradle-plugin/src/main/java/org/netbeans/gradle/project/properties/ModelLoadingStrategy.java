@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import org.gradle.util.GradleVersion;
-import org.netbeans.gradle.project.GradleVersions;
+import org.netbeans.gradle.project.util.GradleVersions;
 
 // Warning: Never rename instances of this enum because they are used to save
 //          the actual configuration.

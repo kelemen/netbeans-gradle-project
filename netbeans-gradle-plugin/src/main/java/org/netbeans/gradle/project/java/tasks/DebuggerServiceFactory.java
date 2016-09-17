@@ -16,7 +16,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.task.GradleCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandService;
 import org.netbeans.gradle.project.api.task.GradleCommandServiceFactory;
@@ -24,6 +23,7 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.tasks.AttacherListener;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.windows.OutputWriter;
 
 public final class DebuggerServiceFactory implements GradleCommandServiceFactory {

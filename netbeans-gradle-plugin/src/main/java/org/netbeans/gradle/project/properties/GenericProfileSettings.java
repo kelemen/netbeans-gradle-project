@@ -13,11 +13,11 @@ import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.event.OneShotChangeListenerManager;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.w3c.dom.Element;
 
 public final class GenericProfileSettings implements LoadableSingleProfileSettingsEx {

@@ -22,10 +22,10 @@ import javax.swing.SwingUtilities;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.Exceptions;
-import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.openide.awt.NotificationDisplayer;
 
 public final class ModelLoadIssueReporter {

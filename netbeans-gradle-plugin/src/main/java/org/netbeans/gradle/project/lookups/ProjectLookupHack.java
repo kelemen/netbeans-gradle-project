@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.lookups;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;

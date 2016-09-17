@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project;
+package org.netbeans.gradle.project.util;
 
 import org.gradle.util.GradleVersion;
 
