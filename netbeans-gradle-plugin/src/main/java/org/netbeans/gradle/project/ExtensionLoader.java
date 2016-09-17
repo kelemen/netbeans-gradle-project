@@ -104,8 +104,8 @@ public final class ExtensionLoader {
         return null;
     }
 
-    private static String getExtensionNameForConfig(NbGradleExtensionRef extensionRef, Lookup... lookups) {
-        ExtensionSettingsId settingsId = tryGet(ExtensionSettingsId.class, lookups);
+    private static String getExtensionNameForConfig(NbGradleExtensionRef extensionRef) {
+        ExtensionSettingsId settingsId = extensionRef.getExtensionDef().getLookup().lookup(ExtensionSettingsId.class);
         return settingsId != null ? settingsId.getId() : extensionRef.getName();
     }
 
@@ -117,7 +117,7 @@ public final class ExtensionLoader {
         return new NbGradleExtensionRef(def, extension, new DeducedExtensionServicesProvider() {
             @Override
             public Lookup getDeducedLookup(NbGradleExtensionRef extensionRef, Lookup... lookups) {
-                String extensionName = getExtensionNameForConfig(extensionRef, lookups);
+                String extensionName = getExtensionNameForConfig(extensionRef);
                 return Lookups.fixed(new ExtensionProjectSettingsPageDefs(project, extensionName, lookups));
             }
         });
