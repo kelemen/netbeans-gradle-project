@@ -37,6 +37,7 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -136,13 +137,13 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     public static <T extends JComponent & ProfileEditorFactory> ProfileBasedPanel createPanel(
-            Project project,
+            NbGradleProject project,
             T customPanel) {
         return createPanel(project, customPanel, customPanel);
     }
 
     public static ProfileBasedPanel createPanel(
-            Project project,
+            NbGradleProject project,
             JComponent customPanel,
             ProfileEditorFactory snapshotCreator) {
         return createPanel(project, customPanel, convertFactory(snapshotCreator));
@@ -166,7 +167,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private static ProfileBasedPanel createPanel(
-            Project project,
+            NbGradleProject project,
             JComponent customPanel,
             ProfileValuesEditorFactory2 snapshotCreator) {
 
@@ -183,11 +184,8 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
             ProfileValuesEditorFactory2 snapshotCreator) {
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
-        }
 
+        NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
         return createPanel(gradleProject, extensionSettings, customPanel, snapshotCreator);
     }
 

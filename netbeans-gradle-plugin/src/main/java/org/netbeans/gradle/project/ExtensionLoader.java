@@ -20,12 +20,14 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.api.config.ExtensionSettingsId;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
 import org.netbeans.gradle.project.api.entry.ParsedModel;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.properties.ExtensionProjectSettingsPageDefs;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -64,7 +66,7 @@ public final class ExtensionLoader {
                     = createWrappedDef(projectDir, def, extension);
             GradleProjectExtension2<SerializableLookup> extension2
                     = createWrappedProjectExtension(extension);
-            return new NbGradleExtensionRef(def2, extension2);
+            return createExtensionRef(project, def2, extension2);
         } catch (Throwable ex) {
             String name = extension != null
                     ? extension.getExtensionName()
@@ -83,13 +85,42 @@ public final class ExtensionLoader {
 
         try {
             GradleProjectExtension2<ModelType> extension = def.createExtension(project);
-            return new NbGradleExtensionRef(def, extension);
+            return createExtensionRef(project, def, extension);
         } catch (Throwable ex) {
             LOGGER.log(levelFromException(ex),
                     "Failed to load extension: " + def.getName() + " for project " + project.getProjectDirectory(),
                     ex);
             return null;
         }
+    }
+
+    private static <T> T tryGet(Class<? extends T> type, Lookup... lookups) {
+        for (Lookup lookup: lookups) {
+            T result = lookup.lookup(type);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private static String getExtensionNameForConfig(NbGradleExtensionRef extensionRef, Lookup... lookups) {
+        ExtensionSettingsId settingsId = tryGet(ExtensionSettingsId.class, lookups);
+        return settingsId != null ? settingsId.getId() : extensionRef.getName();
+    }
+
+    private static <ModelType> NbGradleExtensionRef createExtensionRef(
+            final NbGradleProject project,
+            GradleProjectExtensionDef<ModelType> def,
+            GradleProjectExtension2<ModelType> extension) {
+
+        return new NbGradleExtensionRef(def, extension, new DeducedExtensionServicesProvider() {
+            @Override
+            public Lookup getDeducedLookup(NbGradleExtensionRef extensionRef, Lookup... lookups) {
+                String extensionName = getExtensionNameForConfig(extensionRef, lookups);
+                return Lookups.fixed(new ExtensionProjectSettingsPageDefs(project, extensionName, lookups));
+            }
+        });
     }
 
     private static void tryAddExtension(

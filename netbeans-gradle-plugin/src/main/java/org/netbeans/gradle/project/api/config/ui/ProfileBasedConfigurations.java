@@ -4,7 +4,10 @@ import javax.annotation.Nonnull;
 import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.properties.ExtensionProjectSettingsPageDefs;
 import org.netbeans.gradle.project.properties.ProfileBasedCustomizer;
 import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -39,32 +42,9 @@ public final class ProfileBasedConfigurations {
             @Nonnull final CustomizerCategoryId categoryId,
             @Nonnull final ProjectSettingsProvider.ExtensionSettings extensionSettings,
             @Nonnull final ProfileBasedSettingsPageFactory pageFactory) {
-
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(categoryId, "categoryId");
-        ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
-        ExceptionHelper.checkNotNullArgument(pageFactory, "pageFactory");
-
-        ProfileBasedCustomizer.PanelFactory panelFactory = new ProfileBasedCustomizer.PanelFactory() {
-            @Override
-            public ProfileBasedPanel createPanel() {
-                return createProfileBasedPanel(project, extensionSettings, pageFactory);
-            }
-        };
-
-        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), panelFactory);
-    }
-
-    private static ProfileBasedPanel createProfileBasedPanel(
-            Project project,
-            ProjectSettingsProvider.ExtensionSettings extensionSettings,
-            ProfileBasedSettingsPageFactory pageFactory) {
-
-        ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
-        JComponent customPanel = settingsPage.getSettingsPanel();
-        ProfileEditorFactory editorFactory = settingsPage.getEditorFactory();
-
-        return ProfileBasedPanel.createPanel(project, extensionSettings, customPanel, editorFactory);
+        NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
+        return ExtensionProjectSettingsPageDefs
+                .createProfileBasedCustomizer(gradleProject, categoryId, extensionSettings, pageFactory);
     }
 
     /**

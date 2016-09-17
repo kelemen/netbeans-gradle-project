@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
@@ -18,20 +19,25 @@ public final class NbGradleExtensionRef {
     private final DefWithExtension<?> defWithExtension;
     private final ModelNeeds modelNeed;
     private final AtomicBoolean lastActive;
+    private final DeducedExtensionServicesProvider deducedServicesProvider;
 
     private final DynamicLookup extensionLookup;
     private final DynamicLookup projectLookup;
+    private final AtomicReference<Lookup> deducedServicesRef;
 
     public <ModelType> NbGradleExtensionRef(
             GradleProjectExtensionDef<ModelType> extensionDef,
-            GradleProjectExtension2<ModelType> extension) {
+            GradleProjectExtension2<ModelType> extension,
+            DeducedExtensionServicesProvider deducedServicesProvider) {
 
         ExceptionHelper.checkNotNullArgument(extensionDef, "extensionDef");
         ExceptionHelper.checkNotNullArgument(extension, "extension");
+        ExceptionHelper.checkNotNullArgument(deducedServicesProvider, "deducedServicesProvider");
 
         this.name = extensionDef.getName();
         checkExtensionName(name, extensionDef);
 
+        this.deducedServicesProvider = deducedServicesProvider;
         this.displayName = useNameIfNoDisplayName(extensionDef.getDisplayName(), name);
         this.defWithExtension = new DefWithExtension<>(extensionDef, extension);
         this.modelNeed = new ModelNeeds(extensionDef);
@@ -39,6 +45,7 @@ public final class NbGradleExtensionRef {
         this.projectLookup = new DynamicLookup(extension.getPermanentProjectLookup());
         this.extensionLookup = new DynamicLookup();
         this.lastActive = new AtomicBoolean(false);
+        this.deducedServicesRef = new AtomicReference<>(null);
     }
 
     private static void checkExtensionName(String name, GradleProjectExtensionDef<?> def) {
@@ -111,6 +118,25 @@ public final class NbGradleExtensionRef {
         }
     }
 
+    private Lookup createDeducedLookup() {
+        GradleProjectExtension2<?> extension = getExtension();
+        return deducedServicesProvider.getDeducedLookup(this,
+                extension.getExtensionLookup(),
+                extension.getPermanentProjectLookup(),
+                extension.getProjectLookup());
+    }
+
+    private Lookup getDeducedLookup() {
+        Lookup result = deducedServicesRef.get();
+        if (result == null) {
+            result = createDeducedLookup();
+            if (!deducedServicesRef.compareAndSet(null, result)) {
+                result = deducedServicesRef.get();
+            }
+        }
+        return result;
+    }
+
     public boolean setModelForExtension(Object model) {
         boolean active = model != null;
         boolean prevActive = lastActive.getAndSet(active);
@@ -122,6 +148,7 @@ public final class NbGradleExtensionRef {
                     extension.getPermanentProjectLookup(),
                     extension.getProjectLookup());
             extensionLookup.replaceLookups(
+                    getDeducedLookup(),
                     extension.getExtensionLookup(),
                     extension.getPermanentProjectLookup(),
                     extension.getProjectLookup());

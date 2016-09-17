@@ -516,6 +516,10 @@ public final class NbGradleProject implements Project {
         GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, modelLoadListener);
     }
 
+    public ProjectSettingsProvider getProjectSettingsProvider() {
+        return getServiceObjects().projectSettingsProvider;
+    }
+
     public NbGradleCommonProperties getCommonProperties() {
         return getServiceObjects().commonProperties;
     }

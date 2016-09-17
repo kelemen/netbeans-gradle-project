@@ -47,15 +47,18 @@ public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEdi
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
+    public static CustomizerCategoryId getCategoryId() {
+        // TODO: I18N
+        return new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
+    }
+
     public static ProjectCustomizer.CompositeCategoryProvider createDebuggingCustomizer(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         Project project = javaExt.getProject();
-        // TODO: I18N
-        CustomizerCategoryId categoryId = new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
         ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
 
-        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, categoryId, extensionSettings, new ProfileBasedSettingsPageFactory() {
+        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, getCategoryId(), extensionSettings, new ProfileBasedSettingsPageFactory() {
             @Override
             public ProfileBasedSettingsPage createSettingsPage() {
                 JavaDebuggingPanel customPanel = new JavaDebuggingPanel();

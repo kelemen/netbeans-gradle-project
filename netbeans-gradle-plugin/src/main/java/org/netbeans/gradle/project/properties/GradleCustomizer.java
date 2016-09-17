@@ -110,6 +110,14 @@ public final class GradleCustomizer implements CustomizerProvider {
         return customizerLookup.lookupAll(ProjectCustomizer.CompositeCategoryProvider.class);
     }
 
+    private void getCustomizersOfExtensions(List<ProjectCustomizer.CompositeCategoryProvider> result) {
+        Collection<? extends ExtensionProjectSettingsPageDefs> defs
+                = project.getCombinedExtensionLookup().lookupAll(ExtensionProjectSettingsPageDefs.class);
+        for (ExtensionProjectSettingsPageDefs def: defs) {
+            result.addAll(def.getCustomizers());
+        }
+    }
+
     private ProjectCustomizer.CompositeCategoryProvider[] getAllCustomizers() {
         ProjectCustomizer.CompositeCategoryProvider[] externalCategories
                 = getExternalCustomizers();
@@ -121,9 +129,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         allCategoriesList.add(newCustomTasksCustomizer(project));
         allCategoriesList.add(newCustomVariablesCustomizer(project));
         allCategoriesList.add(newLicenseCustomizer(project));
-        allCategoriesList.addAll(project
-                .getCombinedExtensionLookup()
-                .lookupAll(ProjectCustomizer.CompositeCategoryProvider.class));
+        getCustomizersOfExtensions(allCategoriesList);
         allCategoriesList.add(newAppearanceCustomizer(project));
         allCategoriesList.addAll(Arrays.asList(externalCategories));
         allCategoriesList.addAll(getAnnotationBasedProviders());
