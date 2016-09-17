@@ -9,6 +9,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedForeignSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
@@ -98,10 +99,29 @@ public final class ExtensionProjectSettingsPageDefs {
         }
     }
 
+    public void addAllForeignProviders(List<ProjectCustomizer.CompositeCategoryProvider> result) {
+        ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
+
+        for (Lookup lookup: extensionLookups) {
+            for (ProfileBasedForeignSettingsCategory foreignDef: lookup.lookupAll(ProfileBasedForeignSettingsCategory.class)) {
+                ProfileBasedSettingsCategory categoryDef = foreignDef.getSettingsCetegory();
+
+                CustomizerCategoryId categoryId = categoryDef.getCategoryId();
+                ProfileBasedSettingsPageFactory pageFactory = categoryDef.getSettingsPageFactory();
+
+                ProjectSettingsProvider.ExtensionSettings extSettings
+                        = settingsProvider.getExtensionSettings(foreignDef.getExtensionName());
+
+                result.add(createProfileBasedCustomizer(project, categoryId, extSettings, pageFactory));
+            }
+        }
+    }
+
     public List<ProjectCustomizer.CompositeCategoryProvider> getCustomizers() {
         List<ProjectCustomizer.CompositeCategoryProvider> result = new ArrayList<>();
         addAllGenericProviders(result);
         addAllExplicitProviders(result);
+        addAllForeignProviders(result);
         return result;
     }
 }

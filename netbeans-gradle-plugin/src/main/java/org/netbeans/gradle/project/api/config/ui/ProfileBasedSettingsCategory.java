@@ -11,10 +11,9 @@ import org.jtrim.utils.ExceptionHelper;
  * The settings are saved under the
  * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#getName() extension name}
  * with respect to the argument of
- * {@link org.netbeans.gradle.project.api.config.ProjectSettingsProvider#getExtensionSettings(String) ProjectSettingsProvider.getExtensionSettings}
- * by default. If you need to overwrite this default (due to backward compatibility reasons), you must provide an
- * instance of {@link org.netbeans.gradle.project.api.config.ExtensionSettingsId ExtensionSettingsId} on the
- * {@link org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef#getLookup() lookup of GradleProjectExtensionDef}.
+ * {@link org.netbeans.gradle.project.api.config.ProjectSettingsProvider#getExtensionSettings(String) ProjectSettingsProvider.getExtensionSettings}.
+ * If you need to save settings under a different name (due to backward compatibility reasons), you must use a
+ * {@link ProfileBasedForeignSettingsCategory} instead.
  */
 public final class ProfileBasedSettingsCategory {
     private final CustomizerCategoryId categoryId;

@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.api.config.ExtensionSettingsId;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
@@ -104,11 +103,6 @@ public final class ExtensionLoader {
         return null;
     }
 
-    private static String getExtensionNameForConfig(NbGradleExtensionRef extensionRef) {
-        ExtensionSettingsId settingsId = extensionRef.getExtensionDef().getLookup().lookup(ExtensionSettingsId.class);
-        return settingsId != null ? settingsId.getId() : extensionRef.getName();
-    }
-
     private static <ModelType> NbGradleExtensionRef createExtensionRef(
             final NbGradleProject project,
             GradleProjectExtensionDef<ModelType> def,
@@ -117,7 +111,7 @@ public final class ExtensionLoader {
         return new NbGradleExtensionRef(def, extension, new DeducedExtensionServicesProvider() {
             @Override
             public Lookup getDeducedLookup(NbGradleExtensionRef extensionRef, Lookup... lookups) {
-                String extensionName = getExtensionNameForConfig(extensionRef);
+                String extensionName = extensionRef.getName();
                 return Lookups.fixed(new ExtensionProjectSettingsPageDefs(project, extensionName, lookups));
             }
         });
