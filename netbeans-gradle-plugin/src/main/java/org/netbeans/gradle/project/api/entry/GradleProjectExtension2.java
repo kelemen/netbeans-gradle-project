@@ -73,9 +73,15 @@ public interface GradleProjectExtension2<ModelType> {
      *  <li>{@link org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery}</li>
      *  <li>{@link org.netbeans.gradle.project.api.task.GradleTaskVariableQuery}</li>
      *  <li>
+     *   {@link org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory}:
+     *   You may add as many instances of this query as you want to the lookup,
+     *   if you need more than one project settings page.
+     *  </li>
+     *  <li>
      *   {@link org.netbeans.spi.project.ui.support.ProjectCustomizer.CompositeCategoryProvider}:
      *   You may add as many instances of this query as you want to the lookup,
-     *   if you need more than one customizer.
+     *   if you need more than one customizer. However, it is recommended to provide an instance of
+     *   {@code ProfileBasedSettingsCategory} instead.
      *  </li>
      * </ul>
      * <P>

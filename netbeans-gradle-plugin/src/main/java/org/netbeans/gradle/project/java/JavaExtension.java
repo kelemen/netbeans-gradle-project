@@ -262,7 +262,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new JavaProjectContextActions(this),
                     new GradleJavaBuiltInCommands(this),
                     new JavaInitScriptQuery(),
-                    JavaDebuggingPanel.createDebuggingCustomizer(this));
+                    JavaDebuggingPanel.createDebuggingCustomizer());
 
             if (extensionLookupRef.compareAndSet(null, lookup)) {
                 initLookup(lookup);

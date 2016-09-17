@@ -7,7 +7,7 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
  * Defines the logic of editing multiple profiles on the associated settings
  * panel.
  *
- * @see ProfileBasedConfigurations
+ * @see ProfileBasedSettingsCategory
  * @see ProfileBasedSettingsPageFactory
  */
 public interface ProfileEditorFactory {

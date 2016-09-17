@@ -4,7 +4,7 @@ package org.netbeans.gradle.project.api.config.ui;
  * Defines a factory to create the component and to display the editor of the
  * properties and the logic of setting the properties in the settings.
  *
- * @see ProfileBasedConfigurations
+ * @see ProfileBasedSettingsCategory
  */
 public interface ProfileBasedSettingsPageFactory {
     /**

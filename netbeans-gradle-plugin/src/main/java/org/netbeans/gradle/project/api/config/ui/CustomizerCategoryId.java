@@ -13,7 +13,7 @@ import org.jtrim.utils.ExceptionHelper;
  * further synchronization.
  *
  * @see org.netbeans.spi.project.ui.support.ProjectCustomizer.Category#create(String, String, java.awt.Image, org.netbeans.spi.project.ui.support.ProjectCustomizer.Category[]) ProjectCustomizer.Category.create
- * @see ProfileBasedConfigurations
+ * @see ProfileBasedSettingsCategory
  */
 public final class CustomizerCategoryId {
     private final String categoryName;

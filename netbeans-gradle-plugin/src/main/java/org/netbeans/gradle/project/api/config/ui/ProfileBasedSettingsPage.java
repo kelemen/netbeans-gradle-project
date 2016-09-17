@@ -8,7 +8,7 @@ import org.jtrim.utils.ExceptionHelper;
  * Defines a profile based property editor page. Instances of these
  * classes are usually created by a {@link ProfileBasedSettingsPageFactory}.
  *
- * @see ProfileBasedConfigurations
+ * @see ProfileBasedSettingsCategory
  * @see ProfileBasedSettingsPageFactory
  */
 public class ProfileBasedSettingsPage {

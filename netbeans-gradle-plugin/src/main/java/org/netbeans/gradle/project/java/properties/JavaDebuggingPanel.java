@@ -2,23 +2,18 @@ package org.netbeans.gradle.project.java.properties;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedConfigurations;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
-import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.ui.EnumCombo;
 import org.netbeans.gradle.project.util.NbGuiUtils;
-import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 
 @SuppressWarnings("serial")
 public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEditorFactory {
@@ -52,13 +47,8 @@ public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEdi
         return new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
     }
 
-    public static ProjectCustomizer.CompositeCategoryProvider createDebuggingCustomizer(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
-
-        Project project = javaExt.getProject();
-        ProjectSettingsProvider.ExtensionSettings extensionSettings = javaExt.getExtensionSettings();
-
-        return ProfileBasedConfigurations.createProfileBasedCustomizer(project, getCategoryId(), extensionSettings, new ProfileBasedSettingsPageFactory() {
+    public static ProfileBasedSettingsCategory createDebuggingCustomizer() {
+        return new ProfileBasedSettingsCategory(getCategoryId(), new ProfileBasedSettingsPageFactory() {
             @Override
             public ProfileBasedSettingsPage createSettingsPage() {
                 JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
