@@ -59,7 +59,7 @@ public final class ProfileBasedForeignSettingsCategory {
      * @return the definition of the settings page. This method never returns {@code null}.
      */
     @Nonnull
-    public ProfileBasedSettingsCategory getSettingsCetegory() {
+    public ProfileBasedSettingsCategory getSettingsCategory() {
         return settingsCetegory;
     }
 }

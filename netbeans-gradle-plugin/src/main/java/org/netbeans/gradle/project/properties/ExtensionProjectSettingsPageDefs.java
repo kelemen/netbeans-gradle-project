@@ -104,7 +104,7 @@ public final class ExtensionProjectSettingsPageDefs {
 
         for (Lookup lookup: extensionLookups) {
             for (ProfileBasedForeignSettingsCategory foreignDef: lookup.lookupAll(ProfileBasedForeignSettingsCategory.class)) {
-                ProfileBasedSettingsCategory categoryDef = foreignDef.getSettingsCetegory();
+                ProfileBasedSettingsCategory categoryDef = foreignDef.getSettingsCategory();
 
                 CustomizerCategoryId categoryId = categoryDef.getCategoryId();
                 ProfileBasedSettingsPageFactory pageFactory = categoryDef.getSettingsPageFactory();
