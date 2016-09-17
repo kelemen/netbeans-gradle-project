@@ -200,6 +200,9 @@ public final class NbFileUtils {
                 return pathname.isDirectory();
             }
         });
+        if (subDirs == null) {
+            return null;
+        }
 
         for (File dir: subDirs) {
             File srcFileName = new File(dir, fileName);
