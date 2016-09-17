@@ -61,6 +61,7 @@ public interface GradleProjectExtensionDef<ModelType> {
      * <ul>
      *  <li>{@link org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1}</li>
      *  <li>{@link org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2}</li>
+     *  <li>{@link org.netbeans.gradle.project.api.config.ExtensionSettingsId}</li>
      * </ul>
      *
      * @return the lookup containing information about this extension
