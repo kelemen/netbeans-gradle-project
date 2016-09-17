@@ -16,6 +16,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.spi.debugger.jpda.EditorContext;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -144,7 +145,7 @@ public final class DebugUtils {
                     map.put(classname + basename2.substring(basename.length()), classfile.asBytes());
                 }
             } catch (IOException ex) {
-                NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+                NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
                 if (gradleProject != null) {
                     gradleProject.displayError("Unexpected error.", ex);
                 }

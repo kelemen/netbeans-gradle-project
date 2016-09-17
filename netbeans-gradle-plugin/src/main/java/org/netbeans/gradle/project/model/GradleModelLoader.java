@@ -133,10 +133,7 @@ public final class GradleModelLoader {
             ((DefaultGradleConnector)result).daemonMaxIdleTime(timeoutSec, TimeUnit.SECONDS);
         }
 
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
-        }
+        NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
 
         File gradleUserHome = CommonGlobalSettings.getDefault().gradleUserHomeDir().getActiveValue();
         if (gradleUserHome != null) {
@@ -418,7 +415,7 @@ public final class GradleModelLoader {
     private static JavaPlatform tryGetScriptJavaPlatform(Project project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
 
         ScriptPlatform result = gradleProject != null
                 ? gradleProject.getCommonProperties().scriptPlatform().getActiveValue()
@@ -517,7 +514,7 @@ public final class GradleModelLoader {
     }
 
     public static ModelBuilderSetup modelBuilderSetup(Project project, ProgressHandle progress) {
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
         if (gradleProject != null) {
             return modelBuilderSetup(gradleProject, progress);
         }

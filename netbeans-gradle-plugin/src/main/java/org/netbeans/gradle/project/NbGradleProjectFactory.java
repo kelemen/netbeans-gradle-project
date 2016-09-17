@@ -49,18 +49,26 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         return result;
     }
 
-    private static NbGradleProject asGradleProject(Project project) {
+    public static NbGradleProject tryGetGradleProject(Project project) {
         return project != null
                 ? project.getLookup().lookup(NbGradleProject.class)
                 : null;
     }
 
+    public static NbGradleProject getGradleProject(Project project) {
+        NbGradleProject gradleProject = tryGetGradleProject(project);
+        if (gradleProject == null) {
+            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
+        }
+        return gradleProject;
+    }
+
     public static NbGradleProject tryLoadSafeGradleProject(Path projectDir) {
-        return asGradleProject(tryLoadSafeProject(projectDir));
+        return tryGetGradleProject(tryLoadSafeProject(projectDir));
     }
 
     public static NbGradleProject tryLoadSafeGradleProject(File projectDir) {
-        return asGradleProject(tryLoadSafeProject(projectDir));
+        return tryGetGradleProject(tryLoadSafeProject(projectDir));
     }
 
     public static Project tryLoadSafeProject(Path projectDir) {

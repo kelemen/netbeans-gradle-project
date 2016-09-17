@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleExtensionRef;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.config.GradleArgumentQuery;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -54,7 +55,7 @@ public final class GradleArguments {
             List<String> result,
             ArgGetter argGetter) {
 
-        NbGradleProject gradleProject = context.getProject().getLookup().lookup(NbGradleProject.class);
+        NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(context.getProject());
         if (gradleProject == null) {
             return;
         }
@@ -86,7 +87,7 @@ public final class GradleArguments {
     }
 
     private static Path tryGetUserInitScript(Project project) {
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
+        NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
         if (gradleProject == null) {
             return null;
         }

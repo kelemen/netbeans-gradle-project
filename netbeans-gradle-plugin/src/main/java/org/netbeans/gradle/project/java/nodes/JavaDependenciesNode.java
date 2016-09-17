@@ -26,6 +26,7 @@ import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.NbTaskExecutors;
@@ -91,7 +92,7 @@ public final class JavaDependenciesNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        NbGradleProject project = javaExt.getProject().getLookup().lookup(NbGradleProject.class);
+        NbGradleProject project = NbGradleProjectFactory.getGradleProject(javaExt.getProject());
         return new Action[]{
             new DownloadSourcesAction(project)
         };

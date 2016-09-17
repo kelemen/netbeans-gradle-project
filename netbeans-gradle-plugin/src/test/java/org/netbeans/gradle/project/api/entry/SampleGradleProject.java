@@ -58,13 +58,8 @@ public final class SampleGradleProject implements Closeable {
 
     private NbGradleProject toLoadedProject(Project project) throws IOException {
         try {
-            final NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-            if (gradleProject == null) {
-                throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
-            }
-
+            NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
             gradleProject.ensureLoadRequested();
-
             return gradleProject;
         } catch (Throwable ex) {
             throw Exceptions.throwUnchecked(ex);

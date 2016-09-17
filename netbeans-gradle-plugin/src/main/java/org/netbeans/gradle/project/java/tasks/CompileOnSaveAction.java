@@ -6,7 +6,7 @@ import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.api.task.GradleActionProviderContext;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.modules.parsing.api.Source;
@@ -31,7 +31,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
         }
 
         Project project = FileOwnerQuery.getOwner(srcFile);
-        if (project == null || !isGradleProject(project)) {
+        if (!isGradleProject(project)) {
             return;
         }
 
@@ -48,7 +48,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
     }
 
     private static boolean isGradleProject(Project project) {
-        return project.getLookup().lookup(NbGradleProject.class) != null;
+        return NbGradleProjectFactory.getGradleProject(project) != null;
     }
 
     @Override

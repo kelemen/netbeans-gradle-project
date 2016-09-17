@@ -34,17 +34,10 @@ public final class JavaProjectReference implements Serializable {
     }
 
     public void ensureProjectLoaded() {
-        Project project = tryGetProject();
-        if (project == null) {
-            return;
+        NbGradleProject project = NbGradleProjectFactory.tryGetGradleProject(tryGetProject());
+        if (project != null) {
+            project.ensureLoadRequested();
         }
-
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            return;
-        }
-
-        gradleProject.ensureLoadRequested();
     }
 
     public File getProjectDir() {

@@ -26,7 +26,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.ProjectInfo;
 import org.netbeans.gradle.project.ProjectInfoManager;
 import org.netbeans.gradle.project.ProjectInfoRef;
@@ -318,12 +318,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private static ProjectInfoManager getProjectInfoManager(Project project) {
         // TODO: In the future this should be a public API.
-        NbGradleProject gradleProject = project.getLookup().lookup(NbGradleProject.class);
-        if (gradleProject == null) {
-            throw new IllegalStateException("project is not an " + NbGradleProject.class.getSimpleName() + ": " + project.getProjectDirectory());
-        }
-
-        return gradleProject.getProjectInfoManager();
+        return NbGradleProjectFactory.getGradleProject(project).getProjectInfoManager();
     }
 
     private void checkDependencyResolveProblems(NbJavaModule module) {
