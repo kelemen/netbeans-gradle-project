@@ -19,8 +19,6 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.Exceptions;
 
-import static org.netbeans.gradle.model.util.ReflectionUtils.*;
-
 /**
  * Defines a {@code ProjectInfoBuilder} which is able to extract
  * {@link JavaSourcesModel} from a Gradle project.
@@ -102,15 +100,6 @@ implements
 
         private Collection<File> addSourceGroup(
                 JavaSourceGroupName name,
-                SourceSet sourceSet,
-                String groupName,
-                JavaSourceSet.Builder result) throws Exception {
-            SourceDirectorySet sourceGroup = (SourceDirectorySet)getNonBoolPropertyDyn(sourceSet, groupName);
-            return addSourceGroup(name, sourceGroup, result);
-        }
-
-        private Collection<File> addSourceGroup(
-                JavaSourceGroupName name,
                 SourceDirectorySet sourceGroup,
                 JavaSourceSet.Builder result) throws Exception {
 
@@ -131,11 +120,11 @@ implements
             others.removeAll(addSourceGroup(JavaSourceGroupName.JAVA, sourceSet.getJava(), result));
 
             if (project.getPlugins().hasPlugin(GroovyPlugin.class)) {
-                others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, sourceSet, "groovy", result));
+                others.removeAll(addSourceGroup(JavaSourceGroupName.GROOVY, JavaSourcesUtils.getGroovySources(sourceSet), result));
             }
 
             if (project.getPlugins().hasPlugin(ScalaPlugin.class)) {
-                others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, sourceSet, "scala", result));
+                others.removeAll(addSourceGroup(JavaSourceGroupName.SCALA, JavaSourcesUtils.getScalaSources(sourceSet), result));
             }
 
             others.removeAll(addSourceGroup(JavaSourceGroupName.RESOURCES, sourceSet.getResources(), result));
