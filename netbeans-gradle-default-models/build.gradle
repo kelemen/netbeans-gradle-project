@@ -46,11 +46,9 @@ sourceSets {
         java.srcDirs = []
     }
     modelBuilderRefs {
-        compileClasspath += configurations.provided
         groovy.srcDirs = []
 
         compileClasspath += main.output
-        compileClasspath += modelBuilders.output
         runtimeClasspath += main.output
         runtimeClasspath += modelBuilders.output
     }
