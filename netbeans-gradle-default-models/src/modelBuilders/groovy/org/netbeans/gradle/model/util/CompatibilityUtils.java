@@ -8,6 +8,7 @@ import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
+@SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
     public static <T> Collection<GradleProjectInfoQuery2<?>> toQuery2All(
             Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> src) {
@@ -63,6 +64,7 @@ public final class CompatibilityUtils {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private static class GradleProjectInfoQuery2Wrapper<T> implements GradleProjectInfoQuery2<T> {
         private final org.netbeans.gradle.model.api.GradleProjectInfoQuery<T> src;
 
@@ -80,6 +82,8 @@ public final class CompatibilityUtils {
         }
     }
 
+    /** @deprecated  */
+    @Deprecated
     private static final class ProjectInfoBuilderWrapper<T>
     implements
             org.netbeans.gradle.model.api.ProjectInfoBuilder<T> {
@@ -101,6 +105,8 @@ public final class CompatibilityUtils {
         }
     }
 
+    /** @deprecated  */
+    @Deprecated
     private static class GradleProjectInfoQueryWrapper<T>
     implements
             org.netbeans.gradle.model.api.GradleProjectInfoQuery<T> {

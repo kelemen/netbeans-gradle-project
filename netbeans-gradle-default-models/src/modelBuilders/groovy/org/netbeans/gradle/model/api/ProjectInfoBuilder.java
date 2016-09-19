@@ -4,6 +4,10 @@ import java.io.Serializable;
 import org.gradle.api.Project;
 
 /**
+ * @deprecated Use {@link ProjectInfoBuilder2} instead. This interface prevents
+ *   the usage of newer Tooling API versions, so it will be removed for the next
+ *   major release of NetBeans.
+ * <P>
  * Defines a method which extracts the required information from the Gradle
  * project object.
  * <P>
@@ -16,6 +20,7 @@ import org.gradle.api.Project;
  * @param <T> the type of the object the {@code ProjectInfoBuilder} extracts
  *   from the project object
  */
+@Deprecated
 public interface ProjectInfoBuilder<T> extends Serializable {
     /**
      * Extracts some information from the given Gradle project object.

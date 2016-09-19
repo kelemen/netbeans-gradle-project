@@ -8,10 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.CompatibilityUtils;
@@ -38,14 +36,17 @@ public final class GradleModelDef {
     /**
      * An instance of {@code GradleModelDef} requesting no models.
      */
-    public static final GradleModelDef EMPTY = new GradleModelDef(
+    public static final GradleModelDef EMPTY = create(
             Collections.<Class<?>>emptySet(),
-            Collections.<GradleProjectInfoQuery<?>>emptySet());
+            Collections.<GradleProjectInfoQuery2<?>>emptySet());
 
     private final Collection<Class<?>> toolingModels;
     private final Collection<GradleProjectInfoQuery2<?>> projectInfoQueries;
 
     /**
+     * @deprecated Use {@link #create} instead because
+     *   {@code GradleProjectInfoQuery} is deprecated.
+     * <P>
      * Creates a new {@code GradleModelDef} with the given requested information.
      *
      * @param toolingModels the Tooling API models to request from Gradle. For
@@ -55,9 +56,10 @@ public final class GradleModelDef {
      *   from a {@link org.gradle.api.Project} instance. This argument cannot be
      *   {@code null} and cannot contain {@code null} elements.
      */
+    @Deprecated
     public GradleModelDef(
             @Nonnull Collection<? extends Class<?>> toolingModels,
-            @Nonnull Collection<? extends GradleProjectInfoQuery<?>> projectInfoQueries) {
+            @Nonnull Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> projectInfoQueries) {
         this.toolingModels = CollectionUtils.copyNullSafeList(toolingModels);
         this.projectInfoQueries = CollectionUtils.copyNullSafeList(CompatibilityUtils.toQuery2All(projectInfoQueries));
     }
@@ -71,6 +73,18 @@ public final class GradleModelDef {
         this.projectInfoQueries = CollectionUtils.copyNullSafeList(projectInfoQueries);
     }
 
+    /**
+     * Creates a new {@code GradleModelDef} with the given requested information.
+     *
+     * @param toolingModels the Tooling API models to request from Gradle. For
+     *   example: {@code IdeaProject}. This argument cannot be {@code null} and
+     *   cannot contain {@code null} elements.
+     * @param projectInfoQueries custom queries able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given requested information.
+     *   This method never returns {@code null}.
+     */
     public static GradleModelDef create(
             @Nonnull Collection<? extends Class<?>> toolingModels,
             @Nonnull Collection<? extends GradleProjectInfoQuery2<?>> projectInfoQueries) {
@@ -89,9 +103,28 @@ public final class GradleModelDef {
      */
     @Nonnull
     public static GradleModelDef fromToolingModels(Class<?>... modelTypes) {
-        return new GradleModelDef(
+        return create(
                 Arrays.asList(modelTypes),
-                Collections.<GradleProjectInfoQuery<?>>emptyList());
+                Collections.<GradleProjectInfoQuery2<?>>emptyList());
+    }
+
+    /**
+     * @deprecated Use {@link #fromProjectQueries2} instead because
+     *   {@code GradleProjectInfoQuery} is deprecated.
+     * <P>
+     * Creates a new {@code GradleModelDef} with the given custom queries and
+     * with no {@link #getToolingModels() Tooling API models}.
+     *
+     * @param queries custom queries able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given custom queries.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
+    @Deprecated
+    public static GradleModelDef fromProjectQueries(org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>... queries) {
+        return new GradleModelDef(Collections.<Class<?>>emptyList(), Arrays.asList(queries));
     }
 
     /**
@@ -105,8 +138,8 @@ public final class GradleModelDef {
      *   This method never returns {@code null}.
      */
     @Nonnull
-    public static GradleModelDef fromProjectQueries(GradleProjectInfoQuery<?>... queries) {
-        return new GradleModelDef(Collections.<Class<?>>emptyList(), Arrays.asList(queries));
+    public static GradleModelDef fromProjectQueries2(GradleProjectInfoQuery2<?>... queries) {
+        return create(Collections.<Class<?>>emptyList(), Arrays.asList(queries));
     }
 
     /**
@@ -163,6 +196,9 @@ public final class GradleModelDef {
     }
 
     /**
+     * @deprecated Use {@link #fromProjectInfoBuilders2} instead because
+     *   {@code ProjectInfoBuilder} is deprecated.
+     * <P>
      * Creates a new {@code GradleModelDef} with the given custom
      * {@link ProjectInfoBuilder} instances and
      * {@link #getToolingModels() Tooling API models}.
@@ -182,14 +218,18 @@ public final class GradleModelDef {
      *   This method never returns {@code null}.
      */
     @Nonnull
+    @Deprecated
     public static GradleModelDef fromProjectInfoBuilders(
             Collection<? extends Class<?>> modelTypes,
-            ProjectInfoBuilder<?>... builders) {
+            org.netbeans.gradle.model.api.ProjectInfoBuilder<?>... builders) {
 
         return fromProjectInfoBuilders2(modelTypes, convertBuilders(builders));
     }
 
     /**
+     * @deprecated Use {@link #fromProjectInfoBuilders2} instead because
+     *   {@code ProjectInfoBuilder} is deprecated.
+     * <P>
      * Creates a new {@code GradleModelDef} with the given custom
      * {@link ProjectInfoBuilder} instances and with no
      * {@link #getToolingModels() Tooling API models}.
@@ -206,11 +246,13 @@ public final class GradleModelDef {
      *   This method never returns {@code null}.
      */
     @Nonnull
-    public static GradleModelDef fromProjectInfoBuilders(ProjectInfoBuilder<?>... builders) {
+    @Deprecated
+    public static GradleModelDef fromProjectInfoBuilders(org.netbeans.gradle.model.api.ProjectInfoBuilder<?>... builders) {
         return fromProjectInfoBuilders2(Collections.<Class<?>>emptySet(), convertBuilders(builders));
     }
 
-    private static ProjectInfoBuilder2<?>[] convertBuilders(ProjectInfoBuilder<?>... builders) {
+    @SuppressWarnings("deprecation")
+    private static ProjectInfoBuilder2<?>[] convertBuilders(org.netbeans.gradle.model.api.ProjectInfoBuilder<?>... builders) {
         ProjectInfoBuilder2<?>[] converted = new ProjectInfoBuilder2<?>[builders.length];
         for (int i = 0; i < builders.length; i++) {
             converted[i] = CompatibilityUtils.toBuilder2(builders[i]);
@@ -256,6 +298,9 @@ public final class GradleModelDef {
     }
 
     /**
+     * @deprecated Use {@link #getProjectInfoQueries2()} instead because
+     *   {@code GradleProjectInfoQuery} is deprecated.
+     * <P>
      * Returns the custom queries the retrieve information from Gradle projects
      * from a {@link org.gradle.api.Project} instance.
      *
@@ -264,7 +309,8 @@ public final class GradleModelDef {
      *   not contain {@code null} elements.
      */
     @Nonnull
-    public Collection<GradleProjectInfoQuery<?>> getProjectInfoQueries() {
+    @Deprecated
+    public Collection<org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> getProjectInfoQueries() {
         return CompatibilityUtils.toQueryAll(projectInfoQueries);
     }
 

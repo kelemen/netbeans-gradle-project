@@ -1,6 +1,10 @@
 package org.netbeans.gradle.model.api;
 
 /**
+ * @deprecated Use {@link GradleProjectInfoQuery2} instead. This interface prevents
+ *   the usage of newer Tooling API versions, so it will be removed for the next
+ *   major release of NetBeans.
+ * <P>
  * Defines the query to be submitted for the Gradle daemon to query information
  * from the project.
  *
@@ -10,6 +14,7 @@ package org.netbeans.gradle.model.api;
  *
  * @see ProjectInfoBuilder
  */
+@Deprecated
 public interface GradleProjectInfoQuery<T> extends GradleInfoQuery {
     /**
      * Returns the builder which will extract the information from the project

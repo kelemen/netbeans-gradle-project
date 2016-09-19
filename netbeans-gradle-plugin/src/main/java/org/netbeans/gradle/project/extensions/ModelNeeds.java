@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
 import org.netbeans.gradle.project.api.modelquery.GradleModelDef;
@@ -77,9 +77,9 @@ public final class ModelNeeds {
                     return GradleModelDef.EMPTY;
                 }
 
-                return new GradleModelDef(
+                return GradleModelDef.create(
                         toolinModels,
-                        Collections.<GradleProjectInfoQuery<?>>emptyList());
+                        Collections.<GradleProjectInfoQuery2<?>>emptyList());
             }
         };
     }
@@ -101,7 +101,7 @@ public final class ModelNeeds {
         return new GradleModelDefQuery2() {
             @Override
             public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                List<GradleProjectInfoQuery<?>> projectInfoQueries
+                List<GradleProjectInfoQuery2<?>> projectInfoQueries
                         = new LinkedList<>();
 
                 List<Class<?>> toolingModels = new LinkedList<>();
@@ -109,10 +109,10 @@ public final class ModelNeeds {
                 for (GradleModelDefQuery2 query: queries) {
                     GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), query);
 
-                    projectInfoQueries.addAll(modelDef.getProjectInfoQueries());
+                    projectInfoQueries.addAll(modelDef.getProjectInfoQueries2());
                     toolingModels.addAll(modelDef.getToolingModels());
                 }
-                return new GradleModelDef(toolingModels, projectInfoQueries);
+                return GradleModelDef.create(toolingModels, projectInfoQueries);
             }
         };
     }
