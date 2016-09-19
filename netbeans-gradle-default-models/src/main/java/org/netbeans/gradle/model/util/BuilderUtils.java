@@ -2,7 +2,7 @@ package org.netbeans.gradle.model.util;
 
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
 public final class BuilderUtils {
     public static String getNameForEnumBuilder(Enum<?> instance) {
@@ -28,7 +28,7 @@ public final class BuilderUtils {
         }
     }
 
-    private static String getNameOfBuilder(ProjectInfoBuilder<?> builder) {
+    private static String getNameOfBuilderUnsafe(ProjectInfoBuilder2<?> builder) {
         if (builder == null) {
             return "null";
         }
@@ -41,18 +41,26 @@ public final class BuilderUtils {
                 : getSafeToString(builder);
     }
 
+    private static String getNameOfBuilder(ProjectInfoBuilder2<?> builder, Throwable issue) {
+        try {
+            return getNameOfBuilderUnsafe(builder);
+        } catch (Throwable ex) {
+            Exceptions.tryAddSuppressedException(issue, ex);
+            return builder != null ? builder.getClass().getName() : "null";
+        }
+    }
 
     public static BuilderIssue createIssue(
-            ProjectInfoBuilder<?> builder,
+            ProjectInfoBuilder2<?> builder,
             Throwable issue) {
         if (issue == null) {
             return null;
         }
 
-        return new BuilderIssue(getNameOfBuilder(builder), issue);
+        return new BuilderIssue(getNameOfBuilder(builder, issue), issue);
     }
 
-    private static String getNameOfBuilder(BuildInfoBuilder<?> builder) {
+    private static String getNameOfBuilderUnsafe(BuildInfoBuilder<?> builder) {
         if (builder == null) {
             return "null";
         }
@@ -65,6 +73,14 @@ public final class BuilderUtils {
                 : getSafeToString(builder);
     }
 
+    private static String getNameOfBuilder(BuildInfoBuilder<?> builder, Throwable issue) {
+        try {
+            return getNameOfBuilderUnsafe(builder);
+        } catch (Throwable ex) {
+            Exceptions.tryAddSuppressedException(issue, ex);
+            return builder != null ? builder.getClass().getName() : "null";
+        }
+    }
 
     public static BuilderIssue createIssue(
             BuildInfoBuilder<?> builder,
@@ -73,7 +89,7 @@ public final class BuilderUtils {
             return null;
         }
 
-        return new BuilderIssue(getNameOfBuilder(builder), issue);
+        return new BuilderIssue(getNameOfBuilder(builder, issue), issue);
     }
 
     private BuilderUtils() {

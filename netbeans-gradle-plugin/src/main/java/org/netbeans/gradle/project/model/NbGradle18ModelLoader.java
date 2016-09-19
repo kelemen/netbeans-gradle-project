@@ -22,7 +22,7 @@ import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.OperationInitializer;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -349,7 +349,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
             Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests = Collections.emptyMap();
 
-            Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests
+            Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfoRequests
                     = new HashMap<>();
 
             List<Class<?>> models = new LinkedList<>();
@@ -360,7 +360,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 GradleModelDef modelDef = modelQuery.getModelDef(gradleTarget);
 
                 models.addAll(modelDef.getToolingModels());
-                MultiMapUtils.addAllToMultiMap(extensionName, modelDef.getProjectInfoQueries(), projectInfoRequests);
+                MultiMapUtils.addAllToMultiMap(extensionName, modelDef.getProjectInfoQueries2(), projectInfoRequests);
                 MultiMapUtils.addAllToMultiMap(extensionName, modelDef.getToolingModels(), toolingModelNeeds);
             }
 

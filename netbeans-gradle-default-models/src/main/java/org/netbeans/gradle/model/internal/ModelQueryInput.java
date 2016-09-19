@@ -3,8 +3,7 @@ package org.netbeans.gradle.model.internal;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import org.gradle.api.Project;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 public final class ModelQueryInput implements Serializable {
@@ -36,7 +35,7 @@ public final class ModelQueryInput implements Serializable {
         }
     }
 
-    private static final class FailingProjectInfoBuilder implements ProjectInfoBuilder<Void> {
+    private static final class FailingProjectInfoBuilder implements ProjectInfoBuilder2<Void> {
         private static final long serialVersionUID = 1L;
 
         private final RuntimeException issue;
@@ -45,7 +44,7 @@ public final class ModelQueryInput implements Serializable {
             this.issue = TransferableExceptionWrapper.wrap(issue);
         }
 
-        public Void getProjectInfo(Project project) {
+        public Void getProjectInfo(Object project) {
             throw issue;
         }
 

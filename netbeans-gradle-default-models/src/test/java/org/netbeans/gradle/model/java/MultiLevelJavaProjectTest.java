@@ -36,8 +36,8 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectId;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.internal.ConstBuilders;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.Exceptions;
@@ -630,7 +630,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 String message = "testFailingProjectQuery-message";
-                ProjectInfoBuilder<?> builder = TestBuilders.failingProjectInfoBuilder(message);
+                ProjectInfoBuilder2<?> builder = TestBuilders.failingProjectInfoBuilder(message);
                 BuilderResult result = fetchSingleProjectInfoWithError(connection, builder);
                 assertNotNull("Required result for FailingProjectInfoBuilder.", result);
 
@@ -682,18 +682,18 @@ public class MultiLevelJavaProjectTest {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
 
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
-                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery2<?>>>();
 
         Set<Class<?>> toolingModels = new HashSet<Class<?>>();
 
-        projectInfos.put(0, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(0, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAR_OUTPUTS_BUILDER)));
-        projectInfos.put(1, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(1, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER)));
-        projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(2, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE)));
-        projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(3, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(JavaModelBuilders.WAR_FOLDERS_BUILDER)));
 
         final String prefix = "testCustomQuery-";
@@ -742,12 +742,12 @@ public class MultiLevelJavaProjectTest {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
 
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
-                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery2<?>>>();
 
         Set<Class<?>> toolingModels = new HashSet<Class<?>>();
 
-        projectInfos.put(0, Arrays.<GradleProjectInfoQuery<?>>asList(
+        projectInfos.put(0, Arrays.<GradleProjectInfoQuery2<?>>asList(
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAR_OUTPUTS_BUILDER),
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER),
                 InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE),
@@ -814,23 +814,23 @@ public class MultiLevelJavaProjectTest {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();
 
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
-                = new HashMap<Object, List<GradleProjectInfoQuery<?>>>();
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery2<?>>>();
 
         Set<Class<?>> toolingModels = new HashSet<Class<?>>();
 
         final String projectInfoPrefix = "testSerializationFailures-project-";
         final String buildInfoPrefix = "testSerializationFailures-build-";
 
-        projectInfos.put(0, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(0, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.testProjectInfoBuilder(projectInfoPrefix))));
-        projectInfos.put(1, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(1, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableProjectInfoBuilder())));
-        projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(2, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toCustomQuery(TestBuilders.notSerializableResultProjectInfoBuilder())));
-        projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(3, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toQueryWithKnownClassPath(TestBuilders.testProjectInfoBuilder(""))));
-        projectInfos.put(4, Collections.<GradleProjectInfoQuery<?>>singletonList(
+        projectInfos.put(4, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                 InfoQueries.toQueryWithKnownClassPath(ConstBuilders.constProjectInfoBuilder(new SerializableObject()))));
 
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
@@ -897,7 +897,7 @@ public class MultiLevelJavaProjectTest {
             Class<?>... modelClasses) throws IOException {
 
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos = Collections.emptyMap();
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos = Collections.emptyMap();
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos = Collections.emptyMap();
         Set<Class<?>> toolingModels = new HashSet<Class<?>>(Arrays.asList(modelClasses));
 
         GenericModelFetcher modelFetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);

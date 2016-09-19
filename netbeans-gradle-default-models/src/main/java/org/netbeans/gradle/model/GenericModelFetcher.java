@@ -23,7 +23,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.ModelQueryInput;
 import org.netbeans.gradle.model.internal.ModelQueryOutput;
@@ -59,7 +59,7 @@ public final class GenericModelFetcher {
 
     public GenericModelFetcher(
             Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests,
-            Map<Object, List<GradleProjectInfoQuery<?>>> projectInfoRequests,
+            Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfoRequests,
             Collection<Class<?>> modelClasses) {
 
         this.buildInfoBuilders = GradleInfoQueryMap.fromBuildInfos(buildInfoRequests);

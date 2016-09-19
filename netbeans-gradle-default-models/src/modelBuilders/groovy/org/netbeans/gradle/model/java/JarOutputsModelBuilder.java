@@ -11,12 +11,12 @@ import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.bundling.Jar;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
 enum JarOutputsModelBuilder
 implements
-        ProjectInfoBuilder<JarOutputsModel> {
+        ProjectInfoBuilder2<JarOutputsModel> {
 
     INSTANCE;
 
@@ -24,7 +24,11 @@ implements
     // to explicitly declare to which source set they belong to.
     private static final String SOURCE_SET_NAME_PROPERTY = "netBeansSourceSets";
 
-    public JarOutputsModel getProjectInfo(Project project) {
+    public JarOutputsModel getProjectInfo(Object project) {
+        return getProjectInfo((Project)project);
+    }
+
+    private JarOutputsModel getProjectInfo(Project project) {
         if (!project.getPlugins().hasPlugin("java")) {
             return null;
         }

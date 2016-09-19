@@ -12,17 +12,21 @@ import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.testing.JUnitXmlReport;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.TestTaskReports;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
 enum JavaTestModelBuilder
 implements
-        ProjectInfoBuilder<JavaTestModel> {
+        ProjectInfoBuilder2<JavaTestModel> {
     INSTANCE;
 
     private static final Logger LOGGER = Logger.getLogger(JavaTestModelBuilder.class.getName());
 
-    public JavaTestModel getProjectInfo(Project project) {
+    public JavaTestModel getProjectInfo(Object project) {
+        return getProjectInfo((Project)project);
+    }
+
+    private JavaTestModel getProjectInfo(Project project) {
         if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
             return null;
         }

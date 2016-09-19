@@ -14,7 +14,7 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectId;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.Exceptions;
@@ -45,10 +45,10 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
             for (Object projectInfoBuilder: entry.getValue()) {
                 Object info = null;
                 Throwable issue = null;
-                ProjectInfoBuilder<?> builder = null;
+                ProjectInfoBuilder2<?> builder = null;
 
                 try {
-                    builder = (ProjectInfoBuilder<?>)projectInfoBuilder;
+                    builder = (ProjectInfoBuilder2<?>)projectInfoBuilder;
                     info = builder.getProjectInfo(project);
                 } catch (Throwable ex) {
                     issue = ex;

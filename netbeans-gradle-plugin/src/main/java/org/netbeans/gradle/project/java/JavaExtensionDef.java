@@ -132,7 +132,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
     }
 
     private static final class Query2 implements GradleModelDefQuery2 {
-        private static final GradleModelDef RESULT = GradleModelDef.fromProjectInfoBuilders(
+        private static final GradleModelDef RESULT = GradleModelDef.fromProjectInfoBuilders2(
                 JavaModelBuilders.JAR_OUTPUTS_BUILDER,
                 JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE,
                 JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER,
@@ -140,7 +140,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
                 JavaModelBuilders.JACOCO_BUILDER,
                 JavaModelBuilders.WAR_FOLDERS_BUILDER);
 
-        private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders(
+        private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders2(
                 JavaModelBuilders.JAR_OUTPUTS_BUILDER,
                 JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE,
                 JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER,

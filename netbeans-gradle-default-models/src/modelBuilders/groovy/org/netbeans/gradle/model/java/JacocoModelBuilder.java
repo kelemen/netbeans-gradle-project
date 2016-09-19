@@ -6,13 +6,17 @@ import org.gradle.api.tasks.TaskCollection;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.testing.jacoco.tasks.JacocoReportsContainer;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-enum JacocoModelBuilder implements ProjectInfoBuilder<JacocoModel> {
+enum JacocoModelBuilder implements ProjectInfoBuilder2<JacocoModel> {
     INSTANCE;
 
-    public JacocoModel getProjectInfo(Project project) {
+    public JacocoModel getProjectInfo(Object project) {
+        return getProjectInfo((Project)project);
+    }
+
+    private JacocoModel getProjectInfo(Project project) {
         if (!project.getPlugins().hasPlugin(JacocoPlugin.class)) {
             return null;
         }

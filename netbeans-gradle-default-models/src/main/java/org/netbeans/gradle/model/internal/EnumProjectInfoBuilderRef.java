@@ -6,17 +6,16 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-import org.gradle.api.Project;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
-public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T> {
+public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T> {
     private static final long serialVersionUID = 1L;
 
     private final Class<? extends T> modelType;
     private final String wrappedTypeName;
     private final String wrappedConstName;
 
-    private final AtomicReference<ProjectInfoBuilder<?>> wrappedRef;
+    private final AtomicReference<ProjectInfoBuilder2<?>> wrappedRef;
 
     public EnumProjectInfoBuilderRef(
             Class<? extends T> modelType,
@@ -27,7 +26,7 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         this.modelType = modelType;
         this.wrappedTypeName = updateTypeName(modelType, wrappedTypeName);
         this.wrappedConstName = null;
-        this.wrappedRef = new AtomicReference<ProjectInfoBuilder<?>>(null);
+        this.wrappedRef = new AtomicReference<ProjectInfoBuilder2<?>>(null);
     }
 
     public EnumProjectInfoBuilderRef(
@@ -41,7 +40,7 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         this.modelType = modelType;
         this.wrappedTypeName = updateTypeName(modelType, wrappedTypeName);
         this.wrappedConstName = wrappedConstName;
-        this.wrappedRef = new AtomicReference<ProjectInfoBuilder<?>>(null);
+        this.wrappedRef = new AtomicReference<ProjectInfoBuilder2<?>>(null);
     }
 
     private static String updateTypeName(Class<?> defaultPackage, String typeName) {
@@ -70,9 +69,9 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         }
     }
 
-    private ProjectInfoBuilder<?> createWrapped() {
+    private ProjectInfoBuilder2<?> createWrapped() {
         try {
-            return (ProjectInfoBuilder<?>)unsafeEnumValueOf(Class.forName(wrappedTypeName), wrappedConstName);
+            return (ProjectInfoBuilder2<?>)unsafeEnumValueOf(Class.forName(wrappedTypeName), wrappedConstName);
         } catch (Exception ex) {
             if (ex instanceof RuntimeException) {
                 throw (RuntimeException)ex;
@@ -81,8 +80,8 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         }
     }
 
-    private ProjectInfoBuilder<?> getWrapped() {
-        ProjectInfoBuilder<?> result = wrappedRef.get();
+    private ProjectInfoBuilder2<?> getWrapped() {
+        ProjectInfoBuilder2<?> result = wrappedRef.get();
         if (result == null) {
             result = createWrapped();
             if (!wrappedRef.compareAndSet(null, result)) {
@@ -92,7 +91,7 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         return result;
     }
 
-    public T getProjectInfo(Project project) {
+    public T getProjectInfo(Object project) {
         Object result = getWrapped().getProjectInfo(project);
         return modelType.cast(result);
     }

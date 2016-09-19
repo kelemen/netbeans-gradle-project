@@ -9,9 +9,12 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.CompatibilityUtils;
 
 /**
  * Defines the information need from the Gradle daemon by an extension of the
@@ -40,7 +43,7 @@ public final class GradleModelDef {
             Collections.<GradleProjectInfoQuery<?>>emptySet());
 
     private final Collection<Class<?>> toolingModels;
-    private final Collection<GradleProjectInfoQuery<?>> projectInfoQueries;
+    private final Collection<GradleProjectInfoQuery2<?>> projectInfoQueries;
 
     /**
      * Creates a new {@code GradleModelDef} with the given requested information.
@@ -56,7 +59,22 @@ public final class GradleModelDef {
             @Nonnull Collection<? extends Class<?>> toolingModels,
             @Nonnull Collection<? extends GradleProjectInfoQuery<?>> projectInfoQueries) {
         this.toolingModels = CollectionUtils.copyNullSafeList(toolingModels);
+        this.projectInfoQueries = CollectionUtils.copyNullSafeList(CompatibilityUtils.toQuery2All(projectInfoQueries));
+    }
+
+    private GradleModelDef(
+            @Nonnull Collection<? extends Class<?>> toolingModels,
+            @Nonnull Collection<? extends GradleProjectInfoQuery2<?>> projectInfoQueries,
+            boolean x) {
+        // argument x is only used because we need to overload the constructor
+        this.toolingModels = CollectionUtils.copyNullSafeList(toolingModels);
         this.projectInfoQueries = CollectionUtils.copyNullSafeList(projectInfoQueries);
+    }
+
+    public static GradleModelDef create(
+            @Nonnull Collection<? extends Class<?>> toolingModels,
+            @Nonnull Collection<? extends GradleProjectInfoQuery2<?>> projectInfoQueries) {
+        return new GradleModelDef(toolingModels, projectInfoQueries, true);
     }
 
     /**
@@ -111,16 +129,64 @@ public final class GradleModelDef {
      *   This method never returns {@code null}.
      */
     @Nonnull
+    public static GradleModelDef fromProjectInfoBuilders2(
+            Collection<? extends Class<?>> modelTypes,
+            ProjectInfoBuilder2<?>... builders) {
+
+        List<GradleProjectInfoQuery2<?>> queries = new ArrayList<>(builders.length);
+        for (ProjectInfoBuilder2<?> builder: builders) {
+            queries.add(createDefaultQuery(builder));
+        }
+
+        return GradleModelDef.create(modelTypes, queries);
+    }
+
+    /**
+     * Creates a new {@code GradleModelDef} with the given custom
+     * {@link ProjectInfoBuilder} instances and with no
+     * {@link #getToolingModels() Tooling API models}.
+     * <P>
+     * <B>Warning</B>: This method assumes that for each builder, the builder
+     * and its result are found in the same classpath entry (usually jar) and
+     * can be deserialized using the {@code ClassLoader} used to load the class
+     * of the builder.
+     *
+     * @param builders custom builders able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given custom builders.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
+    public static GradleModelDef fromProjectInfoBuilders2(ProjectInfoBuilder2<?>... builders) {
+        return fromProjectInfoBuilders2(Collections.<Class<?>>emptySet(), builders);
+    }
+
+    /**
+     * Creates a new {@code GradleModelDef} with the given custom
+     * {@link ProjectInfoBuilder} instances and
+     * {@link #getToolingModels() Tooling API models}.
+     * <P>
+     * <B>Warning</B>: This method assumes that for each builder, the builder
+     * and its result are found in the same classpath entry (usually jar) and
+     * can be deserialized using the {@code ClassLoader} used to load the class
+     * of the builder.
+     *
+     * @param modelTypes the Tooling API models to request from Gradle. For
+     *   example: {@code IdeaProject}. This argument cannot be {@code null} and
+     *   cannot contain {@code null} elements.
+     * @param builders custom builders able to retrieve information
+     *   from a {@link org.gradle.api.Project} instance. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the new {@code GradleModelDef} with the given custom builders.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
     public static GradleModelDef fromProjectInfoBuilders(
             Collection<? extends Class<?>> modelTypes,
             ProjectInfoBuilder<?>... builders) {
 
-        List<GradleProjectInfoQuery<?>> queries = new ArrayList<>(builders.length);
-        for (ProjectInfoBuilder<?> builder: builders) {
-            queries.add(createDefaultQuery(builder));
-        }
-
-        return new GradleModelDef(modelTypes, queries);
+        return fromProjectInfoBuilders2(modelTypes, convertBuilders(builders));
     }
 
     /**
@@ -141,15 +207,18 @@ public final class GradleModelDef {
      */
     @Nonnull
     public static GradleModelDef fromProjectInfoBuilders(ProjectInfoBuilder<?>... builders) {
-        List<GradleProjectInfoQuery<?>> queries = new ArrayList<>(builders.length);
-        for (ProjectInfoBuilder<?> builder: builders) {
-            queries.add(createDefaultQuery(builder));
-        }
-
-        return new GradleModelDef(Collections.<Class<?>>emptyList(), queries);
+        return fromProjectInfoBuilders2(Collections.<Class<?>>emptySet(), convertBuilders(builders));
     }
 
-    private static <T> GradleProjectInfoQuery<T> createDefaultQuery(final ProjectInfoBuilder<T> builder) {
+    private static ProjectInfoBuilder2<?>[] convertBuilders(ProjectInfoBuilder<?>... builders) {
+        ProjectInfoBuilder2<?>[] converted = new ProjectInfoBuilder2<?>[builders.length];
+        for (int i = 0; i < builders.length; i++) {
+            converted[i] = CompatibilityUtils.toBuilder2(builders[i]);
+        }
+        return converted;
+    }
+
+    private static <T> GradleProjectInfoQuery2<T> createDefaultQuery(final ProjectInfoBuilder2<T> builder) {
         ExceptionHelper.checkNotNullArgument(builder, "builder");
 
         ClassLoader classLoader = builder.getClass().getClassLoader();
@@ -159,9 +228,9 @@ public final class GradleModelDef {
                 ? ModelClassPathDef.EMPTY
                 : ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPath));
 
-        return new GradleProjectInfoQuery<T>() {
+        return new GradleProjectInfoQuery2<T>() {
             @Override
-            public ProjectInfoBuilder<T> getInfoBuilder() {
+            public ProjectInfoBuilder2<T> getInfoBuilder() {
                 return builder;
             }
 
@@ -196,6 +265,19 @@ public final class GradleModelDef {
      */
     @Nonnull
     public Collection<GradleProjectInfoQuery<?>> getProjectInfoQueries() {
+        return CompatibilityUtils.toQueryAll(projectInfoQueries);
+    }
+
+    /**
+     * Returns the custom queries the retrieve information from Gradle projects
+     * from a {@link org.gradle.api.Project} instance.
+     *
+     * @return the custom queries the retrieve information from Gradle projects.
+     *   This method never returns {@code null} and the returned collection does
+     *   not contain {@code null} elements.
+     */
+    @Nonnull
+    public Collection<GradleProjectInfoQuery2<?>> getProjectInfoQueries2() {
         return projectInfoQueries;
     }
 }

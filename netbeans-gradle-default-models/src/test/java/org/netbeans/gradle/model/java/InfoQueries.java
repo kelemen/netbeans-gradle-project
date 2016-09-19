@@ -14,9 +14,9 @@ import org.netbeans.gradle.model.FetchedModelsOrError;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 import static org.junit.Assert.*;
@@ -29,9 +29,9 @@ public final class InfoQueries {
         return ModelClassPathDef.fromClasses(DEFAULT_CLASS_LOADER, Arrays.asList(types));
     }
 
-    public static <T> GradleProjectInfoQuery<T> toQueryWithKnownClassPath(final ProjectInfoBuilder<T> builder) {
-        return new GradleProjectInfoQuery<T>() {
-            public ProjectInfoBuilder<T> getInfoBuilder() {
+    public static <T> GradleProjectInfoQuery2<T> toQueryWithKnownClassPath(final ProjectInfoBuilder2<T> builder) {
+        return new GradleProjectInfoQuery2<T>() {
+            public ProjectInfoBuilder2<T> getInfoBuilder() {
                 return builder;
             }
 
@@ -54,9 +54,9 @@ public final class InfoQueries {
     }
 
 
-    public static <T> GradleProjectInfoQuery<T> toCustomQuery(final ProjectInfoBuilder<T> builder) {
-        return new GradleProjectInfoQuery<T>() {
-            public ProjectInfoBuilder<T> getInfoBuilder() {
+    public static <T> GradleProjectInfoQuery2<T> toCustomQuery(final ProjectInfoBuilder2<T> builder) {
+        return new GradleProjectInfoQuery2<T>() {
+            public ProjectInfoBuilder2<T> getInfoBuilder() {
                 return builder;
             }
 
@@ -82,7 +82,7 @@ public final class InfoQueries {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = CollectionUtils.newHashMap(builders.length);
 
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
                 = Collections.emptyMap();
 
         Set<Class<?>> toolingModels = Collections.emptySet();
@@ -94,16 +94,16 @@ public final class InfoQueries {
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
     }
 
-    public static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder<?>... builders) {
+    public static GenericModelFetcher projectInfoFetcher(ProjectInfoBuilder2<?>... builders) {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = Collections.emptyMap();
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
                 = CollectionUtils.newHashMap(builders.length);
 
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         for (int i = 0; i < builders.length; i++) {
-            projectInfos.put(i, Collections.<GradleProjectInfoQuery<?>>singletonList(
+            projectInfos.put(i, Collections.<GradleProjectInfoQuery2<?>>singletonList(
                     InfoQueries.toCustomQuery(builders[i])));
         }
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
@@ -111,7 +111,7 @@ public final class InfoQueries {
 
     public static GenericModelFetcher basicInfoFetcher() {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos = Collections.emptyMap();
-        Map<Object, List<GradleProjectInfoQuery<?>>> projectInfos = Collections.emptyMap();
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos = Collections.emptyMap();
         Set<Class<?>> toolingModels = Collections.emptySet();
 
         return new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
@@ -154,7 +154,7 @@ public final class InfoQueries {
 
     public static BuilderResult fetchSingleProjectInfoWithError(
             ProjectConnection connection,
-            ProjectInfoBuilder<?> infoBuilder) throws IOException {
+            ProjectInfoBuilder2<?> infoBuilder) throws IOException {
 
         GenericModelFetcher modelFetcher = projectInfoFetcher(infoBuilder);
         FetchedModels models = verifyNoError(modelFetcher.getModels(connection, defaultInit()));
@@ -166,7 +166,7 @@ public final class InfoQueries {
 
     public static <T> T fetchSingleProjectInfo(
             ProjectConnection connection,
-            ProjectInfoBuilder<T> infoBuilder) throws IOException {
+            ProjectInfoBuilder2<T> infoBuilder) throws IOException {
 
         BuilderResult builderResult = fetchSingleProjectInfoWithError(connection, infoBuilder);
 

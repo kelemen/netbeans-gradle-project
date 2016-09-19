@@ -15,12 +15,12 @@ import org.gradle.api.plugins.scala.ScalaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.Exceptions;
 
 /**
- * Defines a {@code ProjectInfoBuilder} which is able to extract
+ * Defines a {@code ProjectInfoBuilder2} which is able to extract
  * {@link JavaSourcesModel} from a Gradle project.
  * <P>
  * This builder has only two instances {@link #ONLY_COMPILE} and
@@ -28,7 +28,7 @@ import org.netbeans.gradle.model.util.Exceptions;
  */
 enum JavaSourcesModelBuilder
 implements
-        ProjectInfoBuilder<JavaSourcesModel> {
+        ProjectInfoBuilder2<JavaSourcesModel> {
 
     /**
      * The builder instance which will not attempt to query runtime dependencies.
@@ -59,7 +59,11 @@ implements
      *   project or {@code null} if the project does not applies the "java"
      *   plugin
      */
-    public JavaSourcesModel getProjectInfo(Project project) {
+    public JavaSourcesModel getProjectInfo(Object project) {
+        return getProjectInfo((Project)project);
+    }
+
+    private JavaSourcesModel getProjectInfo(Project project) {
         JavaPluginConvention javaPlugin = project.getConvention().findPlugin(JavaPluginConvention.class);
         if (javaPlugin == null) {
             return null;

@@ -1,17 +1,17 @@
 package org.netbeans.gradle.model.java;
 
-import org.gradle.api.Project;
 import org.gradle.tooling.BuildController;
 import org.netbeans.gradle.model.BuildInfoBuilder;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
+import org.netbeans.gradle.model.util.ReflectionUtils;
 
 public final class TestBuilders {
     public static BuildInfoBuilder<String> testBuildInfoBuilder(String prefix) {
         return new TestBuildInfoBuilder(prefix);
     }
 
-    public static ProjectInfoBuilder<String> testProjectInfoBuilder(String prefix) {
+    public static ProjectInfoBuilder2<String> testProjectInfoBuilder(String prefix) {
         return new TestProjectInfoBuilder(prefix);
     }
 
@@ -19,7 +19,7 @@ public final class TestBuilders {
         return new FailingBuildInfoBuilder(exceptionMessage);
     }
 
-    public static ProjectInfoBuilder<Void> failingProjectInfoBuilder(String exceptionMessage) {
+    public static ProjectInfoBuilder2<Void> failingProjectInfoBuilder(String exceptionMessage) {
         return new FailingProjectInfoBuilder(exceptionMessage);
     }
 
@@ -27,7 +27,7 @@ public final class TestBuilders {
         return new NotSerializableBuildInfoBuilder();
     }
 
-    public static ProjectInfoBuilder<Void> notSerializableProjectInfoBuilder() {
+    public static ProjectInfoBuilder2<Void> notSerializableProjectInfoBuilder() {
         return new NotSerializableProjectInfoBuilder();
     }
 
@@ -35,7 +35,7 @@ public final class TestBuilders {
         return new NotSerializableResultBuildInfoBuilder();
     }
 
-    public static ProjectInfoBuilder<Object> notSerializableResultProjectInfoBuilder() {
+    public static ProjectInfoBuilder2<Object> notSerializableResultProjectInfoBuilder() {
         return new NotSerializableResultProjectInfoBuilder();
     }
 
@@ -53,10 +53,10 @@ public final class TestBuilders {
         }
     }
 
-    private static final class NotSerializableResultProjectInfoBuilder implements ProjectInfoBuilder<Object> {
+    private static final class NotSerializableResultProjectInfoBuilder implements ProjectInfoBuilder2<Object> {
         private static final long serialVersionUID = 1L;
 
-        public Object getProjectInfo(Project project) {
+        public Object getProjectInfo(Object project) {
             return new Object();
         }
 
@@ -66,10 +66,10 @@ public final class TestBuilders {
     }
 
     @SuppressWarnings("serial")
-    private static final class NotSerializableProjectInfoBuilder implements ProjectInfoBuilder<Void> {
+    private static final class NotSerializableProjectInfoBuilder implements ProjectInfoBuilder2<Void> {
         public final Object blockerOfSerialization = new Object();
 
-        public Void getProjectInfo(Project controller) {
+        public Void getProjectInfo(Object controller) {
             return null;
         }
 
@@ -91,7 +91,7 @@ public final class TestBuilders {
         }
     }
 
-    private static final class TestProjectInfoBuilder implements ProjectInfoBuilder<String> {
+    private static final class TestProjectInfoBuilder implements ProjectInfoBuilder2<String> {
         private static final long serialVersionUID = 1L;
 
         private final String prefix;
@@ -101,8 +101,8 @@ public final class TestBuilders {
             this.prefix = prefix;
         }
 
-        public String getProjectInfo(Project project) {
-            String rootName = project.getName();
+        public String getProjectInfo(Object project) {
+            String rootName = ReflectionUtils.getStringProperty(project, "name");
             return prefix + rootName;
         }
 
@@ -150,7 +150,7 @@ public final class TestBuilders {
         }
     }
 
-    private static final class FailingProjectInfoBuilder implements ProjectInfoBuilder<Void> {
+    private static final class FailingProjectInfoBuilder implements ProjectInfoBuilder2<Void> {
         private static final long serialVersionUID = 1L;
 
         private final String exceptionMessage;
@@ -160,7 +160,7 @@ public final class TestBuilders {
             this.exceptionMessage = exceptionMessage;
         }
 
-        public Void getProjectInfo(Project project) {
+        public Void getProjectInfo(Object project) {
             throw new NotSerializableException(exceptionMessage);
         }
 

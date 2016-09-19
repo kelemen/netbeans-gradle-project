@@ -1,10 +1,9 @@
 
 package org.netbeans.gradle.model.internal;
 
-import org.gradle.api.Project;
 import org.gradle.tooling.BuildController;
 import org.netbeans.gradle.model.BuildInfoBuilder;
-import org.netbeans.gradle.model.api.ProjectInfoBuilder;
+import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
 /**
@@ -14,7 +13,7 @@ import org.netbeans.gradle.model.util.BuilderUtils;
  * while the builders themselves are always deserializable.
  */
 public final class ConstBuilders {
-    public static ProjectInfoBuilder<Object> constProjectInfoBuilder(Object result) {
+    public static ProjectInfoBuilder2<Object> constProjectInfoBuilder(Object result) {
         return new ConstProjectInfoBuilder(result);
     }
 
@@ -22,7 +21,7 @@ public final class ConstBuilders {
         return new ConstBuildInfoBuilder(result);
     }
 
-    private static final class ConstProjectInfoBuilder implements ProjectInfoBuilder<Object> {
+    private static final class ConstProjectInfoBuilder implements ProjectInfoBuilder2<Object> {
         private static final long serialVersionUID = 1L;
 
         private final Object result;
@@ -32,7 +31,7 @@ public final class ConstBuilders {
             this.result = result;
         }
 
-        public Object getProjectInfo(Project project) {
+        public Object getProjectInfo(Object project) {
             return result;
         }
 

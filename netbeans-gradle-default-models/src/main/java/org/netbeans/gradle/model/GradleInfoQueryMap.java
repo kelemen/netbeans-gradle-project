@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.BuildController;
 import org.netbeans.gradle.model.api.GradleInfoQuery;
-import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
+import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.internal.CustomSerializedMap;
 import org.netbeans.gradle.model.internal.IssueTransformer;
@@ -82,9 +82,9 @@ final class GradleInfoQueryMap {
         });
     }
 
-    public static GradleInfoQueryMap fromProjectInfos(Map<Object, List<GradleProjectInfoQuery<?>>> map) {
-        return fromQueries(map, new BuilderRetriever<GradleProjectInfoQuery<?>>() {
-            public Object getBuilder(GradleProjectInfoQuery<?> infoQuery) {
+    public static GradleInfoQueryMap fromProjectInfos(Map<Object, List<GradleProjectInfoQuery2<?>>> map) {
+        return fromQueries(map, new BuilderRetriever<GradleProjectInfoQuery2<?>>() {
+            public Object getBuilder(GradleProjectInfoQuery2<?> infoQuery) {
                 return infoQuery.getInfoBuilder();
             }
         });
