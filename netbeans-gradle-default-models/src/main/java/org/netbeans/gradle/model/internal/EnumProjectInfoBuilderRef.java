@@ -51,21 +51,22 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder<T>
         return defaultPackage.getPackage().getName() + "." + typeName;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Enum<T>> Class<T> unsafeEnumCast(Class<?> type) {
-        return (Class<T>)type;
-    }
-
     private static Object unsafeEnumValueOf(Class<?> type, String constName) {
+        Object[] enumConsts = type.getEnumConstants();
         if (constName != null) {
-            return Enum.valueOf(unsafeEnumCast(type), constName);
+            for (Object enumConst: enumConsts) {
+                String name = ((Enum<?>)enumConst).name();
+                if (constName.equals(name)) {
+                    return enumConst;
+                }
+            }
+            throw new IllegalStateException("No such enum constant for type " + type.getName() + ": " + constName);
         }
         else {
-            Object[] consts = type.getEnumConstants();
-            if (consts.length != 1) {
-                throw new IllegalStateException("Cannot determine which enum const must be used: " + Arrays.asList(consts));
+            if (enumConsts.length != 1) {
+                throw new IllegalStateException("Cannot determine which enum const must be used: " + Arrays.asList(enumConsts));
             }
-            return consts[0];
+            return enumConsts[0];
         }
     }
 
