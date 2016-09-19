@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.tooling.BuildAction;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
@@ -113,6 +114,38 @@ public final class ModelClassPathDef {
      */
     public static ModelClassPathDef fromJarFiles(ClassLoader classLoader, Collection<? extends File> jarFiles) {
         return new ModelClassPathDef(classLoader, jarFiles);
+    }
+
+    /**
+     * Creates a classpath from the given classes, so that those classes will be
+     * on the returned classpath.
+     *
+     * @param classLoader the {@code ClassLoader} which is to be used to
+     *   deserialize models received from the associated {@link ProjectInfoBuilder}.
+     *   This argument cannot be {@code null}.
+     * @param classes the classes from where the classpath is deduced for
+     *   the associated {@code GradleInfoQuery}. This argument cannot be
+     *   {@code null} and cannot contain {@code null} elements.
+     * @return the classpath from the given set of types. This method
+     *   never returns {@code null}.
+     *
+     * @see #isImplicitlyAssumed(File)
+     */
+    public static ModelClassPathDef fromClasses(ClassLoader classLoader, Collection<? extends Class<?>> classes) {
+        Set<File> modelClassPath = new LinkedHashSet<File>();
+        for (Class<?> type: classes) {
+            File classpath = getClassPathOfClass(type);
+            if (!isImplicitlyAssumed(classpath)) {
+                modelClassPath.add(classpath);
+
+            }
+        }
+
+        if (modelClassPath.isEmpty()) {
+            return ModelClassPathDef.EMPTY;
+        }
+
+        return ModelClassPathDef.fromJarFiles(classLoader, modelClassPath);
     }
 
     /**
