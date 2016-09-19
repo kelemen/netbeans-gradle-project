@@ -8,12 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.model.java.JacocoModelBuilder;
-import org.netbeans.gradle.model.java.JarOutputsModelBuilder;
-import org.netbeans.gradle.model.java.JavaCompatibilityModelBuilder;
-import org.netbeans.gradle.model.java.JavaSourcesModelBuilder;
-import org.netbeans.gradle.model.java.JavaTestModelBuilder;
-import org.netbeans.gradle.model.java.WarFoldersModelBuilder;
+import org.netbeans.gradle.model.java.JavaModelBuilders;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtensionDef;
@@ -138,19 +133,19 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
 
     private static final class Query2 implements GradleModelDefQuery2 {
         private static final GradleModelDef RESULT = GradleModelDef.fromProjectInfoBuilders(
-                JarOutputsModelBuilder.INSTANCE,
-                JavaSourcesModelBuilder.COMPLETE,
-                JavaCompatibilityModelBuilder.INSTANCE,
-                JavaTestModelBuilder.INSTANCE,
-                JacocoModelBuilder.INSTANCE,
-                WarFoldersModelBuilder.INSTANCE);
+                JavaModelBuilders.JAR_OUTPUTS_BUILDER,
+                JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE,
+                JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER,
+                JavaModelBuilders.JAVA_TEST_BUILDER,
+                JavaModelBuilders.JACOCO_BUILDER,
+                JavaModelBuilders.WAR_FOLDERS_BUILDER);
 
         private static final GradleModelDef RESULT_WITHOUT_WAR = GradleModelDef.fromProjectInfoBuilders(
-                JarOutputsModelBuilder.INSTANCE,
-                JavaSourcesModelBuilder.COMPLETE,
-                JavaCompatibilityModelBuilder.INSTANCE,
-                JavaTestModelBuilder.INSTANCE,
-                JacocoModelBuilder.INSTANCE);
+                JavaModelBuilders.JAR_OUTPUTS_BUILDER,
+                JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE,
+                JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER,
+                JavaModelBuilders.JAVA_TEST_BUILDER,
+                JavaModelBuilders.JACOCO_BUILDER);
 
         @Override
         public GradleModelDef getModelDef(GradleTarget gradleTarget) {

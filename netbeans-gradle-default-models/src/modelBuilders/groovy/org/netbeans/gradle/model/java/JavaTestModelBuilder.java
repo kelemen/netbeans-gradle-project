@@ -15,7 +15,7 @@ import org.gradle.api.tasks.testing.TestTaskReports;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-public enum JavaTestModelBuilder
+enum JavaTestModelBuilder
 implements
         ProjectInfoBuilder<JavaTestModel> {
     INSTANCE;

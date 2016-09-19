@@ -9,6 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 public class ClassLoaderUtilsTest {
     @BeforeClass
@@ -53,7 +54,13 @@ public class ClassLoaderUtilsTest {
     @Test
     public void testGetLocationOfClassPath() {
         File dir = ClassLoaderUtils.getLocationOfClassPath();
-        assertTrue("The project binaries must be in a directory and not a jar for this test to be executed",
+        assertTrue("Class path must exist", dir.exists());
+    }
+
+    @Test
+    public void testGetLocationOfClassPathInDirectory() {
+        File dir = ClassLoaderUtils.getLocationOfClassPath();
+        assumeTrue("The project binaries must be in a directory and not a jar for this test to be executed",
                 dir.isDirectory());
 
         String relPath = ClassLoaderUtils.class.getName().replace(".", File.separator) + ".class";

@@ -14,7 +14,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-public enum JarOutputsModelBuilder
+enum JarOutputsModelBuilder
 implements
         ProjectInfoBuilder<JarOutputsModel> {
 

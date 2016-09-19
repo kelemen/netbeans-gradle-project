@@ -12,7 +12,7 @@ import org.netbeans.gradle.model.util.BuilderUtils;
  * Since this builder does not have any input argument, it is singleton and its
  * instance can be accessed through {@code JavaCompatibilityModelBuilder.INSTANCE}.
  */
-public enum JavaCompatibilityModelBuilder
+enum JavaCompatibilityModelBuilder
 implements
         ProjectInfoBuilder<JavaCompatibilityModel> {
 

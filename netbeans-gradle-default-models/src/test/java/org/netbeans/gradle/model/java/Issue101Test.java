@@ -41,7 +41,7 @@ public class Issue101Test {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
-                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.COMPLETE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE);
                 assertNotNull(sourcesModel);
                 JavaModelTests.checkNoDependencyResolultionError(sourcesModel);
             }

@@ -10,8 +10,8 @@ import org.netbeans.gradle.model.util.ProjectConnectionTask;
 import org.netbeans.gradle.model.util.TestUtils;
 import org.netbeans.gradle.model.util.ZipUtils;
 
-import static org.junit.Assert.assertNotNull;
-import static org.netbeans.gradle.model.java.InfoQueries.fetchSingleProjectInfo;
+import static org.junit.Assert.*;
+import static org.netbeans.gradle.model.java.InfoQueries.*;
 
 public final class CodeCoverageTest {
     private static final String ROOT_NAME = "jacoco-project";
@@ -41,7 +41,7 @@ public final class CodeCoverageTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JacocoModel jacocoModel
-                        = fetchSingleProjectInfo(connection, JacocoModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JACOCO_BUILDER);
                 assertNotNull("JacocoModel", jacocoModel);
             }
         });

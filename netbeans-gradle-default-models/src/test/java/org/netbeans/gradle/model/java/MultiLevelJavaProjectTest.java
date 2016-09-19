@@ -320,7 +320,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
-                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.COMPLETE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE);
                 assertNotNull("Must have a JavaSourcesModel.", sourcesModel);
                 SourceSetVerification.verifySourcesModelWithoutDependencies(expected, sourcesModel);
 
@@ -385,7 +385,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
-                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.ONLY_COMPILE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_ONLY_COMPILE);
                 assertNotNull("apps:app1 must have a JavaSourcesModel.", sourcesModel);
 
                 JavaSourceGroup group = findSourceGroup(sourcesModel, JavaSourceSet.NAME_MAIN, JavaSourceGroupName.JAVA);
@@ -403,7 +403,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaSourcesModel sourcesModel
-                        = fetchSingleProjectInfo(connection, JavaSourcesModelBuilder.ONLY_COMPILE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_SOURCES_BUILDER_ONLY_COMPILE);
                 assertNull("Root must not have a JavaSourcesModel.", sourcesModel);
             }
         });
@@ -413,7 +413,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject(relativeProjectName, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaCompatibilityModel compatibilityModel
-                        = fetchSingleProjectInfo(connection, JavaCompatibilityModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER);
                 assertNotNull("Must have a JavaCompatibilityModel.", compatibilityModel);
 
                 assertEquals("1.5", compatibilityModel.getSourceCompatibility());
@@ -434,7 +434,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaCompatibilityModel compatibilityModel
-                        = fetchSingleProjectInfo(connection, JavaCompatibilityModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER);
                 assertNull("Root must not have a JavaCompatibilityModel.", compatibilityModel);
             }
         });
@@ -445,7 +445,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JacocoModel jacocoModel
-                        = fetchSingleProjectInfo(connection, JacocoModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JACOCO_BUILDER);
                 assertNull("apps:app1 must not have a JacocoModel.", jacocoModel);
             }
         });
@@ -464,7 +464,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
-                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
                 assertNotNull("Must have a JarOutputsModel.", jarOutputs);
 
                 JarOutput mainJar = null;
@@ -505,7 +505,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("apps:app1", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
-                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
                 assertNotNull("Must have a JarOutputsModel.", jarOutputs);
 
                 File projectDir = getProjectDir("apps", "app1");
@@ -559,7 +559,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject(relativeProjectPath, new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaTestModel testModel
-                        = fetchSingleProjectInfo(connection, JavaTestModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_TEST_BUILDER);
                 assertNotNull("Must have a JavaTestModel.", testModel);
 
                 Map<String, JavaTestTask> testTasks = nameToTestTask(testModel);
@@ -583,7 +583,7 @@ public class MultiLevelJavaProjectTest {
          runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JavaTestModel testModel
-                        = fetchSingleProjectInfo(connection, JavaTestModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAVA_TEST_BUILDER);
                 assertNull("Root project must not have a JavaTestModel.", testModel);
             }
         });
@@ -594,7 +594,7 @@ public class MultiLevelJavaProjectTest {
         runTestForSubProject("", new ProjectConnectionTask() {
             public void doTask(ProjectConnection connection) throws Exception {
                 JarOutputsModel jarOutputs
-                        = fetchSingleProjectInfo(connection, JarOutputsModelBuilder.INSTANCE);
+                        = fetchSingleProjectInfo(connection, JavaModelBuilders.JAR_OUTPUTS_BUILDER);
                 assertNull("Root project must not have a JarOutputsModel.", jarOutputs);
             }
         });
@@ -606,7 +606,7 @@ public class MultiLevelJavaProjectTest {
             runTestForSubProject(project, new ProjectConnectionTask() {
                 public void doTask(ProjectConnection connection) throws Exception {
                     WarFoldersModel warFolders
-                            = fetchSingleProjectInfo(connection, WarFoldersModelBuilder.INSTANCE);
+                            = fetchSingleProjectInfo(connection, JavaModelBuilders.WAR_FOLDERS_BUILDER);
                     assertNull("Must not have a WarFoldersModel.", warFolders);
                 }
             });
@@ -688,13 +688,13 @@ public class MultiLevelJavaProjectTest {
         Set<Class<?>> toolingModels = new HashSet<Class<?>>();
 
         projectInfos.put(0, Collections.<GradleProjectInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(JarOutputsModelBuilder.INSTANCE)));
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAR_OUTPUTS_BUILDER)));
         projectInfos.put(1, Collections.<GradleProjectInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(JavaCompatibilityModelBuilder.INSTANCE)));
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER)));
         projectInfos.put(2, Collections.<GradleProjectInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(JavaSourcesModelBuilder.COMPLETE)));
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE)));
         projectInfos.put(3, Collections.<GradleProjectInfoQuery<?>>singletonList(
-                InfoQueries.toCustomQuery(WarFoldersModelBuilder.INSTANCE)));
+                InfoQueries.toCustomQuery(JavaModelBuilders.WAR_FOLDERS_BUILDER)));
 
         final String prefix = "testCustomQuery-";
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(
@@ -748,10 +748,10 @@ public class MultiLevelJavaProjectTest {
         Set<Class<?>> toolingModels = new HashSet<Class<?>>();
 
         projectInfos.put(0, Arrays.<GradleProjectInfoQuery<?>>asList(
-                InfoQueries.toCustomQuery(JarOutputsModelBuilder.INSTANCE),
-                InfoQueries.toCustomQuery(JavaCompatibilityModelBuilder.INSTANCE),
-                InfoQueries.toCustomQuery(JavaSourcesModelBuilder.COMPLETE),
-                InfoQueries.toCustomQuery(WarFoldersModelBuilder.INSTANCE)));
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAR_OUTPUTS_BUILDER),
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_COMPATIBILITY_BUILDER),
+                InfoQueries.toCustomQuery(JavaModelBuilders.JAVA_SOURCES_BUILDER_COMPLETE),
+                InfoQueries.toCustomQuery(JavaModelBuilders.WAR_FOLDERS_BUILDER)));
 
         final String prefix = "testCustomQuery-";
         buildInfos.put(0, Collections.<GradleBuildInfoQuery<?>>singletonList(

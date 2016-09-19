@@ -5,7 +5,7 @@ import org.gradle.api.plugins.WarPluginConvention;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-public enum WarFoldersModelBuilder
+enum WarFoldersModelBuilder
 implements
         ProjectInfoBuilder<WarFoldersModel> {
 

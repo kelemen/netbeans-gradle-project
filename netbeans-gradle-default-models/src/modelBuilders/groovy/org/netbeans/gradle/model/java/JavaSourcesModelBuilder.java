@@ -28,7 +28,7 @@ import static org.netbeans.gradle.model.util.ReflectionUtils.*;
  * This builder has only two instances {@link #ONLY_COMPILE} and
  * {@link #COMPLETE}.
  */
-public enum JavaSourcesModelBuilder
+enum JavaSourcesModelBuilder
 implements
         ProjectInfoBuilder<JavaSourcesModel> {
 

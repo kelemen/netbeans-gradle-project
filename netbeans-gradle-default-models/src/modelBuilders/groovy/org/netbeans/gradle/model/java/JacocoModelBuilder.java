@@ -9,7 +9,7 @@ import org.gradle.testing.jacoco.tasks.JacocoReportsContainer;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-public enum JacocoModelBuilder implements ProjectInfoBuilder<JacocoModel> {
+enum JacocoModelBuilder implements ProjectInfoBuilder<JacocoModel> {
     INSTANCE;
 
     public JacocoModel getProjectInfo(Project project) {

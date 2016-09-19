@@ -1,4 +1,4 @@
-apply plugin: 'java';
+apply plugin: 'groovy';
 
 String gradleVersion = '2.13';
 List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2', '2.7', '2.8', '2.9', '2.11', '2.12', '2.14.1', '3.0'];
@@ -9,16 +9,6 @@ ext.scriptFile = { String fileName ->
 
 apply from: scriptFile('compiler-settings.gradle');
 configureJavaCompilers(5);
-
-task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
-    classifier = 'sources';
-    from sourceSets.main.allSource;
-}
-
-artifacts {
-    archives jar
-    archives sourcesJar
-}
 
 repositories {
     mavenCentral();
@@ -45,8 +35,70 @@ configurations {
     provided
 }
 
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+        groovy.srcDirs = []
+    }
+    modelBuilders {
+        compileClasspath += main.output
+        compileClasspath += configurations.provided
+        java.srcDirs = []
+    }
+    modelBuilderRefs {
+        compileClasspath += configurations.provided
+        groovy.srcDirs = []
+
+        compileClasspath += main.output
+        compileClasspath += modelBuilders.output
+        runtimeClasspath += main.output
+        runtimeClasspath += modelBuilders.output
+    }
+    test {
+        compileClasspath += configurations.provided
+        groovy.srcDirs = []
+
+        compileClasspath += modelBuilders.output
+        compileClasspath += modelBuilderRefs.output
+        runtimeClasspath -= main.output
+        runtimeClasspath += files(jar.archivePath)
+        runtimeClasspath += modelBuilders.output
+        runtimeClasspath += modelBuilderRefs.output
+    }
+}
+
+compileTestJava.dependsOn(jar)
+
+configurations {
+    modelBuildersCompile.extendsFrom compile
+    modelBuilderRefsCompile.extendsFrom compile
+    testCompile.extendsFrom modelBuildersCompile
+    testCompile.extendsFrom modelBuilderRefsCompile
+}
+
+jar {
+    from sourceSets.modelBuilders.output
+    from sourceSets.modelBuilderRefs.output
+    ext {
+        netBeansSourceSets = [sourceSets.main, sourceSets.modelBuilders, sourceSets.modelBuilderRefs]
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+    from sourceSets.modelBuilders.allSource
+    from sourceSets.modelBuilderRefs.allSource
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+}
+
 dependencies {
     compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
+    provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6'
 
     def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
         project,
@@ -59,9 +111,6 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11';
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5';
 }
-
-sourceSets.main.compileClasspath += configurations.provided
-sourceSets.test.compileClasspath += configurations.provided
 
 setTestedGradleVersion(test, gradleVersion);
 task testAll {

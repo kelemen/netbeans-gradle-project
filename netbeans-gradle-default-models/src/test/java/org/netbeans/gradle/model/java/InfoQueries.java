@@ -1,7 +1,7 @@
 package org.netbeans.gradle.model.java;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -17,22 +17,16 @@ import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder;
-import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 
 import static org.junit.Assert.*;
-import static org.netbeans.gradle.model.util.TestUtils.defaultInit;
+import static org.netbeans.gradle.model.util.TestUtils.*;
 
 public final class InfoQueries {
     private static final ClassLoader DEFAULT_CLASS_LOADER = InfoQueries.class.getClassLoader();
 
-    public static ModelClassPathDef classPathFromClass(Class<?> type) {
-        File classpath = ClassLoaderUtils.findClassPathOfClass(type);
-        if (ModelClassPathDef.isImplicitlyAssumed(classpath)) {
-            return ModelClassPathDef.EMPTY;
-        }
-
-        return ModelClassPathDef.fromJarFiles(DEFAULT_CLASS_LOADER, Collections.singleton(classpath));
+    private static ModelClassPathDef classPathFromClass(Class<?>... types) {
+        return ModelClassPathDef.fromClasses(DEFAULT_CLASS_LOADER, Arrays.asList(types));
     }
 
     public static <T> GradleProjectInfoQuery<T> toQueryWithKnownClassPath(final ProjectInfoBuilder<T> builder) {
@@ -84,7 +78,7 @@ public final class InfoQueries {
         };
     }
 
-    public static GenericModelFetcher buildInfoFetcher(BuildInfoBuilder<?>... builders) {
+    private static GenericModelFetcher buildInfoFetcher(BuildInfoBuilder<?>... builders) {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = CollectionUtils.newHashMap(builders.length);
 
