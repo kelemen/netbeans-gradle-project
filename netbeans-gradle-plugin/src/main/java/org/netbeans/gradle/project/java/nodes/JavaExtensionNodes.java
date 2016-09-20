@@ -31,11 +31,13 @@ implements
         GradleProjectExtensionNodes {
 
     private final JavaExtension javaExt;
+    private final FileListenerHandler fileListenerHandler;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
+        this.fileListenerHandler = new FileListenerHandler(javaExt);
     }
 
     private PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
@@ -47,7 +49,8 @@ implements
         ListenerRef ref1 = javaExt.addModelChangeListener(listener);
         ListenerRef ref2 = javaExt.getSourceDirsHandler().addDirsCreatedListener(listener);
         ListenerRef ref3 = javaSourcesDisplayMode().addChangeListener(listener);
-        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3));
+        ListenerRef ref4 = fileListenerHandler.addChangeListener(listener);
+        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3, ref4));
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {
