@@ -1,7 +1,11 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import org.junit.Test;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.java.JavaExtensionDef;
+import org.netbeans.gradle.project.java.properties.JavaProjectProperties;
+import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
@@ -18,9 +22,17 @@ public class AppearancePanelTest {
         return new NbSupplier<GlobalSettingsPage>() {
             @Override
             public GlobalSettingsPage get() {
-                return AppearancePanel.createSettingsPage();
+                return AppearancePanel.createSettingsPage(false);
             }
         };
+    }
+
+    private static PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode(CommonGlobalSettings input) {
+        ActiveSettingsQuery javaExtQuery = new ExtensionActiveSettingsQuery(
+                input.getActiveSettingsQuery(),
+                JavaExtensionDef.EXTENSION_NAME);
+
+        return JavaProjectProperties.javaSourcesDisplayMode(javaExtQuery);
     }
 
     @Test
@@ -29,7 +41,7 @@ public class AppearancePanelTest {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.name}");
-                input.javaSourcesDisplayMode().setValue(JavaSourcesDisplayMode.GROUP_BY_SOURCESET);
+                javaSourcesDisplayMode(input).setValue(JavaSourcesDisplayMode.GROUP_BY_SOURCESET);
             }
         });
     }
@@ -40,7 +52,7 @@ public class AppearancePanelTest {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.path}-${project.version}-test");
-                input.javaSourcesDisplayMode().setValue(JavaSourcesDisplayMode.GROUP_BY_SOURCESET);
+                javaSourcesDisplayMode(input).setValue(JavaSourcesDisplayMode.GROUP_BY_SOURCESET);
             }
         });
     }
@@ -51,7 +63,7 @@ public class AppearancePanelTest {
             @Override
             public void accept(CommonGlobalSettings input) {
                 displayNamePattern(input).setValue("${project.path}");
-                input.javaSourcesDisplayMode().setValue(JavaSourcesDisplayMode.DEFAULT_MODE);
+                javaSourcesDisplayMode(input).setValue(JavaSourcesDisplayMode.DEFAULT_MODE);
             }
         });
     }

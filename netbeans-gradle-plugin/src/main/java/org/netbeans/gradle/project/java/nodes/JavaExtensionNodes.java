@@ -19,7 +19,6 @@ import org.netbeans.gradle.project.java.model.NamedSourceRoot;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.filesystems.FileObject;
@@ -39,8 +38,8 @@ implements
         this.javaExt = javaExt;
     }
 
-    private static PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
-        return CommonGlobalSettings.getDefault().javaSourcesDisplayMode().getActiveSource();
+    private PropertySource<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
+        return javaExt.getProjectProperties().javaSourcesDisplayMode().getActiveSource();
     }
 
     @Override

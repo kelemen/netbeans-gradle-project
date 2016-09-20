@@ -177,7 +177,6 @@ final class LegacyGlobalGradleSettings {
         moveToNewSettings(compileOnSave, newSettings.compileOnSave());
         moveToNewSettings(platformPreferenceOrder, newSettings.platformPreferenceOrder());
         moveToNewSettings(displayNamePattern, NbGradleCommonProperties.displayNamePattern(newSettings.getActiveSettingsQuery()));
-        moveToNewSettings(javaSourcesDisplayMode, newSettings.javaSourcesDisplayMode());
         moveToNewSettings(replaceLfOnStdIn, newSettings.replaceLfOnStdIn());
         moveToNewSettings(loadRootProjectFirst, newSettings.loadRootProjectFirst());
         moveToNewSettings(detectProjectDependenciesByJarName, newSettings.detectProjectDependenciesByJarName());
@@ -186,6 +185,8 @@ final class LegacyGlobalGradleSettings {
                 newSettings.getActiveSettingsQuery(),
                 JavaExtensionDef.EXTENSION_NAME);
         moveToNewSettings(debugMode, JavaProjectProperties.debugMode(javaExtQuery));
+
+        moveToNewSettings(javaSourcesDisplayMode, JavaProjectProperties.javaSourcesDisplayMode(javaExtQuery));
     }
 
     private static String withNS(String namespace, String name) {

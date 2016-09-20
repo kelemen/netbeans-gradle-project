@@ -29,6 +29,7 @@ import org.netbeans.gradle.project.properties.standard.TargetPlatformProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptProperty;
 
+
 public final class NbGradleCommonProperties {
     private final NbGradleProject ownerProject;
     private final ActiveSettingsQuery activeSettingsQuery;

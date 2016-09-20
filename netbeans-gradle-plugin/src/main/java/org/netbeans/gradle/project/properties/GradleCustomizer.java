@@ -18,12 +18,12 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
+import org.netbeans.gradle.project.properties.ui.AppearancePanel;
 import org.netbeans.gradle.project.properties.ui.CommonProjectPropertiesPanel;
 import org.netbeans.gradle.project.properties.ui.CustomVariablesPanel;
 import org.netbeans.gradle.project.properties.ui.LicenseHeaderPanel;
 import org.netbeans.gradle.project.properties.ui.ManageBuiltInTasksPanel;
 import org.netbeans.gradle.project.properties.ui.ManageTasksPanel;
-import org.netbeans.gradle.project.properties.ui.ProjectAppearancePanel;
 import org.netbeans.modules.editor.indent.project.api.Customizers;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -95,7 +95,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         return new ProfileBasedCustomizer(
                 APPEARANCE_CATEGORY_NAME,
                 NbStrings.getAppearanceCategoryName(),
-                ProjectAppearancePanel.createProfileBasedPanel(project));
+                AppearancePanel.createProfileBasedPanel(project));
     }
 
     private static ProfileBasedCustomizer newCustomVariablesCustomizer(NbGradleProject project) {

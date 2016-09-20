@@ -55,7 +55,7 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
                 DebuggerPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryAppearance(),
-                AppearancePanel.createSettingsPage()));
+                AppearancePanel.createSettingsPage(false)));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryOther(),
                 OtherOptionsPanel.createSettingsPage()));

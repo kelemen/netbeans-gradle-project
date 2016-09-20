@@ -3,12 +3,17 @@ package org.netbeans.gradle.project.java.properties;
 import org.jtrim.property.PropertyFactory;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
+
+import static org.netbeans.gradle.project.properties.standard.CommonProperties.*;
 
 public class JavaProjectProperties {
     private final PropertyReference<DebugMode> debugMode;
+    private final PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode;
 
     public JavaProjectProperties(ActiveSettingsQuery activeSettingsQuery) {
         this.debugMode = debugMode(activeSettingsQuery);
+        this.javaSourcesDisplayMode = javaSourcesDisplayMode(activeSettingsQuery);
     }
 
     public PropertyReference<DebugMode> debugMode() {
@@ -20,5 +25,16 @@ public class JavaProjectProperties {
                 DebugModeProjectProperty.PROPERTY_DEF,
                 activeSettingsQuery,
                 PropertyFactory.constSource(DebugModeProjectProperty.DEFAULT));
+    }
+
+    public PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
+        return javaSourcesDisplayMode;
+    }
+
+    public static PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode(ActiveSettingsQuery activeSettingsQuery) {
+        return new PropertyReference<>(
+                defineEnumProperty(JavaSourcesDisplayMode.class, "appearance", "project-node", "display-mode"),
+                activeSettingsQuery,
+                PropertyFactory.constSource(JavaSourcesDisplayMode.DEFAULT_MODE));
     }
 }

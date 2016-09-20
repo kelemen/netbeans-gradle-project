@@ -52,7 +52,6 @@ public final class CommonGlobalSettings {
     private final PropertyReference<Boolean> detectProjectDependenciesByJarName;
     private final PropertyReference<SelfMaintainedTasks> selfMaintainedTasks;
     private final PropertyReference<ModelLoadingStrategy> modelLoadingStrategy;
-    private final PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode;
 
     private final PropertyReference<Integer> projectCacheSize;
     private final PropertyReference<Integer> gradleDaemonTimeoutSec;
@@ -77,7 +76,6 @@ public final class CommonGlobalSettings {
         this.detectProjectDependenciesByJarName = detectProjectDependenciesByJarName(activeSettingsQuery);
         this.selfMaintainedTasks = selfMaintainedTasks(activeSettingsQuery);
         this.modelLoadingStrategy = modelLoadingStrategy(activeSettingsQuery);
-        this.javaSourcesDisplayMode = javaSourcesDisplayMode(activeSettingsQuery);
         this.projectCacheSize = projectCacheSize(activeSettingsQuery);
         this.gradleDaemonTimeoutSec = gradleDaemonTimeoutSec(activeSettingsQuery);
     }
@@ -232,17 +230,6 @@ public final class CommonGlobalSettings {
 
     public PropertyReference<ModelLoadingStrategy> modelLoadingStrategy() {
         return modelLoadingStrategy;
-    }
-
-    public static PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode(ActiveSettingsQuery activeSettingsQuery) {
-        return propertyRef(
-                defineEnumProperty(JavaSourcesDisplayMode.class, "appearance", "project-node", "display-mode"),
-                activeSettingsQuery,
-                JavaSourcesDisplayMode.DEFAULT_MODE);
-    }
-
-    public PropertyReference<JavaSourcesDisplayMode> javaSourcesDisplayMode() {
-        return javaSourcesDisplayMode;
     }
 
     public static PropertyReference<Integer> projectCacheSize(ActiveSettingsQuery activeSettingsQuery) {
