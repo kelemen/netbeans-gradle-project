@@ -11,6 +11,7 @@ import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderResult;
 import org.netbeans.gradle.model.FetchedModels;
 import org.netbeans.gradle.model.FetchedModelsOrError;
+import org.netbeans.gradle.model.FetchedProjectModels;
 import org.netbeans.gradle.model.GenericModelFetcher;
 import org.netbeans.gradle.model.GradleBuildInfoQuery;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
@@ -131,9 +132,22 @@ public final class InfoQueries {
         throw fail;
     }
 
+    public static void verifyNoError(FetchedProjectModels models) {
+        verifyNoException(models.getIssue());
+    }
+
+    public static void verifyNoError(FetchedModels models) {
+        verifyNoError(models.getDefaultProjectModels());
+        for (FetchedProjectModels otherModels: models.getOtherProjectModels()) {
+            verifyNoError(otherModels);
+        }
+    }
+
     public static FetchedModels verifyNoError(FetchedModelsOrError modelsOrError) {
         verifyNoException(modelsOrError.getBuildScriptEvaluationError());
         verifyNoException(modelsOrError.getUnexpectedError());
+
+        verifyNoError(modelsOrError.getModels());
 
         FetchedModels result = modelsOrError.getModels();
         assertNotNull(result);
