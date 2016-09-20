@@ -70,24 +70,26 @@ public final class ProfileInfo {
     }
 
     /**
-     * Returns {@code true} refers to the profile which is global to the IDE instance.
+     * Returns {@code true} if the associated profile refers to the profile which
+     * is global to the IDE instance.
      *
-     * @return {@code true} refers to the profile which is global to the IDE instance,
-     *   {@code false} otherwise
+     * @return {@code true} if the associated profile refers to the profile which
+     *   is global to the IDE instance, {@code false} otherwise
      */
     public boolean isGlobal() {
         return Objects.equals(profileKey, ProfileKey.GLOBAL_PROFILE);
     }
 
     /**
-     * Returns {@code true} if this profile is project specific but is
+     * Returns {@code true} if the associated profile is project specific but is
      * explicitly defined to be unsharable across machines.
      *
-     * @return {@code true} if this profile is project specific but is
+     * @return {@code true} if the associated profile is project specific but is
      *   explicitly defined to be unsharable across machines, {@code false}
      *   otherwise
      */
     public boolean isPrivate() {
-        return Objects.equals(profileKey, ProfileKey.PRIVATE_PROFILE);
+        return profileKey != null
+                && Objects.equals(profileKey.getGroupName(), ProfileKey.PRIVATE_PROFILE.getGroupName());
     }
 }
