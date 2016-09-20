@@ -22,12 +22,14 @@ public final class ProfileKey {
      */
     public static final ProfileKey DEFAULT_PROFILE = null;
 
+    private static final String PRIVATE_PROFILE_GROUP = "private";
+
     /**
      * Defines the key to access the default user private profile. It is rarely
      * appropriate to access this profile, instead you can use the group name
      * {@literal "private"} for your profile to be considered user specific.
      */
-    public static final ProfileKey PRIVATE_PROFILE = new ProfileKey("private", "aux-config");
+    public static final ProfileKey PRIVATE_PROFILE = new ProfileKey(PRIVATE_PROFILE_GROUP, "aux-config");
 
     /**
      * Defines the key to access the global profile.
@@ -88,6 +90,49 @@ public final class ProfileKey {
     @Nullable
     public static ProfileKey fromProfileDef(@Nullable ProfileDef profileDef) {
         return profileDef != null ? profileDef.getProfileKey() : null;
+    }
+
+    /**
+     * Returns {@code true} if the given profile might be shared across
+     * different machines. That is, if a profile is shared it is not recommended
+     * to save settings in a manner which is machine specific. For example:
+     * saving absolute paths pointing into the user's file system.
+     *
+     * @param profileKey the key identifying the profile. This argument
+     *   can be {@code null}, which refers to the default profile.
+     * @return {@code true} if the given profile might be shared across
+     *   different machines, {@code false} otherwise
+     */
+    public static boolean isSharedProfile(@Nullable ProfileKey profileKey) {
+        return !isGlobal(profileKey) && !isPrivate(profileKey);
+    }
+
+    /**
+     * Returns {@code true} if the given profile refers to the profile which
+     * is global to the IDE instance.
+     *
+     * @param profileKey the key identifying the profile. This argument
+     *   can be {@code null}, which refers to the default profile.
+     * @return {@code true} if the given profile refers to the profile which
+     *   is global to the IDE instance, {@code false} otherwise
+     */
+    public static boolean isGlobal(@Nullable ProfileKey profileKey) {
+        return Objects.equals(profileKey, ProfileKey.GLOBAL_PROFILE);
+    }
+
+    /**
+     * Returns {@code true} if the given profile is project specific but is
+     * explicitly defined to be unsharable across machines.
+     *
+     * @param profileKey the key identifying the profile. This argument
+     *   can be {@code null}, which refers to the default profile.
+     * @return {@code true} if the given profile is project specific but is
+     *   explicitly defined to be unsharable across machines, {@code false}
+     *   otherwise
+     */
+    public static boolean isPrivate(@Nullable ProfileKey profileKey) {
+        return profileKey != null
+                && PRIVATE_PROFILE_GROUP.equals(profileKey.getGroupName());
     }
 
     /**

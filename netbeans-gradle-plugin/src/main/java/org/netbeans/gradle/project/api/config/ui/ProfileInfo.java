@@ -66,7 +66,7 @@ public final class ProfileInfo {
      *   different machines, {@code false} otherwise
      */
     public boolean isSharedProfile() {
-        return !isGlobal() && !isPrivate();
+        return ProfileKey.isSharedProfile(profileKey);
     }
 
     /**
@@ -77,7 +77,7 @@ public final class ProfileInfo {
      *   is global to the IDE instance, {@code false} otherwise
      */
     public boolean isGlobal() {
-        return Objects.equals(profileKey, ProfileKey.GLOBAL_PROFILE);
+        return ProfileKey.isGlobal(profileKey);
     }
 
     /**
@@ -89,7 +89,6 @@ public final class ProfileInfo {
      *   otherwise
      */
     public boolean isPrivate() {
-        return profileKey != null
-                && Objects.equals(profileKey.getGroupName(), ProfileKey.PRIVATE_PROFILE.getGroupName());
+        return ProfileKey.isPrivate(profileKey);
     }
 }
