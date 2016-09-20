@@ -12,8 +12,9 @@ import java.util.zip.ZipInputStream;
 
 public final class ZipUtils {
     public static File unzipResourceToTemp(Class<?> resourceBase, String resourceRelPath) throws IOException {
-        String resourcePath = "/" + resourceBase.getPackage().getName().replace('.', '/');
-        return unzipResourceToTemp(resourcePath + "/" + resourceRelPath);
+        return unzipResourceToTemp(resourceRelPath.startsWith("/")
+                ? resourceRelPath
+                : "/" + resourceBase.getPackage().getName().replace('.', '/') + "/" + resourceRelPath);
     }
 
     public static File unzipResourceToTemp(String resourcePath) throws IOException {
