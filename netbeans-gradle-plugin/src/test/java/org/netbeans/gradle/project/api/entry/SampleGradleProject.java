@@ -28,14 +28,13 @@ public final class SampleGradleProject implements Closeable {
     }
 
     public static SampleGradleProject createProject(String resourceRelPath) throws IOException {
-        CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
         return createProject(SampleGradleProject.class, resourceRelPath);
     }
 
     public static SampleGradleProject createProject(
             Class<?> resourceBase,
             String resourceRelPath) throws IOException {
-
+        CommonGlobalSettings.getDefault().gradleDaemonTimeoutSec().setValue(DAEMON_TIMEOUT_SEC);
         return new SampleGradleProject(ZipUtils.unzipResourceToTemp(resourceBase, resourceRelPath));
     }
 
