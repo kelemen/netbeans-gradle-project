@@ -810,6 +810,41 @@ public class MultiLevelJavaProjectTest {
     }
 
     @Test
+    public void testEvenBuilderNameFails() throws IOException {
+        Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos = Collections.emptyMap();
+
+        Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfos
+                = new HashMap<Object, List<GradleProjectInfoQuery2<?>>>();
+
+        final String infoMessage = "TEST-INFO-1270748702750";
+        final String nameMessage = "TEST-NAME-5478210972357";
+        projectInfos.put(1, Collections.<GradleProjectInfoQuery2<?>>singletonList(
+                InfoQueries.toCustomQuery(TestBuilders.failingNameProjectInfoBuilder(infoMessage, nameMessage))));
+
+        Set<Class<?>> toolingModels = Collections.emptySet();
+
+        final GenericModelFetcher fetcher = new GenericModelFetcher(buildInfos, projectInfos, toolingModels);
+        runTestForSubProject("apps:app1", new ProjectConnectionTask() {
+            public void doTask(ProjectConnection connection) throws Exception {
+                FetchedModels models = verifyNoError(fetcher.getModels(connection, TestUtils.defaultInit()));
+                BuilderResult result = CollectionUtils.getSingleElement(
+                        models.getDefaultProjectModels().getProjectInfoResults().get(1));
+
+                assertNotNull("Required result for FailingProjectInfoBuilder.", result);
+
+                BuilderIssue issue = result.getIssue();
+                assertNotNull("Required issue for FailingProjectInfoBuilder", issue);
+
+                //assertEquals("Expected approriate builder name.", builder.getName(), issue.getName());
+                String issueMessage = issue.getException().getMessage();
+                if (!issueMessage.contains(infoMessage)) {
+                    fail("Issue message is invalid: " + issueMessage);
+                }
+            }
+        });
+    }
+
+    @Test
     public void testSerializationFailures() throws IOException {
         Map<Object, List<GradleBuildInfoQuery<?>>> buildInfos
                 = new HashMap<Object, List<GradleBuildInfoQuery<?>>>();

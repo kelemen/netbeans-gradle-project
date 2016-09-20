@@ -39,6 +39,35 @@ public final class TestBuilders {
         return new NotSerializableResultProjectInfoBuilder();
     }
 
+    public static ProjectInfoBuilder2<Object> failingNameProjectInfoBuilder(String infoMessage, String nameMessage) {
+        return new FailingNameProjectInfoBuilder(infoMessage, nameMessage);
+    }
+
+    private static final class FailingNameProjectInfoBuilder implements ProjectInfoBuilder2<Object> {
+        private static final long serialVersionUID = 1L;
+
+        private final String infoMessage;
+        private final String nameMessage;
+
+        public FailingNameProjectInfoBuilder(String infoMessage, String nameMessage) {
+            if (infoMessage == null) throw new NullPointerException("infoMessage");
+            if (nameMessage == null) throw new NullPointerException("nameMessage");
+
+            this.infoMessage = infoMessage;
+            this.nameMessage = nameMessage;
+        }
+
+
+
+        public Object getProjectInfo(Object project) {
+            throw new RuntimeException(infoMessage);
+        }
+
+        public String getName() {
+            throw new RuntimeException(nameMessage);
+        }
+    }
+
     private static final class NotSerializableResultBuildInfoBuilder implements BuildInfoBuilder<Object> {
         private static final long serialVersionUID = 1L;
 
