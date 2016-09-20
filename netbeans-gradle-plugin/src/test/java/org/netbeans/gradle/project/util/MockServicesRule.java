@@ -20,7 +20,11 @@ public final class MockServicesRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 MockServices.setServices(services);
-                base.evaluate();
+                try {
+                    base.evaluate();
+                } finally {
+                    MockServices.setServices();
+                }
             }
         };
     }

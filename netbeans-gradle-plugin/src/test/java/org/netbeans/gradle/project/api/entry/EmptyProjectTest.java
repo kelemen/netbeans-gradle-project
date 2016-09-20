@@ -1,63 +1,38 @@
 package org.netbeans.gradle.project.api.entry;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.gradle.tooling.model.eclipse.EclipseProject;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
-import org.netbeans.gradle.project.util.ConfigAwareTest;
-import org.netbeans.junit.MockServices;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.nodes.Node;
 
 import static org.junit.Assert.*;
 
 @SuppressWarnings("deprecation")
-public final class EmptyProjectTest extends ConfigAwareTest {
-    private static SampleGradleProject sampleProject;
+public final class EmptyProjectTest {
+    private static final String RESOURCE_BASE = "/" + EmptyProjectTest.class.getPackage().getName().replace('.', '/');
+    public static final String EMPTY_PROJECT_RESOURCE = RESOURCE_BASE + "/empty-project.zip";
+    public static final String EMPTY_PROJECT_NAME = "empty-project";
+
+    @ClassRule
+    public static final SampleProjectRule PROJECT_REF = SampleProjectRule.getStandardRule(EMPTY_PROJECT_RESOURCE,
+            SingleModelExtensionQuery.class);
+
     private NbGradleProject rootProject;
-
-    public static SampleGradleProject createEmptyProject() throws IOException {
-        return SampleGradleProject.createProject("empty-project.zip");
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        MockServices.setServices(SingleModelExtensionQuery.class);
-
-        sampleProject = createEmptyProject();
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        SampleGradleProject toClose = sampleProject;
-        sampleProject = null;
-
-        if (toClose != null) {
-            toClose.close();
-        }
-    }
 
     @Before
     public void setUp() throws Exception {
-        Thread.interrupted();
-
-        rootProject = sampleProject.loadProject("empty-project");
+        rootProject = PROJECT_REF.loadAndWaitProject(EMPTY_PROJECT_NAME);
 
         JavaDisablerExtension ext = rootProject.getLookup().lookup(JavaDisablerExtension.class);
         assertNotNull(ext);
-
-        if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
-            throw new TimeoutException("Project was not loaded until the timeout elapsed.");
-        }
     }
 
     @Test

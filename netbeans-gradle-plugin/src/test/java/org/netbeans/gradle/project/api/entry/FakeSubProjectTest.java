@@ -1,55 +1,28 @@
 package org.netbeans.gradle.project.api.entry;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.gradle.project.util.NbConsumer;
-import org.netbeans.junit.MockServices;
 
 import static org.junit.Assert.*;
 
-public final class FakeSubProjectTest extends ConfigAwareTest {
-    private static SampleGradleProject sampleProject;
-
-    public FakeSubProjectTest() {
-        super(new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings settings) {
-                settings.loadRootProjectFirst().setValue(true);
-            }
-        });
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        MockServices.setServices();
-
-        sampleProject = SampleGradleProject.createProject("without-settings.zip");
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        SampleGradleProject toClose = sampleProject;
-        sampleProject = null;
-
-        if (toClose != null) {
-            toClose.close();
+public final class FakeSubProjectTest {
+    private static final NbConsumer<CommonGlobalSettings> EXTRA_SETTINGS = new NbConsumer<CommonGlobalSettings>() {
+        @Override
+        public void accept(CommonGlobalSettings settings) {
+            settings.loadRootProjectFirst().setValue(true);
         }
-    }
+    };
+
+    @ClassRule
+    public static final SampleProjectRule PROJECT_REF = SampleProjectRule.getStandardRule("without-settings.zip", EXTRA_SETTINGS);
 
     private ProjectId getProjectId(String... projectPath) throws Exception {
-        Thread.interrupted();
-        NbGradleProject project = sampleProject.loadProject(projectPath);
-        if (!project.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
-            throw new TimeoutException("Project was not loaded until the timeout elapsed.");
-        }
+        NbGradleProject project = PROJECT_REF.loadAndWaitProject(projectPath);
 
         JavaExtension javaExt = project.getLookup().lookup(JavaExtension.class);
         assertNotNull("Lookup must contain entry: JavaExtension", javaExt);

@@ -9,15 +9,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -35,9 +32,7 @@ import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
-import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.gradle.project.view.BuildScriptsNode;
-import org.netbeans.junit.MockServices;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
@@ -59,41 +54,22 @@ import static org.junit.Assert.*;
 import static org.netbeans.spi.project.ActionProvider.*;
 
 @SuppressWarnings("deprecation")
-public class SimpleJavaProjectTest extends ConfigAwareTest {
-    private static SampleGradleProject sampleProject;
+public class SimpleJavaProjectTest {
+    @ClassRule
+    public static final SampleProjectRule PROJECT_REF = SampleProjectRule.getStandardRule("gradle-sample.zip",
+            CustomSourcesMergerExtDef.class);
+
     private NbGradleProject rootProject;
 
     public SimpleJavaProjectTest() {
     }
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        MockServices.setServices(CustomSourcesMergerExtDef.class);
-
-        sampleProject = SampleGradleProject.createProject("gradle-sample.zip");
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        SampleGradleProject toClose = sampleProject;
-        sampleProject = null;
-
-        if (toClose != null) {
-            toClose.close();
-        }
-    }
-
     @Before
     public void setUp() throws Exception {
-        Thread.interrupted();
-        rootProject = sampleProject.loadProject("gradle-sample");
+        rootProject = PROJECT_REF.loadAndWaitProject("gradle-sample");
 
         GradleTestExtension ext = rootProject.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
-
-        if (!rootProject.tryWaitForLoadedProject(3, TimeUnit.MINUTES)) {
-            throw new TimeoutException("Project was not loaded until the timeout elapsed.");
-        }
     }
 
     @Test

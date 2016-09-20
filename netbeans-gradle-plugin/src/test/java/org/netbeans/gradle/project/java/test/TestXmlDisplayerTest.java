@@ -9,22 +9,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.gradle.model.util.ZipUtils;
 import org.netbeans.gradle.project.api.entry.EmptyProjectTest;
-import org.netbeans.gradle.project.api.entry.SampleGradleProject;
+import org.netbeans.gradle.project.api.entry.SampleProjectRule;
 import org.netbeans.gradle.project.others.test.NbGradleTestManager;
 import org.netbeans.gradle.project.others.test.NbGradleTestSession;
 import org.netbeans.gradle.project.others.test.NbGradleTestSuite;
-import org.netbeans.gradle.project.util.ConfigAwareTest;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.modules.gsf.testrunner.api.RerunHandler;
 import org.netbeans.modules.gsf.testrunner.api.Status;
@@ -38,34 +35,20 @@ import org.openide.util.Lookup;
 
 import static org.junit.Assert.*;
 
-public class TestXmlDisplayerTest extends ConfigAwareTest {
-    private static final String PROJECT_NAME = "empty-project";
+public class TestXmlDisplayerTest {
+    @ClassRule
+    public static final SampleProjectRule PROJECT_REF = SampleProjectRule.getStandardRule(EmptyProjectTest.EMPTY_PROJECT_RESOURCE);
+
     private static final String TEST_NAME = "test";
     private static final String BUILD_DIR = "build";
 
-    private static SampleGradleProject sampleProject;
     private Project rootProject;
-
-    public TestXmlDisplayerTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws IOException {
-        sampleProject = EmptyProjectTest.createEmptyProject();
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws IOException {
-        // To ensure that it can be removed wait until loaded.
-        sampleProject.loadProject(PROJECT_NAME).tryWaitForLoadedProject(3, TimeUnit.MINUTES);
-        sampleProject.close();
-    }
 
     @Before
     public void setUp() throws IOException {
         Thread.interrupted();
 
-        rootProject = sampleProject.getUnloadedProject(PROJECT_NAME);
+        rootProject = PROJECT_REF.getUnloadedProject(EmptyProjectTest.EMPTY_PROJECT_NAME);
         cleanDefaultBuildDirectory(rootProject);
     }
 
