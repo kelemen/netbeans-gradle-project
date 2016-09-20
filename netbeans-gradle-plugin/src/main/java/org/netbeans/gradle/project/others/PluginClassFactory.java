@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.others;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.util.TestDetectUtils;
 import org.openide.modules.ModuleInfo;
 import org.openide.util.Lookup;
 
@@ -17,6 +18,11 @@ public final class PluginClassFactory {
     }
 
     private ModuleInfo tryFindModuleInfo() {
+        if (TestDetectUtils.isRunningTests()) {
+            // During tests, this might try to install modules, which is not possible
+            return null;
+        }
+
         for (ModuleInfo info: Lookup.getDefault().lookupAll(ModuleInfo.class)) {
             String codeName = info.getCodeName();
             if (codeName != null && codeName.startsWith(moduleNamePrefix)) {
