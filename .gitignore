@@ -1,4 +1,6 @@
 /*/nb-configuration.xml
+/nbproject/
+/*/nbproject/
 /*/target/
 /*/build/
 /netbeans-gradle-default-models/gradle-api/
