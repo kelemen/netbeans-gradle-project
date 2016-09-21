@@ -14,8 +14,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventListeners;
+import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertyFactory;
@@ -23,6 +24,7 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -175,13 +177,14 @@ public final class AnnotationChildNodes {
             }
         };
 
+        final UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
         return SwingProperties.fromSwingSource(result, new SwingForwarderFactory<ChangeListener>() {
             @Override
             public ChangeListener createForwarder(final Runnable listener) {
                 return new ChangeListener() {
                     @Override
                     public void stateChanged(ChangeEvent e) {
-                        listener.run();
+                        listenerExecutor.execute(listener);
                     }
                 };
             }
@@ -245,13 +248,22 @@ public final class AnnotationChildNodes {
 
     private class RemovedChildrenProperty implements PropertySource<Boolean> {
         private final ListenerManager<Runnable> changeListeners;
+        private final EventDispatcher<Runnable, Void> listenerDispatcher;
 
         public RemovedChildrenProperty() {
             this.changeListeners = new CopyOnTriggerListenerManager<>();
+
+            final UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
+            this.listenerDispatcher = new EventDispatcher<Runnable, Void>() {
+                @Override
+                public void onEvent(Runnable eventListener, Void arg) {
+                    listenerExecutor.execute(eventListener);
+                }
+            };
         }
 
         public void fireOnChange() {
-            EventListeners.dispatchRunnable(changeListeners);
+            changeListeners.onEvent(listenerDispatcher, null);
         }
 
         @Override
@@ -273,12 +285,14 @@ public final class AnnotationChildNodes {
     private static class NodeFactories implements PropertySource<Collection<? extends NodeFactory>> {
         private final AtomicReference<Lookup.Result<NodeFactory>> nodeListsRef;
         private final NbSupplier<? extends Lookup> factoryLookupProvider;
+        private final UpdateTaskExecutor listenerExecutor;
 
         public NodeFactories(NbSupplier<? extends Lookup> factoryLookupProvider) {
             assert factoryLookupProvider != null;
 
             this.factoryLookupProvider = factoryLookupProvider;
             this.nodeListsRef = new AtomicReference<>(null);
+            this.listenerExecutor = new SwingUpdateTaskExecutor(false);
         }
 
         private Lookup.Result<NodeFactory> getNodeListsResult() {
@@ -303,7 +317,7 @@ public final class AnnotationChildNodes {
             final LookupListener wrapper = new LookupListener() {
                 @Override
                 public void resultChanged(LookupEvent ev) {
-                    listener.run();
+                    listenerExecutor.execute(listener);
                 }
             };
 

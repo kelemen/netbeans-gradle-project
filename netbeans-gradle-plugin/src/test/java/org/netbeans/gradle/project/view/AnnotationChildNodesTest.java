@@ -10,11 +10,15 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.NbSupplier;
+import org.netbeans.gradle.project.util.SwingTest;
+import org.netbeans.gradle.project.util.SwingTestsRule;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
 import org.openide.filesystems.FileObject;
@@ -26,6 +30,9 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class AnnotationChildNodesTest {
+    @Rule
+    public final TestRule swingRule = SwingTestsRule.create();
+
     private static Project mockProject() {
         return new Project() {
             @Override
@@ -66,6 +73,7 @@ public class AnnotationChildNodesTest {
     }
 
     @Test
+    @SwingTest
     public void testGetNodesAfterRecreate() {
         TestNodeListSnapshot initList = new TestNodeListSnapshot(0);
         TestNodeListSnapshot testList = new TestNodeListSnapshot(1);
@@ -96,6 +104,7 @@ public class AnnotationChildNodesTest {
     }
 
     @Test
+    @SwingTest
     public void testGetNodesAfterNotify() {
         TestNodeListSnapshot initList = new TestNodeListSnapshot(0);
         TestNodeListSnapshot testList = new TestNodeListSnapshot(1);
@@ -123,6 +132,7 @@ public class AnnotationChildNodesTest {
     }
 
     @Test
+    @SwingTest
     public void testGetNodesBeforeNotify() {
         TestNodeListSnapshot initList = new TestNodeListSnapshot(0);
         TestNodeListSnapshot testList = new TestNodeListSnapshot(1);
