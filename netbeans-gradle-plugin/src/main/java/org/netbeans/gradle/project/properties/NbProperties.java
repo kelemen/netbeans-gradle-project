@@ -9,6 +9,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -17,7 +18,9 @@ import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
+import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.netbeans.gradle.project.view.AnnotationChildNodes;
 
 public final class NbProperties {
     public static <Value> PropertySource<Value> weakListenerProperty(PropertySource<? extends Value> src) {
@@ -94,6 +97,13 @@ public final class NbProperties {
                 return input != null;
             }
         });
+    }
+
+    public static <T, U, R> PropertySource<R> combine(
+            PropertySource<? extends T> src1,
+            PropertySource<? extends U> src2,
+            NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+        return new CombinedProperties<>(src1, src2, valueCombiner);
     }
 
     public static <Value> PropertySource<Value> listSelection(final JList<? extends Value> list) {
@@ -209,6 +219,58 @@ public final class NbProperties {
             });
 
             return new ReferenceHolderListenerRef(listener, result);
+        }
+    }
+
+    private static final class CombinedProperties<R> implements PropertySource<R> {
+        private final PropertySource<?> src1;
+        private final PropertySource<?> src2;
+        private final CombinedValues<?, ?, ? extends R> valueRef;
+
+        public <T, U> CombinedProperties(
+                PropertySource<? extends T> src1,
+                PropertySource<? extends U> src2,
+                NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+            ExceptionHelper.checkNotNullArgument(src1, "src1");
+            ExceptionHelper.checkNotNullArgument(src2, "src2");
+            ExceptionHelper.checkNotNullArgument(valueCombiner, "valueCombiner");
+
+            this.src1 = src1;
+            this.src2 = src2;
+            this.valueRef = new CombinedValues<>(src1, src2, valueCombiner);
+        }
+
+        @Override
+        public R getValue() {
+            return valueRef.getValue();
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return ListenerRegistries.combineListenerRefs(
+                    src1.addChangeListener(listener),
+                    src2.addChangeListener(listener));
+        }
+    }
+
+    private static final class CombinedValues<T, U, R> {
+        private final PropertySource<? extends T> src1;
+        private final PropertySource<? extends U> src2;
+        private final NbBiFunction<? super T, ? super U, ? extends R> valueCombiner;
+
+        public CombinedValues(
+                PropertySource<? extends T> src1,
+                PropertySource<? extends U> src2,
+                NbBiFunction<? super T, ? super U, ? extends R> valueCombiner) {
+            this.src1 = src1;
+            this.src2 = src2;
+            this.valueCombiner = valueCombiner;
+        }
+
+        public R getValue() {
+            T value1 = src1.getValue();
+            U value2 = src2.getValue();
+            return valueCombiner.apply(value1, value2);
         }
     }
 }

@@ -18,7 +18,6 @@ import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
@@ -31,6 +30,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.project.ui.support.NodeFactory;
@@ -75,9 +75,9 @@ public final class AnnotationChildNodes {
         this.removeChildrenRef = new RemovedChildrenProperty();
         this.currentNodeLists = Collections.emptySet();
 
-        this.nodeFactories = combine(new NodeFactories(factoryLookupProvider), this.removeChildrenRef, new ValueCombiner<Collection<? extends NodeFactory>, Boolean, Collection<? extends NodeFactory>>() {
+        this.nodeFactories = NbProperties.combine(new NodeFactories(factoryLookupProvider), this.removeChildrenRef, new NbBiFunction<Collection<? extends NodeFactory>, Boolean, Collection<? extends NodeFactory>>() {
             @Override
-            public Collection<? extends NodeFactory> combine(Collection<? extends NodeFactory> factories, Boolean removedChildren) {
+            public Collection<? extends NodeFactory> apply(Collection<? extends NodeFactory> factories, Boolean removedChildren) {
                 return removedChildren ? null : factories;
             }
         });
@@ -243,13 +243,6 @@ public final class AnnotationChildNodes {
         return singleNodeFactories;
     }
 
-    private static <T, U, R> PropertySource<R> combine(
-            PropertySource<? extends T> src1,
-                PropertySource<? extends U> src2,
-                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
-        return new CombinedProperties<>(src1, src2, valueCombiner);
-    }
-
     private class RemovedChildrenProperty implements PropertySource<Boolean> {
         private final ListenerManager<Runnable> changeListeners;
 
@@ -351,58 +344,6 @@ public final class AnnotationChildNodes {
             if (getClass() != obj.getClass()) return false;
             final NodeListNodeFactory<?> other = (NodeListNodeFactory<?>)obj;
             return Objects.equals(this.key, other.key);
-        }
-    }
-
-    private interface ValueCombiner<T, U, R> {
-        public R combine(T arg1, U arg2);
-    }
-
-    private static final class CombinedProperties<R> implements PropertySource<R> {
-        private final PropertySource<?> src1;
-        private final PropertySource<?> src2;
-        private final CombinedValues<?, ?, ? extends R> valueRef;
-
-        public <T, U> CombinedProperties(
-                PropertySource<? extends T> src1,
-                PropertySource<? extends U> src2,
-                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
-            this.src1 = src1;
-            this.src2 = src2;
-            this.valueRef = new CombinedValues<>(src1, src2, valueCombiner);
-        }
-
-        @Override
-        public R getValue() {
-            return valueRef.getValue();
-        }
-
-        @Override
-        public ListenerRef addChangeListener(Runnable listener) {
-            return ListenerRegistries.combineListenerRefs(
-                    src1.addChangeListener(listener),
-                    src2.addChangeListener(listener));
-        }
-    }
-
-    private static final class CombinedValues<T, U, R> {
-        private final PropertySource<? extends T> src1;
-        private final PropertySource<? extends U> src2;
-        private final ValueCombiner<? super T, ? super U, ? extends R> valueCombiner;
-
-        public CombinedValues(
-                PropertySource<? extends T> src1,
-                PropertySource<? extends U> src2,
-                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
-            this.src1 = src1;
-            this.src2 = src2;
-            this.valueCombiner = valueCombiner;
-        }
-
-        public R getValue() {
-            T value1 = src1.getValue();
-            U value2 = src2.getValue();
-            return valueCombiner.combine(value1, value2);
         }
     }
 }
