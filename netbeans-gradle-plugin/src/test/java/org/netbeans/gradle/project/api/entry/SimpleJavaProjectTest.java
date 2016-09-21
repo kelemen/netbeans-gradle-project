@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -32,6 +31,8 @@ import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
 import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
+import org.netbeans.gradle.project.util.SwingTest;
+import org.netbeans.gradle.project.util.SwingTestAware;
 import org.netbeans.gradle.project.view.BuildScriptsNode;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.project.ActionProvider;
@@ -54,7 +55,7 @@ import static org.junit.Assert.*;
 import static org.netbeans.spi.project.ActionProvider.*;
 
 @SuppressWarnings("deprecation")
-public class SimpleJavaProjectTest {
+public class SimpleJavaProjectTest extends SwingTestAware {
     @ClassRule
     public static final SampleProjectRule PROJECT_REF = SampleProjectRule.getStandardRule("gradle-sample.zip",
             CustomSourcesMergerExtDef.class);
@@ -217,23 +218,17 @@ public class SimpleJavaProjectTest {
     }
 
     @Test
+    @SwingTest
     public void testHasProperNodes() throws Exception {
-        final NbGradleProject project = rootProject;
+        LogicalViewProvider view = rootProject.getLookup().lookup(LogicalViewProvider.class);
+        Node root = view.createLogicalView();
 
-        SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
-                Node root = view.createLogicalView();
+        Lookup children = Lookups.fixed((Object[])root.getChildren().getNodes());
+        JavaDependenciesNode dependenciesNode = children.lookup(JavaDependenciesNode.class);
+        BuildScriptsNode buildScriptsNode = children.lookup(BuildScriptsNode.class);
 
-                Lookup children = Lookups.fixed((Object[])root.getChildren().getNodes());
-                JavaDependenciesNode dependenciesNode = children.lookup(JavaDependenciesNode.class);
-                BuildScriptsNode buildScriptsNode = children.lookup(BuildScriptsNode.class);
-
-                assertNotNull("Must have a dependencies node", dependenciesNode);
-                assertNotNull("Must have a build scripts node", buildScriptsNode);
-            }
-        });
+        assertNotNull("Must have a dependencies node", dependenciesNode);
+        assertNotNull("Must have a build scripts node", buildScriptsNode);
     }
 
     private static void verifyJavaDocActionIsAdded(Action[] actions) {
@@ -252,19 +247,13 @@ public class SimpleJavaProjectTest {
     }
 
     @Test
+    @SwingTest
     public void testJavadocActionIsAdded() throws Exception {
-        final NbGradleProject project = rootProject;
+        LogicalViewProvider view = rootProject.getLookup().lookup(LogicalViewProvider.class);
+        Node root = view.createLogicalView();
 
-        SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
-                Node root = view.createLogicalView();
-
-                verifyJavaDocActionIsAdded(root.getActions(false));
-                verifyJavaDocActionIsAdded(root.getActions(true));
-            }
-        });
+        verifyJavaDocActionIsAdded(root.getActions(false));
+        verifyJavaDocActionIsAdded(root.getActions(true));
     }
 
     public static final class CustomSourcesMergerExtDef implements GradleProjectExtensionDef<Object> {

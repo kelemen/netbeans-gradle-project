@@ -10,15 +10,13 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SwingTest;
-import org.netbeans.gradle.project.util.SwingTestsRule;
+import org.netbeans.gradle.project.util.SwingTestAware;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
 import org.openide.filesystems.FileObject;
@@ -29,10 +27,7 @@ import org.openide.util.lookup.Lookups;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class AnnotationChildNodesTest {
-    @Rule
-    public final TestRule swingRule = SwingTestsRule.create();
-
+public class AnnotationChildNodesTest extends SwingTestAware {
     private static Project mockProject() {
         return new Project() {
             @Override

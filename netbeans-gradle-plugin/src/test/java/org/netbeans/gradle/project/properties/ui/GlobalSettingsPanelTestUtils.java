@@ -1,7 +1,9 @@
 package org.netbeans.gradle.project.properties.ui;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import javax.swing.SwingUtilities;
+import org.jtrim.utils.ExceptionHelper;
 import org.junit.Assert;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -59,11 +61,28 @@ public final class GlobalSettingsPanelTestUtils {
         });
     }
 
+    private static void invokeAndWait(Runnable task) throws InterruptedException {
+        if (SwingUtilities.isEventDispatchThread()) {
+            task.run();
+        }
+        else {
+            try {
+                SwingUtilities.invokeAndWait(task);
+            } catch (InvocationTargetException ex) {
+                Throwable cause = ex.getCause();
+                if (cause == null) {
+                    cause = ex;
+                }
+                throw ExceptionHelper.throwUnchecked(cause);
+            }
+        }
+    }
+
     public static <T extends ProfileBasedSettingsPage> void testInitAndReadBack(
             final NbSupplier<? extends T> panelFactory,
             final NbConsumer<? super CommonGlobalSettings> initializer,
             final NbConsumer<? super T> check) throws Exception {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        invokeAndWait(new Runnable() {
             @Override
             public void run() {
                 testInitAndReadBackNow(panelFactory, initializer, check);

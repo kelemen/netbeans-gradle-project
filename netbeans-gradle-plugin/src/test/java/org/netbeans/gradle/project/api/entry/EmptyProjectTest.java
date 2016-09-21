@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.api.entry;
 
 import java.util.concurrent.TimeUnit;
 import javax.swing.Action;
-import javax.swing.SwingUtilities;
 import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -10,13 +9,15 @@ import org.junit.Test;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
 import org.netbeans.gradle.project.java.query.GradleClassPathProvider;
+import org.netbeans.gradle.project.util.SwingTest;
+import org.netbeans.gradle.project.util.SwingTestAware;
 import org.netbeans.spi.project.ui.LogicalViewProvider;
 import org.openide.nodes.Node;
 
 import static org.junit.Assert.*;
 
 @SuppressWarnings("deprecation")
-public final class EmptyProjectTest {
+public final class EmptyProjectTest extends SwingTestAware {
     private static final String RESOURCE_BASE = "/" + EmptyProjectTest.class.getPackage().getName().replace('.', '/');
     public static final String EMPTY_PROJECT_RESOURCE = RESOURCE_BASE + "/empty-project.zip";
     public static final String EMPTY_PROJECT_NAME = "empty-project";
@@ -51,23 +52,17 @@ public final class EmptyProjectTest {
     }
 
     @Test
+    @SwingTest
     public void testNoDependenciesNode() throws Exception {
-        final NbGradleProject project = rootProject;
+        LogicalViewProvider view = rootProject.getLookup().lookup(LogicalViewProvider.class);
+        Node root = view.createLogicalView();
 
-        SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
-                Node root = view.createLogicalView();
-
-                Node[] children = root.getChildren().getNodes();
-                for (Node child: children) {
-                    if (child instanceof JavaDependenciesNode) {
-                        fail("Dependencies node must not be present.");
-                    }
-                }
+        Node[] children = root.getChildren().getNodes();
+        for (Node child: children) {
+            if (child instanceof JavaDependenciesNode) {
+                fail("Dependencies node must not be present.");
             }
-        });
+        }
     }
 
     private static void verifyNoJavaActions(Action[] actions) {
@@ -83,18 +78,12 @@ public final class EmptyProjectTest {
     }
 
     @Test
+    @SwingTest
     public void testNoJavaActionsAreAdded() throws Exception {
-        final NbGradleProject project = rootProject;
+        LogicalViewProvider view = rootProject.getLookup().lookup(LogicalViewProvider.class);
+        Node root = view.createLogicalView();
 
-        SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-                LogicalViewProvider view = project.getLookup().lookup(LogicalViewProvider.class);
-                Node root = view.createLogicalView();
-
-                verifyNoJavaActions(root.getActions(false));
-                verifyNoJavaActions(root.getActions(true));
-            }
-        });
+        verifyNoJavaActions(root.getActions(false));
+        verifyNoJavaActions(root.getActions(true));
     }
 }
