@@ -14,13 +14,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.event.CopyOnTriggerListenerManager;
+import org.jtrim.event.EventListeners;
+import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.event.ListenerRegistries;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -38,7 +44,11 @@ import org.openide.util.lookup.Lookups;
 public final class AnnotationChildNodes {
     private static final Logger LOGGER = Logger.getLogger(AnnotationChildNodes.class.getName());
 
+    private static final PropertySource<Collection<SingleNodeFactory>> NO_FACTORIES
+            = PropertyFactory.<Collection<SingleNodeFactory>>constSource(Collections.<SingleNodeFactory>emptySet());
+
     private final Project project;
+    private final RemovedChildrenProperty removeChildrenRef;
     private final PropertySource<Collection<? extends NodeFactory>> nodeFactories;
     private final PropertySource<Collection<SingleNodeFactory>> singleNodeFactories;
 
@@ -61,9 +71,16 @@ public final class AnnotationChildNodes {
 
         this.project = project;
         this.nodeLock = new ReentrantLock();
-        this.removedChildren = false;
+        this.removedChildren = true;
+        this.removeChildrenRef = new RemovedChildrenProperty();
         this.currentNodeLists = Collections.emptySet();
-        this.nodeFactories = new NodeFactories(factoryLookupProvider);
+
+        this.nodeFactories = combine(new NodeFactories(factoryLookupProvider), this.removeChildrenRef, new ValueCombiner<Collection<? extends NodeFactory>, Boolean, Collection<? extends NodeFactory>>() {
+            @Override
+            public Collection<? extends NodeFactory> combine(Collection<? extends NodeFactory> factories, Boolean removedChildren) {
+                return removedChildren ? null : factories;
+            }
+        });
         this.singleNodeFactories = NbProperties.propertyOfProperty(nodeFactories, new NbFunction<Collection<? extends NodeFactory>, PropertySource<Collection<SingleNodeFactory>>>() {
             @Override
             public PropertySource<Collection<SingleNodeFactory>> apply(Collection<? extends NodeFactory> arg) {
@@ -72,16 +89,27 @@ public final class AnnotationChildNodes {
         });
     }
 
-    private PropertySource<Collection<SingleNodeFactory>> convertFactories(Collection<? extends NodeFactory> factories) {
-        final List<NodeList<?>> nodeLists = new ArrayList<>(factories.size());
+    private void createAll(
+            Collection<? extends NodeFactory> factories,
+            Collection<NodeList<?>> result) {
+
         for (NodeFactory factory: factories) {
             try {
                 NodeList<?> nodeList = factory.createNodes(project);
-                nodeLists.add(nodeList);
+                result.add(nodeList);
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE, "Exception thrown by NodeFactory.createNodes: " + factory, ex);
             }
         }
+    }
+
+    private Collection<NodeList<?>> updateAndGetNodeLists(Collection<? extends NodeFactory> factories) {
+        if (factories == null) {
+            return Collections.emptyList();
+        }
+
+        Collection<NodeList<?>> result = CollectionUtils.newLinkedHashSet(factories.size());
+        createAll(factories, result);
 
         List<NodeList<?>> removed = new ArrayList<>();
         List<NodeList<?>> added = new ArrayList<>();
@@ -89,19 +117,20 @@ public final class AnnotationChildNodes {
         nodeLock.lock();
         try {
             if (removedChildren) {
-                nodeLists.clear();
+                assert currentNodeLists.isEmpty();
+                return Collections.emptyList();
             }
 
             Set<NodeList<?>> prevNodeLists = currentNodeLists;
-            currentNodeLists = new LinkedHashSet<>(nodeLists);
+            currentNodeLists = new LinkedHashSet<>(result);
 
-            for (NodeList<?> nodeList: nodeLists) {
+            for (NodeList<?> nodeList: result) {
                 if (!prevNodeLists.contains(nodeList)) {
                     added.add(nodeList);
                 }
             }
             for (NodeList<?> nodeList: prevNodeLists) {
-                if (!nodeLists.contains(nodeList)) {
+                if (!result.contains(nodeList)) {
                     removed.add(nodeList);
                 }
             }
@@ -111,6 +140,15 @@ public final class AnnotationChildNodes {
 
         removeNotifyAll(removed);
         addNotifyAll(added);
+
+        return result;
+    }
+
+    private PropertySource<Collection<SingleNodeFactory>> convertFactories(Collection<? extends NodeFactory> factories) {
+        final Collection<NodeList<?>> nodeLists = updateAndGetNodeLists(factories);
+        if (nodeLists.isEmpty()) {
+            return NO_FACTORIES;
+        }
 
         SwingPropertySource<Collection<SingleNodeFactory>, ChangeListener> result = new SwingPropertySource<Collection<SingleNodeFactory>, ChangeListener>() {
             @Override
@@ -150,7 +188,7 @@ public final class AnnotationChildNodes {
         });
     }
 
-    private <T> void addNodeListNodes(NodeList<T> nodeList, List<SingleNodeFactory> toPopulate) {
+    private static <T> void addNodeListNodes(NodeList<T> nodeList, List<SingleNodeFactory> toPopulate) {
         for (T key: nodeList.keys()) {
             toPopulate.add(new NodeListNodeFactory<>(nodeList, key));
         }
@@ -183,6 +221,7 @@ public final class AnnotationChildNodes {
         } finally {
             nodeLock.unlock();
         }
+        removeChildrenRef.fireOnChange();
     }
 
     public void removeNotify() {
@@ -196,11 +235,46 @@ public final class AnnotationChildNodes {
             nodeLock.unlock();
         }
 
+        removeChildrenRef.fireOnChange();
         removeNotifyAll(removed);
     }
 
     public PropertySource<Collection<SingleNodeFactory>> nodeFactories() {
         return singleNodeFactories;
+    }
+
+    private static <T, U, R> PropertySource<R> combine(
+            PropertySource<? extends T> src1,
+                PropertySource<? extends U> src2,
+                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
+        return new CombinedProperties<>(src1, src2, valueCombiner);
+    }
+
+    private class RemovedChildrenProperty implements PropertySource<Boolean> {
+        private final ListenerManager<Runnable> changeListeners;
+
+        public RemovedChildrenProperty() {
+            this.changeListeners = new CopyOnTriggerListenerManager<>();
+        }
+
+        public void fireOnChange() {
+            EventListeners.dispatchRunnable(changeListeners);
+        }
+
+        @Override
+        public Boolean getValue() {
+            nodeLock.lock();
+            try {
+                return removedChildren;
+            } finally {
+                nodeLock.unlock();
+            }
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return changeListeners.registerListener(listener);
+        }
     }
 
     private static class NodeFactories implements PropertySource<Collection<? extends NodeFactory>> {
@@ -267,7 +341,7 @@ public final class AnnotationChildNodes {
 
         @Override
         public int hashCode() {
-            return  355 + Objects.hashCode(key);
+            return 355 + Objects.hashCode(key);
         }
 
         @Override
@@ -277,6 +351,58 @@ public final class AnnotationChildNodes {
             if (getClass() != obj.getClass()) return false;
             final NodeListNodeFactory<?> other = (NodeListNodeFactory<?>)obj;
             return Objects.equals(this.key, other.key);
+        }
+    }
+
+    private interface ValueCombiner<T, U, R> {
+        public R combine(T arg1, U arg2);
+    }
+
+    private static final class CombinedProperties<R> implements PropertySource<R> {
+        private final PropertySource<?> src1;
+        private final PropertySource<?> src2;
+        private final CombinedValues<?, ?, ? extends R> valueRef;
+
+        public <T, U> CombinedProperties(
+                PropertySource<? extends T> src1,
+                PropertySource<? extends U> src2,
+                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
+            this.src1 = src1;
+            this.src2 = src2;
+            this.valueRef = new CombinedValues<>(src1, src2, valueCombiner);
+        }
+
+        @Override
+        public R getValue() {
+            return valueRef.getValue();
+        }
+
+        @Override
+        public ListenerRef addChangeListener(Runnable listener) {
+            return ListenerRegistries.combineListenerRefs(
+                    src1.addChangeListener(listener),
+                    src2.addChangeListener(listener));
+        }
+    }
+
+    private static final class CombinedValues<T, U, R> {
+        private final PropertySource<? extends T> src1;
+        private final PropertySource<? extends U> src2;
+        private final ValueCombiner<? super T, ? super U, ? extends R> valueCombiner;
+
+        public CombinedValues(
+                PropertySource<? extends T> src1,
+                PropertySource<? extends U> src2,
+                ValueCombiner<? super T, ? super U, ? extends R> valueCombiner) {
+            this.src1 = src1;
+            this.src2 = src2;
+            this.valueCombiner = valueCombiner;
+        }
+
+        public R getValue() {
+            T value1 = src1.getValue();
+            U value2 = src2.getValue();
+            return valueCombiner.combine(value1, value2);
         }
     }
 }

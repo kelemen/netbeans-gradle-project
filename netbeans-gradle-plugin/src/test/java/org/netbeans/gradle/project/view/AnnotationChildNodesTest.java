@@ -66,6 +66,36 @@ public class AnnotationChildNodesTest {
     }
 
     @Test
+    public void testGetNodesAfterRecreate() {
+        TestNodeListSnapshot initList = new TestNodeListSnapshot(0);
+        TestNodeListSnapshot testList = new TestNodeListSnapshot(1);
+
+        MutableProperty<TestNodeListSnapshot> nodeList = PropertyFactory.memProperty(initList);
+        AnnotationChildNodes childNodes = testNodes(testNodeFactory(nodeList));
+
+        childNodes.addNotify();
+        childNodes.removeNotify();
+
+        PropertySource<Collection<SingleNodeFactory>> singleNodeFactoriesRef = childNodes.nodeFactories();
+        TestListener changeListener = new TestListener();
+        singleNodeFactoriesRef.addChangeListener(changeListener);
+
+        assertEquals("node factory count", 0, singleNodeFactoriesRef.getValue().size());
+
+        childNodes.addNotify();
+
+        int preSetNotifyCount = changeListener.getCallCount();
+        nodeList.setValue(testList);
+        changeListener.verifyCalledMore(preSetNotifyCount);
+
+        testList.verifyNodes(singleNodeFactoriesRef.getValue());
+
+        childNodes.removeNotify();
+
+        assertEquals("node factory count", 0, singleNodeFactoriesRef.getValue().size());
+    }
+
+    @Test
     public void testGetNodesAfterNotify() {
         TestNodeListSnapshot initList = new TestNodeListSnapshot(0);
         TestNodeListSnapshot testList = new TestNodeListSnapshot(1);
@@ -107,10 +137,14 @@ public class AnnotationChildNodesTest {
         assertEquals("node factory count", 0, singleNodeFactoriesRef.getValue().size());
 
         int preSetNotifyCount = changeListener.getCallCount();
-        nodeList.setValue(testList);
-        changeListener.verifyCalledMore(preSetNotifyCount);
 
+        nodeList.setValue(testList);
+        childNodes.addNotify();
+
+        changeListener.verifyCalledMore(preSetNotifyCount);
         testList.verifyNodes(singleNodeFactoriesRef.getValue());
+
+        childNodes.removeNotify();
     }
 
     private static final class TestNodeListSnapshot {
