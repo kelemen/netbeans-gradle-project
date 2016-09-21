@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
 import org.openide.nodes.Node;
@@ -46,13 +47,23 @@ public final class AnnotationChildNodes {
     private Set<NodeList<?>> currentNodeLists;
 
     public AnnotationChildNodes(Project project) {
+        this(project, new NbSupplier<Lookup>() {
+            @Override
+            public Lookup get() {
+                return Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Nodes");
+            }
+        });
+    }
+
+    public AnnotationChildNodes(Project project, NbSupplier<? extends Lookup> factoryLookupProvider) {
         ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(factoryLookupProvider, "factoryLookupProvider");
 
         this.project = project;
         this.nodeLock = new ReentrantLock();
         this.removedChildren = false;
         this.currentNodeLists = Collections.emptySet();
-        this.nodeFactories = new NodeFactories();
+        this.nodeFactories = new NodeFactories(factoryLookupProvider);
         this.singleNodeFactories = NbProperties.propertyOfProperty(nodeFactories, new NbFunction<Collection<? extends NodeFactory>, PropertySource<Collection<SingleNodeFactory>>>() {
             @Override
             public PropertySource<Collection<SingleNodeFactory>> apply(Collection<? extends NodeFactory> arg) {
@@ -194,15 +205,19 @@ public final class AnnotationChildNodes {
 
     private static class NodeFactories implements PropertySource<Collection<? extends NodeFactory>> {
         private final AtomicReference<Lookup.Result<NodeFactory>> nodeListsRef;
+        private final NbSupplier<? extends Lookup> factoryLookupProvider;
 
-        public NodeFactories() {
+        public NodeFactories(NbSupplier<? extends Lookup> factoryLookupProvider) {
+            assert factoryLookupProvider != null;
+
+            this.factoryLookupProvider = factoryLookupProvider;
             this.nodeListsRef = new AtomicReference<>(null);
         }
 
         private Lookup.Result<NodeFactory> getNodeListsResult() {
             Lookup.Result<NodeFactory> result = nodeListsRef.get();
             if (result == null) {
-                Lookup nodeListsLookup = Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Nodes");
+                Lookup nodeListsLookup = factoryLookupProvider.get();
                 result = nodeListsLookup.lookupResult(NodeFactory.class);
                 if (!nodeListsRef.compareAndSet(null, result)) {
                     result = nodeListsRef.get();
