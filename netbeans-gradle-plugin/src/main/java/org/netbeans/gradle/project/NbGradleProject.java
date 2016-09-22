@@ -103,7 +103,7 @@ public final class NbGradleProject implements Project {
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
 
-    private final AtomicReference<DynamicLookup> lookupRef;
+    private final LazyValue<DynamicLookup> mainLookupRef;
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
@@ -111,18 +111,17 @@ public final class NbGradleProject implements Project {
     private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
-    private final AtomicReference<PropertySource<String>> displayNameRef;
+    private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
     private final LazyValue<GradleModelLoader> modelLoaderRef;
-
-    private final AtomicReference<ProjectInfoRef> loadErrorRef;
+    private final LazyValue<ProjectInfoRef> loadErrorRef;
 
     private final WaitableSignal loadedAtLeastOnceSignal;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
 
-    private final AtomicReference<BuiltInGradleCommandQuery> mergedCommandQueryRef;
+    private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
 
     private final ModelRetrievedListener modelLoadListener;
 
@@ -138,11 +137,21 @@ public final class NbGradleProject implements Project {
         this.serviceObjectsRef = new AtomicReference<>(null);
         this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
 
-        this.mergedCommandQueryRef = new AtomicReference<>(null);
+        this.mergedCommandQueryRef = new LazyValue<>(new NbSupplier<BuiltInGradleCommandQuery>() {
+            @Override
+            public BuiltInGradleCommandQuery get() {
+                return createMergedBuiltInGradleCommandQuery();
+            }
+        });
         this.combinedExtensionLookup = new DynamicLookup();
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
-        this.loadErrorRef = new AtomicReference<>(null);
+        this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
+            @Override
+            public ProjectInfoRef get() {
+                return getProjectInfoManager().createInfoRef();
+            }
+        });
         this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
@@ -151,7 +160,12 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
-        this.lookupRef = new AtomicReference<>(null);
+        this.mainLookupRef = new LazyValue<>(new NbSupplier<DynamicLookup>() {
+            @Override
+            public DynamicLookup get() {
+                return new DynamicLookup(getDefaultLookup());
+            }
+        });
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelLoadListener = new ModelRetrievedListenerImpl();
         this.modelLoaderRef = new LazyValue<>(new NbSupplier<GradleModelLoader>() {
@@ -160,9 +174,12 @@ public final class NbGradleProject implements Project {
                 return createModelLoader();
             }
         });
-
-        this.displayNameRef = new AtomicReference<>(null);
-
+        this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
+            @Override
+            public PropertySource<String> get() {
+                return getDisplayName(currentModel, getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
+            }
+        });
         this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
             @Override
             public String convert(NbGradleModel input) {
@@ -242,15 +259,13 @@ public final class NbGradleProject implements Project {
         return project;
     }
 
+    private BuiltInGradleCommandQuery createMergedBuiltInGradleCommandQuery() {
+        return new MergedBuiltInGradleCommandQuery(this);
+    }
+
     @Nonnull
     public BuiltInGradleCommandQuery getMergedCommandQuery() {
-        BuiltInGradleCommandQuery result = mergedCommandQueryRef.get();
-        if (result == null) {
-            result = new MergedBuiltInGradleCommandQuery(this);
-            mergedCommandQueryRef.compareAndSet(null, result);
-            result = mergedCommandQueryRef.get();
-        }
-        return result;
+        return mergedCommandQueryRef.get();
     }
 
     @Nonnull
@@ -382,12 +397,7 @@ public final class NbGradleProject implements Project {
     }
 
     private ProjectInfoRef getLoadErrorRef() {
-        ProjectInfoRef result = loadErrorRef.get();
-        if (result == null) {
-            loadErrorRef.compareAndSet(null, getProjectInfoManager().createInfoRef());
-            result = loadErrorRef.get();
-        }
-        return result;
+        return loadErrorRef.get();
     }
 
     private static TaskVariableMap asTaskVariableMap(PropertySource<? extends CustomVariables> varsProperty) {
@@ -595,14 +605,7 @@ public final class NbGradleProject implements Project {
     }
 
     public PropertySource<String> displayName() {
-        PropertySource<String> result = displayNameRef.get();
-        if (result == null) {
-            result = getDisplayName(currentModel, getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
-            if (!displayNameRef.compareAndSet(null, result)) {
-                result = displayNameRef.get();
-            }
-        }
-        return result;
+        return displayNameRef.get();
     }
 
     public PropertySource<String> description() {
@@ -629,13 +632,7 @@ public final class NbGradleProject implements Project {
     }
 
     private DynamicLookup getMainLookup() {
-        DynamicLookup lookup = lookupRef.get();
-        if (lookup == null) {
-            lookupRef.compareAndSet(null, new DynamicLookup(getDefaultLookup()));
-            lookup = lookupRef.get();
-        }
-
-        return lookup;
+        return mainLookupRef.get();
     }
 
     @Override
