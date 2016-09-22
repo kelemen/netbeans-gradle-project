@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,8 +20,6 @@ import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ModelBuilder;
-import org.gradle.tooling.ProgressEvent;
-import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -34,8 +31,6 @@ import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.java.platform.JavaPlatform;
-import org.netbeans.api.java.platform.Specification;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.BuildOperationArgs;
@@ -55,9 +50,7 @@ import org.netbeans.gradle.project.properties.GradleLocationDef;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.properties.standard.JavaPlatformUtils;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
@@ -67,9 +60,6 @@ import org.netbeans.gradle.project.util.GradleVersions;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.modules.SpecificationVersion;
 
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
@@ -420,36 +410,6 @@ public final class GradleModelLoader {
         }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
-    private static JavaPlatform tryGetScriptJavaPlatform(Project project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
-
-        ScriptPlatform result = gradleProject != null
-                ? gradleProject.getCommonProperties().scriptPlatform().getActiveValue()
-                : null;
-        return result != null ? result.getJavaPlatform() : null;
-    }
-
-    private static File getScriptJavaHome(JavaPlatform platform) {
-        FileObject jdkHomeObj = platform != null
-                ? JavaPlatformUtils.getHomeFolder(platform)
-                : null;
-
-        if (jdkHomeObj != null) {
-            // This is necessary for unit test code because JavaPlatform returns
-            // the jre inside the JDK.
-            if ("jre".equals(jdkHomeObj.getNameExt().toLowerCase(Locale.ROOT))) {
-                FileObject parent = jdkHomeObj.getParent();
-                if (parent != null) {
-                    jdkHomeObj = parent;
-                }
-            }
-        }
-
-        return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
-    }
-
     private void saveToPersistentCache(Collection<NbGradleModel> models) {
         try {
             persistentCache.saveGradleModels(models);
@@ -504,19 +464,19 @@ public final class GradleModelLoader {
         return GradleArguments.getExtraJvmArgs(daemonTaskContext(project));
     }
 
-    private static ModelBuilderSetup modelBuilderSetup(ProjectLoadRequest projectLoadKey, ProgressHandle progress) {
-        return new ModelBuilderSetup(
+    private static DefaultModelBuilderSetup modelBuilderSetup(ProjectLoadRequest projectLoadKey, ProgressHandle progress) {
+        return new DefaultModelBuilderSetup(
                 projectLoadKey.project,
                 getModelEvaluateArguments(projectLoadKey),
                 getModelEvaluateJvmArguments(projectLoadKey.project),
                 progress);
     }
 
-    public static ModelBuilderSetup modelBuilderSetup(NbGradleProject project, ProgressHandle progress) {
+    public static DefaultModelBuilderSetup modelBuilderSetup(NbGradleProject project, ProgressHandle progress) {
         return modelBuilderSetup(getProjectLoadKey(project), progress);
     }
 
-    public static ModelBuilderSetup modelBuilderSetup(Project project, ProgressHandle progress) {
+    public static DefaultModelBuilderSetup modelBuilderSetup(Project project, ProgressHandle progress) {
         NbGradleProject gradleProject = NbGradleProjectFactory.tryGetGradleProject(project);
         if (gradleProject != null) {
             return modelBuilderSetup(gradleProject, progress);
@@ -525,7 +485,7 @@ public final class GradleModelLoader {
         // This path should not be taken under normal circumstances.
         // That is, this path is only taken if for some weird reasons a non-gradle
         // project is being interpreted as a Gradle project.
-        return new ModelBuilderSetup(
+        return new DefaultModelBuilderSetup(
                 project,
                 getModelEvaluateArguments(project, SettingsGradleDef.DEFAULT),
                 getModelEvaluateJvmArguments(project),
@@ -552,7 +512,7 @@ public final class GradleModelLoader {
         try {
             projectConnection = gradleConnector.connect();
 
-            ModelBuilderSetup setup = modelBuilderSetup(projectLoadKey, progress);
+            DefaultModelBuilderSetup setup = modelBuilderSetup(projectLoadKey, progress);
 
             ModelBuilder<BuildEnvironment> modelBuilder = projectConnection.model(BuildEnvironment.class);
             setupLongRunningOP(setup, modelBuilder);
@@ -729,78 +689,6 @@ public final class GradleModelLoader {
             }
 
             return project.getProjectDirectoryAsPath();
-        }
-    }
-
-    public static class ModelBuilderSetup implements OperationInitializer {
-        private static final SpecificationVersion DEFAULT_JDK_VERSION = new SpecificationVersion("1.5");
-
-        private final ProgressHandle progress;
-
-        private final JavaPlatform jdkPlatform;
-        private final File jdkHome;
-        private final List<String> arguments;
-        private final List<String> jvmArgs;
-
-        public ModelBuilderSetup(
-                Project project,
-                List<String> arguments,
-                List<String> jvmArgs,
-                ProgressHandle progress) {
-            this.progress = progress;
-
-            JavaPlatform selectedPlatform = GradleModelLoader.tryGetScriptJavaPlatform(project);
-            this.jdkHome = GradleModelLoader.getScriptJavaHome(selectedPlatform);
-            this.jdkPlatform = selectedPlatform != null
-                    ? selectedPlatform
-                    : JavaPlatform.getDefault();
-
-            this.arguments = arguments != null
-                    ? new ArrayList<>(arguments)
-                    : Collections.<String>emptyList();
-            this.jvmArgs = jvmArgs != null
-                    ? new ArrayList<>(jvmArgs)
-                    : Collections.<String>emptyList();
-        }
-
-        public JavaPlatform getJdkPlatform() {
-            return jdkPlatform;
-        }
-
-        public SpecificationVersion getJDKVersion() {
-            Specification spec = jdkPlatform.getSpecification();
-            if (spec == null) {
-                return DEFAULT_JDK_VERSION;
-            }
-
-            SpecificationVersion result = spec.getVersion();
-            return result != null ? result : DEFAULT_JDK_VERSION;
-        }
-
-        @Override
-        public void initOperation(BuildOperationArgs args) {
-            if (jdkHome != null && !jdkHome.getPath().isEmpty()) {
-                args.setJavaHome(jdkHome);
-            }
-
-            if (!arguments.isEmpty()) {
-                args.setArguments(arguments.toArray(new String[arguments.size()]));
-            }
-
-            if (!jvmArgs.isEmpty()) {
-                args.setJvmArguments(jvmArgs.toArray(new String[jvmArgs.size()]));
-            }
-
-            if (progress != null) {
-                args.setProgressListeners(new ProgressListener[]{
-                    new ProgressListener() {
-                        @Override
-                        public void statusChanged(ProgressEvent pe) {
-                            progress.progress(pe.getDescription());
-                        }
-                    }
-                });
-            }
         }
     }
 }

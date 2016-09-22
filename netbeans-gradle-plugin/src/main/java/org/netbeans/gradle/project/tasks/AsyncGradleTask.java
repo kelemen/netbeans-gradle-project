@@ -56,6 +56,7 @@ import org.netbeans.gradle.project.api.task.GradleCommandServiceFactory;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
 import org.netbeans.gradle.project.model.GradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
@@ -314,7 +315,7 @@ public final class AsyncGradleTask implements Runnable {
     private boolean checkTaskExecutable(
             ProjectConnection projectConnection,
             GradleTaskDef taskDef,
-            GradleModelLoader.ModelBuilderSetup targetSetup,
+            DefaultModelBuilderSetup targetSetup,
             InputOutputWrapper io) {
 
         GradleTargetVerifier targetVerifier = taskDef.getGradleTargetVerifier();
@@ -334,11 +335,11 @@ public final class AsyncGradleTask implements Runnable {
         return targetVerifier.checkTaskExecutable(gradleTarget, io.getOutRef(), io.getErrRef());
     }
 
-    private GradleModelLoader.ModelBuilderSetup createTargetSetup(
+    private DefaultModelBuilderSetup createTargetSetup(
             GradleTaskDef taskDef,
             ProgressHandle progress) {
 
-        return new GradleModelLoader.ModelBuilderSetup(project,
+        return new DefaultModelBuilderSetup(project,
                 Collections.<String>emptyList(),
                 taskDef.getJvmArguments(),
                 progress);
@@ -434,7 +435,7 @@ public final class AsyncGradleTask implements Runnable {
 
         File projectDir = project.getProjectDirectoryAsFile();
 
-        GradleModelLoader.ModelBuilderSetup targetSetup = createTargetSetup(taskDef, progress);
+        DefaultModelBuilderSetup targetSetup = createTargetSetup(taskDef, progress);
 
         CancellationToken cancelToken = cancellation.getToken();
         Throwable commandError = null;
