@@ -8,6 +8,7 @@ import java.util.List;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -26,6 +27,11 @@ public class CustomVariablesPanel extends javax.swing.JPanel implements ProfileE
 
     public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
         return ProfileBasedPanel.createPanel(project, new CustomVariablesPanel());
+    }
+
+    public static ProfileBasedSettingsPage createSettingsPage() {
+        CustomVariablesPanel result = new CustomVariablesPanel();
+        return new ProfileBasedSettingsPage(result, result);
     }
 
     @Override
