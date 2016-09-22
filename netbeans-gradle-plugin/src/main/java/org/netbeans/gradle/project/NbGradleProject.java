@@ -422,16 +422,6 @@ public final class NbGradleProject implements Project {
         return currentModel;
     }
 
-    public void tryUpdateFromCache(NbGradleModel baseModel) {
-        // In this case we don't yet requested a model, so there is little
-        // reason to do anything now: Be lazy!
-        if (!hasModelBeenLoaded.get()) {
-            return;
-        }
-
-        GradleModelLoader.tryUpdateFromCache(this, baseModel, modelLoadListener);
-    }
-
     public void reloadProject() {
         reloadProject(false);
     }

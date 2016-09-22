@@ -179,12 +179,6 @@ public final class GradleModelLoader {
         return getCache().tryGet(loadRequest.project.getProjectDirectoryAsFile(), settingsFile);
     }
 
-    public static void fetchModel(
-            final NbGradleProject project,
-            final ModelRetrievedListener listener) {
-        fetchModel(project, false, listener);
-    }
-
     public static List<NbGradleExtensionRef> getUnloadedExtensions(
             NbGradleProject project,
             NbGradleModel baseModels) {
@@ -227,27 +221,6 @@ public final class GradleModelLoader {
                 }
             }, null);
         }
-    }
-
-    public static void tryUpdateFromCache(
-            final NbGradleProject project,
-            final NbGradleModel baseModel,
-            final ModelRetrievedListener listener) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
-        GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
-            @Override
-            public void run(CancellationToken cancelToken, ProgressHandle progress) {
-                NbGradleModel model = tryGetFromCache(getProjectLoadKey(project));
-                if (model == null) {
-                    model = baseModel;
-                }
-
-                onModelLoaded(model, null, listener);
-            }
-        }, true, GradleTasks.projectTaskCompleteListener(project));
     }
 
     private static void reportModelLoadError(NbGradleProject project, GradleModelLoadError error) {
@@ -440,11 +413,6 @@ public final class GradleModelLoader {
         }
 
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
-    }
-
-    public static File getScriptJavaHome(Project project) {
-        JavaPlatform platform = tryGetScriptJavaPlatform(project);
-        return getScriptJavaHome(platform);
     }
 
     private static void saveToPersistentCache(Collection<NbGradleModel> models) {
