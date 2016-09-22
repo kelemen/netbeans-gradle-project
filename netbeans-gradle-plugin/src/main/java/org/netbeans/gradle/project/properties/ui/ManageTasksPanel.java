@@ -15,6 +15,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -50,6 +51,11 @@ public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEdito
 
     public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
         return ProfileBasedPanel.createPanel(project, new ManageTasksPanel());
+    }
+
+    public static ProfileBasedSettingsPage createSettingsPage() {
+        ManageTasksPanel panel = new ManageTasksPanel();
+        return new ProfileBasedSettingsPage(panel, panel);
     }
 
     @Override
