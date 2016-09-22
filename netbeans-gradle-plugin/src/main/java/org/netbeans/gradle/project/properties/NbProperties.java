@@ -20,7 +20,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
-import org.netbeans.gradle.project.view.AnnotationChildNodes;
 
 public final class NbProperties {
     public static <Value> PropertySource<Value> weakListenerProperty(PropertySource<? extends Value> src) {

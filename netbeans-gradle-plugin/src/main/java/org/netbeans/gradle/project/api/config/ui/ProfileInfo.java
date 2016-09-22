@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.api.config.ui;
 
-import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jtrim.utils.ExceptionHelper;
