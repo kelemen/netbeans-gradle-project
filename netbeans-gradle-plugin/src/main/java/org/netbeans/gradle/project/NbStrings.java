@@ -576,8 +576,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Tasks");
     }
 
-    public static String getSettingsCategoryDebug() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.Debug");
+    public static String getSettingsCategoryDebugJava() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.SettingsCategory.DebugJava");
     }
 
     public static String getSettingsCategoryOther() {

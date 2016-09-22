@@ -16,6 +16,9 @@ import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
+import org.netbeans.gradle.project.java.JavaExtensionDef;
+import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
+import org.netbeans.gradle.project.properties.ExtensionActiveSettingsQuery;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.awt.HtmlBrowser;
@@ -51,8 +54,9 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
                 NbStrings.getSettingsCategoryTasks(),
                 TaskExecutionPanel.createSettingsPage()));
         categoriesModel.addElement(new CategoryItem(
-                NbStrings.getSettingsCategoryDebug(),
-                DebuggerPanel.createSettingsPage()));
+                NbStrings.getSettingsCategoryDebugJava(),
+                JavaDebuggingPanel.createSettingsPage(false),
+                JavaExtensionDef.EXTENSION_NAME));
         categoriesModel.addElement(new CategoryItem(
                 NbStrings.getSettingsCategoryAppearance(),
                 AppearancePanel.createSettingsPage(false)));
@@ -159,9 +163,10 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
         int categoryCount = model.getSize();
         final List<ProfileEditor> editors = new ArrayList<>(categoryCount);
         for (int i = 0; i < categoryCount; i++) {
-            GlobalSettingsPage editorDef = model.getElementAt(i).getEditorDef();
+            CategoryItem item = model.getElementAt(i);
+            GlobalSettingsPage editorDef = item.getEditorDef();
             ProfileEditorFactory editorFactory = editorDef.getEditorFactory();
-            ProfileEditor editor = editorFactory.startEditingProfile(profileInfo, profileQuery);
+            ProfileEditor editor = editorFactory.startEditingProfile(profileInfo, item.wrapSettings(profileQuery));
             editors.add(editor);
         }
 
@@ -194,14 +199,29 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
     private static final class CategoryItem {
         private final String caption;
         public final GlobalSettingsPage editorDef;
+        private final String extensionName;
 
         public CategoryItem(String caption, GlobalSettingsPage editorDef) {
+            this(caption, editorDef, "");
+        }
+
+        public CategoryItem(String caption, GlobalSettingsPage editorDef, String extensionName) {
             this.caption = caption;
             this.editorDef = editorDef;
+            this.extensionName = extensionName;
         }
 
         public GlobalSettingsPage getEditorDef() {
             return editorDef;
+        }
+
+        public ActiveSettingsQuery wrapSettings(ActiveSettingsQuery rootSettings) {
+            if ("".equals(extensionName)) {
+                return rootSettings;
+            }
+            else {
+                return new ExtensionActiveSettingsQuery(rootSettings, extensionName);
+            }
         }
 
         public JComponent getEditorComponent() {

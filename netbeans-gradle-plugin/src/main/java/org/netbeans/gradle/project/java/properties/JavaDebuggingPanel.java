@@ -1,7 +1,9 @@
 package org.netbeans.gradle.project.java.properties;
 
+import java.net.URL;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
@@ -12,16 +14,27 @@ import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
+import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
 import org.netbeans.gradle.project.properties.ui.EnumCombo;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 
 @SuppressWarnings("serial")
 public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEditorFactory {
+    private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Debug-Settings");
+
+    private final boolean allowInherit;
     private final EnumCombo<DebugMode> debugModeComboHandler;
 
-    public JavaDebuggingPanel() {
+    public JavaDebuggingPanel(boolean allowInherit) {
+        this.allowInherit = allowInherit;
+
         initComponents();
         debugModeComboHandler = new EnumCombo<>(DebugMode.class, DebugMode.DEBUGGER_ATTACHES, jDebugMode);
+        if (!allowInherit) {
+            jDebugModeInherit.setVisible(false);
+            jDebugModeInherit.setSelected(false);
+        }
 
         setupEnableDisable();
     }
@@ -34,27 +47,31 @@ public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEdi
         NbGuiUtils.enableBasedOnCheck(inheritCheck, false, components);
     }
 
-    private static <Value> Value setInheritAndGetValue(
+    private <Value> Value setInheritAndGetValue(
             Value value,
             PropertyReference<? extends Value> valueWithFallbacks,
             JCheckBox inheritCheck) {
-        inheritCheck.setSelected(value == null);
+        inheritCheck.setSelected(allowInherit && value == null);
         return value != null ? value : valueWithFallbacks.getActiveValue();
     }
 
-    public static CustomizerCategoryId getCategoryId() {
-        // TODO: I18N
-        return new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), "Debugging - Java");
+    private static CustomizerCategoryId getCategoryId() {
+        return new CustomizerCategoryId(JavaDebuggingPanel.class.getName(), NbStrings.getSettingsCategoryDebugJava());
     }
 
-    public static ProfileBasedSettingsCategory createDebuggingCustomizer() {
+    public static ProfileBasedSettingsCategory createDebuggingCustomizer(final boolean allowInherit) {
         return new ProfileBasedSettingsCategory(getCategoryId(), new ProfileBasedSettingsPageFactory() {
             @Override
             public ProfileBasedSettingsPage createSettingsPage() {
-                JavaDebuggingPanel customPanel = new JavaDebuggingPanel();
-                return new ProfileBasedSettingsPage(customPanel, customPanel);
+                return JavaDebuggingPanel.createSettingsPage(allowInherit);
             }
         });
+    }
+
+    public static GlobalSettingsPage createSettingsPage(boolean allowInherit) {
+        GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new JavaDebuggingPanel(allowInherit));
+        result.setHelpUrl(HELP_URL);
+        return result.create();
     }
 
     @Override
@@ -92,7 +109,7 @@ public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEdi
         public StoredSettingsImpl(PropertyRefs properties, JavaDebuggingPanel panel) {
             this.properties = properties;
 
-            this.debugMode = panel.jDebugModeInherit.isSelected()
+            this.debugMode = allowInherit && panel.jDebugModeInherit.isSelected()
                     ? null
                     : panel.debugModeComboHandler.getSelectedValue();
         }
