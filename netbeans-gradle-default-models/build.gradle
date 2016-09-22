@@ -43,23 +43,12 @@ sourceSets {
         compileClasspath += configurations.provided
         java.srcDirs = []
     }
-    modelBuilderRefs {
-        groovy.srcDirs = []
-
-        compileClasspath += main.output
-        runtimeClasspath += main.output
-        runtimeClasspath += modelBuilders.output
-    }
     test {
         groovy.srcDirs = []
 
         compileClasspath += configurations.provided
-        compileClasspath += modelBuilders.output
-        compileClasspath += modelBuilderRefs.output
         runtimeClasspath -= main.output
         runtimeClasspath += files(jar.archivePath)
-        runtimeClasspath += modelBuilders.output
-        runtimeClasspath += modelBuilderRefs.output
     }
 }
 
@@ -69,16 +58,12 @@ compileTestJava.dependsOn(jar)
 
 configurations {
     modelBuildersCompile.extendsFrom compile
-    modelBuilderRefsCompile.extendsFrom compile
-    testCompile.extendsFrom modelBuildersCompile
-    testCompile.extendsFrom modelBuilderRefsCompile
 }
 
 jar {
     from sourceSets.modelBuilders.output
-    from sourceSets.modelBuilderRefs.output
     ext {
-        netBeansSourceSets = [sourceSets.main, sourceSets.modelBuilders, sourceSets.modelBuilderRefs]
+        netBeansSourceSets = [sourceSets.main, sourceSets.modelBuilders]
     }
 }
 
@@ -86,7 +71,6 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
     classifier = 'sources'
     from sourceSets.main.allSource
     from sourceSets.modelBuilders.allSource
-    from sourceSets.modelBuilderRefs.allSource
 }
 
 artifacts {
