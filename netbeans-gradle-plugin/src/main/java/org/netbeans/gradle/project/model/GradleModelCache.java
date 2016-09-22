@@ -5,23 +5,17 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
-import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleModelCache {
-    private static final AtomicReference<GradleModelCache> DEFAULT_REF
-            = new AtomicReference<>(null);
-
     private final ReentrantLock cacheLock;
     private final Map<CacheKey, NbGradleModel> cache;
     private final AtomicInteger maxCapacity;
@@ -37,28 +31,6 @@ public final class GradleModelCache {
 
         this.cache = CollectionUtils.newLinkedHashMap(maxCapacity);
         this.updateListeners = new CopyOnTriggerListenerManager<>();
-    }
-
-    public static GradleModelCache getDefault() {
-        GradleModelCache result = DEFAULT_REF.get();
-        if (result == null) {
-            final PropertySource<Integer> cacheSize = CommonGlobalSettings.getDefault().projectCacheSize().getActiveSource();
-            result = new GradleModelCache(cacheSize.getValue());
-            if (DEFAULT_REF.compareAndSet(null, result)) {
-                final GradleModelCache cache = result;
-                cacheSize.addChangeListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        cache.setMaxCapacity(cacheSize.getValue());
-                    }
-                });
-                cache.setMaxCapacity(cacheSize.getValue());
-            }
-            else {
-                result = DEFAULT_REF.get();
-            }
-        }
-        return result;
     }
 
     private void cleanupCache() {

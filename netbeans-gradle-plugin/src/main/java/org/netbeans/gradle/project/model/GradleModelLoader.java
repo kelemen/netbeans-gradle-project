@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.gradle.tooling.BuildException;
@@ -32,7 +32,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
-import org.jtrim.event.EventDispatcher;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.Specification;
@@ -64,6 +64,7 @@ import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.gradle.project.util.GradleVersions;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.openide.filesystems.FileObject;
@@ -73,15 +74,33 @@ import org.openide.modules.SpecificationVersion;
 public final class GradleModelLoader {
     private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
 
-    private static final TaskExecutor PROJECT_LOADER
+    private static final TaskExecutor DEFAULT_PROJECT_LOADER
             = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
 
-    private static final MonitorableTaskExecutorService MODEL_LOAD_NOTIFIER
+    private static final MonitorableTaskExecutorService DEFAULT_MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
-    private static final AtomicBoolean CACHE_INIT = new AtomicBoolean(false);
+    private static final AtomicReference<GradleModelCache> DEFAULT_CACHE_REF
+            = new AtomicReference<>(null);
 
-    private static final PersistentModelCache PERSISTENT_CACHE = new MultiFileModelCache();
+    private static final PersistentModelCache DEFAULT_PERSISTENT_CACHE
+            = new MultiFileModelCache();
+
+    private final NbGradleProject project;
+    private final TaskExecutor projectLoader;
+    private final MonitorableTaskExecutorService modelLoadNotifier;
+    private final LoadedProjectManager loadedProjectManager;
+    private final PersistentModelCache persistentCache;
+    private final NbSupplier<? extends GradleModelCache> cacheRef;
+
+    private GradleModelLoader(Builder builder) {
+        this.project = builder.project;
+        this.projectLoader = builder.projectLoader;
+        this.modelLoadNotifier = builder.modelLoadNotifier;
+        this.loadedProjectManager = builder.loadedProjectManager;
+        this.persistentCache = builder.persistentCache;
+        this.cacheRef = builder.cacheRef;
+    }
 
     private static void updateProjectFromCacheIfNeeded(NbGradleModel newModel) {
         File projectDir = newModel.getProjectDir();
@@ -91,17 +110,36 @@ public final class GradleModelLoader {
         }
     }
 
-    private static GradleModelCache getCache() {
-        if (CACHE_INIT.compareAndSet(false, true)) {
-            GradleModelCache.getDefault().addModelUpdateListener(new ProjectModelUpdatedListener() {
-                @Override
-                public void onUpdateProject(NbGradleModel newModel) {
-                    updateProjectFromCacheIfNeeded(newModel);
-                }
-            });
+    private static GradleModelCache getDefaultCache() {
+        GradleModelCache result = DEFAULT_CACHE_REF.get();
+        if (result == null) {
+            final PropertySource<Integer> cacheSize = CommonGlobalSettings.getDefault().projectCacheSize().getActiveSource();
+            result = new GradleModelCache(cacheSize.getValue());
+            if (DEFAULT_CACHE_REF.compareAndSet(null, result)) {
+                final GradleModelCache cache = result;
+                cacheSize.addChangeListener(new Runnable() {
+                    @Override
+                    public void run() {
+                        cache.setMaxCapacity(cacheSize.getValue());
+                    }
+                });
+                cache.setMaxCapacity(cacheSize.getValue());
+                cache.addModelUpdateListener(new ProjectModelUpdatedListener() {
+                    @Override
+                    public void onUpdateProject(NbGradleModel newModel) {
+                        updateProjectFromCacheIfNeeded(newModel);
+                    }
+                });
+            }
+            else {
+                result = DEFAULT_CACHE_REF.get();
+            }
         }
+        return result;
+    }
 
-        return GradleModelCache.getDefault();
+    private GradleModelCache getCache() {
+        return cacheRef.get();
     }
 
     private static boolean hasWrapper(NbGradleProject project) {
@@ -174,7 +212,7 @@ public final class GradleModelLoader {
         return new ProjectLoadRequest(project, settingsFile);
     }
 
-    private static NbGradleModel tryGetFromCache(ProjectLoadRequest loadRequest) {
+    private NbGradleModel tryGetFromCache(ProjectLoadRequest loadRequest) {
         File settingsFile = loadRequest.findAppliedSettingsFileAsFile();
         return getCache().tryGet(loadRequest.project.getProjectDirectoryAsFile(), settingsFile);
     }
@@ -192,7 +230,7 @@ public final class GradleModelLoader {
         return result;
     }
 
-    private static boolean hasUnloadedExtension(NbGradleProject project, NbGradleModel cached) {
+    private boolean hasUnloadedExtension(NbGradleModel cached) {
         for (NbGradleExtensionRef extension: project.getExtensionRefs()) {
             if (!cached.hasModelOfExtension(extension)) {
                 return true;
@@ -201,7 +239,7 @@ public final class GradleModelLoader {
         return false;
     }
 
-    private static void onModelLoaded(
+    private void onModelLoaded(
             final NbGradleModel model,
             final Throwable error,
             final ModelRetrievedListener listener) {
@@ -210,11 +248,11 @@ public final class GradleModelLoader {
             return;
         }
 
-        if (MODEL_LOAD_NOTIFIER.isExecutingInThis()) {
+        if (modelLoadNotifier.isExecutingInThis()) {
             listener.onComplete(model, error);
         }
         else {
-            MODEL_LOAD_NOTIFIER.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+            modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
                     listener.onComplete(model, error);
@@ -237,9 +275,9 @@ public final class GradleModelLoader {
         }
     }
 
-    private static NbGradleModel tryGetFromPersistentCache(ProjectLoadRequest projectLoadKey) {
+    private NbGradleModel tryGetFromPersistentCache(ProjectLoadRequest projectLoadKey) {
         try {
-            return PERSISTENT_CACHE.tryGetModel(projectLoadKey.project, projectLoadKey.getAppliedRootProjectDir());
+            return persistentCache.tryGetModel(projectLoadKey.project, projectLoadKey.getAppliedRootProjectDir());
         } catch (IOException ex) {
             LOGGER.log(Level.INFO,
                     "Failed to read persistent cache for project " + projectLoadKey.project.getProjectDirectoryAsFile(),
@@ -252,19 +290,18 @@ public final class GradleModelLoader {
         return null;
     }
 
-    public static void fetchModel(
-            final NbGradleProject project,
+    public void fetchModel(
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
 
         // TODO: If we already loaded model from the persistent cache for this
         //       project, skip loading from persistent cache.
         if (!mayFetchFromCache || project.hasLoadedProject()) {
-            fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+            fetchModelWithoutPersistentCache(mayFetchFromCache, listener);
             return;
         }
 
-        MODEL_LOAD_NOTIFIER.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
+        modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) {
                 NbGradleModel model = null;
@@ -273,7 +310,7 @@ public final class GradleModelLoader {
                 try {
                     ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
                     model = tryGetFromCache(projectLoadKey);
-                    if (model == null || hasUnloadedExtension(project, model)) {
+                    if (model == null || hasUnloadedExtension(model)) {
                         if (project.hasLoadedProject()) {
                             model = null;
                         }
@@ -287,7 +324,7 @@ public final class GradleModelLoader {
                 } finally {
                     onModelLoaded(model, null, listener);
                     if (needLoadFromScripts) {
-                        fetchModelWithoutPersistentCache(project, mayFetchFromCache, listener);
+                        fetchModelWithoutPersistentCache(mayFetchFromCache, listener);
                     }
                 }
             }
@@ -312,9 +349,8 @@ public final class GradleModelLoader {
         return false;
     }
 
-    private static ProjectLoadRequest fixProjectLoadKey(
+    private ProjectLoadRequest fixProjectLoadKey(
             CancellationToken cancelToken,
-            NbGradleProject project,
             ProjectLoadRequest projectLoadKey,
             ProgressHandle progress) throws IOException, GradleModelLoadError {
         if (!CommonGlobalSettings.getDefault().loadRootProjectFirst().getActiveValue()) {
@@ -344,15 +380,14 @@ public final class GradleModelLoader {
         return projectLoadKey;
     }
 
-    private static void fetchModelWithoutPersistentCache(
-            final NbGradleProject project,
+    private void fetchModelWithoutPersistentCache(
             final boolean mayFetchFromCache,
             final ModelRetrievedListener listener) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
-        GradleDaemonManager.submitGradleTask(PROJECT_LOADER, caption, new DaemonTask() {
+        GradleDaemonManager.submitGradleTask(projectLoader, caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {
                 ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
@@ -360,11 +395,11 @@ public final class GradleModelLoader {
                 NbGradleModel model = null;
                 Throwable error = null;
                 try {
-                    ProjectLoadRequest fixedLoadKey = fixProjectLoadKey(cancelToken, project, projectLoadKey, progress);
+                    ProjectLoadRequest fixedLoadKey = fixProjectLoadKey(cancelToken, projectLoadKey, progress);
                     if (mayFetchFromCache) {
                         model = tryGetFromCache(fixedLoadKey);
                     }
-                    if (model == null || hasUnloadedExtension(project, model)) {
+                    if (model == null || hasUnloadedExtension(model)) {
                         model = loadModelWithProgress(cancelToken, fixedLoadKey, progress, model);
                     }
                 } catch (IOException | BuildException ex) {
@@ -415,9 +450,9 @@ public final class GradleModelLoader {
         return jdkHomeObj != null ? FileUtil.toFile(jdkHomeObj) : null;
     }
 
-    private static void saveToPersistentCache(Collection<NbGradleModel> models) {
+    private void saveToPersistentCache(Collection<NbGradleModel> models) {
         try {
-            PERSISTENT_CACHE.saveGradleModels(models);
+            persistentCache.saveGradleModels(models);
         } catch (IOException ex) {
             LOGGER.log(Level.INFO, "Failed to save into the persistent cache.", ex);
         } catch (Throwable ex) {
@@ -425,7 +460,7 @@ public final class GradleModelLoader {
         }
     }
 
-    private static NbGradleModel introduceLoadedModel(NbGradleModel model, boolean replaced) {
+    private NbGradleModel introduceLoadedModel(NbGradleModel model, boolean replaced) {
         NbGradleModel modelToSave;
         if (replaced) {
             modelToSave = model;
@@ -435,7 +470,7 @@ public final class GradleModelLoader {
             modelToSave = getCache().updateEntry(model);
         }
 
-        NbGradleProject ownerProject = LoadedProjectManager.getDefault().tryGetLoadedProject(model.getProjectDir());
+        NbGradleProject ownerProject = loadedProjectManager.tryGetLoadedProject(model.getProjectDir());
         if (ownerProject != null) {
             ownerProject.tryReplaceModel(modelToSave);
         }
@@ -443,7 +478,7 @@ public final class GradleModelLoader {
         return modelToSave;
     }
 
-    private static void introduceProjects(
+    private void introduceProjects(
             List<NbGradleModel> otherModels,
             NbGradleModel mainModel) {
 
@@ -497,13 +532,12 @@ public final class GradleModelLoader {
                 progress);
     }
 
-    private static NbGradleModel loadModelWithProgress(
+    private NbGradleModel loadModelWithProgress(
             CancellationToken cancelToken,
             final ProjectLoadRequest projectLoadKey,
             final ProgressHandle progress,
             final NbGradleModel cachedEntry) throws IOException, GradleModelLoadError {
 
-        NbGradleProject project = projectLoadKey.project;
         File projectDir = project.getProjectDirectoryAsFile();
 
         LOGGER.log(Level.INFO,
@@ -592,6 +626,66 @@ public final class GradleModelLoader {
         return GradleArguments.getExtraArgs(
                 projectLoadKey.settingsGradleDef,
                 daemonTaskContext(projectLoadKey.project));
+    }
+
+    public static final class Builder {
+        private final NbGradleProject project;
+
+        private TaskExecutor projectLoader;
+        private MonitorableTaskExecutorService modelLoadNotifier;
+        private LoadedProjectManager loadedProjectManager;
+        private PersistentModelCache persistentCache;
+        private NbSupplier<? extends GradleModelCache> cacheRef;
+
+        public Builder(NbGradleProject project) {
+            ExceptionHelper.checkNotNullArgument(project, "project");
+
+            this.project = project;
+            this.projectLoader = DEFAULT_PROJECT_LOADER;
+            this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
+            this.loadedProjectManager = LoadedProjectManager.getDefault();
+            this.persistentCache = DEFAULT_PERSISTENT_CACHE;
+            this.cacheRef = new NbSupplier<GradleModelCache>() {
+                @Override
+                public GradleModelCache get() {
+                    return getDefaultCache();
+                }
+            };
+        }
+
+        public void setProjectLoader(TaskExecutor projectLoader) {
+            ExceptionHelper.checkNotNullArgument(projectLoader, "projectLoader");
+            this.projectLoader = projectLoader;
+        }
+
+        public void setModelLoadNotifier(MonitorableTaskExecutorService modelLoadNotifier) {
+            ExceptionHelper.checkNotNullArgument(modelLoadNotifier, "modelLoadNotifier");
+            this.modelLoadNotifier = modelLoadNotifier;
+        }
+
+        public void setLoadedProjectManager(LoadedProjectManager loadedProjectManager) {
+            ExceptionHelper.checkNotNullArgument(loadedProjectManager, "loadedProjectManager");
+            this.loadedProjectManager = loadedProjectManager;
+        }
+
+        public void setPersistentCache(PersistentModelCache persistentCache) {
+            ExceptionHelper.checkNotNullArgument(persistentCache, "persistentCache");
+            this.persistentCache = persistentCache;
+        }
+
+        public void setCacheRef(final GradleModelCache cache) {
+            ExceptionHelper.checkNotNullArgument(cache, "cache");
+            this.cacheRef = new NbSupplier<GradleModelCache>() {
+                @Override
+                public GradleModelCache get() {
+                    return cache;
+                }
+            };
+        }
+
+        public GradleModelLoader create() {
+            return new GradleModelLoader(this);
+        }
     }
 
     private static final class ProjectLoadRequest {
@@ -707,19 +801,6 @@ public final class GradleModelLoader {
                     }
                 });
             }
-        }
-    }
-
-    private GradleModelLoader() {
-        throw new AssertionError();
-    }
-
-    private enum ModelLoaderDispatcher implements EventDispatcher<ModelLoadListener, NbGradleModel> {
-        INSTANCE;
-
-        @Override
-        public void onEvent(ModelLoadListener eventListener, NbGradleModel arg) {
-            eventListener.modelLoaded(arg);
         }
     }
 }

@@ -78,7 +78,9 @@ import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
+import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.LookupProvider;
@@ -111,6 +113,7 @@ public final class NbGradleProject implements Project {
     private final PropertySource<NbGradleModel> currentModel;
     private final AtomicReference<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
+    private final LazyValue<GradleModelLoader> modelLoaderRef;
 
     private final AtomicReference<ProjectInfoRef> loadErrorRef;
 
@@ -151,6 +154,12 @@ public final class NbGradleProject implements Project {
         this.lookupRef = new AtomicReference<>(null);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelLoadListener = new ModelRetrievedListenerImpl();
+        this.modelLoaderRef = new LazyValue<>(new NbSupplier<GradleModelLoader>() {
+            @Override
+            public GradleModelLoader get() {
+                return createModelLoader();
+            }
+        });
 
         this.displayNameRef = new AtomicReference<>(null);
 
@@ -160,6 +169,15 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
+    }
+
+    private GradleModelLoader createModelLoader() {
+        GradleModelLoader.Builder result = new GradleModelLoader.Builder(this);
+        return result.create();
+    }
+
+    private GradleModelLoader getModelLoader() {
+        return modelLoaderRef.get();
     }
 
     private static Path tryGetPreferredSettingsFile(File projectDir) {
@@ -508,7 +526,7 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        GradleModelLoader.fetchModel(NbGradleProject.this, mayUseCache, modelLoadListener);
+        getModelLoader().fetchModel(mayUseCache, modelLoadListener);
     }
 
     public ProjectSettingsProvider getProjectSettingsProvider() {
