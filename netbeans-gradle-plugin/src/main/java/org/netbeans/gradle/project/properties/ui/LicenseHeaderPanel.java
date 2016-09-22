@@ -8,6 +8,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -15,24 +16,40 @@ import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
-    private final NbGradleProject project;
+    private final NbSupplier<? extends Path> defaultDirProvider;
 
-    private LicenseHeaderPanel(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    private LicenseHeaderPanel(NbSupplier<? extends Path> defaultDirProvider) {
+        ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
 
-        this.project = project;
+        this.defaultDirProvider = defaultDirProvider;
 
         initComponents();
     }
 
     public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new LicenseHeaderPanel(project));
+        return ProfileBasedPanel.createPanel(project, new LicenseHeaderPanel(toDefaultDirProvider(project)));
+    }
+
+    public static ProfileBasedSettingsPage createSettingsPage(NbSupplier<? extends Path> defaultDirProvider) {
+        LicenseHeaderPanel result = new LicenseHeaderPanel(defaultDirProvider);
+        return new ProfileBasedSettingsPage(result, result);
+    }
+
+    private static NbSupplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+        return new NbSupplier<Path>() {
+            @Override
+            public Path get() {
+                return project.currentModel().getValue().getSettingsDir();
+            }
+        };
     }
 
     @Override
@@ -202,12 +219,17 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private File tryGetDefaultDir() {
+        Path result = defaultDirProvider.get();
+        return result != null ? result.toFile() : null;
+    }
+
     private void jBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBrowseButtonActionPerformed
-        File settingsDir = project.currentModel().getValue().getSettingsDir().toFile();
-        File initialDir = settingsDir;
+        File defaultDir = tryGetDefaultDir();
+        File initialDir = defaultDir;
 
         FileChooserBuilder dlgChooser = new FileChooserBuilder(
-                LicenseHeaderPanel.class.getName() + "-" + initialDir.getName());
+                LicenseHeaderPanel.class.getName() + (initialDir != null ? ("-" + initialDir.getName()) : ""));
         dlgChooser.setDefaultWorkingDirectory(initialDir);
 
         File f = dlgChooser.showOpenDialog();
@@ -216,7 +238,9 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         }
 
         File file = f.getAbsoluteFile();
-        String relPath = NbFileUtils.tryMakeRelative(settingsDir, file);
+        String relPath = defaultDir != null
+                ? NbFileUtils.tryMakeRelative(defaultDir, file)
+                : null;
         jLicenseTemplateEdit.setText(relPath != null ? relPath : file.getPath());
 
     }//GEN-LAST:event_jBrowseButtonActionPerformed
