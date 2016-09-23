@@ -11,7 +11,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.OperationInitializer;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
@@ -32,7 +32,7 @@ public final class DownloadSourcesTask implements DaemonTask {
 
     @Override
     public void run(CancellationToken cancelToken, ProgressHandle progress) {
-        GradleConnector connector = GradleModelLoader.createGradleConnector(cancelToken, project);
+        GradleConnector connector = DefaultGradleModelLoader.createGradleConnector(cancelToken, project);
         FileObject projectDirObj = project.getProjectDirectory();
         File projectDir = FileUtil.toFile(projectDirObj);
         if (projectDir == null) {
@@ -41,7 +41,7 @@ public final class DownloadSourcesTask implements DaemonTask {
 
         connector.forProjectDirectory(projectDir);
 
-        OperationInitializer setup = GradleModelLoader.modelBuilderSetup(project, progress);
+        OperationInitializer setup = DefaultGradleModelLoader.modelBuilderSetup(project, progress);
 
         // FIXME: Currently we just fetch IdeaProject and rely on that to fetch
         //   the sources. Then the source locator query will find the sources
@@ -49,7 +49,7 @@ public final class DownloadSourcesTask implements DaemonTask {
         ProjectConnection connection = connector.connect();
         try {
             ModelBuilder<IdeaProject> builder = connection.model(IdeaProject.class);
-            GradleModelLoader.setupLongRunningOP(setup, builder);
+            DefaultGradleModelLoader.setupLongRunningOP(setup, builder);
 
             builder.get();
         } finally {

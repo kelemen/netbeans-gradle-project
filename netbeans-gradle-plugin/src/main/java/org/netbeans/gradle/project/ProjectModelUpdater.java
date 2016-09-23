@@ -6,29 +6,28 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.ModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
-import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.util.NbSupplier;
 
-public final class ProjectModelUpdater {
-    private final NbSupplier<? extends GradleModelLoader> modelLoaderProvider;
-    private final ModelRetrievedListener modelUpdaterWrapper;
+public final class ProjectModelUpdater<M> {
+    private final NbSupplier<? extends ModelLoader<? extends M>> modelLoaderProvider;
+    private final ModelRetrievedListener<M> modelUpdaterWrapper;
 
     private final AtomicBoolean hasModelBeenLoaded;
     private final WaitableSignal loadedAtLeastOnceSignal;
 
     public ProjectModelUpdater(
-            NbSupplier<? extends GradleModelLoader> modelLoaderProvider,
-            final ModelRetrievedListener modelUpdater) {
+            NbSupplier<? extends ModelLoader<? extends M>> modelLoaderProvider,
+            final ModelRetrievedListener<? super M> modelUpdater) {
         ExceptionHelper.checkNotNullArgument(modelLoaderProvider, "modelLoaderProvider");
         ExceptionHelper.checkNotNullArgument(modelUpdater, "modelUpdater");
 
         this.modelLoaderProvider = modelLoaderProvider;
-        this.modelUpdaterWrapper = new ModelRetrievedListener() {
+        this.modelUpdaterWrapper = new ModelRetrievedListener<M>() {
             @Override
-            public void onComplete(NbGradleModel model, Throwable error) {
+            public void onComplete(M model, Throwable error) {
                 try {
                     modelUpdater.onComplete(model, error);
                 } finally {
@@ -41,7 +40,7 @@ public final class ProjectModelUpdater {
         this.loadedAtLeastOnceSignal = new WaitableSignal();
     }
 
-    private GradleModelLoader getModelLoader() {
+    private ModelLoader<? extends M> getModelLoader() {
         return modelLoaderProvider.get();
     }
 

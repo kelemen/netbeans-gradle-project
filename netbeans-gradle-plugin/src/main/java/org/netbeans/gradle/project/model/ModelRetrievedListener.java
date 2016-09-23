@@ -1,5 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-public interface ModelRetrievedListener {
-    public void onComplete(NbGradleModel model, Throwable error);
+public interface ModelRetrievedListener<M> {
+    public void onComplete(M model, Throwable error);
 }

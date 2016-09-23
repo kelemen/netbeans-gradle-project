@@ -57,7 +57,7 @@ import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
-import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.IOTabRef;
@@ -242,7 +242,7 @@ public final class AsyncGradleTask implements Runnable {
             GradleTaskDef taskDef,
             List<TemporaryFileRef> initScripts) {
 
-        GradleModelLoader.setupLongRunningOP(targetSetup, buildLauncher);
+        DefaultGradleModelLoader.setupLongRunningOP(targetSetup, buildLauncher);
 
         List<String> arguments = new LinkedList<>();
         arguments.addAll(taskDef.getArguments());
@@ -324,7 +324,7 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         ModelBuilder<BuildEnvironment> envGetter = projectConnection.model(BuildEnvironment.class);
-        GradleModelLoader.setupLongRunningOP(targetSetup, envGetter);
+        DefaultGradleModelLoader.setupLongRunningOP(targetSetup, envGetter);
 
         BuildEnvironment buildEnv = envGetter.get();
 
@@ -440,7 +440,7 @@ public final class AsyncGradleTask implements Runnable {
         CancellationToken cancelToken = cancellation.getToken();
         Throwable commandError = null;
 
-        GradleConnector gradleConnector = GradleModelLoader.createGradleConnector(cancelToken, project);
+        GradleConnector gradleConnector = DefaultGradleModelLoader.createGradleConnector(cancelToken, project);
         gradleConnector.forProjectDirectory(projectDir);
         ProjectConnection projectConnection = null;
         try {

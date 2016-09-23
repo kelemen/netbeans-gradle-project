@@ -61,8 +61,8 @@ import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 
-public final class GradleModelLoader {
-    private static final Logger LOGGER = Logger.getLogger(GradleModelLoader.class.getName());
+public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleModel> {
+    private static final Logger LOGGER = Logger.getLogger(DefaultGradleModelLoader.class.getName());
 
     private static final TaskExecutor DEFAULT_PROJECT_LOADER
             = NbTaskExecutors.newExecutor("Gradle-Project-Loader", 1);
@@ -83,7 +83,7 @@ public final class GradleModelLoader {
     private final PersistentModelCache persistentCache;
     private final NbSupplier<? extends GradleModelCache> cacheRef;
 
-    private GradleModelLoader(Builder builder) {
+    private DefaultGradleModelLoader(Builder builder) {
         this.project = builder.project;
         this.projectLoader = builder.projectLoader;
         this.modelLoadNotifier = builder.modelLoadNotifier;
@@ -232,7 +232,7 @@ public final class GradleModelLoader {
     private void onModelLoaded(
             final NbGradleModel model,
             final Throwable error,
-            final ModelRetrievedListener listener) {
+            final ModelRetrievedListener<? super NbGradleModel> listener) {
 
         if (model == null && error == null) {
             return;
@@ -280,9 +280,10 @@ public final class GradleModelLoader {
         return null;
     }
 
+    @Override
     public void fetchModel(
             final boolean mayFetchFromCache,
-            final ModelRetrievedListener listener) {
+            final ModelRetrievedListener<? super NbGradleModel> listener) {
 
         // TODO: If we already loaded model from the persistent cache for this
         //       project, skip loading from persistent cache.
@@ -372,7 +373,7 @@ public final class GradleModelLoader {
 
     private void fetchModelWithoutPersistentCache(
             final boolean mayFetchFromCache,
-            final ModelRetrievedListener listener) {
+            final ModelRetrievedListener<? super NbGradleModel> listener) {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
@@ -643,8 +644,8 @@ public final class GradleModelLoader {
             };
         }
 
-        public GradleModelLoader create() {
-            return new GradleModelLoader(this);
+        public DefaultGradleModelLoader create() {
+            return new DefaultGradleModelLoader(this);
         }
     }
 

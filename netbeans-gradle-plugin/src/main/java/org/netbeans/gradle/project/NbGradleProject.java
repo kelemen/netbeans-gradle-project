@@ -40,7 +40,7 @@ import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.lookups.DynamicLookup;
 import org.netbeans.gradle.project.lookups.ProjectLookupHack;
-import org.netbeans.gradle.project.model.GradleModelLoader;
+import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.ModelRefreshListener;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -109,10 +109,10 @@ public final class NbGradleProject implements Project {
     private final PropertySource<NbGradleModel> currentModel;
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
-    private final LazyValue<GradleModelLoader> modelLoaderRef;
+    private final LazyValue<DefaultGradleModelLoader> modelLoaderRef;
     private final LazyValue<ProjectInfoRef> loadErrorRef;
-    private final ModelRetrievedListener modelLoadListener;
-    private final ProjectModelUpdater modelUpdater;
+    private final ModelRetrievedListener<NbGradleModel> modelLoadListener;
+    private final ProjectModelUpdater<NbGradleModel> modelUpdater;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
@@ -147,7 +147,7 @@ public final class NbGradleProject implements Project {
         });
         this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
         this.currentModelRef = new AtomicReference<>(
-                GradleModelLoader.createEmptyModel(projectDirAsFile));
+                DefaultGradleModelLoader.createEmptyModel(projectDirAsFile));
 
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
@@ -159,9 +159,9 @@ public final class NbGradleProject implements Project {
             }
         });
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
-        this.modelLoaderRef = new LazyValue<>(new NbSupplier<GradleModelLoader>() {
+        this.modelLoaderRef = new LazyValue<>(new NbSupplier<DefaultGradleModelLoader>() {
             @Override
-            public GradleModelLoader get() {
+            public DefaultGradleModelLoader get() {
                 return createModelLoader();
             }
         });
@@ -178,11 +178,11 @@ public final class NbGradleProject implements Project {
             }
         });
         this.modelLoadListener = new ModelRetrievedListenerImpl();
-        this.modelUpdater = new ProjectModelUpdater(modelLoaderRef, modelLoadListener);
+        this.modelUpdater = new ProjectModelUpdater<>(modelLoaderRef, modelLoadListener);
     }
 
-    private GradleModelLoader createModelLoader() {
-        GradleModelLoader.Builder result = new GradleModelLoader.Builder(this);
+    private DefaultGradleModelLoader createModelLoader() {
+        DefaultGradleModelLoader.Builder result = new DefaultGradleModelLoader.Builder(this);
         return result.create();
     }
 
@@ -660,7 +660,7 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private class ModelRetrievedListenerImpl implements ModelRetrievedListener {
+    private class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
         private void fireModelChangeEvent() {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override

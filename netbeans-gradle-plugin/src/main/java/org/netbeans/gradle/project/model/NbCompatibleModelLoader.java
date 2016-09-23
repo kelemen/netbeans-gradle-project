@@ -90,7 +90,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             ProjectConnection projectConnection,
             Class<T> model) {
         ModelBuilder<T> builder = projectConnection.model(model);
-        GradleModelLoader.setupLongRunningOP(setup, builder);
+        DefaultGradleModelLoader.setupLongRunningOP(setup, builder);
 
         return builder.get();
     }
@@ -105,7 +105,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         Map<Class<?>, Object> found = new HashMap<>();
 
         NbGradleModel initialMainModel = mainModel.create();
-        for (NbGradleExtensionRef extensionRef: GradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
+        for (NbGradleExtensionRef extensionRef: DefaultGradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
             List<Object> extensionModels = new LinkedList<>();
 
             GradleModelDefQuery1 query1 = extensionRef.getModelNeeds().getQuery1();
