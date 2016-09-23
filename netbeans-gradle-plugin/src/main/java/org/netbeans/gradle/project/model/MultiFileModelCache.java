@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,20 +8,21 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.StringUtils;
 
-public final class MultiFileModelCache implements PersistentModelCache<NbGradleModel> {
-    private final File ownerProjectDir;
-    private final ModelPersister<NbGradleModel> modelPersister;
+public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
+    private final ModelPersister<T> modelPersister;
+    private final NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory;
 
     public MultiFileModelCache(
-            File ownerProjectDir,
-            ModelPersister<NbGradleModel> modelPersister) {
-        ExceptionHelper.checkNotNullArgument(ownerProjectDir, "ownerProjectDir");
+            ModelPersister<T> modelPersister,
+            NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory) {
         ExceptionHelper.checkNotNullArgument(modelPersister, "modelPersister");
+        ExceptionHelper.checkNotNullArgument(modelKeyFactory, "modelKeyFactory");
 
-        this.ownerProjectDir = ownerProjectDir;
         this.modelPersister = modelPersister;
+        this.modelKeyFactory = modelKeyFactory;
     }
 
     private static MessageDigest getMD5() {
@@ -34,16 +34,16 @@ public final class MultiFileModelCache implements PersistentModelCache<NbGradleM
     }
 
     @Override
-    public NbGradleModel tryGetModel(Path rootProjectDir) throws IOException {
-        Path cacheFilePath = getCacheFilePath(rootProjectDir, ownerProjectDir, getMD5());
+    public T tryGetModel(PersistentModelKey modelKey) throws IOException {
+        Path cacheFilePath = getCacheFilePath(modelKey, getMD5());
         return modelPersister.tryLoadModel(cacheFilePath);
     }
 
     @Override
-    public void saveGradleModels(Collection<? extends NbGradleModel> models) throws IOException {
+    public void saveGradleModels(Collection<? extends T> models) throws IOException {
         MessageDigest hashCalculator = getMD5();
 
-        for (NbGradleModel model: models) {
+        for (T model: models) {
             Path cacheFilePath = getCacheFilePath(model, hashCalculator);
 
             Path cacheDir = cacheFilePath.getParent();
@@ -59,11 +59,11 @@ public final class MultiFileModelCache implements PersistentModelCache<NbGradleM
         return str.length() > maxLength ? str.substring(0, maxLength) : str;
     }
 
-    private static String getCacheKey(Path rootProjectDir, File projectDir) throws IOException {
+    private static String getCacheKey(Path rootProjectDir, Path projectDir) throws IOException {
         Path rootDir = rootProjectDir.normalize();
 
         String rootDirStr = rootDir.toString();
-        String projectDirStr = projectDir.getCanonicalFile().getPath();
+        String projectDirStr = projectDir.toRealPath().toString();
         if (projectDirStr.startsWith(rootDirStr)) {
             projectDirStr = projectDirStr.substring(rootDirStr.length());
         }
@@ -72,7 +72,7 @@ public final class MultiFileModelCache implements PersistentModelCache<NbGradleM
 
     private static String getCacheFileName(
             Path rootProjectDir,
-            File projectDir,
+            Path projectDir,
             MessageDigest hashCalculator) throws IOException {
 
         String cacheKey = getCacheKey(rootProjectDir, projectDir);
@@ -80,16 +80,23 @@ public final class MultiFileModelCache implements PersistentModelCache<NbGradleM
         // We do this to limit the key length and make it usable as part of a file name.
         hashCalculator.reset();
         String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(StringUtils.UTF8)));
-        return limitLength(projectDir.getName(), 16) + "-" + keyHash;
+        return limitLength(projectDir.getFileName().toString(), 16) + "-" + keyHash;
     }
 
-    private static Path getCacheFilePath(NbGradleModel model, MessageDigest hashCalculator) throws IOException {
-        return getCacheFilePath(model.getSettingsDir(), model.getProjectDir(), hashCalculator);
+    private Path getCacheFilePath(T model, MessageDigest hashCalculator) throws IOException {
+        PersistentModelKey modelKey = modelKeyFactory.apply(model);
+        return getCacheFilePath(modelKey, hashCalculator);
+    }
+
+    private static Path getCacheFilePath(
+            PersistentModelKey modelKey,
+            MessageDigest hashCalculator) throws IOException {
+        return getCacheFilePath(modelKey.getRootPath(), modelKey.getProjectDir(), hashCalculator);
     }
 
     private static Path getCacheFilePath(
             Path rootProjectDir,
-            File projectDir,
+            Path projectDir,
             MessageDigest hashCalculator) throws IOException {
 
         String fileName = getCacheFileName(rootProjectDir, projectDir, hashCalculator);

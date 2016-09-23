@@ -60,6 +60,7 @@ import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.gradle.project.util.GradleVersions;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
@@ -276,7 +277,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         }
 
         try {
-            return persistentCache.tryGetModel(projectLoadKey.getAppliedRootProjectDir());
+            return persistentCache.tryGetModel(projectLoadKey.getPersistentModelKey());
         } catch (IOException ex) {
             LOGGER.log(Level.INFO,
                     "Failed to read persistent cache for project " + projectLoadKey.project.getProjectDirectoryAsFile(),
@@ -625,9 +626,12 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = new MultiFileModelCache(
-                    project.getProjectDirectoryAsFile(),
-                    new ProjectModelPersister(project));
+            this.persistentCache = new MultiFileModelCache<>(new ProjectModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
+                @Override
+                public PersistentModelKey apply(NbGradleModel arg) {
+                    return new PersistentModelKey(arg.getSettingsDir(), arg.getProjectDir().toPath());
+                }
+            });
             this.cacheRef = new NbSupplier<GradleModelCache>() {
                 @Override
                 public GradleModelCache get() {
@@ -681,6 +685,10 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
             this.project = project;
             this.settingsGradleDef = settingsGradleDef;
+        }
+
+        public PersistentModelKey getPersistentModelKey() {
+            return new PersistentModelKey(getAppliedRootProjectDir(), project.getProjectDirectoryAsPath());
         }
 
         public File findAppliedSettingsFileAsFile() {
