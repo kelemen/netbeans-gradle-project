@@ -83,16 +83,19 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
     private final TaskExecutor projectLoader;
     private final MonitorableTaskExecutorService modelLoadNotifier;
     private final LoadedProjectManager loadedProjectManager;
-    private final OneShotPersistentCache persistentCache;
+    private final PersistentModelCache persistentCache;
     private final NbSupplier<? extends GradleModelCache> cacheRef;
+
+    private final AtomicBoolean modelWasSetOnce;
 
     private DefaultGradleModelLoader(Builder builder) {
         this.project = builder.project;
         this.projectLoader = builder.projectLoader;
         this.modelLoadNotifier = builder.modelLoadNotifier;
         this.loadedProjectManager = builder.loadedProjectManager;
-        this.persistentCache = new OneShotPersistentCache(builder.persistentCache);
+        this.persistentCache = builder.persistentCache;
         this.cacheRef = builder.cacheRef;
+        this.modelWasSetOnce = new AtomicBoolean(false);
     }
 
     private static void updateProjectFromCacheIfNeeded(NbGradleModel newModel) {
@@ -241,6 +244,8 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
             return;
         }
 
+        modelWasSetOnce.set(true);
+
         if (modelLoadNotifier.isExecutingInThis()) {
             listener.onComplete(model, error);
         }
@@ -269,6 +274,10 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
     }
 
     private NbGradleModel tryGetFromPersistentCache(ProjectLoadRequest projectLoadKey) {
+        if (modelWasSetOnce.get()) {
+            return null;
+        }
+
         try {
             return persistentCache.tryGetModel(projectLoadKey.project, projectLoadKey.getAppliedRootProjectDir());
         } catch (IOException ex) {
@@ -291,7 +300,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
         ExceptionHelper.checkNotNullArgument(listener, "listener");
         ExceptionHelper.checkNotNullArgument(aboutToCompleteListener, "aboutToCompleteListener");
 
-        if (persistentCache.hasReadFromCache()) {
+        if (modelWasSetOnce.get()) {
             fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
             return;
         }
@@ -704,34 +713,6 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
             }
 
             return project.getProjectDirectoryAsPath();
-        }
-    }
-
-    private static final class OneShotPersistentCache implements PersistentModelCache {
-        private final PersistentModelCache wrapped;
-        private final AtomicBoolean readFromCache;
-
-        public OneShotPersistentCache(PersistentModelCache wrapped) {
-            this.wrapped = wrapped;
-            this.readFromCache = new AtomicBoolean(false);
-        }
-
-        public boolean hasReadFromCache() {
-            return readFromCache.get();
-        }
-
-        @Override
-        public NbGradleModel tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException {
-            if (!readFromCache.compareAndSet(false, true)) {
-                return null;
-            }
-
-            return wrapped.tryGetModel(project, rootProjectDir);
-        }
-
-        @Override
-        public void saveGradleModels(Collection<NbGradleModel> models) throws IOException {
-            wrapped.saveGradleModels(models);
         }
     }
 }
