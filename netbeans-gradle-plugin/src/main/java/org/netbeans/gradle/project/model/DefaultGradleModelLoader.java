@@ -64,7 +64,7 @@ import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 
-public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleModel> {
+public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel> {
     private static final Logger LOGGER = Logger.getLogger(DefaultGradleModelLoader.class.getName());
 
     private static final TaskExecutor DEFAULT_PROJECT_LOADER
