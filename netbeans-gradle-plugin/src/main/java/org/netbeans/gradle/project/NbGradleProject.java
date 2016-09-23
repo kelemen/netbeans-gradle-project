@@ -106,14 +106,10 @@ public final class NbGradleProject implements Project {
     private final DynamicLookup combinedExtensionLookup;
 
     private final String name;
-    private final ChangeListenerManager modelChangeListeners;
-    private final AtomicReference<NbGradleModel> currentModelRef;
-    private final PropertySource<NbGradleModel> currentModel;
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
     private final LazyValue<DefaultGradleModelLoader> modelLoaderRef;
-    private final LazyValue<ProjectInfoRef> loadErrorRef;
-    private final ModelRetrievedListener<NbGradleModel> modelLoadListener;
+    private final ModelRetrievedListenerImpl modelLoadListener;
     private final ProjectModelUpdater<NbGradleModel> modelUpdater;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
@@ -141,16 +137,6 @@ public final class NbGradleProject implements Project {
         });
         this.combinedExtensionLookup = new DynamicLookup();
 
-        this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
-            @Override
-            public ProjectInfoRef get() {
-                return getProjectInfoManager().createInfoRef();
-            }
-        });
-        this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-        this.currentModelRef = new AtomicReference<>(
-                DefaultGradleModelLoader.createEmptyModel(projectDirAsFile));
-
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
@@ -160,17 +146,22 @@ public final class NbGradleProject implements Project {
                 return new DynamicLookup(getDefaultLookup());
             }
         });
-        this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelLoaderRef = new LazyValue<>(new NbSupplier<DefaultGradleModelLoader>() {
             @Override
             public DefaultGradleModelLoader get() {
                 return createModelLoader();
             }
         });
+
+        this.modelLoadListener = new ModelRetrievedListenerImpl(this);
+        final PropertySource<NbGradleModel> currentModel = this.modelLoadListener.currentModel();
+
         this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
             @Override
             public PropertySource<String> get() {
-                return getDisplayName(currentModel, getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
+                return getDisplayName(
+                        currentModel,
+                        getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
             }
         });
         this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
@@ -179,7 +170,6 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
-        this.modelLoadListener = new ModelRetrievedListenerImpl(this);
         this.modelUpdater = new ProjectModelUpdater<>(modelLoaderRef, modelLoadListener);
     }
 
@@ -407,10 +397,6 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private ProjectInfoRef getLoadErrorRef() {
-        return loadErrorRef.get();
-    }
-
     private static TaskVariableMap asTaskVariableMap(PropertySource<? extends CustomVariables> varsProperty) {
         final CustomVariables vars = varsProperty.getValue();
         if (vars == null || vars.isEmpty()) {
@@ -458,7 +444,7 @@ public final class NbGradleProject implements Project {
     }
 
     public PropertySource<NbGradleModel> currentModel() {
-        return currentModel;
+        return modelLoadListener.currentModel();
     }
 
     public Path getPreferredSettingsFile() {
@@ -468,7 +454,7 @@ public final class NbGradleProject implements Project {
     public SettingsGradleDef getPreferredSettingsGradleDef() {
         return new SettingsGradleDef(
                 getPreferredSettingsFile(),
-                !currentModel.getValue().isRootWithoutSettingsGradle());
+                !currentModel().getValue().isRootWithoutSettingsGradle());
     }
 
     private void updateSettingsFile(Path settingsFile) {
@@ -482,20 +468,6 @@ public final class NbGradleProject implements Project {
 
     public void updateSettingsFile() {
         updateSettingsFile(tryGetPreferredSettingsFile(getProjectDirectoryAsFile()));
-    }
-
-    private void onModelChange() {
-        assert SwingUtilities.isEventDispatchThread();
-
-        try {
-            modelChangeListeners.fireEventually();
-            for (ProjectModelChangeListener listener: getLookup().lookupAll(ProjectModelChangeListener.class)) {
-                listener.onModelChanged();
-            }
-        } finally {
-            GradleCacheByBinaryLookup.notifyCacheChange();
-            GradleCacheBinaryForSourceQuery.notifyCacheChange();
-        }
     }
 
     public ProjectSettingsProvider getProjectSettingsProvider() {
@@ -660,20 +632,56 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private static class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
+    private static final class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
         private final NbGradleProject project;
+
+        private final ChangeListenerManager modelChangeListeners;
+        private final AtomicReference<NbGradleModel> currentModelRef;
+        private final PropertySource<NbGradleModel> currentModel;
+        private final LazyValue<ProjectInfoRef> loadErrorRef;
+
         private final UpdateTaskExecutor modelUpdater;
         private final Runnable modelUpdateDispatcher;
 
         public ModelRetrievedListenerImpl(final NbGradleProject project) {
             this.project = project;
+
+            this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
+            this.currentModelRef = new AtomicReference<>(
+                DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
+            this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
+
             this.modelUpdater = new SwingUpdateTaskExecutor(true);
             this.modelUpdateDispatcher = new Runnable() {
                 @Override
                 public void run() {
-                    project.onModelChange();
+                    onModelChange();
                 }
             };
+            this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
+                @Override
+                public ProjectInfoRef get() {
+                    return project.getProjectInfoManager().createInfoRef();
+                }
+            });
+        }
+
+        private void onModelChange() {
+            assert SwingUtilities.isEventDispatchThread();
+
+            try {
+                modelChangeListeners.fireEventually();
+                for (ProjectModelChangeListener listener: project.getLookup().lookupAll(ProjectModelChangeListener.class)) {
+                    listener.onModelChanged();
+                }
+            } finally {
+                GradleCacheByBinaryLookup.notifyCacheChange();
+                GradleCacheBinaryForSourceQuery.notifyCacheChange();
+            }
+        }
+
+        public PropertySource<NbGradleModel> currentModel() {
+            return currentModel;
         }
 
         private void fireModelChangeEvent() {
@@ -759,11 +767,15 @@ public final class NbGradleProject implements Project {
             }
         }
 
+        private ProjectInfoRef getLoadErrorRef() {
+            return loadErrorRef.get();
+        }
+
         @Override
         public void onComplete(NbGradleModel model, Throwable error) {
             boolean hasChanged = false;
             if (model != null) {
-                NbGradleModel prevModel = project.currentModelRef.getAndSet(model);
+                NbGradleModel prevModel = currentModelRef.getAndSet(model);
                 hasChanged = prevModel != model;
             }
 
@@ -771,12 +783,12 @@ public final class NbGradleProject implements Project {
                 ProjectInfo.Entry entry = new ProjectInfo.Entry(
                         ProjectInfo.Kind.ERROR,
                         NbStrings.getErrorLoadingProject(error));
-                project.getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
+                getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
                 LOGGER.log(Level.INFO, "Error while loading the project model.", error);
                 project.displayError(NbStrings.getProjectLoadFailure(project.getName()), error);
             }
             else {
-                project.getLoadErrorRef().setInfo(null);
+                getLoadErrorRef().setInfo(null);
             }
 
             if (hasChanged) {
