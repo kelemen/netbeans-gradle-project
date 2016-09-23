@@ -76,9 +76,6 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private static final AtomicReference<GradleModelCache> DEFAULT_CACHE_REF
             = new AtomicReference<>(null);
 
-    private static final PersistentModelCache<NbGradleModel> DEFAULT_PERSISTENT_CACHE
-            = new MultiFileModelCache();
-
     private final NbGradleProject project;
     private final TaskExecutor projectLoader;
     private final MonitorableTaskExecutorService modelLoadNotifier;
@@ -628,7 +625,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = DEFAULT_PERSISTENT_CACHE;
+            this.persistentCache = new MultiFileModelCache(new ProjectModelPersister(project));
             this.cacheRef = new NbSupplier<GradleModelCache>() {
                 @Override
                 public GradleModelCache get() {
