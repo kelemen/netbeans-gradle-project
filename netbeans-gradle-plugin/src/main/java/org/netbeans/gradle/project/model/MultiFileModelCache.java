@@ -60,10 +60,10 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
     }
 
     private static String getCacheKey(PersistentModelKey modelKey) throws IOException {
-        Path rootDir = modelKey.getRootPath().toRealPath();
+        Path rootDir = modelKey.getRootPath();
 
         String rootDirStr = rootDir.toString();
-        String projectDirStr = modelKey.getProjectDir().toRealPath().toString();
+        String projectDirStr = modelKey.getProjectDir().toString();
         if (projectDirStr.startsWith(rootDirStr)) {
             projectDirStr = projectDirStr.substring(rootDirStr.length());
         }

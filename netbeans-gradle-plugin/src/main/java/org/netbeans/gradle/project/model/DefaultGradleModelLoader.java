@@ -629,7 +629,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.persistentCache = new MultiFileModelCache<>(new ProjectModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
                 @Override
                 public PersistentModelKey apply(NbGradleModel arg) {
-                    return new PersistentModelKey(arg.getSettingsDir(), arg.getProjectDir().toPath());
+                    try {
+                        return new PersistentModelKey(arg).normalize();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             });
             this.cacheRef = new NbSupplier<GradleModelCache>() {
@@ -687,8 +691,8 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.settingsGradleDef = settingsGradleDef;
         }
 
-        public PersistentModelKey getPersistentModelKey() {
-            return new PersistentModelKey(getAppliedRootProjectDir(), project.getProjectDirectoryAsPath());
+        public PersistentModelKey getPersistentModelKey() throws IOException {
+            return new PersistentModelKey(getAppliedRootProjectDir(), project.getProjectDirectoryAsPath()).normalize();
         }
 
         public File findAppliedSettingsFileAsFile() {
