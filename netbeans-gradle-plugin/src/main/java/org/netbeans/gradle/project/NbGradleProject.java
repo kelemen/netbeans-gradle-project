@@ -153,7 +153,7 @@ public final class NbGradleProject implements Project {
             }
         });
 
-        this.modelLoadListener = new ModelRetrievedListenerImpl(this);
+        this.modelLoadListener = new ModelRetrievedListenerImpl(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
         final PropertySource<NbGradleModel> currentModel = this.modelLoadListener.currentModel();
 
         this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
@@ -643,12 +643,13 @@ public final class NbGradleProject implements Project {
         private final UpdateTaskExecutor modelUpdater;
         private final Runnable modelUpdateDispatcher;
 
-        public ModelRetrievedListenerImpl(final NbGradleProject project) {
+        public ModelRetrievedListenerImpl(
+                final NbGradleProject project,
+                final NbGradleModel initialModel) {
             this.project = project;
 
             this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-            this.currentModelRef = new AtomicReference<>(
-                DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
+            this.currentModelRef = new AtomicReference<>(initialModel);
             this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
 
             this.modelUpdater = new SwingUpdateTaskExecutor(true);
