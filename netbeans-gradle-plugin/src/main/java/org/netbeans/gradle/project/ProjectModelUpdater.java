@@ -91,10 +91,6 @@ public final class ProjectModelUpdater<M> {
         });
     }
 
-    public boolean wasModelEverSet() {
-        return loadedAtLeastOnceSignal.isSignaled();
-    }
-
     private static void checkCanWaitForProjectLoad() {
         if (GradleDaemonManager.isRunningExclusiveTask()) {
             throw new IllegalStateException("Cannot wait for loading a project"

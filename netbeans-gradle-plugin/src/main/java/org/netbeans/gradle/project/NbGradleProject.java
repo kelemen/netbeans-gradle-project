@@ -270,10 +270,6 @@ public final class NbGradleProject implements Project {
         modelUpdater.reloadProject();
     }
 
-    public boolean wasModelEverSet() {
-        return modelUpdater.wasModelEverSet();
-    }
-
     public void waitForLoadedProject(CancellationToken cancelToken) {
         modelUpdater.waitForLoadedProject(cancelToken);
     }

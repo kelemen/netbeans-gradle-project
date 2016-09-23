@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,7 +83,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
     private final TaskExecutor projectLoader;
     private final MonitorableTaskExecutorService modelLoadNotifier;
     private final LoadedProjectManager loadedProjectManager;
-    private final PersistentModelCache persistentCache;
+    private final OneShotPersistentCache persistentCache;
     private final NbSupplier<? extends GradleModelCache> cacheRef;
 
     private DefaultGradleModelLoader(Builder builder) {
@@ -90,7 +91,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
         this.projectLoader = builder.projectLoader;
         this.modelLoadNotifier = builder.modelLoadNotifier;
         this.loadedProjectManager = builder.loadedProjectManager;
-        this.persistentCache = builder.persistentCache;
+        this.persistentCache = new OneShotPersistentCache(builder.persistentCache);
         this.cacheRef = builder.cacheRef;
     }
 
@@ -290,9 +291,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
         ExceptionHelper.checkNotNullArgument(listener, "listener");
         ExceptionHelper.checkNotNullArgument(aboutToCompleteListener, "aboutToCompleteListener");
 
-        // TODO: If we already loaded model from the persistent cache for this
-        //       project, skip loading from persistent cache.
-        if (!mayFetchFromCache || project.wasModelEverSet()) {
+        if (persistentCache.hasReadFromCache()) {
             fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
             return;
         }
@@ -305,14 +304,9 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
 
                 try {
                     ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
-                    model = tryGetFromCache(projectLoadKey);
+                    model = mayFetchFromCache ? tryGetFromCache(projectLoadKey) : null;
                     if (model == null || hasUnloadedExtension(model)) {
-                        if (project.wasModelEverSet()) {
-                            model = null;
-                        }
-                        else {
-                            model = tryGetFromPersistentCache(projectLoadKey);
-                        }
+                        model = tryGetFromPersistentCache(projectLoadKey);
                     }
                     else {
                         needLoadFromScripts = false;
@@ -710,6 +704,34 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
             }
 
             return project.getProjectDirectoryAsPath();
+        }
+    }
+
+    private static final class OneShotPersistentCache implements PersistentModelCache {
+        private final PersistentModelCache wrapped;
+        private final AtomicBoolean readFromCache;
+
+        public OneShotPersistentCache(PersistentModelCache wrapped) {
+            this.wrapped = wrapped;
+            this.readFromCache = new AtomicBoolean(false);
+        }
+
+        public boolean hasReadFromCache() {
+            return readFromCache.get();
+        }
+
+        @Override
+        public NbGradleModel tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException {
+            if (!readFromCache.compareAndSet(false, true)) {
+                return null;
+            }
+
+            return wrapped.tryGetModel(project, rootProjectDir);
+        }
+
+        @Override
+        public void saveGradleModels(Collection<NbGradleModel> models) throws IOException {
+            wrapped.saveGradleModels(models);
         }
     }
 }
