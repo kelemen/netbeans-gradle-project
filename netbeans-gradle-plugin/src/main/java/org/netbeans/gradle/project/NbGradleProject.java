@@ -13,18 +13,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
-import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
-import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -36,17 +31,12 @@ import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.event.ChangeListenerManager;
-import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.lookups.DynamicLookup;
 import org.netbeans.gradle.project.lookups.ProjectLookupHack;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
-import org.netbeans.gradle.project.model.ModelRefreshListener;
-import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.model.ProjectModelChangeListener;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
@@ -59,15 +49,12 @@ import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
-import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.standard.CustomVariables;
-import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
-import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
@@ -94,8 +81,6 @@ import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class NbGradleProject implements Project {
-    private static final Logger LOGGER = Logger.getLogger(NbGradleProject.class.getName());
-
     private final FileObject projectDir;
     private final File projectDirAsFile;
     private final Path projectDirAsPath;
@@ -109,7 +94,7 @@ public final class NbGradleProject implements Project {
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
     private final LazyValue<DefaultGradleModelLoader> modelLoaderRef;
-    private final ModelRetrievedListenerImpl modelLoadListener;
+    private final ProjectModelManager modelLoadListener;
     private final ProjectModelUpdater<NbGradleModel> modelUpdater;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
@@ -153,7 +138,7 @@ public final class NbGradleProject implements Project {
             }
         });
 
-        this.modelLoadListener = new ModelRetrievedListenerImpl(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
+        this.modelLoadListener = new ProjectModelManager(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
         final PropertySource<NbGradleModel> currentModel = this.modelLoadListener.currentModel();
 
         this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
@@ -629,172 +614,6 @@ public final class NbGradleProject implements Project {
         @Override
         protected void projectClosed() {
             closeableActions.close();
-        }
-    }
-
-    private static final class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
-        private final NbGradleProject project;
-
-        private final ChangeListenerManager modelChangeListeners;
-        private final AtomicReference<NbGradleModel> currentModelRef;
-        private final PropertySource<NbGradleModel> currentModel;
-        private final LazyValue<ProjectInfoRef> loadErrorRef;
-
-        private final UpdateTaskExecutor modelUpdater;
-        private final Runnable modelUpdateDispatcher;
-
-        public ModelRetrievedListenerImpl(
-                final NbGradleProject project,
-                final NbGradleModel initialModel) {
-            this.project = project;
-
-            this.modelChangeListeners = GenericChangeListenerManager.getSwingNotifier();
-            this.currentModelRef = new AtomicReference<>(initialModel);
-            this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
-
-            this.modelUpdater = new SwingUpdateTaskExecutor(true);
-            this.modelUpdateDispatcher = new Runnable() {
-                @Override
-                public void run() {
-                    onModelChange();
-                }
-            };
-            this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
-                @Override
-                public ProjectInfoRef get() {
-                    return project.getProjectInfoManager().createInfoRef();
-                }
-            });
-        }
-
-        private void onModelChange() {
-            assert SwingUtilities.isEventDispatchThread();
-
-            try {
-                modelChangeListeners.fireEventually();
-                for (ProjectModelChangeListener listener: project.getLookup().lookupAll(ProjectModelChangeListener.class)) {
-                    listener.onModelChanged();
-                }
-            } finally {
-                GradleCacheByBinaryLookup.notifyCacheChange();
-                GradleCacheBinaryForSourceQuery.notifyCacheChange();
-            }
-        }
-
-        public PropertySource<NbGradleModel> currentModel() {
-            return currentModel;
-        }
-
-        private void fireModelChangeEvent() {
-            modelUpdater.execute(modelUpdateDispatcher);
-        }
-
-        private boolean safelyLoadExtensions(NbGradleExtensionRef extension, Object model) {
-            try {
-                return extension.setModelForExtension(model);
-            } catch (Throwable ex) {
-                LOGGER.log(Level.SEVERE,
-                        "Extension has thrown an unexpected exception: " + extension.getName(),
-                        ex);
-                return false;
-            }
-        }
-
-        private boolean notifyEmptyModelChange() {
-            boolean changedAny = false;
-            for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
-                boolean changed = safelyLoadExtensions(extensionRef, null);
-                changedAny = changedAny || changed;
-            }
-
-            fireModelChangeEvent();
-            return changedAny;
-        }
-
-        private boolean notifyModelChange(NbGradleModel model) {
-            // TODO: Consider conflicts
-            //   GradleProjectExtensionDef.getSuppressedExtensions()
-
-            boolean changedAny = false;
-            for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
-                boolean changed = safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
-                changedAny = changedAny || changed;
-            }
-
-            fireModelChangeEvent();
-            return changedAny;
-        }
-
-        private void startRefresh(Collection<ModelRefreshListener> listeners) {
-            for (ModelRefreshListener listener: listeners) {
-                try {
-                    listener.startRefresh();
-                } catch (Throwable ex) {
-                    LOGGER.log(Level.SEVERE,
-                            "Failed to call " + listener.getClass().getName() + ".startRefresh()",
-                            ex);
-                }
-            }
-        }
-
-        private void endRefresh(Collection<ModelRefreshListener> listeners, boolean extensionsChanged) {
-            for (ModelRefreshListener listener: listeners) {
-                try {
-                    listener.endRefresh(extensionsChanged);
-                } catch (Throwable ex) {
-                    LOGGER.log(Level.SEVERE,
-                            "Failed to call " + listener.getClass().getName() + ".endRefresh(" + extensionsChanged + ")",
-                            ex);
-                }
-            }
-        }
-
-        private void updateExtensionActivation(NbGradleModel model) {
-            Collection<ModelRefreshListener> refreshListeners
-                    = new ArrayList<>(project.getLookup().lookupAll(ModelRefreshListener.class));
-
-            boolean extensionsChanged = false;
-
-            startRefresh(refreshListeners);
-            try {
-                if (model == null) {
-                    extensionsChanged = notifyEmptyModelChange();
-                }
-                else {
-                    extensionsChanged = notifyModelChange(model);
-                }
-            } finally {
-                endRefresh(refreshListeners, extensionsChanged);
-            }
-        }
-
-        private ProjectInfoRef getLoadErrorRef() {
-            return loadErrorRef.get();
-        }
-
-        @Override
-        public void onComplete(NbGradleModel model, Throwable error) {
-            boolean hasChanged = false;
-            if (model != null) {
-                NbGradleModel prevModel = currentModelRef.getAndSet(model);
-                hasChanged = prevModel != model;
-            }
-
-            if (error != null) {
-                ProjectInfo.Entry entry = new ProjectInfo.Entry(
-                        ProjectInfo.Kind.ERROR,
-                        NbStrings.getErrorLoadingProject(error));
-                getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
-                LOGGER.log(Level.INFO, "Error while loading the project model.", error);
-                project.displayError(NbStrings.getProjectLoadFailure(project.getName()), error);
-            }
-            else {
-                getLoadErrorRef().setInfo(null);
-            }
-
-            if (hasChanged) {
-                updateExtensionActivation(model);
-            }
         }
     }
 
