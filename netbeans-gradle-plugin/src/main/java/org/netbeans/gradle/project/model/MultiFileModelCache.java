@@ -59,11 +59,11 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
         return str.length() > maxLength ? str.substring(0, maxLength) : str;
     }
 
-    private static String getCacheKey(Path rootProjectDir, Path projectDir) throws IOException {
-        Path rootDir = rootProjectDir.normalize();
+    private static String getCacheKey(PersistentModelKey modelKey) throws IOException {
+        Path rootDir = modelKey.getRootPath().toRealPath();
 
         String rootDirStr = rootDir.toString();
-        String projectDirStr = projectDir.toRealPath().toString();
+        String projectDirStr = modelKey.getProjectDir().toRealPath().toString();
         if (projectDirStr.startsWith(rootDirStr)) {
             projectDirStr = projectDirStr.substring(rootDirStr.length());
         }
@@ -71,16 +71,15 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
     }
 
     private static String getCacheFileName(
-            Path rootProjectDir,
-            Path projectDir,
+            PersistentModelKey modelKey,
             MessageDigest hashCalculator) throws IOException {
 
-        String cacheKey = getCacheKey(rootProjectDir, projectDir);
+        String cacheKey = getCacheKey(modelKey);
 
         // We do this to limit the key length and make it usable as part of a file name.
         hashCalculator.reset();
         String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(StringUtils.UTF8)));
-        return limitLength(projectDir.getFileName().toString(), 16) + "-" + keyHash;
+        return limitLength(modelKey.getProjectDir().getFileName().toString(), 16) + "-" + keyHash;
     }
 
     private Path getCacheFilePath(T model, MessageDigest hashCalculator) throws IOException {
@@ -91,15 +90,7 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
     private static Path getCacheFilePath(
             PersistentModelKey modelKey,
             MessageDigest hashCalculator) throws IOException {
-        return getCacheFilePath(modelKey.getRootPath(), modelKey.getProjectDir(), hashCalculator);
-    }
-
-    private static Path getCacheFilePath(
-            Path rootProjectDir,
-            Path projectDir,
-            MessageDigest hashCalculator) throws IOException {
-
-        String fileName = getCacheFileName(rootProjectDir, projectDir, hashCalculator);
-        return SettingsFiles.getCacheDir(rootProjectDir).resolve(fileName);
+        String fileName = getCacheFileName(modelKey, hashCalculator);
+        return SettingsFiles.getCacheDir(modelKey.getRootPath()).resolve(fileName);
     }
 }
