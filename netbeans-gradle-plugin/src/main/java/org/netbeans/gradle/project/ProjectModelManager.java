@@ -152,11 +152,11 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
     }
 
     public void updateModel(NbGradleModel model) {
-        onComplete(model, null);
+        updateModel(model, null);
     }
 
     @Override
-    public void onComplete(NbGradleModel model, Throwable error) {
+    public void updateModel(NbGradleModel model, Throwable error) {
         boolean hasChanged = false;
         if (model != null) {
             NbGradleModel prevModel = currentModelRef.getAndSet(model);

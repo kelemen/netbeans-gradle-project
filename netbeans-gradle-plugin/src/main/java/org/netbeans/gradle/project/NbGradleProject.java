@@ -576,7 +576,7 @@ public final class NbGradleProject implements Project {
 
     public void tryReplaceModel(NbGradleModel model) {
         if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-            modelLoadListener.onComplete(model, null);
+            modelLoadListener.updateModel(model, null);
         }
     }
 

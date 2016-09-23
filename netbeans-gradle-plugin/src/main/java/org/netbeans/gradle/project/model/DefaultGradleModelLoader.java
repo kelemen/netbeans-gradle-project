@@ -245,13 +245,13 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         modelWasSetOnce.set(true);
 
         if (modelLoadNotifier.isExecutingInThis()) {
-            listener.onComplete(model, error);
+            listener.updateModel(model, error);
         }
         else {
             modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) {
-                    listener.onComplete(model, error);
+                    listener.updateModel(model, error);
                 }
             }, null);
         }

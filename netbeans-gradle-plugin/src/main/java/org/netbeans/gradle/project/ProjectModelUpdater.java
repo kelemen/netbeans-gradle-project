@@ -29,9 +29,9 @@ public final class ProjectModelUpdater<M> {
         this.modelLoaderProvider = modelLoaderProvider;
         this.modelUpdaterWrapper = new ModelRetrievedListener<M>() {
             @Override
-            public void onComplete(M model, Throwable error) {
+            public void updateModel(M model, Throwable error) {
                 try {
-                    modelUpdater.onComplete(model, error);
+                    modelUpdater.updateModel(model, error);
                 } finally {
                     loadedAtLeastOnceSignal.signal();
                 }
