@@ -76,14 +76,14 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private static final AtomicReference<GradleModelCache> DEFAULT_CACHE_REF
             = new AtomicReference<>(null);
 
-    private static final PersistentModelCache DEFAULT_PERSISTENT_CACHE
+    private static final PersistentModelCache<NbGradleModel> DEFAULT_PERSISTENT_CACHE
             = new MultiFileModelCache();
 
     private final NbGradleProject project;
     private final TaskExecutor projectLoader;
     private final MonitorableTaskExecutorService modelLoadNotifier;
     private final LoadedProjectManager loadedProjectManager;
-    private final PersistentModelCache persistentCache;
+    private final PersistentModelCache<NbGradleModel> persistentCache;
     private final NbSupplier<? extends GradleModelCache> cacheRef;
 
     private final AtomicBoolean modelWasSetOnce;
@@ -618,7 +618,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         private TaskExecutor projectLoader;
         private MonitorableTaskExecutorService modelLoadNotifier;
         private LoadedProjectManager loadedProjectManager;
-        private PersistentModelCache persistentCache;
+        private PersistentModelCache<NbGradleModel> persistentCache;
         private NbSupplier<? extends GradleModelCache> cacheRef;
 
         public Builder(NbGradleProject project) {
@@ -652,7 +652,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.loadedProjectManager = loadedProjectManager;
         }
 
-        public void setPersistentCache(PersistentModelCache persistentCache) {
+        public void setPersistentCache(PersistentModelCache<NbGradleModel> persistentCache) {
             ExceptionHelper.checkNotNullArgument(persistentCache, "persistentCache");
             this.persistentCache = persistentCache;
         }

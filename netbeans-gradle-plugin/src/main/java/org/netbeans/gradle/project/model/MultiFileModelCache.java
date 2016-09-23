@@ -12,7 +12,7 @@ import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 import org.netbeans.gradle.project.util.StringUtils;
 
-public final class MultiFileModelCache implements PersistentModelCache {
+public final class MultiFileModelCache implements PersistentModelCache<NbGradleModel> {
     private static MessageDigest getMD5() {
         try {
             return MessageDigest.getInstance("MD5");
@@ -40,7 +40,7 @@ public final class MultiFileModelCache implements PersistentModelCache {
     }
 
     @Override
-    public void saveGradleModels(Collection<NbGradleModel> models) throws IOException {
+    public void saveGradleModels(Collection<? extends NbGradleModel> models) throws IOException {
         MessageDigest hashCalculator = getMD5();
 
         for (NbGradleModel model: models) {

@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import org.netbeans.gradle.project.NbGradleProject;
 
-public interface PersistentModelCache {
-    public NbGradleModel tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException;
-    public void saveGradleModels(Collection<NbGradleModel> models) throws IOException;
+public interface PersistentModelCache<T> {
+    public T tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException;
+    public void saveGradleModels(Collection<? extends T> models) throws IOException;
 }
