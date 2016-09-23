@@ -18,11 +18,13 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -657,13 +659,21 @@ public final class NbGradleProject implements Project {
     }
 
     private class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
-        private void fireModelChangeEvent() {
-            SwingUtilities.invokeLater(new Runnable() {
+        private final UpdateTaskExecutor modelUpdater;
+        private final Runnable modelUpdateDispatcher;
+
+        public ModelRetrievedListenerImpl() {
+            this.modelUpdater = new SwingUpdateTaskExecutor(true);
+            this.modelUpdateDispatcher = new Runnable() {
                 @Override
                 public void run() {
                     onModelChange();
                 }
-            });
+            };
+        }
+
+        private void fireModelChangeEvent() {
+            modelUpdater.execute(modelUpdateDispatcher);
         }
 
         private boolean safelyLoadExtensions(NbGradleExtensionRef extension, Object model) {
