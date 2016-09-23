@@ -2,6 +2,7 @@ package org.netbeans.gradle.project;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.WaitableSignal;
@@ -17,6 +18,7 @@ public final class ProjectModelUpdater<M> {
 
     private final AtomicBoolean hasModelBeenLoaded;
     private final WaitableSignal loadedAtLeastOnceSignal;
+    private final AtomicReference<Object> lastInProgressRef;
 
     public ProjectModelUpdater(
             NbSupplier<? extends ModelLoader<? extends M>> modelLoaderProvider,
@@ -38,6 +40,7 @@ public final class ProjectModelUpdater<M> {
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadedAtLeastOnceSignal = new WaitableSignal();
+        this.lastInProgressRef = new AtomicReference<>(null);
     }
 
     private ModelLoader<? extends M> getModelLoader() {
@@ -63,7 +66,29 @@ public final class ProjectModelUpdater<M> {
             }
         }
 
-        getModelLoader().fetchModel(mayUseCache, modelUpdaterWrapper);
+        final Object progressRef = new Object();
+        if (mayUseCache) {
+            Object currentProgressRef;
+            do {
+                currentProgressRef = lastInProgressRef.get();
+                if (currentProgressRef != null) {
+                    // Since we are content with a cached value, we consider that the
+                    // model loading currently in progress will be (or was) good enough
+                    // as a cached value.
+                    return;
+                }
+            } while (!lastInProgressRef.compareAndSet(null, progressRef));
+        }
+        else {
+            lastInProgressRef.set(progressRef);
+        }
+
+        getModelLoader().fetchModel(mayUseCache, modelUpdaterWrapper, new Runnable() {
+            @Override
+            public void run() {
+                lastInProgressRef.compareAndSet(progressRef, null);
+            }
+        });
     }
 
     public boolean wasModelEverSet() {

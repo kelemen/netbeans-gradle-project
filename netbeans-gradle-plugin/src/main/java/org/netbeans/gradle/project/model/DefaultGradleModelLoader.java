@@ -29,6 +29,7 @@ import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.concurrent.Tasks;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
@@ -40,6 +41,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
@@ -283,12 +285,15 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
     @Override
     public void fetchModel(
             final boolean mayFetchFromCache,
-            final ModelRetrievedListener<? super NbGradleModel> listener) {
+            final ModelRetrievedListener<? super NbGradleModel> listener,
+            final Runnable aboutToCompleteListener) {
+        ExceptionHelper.checkNotNullArgument(listener, "listener");
+        ExceptionHelper.checkNotNullArgument(aboutToCompleteListener, "aboutToCompleteListener");
 
         // TODO: If we already loaded model from the persistent cache for this
         //       project, skip loading from persistent cache.
         if (!mayFetchFromCache || project.wasModelEverSet()) {
-            fetchModelWithoutPersistentCache(mayFetchFromCache, listener);
+            fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
             return;
         }
 
@@ -315,7 +320,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
                 } finally {
                     onModelLoaded(model, null, listener);
                     if (needLoadFromScripts) {
-                        fetchModelWithoutPersistentCache(mayFetchFromCache, listener);
+                        fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
                     }
                 }
             }
@@ -371,11 +376,25 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
         return projectLoadKey;
     }
 
+    private CommandCompleteListener projectTaskCompleteListener(final Runnable loadCompletedListener) {
+        return new CommandCompleteListener() {
+            @Override
+            public void onComplete(Throwable error) {
+                try {
+                    GradleTasks.projectTaskCompleteListener(project).onComplete(error);
+                } finally {
+                    loadCompletedListener.run();
+                }
+            }
+        };
+    }
+
     private void fetchModelWithoutPersistentCache(
             final boolean mayFetchFromCache,
-            final ModelRetrievedListener<? super NbGradleModel> listener) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
+            final ModelRetrievedListener<? super NbGradleModel> listener,
+            Runnable aboutToCompleteListener) {
+
+        final Runnable safeCompleteListener = Tasks.runOnceTask(aboutToCompleteListener, false);
 
         String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
         GradleDaemonManager.submitGradleTask(projectLoader, caption, new DaemonTask() {
@@ -401,6 +420,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
                     error = ex;
                     reportModelLoadError(project, ex);
                 } finally {
+                    safeCompleteListener.run();
                     onModelLoaded(model, error, listener);
 
                     if (error != null) {
@@ -408,7 +428,7 @@ public final class DefaultGradleModelLoader implements  ModelLoader<NbGradleMode
                     }
                 }
             }
-        }, true, GradleTasks.projectTaskCompleteListener(project));
+        }, true, projectTaskCompleteListener(safeCompleteListener));
     }
 
     private void saveToPersistentCache(Collection<NbGradleModel> models) {
