@@ -179,7 +179,7 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
-        this.modelLoadListener = new ModelRetrievedListenerImpl();
+        this.modelLoadListener = new ModelRetrievedListenerImpl(this);
         this.modelUpdater = new ProjectModelUpdater<>(modelLoaderRef, modelLoadListener);
     }
 
@@ -623,11 +623,13 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private class OpenHook extends ProjectOpenedHook {
+    private static class OpenHook extends ProjectOpenedHook {
+        private final NbGradleProject project;
         private final CloseableActionContainer closeableActions;
         private final AtomicBoolean initialized;
 
-        public OpenHook() {
+        public OpenHook(NbGradleProject project) {
+            this.project = project;
             this.closeableActions = new CloseableActionContainer();
             this.initialized = new AtomicBoolean(false);
         }
@@ -638,10 +640,10 @@ public final class NbGradleProject implements Project {
             }
 
             this.closeableActions.defineAction(LicenseManager.getDefault().getRegisterListenerAction(
-                    NbGradleProject.this,
-                    getCommonProperties().licenseHeaderInfo().getActiveSource()));
+                    project,
+                    project.getCommonProperties().licenseHeaderInfo().getActiveSource()));
 
-            this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(NbGradleProject.this));
+            this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(project));
         }
 
         @Override
@@ -649,7 +651,7 @@ public final class NbGradleProject implements Project {
             ensureInitialized();
 
             closeableActions.open();
-            modelUpdater.reloadProjectMayUseCache();
+            project.modelUpdater.reloadProjectMayUseCache();
         }
 
         @Override
@@ -658,16 +660,18 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    private class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
+    private static class ModelRetrievedListenerImpl implements ModelRetrievedListener<NbGradleModel> {
+        private final NbGradleProject project;
         private final UpdateTaskExecutor modelUpdater;
         private final Runnable modelUpdateDispatcher;
 
-        public ModelRetrievedListenerImpl() {
+        public ModelRetrievedListenerImpl(final NbGradleProject project) {
+            this.project = project;
             this.modelUpdater = new SwingUpdateTaskExecutor(true);
             this.modelUpdateDispatcher = new Runnable() {
                 @Override
                 public void run() {
-                    onModelChange();
+                    project.onModelChange();
                 }
             };
         }
@@ -689,7 +693,7 @@ public final class NbGradleProject implements Project {
 
         private boolean notifyEmptyModelChange() {
             boolean changedAny = false;
-            for (NbGradleExtensionRef extensionRef: extensionRefs) {
+            for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
                 boolean changed = safelyLoadExtensions(extensionRef, null);
                 changedAny = changedAny || changed;
             }
@@ -703,7 +707,7 @@ public final class NbGradleProject implements Project {
             //   GradleProjectExtensionDef.getSuppressedExtensions()
 
             boolean changedAny = false;
-            for (NbGradleExtensionRef extensionRef: extensionRefs) {
+            for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
                 boolean changed = safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
                 changedAny = changedAny || changed;
             }
@@ -738,7 +742,7 @@ public final class NbGradleProject implements Project {
 
         private void updateExtensionActivation(NbGradleModel model) {
             Collection<ModelRefreshListener> refreshListeners
-                    = new ArrayList<>(getLookup().lookupAll(ModelRefreshListener.class));
+                    = new ArrayList<>(project.getLookup().lookupAll(ModelRefreshListener.class));
 
             boolean extensionsChanged = false;
 
@@ -759,7 +763,7 @@ public final class NbGradleProject implements Project {
         public void onComplete(NbGradleModel model, Throwable error) {
             boolean hasChanged = false;
             if (model != null) {
-                NbGradleModel prevModel = currentModelRef.getAndSet(model);
+                NbGradleModel prevModel = project.currentModelRef.getAndSet(model);
                 hasChanged = prevModel != model;
             }
 
@@ -767,12 +771,12 @@ public final class NbGradleProject implements Project {
                 ProjectInfo.Entry entry = new ProjectInfo.Entry(
                         ProjectInfo.Kind.ERROR,
                         NbStrings.getErrorLoadingProject(error));
-                getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
+                project.getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
                 LOGGER.log(Level.INFO, "Error while loading the project model.", error);
-                displayError(NbStrings.getProjectLoadFailure(name), error);
+                project.displayError(NbStrings.getProjectLoadFailure(project.getName()), error);
             }
             else {
-                getLoadErrorRef().setInfo(null);
+                project.getLoadErrorRef().setInfo(null);
             }
 
             if (hasChanged) {
@@ -819,7 +823,7 @@ public final class NbGradleProject implements Project {
             this.projectInfoManager = add(new ProjectInfoManager(), serviceObjects);
             this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);
 
-            add(project.new OpenHook(), serviceObjects);
+            add(new OpenHook(project), serviceObjects);
 
             // NbGradleCommonProperties is not needed on the lookup
             this.commonProperties = new NbGradleCommonProperties(project, configProvider.getActiveSettingsQuery());
