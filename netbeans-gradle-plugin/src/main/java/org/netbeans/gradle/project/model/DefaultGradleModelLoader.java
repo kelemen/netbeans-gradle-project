@@ -276,7 +276,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         }
 
         try {
-            return persistentCache.tryGetModel(projectLoadKey.project, projectLoadKey.getAppliedRootProjectDir());
+            return persistentCache.tryGetModel(projectLoadKey.getAppliedRootProjectDir());
         } catch (IOException ex) {
             LOGGER.log(Level.INFO,
                     "Failed to read persistent cache for project " + projectLoadKey.project.getProjectDirectoryAsFile(),
@@ -625,7 +625,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = new MultiFileModelCache(new ProjectModelPersister(project));
+            this.persistentCache = new MultiFileModelCache(
+                    project.getProjectDirectoryAsFile(),
+                    new ProjectModelPersister(project));
             this.cacheRef = new NbSupplier<GradleModelCache>() {
                 @Override
                 public GradleModelCache get() {

@@ -8,15 +8,20 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache implements PersistentModelCache<NbGradleModel> {
+    private final File ownerProjectDir;
     private final ModelPersister<NbGradleModel> modelPersister;
 
-    public MultiFileModelCache(ModelPersister<NbGradleModel> modelPersister) {
+    public MultiFileModelCache(
+            File ownerProjectDir,
+            ModelPersister<NbGradleModel> modelPersister) {
+        ExceptionHelper.checkNotNullArgument(ownerProjectDir, "ownerProjectDir");
         ExceptionHelper.checkNotNullArgument(modelPersister, "modelPersister");
+
+        this.ownerProjectDir = ownerProjectDir;
         this.modelPersister = modelPersister;
     }
 
@@ -29,12 +34,8 @@ public final class MultiFileModelCache implements PersistentModelCache<NbGradleM
     }
 
     @Override
-    public NbGradleModel tryGetModel(NbGradleProject project, Path rootProjectDir) throws IOException {
-        Path cacheFilePath = getCacheFilePath(
-                rootProjectDir,
-                project.getProjectDirectoryAsFile(),
-                getMD5());
-
+    public NbGradleModel tryGetModel(Path rootProjectDir) throws IOException {
+        Path cacheFilePath = getCacheFilePath(rootProjectDir, ownerProjectDir, getMD5());
         return modelPersister.tryLoadModel(cacheFilePath);
     }
 
