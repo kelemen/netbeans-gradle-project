@@ -17,9 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
-import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.WaitableSignal;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
@@ -74,7 +72,6 @@ import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.CombinedTaskVariableMap;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.EnvTaskVariableMap;
-import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
@@ -108,22 +105,19 @@ public final class NbGradleProject implements Project {
 
     private final String name;
     private final ChangeListenerManager modelChangeListeners;
-    private final AtomicBoolean hasModelBeenLoaded;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
     private final LazyValue<GradleModelLoader> modelLoaderRef;
     private final LazyValue<ProjectInfoRef> loadErrorRef;
-
-    private final WaitableSignal loadedAtLeastOnceSignal;
+    private final ModelRetrievedListener modelLoadListener;
+    private final ProjectModelUpdater modelUpdater;
 
     private volatile List<NbGradleExtensionRef> extensionRefs;
     private volatile Set<String> extensionNames;
 
     private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
-
-    private final ModelRetrievedListener modelLoadListener;
 
     private final AtomicReference<Path> preferredSettingsFileRef;
 
@@ -145,7 +139,6 @@ public final class NbGradleProject implements Project {
         });
         this.combinedExtensionLookup = new DynamicLookup();
 
-        this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
             @Override
             public ProjectInfoRef get() {
@@ -156,7 +149,6 @@ public final class NbGradleProject implements Project {
         this.currentModelRef = new AtomicReference<>(
                 GradleModelLoader.createEmptyModel(projectDirAsFile));
 
-        this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.name = projectDir.getNameExt();
         this.extensionRefs = Collections.emptyList();
         this.extensionNames = Collections.emptySet();
@@ -167,7 +159,6 @@ public final class NbGradleProject implements Project {
             }
         });
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
-        this.modelLoadListener = new ModelRetrievedListenerImpl();
         this.modelLoaderRef = new LazyValue<>(new NbSupplier<GradleModelLoader>() {
             @Override
             public GradleModelLoader get() {
@@ -186,15 +177,13 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
+        this.modelLoadListener = new ModelRetrievedListenerImpl();
+        this.modelUpdater = new ProjectModelUpdater(modelLoaderRef, modelLoadListener);
     }
 
     private GradleModelLoader createModelLoader() {
         GradleModelLoader.Builder result = new GradleModelLoader.Builder(this);
         return result.create();
-    }
-
-    private GradleModelLoader getModelLoader() {
-        return modelLoaderRef.get();
     }
 
     private static Path tryGetPreferredSettingsFile(File projectDir) {
@@ -271,6 +260,30 @@ public final class NbGradleProject implements Project {
     @Nonnull
     public List<NbGradleExtensionRef> getExtensionRefs() {
         return extensionRefs;
+    }
+
+    public void ensureLoadRequested() {
+        modelUpdater.ensureLoadRequested();
+    }
+
+    public void reloadProject() {
+        modelUpdater.reloadProject();
+    }
+
+    public boolean wasModelEverSet() {
+        return modelUpdater.wasModelEverSet();
+    }
+
+    public void waitForLoadedProject(CancellationToken cancelToken) {
+        modelUpdater.waitForLoadedProject(cancelToken);
+    }
+
+    public boolean tryWaitForLoadedProject(long timeout, TimeUnit unit) {
+        return modelUpdater.tryWaitForLoadedProject(timeout, unit);
+    }
+
+    public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
+        return modelUpdater.tryWaitForLoadedProject(cancelToken, timeout, unit);
     }
 
     public boolean isSameProject(Project other) {
@@ -362,7 +375,7 @@ public final class NbGradleProject implements Project {
 
             @Override
             public Lookup getLookupAndActivate() {
-                ensureLoadRequested();
+                modelUpdater.ensureLoadRequested();
                 return combinedAllLookups;
             }
         }));
@@ -450,14 +463,6 @@ public final class NbGradleProject implements Project {
         return currentModel;
     }
 
-    public void reloadProject() {
-        reloadProject(false);
-    }
-
-    private void reloadProject(boolean mayUseCache) {
-        loadProject(false, mayUseCache);
-    }
-
     public Path getPreferredSettingsFile() {
         return preferredSettingsFileRef.get();
     }
@@ -474,41 +479,11 @@ public final class NbGradleProject implements Project {
             return;
         }
 
-        reloadProject(true);
+        modelUpdater.reloadProjectMayUseCache();
     }
 
     public void updateSettingsFile() {
         updateSettingsFile(tryGetPreferredSettingsFile(getProjectDirectoryAsFile()));
-    }
-
-    public boolean hasLoadedProject() {
-        return loadedAtLeastOnceSignal.isSignaled();
-    }
-
-    private static void checkCanWaitForProjectLoad() {
-        if (GradleDaemonManager.isRunningExclusiveTask()) {
-            throw new IllegalStateException("Cannot wait for loading a project"
-                    + " while blocking daemon tasks from being executed."
-                    + " Possible dead-lock.");
-        }
-    }
-
-    public boolean tryWaitForLoadedProject(long timeout, TimeUnit unit) {
-        return tryWaitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN, timeout, unit);
-    }
-
-    public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
-        checkCanWaitForProjectLoad();
-
-        ensureLoadRequested();
-        return loadedAtLeastOnceSignal.tryWaitSignal(cancelToken, timeout, unit);
-    }
-
-    public void waitForLoadedProject(CancellationToken cancelToken) {
-        checkCanWaitForProjectLoad();
-
-        ensureLoadRequested();
-        loadedAtLeastOnceSignal.waitSignal(cancelToken);
     }
 
     private void onModelChange() {
@@ -523,20 +498,6 @@ public final class NbGradleProject implements Project {
             GradleCacheByBinaryLookup.notifyCacheChange();
             GradleCacheBinaryForSourceQuery.notifyCacheChange();
         }
-    }
-
-    public void ensureLoadRequested() {
-        loadProject(true, true);
-    }
-
-    private void loadProject(final boolean onlyIfNotLoaded, final boolean mayUseCache) {
-        if (!hasModelBeenLoaded.compareAndSet(false, true)) {
-            if (onlyIfNotLoaded) {
-                return;
-            }
-        }
-
-        getModelLoader().fetchModel(mayUseCache, modelLoadListener);
     }
 
     public ProjectSettingsProvider getProjectSettingsProvider() {
@@ -690,7 +651,7 @@ public final class NbGradleProject implements Project {
             ensureInitialized();
 
             closeableActions.open();
-            reloadProject(true);
+            modelUpdater.reloadProjectMayUseCache();
         }
 
         @Override
@@ -788,7 +749,8 @@ public final class NbGradleProject implements Project {
             }
         }
 
-        private void applyModelLoadResults(NbGradleModel model, Throwable error) {
+        @Override
+        public void onComplete(NbGradleModel model, Throwable error) {
             boolean hasChanged = false;
             if (model != null) {
                 NbGradleModel prevModel = currentModelRef.getAndSet(model);
@@ -809,15 +771,6 @@ public final class NbGradleProject implements Project {
 
             if (hasChanged) {
                 updateExtensionActivation(model);
-            }
-        }
-
-        @Override
-        public void onComplete(NbGradleModel model, Throwable error) {
-            try {
-                applyModelLoadResults(model, error);
-            } finally {
-                loadedAtLeastOnceSignal.signal();
             }
         }
     }
