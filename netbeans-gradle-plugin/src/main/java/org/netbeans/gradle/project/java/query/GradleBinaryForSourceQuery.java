@@ -6,7 +6,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
@@ -16,9 +15,9 @@ import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
+import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 import org.openide.util.Utilities;
 
 public final class GradleBinaryForSourceQuery
@@ -31,16 +30,13 @@ implements
     private static final URL[] NO_ROOTS = new URL[0];
 
     private final JavaExtension javaExt;
-    private final ChangeSupport changes;
+    private final LazyChangeSupport changes;
 
     public GradleBinaryForSourceQuery(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-
-        EventSource eventSource = new EventSource();
-        this.changes = new ChangeSupport(eventSource);
-        eventSource.init(this.changes);
+        this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
     private static File tryGetOutputDir(
@@ -78,12 +74,7 @@ implements
 
     @Override
     public void onModelChange() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                changes.fireChange();
-            }
-        });
+        changes.fireChange();
     }
 
     @Override
@@ -123,10 +114,14 @@ implements
         };
     }
 
-    private static final class EventSource implements BinaryForSourceQuery.Result {
-        private volatile ChangeSupport changes;
+    private static final class EventSource
+    implements
+            BinaryForSourceQuery.Result,
+            LazyChangeSupport.Source {
+        private volatile LazyChangeSupport changes;
 
-        public void init(ChangeSupport changes) {
+        @Override
+        public void init(LazyChangeSupport changes) {
             assert changes != null;
             this.changes = changes;
         }

@@ -1,26 +1,19 @@
 package org.netbeans.gradle.project.query;
 
 import java.io.File;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 
 public final class GradleCacheByBinaryLookup {
     private static final FileObject[] NO_ROOTS = new FileObject[0];
-    private static final ChangeSupport CHANGES;
-
-    static {
-        EventSource eventSource = new EventSource();
-        CHANGES = new ChangeSupport(eventSource);
-        eventSource.init(CHANGES);
-    }
+    private static final LazyChangeSupport CHANGES = LazyChangeSupport.createSwing(new EventSource());
 
     private final String searchedPackaging;
     private final NbFunction<FileObject, String> binaryToSearchedEntry;
@@ -34,12 +27,7 @@ public final class GradleCacheByBinaryLookup {
     }
 
     public static void notifyCacheChange() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                CHANGES.fireChange();
-            }
-        });
+        CHANGES.fireChange();
     }
 
     public SourceForBinaryQueryImplementation2.Result tryFindEntryByBinary(File binaryRoot) {
@@ -82,10 +70,15 @@ public final class GradleCacheByBinaryLookup {
         return new NewFormatCacheResult(binDir, sourceFileName);
     }
 
-    private static final class EventSource implements SourceForBinaryQueryImplementation2.Result {
-        private volatile ChangeSupport changes;
+    private static final class EventSource
+    implements
+            SourceForBinaryQueryImplementation2.Result,
+            LazyChangeSupport.Source {
 
-        public void init(ChangeSupport changes) {
+        private volatile LazyChangeSupport changes;
+
+        @Override
+        public void init(LazyChangeSupport changes) {
             assert changes != null;
             this.changes = changes;
         }

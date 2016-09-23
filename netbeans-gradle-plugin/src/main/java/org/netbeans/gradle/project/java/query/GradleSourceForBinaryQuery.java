@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -16,11 +15,11 @@ import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
+import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ChangeSupport;
 
 public final class GradleSourceForBinaryQuery
 extends
@@ -44,16 +43,13 @@ implements
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
     private final JavaExtension javaExt;
-    private final ChangeSupport changes;
+    private final LazyChangeSupport changes;
 
     public GradleSourceForBinaryQuery(JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
-
-        EventSource eventSource = new EventSource();
-        this.changes = new ChangeSupport(eventSource);
-        eventSource.init(this.changes);
+        this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
     private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
@@ -94,12 +90,7 @@ implements
 
     @Override
     public void onModelChange() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                changes.fireChange();
-            }
-        });
+        changes.fireChange();
     }
 
     @Override
@@ -140,10 +131,15 @@ implements
         };
     }
 
-    private static final class EventSource implements SourceForBinaryQueryImplementation2.Result {
-        private volatile ChangeSupport changes;
+    private static final class EventSource
+    implements
+            SourceForBinaryQueryImplementation2.Result,
+            LazyChangeSupport.Source {
 
-        public void init(ChangeSupport changes) {
+        private volatile LazyChangeSupport changes;
+
+        @Override
+        public void init(LazyChangeSupport changes) {
             assert changes != null;
             this.changes = changes;
         }
