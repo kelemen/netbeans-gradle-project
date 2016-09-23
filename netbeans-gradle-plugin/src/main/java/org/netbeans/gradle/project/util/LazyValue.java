@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.util;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class LazyValue<T> {
+public final class LazyValue<T> implements NbSupplier<T> {
     private final NbSupplier<? extends T> valueFactory;
     private final AtomicReference<T> valueRef;
 
@@ -14,6 +14,7 @@ public final class LazyValue<T> {
         this.valueRef = new AtomicReference<>(null);
     }
 
+    @Override
     public T get() {
         T result = valueRef.get();
         if (result == null) {
