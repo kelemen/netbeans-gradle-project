@@ -7,11 +7,20 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class DynamicLookup extends ProxyLookup {
+    private final Lookup view;
+
     public DynamicLookup(Lookup... lookups) {
         super(lookups);
+
+        this.view = new DelegateLookup(this);
     }
 
     public DynamicLookup() {
+        this.view = new DelegateLookup(this);
+    }
+
+    public Lookup getUnmodifiableView() {
+        return view;
     }
 
     public void replaceLookups(Lookup... lookups) {

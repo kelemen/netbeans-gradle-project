@@ -75,15 +75,11 @@ public final class NbGradleProjectLookups {
     }
 
     public Lookup getMainLookup() {
-        // TODO: We could protect the returned Lookup from being cast to DynamicLookup by
-        //       the caller and then being modified.
-        return mainLookup;
+        return mainLookup.getUnmodifiableView();
     }
 
     public Lookup getCombinedExtensionLookup() {
-        // TODO: We could protect the returned Lookup from being cast to DynamicLookup by
-        //       the caller and then being modified.
-        return combinedExtensionLookup;
+        return combinedExtensionLookup.getUnmodifiableView();
     }
 
     private static List<LookupProvider> moveToLookupProvider(List<Lookup> lookups) {

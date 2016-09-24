@@ -89,11 +89,11 @@ public final class NbGradleExtensionRef {
     }
 
     public Lookup getExtensionLookup() {
-        return extensionLookup;
+        return extensionLookup.getUnmodifiableView();
     }
 
     public Lookup getProjectLookup() {
-        return projectLookup;
+        return projectLookup.getUnmodifiableView();
     }
 
     private ParsedModel<?> safelyReturn(ParsedModel<?> result) {
