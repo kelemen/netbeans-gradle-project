@@ -24,6 +24,7 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
+import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -234,7 +235,7 @@ public final class NbGradleProject implements Project {
         return extensions;
     }
 
-    private NbGradleSingleProjectConfigProvider getConfigProvider() {
+    public NbGradleSingleProjectConfigProvider getConfigProvider() {
         return getServiceObjects().configProvider;
     }
 
@@ -286,6 +287,10 @@ public final class NbGradleProject implements Project {
 
     public ProjectSettingsProvider getProjectSettingsProvider() {
         return getServiceObjects().projectSettingsProvider;
+    }
+
+    public GradleCommandExecutor getGradleCommandExecutor() {
+        return getServiceObjects().commandExecutor;
     }
 
     public NbGradleCommonProperties getCommonProperties() {

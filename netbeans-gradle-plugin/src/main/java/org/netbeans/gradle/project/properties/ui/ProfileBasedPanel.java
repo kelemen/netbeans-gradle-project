@@ -50,7 +50,6 @@ import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.properties.AtomicIntProperty;
 import org.netbeans.gradle.project.properties.NbGradleConfiguration;
-import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.util.GlassPanes;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -171,7 +170,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             JComponent customPanel,
             ProfileValuesEditorFactory2 snapshotCreator) {
 
-        final ProjectSettingsProvider settingsProvider = project.getLookup().lookup(ProjectSettingsProvider.class);
+        final ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
         if (settingsProvider == null) {
             throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
         }
@@ -291,10 +290,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private List<ProfileItem> getProfileItems() {
-        Collection<NbGradleConfiguration> projectConfigs = project
-                .getLookup()
-                .lookup(NbGradleSingleProjectConfigProvider.class)
-                .getConfigurations();
+        Collection<NbGradleConfiguration> projectConfigs = project.getConfigProvider().getConfigurations();
         List<ProfileItem> result = new ArrayList<>(projectConfigs.size() + 1);
         for (NbGradleConfiguration config: projectConfigs) {
             result.add(new ProfileItem(config.getProfileDef()));
@@ -662,7 +658,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         NbGradleConfiguration newConfig = new NbGradleConfiguration(profileDef);
         ProfileItem newProfile = new ProfileItem(profileDef);
 
-        project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).addConfiguration(newConfig);
+        project.getConfigProvider().addConfiguration(newConfig);
 
         boolean hasItem = false;
         int itemCount = jProfileCombo.getItemCount();
@@ -709,7 +705,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         jProfileCombo.setSelectedItem(ProfileItem.DEFAULT);
 
         NbGradleConfiguration config = new NbGradleConfiguration(profileItem.profileDef);
-        project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class).removeConfiguration(config);
+        project.getConfigProvider().removeConfiguration(config);
     }//GEN-LAST:event_jRemoveProfileButtonActionPerformed
 
 

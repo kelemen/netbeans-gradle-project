@@ -457,8 +457,7 @@ implements
                 ? CustomCommandActions.OTHER
                 : CustomCommandActions.BUILD;
 
-        project.getLookup().lookup(GradleCommandExecutor.class)
-                .executeCommand(command, actions);
+        project.getGradleCommandExecutor().executeCommand(command, actions);
     }
 
     @SuppressWarnings("serial") // don't care about serialization

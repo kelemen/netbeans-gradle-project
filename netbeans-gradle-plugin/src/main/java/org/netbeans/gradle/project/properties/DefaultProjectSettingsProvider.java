@@ -26,7 +26,7 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
     public NbGradleSingleProjectConfigProvider getConfigProvider() {
         NbGradleSingleProjectConfigProvider result = configProviderRef.get();
         if (result == null) {
-            result = project.getLookup().lookup(NbGradleSingleProjectConfigProvider.class);
+            result = project.getConfigProvider();
             configProviderRef.set(result);
         }
         return result;
