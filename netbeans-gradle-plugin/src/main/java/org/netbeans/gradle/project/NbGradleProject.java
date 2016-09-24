@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,19 +21,15 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
-import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
-import org.netbeans.gradle.project.lookups.DynamicLookup;
-import org.netbeans.gradle.project.lookups.ProjectLookupHack;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -69,16 +64,12 @@ import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
-import org.netbeans.spi.project.LookupProvider;
 import org.netbeans.spi.project.ProjectState;
-import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
-import org.netbeans.spi.project.ui.support.UILookupMergerSupport;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
-import org.openide.util.lookup.ProxyLookup;
 
 public final class NbGradleProject implements Project {
     private final FileObject projectDir;
@@ -86,9 +77,7 @@ public final class NbGradleProject implements Project {
     private final Path projectDirAsPath;
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
-
-    private final LazyValue<DynamicLookup> mainLookupRef;
-    private final DynamicLookup combinedExtensionLookup;
+    private volatile NbGradleProjectExtensions extensions;
 
     private final String name;
     private final LazyValue<PropertySource<String>> displayNameRef;
@@ -96,12 +85,7 @@ public final class NbGradleProject implements Project {
     private final LazyValue<DefaultGradleModelLoader> modelLoaderRef;
     private final ProjectModelManager modelLoadListener;
     private final ProjectModelUpdater<NbGradleModel> modelUpdater;
-
-    private volatile List<NbGradleExtensionRef> extensionRefs;
-    private volatile Set<String> extensionNames;
-
     private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
-
     private final AtomicReference<Path> preferredSettingsFileRef;
 
     private NbGradleProject(FileObject projectDir) throws IOException {
@@ -120,17 +104,9 @@ public final class NbGradleProject implements Project {
                 return createMergedBuiltInGradleCommandQuery();
             }
         });
-        this.combinedExtensionLookup = new DynamicLookup();
+        this.extensions = NbGradleProjectExtensions.EMPTY;
 
         this.name = projectDir.getNameExt();
-        this.extensionRefs = Collections.emptyList();
-        this.extensionNames = Collections.emptySet();
-        this.mainLookupRef = new LazyValue<>(new NbSupplier<DynamicLookup>() {
-            @Override
-            public DynamicLookup get() {
-                return new DynamicLookup(getDefaultLookup());
-            }
-        });
         this.modelLoaderRef = new LazyValue<>(new NbSupplier<DefaultGradleModelLoader>() {
             @Override
             public DefaultGradleModelLoader get() {
@@ -218,7 +194,7 @@ public final class NbGradleProject implements Project {
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir);
         project.initServiceObjects(state);
-        project.setExtensions(ExtensionLoader.loadExtensions(project));
+        project.setExtensions(new NbGradleProjectExtensions(ExtensionLoader.loadExtensions(project)));
 
         LoadedProjectManager.getDefault().addProject(project);
         project.updateSettingsFile();
@@ -236,7 +212,7 @@ public final class NbGradleProject implements Project {
 
     @Nonnull
     public List<NbGradleExtensionRef> getExtensionRefs() {
-        return extensionRefs;
+        return extensions.getExtensionRefs();
     }
 
     public void ensureLoadRequested() {
@@ -263,104 +239,17 @@ public final class NbGradleProject implements Project {
         return Objects.equals(other.getProjectDirectory(), getProjectDirectory());
     }
 
-    private List<Lookup> extractLookupsFromProviders(Lookup providerContainer) {
-        Lookup baseContext = getDefaultLookup();
-        // baseContext must contain the Project instance.
-
-        List<Lookup> result = new LinkedList<>();
-        for (LookupProvider provider: providerContainer.lookupAll(LookupProvider.class)) {
-            result.add(provider.createAdditionalLookup(baseContext));
-        }
-
-        return result;
-    }
-
-    private List<Lookup> getLookupsFromAnnotations() {
-        Lookup lookupProviders = Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Lookup");
-        return extractLookupsFromProviders(lookupProviders);
-    }
-
-    private void updateCombinedExtensionLookup() {
-        List<Lookup> extensionLookups = new ArrayList<>(extensionRefs.size());
-        for (NbGradleExtensionRef extenion: extensionRefs) {
-            extensionLookups.add(extenion.getExtensionLookup());
-        }
-        combinedExtensionLookup.replaceLookups(extensionLookups);
-    }
-
-    private static List<LookupProvider> moveToLookupProvider(List<Lookup> lookups) {
-        List<LookupProvider> result = new ArrayList<>(lookups.size());
-        for (Lookup lookup: lookups) {
-            result.add(moveToLookupProvider(lookup));
-        }
-        return result;
-    }
-
-    private static LookupProvider moveToLookupProvider(final Lookup lookup) {
-        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
-        return new LookupProvider() {
-            @Override
-            public Lookup createAdditionalLookup(Lookup baseContext) {
-                return lookup;
-            }
-        };
-    }
-
-    private static Lookup getLookupMergers() {
-        return Lookups.fixed(
-                UILookupMergerSupport.createPrivilegedTemplatesMerger(),
-                UILookupMergerSupport.createProjectProblemsProviderMerger(),
-                UILookupMergerSupport.createRecommendedTemplatesMerger()
-        );
-    }
-
-    private void setExtensions(List<NbGradleExtensionRef> extensions) {
-        List<LookupProvider> allLookupProviders = new ArrayList<>(extensions.size() + 3);
-
-        Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
-
-
-        allLookupProviders.add(moveToLookupProvider(getDefaultLookup()));
-        for (final NbGradleExtensionRef extension: extensions) {
-            newExtensionNames.add(extension.getName());
-            allLookupProviders.add(moveToLookupProvider(extension.getProjectLookup()));
-        }
-
-        allLookupProviders.add(moveToLookupProvider(getLookupMergers()));
-
-        allLookupProviders.addAll(moveToLookupProvider(getLookupsFromAnnotations()));
-
-        this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
-        this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
-
-        Lookup combinedLookupProviders = LookupProviderSupport.createCompositeLookup(Lookup.EMPTY, Lookups.fixed(allLookupProviders.toArray()));
-        final Lookup combinedAllLookups = new ProxyLookup(combinedLookupProviders);
-        getMainLookup().replaceLookups(new ProjectLookupHack(new ProjectLookupHack.LookupContainer() {
-            @Override
-            public NbGradleProject getProject() {
-                return NbGradleProject.this;
-            }
-
-            @Override
-            public Lookup getLookup() {
-                return combinedAllLookups;
-            }
-
-            @Override
-            public Lookup getLookupAndActivate() {
-                modelUpdater.ensureLoadRequested();
-                return combinedAllLookups;
-            }
-        }));
-        updateCombinedExtensionLookup();
+    private void setExtensions(NbGradleProjectExtensions newExtensions) {
+        this.extensions = newExtensions;
+        getServiceObjects().projectLookups.updateExtensions(this, newExtensions);
     }
 
     public boolean hasExtension(String extensionName) {
-        return extensionNames.contains(extensionName);
+        return extensions.hasExtension(extensionName);
     }
 
     public Lookup getCombinedExtensionLookup() {
-        return combinedExtensionLookup;
+        return extensions.getCombinedExtensionLookup();
     }
 
     private NbGradleSingleProjectConfigProvider getConfigProvider() {
@@ -543,17 +432,9 @@ public final class NbGradleProject implements Project {
         return projectDir;
     }
 
-    private Lookup getDefaultLookup() {
-        return getServiceObjects().services;
-    }
-
-    private DynamicLookup getMainLookup() {
-        return mainLookupRef.get();
-    }
-
     @Override
     public Lookup getLookup() {
-        return getMainLookup();
+        return getServiceObjects().projectLookups.getMainLookup();
     }
 
     // equals and hashCode is provided, so that NetBeans doesn't load the
@@ -635,6 +516,7 @@ public final class NbGradleProject implements Project {
         public final ProjectSettingsProvider projectSettingsProvider;
 
         public final Lookup services;
+        public final NbGradleProjectLookups projectLookups;
 
         public ServiceObjects(NbGradleProject project, ProjectState state) {
             List<Object> serviceObjects = new LinkedList<>();
@@ -666,6 +548,7 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
             this.services = Lookups.fixed(serviceObjects.toArray());
+            this.projectLookups = new NbGradleProjectLookups(this.services);
         }
 
         private static <T> T add(T obj, Collection<? super T> serviceContainer) {
