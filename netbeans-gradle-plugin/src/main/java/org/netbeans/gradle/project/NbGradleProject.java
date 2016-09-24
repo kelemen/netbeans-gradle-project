@@ -64,7 +64,7 @@ public final class NbGradleProject implements Project {
     private final String name;
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
-    private final ProjectModelManager modelLoadListener;
+    private final ProjectModelManager modelManager;
     private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
     private final AtomicReference<Path> preferredSettingsFileRef;
 
@@ -89,8 +89,8 @@ public final class NbGradleProject implements Project {
 
         this.name = projectDir.getNameExt();
 
-        this.modelLoadListener = new ProjectModelManager(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
-        final PropertySource<NbGradleModel> currentModel = this.modelLoadListener.currentModel();
+        this.modelManager = new ProjectModelManager(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
+        final PropertySource<NbGradleModel> currentModel = this.modelManager.currentModel();
 
         this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
             @Override
@@ -236,7 +236,7 @@ public final class NbGradleProject implements Project {
     }
 
     public PropertySource<NbGradleModel> currentModel() {
-        return modelLoadListener.currentModel();
+        return modelManager.currentModel();
     }
 
     private Path getPreferredSettingsFile() {
@@ -304,7 +304,7 @@ public final class NbGradleProject implements Project {
 
     public void tryReplaceModel(NbGradleModel model) {
         if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-            modelLoadListener.updateModel(model, null);
+            modelManager.updateModel(model, null);
         }
     }
 
@@ -419,7 +419,7 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
-            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), project.modelLoadListener);
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), project.modelManager);
 
             this.services = Lookups.fixed(serviceObjects.toArray());
             this.projectLookups = new NbGradleProjectLookups(this.services);
