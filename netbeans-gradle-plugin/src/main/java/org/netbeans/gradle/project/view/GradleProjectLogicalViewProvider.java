@@ -53,6 +53,7 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties.ui.AddNewTaskPanel;
+import org.netbeans.gradle.project.tasks.TaskVariableMaps;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
@@ -663,7 +664,7 @@ implements
             boolean hasCustomTasks = false;
             menu.removeAll();
 
-            TaskVariableMap varReplaceMap = project.getVarReplaceMap(Lookup.EMPTY);
+            TaskVariableMap varReplaceMap = TaskVariableMaps.createProjectActionVariableMap(project, Lookup.EMPTY);
             for (final PredefinedTask task: commonTasksList) {
                 if (!task.isTasksExistsIfRequired(project, varReplaceMap)) {
                     continue;

@@ -3,7 +3,6 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -25,11 +24,7 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
-import org.netbeans.gradle.project.api.task.GradleTaskVariableQuery;
-import org.netbeans.gradle.project.api.task.TaskVariable;
-import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
-import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -49,15 +44,11 @@ import org.netbeans.gradle.project.properties.ProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectProfileSettingsKey;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
-import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
-import org.netbeans.gradle.project.tasks.CombinedTaskVariableMap;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
-import org.netbeans.gradle.project.tasks.EnvTaskVariableMap;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.NbConsumer;
@@ -260,48 +251,6 @@ public final class NbGradleProject implements Project {
             ModelLoadIssueReporter.reportAllIssues(errorText, Collections.singleton(
                     new ModelLoadIssue(this, null, null, null, exception)));
         }
-    }
-
-    private static TaskVariableMap asTaskVariableMap(PropertySource<? extends CustomVariables> varsProperty) {
-        final CustomVariables vars = varsProperty.getValue();
-        if (vars == null || vars.isEmpty()) {
-            return null;
-        }
-
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                return vars.tryGetValue(variable.getVariableName());
-            }
-        };
-    }
-
-    private static void addAsTaskVariableMap(
-            PropertySource<? extends CustomVariables> varsProperty,
-            List<? super TaskVariableMap> result) {
-        TaskVariableMap vars = asTaskVariableMap(varsProperty);
-        if (vars != null) {
-            result.add(vars);
-        }
-    }
-
-    @Nonnull
-    public TaskVariableMap getVarReplaceMap(Lookup actionContext) {
-        final List<TaskVariableMap> maps = new ArrayList<>();
-
-        addAsTaskVariableMap(getCommonProperties().customVariables().getActiveSource(), maps);
-
-        Collection<? extends GradleTaskVariableQuery> taskVariables
-                = getExtensions().getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
-        for (GradleTaskVariableQuery query: taskVariables) {
-            maps.add(query.getVariableMap(actionContext));
-        }
-
-        // Allow extensions to redefine variables.
-        maps.add(StandardTaskVariable.createVarReplaceMap(this, actionContext));
-        maps.add(EnvTaskVariableMap.DEFAULT);
-
-        return new CombinedTaskVariableMap(maps);
     }
 
     public ProjectInfoManager getProjectInfoManager() {

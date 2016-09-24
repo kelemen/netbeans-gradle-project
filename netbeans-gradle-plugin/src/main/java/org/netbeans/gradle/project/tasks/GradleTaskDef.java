@@ -583,7 +583,7 @@ public final class GradleTaskDef {
             CustomCommandActions customActions,
             Lookup actionContext) {
 
-        TaskVariableMap varReplaceMap = project.getVarReplaceMap(actionContext);
+        TaskVariableMap varReplaceMap = TaskVariableMaps.createProjectActionVariableMap(project, actionContext);
         TaskOutputDef caption = getOutputDef(project, customActions.getTaskKind(), command);
         GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
         addAdditionalArguments(project, actionContext, customActions, varReplaceMap, builder);

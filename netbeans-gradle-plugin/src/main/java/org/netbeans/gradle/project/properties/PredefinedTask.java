@@ -14,6 +14,7 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TaskVariableMaps;
 import org.openide.util.Lookup;
 
 public final class PredefinedTask {
@@ -189,7 +190,8 @@ public final class PredefinedTask {
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {
-        return isTasksExistsIfRequired(project, project.getVarReplaceMap(actionContext));
+        TaskVariableMap varMap = TaskVariableMaps.createProjectActionVariableMap(project, actionContext);
+        return isTasksExistsIfRequired(project, varMap);
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
