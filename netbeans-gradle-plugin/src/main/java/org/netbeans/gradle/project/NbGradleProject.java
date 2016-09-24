@@ -3,13 +3,11 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,7 +15,6 @@ import javax.annotation.Nonnull;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.property.PropertySource;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
@@ -311,7 +308,7 @@ public final class NbGradleProject implements Project {
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
-        public final NbGradleProjectExtensionsImpl extensions;
+        public final UpdatableProjectExtensions extensions;
 
         public ServiceObjects(NbGradleProject project, ProjectState state) {
             List<Object> serviceObjects = new LinkedList<>();
@@ -356,7 +353,7 @@ public final class NbGradleProject implements Project {
 
             this.services = Lookups.fixed(serviceObjects.toArray());
             this.projectLookups = new NbGradleProjectLookups(project, services);
-            this.extensions = new NbGradleProjectExtensionsImpl(projectLookups.getCombinedExtensionLookup());
+            this.extensions = new UpdatableProjectExtensions(projectLookups.getCombinedExtensionLookup());
         }
 
         public void updateExtensions(Collection<? extends NbGradleExtensionRef> newExtensions) {
@@ -432,76 +429,6 @@ public final class NbGradleProject implements Project {
             }
 
             return NbGradleModel.findSettingsGradle(projectDir);
-        }
-    }
-
-    private static final class ExtensionCollection {
-        public static final ExtensionCollection EMPTY
-                = new ExtensionCollection(Collections.<NbGradleExtensionRef>emptySet());
-
-        private final List<NbGradleExtensionRef> extensionRefs;
-        private final Set<String> extensionNames;
-
-        public ExtensionCollection(Collection<? extends NbGradleExtensionRef> extensions) {
-            this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
-
-            Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
-            for (NbGradleExtensionRef extension: this.extensionRefs) {
-                newExtensionNames.add(extension.getName());
-            }
-            this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
-        }
-
-        public List<NbGradleExtensionRef> getExtensionRefs() {
-            return extensionRefs;
-        }
-
-        public boolean hasExtension(String extensionName) {
-            return extensionNames.contains(extensionName);
-        }
-    }
-
-    private static final class NbGradleProjectExtensionsImpl implements NbGradleProjectExtensions {
-        private final Lookup combinedLookup;
-        private volatile ExtensionCollection extensions;
-
-        public NbGradleProjectExtensionsImpl(Lookup combinedLookup) {
-            this.combinedLookup = combinedLookup;
-            this.extensions = ExtensionCollection.EMPTY;
-        }
-
-        public void setExtensions(Collection<? extends NbGradleExtensionRef> extensions) {
-            setExtensions(new ExtensionCollection(extensions));
-        }
-
-        public void setExtensions(ExtensionCollection extensions) {
-            assert extensions != null;
-            this.extensions = extensions;
-        }
-
-        @Override
-        public <T> Collection<? extends T> lookupAllExtensionObjs(Class<T> type) {
-            return combinedLookup.lookupAll(type);
-        }
-
-        @Override
-        public <T> T lookupExtensionObj(Class<T> type) {
-            return combinedLookup.lookup(type);
-        }
-
-        @Override
-        public Lookup getCombinedExtensionLookup() {
-            return combinedLookup;
-        }
-
-        @Override
-        public List<NbGradleExtensionRef> getExtensionRefs() {
-            return extensions.getExtensionRefs();
-        }
-
-        @Override
-        public boolean hasExtension(String extensionName) {
-            return extensions.hasExtension(extensionName);
         }
     }
 }
