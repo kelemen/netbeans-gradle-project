@@ -226,7 +226,7 @@ public final class NbGradleProject implements Project {
     }
 
     public ProjectDisplayInfo getDisplayInfo() {
-        return getServiceObjects().projectInfo;
+        return getServiceObjects().projectDisplayInfo;
     }
 
     public String getDisplayName() {
@@ -333,7 +333,7 @@ public final class NbGradleProject implements Project {
         public final ProjectSettingsProvider projectSettingsProvider;
         public final ProjectModelManager modelManager;
         public final ProjectModelUpdater<NbGradleModel> modelUpdater;
-        public final ProjectDisplayInfo projectInfo;
+        public final ProjectDisplayInfo projectDisplayInfo;
         public final BuiltInGradleCommandQuery mergedCommandQuery;
 
         public final Lookup services;
@@ -371,7 +371,7 @@ public final class NbGradleProject implements Project {
             this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(project);
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
-            this.projectInfo = new ProjectDisplayInfo(
+            this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
 
