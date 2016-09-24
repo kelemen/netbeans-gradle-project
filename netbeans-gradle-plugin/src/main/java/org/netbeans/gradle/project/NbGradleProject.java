@@ -48,15 +48,14 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class NbGradleProject implements Project {
+    private final String name;
+
     private final FileObject projectDir;
     private final File projectDirAsFile;
     private final Path projectDirAsPath;
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
     private volatile NbGradleProjectExtensions extensions;
-
-    private final String name;
-    private final AtomicReference<Path> preferredSettingsFileRef;
 
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
@@ -69,21 +68,7 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
 
         this.serviceObjectsRef = new AtomicReference<>(null);
-        this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
         this.extensions = NbGradleProjectExtensions.EMPTY;
-    }
-
-    private static Path tryGetPreferredSettingsFile(File projectDir) {
-        if (NbGradleModel.isBuildSrcDirectory(projectDir)) {
-            return null;
-        }
-
-        Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
-        if (explicitSettingsFile != null) {
-            return explicitSettingsFile;
-        }
-
-        return NbGradleModel.findSettingsGradle(projectDir);
     }
 
     private void initServiceObjects(ProjectState state) {
@@ -114,6 +99,18 @@ public final class NbGradleProject implements Project {
         LoadedProjectManager.getDefault().addProject(project);
         project.updateSettingsFile();
         return project;
+    }
+
+    private SettingsFileManager getSettingsFileManager() {
+        return getServiceObjects().settingsFileManager;
+    }
+
+    public SettingsGradleDef getPreferredSettingsGradleDef() {
+        return getSettingsFileManager().getPreferredSettingsGradleDef();
+    }
+
+    public void updateSettingsFile() {
+        getSettingsFileManager().updateSettingsFile();
     }
 
     @Nonnull
@@ -183,29 +180,6 @@ public final class NbGradleProject implements Project {
 
     public PropertySource<NbGradleModel> currentModel() {
         return getModelManager().currentModel();
-    }
-
-    private Path getPreferredSettingsFile() {
-        return preferredSettingsFileRef.get();
-    }
-
-    public SettingsGradleDef getPreferredSettingsGradleDef() {
-        return new SettingsGradleDef(
-                getPreferredSettingsFile(),
-                !currentModel().getValue().isRootWithoutSettingsGradle());
-    }
-
-    private void updateSettingsFile(Path settingsFile) {
-        Path prevSettingsFile = preferredSettingsFileRef.getAndSet(settingsFile);
-        if (Objects.equals(prevSettingsFile, settingsFile)) {
-            return;
-        }
-
-        getModelUpdater().reloadProjectMayUseCache();
-    }
-
-    public void updateSettingsFile() {
-        updateSettingsFile(tryGetPreferredSettingsFile(getProjectDirectoryAsFile()));
     }
 
     public ProjectSettingsProvider getProjectSettingsProvider() {
@@ -335,6 +309,7 @@ public final class NbGradleProject implements Project {
         public final ProjectModelUpdater<NbGradleModel> modelUpdater;
         public final ProjectDisplayInfo projectDisplayInfo;
         public final BuiltInGradleCommandQuery mergedCommandQuery;
+        public final SettingsFileManager settingsFileManager;
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
@@ -371,6 +346,10 @@ public final class NbGradleProject implements Project {
             this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(project);
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
+            this.settingsFileManager = new SettingsFileManager(
+                    project.getProjectDirectoryAsFile(),
+                    modelUpdater,
+                    modelManager.currentModel());
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
@@ -387,6 +366,60 @@ public final class NbGradleProject implements Project {
         private static DefaultGradleModelLoader createModelLoader(NbGradleProject project) {
             DefaultGradleModelLoader.Builder result = new DefaultGradleModelLoader.Builder(project);
             return result.create();
+        }
+    }
+
+    private static final class SettingsFileManager {
+        private final File projectDir;
+        private final ProjectModelUpdater<?> modelUpdater;
+        private final PropertySource<NbGradleModel> currentModel;
+
+        private final AtomicReference<Path> preferredSettingsFileRef;
+
+        public SettingsFileManager(
+                File projectDir,
+                ProjectModelUpdater<?> modelUpdater,
+                PropertySource<NbGradleModel> currentModel) {
+            this.projectDir = projectDir;
+            this.modelUpdater = modelUpdater;
+            this.currentModel = currentModel;
+            this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDir));
+        }
+
+        private Path getPreferredSettingsFile() {
+            return preferredSettingsFileRef.get();
+        }
+
+        public SettingsGradleDef getPreferredSettingsGradleDef() {
+            return new SettingsGradleDef(
+                    getPreferredSettingsFile(),
+                    !currentModel.getValue().isRootWithoutSettingsGradle());
+        }
+
+        private void updateSettingsFile(Path settingsFile) {
+            Path prevSettingsFile = preferredSettingsFileRef.getAndSet(settingsFile);
+            if (Objects.equals(prevSettingsFile, settingsFile)) {
+                return;
+            }
+
+            modelUpdater.reloadProjectMayUseCache();
+        }
+
+        public void updateSettingsFile() {
+            updateSettingsFile(tryGetPreferredSettingsFile(projectDir));
+        }
+
+        private static Path tryGetPreferredSettingsFile(File projectDir) {
+            if (NbGradleModel.isBuildSrcDirectory(projectDir)) {
+                return null;
+            }
+
+            Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
+            if (explicitSettingsFile != null) {
+                return explicitSettingsFile;
+            }
+
+            return NbGradleModel.findSettingsGradle(projectDir);
         }
     }
 }
