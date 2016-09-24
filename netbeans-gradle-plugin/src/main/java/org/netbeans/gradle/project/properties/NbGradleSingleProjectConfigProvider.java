@@ -93,9 +93,7 @@ implements
         return result.create();
     }
 
-    public static NbGradleSingleProjectConfigProvider create(NbGradleProject project) {
-        Path rootDir = SettingsFiles.getRootDirectory(project);
-
+    public static NbGradleSingleProjectConfigProvider create(Path rootDir, NbGradleProject project) {
         return new NbGradleSingleProjectConfigProvider(
                 project,
                 NbGradleConfigProvider.getConfigProvider(rootDir));

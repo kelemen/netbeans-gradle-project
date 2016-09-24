@@ -318,7 +318,11 @@ public final class NbGradleProject implements Project {
             List<Object> serviceObjects = new LinkedList<>();
             serviceObjects.add(project);
 
-            this.configProvider = add(NbGradleSingleProjectConfigProvider.create(project), serviceObjects);
+            File projectDir = project.getProjectDirectoryAsFile();
+
+            this.configProvider = add(
+                    NbGradleSingleProjectConfigProvider.create(getSettingsDir(projectDir), project),
+                    serviceObjects);
             this.profileLoader = new ProjectProfileLoader(configProvider);
             this.commonProperties = configProvider.getCommonProperties(configProvider.getActiveSettingsQuery());
 
@@ -344,12 +348,9 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
             this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(project);
-            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
+            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
-            this.settingsFileManager = new SettingsFileManager(
-                    project.getProjectDirectoryAsFile(),
-                    modelUpdater,
-                    modelManager.currentModel());
+            this.settingsFileManager = new SettingsFileManager(projectDir, modelUpdater, modelManager.currentModel());
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
@@ -366,6 +367,12 @@ public final class NbGradleProject implements Project {
         private static DefaultGradleModelLoader createModelLoader(NbGradleProject project) {
             DefaultGradleModelLoader.Builder result = new DefaultGradleModelLoader.Builder(project);
             return result.create();
+        }
+
+        private static Path getSettingsDir(File projectDir) {
+            Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir);
+            Path rootDir = settingsGradle != null ? settingsGradle.getParent() : null;
+            return rootDir != null ? rootDir : projectDir.toPath();
         }
     }
 
