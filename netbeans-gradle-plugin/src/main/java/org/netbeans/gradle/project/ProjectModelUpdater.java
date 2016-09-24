@@ -10,10 +10,9 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.ModelLoader;
 import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 public final class ProjectModelUpdater<M> {
-    private final NbSupplier<? extends ModelLoader<? extends M>> modelLoaderProvider;
+    private final ModelLoader<? extends M>  modelLoader;
     private final ModelRetrievedListener<M> modelUpdaterWrapper;
 
     private final AtomicBoolean hasModelBeenLoaded;
@@ -21,12 +20,12 @@ public final class ProjectModelUpdater<M> {
     private final AtomicReference<Object> lastInProgressRef;
 
     public ProjectModelUpdater(
-            NbSupplier<? extends ModelLoader<? extends M>> modelLoaderProvider,
+            ModelLoader<? extends M> modelLoader,
             final ModelRetrievedListener<? super M> modelUpdater) {
-        ExceptionHelper.checkNotNullArgument(modelLoaderProvider, "modelLoaderProvider");
+        ExceptionHelper.checkNotNullArgument(modelLoader, "modelLoader");
         ExceptionHelper.checkNotNullArgument(modelUpdater, "modelUpdater");
 
-        this.modelLoaderProvider = modelLoaderProvider;
+        this.modelLoader = modelLoader;
         this.modelUpdaterWrapper = new ModelRetrievedListener<M>() {
             @Override
             public void updateModel(M model, Throwable error) {
@@ -41,10 +40,6 @@ public final class ProjectModelUpdater<M> {
         this.hasModelBeenLoaded = new AtomicBoolean(false);
         this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.lastInProgressRef = new AtomicReference<>(null);
-    }
-
-    private ModelLoader<? extends M> getModelLoader() {
-        return modelLoaderProvider.get();
     }
 
     public void ensureLoadRequested() {
@@ -83,7 +78,7 @@ public final class ProjectModelUpdater<M> {
             lastInProgressRef.set(progressRef);
         }
 
-        getModelLoader().fetchModel(mayUseCache, modelUpdaterWrapper, new Runnable() {
+        modelLoader.fetchModel(mayUseCache, modelUpdaterWrapper, new Runnable() {
             @Override
             public void run() {
                 lastInProgressRef.compareAndSet(progressRef, null);

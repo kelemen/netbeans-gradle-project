@@ -64,9 +64,7 @@ public final class NbGradleProject implements Project {
     private final String name;
     private final LazyValue<PropertySource<String>> displayNameRef;
     private final PropertySource<String> description;
-    private final LazyValue<DefaultGradleModelLoader> modelLoaderRef;
     private final ProjectModelManager modelLoadListener;
-    private final ProjectModelUpdater<NbGradleModel> modelUpdater;
     private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
     private final AtomicReference<Path> preferredSettingsFileRef;
 
@@ -89,12 +87,6 @@ public final class NbGradleProject implements Project {
         this.extensions = NbGradleProjectExtensions.EMPTY;
 
         this.name = projectDir.getNameExt();
-        this.modelLoaderRef = new LazyValue<>(new NbSupplier<DefaultGradleModelLoader>() {
-            @Override
-            public DefaultGradleModelLoader get() {
-                return createModelLoader();
-            }
-        });
 
         this.modelLoadListener = new ProjectModelManager(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
         final PropertySource<NbGradleModel> currentModel = this.modelLoadListener.currentModel();
@@ -113,12 +105,6 @@ public final class NbGradleProject implements Project {
                 return input.getDescription();
             }
         });
-        this.modelUpdater = new ProjectModelUpdater<>(modelLoaderRef, modelLoadListener);
-    }
-
-    private DefaultGradleModelLoader createModelLoader() {
-        DefaultGradleModelLoader.Builder result = new DefaultGradleModelLoader.Builder(this);
-        return result.create();
     }
 
     private static Path tryGetPreferredSettingsFile(File projectDir) {
@@ -192,24 +178,28 @@ public final class NbGradleProject implements Project {
         return mergedCommandQueryRef.get();
     }
 
+    private ProjectModelUpdater<NbGradleModel> getModelUpdater() {
+        return getServiceObjects().modelUpdater;
+    }
+
     public void ensureLoadRequested() {
-        modelUpdater.ensureLoadRequested();
+        getModelUpdater().ensureLoadRequested();
     }
 
     public void reloadProject() {
-        modelUpdater.reloadProject();
+        getModelUpdater().reloadProject();
     }
 
     public void waitForLoadedProject(CancellationToken cancelToken) {
-        modelUpdater.waitForLoadedProject(cancelToken);
+        getModelUpdater().waitForLoadedProject(cancelToken);
     }
 
     public boolean tryWaitForLoadedProject(long timeout, TimeUnit unit) {
-        return modelUpdater.tryWaitForLoadedProject(timeout, unit);
+        return getModelUpdater().tryWaitForLoadedProject(timeout, unit);
     }
 
     public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
-        return modelUpdater.tryWaitForLoadedProject(cancelToken, timeout, unit);
+        return getModelUpdater().tryWaitForLoadedProject(cancelToken, timeout, unit);
     }
 
     public boolean isSameProject(Project other) {
@@ -264,7 +254,7 @@ public final class NbGradleProject implements Project {
             return;
         }
 
-        modelUpdater.reloadProjectMayUseCache();
+        getModelUpdater().reloadProjectMayUseCache();
     }
 
     public void updateSettingsFile() {
@@ -368,7 +358,7 @@ public final class NbGradleProject implements Project {
             ensureInitialized();
 
             closeableActions.open();
-            project.modelUpdater.reloadProjectMayUseCache();
+            project.getModelUpdater().reloadProjectMayUseCache();
         }
 
         @Override
@@ -394,6 +384,7 @@ public final class NbGradleProject implements Project {
         public final DefaultGradleCommandExecutor commandExecutor;
         public final ProjectIssueManager projectIssueManager;
         public final ProjectSettingsProvider projectSettingsProvider;
+        public final ProjectModelUpdater<NbGradleModel> modelUpdater;
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
@@ -427,6 +418,8 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), project.modelLoadListener);
+
             this.services = Lookups.fixed(serviceObjects.toArray());
             this.projectLookups = new NbGradleProjectLookups(this.services);
         }
@@ -434,6 +427,11 @@ public final class NbGradleProject implements Project {
         private static <T> T add(T obj, Collection<? super T> serviceContainer) {
             serviceContainer.add(obj);
             return obj;
+        }
+
+        private static DefaultGradleModelLoader createModelLoader(NbGradleProject project) {
+            DefaultGradleModelLoader.Builder result = new DefaultGradleModelLoader.Builder(project);
+            return result.create();
         }
     }
 }
