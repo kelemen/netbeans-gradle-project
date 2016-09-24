@@ -247,12 +247,12 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         File projectDir = project.getProjectDirectoryAsFile();
         IdeaModule mainModule = IdeaJavaModelUtils.tryFindMainModule(projectDir, ideaProject);
         if (mainModule == null) {
-            throw new IOException("Failed to find idea module for project: " + project.displayName().getValue());
+            throw new IOException("Failed to find idea module for project: " + project.getDisplayName());
         }
 
         IdeaModule rootModule = tryFindRootModule(ideaProject);
         if (rootModule == null) {
-            throw new IOException("Failed to find root module for project: " + project.displayName().getValue());
+            throw new IOException("Failed to find root module for project: " + project.getDisplayName());
         }
 
         NbGradleProjectTree rootTree = tryCreateProjectTreeFromIdea(rootModule);

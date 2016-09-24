@@ -25,7 +25,7 @@ public final class GradleProjectInformation implements ProjectInformation {
         if (result == null) {
             SwingPropertyChangeForwarder.Builder combinedListeners
                     = new SwingPropertyChangeForwarder.Builder(SwingTaskExecutor.getStrictExecutor(false));
-            PropertySource<String> displayName = PropertyFactory.lazilyNotifiedSource(project.displayName());
+            PropertySource<String> displayName = PropertyFactory.lazilyNotifiedSource(project.getDisplayInfo().displayName());
             combinedListeners.addProperty(PROP_DISPLAY_NAME, displayName);
             result = combinedListeners.create();
 
@@ -48,7 +48,7 @@ public final class GradleProjectInformation implements ProjectInformation {
 
     @Override
     public String getDisplayName() {
-        return project.displayName().getValue();
+        return project.getDisplayInfo().displayName().getValue();
     }
 
     @Override

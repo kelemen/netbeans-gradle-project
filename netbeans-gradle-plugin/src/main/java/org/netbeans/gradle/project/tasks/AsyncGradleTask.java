@@ -746,7 +746,7 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         public String getDisplayName() {
-            return taskName + " " + project.displayName().getValue();
+            return taskName + " " + project.getDisplayName();
         }
 
         public String getProgressCaption() {

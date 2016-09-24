@@ -397,7 +397,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         final Runnable safeCompleteListener = Tasks.runOnceTask(aboutToCompleteListener, false);
 
-        String caption = NbStrings.getLoadingProjectText(project.displayName().getValue());
+        String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
         GradleDaemonManager.submitGradleTask(projectLoader, caption, new DaemonTask() {
             @Override
             public void run(CancellationToken cancelToken, ProgressHandle progress) {

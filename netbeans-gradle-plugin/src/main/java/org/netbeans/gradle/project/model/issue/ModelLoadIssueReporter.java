@@ -171,7 +171,7 @@ public final class ModelLoadIssueReporter {
     private static Set<String> getProjectNames(List<ModelLoadIssue> issues) {
         Set<String> names = new LinkedHashSet<>();
         for (ModelLoadIssue issue: issues) {
-            names.add(issue.getRequestedProject().displayName().getValue());
+            names.add(issue.getRequestedProject().getDisplayName());
         }
         return names;
     }
@@ -228,9 +228,9 @@ public final class ModelLoadIssueReporter {
     }
 
     private static void reportBuildScriptErrorNow(NbGradleProject project, Throwable error) {
-        String message = NbStrings.getBuildScriptErrorInProject(project.displayName().getValue());
-        String detailsCaption = project.displayName().getValue();
-        reportErrorNow(message, detailsCaption, error);
+        String projectName = project.getDisplayName();
+        String message = NbStrings.getBuildScriptErrorInProject(projectName);
+        reportErrorNow(message, projectName, error);
     }
 
     public static void reportBuildScriptError(final NbGradleProject project, final Throwable error) {

@@ -507,7 +507,7 @@ public final class GradleTaskDef {
         Object additionalKey;
         String caption;
 
-        String projectDisplayName = project.displayName().getValue();
+        String projectDisplayName = project.getDisplayName();
 
         switch (kind) {
             case DEBUG:

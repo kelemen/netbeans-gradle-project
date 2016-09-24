@@ -68,7 +68,7 @@ public final class DeleteProjectAction extends AbstractAction {
     }
 
     private ProgressHandle createProgress(final CancellationController cancelController) {
-        String caption = NbStrings.getDeleteProjectProgress(project.displayName().getValue());
+        String caption = NbStrings.getDeleteProjectProgress(project.getDisplayName());
         return ProgressHandle.createHandle(caption, new Cancellable() {
             @Override
             public boolean cancel() {
@@ -81,7 +81,7 @@ public final class DeleteProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Object[] answers = {NbStrings.getYesOption(), NbStrings.getNoOption()};
-        String message = NbStrings.getConfirmDeleteProject(project.displayName().getValue());
+        String message = NbStrings.getConfirmDeleteProject(project.getDisplayName());
         String title = NbStrings.getConfirmDeleteProjectTitle();
         if (JOptionPane.showOptionDialog(null, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, answers, answers[1]) != 0) {
             return;

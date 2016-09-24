@@ -28,7 +28,6 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.AutoDisplayState;
 import org.jtrim.utils.ExceptionHelper;
@@ -36,6 +35,7 @@ import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.ProjectDisplayInfo;
 import org.netbeans.gradle.project.ProjectIssue;
 import org.netbeans.gradle.project.ProjectIssue.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
@@ -135,16 +135,15 @@ implements
 
         final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
 
-        PropertySource<String> displayName = PropertyFactory.lazilyNotifiedSource(project.displayName());
-        PropertySource<String> description = PropertyFactory.lazilyNotifiedSource(project.description());
+        ProjectDisplayInfo displayInfo = project.getDisplayInfo();
 
-        final ListenerRef displayNameRef = displayName.addChangeListener(new Runnable() {
+        final ListenerRef displayNameRef = displayInfo.displayName().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireDisplayNameChange();
             }
         });
-        final ListenerRef descriptionRef = description.addChangeListener(new Runnable() {
+        final ListenerRef descriptionRef = displayInfo.description().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireShortDescriptionChange();
@@ -400,12 +399,12 @@ implements
 
         @Override
         public String getDisplayName() {
-            return project.displayName().getValue();
+            return project.getDisplayName();
         }
 
         @Override
         public String getShortDescription() {
-            return project.description().getValue();
+            return project.getDisplayInfo().description().getValue();
         }
     }
 

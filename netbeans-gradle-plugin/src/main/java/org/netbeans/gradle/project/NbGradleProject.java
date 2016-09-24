@@ -13,11 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.event.ListenerRef;
-import org.jtrim.event.ListenerRegistries;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
@@ -62,9 +58,6 @@ public final class NbGradleProject implements Project {
     private volatile NbGradleProjectExtensions extensions;
 
     private final String name;
-    private final LazyValue<PropertySource<String>> displayNameRef;
-    private final PropertySource<String> description;
-    private final ProjectModelManager modelManager;
     private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
     private final AtomicReference<Path> preferredSettingsFileRef;
 
@@ -76,6 +69,8 @@ public final class NbGradleProject implements Project {
         }
         this.projectDirAsPath = projectDirAsFile.toPath();
 
+        this.name = projectDir.getNameExt();
+
         this.serviceObjectsRef = new AtomicReference<>(null);
         this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
 
@@ -86,26 +81,6 @@ public final class NbGradleProject implements Project {
             }
         });
         this.extensions = NbGradleProjectExtensions.EMPTY;
-
-        this.name = projectDir.getNameExt();
-
-        this.modelManager = new ProjectModelManager(this, DefaultGradleModelLoader.createEmptyModel(this.projectDirAsFile));
-        final PropertySource<NbGradleModel> currentModel = this.modelManager.currentModel();
-
-        this.displayNameRef = new LazyValue<>(new NbSupplier<PropertySource<String>>() {
-            @Override
-            public PropertySource<String> get() {
-                return getDisplayName(
-                        currentModel,
-                        getServiceObjects().commonProperties.displayNamePattern().getActiveSource());
-            }
-        });
-        this.description = PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, String>() {
-            @Override
-            public String convert(NbGradleModel input) {
-                return input.getDescription();
-            }
-        });
     }
 
     private static Path tryGetPreferredSettingsFile(File projectDir) {
@@ -140,25 +115,6 @@ public final class NbGradleProject implements Project {
         return result;
     }
 
-    private static PropertySource<String> getDisplayName(
-            final PropertySource<NbGradleModel> model,
-            final PropertySource<String> namePattern) {
-
-        return new PropertySource<String>() {
-            @Override
-            public String getValue() {
-                return model.getValue().getDisplayName(namePattern.getValue());
-            }
-
-            @Override
-            public ListenerRef addChangeListener(Runnable listener) {
-                ListenerRef ref1 = model.addChangeListener(listener);
-                ListenerRef ref2 = namePattern.addChangeListener(listener);
-                return ListenerRegistries.combineListenerRefs(ref1, ref2);
-            }
-        };
-    }
-
     @Nonnull
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir);
@@ -177,6 +133,10 @@ public final class NbGradleProject implements Project {
     @Nonnull
     public BuiltInGradleCommandQuery getMergedCommandQuery() {
         return mergedCommandQueryRef.get();
+    }
+
+    private ProjectModelManager getModelManager() {
+        return getServiceObjects().modelManager;
     }
 
     private ProjectModelUpdater<NbGradleModel> getModelUpdater() {
@@ -236,7 +196,7 @@ public final class NbGradleProject implements Project {
     }
 
     public PropertySource<NbGradleModel> currentModel() {
-        return modelManager.currentModel();
+        return getModelManager().currentModel();
     }
 
     private Path getPreferredSettingsFile() {
@@ -279,12 +239,12 @@ public final class NbGradleProject implements Project {
         return name;
     }
 
-    public PropertySource<String> displayName() {
-        return displayNameRef.get();
+    public ProjectDisplayInfo getDisplayInfo() {
+        return getServiceObjects().projectInfo;
     }
 
-    public PropertySource<String> description() {
-        return description;
+    public String getDisplayName() {
+        return getDisplayInfo().displayName().getValue();
     }
 
     @Nonnull
@@ -304,7 +264,7 @@ public final class NbGradleProject implements Project {
 
     public void tryReplaceModel(NbGradleModel model) {
         if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-            modelManager.updateModel(model, null);
+            getModelManager().updateModel(model, null);
         }
     }
 
@@ -385,7 +345,9 @@ public final class NbGradleProject implements Project {
         public final DefaultGradleCommandExecutor commandExecutor;
         public final ProjectIssueManager projectIssueManager;
         public final ProjectSettingsProvider projectSettingsProvider;
+        public final ProjectModelManager modelManager;
         public final ProjectModelUpdater<NbGradleModel> modelUpdater;
+        public final ProjectDisplayInfo projectInfo;
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
@@ -419,7 +381,11 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
-            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), project.modelManager);
+            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
+            this.projectInfo = new ProjectDisplayInfo(
+                    modelManager.currentModel(),
+                    commonProperties.displayNamePattern().getActiveSource());
 
             this.services = Lookups.fixed(serviceObjects.toArray());
             this.projectLookups = new NbGradleProjectLookups(this.services);
