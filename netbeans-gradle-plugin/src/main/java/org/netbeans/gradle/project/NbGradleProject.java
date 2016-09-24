@@ -243,10 +243,6 @@ public final class NbGradleProject implements Project {
         return getConfigProvider().getActiveConfiguration();
     }
 
-    public ListenerRef addProfileChangeListener(Runnable listener) {
-        return getConfigProvider().addActiveConfigChangeListener(listener);
-    }
-
     public void displayError(String errorText, Throwable exception) {
         if (!ModelLoadIssueReporter.reportIfBuildScriptError(this, exception)) {
             ModelLoadIssueReporter.reportAllIssues(errorText, Collections.singleton(
@@ -262,7 +258,7 @@ public final class NbGradleProject implements Project {
         return modelLoadListener.currentModel();
     }
 
-    public Path getPreferredSettingsFile() {
+    private Path getPreferredSettingsFile() {
         return preferredSettingsFileRef.get();
     }
 
@@ -332,21 +328,17 @@ public final class NbGradleProject implements Project {
         return getConfigProvider().getActiveSettingsQuery();
     }
 
-    public ProfileSettingsContainer getProfileSettingsContainer() {
+    private ProfileSettingsContainer getProfileSettingsContainer() {
         return getConfigProvider().getProfileSettingsContainer();
     }
 
-    public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
+    private ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
         return ProjectProfileSettingsKey.getForProject(this, profileKey);
     }
 
     public SingleProfileSettingsEx loadPropertiesForProfile(ProfileKey profileKey) {
         ProfileSettingsKey key = getProjectProfileKey(profileKey);
         return getProfileSettingsContainer().loadProfileSettings(key);
-    }
-
-    public SingleProfileSettingsEx loadPrivateProfile() {
-        return loadPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
     }
 
     @Nonnull
@@ -377,6 +369,12 @@ public final class NbGradleProject implements Project {
         return projectDir;
     }
 
+    public void tryReplaceModel(NbGradleModel model) {
+        if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
+            modelLoadListener.updateModel(model, null);
+        }
+    }
+
     @Override
     public Lookup getLookup() {
         return getServiceObjects().projectLookups.getMainLookup();
@@ -398,12 +396,6 @@ public final class NbGradleProject implements Project {
 
         final NbGradleProject other = (NbGradleProject)obj;
         return this.projectDir.equals(other.projectDir);
-    }
-
-    public void tryReplaceModel(NbGradleModel model) {
-        if (getProjectDirectoryAsFile().equals(model.getProjectDir())) {
-            modelLoadListener.updateModel(model, null);
-        }
     }
 
     private static class OpenHook extends ProjectOpenedHook {

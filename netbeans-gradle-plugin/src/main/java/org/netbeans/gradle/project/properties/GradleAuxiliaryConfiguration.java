@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.spi.project.AuxiliaryConfiguration;
 import org.w3c.dom.Element;
 
@@ -29,7 +30,7 @@ public final class GradleAuxiliaryConfiguration implements AuxiliaryConfiguratio
     }
 
     private static SingleProfileSettingsEx getPrivateProperties(NbGradleProject project) {
-        return project.loadPrivateProfile();
+        return project.loadPropertiesForProfile(ProfileKey.PRIVATE_PROFILE);
     }
 
     private SingleProfileSettingsEx getSharedProperties() {
