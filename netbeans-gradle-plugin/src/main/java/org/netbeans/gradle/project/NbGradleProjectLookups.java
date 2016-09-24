@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.jtrim.utils.ExceptionHelper;
@@ -16,22 +17,22 @@ import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
 public final class NbGradleProjectLookups {
+    private final NbGradleProject project;
     private final Lookup defaultLookup;
     private final DynamicLookup mainLookup;
+    private final DynamicLookup combinedExtensionLookup;
 
-    public NbGradleProjectLookups(Lookup defaultLookup) {
+    public NbGradleProjectLookups(NbGradleProject project, Lookup defaultLookup) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(defaultLookup, "defaultLookup");
 
+        this.project = project;
         this.defaultLookup = defaultLookup;
         this.mainLookup = new DynamicLookup(defaultLookup);
+        this.combinedExtensionLookup = new DynamicLookup();
     }
 
-    public void updateExtensions(
-            final NbGradleProject project,
-            NbGradleProjectExtensions extensions) {
-
-        List<NbGradleExtensionRef> extensionRefs = extensions.getExtensionRefs();
-
+    public void updateExtensions(Collection<? extends NbGradleExtensionRef> extensionRefs) {
         List<LookupProvider> allLookupProviders = new ArrayList<>(extensionRefs.size() + 3);
 
         allLookupProviders.add(moveToLookupProvider(defaultLookup));
@@ -62,12 +63,27 @@ public final class NbGradleProjectLookups {
                 return combinedAllLookups;
             }
         }));
+        updateExtensionLookups(extensionRefs);
+    }
+
+    private void updateExtensionLookups(Collection<? extends NbGradleExtensionRef> extensions) {
+        List<Lookup> extensionLookups = new ArrayList<>(extensions.size());
+        for (NbGradleExtensionRef extenion: extensions) {
+            extensionLookups.add(extenion.getExtensionLookup());
+        }
+        combinedExtensionLookup.replaceLookups(extensionLookups);
     }
 
     public Lookup getMainLookup() {
         // TODO: We could protect the returned Lookup from being cast to DynamicLookup by
         //       the caller and then being modified.
         return mainLookup;
+    }
+
+    public Lookup getCombinedExtensionLookup() {
+        // TODO: We could protect the returned Lookup from being cast to DynamicLookup by
+        //       the caller and then being modified.
+        return combinedExtensionLookup;
     }
 
     private static List<LookupProvider> moveToLookupProvider(List<Lookup> lookups) {

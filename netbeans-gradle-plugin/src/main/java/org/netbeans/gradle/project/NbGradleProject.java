@@ -3,11 +3,13 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,10 +17,12 @@ import javax.annotation.Nonnull;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.property.PropertySource;
 import org.netbeans.api.project.Project;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
+import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -55,7 +59,6 @@ public final class NbGradleProject implements Project {
     private final Path projectDirAsPath;
 
     private final AtomicReference<ServiceObjects> serviceObjectsRef;
-    private volatile NbGradleProjectExtensions extensions;
 
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
@@ -68,10 +71,9 @@ public final class NbGradleProject implements Project {
         this.name = projectDir.getNameExt();
 
         this.serviceObjectsRef = new AtomicReference<>(null);
-        this.extensions = NbGradleProjectExtensions.EMPTY;
     }
 
-    private void initServiceObjects(ProjectState state) {
+    private ServiceObjects initServiceObjects(ProjectState state) {
         ServiceObjects serviceObjects = new ServiceObjects(this, state);
         if (!serviceObjectsRef.compareAndSet(null, serviceObjects)) {
             throw new IllegalStateException("Alread initialized: ServiceObjects");
@@ -80,6 +82,7 @@ public final class NbGradleProject implements Project {
         for (ProjectInitListener listener: serviceObjects.services.lookupAll(ProjectInitListener.class)) {
             listener.onInitProject();
         }
+        return serviceObjects;
     }
 
     private ServiceObjects getServiceObjects() {
@@ -93,8 +96,8 @@ public final class NbGradleProject implements Project {
     @Nonnull
     public static NbGradleProject createProject(FileObject projectDir, ProjectState state) throws IOException {
         NbGradleProject project = new NbGradleProject(projectDir);
-        project.initServiceObjects(state);
-        project.setExtensions(new NbGradleProjectExtensions(ExtensionLoader.loadExtensions(project)));
+        ServiceObjects serviceObjects = project.initServiceObjects(state);
+        serviceObjects.updateExtensions(ExtensionLoader.loadExtensions(project));
 
         LoadedProjectManager.getDefault().addProject(project);
         project.updateSettingsFile();
@@ -150,13 +153,8 @@ public final class NbGradleProject implements Project {
         return Objects.equals(other.getProjectDirectory(), getProjectDirectory());
     }
 
-    private void setExtensions(NbGradleProjectExtensions newExtensions) {
-        this.extensions = newExtensions;
-        getServiceObjects().projectLookups.updateExtensions(this, newExtensions);
-    }
-
     public NbGradleProjectExtensions getExtensions() {
-        return extensions;
+        return getServiceObjects().extensions;
     }
 
     public NbGradleSingleProjectConfigProvider getConfigProvider() {
@@ -313,6 +311,7 @@ public final class NbGradleProject implements Project {
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
+        public final NbGradleProjectExtensionsImpl extensions;
 
         public ServiceObjects(NbGradleProject project, ProjectState state) {
             List<Object> serviceObjects = new LinkedList<>();
@@ -356,7 +355,13 @@ public final class NbGradleProject implements Project {
                     commonProperties.displayNamePattern().getActiveSource());
 
             this.services = Lookups.fixed(serviceObjects.toArray());
-            this.projectLookups = new NbGradleProjectLookups(this.services);
+            this.projectLookups = new NbGradleProjectLookups(project, services);
+            this.extensions = new NbGradleProjectExtensionsImpl(projectLookups.getCombinedExtensionLookup());
+        }
+
+        public void updateExtensions(Collection<? extends NbGradleExtensionRef> newExtensions) {
+            extensions.setExtensions(newExtensions);
+            projectLookups.updateExtensions(newExtensions);
         }
 
         private static <T> T add(T obj, Collection<? super T> serviceContainer) {
@@ -427,6 +432,76 @@ public final class NbGradleProject implements Project {
             }
 
             return NbGradleModel.findSettingsGradle(projectDir);
+        }
+    }
+
+    private static final class ExtensionCollection {
+        public static final ExtensionCollection EMPTY
+                = new ExtensionCollection(Collections.<NbGradleExtensionRef>emptySet());
+
+        private final List<NbGradleExtensionRef> extensionRefs;
+        private final Set<String> extensionNames;
+
+        public ExtensionCollection(Collection<? extends NbGradleExtensionRef> extensions) {
+            this.extensionRefs = Collections.unmodifiableList(new ArrayList<>(extensions));
+
+            Set<String> newExtensionNames = CollectionUtils.newHashSet(extensions.size());
+            for (NbGradleExtensionRef extension: this.extensionRefs) {
+                newExtensionNames.add(extension.getName());
+            }
+            this.extensionNames = Collections.unmodifiableSet(newExtensionNames);
+        }
+
+        public List<NbGradleExtensionRef> getExtensionRefs() {
+            return extensionRefs;
+        }
+
+        public boolean hasExtension(String extensionName) {
+            return extensionNames.contains(extensionName);
+        }
+    }
+
+    private static final class NbGradleProjectExtensionsImpl implements NbGradleProjectExtensions {
+        private final Lookup combinedLookup;
+        private volatile ExtensionCollection extensions;
+
+        public NbGradleProjectExtensionsImpl(Lookup combinedLookup) {
+            this.combinedLookup = combinedLookup;
+            this.extensions = ExtensionCollection.EMPTY;
+        }
+
+        public void setExtensions(Collection<? extends NbGradleExtensionRef> extensions) {
+            setExtensions(new ExtensionCollection(extensions));
+        }
+
+        public void setExtensions(ExtensionCollection extensions) {
+            assert extensions != null;
+            this.extensions = extensions;
+        }
+
+        @Override
+        public <T> Collection<? extends T> lookupAllExtensionObjs(Class<T> type) {
+            return combinedLookup.lookupAll(type);
+        }
+
+        @Override
+        public <T> T lookupExtensionObj(Class<T> type) {
+            return combinedLookup.lookup(type);
+        }
+
+        @Override
+        public Lookup getCombinedExtensionLookup() {
+            return combinedLookup;
+        }
+
+        @Override
+        public List<NbGradleExtensionRef> getExtensionRefs() {
+            return extensions.getExtensionRefs();
+        }
+
+        @Override
+        public boolean hasExtension(String extensionName) {
+            return extensions.hasExtension(extensionName);
         }
     }
 }
