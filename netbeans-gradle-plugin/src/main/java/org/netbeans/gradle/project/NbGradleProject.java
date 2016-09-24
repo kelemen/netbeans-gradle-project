@@ -18,10 +18,7 @@ import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
-import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
@@ -31,20 +28,14 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
-import org.netbeans.gradle.project.properties.ActiveSettingsQueryEx;
 import org.netbeans.gradle.project.properties.DefaultProjectSettingsProvider;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryConfiguration;
 import org.netbeans.gradle.project.properties.GradleAuxiliaryProperties;
 import org.netbeans.gradle.project.properties.GradleCustomizer;
-import org.netbeans.gradle.project.properties.MultiProfileProperties;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
-import org.netbeans.gradle.project.properties.NbGradleConfiguration;
 import org.netbeans.gradle.project.properties.NbGradleSingleProjectConfigProvider;
-import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
-import org.netbeans.gradle.project.properties.ProfileSettingsKey;
-import org.netbeans.gradle.project.properties.ProjectProfileSettingsKey;
+import org.netbeans.gradle.project.properties.ProjectProfileLoader;
 import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
-import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
@@ -52,7 +43,6 @@ import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.gradle.project.util.LazyValue;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
@@ -239,8 +229,8 @@ public final class NbGradleProject implements Project {
         return getServiceObjects().configProvider;
     }
 
-    public NbGradleConfiguration getCurrentProfile() {
-        return getConfigProvider().getActiveConfiguration();
+    public ProjectProfileLoader getProfileLoader() {
+        return getServiceObjects().profileLoader;
     }
 
     public void displayError(String errorText, Throwable exception) {
@@ -291,54 +281,6 @@ public final class NbGradleProject implements Project {
 
     public NbGradleCommonProperties getCommonProperties() {
         return getServiceObjects().commonProperties;
-    }
-
-    public NbGradleCommonProperties loadCommonPropertiesForProfile(ProfileKey profileKey) {
-        ActiveSettingsQueryEx settings = loadActiveSettingsForProfile(profileKey);
-        return new NbGradleCommonProperties(this, settings);
-    }
-
-    private List<ProfileSettingsKey> keysWithFallbacks(ProfileKey profileKey) {
-        return getProjectProfileKey(profileKey).getWithFallbacks();
-    }
-
-    public ActiveSettingsQueryEx loadActiveSettingsForProfile(ProfileKey profileKey) {
-        ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
-        List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
-
-        List<SingleProfileSettingsEx> settings = settingsContainer.loadAllProfileSettings(combinedKeys);
-        return new MultiProfileProperties(settings);
-    }
-
-    public ListenerRef loadActiveSettingsForProfile(ProfileKey profileKey, final ActiveSettingsQueryListener listener) {
-        ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        ProfileSettingsContainer settingsContainer = getConfigProvider().getProfileSettingsContainer();
-        List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
-
-        return settingsContainer.loadAllProfileSettings(combinedKeys, new NbConsumer<List<SingleProfileSettingsEx>>() {
-            @Override
-            public void accept(List<SingleProfileSettingsEx> settings) {
-                listener.onLoad(new MultiProfileProperties(settings));
-            }
-        });
-    }
-
-    public ActiveSettingsQueryEx getActiveSettingsQuery() {
-        return getConfigProvider().getActiveSettingsQuery();
-    }
-
-    private ProfileSettingsContainer getProfileSettingsContainer() {
-        return getConfigProvider().getProfileSettingsContainer();
-    }
-
-    private ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
-        return ProjectProfileSettingsKey.getForProject(this, profileKey);
-    }
-
-    public SingleProfileSettingsEx loadPropertiesForProfile(ProfileKey profileKey) {
-        ProfileSettingsKey key = getProjectProfileKey(profileKey);
-        return getProfileSettingsContainer().loadProfileSettings(key);
     }
 
     @Nonnull
@@ -438,6 +380,7 @@ public final class NbGradleProject implements Project {
     private static final class ServiceObjects {
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;
+        public final ProjectProfileLoader profileLoader;
         public final NbGradleCommonProperties commonProperties;
         public final ProjectState state;
         public final GradleProjectInformation projectInformation;
@@ -459,8 +402,11 @@ public final class NbGradleProject implements Project {
             List<Object> serviceObjects = new LinkedList<>();
             serviceObjects.add(project);
 
-            this.auxConfig = add(new GradleAuxiliaryConfiguration(project), serviceObjects);
             this.configProvider = add(NbGradleSingleProjectConfigProvider.create(project), serviceObjects);
+            this.profileLoader = new ProjectProfileLoader(configProvider);
+            this.commonProperties = configProvider.getCommonProperties(configProvider.getActiveSettingsQuery());
+
+            this.auxConfig = add(new GradleAuxiliaryConfiguration(profileLoader), serviceObjects);
             this.state = add(state, serviceObjects);
             this.projectInformation = add(new GradleProjectInformation(project), serviceObjects);
             this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
@@ -475,9 +421,6 @@ public final class NbGradleProject implements Project {
             this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);
 
             add(new OpenHook(project), serviceObjects);
-
-            // NbGradleCommonProperties is not needed on the lookup
-            this.commonProperties = new NbGradleCommonProperties(project, configProvider.getActiveSettingsQuery());
 
             add(ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()), serviceObjects);

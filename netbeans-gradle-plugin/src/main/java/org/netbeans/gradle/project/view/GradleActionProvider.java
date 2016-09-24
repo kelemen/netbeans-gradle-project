@@ -90,7 +90,7 @@ public final class GradleActionProvider implements ActionProvider {
         checkNotEdt();
 
         NbGradleCommonProperties result = config != null
-                    ? project.loadCommonPropertiesForProfile(config.getProfileKey())
+                    ? project.getProfileLoader().loadCommonPropertiesForProfile(config.getProfileKey())
                     : project.getCommonProperties();
         return result;
     }
@@ -185,7 +185,7 @@ public final class GradleActionProvider implements ActionProvider {
         NbGradleConfiguration config = appliedContext.lookup(NbGradleConfiguration.class);
         final NbGradleConfiguration appliedConfig = config != null
                 ? config
-                : project.getCurrentProfile();
+                : project.getConfigProvider().getActiveConfiguration();
 
         final AtomicReference<CustomCommandActions> customActionsRef
                 = new AtomicReference<>(null);

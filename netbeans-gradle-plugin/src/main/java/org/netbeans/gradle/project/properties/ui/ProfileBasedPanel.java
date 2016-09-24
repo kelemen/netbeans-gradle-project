@@ -333,7 +333,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private void fillProfileCombo(Collection<ProfileItem> profileItems) {
         jProfileCombo.setModel(new DefaultComboBoxModel<>(profileItems.toArray(new ProfileItem[profileItems.size()])));
-        jProfileCombo.setSelectedItem(new ProfileItem(project.getCurrentProfile().getProfileDef()));
+        jProfileCombo.setSelectedItem(new ProfileItem(project.getConfigProvider().getActiveConfiguration().getProfileDef()));
         loadSelectedProfile();
     }
 

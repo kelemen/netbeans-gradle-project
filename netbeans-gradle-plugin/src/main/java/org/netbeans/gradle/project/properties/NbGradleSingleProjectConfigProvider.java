@@ -21,8 +21,10 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.CustomProfileQuery;
 import org.netbeans.gradle.project.api.config.ProfileDef;
+import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.ProjectModelChangeListener;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -97,6 +99,14 @@ implements
         return new NbGradleSingleProjectConfigProvider(
                 project,
                 NbGradleConfigProvider.getConfigProvider(rootDir));
+    }
+
+    public NbGradleCommonProperties getCommonProperties(ActiveSettingsQuery settings) {
+        return new NbGradleCommonProperties(project, settings);
+    }
+
+    public ProfileSettingsKey getProjectProfileKey(ProfileKey profileKey) {
+        return ProjectProfileSettingsKey.getForProject(project, profileKey);
     }
 
     private NbGradleConfigProvider getCommonConfig() {

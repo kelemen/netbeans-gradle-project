@@ -148,7 +148,7 @@ public final class SettingsFiles {
     }
 
     public static Path[] getFilesForProject(NbGradleProject project) {
-        return getFilesForProfile(project, project.getCurrentProfile().getProfileDef());
+        return getFilesForProfile(project, project.getConfigProvider().getActiveConfiguration().getProfileDef());
     }
 
     public static Path getRootDirectory(NbGradleProject project) {
