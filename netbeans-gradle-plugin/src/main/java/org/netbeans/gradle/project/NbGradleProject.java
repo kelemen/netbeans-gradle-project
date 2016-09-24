@@ -38,8 +38,6 @@ import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
-import org.netbeans.gradle.project.util.LazyValue;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
@@ -58,7 +56,6 @@ public final class NbGradleProject implements Project {
     private volatile NbGradleProjectExtensions extensions;
 
     private final String name;
-    private final LazyValue<BuiltInGradleCommandQuery> mergedCommandQueryRef;
     private final AtomicReference<Path> preferredSettingsFileRef;
 
     private NbGradleProject(FileObject projectDir) throws IOException {
@@ -73,13 +70,6 @@ public final class NbGradleProject implements Project {
 
         this.serviceObjectsRef = new AtomicReference<>(null);
         this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
-
-        this.mergedCommandQueryRef = new LazyValue<>(new NbSupplier<BuiltInGradleCommandQuery>() {
-            @Override
-            public BuiltInGradleCommandQuery get() {
-                return createMergedBuiltInGradleCommandQuery();
-            }
-        });
         this.extensions = NbGradleProjectExtensions.EMPTY;
     }
 
@@ -126,13 +116,9 @@ public final class NbGradleProject implements Project {
         return project;
     }
 
-    private BuiltInGradleCommandQuery createMergedBuiltInGradleCommandQuery() {
-        return new MergedBuiltInGradleCommandQuery(this);
-    }
-
     @Nonnull
     public BuiltInGradleCommandQuery getMergedCommandQuery() {
-        return mergedCommandQueryRef.get();
+        return getServiceObjects().mergedCommandQuery;
     }
 
     private ProjectModelManager getModelManager() {
@@ -348,6 +334,7 @@ public final class NbGradleProject implements Project {
         public final ProjectModelManager modelManager;
         public final ProjectModelUpdater<NbGradleModel> modelUpdater;
         public final ProjectDisplayInfo projectInfo;
+        public final BuiltInGradleCommandQuery mergedCommandQuery;
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
@@ -381,6 +368,7 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
+            this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(project);
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(project.getProjectDirectoryAsFile()));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
             this.projectInfo = new ProjectDisplayInfo(
