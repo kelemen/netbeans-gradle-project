@@ -43,7 +43,6 @@ import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
-import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
