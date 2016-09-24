@@ -105,7 +105,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
             this.mainProject = mainProject;
             this.settingsGradleDef = settingsGradleDef;
-            this.extensions = mainProject.getExtensionRefs();
+            this.extensions = mainProject.getExtensions().getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
             this.issues = new LinkedList<>();
@@ -344,7 +344,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         public ProjectModelFetcher(NbGradleProject project, GradleTarget gradleTarget) {
             this.settingsFile = NbGenericModelInfo.findSettingsGradle(project.getProjectDirectoryAsFile());
 
-            List<NbGradleExtensionRef> extensions = project.getExtensionRefs();
+            List<NbGradleExtensionRef> extensions = project.getExtensions().getExtensionRefs();
             this.toolingModelNeeds = CollectionUtils.newHashMap(extensions.size());
 
             Map<Object, List<GradleBuildInfoQuery<?>>> buildInfoRequests = Collections.emptyMap();

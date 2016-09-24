@@ -23,7 +23,7 @@ public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleComma
 
     private List<BuiltInGradleCommandQuery> getAllQueries() {
         List<BuiltInGradleCommandQuery> result = new LinkedList<>();
-        result.addAll(project.getCombinedExtensionLookup().lookupAll(BuiltInGradleCommandQuery.class));
+        result.addAll(project.getExtensions().lookupAllExtensionObjs(BuiltInGradleCommandQuery.class));
         result.add(defaultBuiltInTasks);
         return result;
     }

@@ -112,7 +112,7 @@ public final class GradleCustomizer implements CustomizerProvider {
 
     private void getCustomizersOfExtensions(List<ProjectCustomizer.CompositeCategoryProvider> result) {
         Collection<? extends ExtensionProjectSettingsPageDefs> defs
-                = project.getCombinedExtensionLookup().lookupAll(ExtensionProjectSettingsPageDefs.class);
+                = project.getExtensions().lookupAllExtensionObjs(ExtensionProjectSettingsPageDefs.class);
         for (ExtensionProjectSettingsPageDefs def: defs) {
             result.addAll(def.getCustomizers());
         }

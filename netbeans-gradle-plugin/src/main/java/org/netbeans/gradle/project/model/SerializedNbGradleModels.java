@@ -61,7 +61,7 @@ public final class SerializedNbGradleModels implements Serializable {
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
         Map<String, Object> deserializedModels = CollectionUtils.newHashMap(extensionModels.size());
 
-        for (NbGradleExtensionRef extensionRef: ownerProject.getExtensionRefs()) {
+        for (NbGradleExtensionRef extensionRef: ownerProject.getExtensions().getExtensionRefs()) {
             byte[] serializedModel = extensionModels.get(extensionRef.getName());
 
             if (serializedModel != null) {

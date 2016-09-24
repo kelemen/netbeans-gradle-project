@@ -85,7 +85,7 @@ implements
 
     private List<GradleProjectExtensionNodes> getExtensionNodes() {
         List<GradleProjectExtensionNodes> result = new ArrayList<>(
-                project.getCombinedExtensionLookup().lookupAll(GradleProjectExtensionNodes.class));
+                project.getExtensions().lookupAllExtensionObjs(GradleProjectExtensionNodes.class));
         return result;
     }
 

@@ -210,11 +210,6 @@ public final class NbGradleProject implements Project {
         return mergedCommandQueryRef.get();
     }
 
-    @Nonnull
-    public List<NbGradleExtensionRef> getExtensionRefs() {
-        return extensions.getExtensionRefs();
-    }
-
     public void ensureLoadRequested() {
         modelUpdater.ensureLoadRequested();
     }
@@ -244,12 +239,8 @@ public final class NbGradleProject implements Project {
         getServiceObjects().projectLookups.updateExtensions(this, newExtensions);
     }
 
-    public boolean hasExtension(String extensionName) {
-        return extensions.hasExtension(extensionName);
-    }
-
-    public Lookup getCombinedExtensionLookup() {
-        return extensions.getCombinedExtensionLookup();
+    public NbGradleProjectExtensions getExtensions() {
+        return extensions;
     }
 
     private NbGradleSingleProjectConfigProvider getConfigProvider() {
@@ -301,7 +292,7 @@ public final class NbGradleProject implements Project {
         addAsTaskVariableMap(getCommonProperties().customVariables().getActiveSource(), maps);
 
         Collection<? extends GradleTaskVariableQuery> taskVariables
-                = getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
+                = getExtensions().getCombinedExtensionLookup().lookupAll(GradleTaskVariableQuery.class);
         for (GradleTaskVariableQuery query: taskVariables) {
             maps.add(query.getVariableMap(actionContext));
         }

@@ -92,7 +92,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
             return displayName;
         }
 
-        for (BuiltInGradleCommandQuery commandQuery: project.getCombinedExtensionLookup().lookupAll(BuiltInGradleCommandQuery.class)) {
+        for (BuiltInGradleCommandQuery commandQuery: project.getExtensions().lookupAllExtensionObjs(BuiltInGradleCommandQuery.class)) {
             displayName = commandQuery.tryGetDisplayNameOfCommand(command);
             if (displayName != null) {
                 return displayName;

@@ -89,9 +89,13 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
         }
     }
 
+    private Collection<NbGradleExtensionRef> getExtensionRefs() {
+        return project.getExtensions().getExtensionRefs();
+    }
+
     private boolean notifyEmptyModelChange() {
         boolean changedAny = false;
-        for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
+        for (NbGradleExtensionRef extensionRef: getExtensionRefs()) {
             boolean changed = safelyLoadExtensions(extensionRef, null);
             changedAny = changedAny || changed;
         }
@@ -103,7 +107,7 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
         // TODO: Consider conflicts
         //   GradleProjectExtensionDef.getSuppressedExtensions()
         boolean changedAny = false;
-        for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
+        for (NbGradleExtensionRef extensionRef: getExtensionRefs()) {
             boolean changed = safelyLoadExtensions(extensionRef, model.getModelOfExtension(extensionRef));
             changedAny = changedAny || changed;
         }

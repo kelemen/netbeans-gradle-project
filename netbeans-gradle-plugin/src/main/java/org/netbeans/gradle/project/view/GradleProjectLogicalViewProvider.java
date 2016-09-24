@@ -221,7 +221,7 @@ implements
     private ExtensionActions getExtensionActions() {
         ExtensionActions result = new ExtensionActions();
 
-        for (NbGradleExtensionRef extensionRef: project.getExtensionRefs()) {
+        for (NbGradleExtensionRef extensionRef: project.getExtensions().getExtensionRefs()) {
             ExtensionActions actions = getActionsOfExtension(extensionRef);
             result.mergeActions(actions);
         }

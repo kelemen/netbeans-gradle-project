@@ -56,8 +56,8 @@ import org.netbeans.gradle.project.api.task.GradleCommandServiceFactory;
 import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
-import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
+import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.IOTabRef;
@@ -176,7 +176,7 @@ public final class AsyncGradleTask implements Runnable {
         }
 
         Collection<? extends InitScriptQuery> scriptQueries
-                = project.getCombinedExtensionLookup().lookupAll(InitScriptQuery.class);
+                = project.getExtensions().lookupAllExtensionObjs(InitScriptQuery.class);
 
         List<TemporaryFileRef> results = new ArrayList<>(scriptQueries.size());
         try {

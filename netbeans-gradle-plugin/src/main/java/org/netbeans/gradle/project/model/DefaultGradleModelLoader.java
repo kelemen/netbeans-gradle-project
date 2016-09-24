@@ -216,7 +216,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             NbGradleModel baseModels) {
 
         List<NbGradleExtensionRef> result = new LinkedList<>();
-        for (NbGradleExtensionRef extension: project.getExtensionRefs()) {
+        for (NbGradleExtensionRef extension: project.getExtensions().getExtensionRefs()) {
             if (!baseModels.hasModelOfExtension(extension)) {
                 result.add(extension);
             }
@@ -225,7 +225,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     }
 
     private boolean hasUnloadedExtension(NbGradleModel cached) {
-        for (NbGradleExtensionRef extension: project.getExtensionRefs()) {
+        for (NbGradleExtensionRef extension: project.getExtensions().getExtensionRefs()) {
             if (!cached.hasModelOfExtension(extension)) {
                 return true;
             }

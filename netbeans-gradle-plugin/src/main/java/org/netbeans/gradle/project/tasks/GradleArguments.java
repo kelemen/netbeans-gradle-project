@@ -60,7 +60,7 @@ public final class GradleArguments {
             return;
         }
 
-        for (NbGradleExtensionRef extensionRef: gradleProject.getExtensionRefs()) {
+        for (NbGradleExtensionRef extensionRef: gradleProject.getExtensions().getExtensionRefs()) {
             for (GradleArgumentQuery query: extensionRef.getExtensionLookup().lookupAll(GradleArgumentQuery.class)) {
                 List<String> extArgs = fixArguments(extensionRef.getName(), argGetter.getArgs(query, context));
                 result.addAll(extArgs);

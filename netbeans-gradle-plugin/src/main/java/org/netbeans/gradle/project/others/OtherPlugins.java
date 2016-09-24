@@ -30,7 +30,7 @@ public final class OtherPlugins {
     }
 
     public static boolean hasJavaEEExtension(NbGradleProject project) {
-        return project.hasExtension(JAVA_EE_EXTENSION_NAME);
+        return project.getExtensions().hasExtension(JAVA_EE_EXTENSION_NAME);
     }
 
     private OtherPlugins() {

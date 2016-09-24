@@ -30,6 +30,14 @@ public final class NbGradleProjectExtensions {
         this.combinedExtensionLookup = combineExtensionLookups(this.extensionRefs);
     }
 
+    public <T> Collection<? extends T> lookupAllExtensionObjs(Class<T> type) {
+        return combinedExtensionLookup.lookupAll(type);
+    }
+
+    public <T> T lookupExtensionObj(Class<T> type) {
+        return combinedExtensionLookup.lookup(type);
+    }
+
     public Lookup getCombinedExtensionLookup() {
         return combinedExtensionLookup;
     }

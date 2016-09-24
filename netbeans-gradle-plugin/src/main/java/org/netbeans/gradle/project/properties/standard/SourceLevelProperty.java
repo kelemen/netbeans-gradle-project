@@ -91,7 +91,7 @@ public final class SourceLevelProperty {
     }
 
     public static J2SEPlatformFromScriptQuery tryGetPlatformScriptQuery(NbGradleProject project) {
-        return project.getCombinedExtensionLookup().lookup(J2SEPlatformFromScriptQuery.class);
+        return project.getExtensions().lookupExtensionObj(J2SEPlatformFromScriptQuery.class);
     }
 
     private static String tryGetScriptSourceLevel(NbGradleProject project) {

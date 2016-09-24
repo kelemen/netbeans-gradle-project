@@ -353,7 +353,7 @@ public final class ExtensionLoader {
             }
 
             NbGradleExtensionRef extensionToUse = null;
-            for (NbGradleExtensionRef projectExtension: project.getExtensionRefs()) {
+            for (NbGradleExtensionRef projectExtension: project.getExtensions().getExtensionRefs()) {
                 if (extensionName.equals(projectExtension.getName())) {
                     extensionToUse = projectExtension;
                     break;
