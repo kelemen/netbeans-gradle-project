@@ -71,10 +71,11 @@ public final class NbGradleProject implements Project {
     private NbGradleProject(FileObject projectDir) throws IOException {
         this.projectDir = projectDir;
         this.projectDirAsFile = FileUtil.toFile(projectDir);
-        this.projectDirAsPath = projectDirAsFile.toPath();
         if (projectDirAsFile == null) {
             throw new IOException("Project directory does not exist.");
         }
+        this.projectDirAsPath = projectDirAsFile.toPath();
+
         this.serviceObjectsRef = new AtomicReference<>(null);
         this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDirAsFile));
 
