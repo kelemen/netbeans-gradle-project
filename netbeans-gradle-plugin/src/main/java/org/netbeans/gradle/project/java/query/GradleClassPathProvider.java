@@ -25,10 +25,10 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.ProjectInfo;
-import org.netbeans.gradle.project.ProjectInfoManager;
-import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.ProjectIssue;
+import org.netbeans.gradle.project.ProjectIssueManager;
+import org.netbeans.gradle.project.ProjectIssueRef;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
@@ -68,7 +68,7 @@ implements
     private final PropertyChangeSupport changes;
     private final AtomicReference<ProjectPlatform> currentPlatformRef;
 
-    private final AtomicReference<ProjectInfoRef> infoRefRef;
+    private final AtomicReference<ProjectIssueRef> infoRefRef;
 
     private final AtomicReference<ClassPath> allSourcesClassPathRef;
     private volatile List<PathResourceImplementation> allSources;
@@ -99,11 +99,11 @@ implements
         eventSource.init(this.changes);
     }
 
-    private ProjectInfoRef getInfoRef() {
-        ProjectInfoRef result = infoRefRef.get();
+    private ProjectIssueRef getInfoRef() {
+        ProjectIssueRef result = infoRefRef.get();
         if (result == null) {
-            ProjectInfoManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectInfoManager.class);
-            infoRefRef.compareAndSet(null, infoManager.createInfoRef());
+            ProjectIssueManager infoManager = javaExt.getOwnerProjectLookup().lookup(ProjectIssueManager.class);
+            infoRefRef.compareAndSet(null, infoManager.createIssueRef());
             result = infoRefRef.get();
         }
         return result;
@@ -345,12 +345,12 @@ implements
             getInfoRef().setInfo(null);
         }
         else {
-            List<ProjectInfo.Entry> infos = new LinkedList<>();
+            List<ProjectIssue.Entry> infos = new LinkedList<>();
             for (File missingDep: missing) {
-                infos.add(new ProjectInfo.Entry(ProjectInfo.Kind.WARNING,
+                infos.add(new ProjectIssue.Entry(ProjectIssue.Kind.WARNING,
                         NbStrings.getInvalidClassPathEntry(missingDep.getPath())));
             }
-            getInfoRef().setInfo(new ProjectInfo(infos));
+            getInfoRef().setInfo(new ProjectIssue(infos));
         }
 
         updateAllSources();

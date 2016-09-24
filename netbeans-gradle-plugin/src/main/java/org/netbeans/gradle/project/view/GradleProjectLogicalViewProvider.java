@@ -36,8 +36,8 @@ import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.ProjectInfo;
-import org.netbeans.gradle.project.ProjectInfo.Kind;
+import org.netbeans.gradle.project.ProjectIssue;
+import org.netbeans.gradle.project.ProjectIssue.Kind;
 import org.netbeans.gradle.project.api.nodes.GradleActionType;
 import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
@@ -156,7 +156,7 @@ implements
                 result.fireModelChange();
             }
         });
-        final ListenerRef infoListenerRef = project.getProjectInfoManager().addChangeListener(new Runnable() {
+        final ListenerRef infoListenerRef = project.getProjectIssueManager().addChangeListener(new Runnable() {
             @Override
             public void run() {
                 result.fireInfoChangeEvent();
@@ -360,18 +360,18 @@ implements
         @Override
         public Image getIcon(int type) {
             Image icon = NbIcons.getGradleIcon();
-            Collection<ProjectInfo> infos = project.getProjectInfoManager().getInformations();
+            Collection<ProjectIssue> infos = project.getProjectIssueManager().getIssues();
             if (!infos.isEmpty()) {
-                Map<ProjectInfo.Kind, List<String>> infoMap
-                        = new EnumMap<>(ProjectInfo.Kind.class);
+                Map<ProjectIssue.Kind, List<String>> infoMap
+                        = new EnumMap<>(ProjectIssue.Kind.class);
 
-                for (ProjectInfo.Kind kind: ProjectInfo.Kind.values()) {
+                for (ProjectIssue.Kind kind: ProjectIssue.Kind.values()) {
                     infoMap.put(kind, new LinkedList<String>());
                 }
 
                 Kind mostImportantKind = Kind.INFO;
-                for (ProjectInfo info: infos) {
-                    for (ProjectInfo.Entry entry: info.getEntries()) {
+                for (ProjectIssue info: infos) {
+                    for (ProjectIssue.Entry entry: info.getEntries()) {
                         Kind kind = entry.getKind();
                         if (mostImportantKind.getImportance() < kind.getImportance()) {
                             mostImportantKind = kind;
@@ -381,12 +381,12 @@ implements
                 }
 
                 StringBuilder completeText = new StringBuilder(1024);
-                appendHtmlList(NbStrings.getErrorCaption(), infoMap.get(ProjectInfo.Kind.ERROR), completeText);
-                appendHtmlList(NbStrings.getWarningCaption(), infoMap.get(ProjectInfo.Kind.WARNING), completeText);
-                appendHtmlList(NbStrings.getInfoCaption(), infoMap.get(ProjectInfo.Kind.INFO), completeText);
+                appendHtmlList(NbStrings.getErrorCaption(), infoMap.get(ProjectIssue.Kind.ERROR), completeText);
+                appendHtmlList(NbStrings.getWarningCaption(), infoMap.get(ProjectIssue.Kind.WARNING), completeText);
+                appendHtmlList(NbStrings.getInfoCaption(), infoMap.get(ProjectIssue.Kind.INFO), completeText);
 
                 icon = ImageUtilities.addToolTipToImage(icon, completeText.toString());
-                if (mostImportantKind.getImportance() >= ProjectInfo.Kind.WARNING.getImportance()) {
+                if (mostImportantKind.getImportance() >= ProjectIssue.Kind.WARNING.getImportance()) {
                     icon = ImageUtilities.mergeImages(icon, NbIcons.getWarningBadge(), 0, 0);
                 }
             }

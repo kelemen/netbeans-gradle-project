@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class ProjectInfo {
+public final class ProjectIssue {
     private final List<Entry> entries;
 
-    public ProjectInfo(Collection<Entry> entries) {
+    public ProjectIssue(Collection<Entry> entries) {
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
 
         ExceptionHelper.checkNotNullElements(this.entries, "entries");

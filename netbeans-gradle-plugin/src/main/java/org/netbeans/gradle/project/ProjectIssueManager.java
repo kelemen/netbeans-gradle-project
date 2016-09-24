@@ -18,20 +18,20 @@ import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
 import org.netbeans.spi.project.ui.ProjectProblemResolver;
 import org.netbeans.spi.project.ui.ProjectProblemsProvider;
 
-public final class ProjectInfoManager {
+public final class ProjectIssueManager {
     private final Lock mainLock;
-    private final RefList<ProjectInfo> informations;
+    private final RefList<ProjectIssue> issues;
     private final ChangeListenerManager changeListeners;
 
-    private final InformationsProperty informationsProperty;
+    private final IssueProperty issuesProperty;
     private final ProjectProblemsProviderImpl projectProblemsProvider;
 
-    public ProjectInfoManager() {
+    public ProjectIssueManager() {
         this.mainLock = new ReentrantLock();
-        this.informations = new RefLinkedList<>();
+        this.issues = new RefLinkedList<>();
         this.changeListeners = GenericChangeListenerManager.getSwingNotifier();
-        this.informationsProperty = new InformationsProperty();
-        this.projectProblemsProvider = new ProjectProblemsProviderImpl(informationsProperty);
+        this.issuesProperty = new IssueProperty();
+        this.projectProblemsProvider = new ProjectProblemsProviderImpl(issuesProperty);
     }
 
     public ProjectProblemsProvider asProblemProvider() {
@@ -46,42 +46,42 @@ public final class ProjectInfoManager {
         changeListeners.fireEventually();
     }
 
-    public PropertySource<Collection<ProjectInfo>> informations() {
-        return informationsProperty;
+    public PropertySource<Collection<ProjectIssue>> issues() {
+        return issuesProperty;
     }
 
-    public boolean hasProblems() {
+    public boolean hasIssues() {
         mainLock.lock();
         try {
-            return !informations.isEmpty();
+            return !issues.isEmpty();
         } finally {
             mainLock.unlock();
         }
     }
 
-    public Collection<ProjectInfo> getInformations() {
+    public Collection<ProjectIssue> getIssues() {
         mainLock.lock();
         try {
-            return new ArrayList<>(informations);
+            return new ArrayList<>(issues);
         } finally {
             mainLock.unlock();
         }
     }
 
-    public ProjectInfoRef createInfoRef() {
-        return new ProjectInfoRefImpl();
+    public ProjectIssueRef createIssueRef() {
+        return new ProjectIssueRefImpl();
     }
 
-    private class ProjectInfoRefImpl implements ProjectInfoRef {
-        private RefList.ElementRef<ProjectInfo> infoRef;
+    private class ProjectIssueRefImpl implements ProjectIssueRef {
+        private RefList.ElementRef<ProjectIssue> infoRef;
 
-        public ProjectInfoRefImpl() {
+        public ProjectIssueRefImpl() {
             this.infoRef = null;
         }
 
         @Override
-        public void setInfo(ProjectInfo info) {
-            ProjectInfo prevInfo;
+        public void setInfo(ProjectIssue info) {
+            ProjectIssue prevInfo;
             mainLock.lock();
             try {
                 prevInfo = infoRef != null ? infoRef.getElement() : null;
@@ -97,7 +97,7 @@ public final class ProjectInfoManager {
                         infoRef.setElement(info);
                     }
                     else {
-                        infoRef = informations.addLastGetReference(info);
+                        infoRef = issues.addLastGetReference(info);
                     }
                 }
             } finally {
@@ -110,15 +110,15 @@ public final class ProjectInfoManager {
         }
     }
 
-    private final class InformationsProperty implements PropertySource<Collection<ProjectInfo>> {
+    private final class IssueProperty implements PropertySource<Collection<ProjectIssue>> {
         @Override
-        public Collection<ProjectInfo> getValue() {
-            return getInformations();
+        public Collection<ProjectIssue> getValue() {
+            return getIssues();
         }
 
         @Override
         public ListenerRef addChangeListener(Runnable listener) {
-            return ProjectInfoManager.this.addChangeListener(listener);
+            return ProjectIssueManager.this.addChangeListener(listener);
         }
     }
 
@@ -135,10 +135,10 @@ public final class ProjectInfoManager {
     }
 
     private static class ProjectProblemsProviderImpl implements ProjectProblemsProvider {
-        private final PropertySource<Collection<ProjectInfo>> informations;
+        private final PropertySource<Collection<ProjectIssue>> informations;
         private final SwingPropertyChangeForwarder properties;
 
-        public ProjectProblemsProviderImpl(PropertySource<Collection<ProjectInfo>> informations) {
+        public ProjectProblemsProviderImpl(PropertySource<Collection<ProjectIssue>> informations) {
             this.informations = informations;
 
             SwingPropertyChangeForwarder.Builder propertiesBuilder = new SwingPropertyChangeForwarder.Builder();
@@ -158,16 +158,16 @@ public final class ProjectInfoManager {
 
         @Override
         public Collection<? extends ProjectProblemsProvider.ProjectProblem> getProblems() {
-            Collection<ProjectInfo> projectInfos = informations.getValue();
+            Collection<ProjectIssue> projectInfos = informations.getValue();
             Collection<ProjectProblemsProvider.ProjectProblem> result = new ArrayList<>(projectInfos.size());
 
-            for (ProjectInfo info: projectInfos) {
+            for (ProjectIssue info: projectInfos) {
                 addProblems(info, result);
             }
             return result;
         }
 
-        private static ProjectProblemsProvider.ProjectProblem asProblem(ProjectInfo.Entry entry) {
+        private static ProjectProblemsProvider.ProjectProblem asProblem(ProjectIssue.Entry entry) {
             switch (entry.getKind()) {
                 case WARNING:
                     return ProjectProblemsProvider.ProjectProblem.createWarning(
@@ -185,9 +185,9 @@ public final class ProjectInfoManager {
         }
 
         private static void addProblems(
-                ProjectInfo info,
+                ProjectIssue info,
                 Collection<? super ProjectProblemsProvider.ProjectProblem> result) {
-            for (ProjectInfo.Entry entry: info.getEntries()) {
+            for (ProjectIssue.Entry entry: info.getEntries()) {
                 ProjectProblemsProvider.ProjectProblem problem = asProblem(entry);
                 if (problem != null) {
                     result.add(problem);

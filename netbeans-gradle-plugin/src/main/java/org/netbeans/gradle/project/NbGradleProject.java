@@ -240,8 +240,8 @@ public final class NbGradleProject implements Project {
         }
     }
 
-    public ProjectInfoManager getProjectInfoManager() {
-        return getServiceObjects().projectInfoManager;
+    public ProjectIssueManager getProjectIssueManager() {
+        return getServiceObjects().projectIssueManager;
     }
 
     public PropertySource<NbGradleModel> currentModel() {
@@ -392,7 +392,7 @@ public final class NbGradleProject implements Project {
         public final GradleAuxiliaryProperties auxProperties;
         public final GradleTemplateAttrProvider templateAttrProvider;
         public final DefaultGradleCommandExecutor commandExecutor;
-        public final ProjectInfoManager projectInfoManager;
+        public final ProjectIssueManager projectIssueManager;
         public final ProjectSettingsProvider projectSettingsProvider;
 
         public final Lookup services;
@@ -417,7 +417,7 @@ public final class NbGradleProject implements Project {
             this.auxProperties = add(new GradleAuxiliaryProperties(auxConfig), serviceObjects);
             this.templateAttrProvider = add(new GradleTemplateAttrProvider(project), serviceObjects);
             this.commandExecutor = add(new DefaultGradleCommandExecutor(project), serviceObjects);
-            this.projectInfoManager = add(new ProjectInfoManager(), serviceObjects);
+            this.projectIssueManager = add(new ProjectIssueManager(), serviceObjects);
             this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);
 
             add(new OpenHook(project), serviceObjects);

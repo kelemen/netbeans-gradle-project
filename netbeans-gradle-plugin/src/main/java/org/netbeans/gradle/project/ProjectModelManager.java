@@ -32,7 +32,7 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
     private final ChangeListenerManager modelChangeListeners;
     private final AtomicReference<NbGradleModel> currentModelRef;
     private final PropertySource<NbGradleModel> currentModel;
-    private final LazyValue<ProjectInfoRef> loadErrorRef;
+    private final LazyValue<ProjectIssueRef> loadErrorRef;
     private final UpdateTaskExecutor modelUpdater;
     private final Runnable modelUpdateDispatcher;
 
@@ -51,10 +51,10 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
                 onModelChange();
             }
         };
-        this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectInfoRef>() {
+        this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectIssueRef>() {
             @Override
-            public ProjectInfoRef get() {
-                return project.getProjectInfoManager().createInfoRef();
+            public ProjectIssueRef get() {
+                return project.getProjectIssueManager().createIssueRef();
             }
         });
     }
@@ -151,7 +151,7 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
         }
     }
 
-    private ProjectInfoRef getLoadErrorRef() {
+    private ProjectIssueRef getLoadErrorRef() {
         return loadErrorRef.get();
     }
 
@@ -167,8 +167,8 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
             hasChanged = prevModel != model;
         }
         if (error != null) {
-            ProjectInfo.Entry entry = new ProjectInfo.Entry(ProjectInfo.Kind.ERROR, NbStrings.getErrorLoadingProject(error));
-            getLoadErrorRef().setInfo(new ProjectInfo(Collections.singleton(entry)));
+            ProjectIssue.Entry entry = new ProjectIssue.Entry(ProjectIssue.Kind.ERROR, NbStrings.getErrorLoadingProject(error));
+            getLoadErrorRef().setInfo(new ProjectIssue(Collections.singleton(entry)));
             LOGGER.log(Level.INFO, "Error while loading the project model.", error);
             project.displayError(NbStrings.getProjectLoadFailure(project.getName()), error);
         }

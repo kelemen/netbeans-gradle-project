@@ -27,10 +27,10 @@ import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
-import org.netbeans.gradle.project.ProjectInfo;
-import org.netbeans.gradle.project.ProjectInfoManager;
-import org.netbeans.gradle.project.ProjectInfoRef;
 import org.netbeans.gradle.project.ProjectInitListener;
+import org.netbeans.gradle.project.ProjectIssue;
+import org.netbeans.gradle.project.ProjectIssueManager;
+import org.netbeans.gradle.project.ProjectIssueRef;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
 import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.coverage.GradleCoverageProvider;
@@ -79,7 +79,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private final GradleClassPathProvider cpProvider;
     private final AtomicReference<JavaSourceDirHandler> sourceDirsHandlerRef;
-    private final ProjectInfoRef dependencyResolutionFailureRef;
+    private final ProjectIssueRef dependencyResolutionFailureRef;
 
     private final AtomicReference<Lookup> projectLookupRef;
     private final AtomicReference<Lookup> permanentLookupRef;
@@ -107,7 +107,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.combinedLookupRef = new AtomicReference<>(null);
         this.hasEverBeenLoaded = false;
         this.sourceDirsHandlerRef = new AtomicReference<>(null);
-        this.dependencyResolutionFailureRef = getProjectInfoManager(project).createInfoRef();
+        this.dependencyResolutionFailureRef = getProjectInfoManager(project).createIssueRef();
         this.modelChangeListeners = new GenericChangeListenerManager();
         this.projectPropertiesRef = new AtomicReference<>(null);
         this.extensionSettingsRef = new AtomicReference<>(null);
@@ -316,9 +316,9 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         modelChangeListeners.fireEventually();
     }
 
-    private static ProjectInfoManager getProjectInfoManager(Project project) {
+    private static ProjectIssueManager getProjectInfoManager(Project project) {
         // TODO: In the future this should be a public API.
-        return NbGradleProjectFactory.getGradleProject(project).getProjectInfoManager();
+        return NbGradleProjectFactory.getGradleProject(project).getProjectIssueManager();
     }
 
     private void checkDependencyResolveProblems(NbJavaModule module) {
@@ -340,12 +340,12 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
 
         if (!issues.isEmpty()) {
-            List<ProjectInfo.Entry> entries = new ArrayList<>(issues.size());
+            List<ProjectIssue.Entry> entries = new ArrayList<>(issues.size());
             for (DependencyResolutionIssue issue: issues) {
-                entries.add(new ProjectInfo.Entry(ProjectInfo.Kind.ERROR, issue.getMessage()));
+                entries.add(new ProjectIssue.Entry(ProjectIssue.Kind.ERROR, issue.getMessage()));
             }
 
-            dependencyResolutionFailureRef.setInfo(new ProjectInfo(entries));
+            dependencyResolutionFailureRef.setInfo(new ProjectIssue(entries));
             ModelLoadIssueReporter.reportDependencyResolutionFailures(issues);
         }
         else {

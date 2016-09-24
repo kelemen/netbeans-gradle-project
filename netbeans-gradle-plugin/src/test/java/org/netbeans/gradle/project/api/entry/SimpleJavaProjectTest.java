@@ -23,7 +23,7 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.ProjectInfoManager;
+import org.netbeans.gradle.project.ProjectIssueManager;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.java.nodes.JavaDependenciesNode;
@@ -180,7 +180,7 @@ public class SimpleJavaProjectTest extends SwingTestAware {
         checkExactlyOnce(lookup, GradleProperty.ScriptPlatform.class);
         checkExactlyOnce(lookup, GradleProperty.SourceLevel.class);
         checkExactlyOnce(lookup, GradleProperty.BuildPlatform.class);
-        checkExactlyOnce(lookup, ProjectInfoManager.class);
+        checkExactlyOnce(lookup, ProjectIssueManager.class);
         checkExactlyOnce(lookup, Sources.class);
         checkExactlyOnce(lookup, GradleClassPathProvider.class);
         checkExactlyOnce(lookup, PrivilegedTemplates.class);
