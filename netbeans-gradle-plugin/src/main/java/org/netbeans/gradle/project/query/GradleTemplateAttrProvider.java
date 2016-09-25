@@ -16,9 +16,12 @@ import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 
 public final class GradleTemplateAttrProvider implements CreateFromTemplateAttributes {
     private final NbGradleProject project;
-    private final LicenseManager licenseManager;
+    private final LicenseManager<? super NbGradleModel> licenseManager;
 
-    public GradleTemplateAttrProvider(NbGradleProject project, LicenseManager licenseManager) {
+    public GradleTemplateAttrProvider(
+            NbGradleProject project,
+            LicenseManager<? super NbGradleModel> licenseManager) {
+
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(licenseManager, "licenseManager");
 

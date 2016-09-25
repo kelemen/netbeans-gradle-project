@@ -39,6 +39,8 @@ import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
+import org.netbeans.gradle.project.util.NbFunction;
+import org.netbeans.gradle.project.util.PathResolver;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
@@ -284,7 +286,7 @@ public final class NbGradleProject implements Project {
     }
 
     private static final class ServiceObjects {
-        public static final LicenseManager LICENSE_MANAGER = new LicenseManager();
+        public static final LicenseManager<NbGradleModel> LICENSE_MANAGER = createLicenseManager();
 
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;
@@ -377,6 +379,55 @@ public final class NbGradleProject implements Project {
             Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir);
             Path rootDir = settingsGradle != null ? settingsGradle.getParent() : null;
             return rootDir != null ? rootDir : projectDir.toPath();
+        }
+
+        private static LicenseManager<NbGradleModel> createLicenseManager() {
+            NbFunction<NbGradleModel, PathResolver> pathResolverGetter = new NbFunction<NbGradleModel, PathResolver>() {
+                @Override
+                public PathResolver apply(NbGradleModel arg) {
+                    return new LicensePathResolver(arg);
+                }
+            };
+
+            NbFunction<NbGradleModel, String> modelNameGetter = new NbFunction<NbGradleModel, String>() {
+                @Override
+                public String apply(NbGradleModel arg) {
+                    return arg.getSettingsDir().getFileName().toString();
+                }
+            };
+
+            return new LicenseManager<>(pathResolverGetter, modelNameGetter);
+        }
+    }
+
+    private static final class LicensePathResolver implements PathResolver {
+        private final Path basePath;
+
+        public LicensePathResolver(NbGradleModel model) {
+            this.basePath = model.getSettingsDir();
+        }
+
+        @Override
+        public Path resolvePath(Path relativePath) {
+            return basePath.resolve(relativePath);
+        }
+
+        public Path getBasePath() {
+            return basePath;
+        }
+
+        @Override
+        public int hashCode() {
+            return 485 + Objects.hashCode(basePath);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+            final LicensePathResolver other = (LicensePathResolver)obj;
+            return Objects.equals(this.basePath, other.basePath);
         }
     }
 }
