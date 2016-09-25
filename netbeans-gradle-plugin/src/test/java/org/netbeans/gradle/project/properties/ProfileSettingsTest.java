@@ -21,6 +21,7 @@ import org.netbeans.gradle.project.api.config.ConfigTree;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.PropertyKeyEncodingDef;
 import org.netbeans.gradle.project.api.config.PropertyValueDef;
+import org.netbeans.gradle.project.license.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.LicenseHeaderInfoProperty;
 import org.netbeans.gradle.project.properties.standard.PlatformId;
 import org.netbeans.gradle.project.properties.standard.TargetPlatformProperty;

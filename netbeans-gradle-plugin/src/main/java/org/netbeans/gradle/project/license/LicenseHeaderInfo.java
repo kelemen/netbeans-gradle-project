@@ -1,10 +1,9 @@
-package org.netbeans.gradle.project.properties;
+package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
 import java.util.Map;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.NbGradleProject;
 
 public final class LicenseHeaderInfo {
     private final String licenseName;
@@ -25,21 +24,6 @@ public final class LicenseHeaderInfo {
 
     public Path getLicenseTemplateFile() {
         return licenseTemplateFile;
-    }
-
-    public Path getLicenseTemplateFile(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        if (licenseTemplateFile == null) {
-            return null;
-        }
-
-        if (licenseTemplateFile.isAbsolute()) {
-            return licenseTemplateFile;
-        }
-
-        Path rootProjectDir = project.currentModel().getValue().getSettingsDir();
-        return rootProjectDir.resolve(licenseTemplateFile);
     }
 
     public String getLicenseName() {

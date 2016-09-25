@@ -7,10 +7,10 @@ import java.util.TreeMap;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.templates.CreateDescriptor;
 import org.netbeans.api.templates.CreateFromTemplateAttributes;
-import org.netbeans.gradle.project.LicenseManager;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.license.LicenseHeaderInfo;
+import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 
