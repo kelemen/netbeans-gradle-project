@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.model;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -45,12 +44,6 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
 
         for (T model: models) {
             Path cacheFilePath = getCacheFilePath(model, hashCalculator);
-
-            Path cacheDir = cacheFilePath.getParent();
-            if (cacheDir != null) {
-                Files.createDirectories(cacheDir);
-            }
-
             modelPersister.persistModel(model, cacheFilePath);
         }
     }

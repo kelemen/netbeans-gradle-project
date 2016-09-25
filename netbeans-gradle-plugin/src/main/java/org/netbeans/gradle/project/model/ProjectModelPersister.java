@@ -17,6 +17,11 @@ public final class ProjectModelPersister implements ModelPersister<NbGradleModel
 
     @Override
     public void persistModel(NbGradleModel model, Path dest) throws IOException {
+        Path destDir = dest.getParent();
+        if (destDir != null) {
+            Files.createDirectories(destDir);
+        }
+
         SerializedNbGradleModels toSave = SerializedNbGradleModels.createSerialized(model);
         SerializationUtils2.serializeToFile(dest, toSave);
     }
