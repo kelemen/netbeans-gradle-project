@@ -262,8 +262,8 @@ public final class NbGradleProject implements Project {
                 return;
             }
 
-            this.closeableActions.defineAction(LicenseManager.getDefault().getRegisterListenerAction(
-                    project,
+            this.closeableActions.defineAction(ServiceObjects.LICENSE_MANAGER.getRegisterListenerAction(
+                    project.currentModel(),
                     project.getCommonProperties().licenseHeaderInfo().getActiveSource()));
 
             this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(project));
@@ -284,6 +284,8 @@ public final class NbGradleProject implements Project {
     }
 
     private static final class ServiceObjects {
+        public static final LicenseManager LICENSE_MANAGER = new LicenseManager();
+
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;
         public final ProjectProfileLoader profileLoader;
@@ -331,7 +333,7 @@ public final class NbGradleProject implements Project {
             this.sourceEncoding = add(new GradleSourceEncodingQuery(project), serviceObjects);
             this.customizer = add(new GradleCustomizer(project), serviceObjects);
             this.auxProperties = add(new GradleAuxiliaryProperties(auxConfig), serviceObjects);
-            this.templateAttrProvider = add(new GradleTemplateAttrProvider(project), serviceObjects);
+            this.templateAttrProvider = add(new GradleTemplateAttrProvider(project, LICENSE_MANAGER), serviceObjects);
             this.commandExecutor = add(new DefaultGradleCommandExecutor(project), serviceObjects);
             this.projectIssueManager = add(new ProjectIssueManager(), serviceObjects);
             this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);

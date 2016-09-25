@@ -14,13 +14,13 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutor;
-import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
+import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
+import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
@@ -30,26 +30,20 @@ public final class LicenseManager {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
     private static final Random RND = new SecureRandom();
 
-    private static final LicenseManager DEFAULT = new LicenseManager();
-
     private static final MonitorableTaskExecutor SYNC_EXECUTOR
             = NbTaskExecutors.newDefaultFifoExecutor();
 
     private final Map<LicenseKey, RegisteredLicense> licenseRegistartions;
 
-    private LicenseManager() {
+    public LicenseManager() {
         this.licenseRegistartions = new ConcurrentHashMap<>();
     }
 
-    public static LicenseManager getDefault() {
-        return DEFAULT;
-    }
-
-    public String tryGetRegisteredLicenseName(NbGradleProject project, LicenseHeaderInfo headerInfo) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    public String tryGetRegisteredLicenseName(NbGradleModel projectModel, LicenseHeaderInfo headerInfo) {
+        ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
         ExceptionHelper.checkNotNullArgument(headerInfo, "headerInfo");
 
-        LicenseKey key = new LicenseKey(project, headerInfo);
+        LicenseKey key = new LicenseKey(projectModel, headerInfo);
         RegisteredLicense registration = licenseRegistartions.get(key);
         String licenseName = registration != null
                 ? registration.privateName
@@ -93,7 +87,7 @@ public final class LicenseManager {
         licenseFile.delete();
     }
 
-    private void addLicense(NbGradleProject project, RegisteredLicense registration) throws IOException {
+    private void addLicense(NbGradleModel projectModel, RegisteredLicense registration) throws IOException {
         assert SYNC_EXECUTOR.isExecutingInThis();
 
         FileObject licenseRoot = getLicenseRoot();
@@ -107,10 +101,7 @@ public final class LicenseManager {
             return;
         }
 
-        project.waitForLoadedProject(Cancellation.UNCANCELABLE_TOKEN);
-        NbGradleModel currentModel = project.currentModel().getValue();
-
-        Path licenseTemplateFile = registration.key.getAbsoluteSrcFile(currentModel);
+        Path licenseTemplateFile = registration.key.getAbsoluteSrcFile(projectModel);
         licenseTemplateFile = licenseTemplateFile.normalize();
 
         if (licenseTemplateFile.getNameCount() == 0) {
@@ -126,7 +117,7 @@ public final class LicenseManager {
         FileObject templateFile = licenseTemplateSrc.copy(licenseRoot, registration.baseFileName, "");
         templateFile.setAttribute("template", true);
 
-        String projectName = currentModel.getMainProject().getGenericProperties().getProjectFullName();
+        String projectName = projectModel.getMainProject().getGenericProperties().getProjectFullName();
         templateFile.setAttribute("displayName", registration.key.name + " (" + projectName + ")");
     }
 
@@ -148,7 +139,7 @@ public final class LicenseManager {
         }, null);
     }
 
-    private void doRegister(final NbGradleProject project, final LicenseKey key) {
+    private void doRegister(final NbGradleModel projectModel, final LicenseKey key) {
         SYNC_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
             public void execute(CancellationToken cancelToken) throws IOException {
@@ -156,7 +147,7 @@ public final class LicenseManager {
                 if (registration == null) {
                     registration = new RegisteredLicense(key);
                     licenseRegistartions.put(key, registration);
-                    addLicense(project, registration);
+                    addLicense(projectModel, registration);
                 }
                 else {
                     registration.use();
@@ -166,34 +157,34 @@ public final class LicenseManager {
     }
 
     private CloseableAction getRegisterListenerAction(
-            final NbGradleProject project,
+            final NbGradleModel projectModel,
             final LicenseHeaderInfo header) {
-        assert project != null;
+        ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
 
         return new CloseableAction() {
             @Override
             public CloseableAction.Ref open() {
-                return registerLicense(project, header);
+                return registerLicense(projectModel, header);
             }
         };
     }
 
     public PropertySource<CloseableAction> getRegisterListenerAction(
-            final NbGradleProject project,
+            PropertySource<? extends NbGradleModel> projectModelProperty,
             PropertySource<? extends LicenseHeaderInfo> headerProperty) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(projectModelProperty, "projectModelProperty");
         ExceptionHelper.checkNotNullArgument(headerProperty, "headerProperty");
 
-        return PropertyFactory.convert(headerProperty, new ValueConverter<LicenseHeaderInfo, CloseableAction>() {
+        return NbProperties.combine(headerProperty, projectModelProperty, new NbBiFunction<LicenseHeaderInfo, NbGradleModel, CloseableAction>() {
             @Override
-            public CloseableAction convert(LicenseHeaderInfo input) {
-                return getRegisterListenerAction(project, input);
+            public CloseableAction apply(LicenseHeaderInfo headerInfo, NbGradleModel projectModel) {
+                return getRegisterListenerAction(projectModel, headerInfo);
             }
         });
     }
 
-    private CloseableAction.Ref registerLicense(NbGradleProject project, LicenseHeaderInfo header) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
+    private CloseableAction.Ref registerLicense(NbGradleModel projectModel, LicenseHeaderInfo header) {
+        ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
 
         if (header == null) {
             return CloseableAction.CLOSED_REF;
@@ -204,9 +195,9 @@ public final class LicenseManager {
             return CloseableAction.CLOSED_REF;
         }
 
-        final LicenseKey key = new LicenseKey(project, header);
+        final LicenseKey key = new LicenseKey(projectModel, header);
 
-        doRegister(project, key);
+        doRegister(projectModel, key);
 
         return new CloseableAction.Ref() {
             private final AtomicBoolean unregistered = new AtomicBoolean(false);
@@ -226,24 +217,24 @@ public final class LicenseManager {
     }
 
     private static final class LicenseKey {
-        private final Path projectDir;
+        private final Path rootDir;
         private final Path srcFile;
         private final String name;
 
-        public LicenseKey(NbGradleProject project, LicenseHeaderInfo headerInfo) {
-            this.projectDir = project.getProjectDirectoryAsPath();
+        public LicenseKey(NbGradleModel projectModel, LicenseHeaderInfo headerInfo) {
+            this.rootDir = projectModel.getSettingsDir();
             this.srcFile = headerInfo.getLicenseTemplateFile();
             this.name = headerInfo.getLicenseName();
         }
 
         public Path getAbsoluteSrcFile(NbGradleModel currentModel) {
-            return currentModel.getSettingsDir().resolve(srcFile);
+            return rootDir.resolve(srcFile);
         }
 
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 97 * hash + Objects.hashCode(this.projectDir);
+            hash = 97 * hash + Objects.hashCode(this.rootDir);
             hash = 97 * hash + Objects.hashCode(this.srcFile);
             hash = 97 * hash + Objects.hashCode(this.name);
             return hash;
@@ -257,7 +248,7 @@ public final class LicenseManager {
             final LicenseKey other = (LicenseKey)obj;
             return Objects.equals(this.name, other.name)
                     && Objects.equals(this.srcFile, other.srcFile)
-                    && Objects.equals(this.projectDir, other.projectDir);
+                    && Objects.equals(this.rootDir, other.rootDir);
         }
     }
 

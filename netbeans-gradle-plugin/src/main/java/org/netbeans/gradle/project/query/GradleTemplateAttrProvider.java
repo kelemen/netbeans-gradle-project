@@ -9,17 +9,21 @@ import org.netbeans.api.templates.CreateDescriptor;
 import org.netbeans.api.templates.CreateFromTemplateAttributes;
 import org.netbeans.gradle.project.LicenseManager;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.LicenseHeaderInfo;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 
 public final class GradleTemplateAttrProvider implements CreateFromTemplateAttributes {
     private final NbGradleProject project;
+    private final LicenseManager licenseManager;
 
-    public GradleTemplateAttrProvider(NbGradleProject project) {
+    public GradleTemplateAttrProvider(NbGradleProject project, LicenseManager licenseManager) {
         ExceptionHelper.checkNotNullArgument(project, "project");
+        ExceptionHelper.checkNotNullArgument(licenseManager, "licenseManager");
 
         this.project = project;
+        this.licenseManager = licenseManager;
     }
 
     @Override
@@ -28,7 +32,8 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
 
         LicenseHeaderInfo licenseHeader = project.getCommonProperties().licenseHeaderInfo().getActiveValue();
         if (licenseHeader != null) {
-            String licenseName = LicenseManager.getDefault().tryGetRegisteredLicenseName(project, licenseHeader);
+            NbGradleModel currentModel = project.currentModel().getValue();
+            String licenseName = licenseManager.tryGetRegisteredLicenseName(currentModel, licenseHeader);
             if (licenseName != null) {
                 values.put("license", licenseName);
                 for (Map.Entry<String, String> property: licenseHeader.getProperties().entrySet()) {
