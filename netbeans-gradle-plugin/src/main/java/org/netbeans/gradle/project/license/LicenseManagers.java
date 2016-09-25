@@ -1,10 +1,12 @@
 package org.netbeans.gradle.project.license;
 
 import java.nio.file.Path;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class LicenseManagers {
     public static LicenseManager<NbGradleModel> createProjectLicenseManager() {
@@ -22,10 +24,13 @@ public final class LicenseManagers {
             }
         };
 
-        return createLicenseManager(new DefaultLicenseStore(), licenseRootProvider, modelNameProvider);
+        TaskExecutor executor = NbTaskExecutors.DEFAULT_EXECUTOR;
+
+        return createLicenseManager(executor, new DefaultLicenseStore(), licenseRootProvider, modelNameProvider);
     }
 
     public static <T> LicenseManager<T> createLicenseManager(
+            final TaskExecutor executor,
             final LicenseStore<DefaultLicenseDef> licenseStore,
             final NbFunction<? super T, ? extends Path> licenseRootProvider,
             final NbFunction<? super T, ? extends String> modelNameProvider) {
@@ -48,7 +53,7 @@ public final class LicenseManagers {
             }
         };
 
-        return new LicenseManager<>(licenseStore, licenseKeyFactory, licenseDefFactory);
+        return new LicenseManager<>(executor, licenseStore, licenseKeyFactory, licenseDefFactory);
     }
 
     private static <T> DefaultLicenseKey tryCreateLicenseKey(

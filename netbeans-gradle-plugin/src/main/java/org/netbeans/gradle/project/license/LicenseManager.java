@@ -17,7 +17,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.NbBiFunction;
-import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class LicenseManager<T> {
     private static final Logger LOGGER = Logger.getLogger(LicenseManager.class.getName());
@@ -25,21 +24,10 @@ public final class LicenseManager<T> {
     private final Impl<T, ?, ?> impl;
 
     public <LK, LD extends LicenseDef> LicenseManager(
-            LicenseStore<LD> licenseStore,
-            NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
-            NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
-        this(NbTaskExecutors.DEFAULT_EXECUTOR, licenseStore, licenseKeyFactory, licenseDefFactory);
-    }
-
-    public <LK, LD extends LicenseDef> LicenseManager(
             TaskExecutor executor,
             LicenseStore<LD> licenseStore,
             NbBiFunction<? super T, ? super LicenseHeaderInfo, ? extends LK> licenseKeyFactory,
             NbBiFunction<? super T, ? super LK, ? extends LD> licenseDefFactory) {
-        ExceptionHelper.checkNotNullArgument(licenseStore, "licenseStore");
-        ExceptionHelper.checkNotNullArgument(licenseKeyFactory, "licenseKeyFactory");
-        ExceptionHelper.checkNotNullArgument(licenseDefFactory, "licenseDefFactory");
-
         this.impl = new Impl<>(executor, licenseStore, licenseKeyFactory, licenseDefFactory);
     }
 
