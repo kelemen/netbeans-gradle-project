@@ -45,7 +45,7 @@ public final class DefaultLicenseStore implements LicenseStore<DefaultLicenseDef
 
     @Override
     public void removeLicense(DefaultLicenseDef licenseDef) throws IOException {
-        FileObject licenseRoot = getLicenseRoot();
+        FileObject licenseRoot = tryGetLicenseRoot();
         if (licenseRoot == null) {
             LOGGER.warning("License root does not exist.");
             return;
@@ -63,14 +63,13 @@ public final class DefaultLicenseStore implements LicenseStore<DefaultLicenseDef
 
     @Override
     public boolean containsLicense(String licenseId) {
-        FileObject licenseRoot = getLicenseRoot();
+        FileObject licenseRoot = tryGetLicenseRoot();
         if (licenseRoot == null) {
-            LOGGER.warning("License root does not exist.");
             return false;
         }
 
         String fileName = toLicenseFileName(licenseId);
-        return FileUtil.getConfigFile("Templates/Licenses/" + fileName) != null;
+        return licenseRoot.getFileObject(fileName) != null;
     }
 
     private static String toLicenseFileName(String licenseName) {
@@ -78,10 +77,20 @@ public final class DefaultLicenseStore implements LicenseStore<DefaultLicenseDef
         return "license-" + licenseName + ".txt";
     }
 
-    private static FileObject getLicenseRoot() {
+    private static FileObject tryGetLicenseRoot() {
         FileObject configRoot = FileUtil.getConfigRoot();
         return configRoot != null
                 ? configRoot.getFileObject("Templates/Licenses")
                 : null;
+    }
+
+    private static FileObject getLicenseRoot() throws IOException {
+        FileObject configRoot = FileUtil.getConfigRoot();
+        if (configRoot == null) {
+            return null;
+        }
+
+        FileObject templatesDir = FileUtil.createFolder(configRoot, "Templates");
+        return FileUtil.createFolder(templatesDir, "Licenses");
     }
 }
