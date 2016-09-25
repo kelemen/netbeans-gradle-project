@@ -44,7 +44,9 @@ import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
+import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
+import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
@@ -189,6 +191,14 @@ public final class NbGradleProject implements Project {
 
     public NbGradleCommonProperties getCommonProperties() {
         return getServiceObjects().commonProperties;
+    }
+
+    public FileEncodingQueryImplementation getEncodingQuery() {
+        return getServiceObjects().sourceEncoding;
+    }
+
+    public CustomizerProvider getCustomizer() {
+        return getServiceObjects().customizer;
     }
 
     @Nonnull

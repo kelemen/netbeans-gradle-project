@@ -45,8 +45,7 @@ public final class GradleTemplateAttrProvider implements CreateFromTemplateAttri
             }
         }
 
-        FileEncodingQueryImplementation enc = project.getLookup().lookup(FileEncodingQueryImplementation.class);
-        Charset encoding = enc.getEncoding(desc.getTarget());
+        Charset encoding = project.getEncodingQuery().getEncoding(desc.getTarget());
         if (encoding == null) {
             encoding = SourceEncodingProperty.DEFAULT_SOURCE_ENCODING;
         }

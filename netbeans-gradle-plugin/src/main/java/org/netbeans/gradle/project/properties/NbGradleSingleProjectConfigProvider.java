@@ -180,7 +180,7 @@ implements
     }
 
     private CustomizerProvider getCustomizerProvider() {
-        return project.getLookup().lookup(CustomizerProvider.class);
+        return project.getCustomizer();
     }
 
     @Override
