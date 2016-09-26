@@ -11,11 +11,13 @@ import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -30,6 +32,10 @@ import org.openide.DialogDisplayer;
 
 @SuppressWarnings("serial")
 public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEditorFactory {
+    private static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            ManageTasksPanel.class.getName() + ".settings",
+            NbStrings.getManageCustomTasksTitle());
+
     private final CustomActionPanel jActionPanel;
     private PredefinedTaskItem currentlyShown;
 
@@ -49,8 +55,13 @@ public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEdito
         });
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new ManageTasksPanel());
+    public static ProfileBasedSettingsCategory createSettingsCategory() {
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return ManageTasksPanel.createSettingsPage();
+            }
+        });
     }
 
     public static ProfileBasedSettingsPage createSettingsPage() {

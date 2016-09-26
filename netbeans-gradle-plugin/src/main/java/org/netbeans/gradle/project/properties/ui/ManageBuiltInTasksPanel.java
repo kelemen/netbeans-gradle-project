@@ -21,10 +21,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -42,6 +48,10 @@ import org.netbeans.gradle.project.view.CustomActionPanel;
 @SuppressWarnings("serial")
 public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final Logger LOGGER = Logger.getLogger(ManageBuiltInTasksPanel.class.getName());
+
+    private static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            ManageBuiltInTasksPanel.class.getName() + ".settings",
+            NbStrings.getManageBuiltInTasksTitle());
 
     private final NbGradleProject project;
     private final CustomActionPanel jActionPanel;
@@ -77,8 +87,20 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
         showSelectedItem();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(final NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new ManageBuiltInTasksPanel(project));
+    public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return ManageBuiltInTasksPanel.createSettingsPage(project);
+            }
+        });
+    }
+
+    public static ProfileBasedSettingsPage createSettingsPage(NbGradleProject project) {
+        ManageBuiltInTasksPanel result = new ManageBuiltInTasksPanel(project);
+        return new ProfileBasedSettingsPage(result, result);
     }
 
     @Override

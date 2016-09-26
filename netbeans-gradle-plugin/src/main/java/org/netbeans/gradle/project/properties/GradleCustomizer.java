@@ -16,6 +16,10 @@ import javax.swing.JPanel;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.others.ChangeLFPlugin;
 import org.netbeans.gradle.project.properties.ui.AppearancePanel;
@@ -24,6 +28,7 @@ import org.netbeans.gradle.project.properties.ui.CustomVariablesPanel;
 import org.netbeans.gradle.project.properties.ui.LicenseHeaderPanel;
 import org.netbeans.gradle.project.properties.ui.ManageBuiltInTasksPanel;
 import org.netbeans.gradle.project.properties.ui.ManageTasksPanel;
+import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.modules.editor.indent.project.api.Customizers;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -34,13 +39,6 @@ import org.openide.util.lookup.implspi.NamedServicesProvider;
 
 public final class GradleCustomizer implements CustomizerProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleCustomizer.class.getName());
-
-    private static final String GRADLE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle";
-    private static final String BUILT_IN_TASKS_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-built-in-commands";
-    private static final String CUSTOM_TASKS_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-custom-tasks";
-    private static final String LICENSE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".gradle-license";
-    private static final String APPEARANCE_CATEGORY_NAME = GradleCustomizer.class.getName() + ".appearance";
-    private static final String CUSTOM_VARIABLES_CATEGORY_NAME = GradleCustomizer.class.getName() + ".customVars";
 
     private final NbGradleProject project;
 
@@ -63,46 +61,43 @@ public final class GradleCustomizer implements CustomizerProvider {
         return result.toArray(new ProjectCustomizer.CompositeCategoryProvider[result.size()]);
     }
 
+    private static ProfileBasedCustomizer toCustomizer(
+            final NbGradleProject project,
+            ProfileBasedSettingsCategory settingsCategory) {
+        CustomizerCategoryId categoryId = settingsCategory.getCategoryId();
+        final ProfileBasedSettingsPageFactory pageFactory = settingsCategory.getSettingsPageFactory();
+
+        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), new ProfileBasedCustomizer.PanelFactory() {
+            @Override
+            public ProfileBasedPanel createPanel() {
+                ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
+                return ProfileBasedPanel.createPanel(project, settingsPage);
+            }
+        });
+    }
+
     private static ProfileBasedCustomizer newMainCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                GRADLE_CATEGORY_NAME,
-                NbStrings.getGradleProjectCategoryName(),
-                CommonProjectPropertiesPanel.createProfileBasedPanel(project));
+        return toCustomizer(project, CommonProjectPropertiesPanel.createSettingsCategory(project));
     }
 
     private static ProfileBasedCustomizer newBuiltInTasksCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                BUILT_IN_TASKS_CATEGORY_NAME,
-                NbStrings.getManageBuiltInTasksTitle(),
-                ManageBuiltInTasksPanel.createProfileBasedPanel(project));
+        return toCustomizer(project, ManageBuiltInTasksPanel.createSettingsCategory(project));
     }
 
     private static ProfileBasedCustomizer newCustomTasksCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                CUSTOM_TASKS_CATEGORY_NAME,
-                NbStrings.getManageCustomTasksTitle(),
-                ManageTasksPanel.createProfileBasedPanel(project));
+        return toCustomizer(project, ManageTasksPanel.createSettingsCategory());
     }
 
     private static ProfileBasedCustomizer newLicenseCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                LICENSE_CATEGORY_NAME,
-                NbStrings.getGradleProjectLicenseCategoryName(),
-                LicenseHeaderPanel.createProfileBasedPanel(project));
+        return toCustomizer(project, LicenseHeaderPanel.createSettingsCategory(project));
     }
 
     private static ProfileBasedCustomizer newAppearanceCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                APPEARANCE_CATEGORY_NAME,
-                NbStrings.getAppearanceCategoryName(),
-                AppearancePanel.createProfileBasedPanel(project));
+        return toCustomizer(project, AppearancePanel.createSettingsCategory(true));
     }
 
     private static ProfileBasedCustomizer newCustomVariablesCustomizer(NbGradleProject project) {
-        return new ProfileBasedCustomizer(
-                CUSTOM_VARIABLES_CATEGORY_NAME,
-                NbStrings.getCustomVariablesCategoryName(),
-                CustomVariablesPanel.createProfileBasedPanel(project));
+        return toCustomizer(project, CustomVariablesPanel.createSettingsCategory());
     }
 
     private static Collection<? extends ProjectCustomizer.CompositeCategoryProvider> getAnnotationBasedProviders() {
@@ -180,7 +175,7 @@ public final class GradleCustomizer implements CustomizerProvider {
         Dialog dlg = ProjectCustomizer.createCustomizerDialog(
                 categories,
                 panelProvider,
-                GRADLE_CATEGORY_NAME,
+                CommonProjectPropertiesPanel.CATEGORY_ID.getCategoryName(),
                 okListener,
                 HelpCtx.DEFAULT_HELP);
 

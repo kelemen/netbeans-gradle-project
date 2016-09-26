@@ -19,8 +19,13 @@ import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.api.java.platform.JavaPlatformManager;
 import org.netbeans.api.java.platform.Specification;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -46,6 +51,10 @@ import org.openide.util.Lookup;
 
 @SuppressWarnings("serial")
 public class CommonProjectPropertiesPanel extends JPanel implements ProfileEditorFactory {
+    public static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            CommonProjectPropertiesPanel.class.getName() + ".settings",
+            NbStrings.getGradleProjectCategoryName());
+
     private final NbGradleProject project;
 
     private PropertyRefs currentValues;
@@ -67,10 +76,20 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         setupEnableDisable();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
+    public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        return ProfileBasedPanel.createPanel(project, new CommonProjectPropertiesPanel(project));
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return CommonProjectPropertiesPanel.createSettingsPage(project);
+            }
+        });
+    }
+
+    public static ProfileBasedSettingsPage createSettingsPage(NbGradleProject project) {
+        CommonProjectPropertiesPanel result = new CommonProjectPropertiesPanel(project);
+        return new ProfileBasedSettingsPage(result, result);
     }
 
     @Override

@@ -9,10 +9,13 @@ import java.util.Objects;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -31,6 +34,10 @@ import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 @SuppressWarnings("serial")
 public class AppearancePanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Appearance");
+
+    private static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            AppearancePanel.class.getName() + ".settings",
+            NbStrings.getAppearanceCategoryName());
 
     private boolean allowInherit;
     private String defaultPatternValue;
@@ -66,14 +73,19 @@ public class AppearancePanel extends javax.swing.JPanel implements ProfileEditor
         updateCustomEditVisibility();
     }
 
+    public static ProfileBasedSettingsCategory createSettingsCategory(final boolean allowInherit) {
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return AppearancePanel.createSettingsPage(allowInherit);
+            }
+        });
+    }
+
     public static GlobalSettingsPage createSettingsPage(boolean allowInherit) {
         GlobalSettingsPage.Builder result = new GlobalSettingsPage.Builder(new AppearancePanel(allowInherit));
         result.setHelpUrl(HELP_URL);
         return result.create();
-    }
-
-    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new AppearancePanel(true));
     }
 
     private static void setupInitialInheritChecks(boolean allowInherit, JCheckBox... checkboxes) {

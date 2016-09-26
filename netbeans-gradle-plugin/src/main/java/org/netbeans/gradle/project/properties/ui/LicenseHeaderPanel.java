@@ -6,9 +6,13 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -21,6 +25,10 @@ import org.openide.filesystems.FileChooserBuilder;
 
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEditorFactory {
+    private static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            LicenseHeaderPanel.class.getName() + ".settings",
+            NbStrings.getGradleProjectLicenseCategoryName());
+
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
     private final NbSupplier<? extends Path> defaultDirProvider;
@@ -33,8 +41,19 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         initComponents();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new LicenseHeaderPanel(toDefaultDirProvider(project)));
+    public static ProfileBasedSettingsCategory createSettingsCategory(NbGradleProject project) {
+        return createSettingsCategory(toDefaultDirProvider(project));
+    }
+
+    public static ProfileBasedSettingsCategory createSettingsCategory(final NbSupplier<? extends Path> defaultDirProvider) {
+        ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
+
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return LicenseHeaderPanel.createSettingsPage(defaultDirProvider);
+            }
+        });
     }
 
     public static ProfileBasedSettingsPage createSettingsPage(NbSupplier<? extends Path> defaultDirProvider) {

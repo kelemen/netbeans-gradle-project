@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
+import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -21,12 +24,21 @@ import org.netbeans.gradle.project.util.StringUtils;
 
 @SuppressWarnings("serial")
 public class CustomVariablesPanel extends javax.swing.JPanel implements ProfileEditorFactory {
+    private static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
+            CustomVariablesPanel.class.getName() + ".settings",
+            NbStrings.getCustomVariablesCategoryName());
+
     private CustomVariablesPanel() {
         initComponents();
     }
 
-    public static ProfileBasedPanel createProfileBasedPanel(NbGradleProject project) {
-        return ProfileBasedPanel.createPanel(project, new CustomVariablesPanel());
+    public static ProfileBasedSettingsCategory createSettingsCategory() {
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
+            @Override
+            public ProfileBasedSettingsPage createSettingsPage() {
+                return CustomVariablesPanel.createSettingsPage();
+            }
+        });
     }
 
     public static ProfileBasedSettingsPage createSettingsPage() {

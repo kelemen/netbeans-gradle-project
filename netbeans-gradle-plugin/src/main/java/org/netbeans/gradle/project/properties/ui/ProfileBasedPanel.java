@@ -44,6 +44,7 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
+import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -135,17 +136,12 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         setupEnableDisable();
     }
 
-    public static <T extends JComponent & ProfileEditorFactory> ProfileBasedPanel createPanel(
-            NbGradleProject project,
-            T customPanel) {
-        return createPanel(project, customPanel, customPanel);
-    }
-
     public static ProfileBasedPanel createPanel(
             NbGradleProject project,
-            JComponent customPanel,
-            ProfileEditorFactory snapshotCreator) {
-        return createPanel(project, customPanel, convertFactory(snapshotCreator));
+            ProfileBasedSettingsPage settingsPage) {
+        JComponent settingsPanel = settingsPage.getSettingsPanel();
+        ProfileEditorFactory editorFactory = settingsPage.getEditorFactory();
+        return createPanel(project, settingsPanel, convertFactory(editorFactory));
     }
 
     public static ProfileBasedPanel createPanel(
@@ -170,11 +166,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             JComponent customPanel,
             ProfileValuesEditorFactory2 snapshotCreator) {
 
-        final ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
-        if (settingsProvider == null) {
-            throw new IllegalArgumentException("Not a Gradle project: " + project.getProjectDirectory());
-        }
-
+        ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
         return createPanel(project, settingsProvider.getExtensionSettings(""), customPanel, snapshotCreator);
     }
 
