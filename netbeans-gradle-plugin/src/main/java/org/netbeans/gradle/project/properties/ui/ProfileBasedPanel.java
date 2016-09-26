@@ -7,6 +7,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +30,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableFunction;
 import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.property.PropertySource;
@@ -139,17 +141,20 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     public static ProfileBasedPanel createPanel(
             NbGradleProject project,
             ProfileBasedSettingsPage settingsPage) {
-        JComponent settingsPanel = settingsPage.getSettingsPanel();
-        ProfileEditorFactory editorFactory = settingsPage.getEditorFactory();
-        return createPanel(project, settingsPanel, convertFactory(editorFactory));
+        ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
+        return createPanel(project, settingsProvider.getExtensionSettings(""), settingsPage);
     }
 
     public static ProfileBasedPanel createPanel(
-            Project project,
+            NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
-            JComponent customPanel,
-            ProfileEditorFactory snapshotCreator) {
-        return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
+            ProfileBasedSettingsPage settingsPage) {
+        return createPanel(
+                project,
+                extensionSettings,
+                settingsPage.getSettingsPanel(),
+                settingsPage.getAsyncPanelInitializer(),
+                convertFactory(settingsPage.getEditorFactory()));
     }
 
     @SuppressWarnings("deprecation")
@@ -158,35 +163,27 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
             org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory snapshotCreator) {
-        return createPanel(project, extensionSettings, customPanel, convertFactory(snapshotCreator));
-    }
-
-    private static ProfileBasedPanel createPanel(
-            NbGradleProject project,
-            JComponent customPanel,
-            ProfileValuesEditorFactory2 snapshotCreator) {
-
-        ProjectSettingsProvider settingsProvider = project.getProjectSettingsProvider();
-        return createPanel(project, settingsProvider.getExtensionSettings(""), customPanel, snapshotCreator);
-    }
-
-    private static ProfileBasedPanel createPanel(
-            Project project,
-            ProjectSettingsProvider.ExtensionSettings extensionSettings,
-            JComponent customPanel,
-            ProfileValuesEditorFactory2 snapshotCreator) {
 
         NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
-        return createPanel(gradleProject, extensionSettings, customPanel, snapshotCreator);
+        CancelableFunction<? extends Runnable> asyncPanelInitializer = new CancelableFunction<Runnable>() {
+            @Override
+            public Runnable execute(CancellationToken cancelToken) throws Exception {
+                return null;
+            }
+        };
+        ProfileValuesEditorFactory2 editorFactory = convertFactory(snapshotCreator);
+
+        return createPanel(gradleProject, extensionSettings, customPanel, asyncPanelInitializer, editorFactory);
     }
 
     private static ProfileBasedPanel createPanel(
             NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
+            CancelableFunction<? extends Runnable> asyncPanelInitializer,
             ProfileValuesEditorFactory2 snapshotCreator) {
         ProfileBasedPanel result = new ProfileBasedPanel(project, extensionSettings, customPanel, snapshotCreator);
-        result.fetchProfilesAndSelect();
+        result.fetchProfilesAndSelect(asyncPanelInitializer);
         return result;
     }
 
@@ -292,33 +289,60 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         return result;
     }
 
-    private void fetchProfilesAndSelect() {
-        final AtomicReference<PanelLockRef> lockRef = new AtomicReference<>(lockPanel());
+    private CancelableFunction<Runnable> initProfileComboTask() {
+        return new CancelableFunction<Runnable>() {
+            @Override
+            public Runnable execute(CancellationToken cancelToken) throws Exception {
+                List<ProfileItem> profileItems = getProfileItems();
+                return fillProfileComboTask(profileItems);
+            }
+        };
+    }
 
+    private Runnable fillProfileComboTask(final List<ProfileItem> profileItems) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                fillProfileCombo(profileItems);
+            }
+        };
+    }
+
+    private Runnable toReleaseTask(final PanelLockRef taskLock, final Runnable task) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    task.run();
+                } finally {
+                    taskLock.release();
+                }
+            }
+        };
+    }
+
+    private void fetchProfilesAndSelect(CancelableFunction<? extends Runnable> asyncPanelInitializer) {
+        final List<CancelableFunction<? extends Runnable>> initTasks = Arrays.<CancelableFunction<? extends Runnable>>asList(
+                asyncPanelInitializer,
+                initProfileComboTask());
+
+        final PanelLockRef mainLockRef = lockPanel();
         NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
             @Override
-            public void execute(CancellationToken cancelToken) {
-                final List<ProfileItem> profileItems = getProfileItems();
-                final PanelLockRef swingLock = lockRef.getAndSet(null);
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            fillProfileCombo(profileItems);
-                        } finally {
-                            swingLock.release();
-                        }
+            public void execute(CancellationToken cancelToken) throws Exception {
+                for (CancelableFunction<? extends Runnable> initTask: initTasks) {
+                    Runnable uiUpdateTask = initTask.execute(cancelToken);
+                    if (uiUpdateTask != null) {
+                        PanelLockRef taskLock = lockPanel();
+                        SwingUtilities.invokeLater(toReleaseTask(taskLock, uiUpdateTask));
                     }
-                });
+                }
             }
         }, new CleanupTask() {
             @Override
             public void cleanup(boolean canceled, Throwable error) throws Exception {
                 NbTaskExecutors.defaultCleanup(canceled, error);
-                PanelLockRef lock = lockRef.get();
-                if (lock != null) {
-                    lock.release();
-                }
+                mainLockRef.release();
             }
         });
     }

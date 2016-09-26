@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
-import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
@@ -13,7 +12,6 @@ import org.netbeans.gradle.project.api.config.ui.ProfileBasedForeignSettingsCate
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
-import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
 import org.openide.util.Lookup;
@@ -56,10 +54,7 @@ public final class ExtensionProjectSettingsPageDefs {
             @Override
             public ProfileBasedPanel createPanel() {
                 ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
-                JComponent customPanel = settingsPage.getSettingsPanel();
-                ProfileEditorFactory editorFactory = settingsPage.getEditorFactory();
-
-                return ProfileBasedPanel.createPanel(project, extensionSettings, customPanel, editorFactory);
+                return ProfileBasedPanel.createPanel(project, extensionSettings, settingsPage);
             }
         };
 
