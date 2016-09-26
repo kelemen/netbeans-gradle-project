@@ -19,8 +19,11 @@ import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
+import org.netbeans.gradle.project.license.DefaultLicenseStore;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
+import org.netbeans.gradle.project.license.LicenseSource;
+import org.netbeans.gradle.project.license.LicenseStore;
 import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
@@ -197,6 +200,10 @@ public final class NbGradleProject implements Project {
         return getServiceObjects().customizer;
     }
 
+    public LicenseSource getLicenseSource() {
+        return ServiceObjects.LICENSE_STORE;
+    }
+
     @Nonnull
     public String getName() {
         return name;
@@ -292,8 +299,9 @@ public final class NbGradleProject implements Project {
     }
 
     private static final class ServiceObjects {
+        public static final DefaultLicenseStore LICENSE_STORE = new DefaultLicenseStore();
         public static final LicenseManager<NbGradleModel> LICENSE_MANAGER
-                = LicenseManagers.createProjectLicenseManager();
+                = LicenseManagers.createProjectLicenseManager(LICENSE_STORE);
 
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;

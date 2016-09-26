@@ -21,7 +21,12 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jCaption" pref="0" max="32767" attributes="0"/>
                   <Component id="jOrganizationEdit" alignment="0" max="32767" attributes="0"/>
-                  <Component id="jLicenseNameEdit" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jLicenseCombo" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jLicenseTemplateEdit" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jBrowseButton" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jOrganizationCaption" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -29,11 +34,6 @@
                           <Component id="jLicenseTemplateCaption" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="360" max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="jLicenseTemplateEdit" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jBrowseButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -52,8 +52,8 @@
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="jLicenseNameCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jLicenseNameEdit" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Component id="jLicenseCombo" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="jLicenseTemplateCaption" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -87,13 +87,6 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JTextField" name="jLicenseNameEdit">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/netbeans/gradle/project/properties/ui/Bundle.properties" key="LicenseHeaderPanel.jLicenseNameEdit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JLabel" name="jLicenseTemplateCaption">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -124,6 +117,11 @@
           <ResourceString bundle="org/netbeans/gradle/project/properties/ui/Bundle.properties" key="LicenseHeaderPanel.jCaption.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="jLicenseCombo">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;LicenseComboItem&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

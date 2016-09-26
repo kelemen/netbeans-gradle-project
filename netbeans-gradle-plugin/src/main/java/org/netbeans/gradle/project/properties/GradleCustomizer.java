@@ -91,7 +91,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     }
 
     private static ProfileBasedCustomizer newLicenseCustomizer(NbGradleProject project) {
-        return toCustomizer(project, LicenseHeaderPanel.createSettingsCategory(project));
+        return toCustomizer(project, LicenseHeaderPanel.createSettingsCategory(project, project.getLicenseSource()));
     }
 
     private static ProfileBasedCustomizer newAppearanceCustomizer(NbGradleProject project) {

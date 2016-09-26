@@ -1,9 +1,21 @@
 package org.netbeans.gradle.project.properties.ui;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.DefaultComboBoxModel;
+import org.jtrim.cancel.CancellationToken;
+import org.jtrim.concurrent.CancelableFunction;
+import org.jtrim.property.PropertySource;
+import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
@@ -18,10 +30,16 @@ import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
 import org.netbeans.gradle.project.license.LicenseHeaderInfo;
+import org.netbeans.gradle.project.license.LicenseRef;
+import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
+import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.filesystems.FileChooserBuilder;
+
+import static org.jtrim.property.BoolProperties.*;
+import static org.jtrim.property.swing.AutoDisplayState.*;
 
 @SuppressWarnings("serial")
 public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEditorFactory {
@@ -32,33 +50,61 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     private static final String ORGANIZATION_PROPERTY_NAME = "organization";
 
     private final NbSupplier<? extends Path> defaultDirProvider;
+    private final LicenseSource licenseSource;
+    private String lastDisplayedCustomName;
+    private LicenseHeaderInfo unknownLicense;
 
-    private LicenseHeaderPanel(NbSupplier<? extends Path> defaultDirProvider) {
+    private LicenseHeaderPanel(
+            NbSupplier<? extends Path> defaultDirProvider,
+            LicenseSource licenseSource) {
         ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
+        ExceptionHelper.checkNotNullArgument(licenseSource, "licenseSource");
 
         this.defaultDirProvider = defaultDirProvider;
+        this.licenseSource = licenseSource;
+
+        this.lastDisplayedCustomName = null;
+        this.unknownLicense = null;
 
         initComponents();
+
+        updateCombo(Arrays.asList(LicenseComboItem.NO_LICENSE, LicenseComboItem.CUSTOM_LICENSE));
+
+        setupEnableDisable();
     }
 
-    public static ProfileBasedSettingsCategory createSettingsCategory(NbGradleProject project) {
-        return createSettingsCategory(toDefaultDirProvider(project));
+    private void setupEnableDisable() {
+        PropertySource<LicenseComboItem> selectedLicense = SwingProperties.comboBoxSelection(jLicenseCombo);
+
+        addSwingStateListener(equalsWithConst(selectedLicense, LicenseComboItem.CUSTOM_LICENSE),
+                componentDisabler(jLicenseTemplateEdit, jBrowseButton));
     }
 
-    public static ProfileBasedSettingsCategory createSettingsCategory(final NbSupplier<? extends Path> defaultDirProvider) {
+    public static ProfileBasedSettingsCategory createSettingsCategory(
+            NbGradleProject project,
+            LicenseSource licenseSource) {
+        return createSettingsCategory(toDefaultDirProvider(project), licenseSource);
+    }
+
+    public static ProfileBasedSettingsCategory createSettingsCategory(
+            final NbSupplier<? extends Path> defaultDirProvider,
+            final LicenseSource licenseSource) {
         ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
+        ExceptionHelper.checkNotNullArgument(licenseSource, "licenseSource");
 
         return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
             @Override
             public ProfileBasedSettingsPage createSettingsPage() {
-                return LicenseHeaderPanel.createSettingsPage(defaultDirProvider);
+                return LicenseHeaderPanel.createSettingsPage(defaultDirProvider, licenseSource);
             }
         });
     }
 
-    public static ProfileBasedSettingsPage createSettingsPage(NbSupplier<? extends Path> defaultDirProvider) {
-        LicenseHeaderPanel result = new LicenseHeaderPanel(defaultDirProvider);
-        return new ProfileBasedSettingsPage(result, result);
+    public static ProfileBasedSettingsPage createSettingsPage(
+            NbSupplier<? extends Path> defaultDirProvider,
+            LicenseSource licenseSource) {
+        LicenseHeaderPanel result = new LicenseHeaderPanel(defaultDirProvider, licenseSource);
+        return new ProfileBasedSettingsPage(result, result, result.asyncInitTask());
     }
 
     private static NbSupplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
@@ -76,38 +122,121 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         return new PropertyRefs(profileQuery);
     }
 
+    private List<LicenseComboItem> getAllNonDynamicLicenses() throws IOException {
+        List<LicenseComboItem> result = new ArrayList<>();
+        for (LicenseRef ref: licenseSource.getAllLicense()) {
+            if (!ref.isDynamic()) {
+                result.add(new LicenseComboItem(ref));
+            }
+        }
+        Collections.sort(result, new Comparator<LicenseComboItem>() {
+            @Override
+            public int compare(LicenseComboItem o1, LicenseComboItem o2) {
+                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+            }
+        });
+        return result;
+    }
+
+    private CancelableFunction<Runnable> asyncInitTask() {
+        return new CancelableFunction<Runnable>() {
+            @Override
+            public Runnable execute(CancellationToken cancelToken) throws Exception {
+                List<LicenseComboItem> builtInLicenses = getAllNonDynamicLicenses();
+
+                List<LicenseComboItem> items = new ArrayList<>(builtInLicenses.size() + 2);
+                items.add(LicenseComboItem.NO_LICENSE);
+                items.add(LicenseComboItem.CUSTOM_LICENSE);
+                items.addAll(builtInLicenses);
+
+                return updateComboTask(items);
+            }
+        };
+    }
+
+    private LicenseComboItem getSelectedComboItem(LicenseComboItem defaultValue) {
+        LicenseComboItem result = (LicenseComboItem)jLicenseCombo.getSelectedItem();
+        return result != null ? result : defaultValue;
+    }
+
+    private void updateCombo(List<LicenseComboItem> items) {
+        LicenseHeaderInfo selection = getLicenseHeaderInfo();
+
+        jLicenseCombo.setModel(new DefaultComboBoxModel<>(items.toArray(new LicenseComboItem[items.size()])));
+        displayLicenseHeaderInfo(selection);
+    }
+
+    private Runnable updateComboTask(final List<LicenseComboItem> items) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                updateCombo(items);
+            }
+        };
+    }
+
     private void displayLicenseHeaderInfo(final LicenseHeaderInfo info) {
+        lastDisplayedCustomName = null;
+        unknownLicense = null;
+
         if (info == null) {
-            jLicenseNameEdit.setText("");
             jLicenseTemplateEdit.setText("");
             jOrganizationEdit.setText("");
+            jLicenseCombo.setSelectedItem(LicenseComboItem.NO_LICENSE);
         }
         else {
             String organization = info.getProperties().get(ORGANIZATION_PROPERTY_NAME);
             jOrganizationEdit.setText(organization != null ? organization : "");
 
-            jLicenseNameEdit.setText(info.getLicenseName());
-
             Path licenseTemplate = info.getLicenseTemplateFile();
             jLicenseTemplateEdit.setText(licenseTemplate != null ? licenseTemplate.toString() : "");
+
+            if (licenseTemplate != null) {
+                lastDisplayedCustomName = info.getLicenseName();
+                jLicenseCombo.setSelectedItem(LicenseComboItem.CUSTOM_LICENSE);
+                jLicenseTemplateEdit.setText(licenseTemplate.toString());
+            }
+            else {
+                jLicenseTemplateEdit.setText("");
+
+                LicenseRef licenseRef = new LicenseRef(info.getLicenseName(), "", false);
+                LicenseComboItem newSelection = new LicenseComboItem(licenseRef);
+                jLicenseCombo.setSelectedItem(newSelection);
+                if (!newSelection.equals(getSelectedComboItem(null))) {
+                    // TODO: We should somehow display this state to the user, otherwise he
+                    //       can't just select no license.
+                    //       Note that this is not a big issue because an unknown license
+                    //       will act the same way as having no license selected.
+                    unknownLicense = info;
+                    jLicenseCombo.setSelectedItem(LicenseComboItem.NO_LICENSE);
+                }
+            }
         }
     }
 
     private LicenseHeaderInfo getLicenseHeaderInfo() {
-        String name = jLicenseNameEdit.getText().trim();
-        if (name.isEmpty()) {
-            return null;
+        LicenseComboItem selected = getSelectedComboItem(LicenseComboItem.NO_LICENSE);
+        if (selected.equals(LicenseComboItem.NO_LICENSE)) {
+            return unknownLicense;
         }
 
-        String template = jLicenseTemplateEdit.getText().trim();
-        Path templateFile = template.isEmpty() ? null : Paths.get(template);
-
         String organization = jOrganizationEdit.getText().trim();
+        Map<String, String> properties = Collections.singletonMap(ORGANIZATION_PROPERTY_NAME, organization);
 
-        return new LicenseHeaderInfo(
-                name,
-                Collections.singletonMap(ORGANIZATION_PROPERTY_NAME, organization),
-                templateFile);
+        if (selected.equals(LicenseComboItem.CUSTOM_LICENSE)) {
+            String template = jLicenseTemplateEdit.getText().trim();
+            if (template.isEmpty()) {
+                return null;
+            }
+
+            String name = lastDisplayedCustomName != null
+                    ? lastDisplayedCustomName
+                    : "Custom";
+            return new LicenseHeaderInfo(name, properties, Paths.get(template));
+        }
+
+        String licenseId = selected.getLicenseId();
+        return new LicenseHeaderInfo(licenseId, properties, null);
     }
 
     private final class PropertyRefs implements ProfileEditor {
@@ -153,6 +282,61 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         }
     }
 
+    private static final class LicenseComboItem {
+        private static final LicenseComboItem NO_LICENSE = new LicenseComboItem(false);
+        private static final LicenseComboItem CUSTOM_LICENSE = new LicenseComboItem(true);
+
+        private final LicenseRef licenseRef;
+        private final boolean hasLicense;
+
+        public LicenseComboItem(LicenseRef licenseRef) {
+            this(licenseRef, true);
+        }
+
+        public LicenseComboItem(boolean hasLicense) {
+            this(null, hasLicense);
+        }
+
+        public LicenseComboItem(LicenseRef licenseRef, boolean hasLicense) {
+            this.licenseRef = licenseRef;
+            this.hasLicense = hasLicense;
+        }
+
+        public String getLicenseId() {
+            return licenseRef != null ? licenseRef.getId() : null;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 41 * hash + Objects.hashCode(getLicenseId());
+            hash = 41 * hash + (this.hasLicense ? 1 : 0);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final LicenseComboItem other = (LicenseComboItem)obj;
+            if (this.hasLicense != other.hasLicense) return false;
+            return this.hasLicense == other.hasLicense
+                    && Objects.equals(this.getLicenseId(), other.getLicenseId());
+        }
+
+        @Override
+        public String toString() {
+            if (licenseRef != null) {
+                return licenseRef.getDisplayName();
+            }
+
+            // TODO: I18N
+            return hasLicense ? "Custom license" : "No license";
+        }
+    }
+
     /**
      * This method is called from within the constructor to
      * initialize the form.
@@ -166,19 +350,17 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         jOrganizationCaption = new javax.swing.JLabel();
         jOrganizationEdit = new javax.swing.JTextField();
         jLicenseNameCaption = new javax.swing.JLabel();
-        jLicenseNameEdit = new javax.swing.JTextField();
         jLicenseTemplateCaption = new javax.swing.JLabel();
         jLicenseTemplateEdit = new javax.swing.JTextField();
         jBrowseButton = new javax.swing.JButton();
         jCaption = new javax.swing.JLabel();
+        jLicenseCombo = new javax.swing.JComboBox<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(jOrganizationCaption, org.openide.util.NbBundle.getMessage(LicenseHeaderPanel.class, "LicenseHeaderPanel.jOrganizationCaption.text")); // NOI18N
 
         jOrganizationEdit.setText(org.openide.util.NbBundle.getMessage(LicenseHeaderPanel.class, "LicenseHeaderPanel.jOrganizationEdit.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLicenseNameCaption, org.openide.util.NbBundle.getMessage(LicenseHeaderPanel.class, "LicenseHeaderPanel.jLicenseNameCaption.text")); // NOI18N
-
-        jLicenseNameEdit.setText(org.openide.util.NbBundle.getMessage(LicenseHeaderPanel.class, "LicenseHeaderPanel.jLicenseNameEdit.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLicenseTemplateCaption, org.openide.util.NbBundle.getMessage(LicenseHeaderPanel.class, "LicenseHeaderPanel.jLicenseTemplateCaption.text")); // NOI18N
 
@@ -202,17 +384,17 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jCaption, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(jOrganizationEdit)
-                    .addComponent(jLicenseNameEdit)
+                    .addComponent(jLicenseCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLicenseTemplateEdit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jBrowseButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jOrganizationCaption)
                             .addComponent(jLicenseNameCaption)
                             .addComponent(jLicenseTemplateCaption))
-                        .addGap(0, 360, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLicenseTemplateEdit)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jBrowseButton)))
+                        .addGap(0, 360, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -227,8 +409,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
                 .addGap(18, 18, 18)
                 .addComponent(jLicenseNameCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLicenseNameEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(jLicenseCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLicenseTemplateCaption)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -267,8 +449,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBrowseButton;
     private javax.swing.JLabel jCaption;
+    private javax.swing.JComboBox<LicenseComboItem> jLicenseCombo;
     private javax.swing.JLabel jLicenseNameCaption;
-    private javax.swing.JTextField jLicenseNameEdit;
     private javax.swing.JLabel jLicenseTemplateCaption;
     private javax.swing.JTextField jLicenseTemplateEdit;
     private javax.swing.JLabel jOrganizationCaption;

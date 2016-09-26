@@ -9,7 +9,7 @@ import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class LicenseManagers {
-    public static LicenseManager<NbGradleModel> createProjectLicenseManager() {
+    public static LicenseManager<NbGradleModel> createProjectLicenseManager(LicenseStore<DefaultLicenseDef> licenseStore) {
         NbFunction<NbGradleModel, Path> licenseRootProvider = new NbFunction<NbGradleModel, Path>() {
             @Override
             public Path apply(NbGradleModel ownerModel) {
@@ -26,7 +26,7 @@ public final class LicenseManagers {
 
         TaskExecutor executor = NbTaskExecutors.DEFAULT_EXECUTOR;
 
-        return createLicenseManager(executor, new DefaultLicenseStore(), licenseRootProvider, modelNameProvider);
+        return createLicenseManager(executor, licenseStore, licenseRootProvider, modelNameProvider);
     }
 
     public static <T> LicenseManager<T> createLicenseManager(

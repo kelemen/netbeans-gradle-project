@@ -1,12 +1,16 @@
 package org.netbeans.gradle.project.properties.ui;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
 import org.netbeans.gradle.project.license.LicenseHeaderInfo;
+import org.netbeans.gradle.project.license.LicenseRef;
+import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.NbConsumer;
@@ -21,11 +25,18 @@ public class LicenseHeaderPanelTest {
         }
     };
 
+    private static final LicenseSource LICENSE_SOURCE = new LicenseSource() {
+        @Override
+        public Collection<LicenseRef> getAllLicense() throws IOException {
+            return Collections.emptyList();
+        }
+    };
+
     private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory() {
         return new NbSupplier<ProfileBasedSettingsPage>() {
             @Override
             public ProfileBasedSettingsPage get() {
-                return LicenseHeaderPanel.createSettingsPage(NULL_PATH);
+                return LicenseHeaderPanel.createSettingsPage(NULL_PATH, LICENSE_SOURCE);
             }
         };
     }
