@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -149,10 +148,6 @@ public final class NbGradleProject implements Project {
 
     public boolean tryWaitForLoadedProject(CancellationToken cancelToken, long timeout, TimeUnit unit) {
         return getModelUpdater().tryWaitForLoadedProject(cancelToken, timeout, unit);
-    }
-
-    public boolean isSameProject(Project other) {
-        return Objects.equals(other.getProjectDirectory(), getProjectDirectory());
     }
 
     public NbGradleProjectExtensions getExtensions() {
@@ -344,7 +339,9 @@ public final class NbGradleProject implements Project {
             this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
             this.actionProvider = add(new GradleActionProvider(project), serviceObjects);
             this.sharabilityQuery = add(new GradleSharabilityQuery(project), serviceObjects);
-            this.sourceEncoding = add(new GradleSourceEncodingQuery(project), serviceObjects);
+            this.sourceEncoding = add(
+                    new GradleSourceEncodingQuery(project.getProjectDirectory(), commonProperties.sourceEncoding().getActiveSource()),
+                    serviceObjects);
             this.customizer = add(new GradleCustomizer(project), serviceObjects);
             this.auxProperties = add(new GradleAuxiliaryProperties(auxConfig), serviceObjects);
             this.templateAttrProvider = add(new GradleTemplateAttrProvider(project, LICENSE_MANAGER), serviceObjects);
