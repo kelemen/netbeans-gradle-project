@@ -4,19 +4,19 @@ import java.net.URI;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.queries.SharabilityQuery.Sharability;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.spi.queries.SharabilityQueryImplementation2;
 
 public final class GradleSharabilityQuery implements SharabilityQueryImplementation2 {
-    private final NbGradleProject project;
+    private final PropertySource<? extends NbGradleModel> modelRef;
 
-    public GradleSharabilityQuery(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
+    public GradleSharabilityQuery(PropertySource<? extends NbGradleModel> modelRef) {
+        ExceptionHelper.checkNotNullArgument(modelRef, "modelRef");
+        this.modelRef = modelRef;
     }
 
     private static boolean isInDirectory(Path dir, Path queriedFile) {
@@ -43,7 +43,7 @@ public final class GradleSharabilityQuery implements SharabilityQueryImplementat
             return Sharability.UNKNOWN;
         }
 
-        NbGradleModel model = project.currentModel().getValue();
+        NbGradleModel model = modelRef.getValue();
         Path rootProjectDir = model.getSettingsDir();
 
         if (isInBuildDir(model, queriedPath)) {

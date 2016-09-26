@@ -333,12 +333,19 @@ public final class NbGradleProject implements Project {
             this.profileLoader = new ProjectProfileLoader(configProvider);
             this.commonProperties = configProvider.getCommonProperties(configProvider.getActiveSettingsQuery());
 
+            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
+            this.settingsFileManager = new SettingsFileManager(projectDir, modelUpdater, modelManager.currentModel());
+            this.projectDisplayInfo = new ProjectDisplayInfo(
+                    modelManager.currentModel(),
+                    commonProperties.displayNamePattern().getActiveSource());
+
             this.auxConfig = add(new GradleAuxiliaryConfiguration(profileLoader), serviceObjects);
             this.state = add(state, serviceObjects);
             this.projectInformation = add(new GradleProjectInformation(project), serviceObjects);
             this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
             this.actionProvider = add(new GradleActionProvider(project), serviceObjects);
-            this.sharabilityQuery = add(new GradleSharabilityQuery(project), serviceObjects);
+            this.sharabilityQuery = add(new GradleSharabilityQuery(modelManager.currentModel()), serviceObjects);
             this.sourceEncoding = add(
                     new GradleSourceEncodingQuery(project.getProjectDirectory(), commonProperties.sourceEncoding().getActiveSource()),
                     serviceObjects);
@@ -364,12 +371,6 @@ public final class NbGradleProject implements Project {
 
             this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(
                     LookupsEx.asSupplier(extensions.getCombinedExtensionLookup(), BuiltInGradleCommandQuery.class));
-            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
-            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
-            this.settingsFileManager = new SettingsFileManager(projectDir, modelUpdater, modelManager.currentModel());
-            this.projectDisplayInfo = new ProjectDisplayInfo(
-                    modelManager.currentModel(),
-                    commonProperties.displayNamePattern().getActiveSource());
         }
 
         public void updateExtensions(Collection<? extends NbGradleExtensionRef> newExtensions) {
