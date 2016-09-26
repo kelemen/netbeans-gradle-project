@@ -103,13 +103,9 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         return command;
     }
 
-    private final NbGradleProject project;
     private final Set<String> supportedCommands;
 
-    public DefaultBuiltInTasks(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-
-        this.project = project;
+    public DefaultBuiltInTasks() {
         this.supportedCommands = Collections.unmodifiableSet(DEFAULT_TASKS.keySet());
     }
 

@@ -22,6 +22,7 @@ import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
+import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
@@ -358,17 +359,18 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
 
-            this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(project);
+            this.services = Lookups.fixed(serviceObjects.toArray());
+            this.projectLookups = new NbGradleProjectLookups(project, services);
+            this.extensions = new UpdatableProjectExtensions(projectLookups.getCombinedExtensionLookup());
+
+            this.mergedCommandQuery = new MergedBuiltInGradleCommandQuery(
+                    LookupsEx.asSupplier(extensions.getCombinedExtensionLookup(), BuiltInGradleCommandQuery.class));
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
             this.settingsFileManager = new SettingsFileManager(projectDir, modelUpdater, modelManager.currentModel());
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
-
-            this.services = Lookups.fixed(serviceObjects.toArray());
-            this.projectLookups = new NbGradleProjectLookups(project, services);
-            this.extensions = new UpdatableProjectExtensions(projectLookups.getCombinedExtensionLookup());
         }
 
         public void updateExtensions(Collection<? extends NbGradleExtensionRef> newExtensions) {

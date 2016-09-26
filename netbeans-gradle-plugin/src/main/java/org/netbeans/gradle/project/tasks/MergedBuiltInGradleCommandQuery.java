@@ -1,29 +1,31 @@
 package org.netbeans.gradle.project.tasks;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
+import org.netbeans.gradle.project.util.NbSupplier;
 
 public final class MergedBuiltInGradleCommandQuery implements BuiltInGradleCommandQuery {
-    private final NbGradleProject project;
     private final BuiltInGradleCommandQuery defaultBuiltInTasks;
+    private final NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries;
 
-    public MergedBuiltInGradleCommandQuery(NbGradleProject project) {
-        ExceptionHelper.checkNotNullArgument(project, "project");
-        this.project = project;
-        this.defaultBuiltInTasks = new DefaultBuiltInTasks(project);
+    public MergedBuiltInGradleCommandQuery(NbSupplier<? extends Collection<? extends BuiltInGradleCommandQuery>> extraQueries) {
+        ExceptionHelper.checkNotNullArgument(extraQueries, "extraQueries");
+
+        this.extraQueries = extraQueries;
+        this.defaultBuiltInTasks = new DefaultBuiltInTasks();
     }
 
     private List<BuiltInGradleCommandQuery> getAllQueries() {
-        List<BuiltInGradleCommandQuery> result = new LinkedList<>();
-        result.addAll(project.getExtensions().lookupAllExtensionObjs(BuiltInGradleCommandQuery.class));
+        List<BuiltInGradleCommandQuery> result = new ArrayList<>();
+        result.addAll(extraQueries.get());
         result.add(defaultBuiltInTasks);
         return result;
     }
