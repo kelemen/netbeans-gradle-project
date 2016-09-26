@@ -9,11 +9,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
@@ -139,10 +141,21 @@ public final class GradleCustomizer implements CustomizerProvider {
         final ProjectCustomizer.CompositeCategoryProvider[] customizers
                 = getAllCustomizers();
 
+        final Map<String, ProjectCustomizer.CompositeCategoryProvider> customizersByName
+                = CollectionUtils.newHashMap(customizers.length);
+
         final ProjectCustomizer.Category[] categories =
                 new ProjectCustomizer.Category[customizers.length];
         for (int i = 0; i < categories.length; i++) {
             categories[i] = customizers[i].createCategory(lookup);
+
+            String name = categories[i].getName();
+            if (customizersByName.containsKey(name)) {
+                LOGGER.log(Level.WARNING, "Customizer with the name already exists: {0}", name);
+            }
+            else {
+                customizersByName.put(name, customizers[i]);
+            }
         }
 
         ProjectCustomizer.CategoryComponentProvider panelProvider = new ProjectCustomizer.CategoryComponentProvider() {
@@ -154,14 +167,13 @@ public final class GradleCustomizer implements CustomizerProvider {
                     return new JPanel();
                 }
 
-                for (int i = 0; i < categories.length; i++) {
-                    if (name.equals(categories[i].getName())) {
-                        return customizers[i].createComponent(category, lookup);
-                    }
+                ProjectCustomizer.CompositeCategoryProvider customizer = customizersByName.get(name);
+                if (customizer == null) {
+                    LOGGER.log(Level.WARNING, "Requested category cannot be found {0}.", name);
+                    return new JPanel();
                 }
 
-                LOGGER.log(Level.WARNING, "Requested category cannot be found {0}.", name);
-                return new JPanel();
+                return customizer.createComponent(category, lookup);
             }
         };
 
