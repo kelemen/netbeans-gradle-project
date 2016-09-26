@@ -12,7 +12,6 @@ import org.netbeans.gradle.project.license.LicenseHeaderInfo;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
-import org.netbeans.spi.queries.FileEncodingQueryImplementation;
 
 public final class GradleTemplateAttrProvider implements CreateFromTemplateAttributes {
     private final NbGradleProject project;
