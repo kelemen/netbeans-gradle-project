@@ -350,7 +350,9 @@ public final class NbGradleProject implements Project {
             this.templateAttrProvider = add(new GradleTemplateAttrProvider(project, LICENSE_MANAGER), serviceObjects);
             this.commandExecutor = add(new DefaultGradleCommandExecutor(project), serviceObjects);
             this.projectIssueManager = add(new ProjectIssueManager(), serviceObjects);
-            this.projectSettingsProvider = add(new DefaultProjectSettingsProvider(project), serviceObjects);
+            this.projectSettingsProvider = add(
+                    new DefaultProjectSettingsProvider(configProvider, profileLoader),
+                    serviceObjects);
 
             add(new OpenHook(project), serviceObjects);
 
