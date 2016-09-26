@@ -97,7 +97,7 @@ public final class LicenseManager<T> {
                     : null;
 
             String licenseId = registration != null
-                    ? registration.licenseDef.getLicenseId()
+                    ? registration.getLicenseId()
                     : headerInfo.getLicenseName();
 
             return licenseStore.containsLicense(licenseId) ? licenseId : null;
@@ -106,7 +106,7 @@ public final class LicenseManager<T> {
         private void removeLicense(RegisteredLicense<LD> registration) throws IOException {
             assert syncExecutor.isExecutingInThis();
 
-            licenseStore.removeLicense(registration.licenseDef);
+            licenseStore.removeLicense(registration.getLicenseId());
         }
 
         private void addLicense(RegisteredLicense<LD> registration) throws IOException {
@@ -185,13 +185,17 @@ public final class LicenseManager<T> {
         }
     }
 
-    private static final class RegisteredLicense<LD> {
+    private static final class RegisteredLicense<LD extends LicenseDef> {
         private final LD licenseDef;
         private int useCount;
 
         public RegisteredLicense(LD licenseDef) {
             this.useCount = 1;
             this.licenseDef = licenseDef;
+        }
+
+        public String getLicenseId() {
+            return licenseDef.getLicenseId();
         }
 
         public void use() {

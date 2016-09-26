@@ -23,7 +23,7 @@ public class DefaultLicenseStoreTest {
         try {
             assertTrue(store.containsLicense(licenseDef.getLicenseId()));
         } finally {
-            store.removeLicense(licenseDef);
+            store.removeLicense(licenseDef.getLicenseId());
         }
 
         assertFalse(store.containsLicense(licenseDef.getLicenseId()));
@@ -38,7 +38,7 @@ public class DefaultLicenseStoreTest {
         DefaultLicenseStore store = new DefaultLicenseStore();
 
         assertFalse(store.containsLicense(licenseDef.getLicenseId()));
-        store.removeLicense(licenseDef);
+        store.removeLicense(licenseDef.getLicenseId());
         assertFalse(store.containsLicense(licenseDef.getLicenseId()));
     }
 }

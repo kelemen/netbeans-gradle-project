@@ -44,14 +44,14 @@ public final class DefaultLicenseStore implements LicenseStore<DefaultLicenseDef
     }
 
     @Override
-    public void removeLicense(DefaultLicenseDef licenseDef) throws IOException {
+    public void removeLicense(String licenseId) throws IOException {
         FileObject licenseRoot = tryGetLicenseRoot();
         if (licenseRoot == null) {
             LOGGER.warning("License root does not exist.");
             return;
         }
 
-        String baseFileName = toLicenseFileName(licenseDef.getLicenseId());
+        String baseFileName = toLicenseFileName(licenseId);
 
         FileObject licenseFile = licenseRoot.getFileObject(baseFileName);
         if (licenseFile == null) {

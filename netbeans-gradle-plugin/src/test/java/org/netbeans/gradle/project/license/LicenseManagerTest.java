@@ -305,8 +305,8 @@ public class LicenseManagerTest {
         }
 
         @Override
-        public void removeLicense(DefaultLicenseDef licenseDef) throws IOException {
-            licenses.remove(licenseDef.getLicenseId());
+        public void removeLicense(String licenseId) throws IOException {
+            licenses.remove(licenseId);
         }
 
         @Override
