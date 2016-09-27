@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -257,6 +258,54 @@ public final class StringUtils {
         StringBuilder result = new StringBuilder(str);
         result.setCharAt(0, capitalized);
         return result.toString();
+    }
+
+    private static int indexOfNonWs(String str, int startIndex) {
+        return indexOfWs(str, startIndex, false);
+    }
+
+    private static int indexOfWs(String str, int startIndex) {
+        return indexOfWs(str, startIndex, true);
+    }
+
+    private static int indexOfWs(String str, int startIndex, boolean findWs) {
+        for (int i = startIndex; i < str.length(); i++) {
+            if ((str.charAt(i) <= ' ') == findWs) {
+                return i;
+            }
+        }
+        return str.length();
+    }
+
+    public static List<String> splitArgs(String cmdLine) {
+        List<String> result = new ArrayList<>();
+        int index = indexOfNonWs(cmdLine, 0);
+        while (index < cmdLine.length()) {
+            if (cmdLine.charAt(index) == '"') {
+                int argStartIndex = index + 1;
+                index = unescapedIndexOf(cmdLine, argStartIndex, '"');
+
+                int argEndIndex;
+                if (index < 0) {
+                    index = cmdLine.length();
+                    argEndIndex = index;
+                }
+                else {
+                    argEndIndex = index;
+                    index++;
+                }
+
+                result.add(unescapeString(cmdLine.substring(argStartIndex, argEndIndex)));
+            }
+            else {
+                int argStartIndex = index;
+                index = indexOfWs(cmdLine, index);
+                result.add(cmdLine.substring(argStartIndex, index));
+            }
+
+            index = indexOfNonWs(cmdLine, index);
+        }
+        return result;
     }
 
     private StringUtils() {
