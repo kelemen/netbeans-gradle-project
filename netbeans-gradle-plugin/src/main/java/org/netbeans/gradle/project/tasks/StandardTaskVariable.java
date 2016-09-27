@@ -121,6 +121,13 @@ public enum StandardTaskVariable {
                     ? StringUtils.capitalizeFirstCharacter(value)
                     : null);
         }
+    })
+    ,
+    CMD_ARGS("cmd-args", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            return VariableValue.EMPTY_VALUE;
+        }
     });
 
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
