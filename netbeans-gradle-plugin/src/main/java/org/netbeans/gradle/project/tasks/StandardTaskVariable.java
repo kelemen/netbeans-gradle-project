@@ -123,7 +123,7 @@ public enum StandardTaskVariable {
         }
     })
     ,
-    CMD_ARGS("cmd-args", new ValueGetter<NbGradleProject>() {
+    CMD_LINE_ARGS("cmd-line-args", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             return VariableValue.EMPTY_VALUE;
