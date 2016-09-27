@@ -23,7 +23,6 @@ import org.netbeans.gradle.project.license.DefaultLicenseStore;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
-import org.netbeans.gradle.project.license.LicenseStore;
 import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.NbGradleModel;
