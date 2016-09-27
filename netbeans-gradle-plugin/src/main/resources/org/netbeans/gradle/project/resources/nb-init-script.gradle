@@ -7,25 +7,24 @@ afterProject { org.gradle.api.Project project ->
     }
 
     def tasks = project.tasks
-    boolean hasRun = tasks.findByName('run') != null
-    boolean hasDebug = tasks.findByName('debug') != null
+    def runTask =  tasks.findByName('run')
+    def debugTask = tasks.findByName('debug')
+
+    boolean hasRun = runTask != null
+    boolean hasDebug = debugTask != null
 
     if (tasks.findByName('classes') != null && project.hasProperty('sourceSets')) {
         def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
         if (definedMainClass == null) definedMainClass = '';
         definedMainClass = definedMainClass.toString()
 
-        def cmdLineArgs = project.hasProperty('cmdLineArgs') ? project.cmdLineArgs : ''
-        cmdLineArgs = cmdLineArgs?.toString()?.trim()
-        if (cmdLineArgs == null) cmdLineArgs = ''
+        def cmdLineArgs = getCmdLineArgs(project)
 
         def configJavaExec = { JavaExec task ->
             task.main = definedMainClass
             task.classpath = project.sourceSets.main.runtimeClasspath
             task.standardInput = System.in
-            if (cmdLineArgs != '') {
-                task.args splitArgs(cmdLineArgs)
-            }
+            task.args = cmdLineArgs
         }
 
         if (!hasRun) {
@@ -40,6 +39,9 @@ afterProject { org.gradle.api.Project project ->
                 }
             }
         }
+        else if (!cmdLineArgs.isEmpty() && (runTask instanceof JavaExec)) {
+            runTask.args = cmdLineArgs
+        }
 
         if (!hasDebug) {
             if ('' != definedMainClass) {
@@ -53,6 +55,9 @@ afterProject { org.gradle.api.Project project ->
                     println 'Cannot execute debug because the property "mainClass" is not defined or empty.'
                 }
             }
+        }
+        else if (!cmdLineArgs.isEmpty() && (debugTask instanceof JavaExec)) {
+            debugTask.args = getCmdLineArgs(project)
         }
     }
     else {
@@ -81,6 +86,17 @@ afterProject { org.gradle.api.Project project ->
     updateDebugTaskArgs(project)
 }
 
+List<String> getCmdLineArgs(def project) {
+    def cmdLineArgs = project.hasProperty('cmdLineArgs') ? project.cmdLineArgs : ''
+    cmdLineArgs = cmdLineArgs?.toString()?.trim()
+    if (cmdLineArgs == null || cmdLineArgs == '') {
+        return []
+    }
+    else {
+        return splitArgs(cmdLineArgs)
+    }
+}
+
 void updateDebugTaskArgs(def project) {
     List debuggerAttachArgs = null;
     if (project.hasProperty('debuggerJpdaPort')) {
@@ -106,6 +122,12 @@ void updateDebugTaskArgs(def project) {
     }
 
     def task = project.tasks.findByName(localTaskName)
+    if (task instanceof JavaExec) {
+        def cmdLineArgs = getCmdLineArgs(project)
+        if (!cmdLineArgs.isEmpty()) {
+            task.args = cmdLineArgs
+        }
+    }
     if ((task instanceof JavaExec) || (task instanceof Test)) {
         updateJvmArgs(task, debuggerAttachArgs)
     }
