@@ -3,12 +3,12 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 import org.jtrim.cancel.CancellationToken;
@@ -20,6 +20,7 @@ import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
 import org.netbeans.gradle.project.extensions.ExtensionLoader;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.license.DefaultLicenseStore;
+import org.netbeans.gradle.project.license.LicenseHeaderInfo;
 import org.netbeans.gradle.project.license.LicenseManager;
 import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
@@ -42,7 +43,7 @@ import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
-import org.netbeans.gradle.project.util.CloseableActionContainer;
+import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
 import org.netbeans.spi.project.ProjectState;
@@ -260,43 +261,6 @@ public final class NbGradleProject implements Project {
         return this.projectDir.equals(other.projectDir);
     }
 
-    private static class OpenHook extends ProjectOpenedHook {
-        private final NbGradleProject project;
-        private final CloseableActionContainer closeableActions;
-        private final AtomicBoolean initialized;
-
-        public OpenHook(NbGradleProject project) {
-            this.project = project;
-            this.closeableActions = new CloseableActionContainer();
-            this.initialized = new AtomicBoolean(false);
-        }
-
-        private void ensureInitialized() {
-            if (!initialized.compareAndSet(false, true)) {
-                return;
-            }
-
-            this.closeableActions.defineAction(ServiceObjects.LICENSE_MANAGER.getRegisterListenerAction(
-                    project.currentModel(),
-                    project.getCommonProperties().licenseHeaderInfo().getActiveSource()));
-
-            this.closeableActions.defineAction(RootProjectRegistry.getDefault().forProject(project));
-        }
-
-        @Override
-        protected void projectOpened() {
-            ensureInitialized();
-
-            closeableActions.open();
-            project.getModelUpdater().reloadProjectMayUseCache();
-        }
-
-        @Override
-        protected void projectClosed() {
-            closeableActions.close();
-        }
-    }
-
     private static final class ServiceObjects {
         public static final DefaultLicenseStore LICENSE_STORE = new DefaultLicenseStore();
         public static final LicenseManager<NbGradleModel> LICENSE_MANAGER
@@ -365,7 +329,10 @@ public final class NbGradleProject implements Project {
                     new DefaultProjectSettingsProvider(configProvider, profileLoader),
                     serviceObjects);
 
-            add(new OpenHook(project), serviceObjects);
+            serviceObjects.add(createOpenHook(
+                    modelUpdater,
+                    modelManager.currentModel(),
+                    commonProperties.licenseHeaderInfo().getActiveSource()));
 
             add(ProjectPropertiesApi.buildPlatform(commonProperties.targetPlatform().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()), serviceObjects);
@@ -399,6 +366,24 @@ public final class NbGradleProject implements Project {
             Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir);
             Path rootDir = settingsGradle != null ? settingsGradle.getParent() : null;
             return rootDir != null ? rootDir : projectDir.toPath();
+        }
+
+        private static ProjectOpenedHook createOpenHook(
+                final ProjectModelUpdater<?> modelUpdater,
+                final PropertySource<NbGradleModel> currentModel,
+                final PropertySource<LicenseHeaderInfo> licenseInfo) {
+
+            List<PropertySource<CloseableAction>> actionProperties = Arrays.asList(
+                    LICENSE_MANAGER.getRegisterListenerAction(currentModel, licenseInfo),
+                    RootProjectRegistry.getDefault().forProject(currentModel)
+            );
+
+            return GenericOpenHook.create(actionProperties, new Runnable() {
+                @Override
+                public void run() {
+                    modelUpdater.reloadProjectMayUseCache();
+                }
+            });
         }
     }
 }

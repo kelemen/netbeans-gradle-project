@@ -91,8 +91,8 @@ public final class RootProjectRegistry {
         };
     }
 
-    public PropertySource<CloseableAction> forProject(NbGradleProject project) {
-        return PropertyFactory.convert(project.currentModel(), new ValueConverter<NbGradleModel, CloseableAction>() {
+    public PropertySource<CloseableAction> forProject(PropertySource<? extends NbGradleModel> currentModel) {
+        return PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, CloseableAction>() {
             @Override
             public CloseableAction convert(NbGradleModel input) {
                 return registerAsCloseableAction(input);
