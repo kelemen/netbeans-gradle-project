@@ -266,6 +266,8 @@ public final class NbGradleProject implements Project {
         public static final LicenseManager<NbGradleModel> LICENSE_MANAGER
                 = LicenseManagers.createProjectLicenseManager(LICENSE_STORE);
 
+        public static final RootProjectRegistry ROOT_PROJECT_REGISTRY = new RootProjectRegistry();
+
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;
         public final ProjectProfileLoader profileLoader;
@@ -306,7 +308,11 @@ public final class NbGradleProject implements Project {
 
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
-            this.settingsFileManager = new SettingsFileManager(projectDir, modelUpdater, modelManager.currentModel());
+            this.settingsFileManager = new SettingsFileManager(
+                    projectDir,
+                    ROOT_PROJECT_REGISTRY,
+                    modelUpdater,
+                    modelManager.currentModel());
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
@@ -375,7 +381,7 @@ public final class NbGradleProject implements Project {
 
             List<PropertySource<CloseableAction>> actionProperties = Arrays.asList(
                     LICENSE_MANAGER.getRegisterListenerAction(currentModel, licenseInfo),
-                    RootProjectRegistry.getDefault().forProject(currentModel)
+                    ROOT_PROJECT_REGISTRY.forProject(currentModel)
             );
 
             return GenericOpenHook.create(actionProperties, new Runnable() {

@@ -21,18 +21,12 @@ import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class RootProjectRegistry {
-    private static final RootProjectRegistry DEFAULT = new RootProjectRegistry();
-
     private final Lock mainLock;
     private final Map<RootProjectKey, RegisteredProjects> rootProjects;
 
     public RootProjectRegistry() {
         this.mainLock = new ReentrantLock();
         this.rootProjects = new HashMap<>();
-    }
-
-    public static RootProjectRegistry getDefault() {
-        return DEFAULT;
     }
 
     private static boolean isExplicitRootProject(NbGradleModel input) {

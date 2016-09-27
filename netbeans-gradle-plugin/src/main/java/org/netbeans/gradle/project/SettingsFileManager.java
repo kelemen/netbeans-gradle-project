@@ -6,17 +6,29 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.property.PropertySource;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 
 final class SettingsFileManager {
     private final File projectDir;
+    private final RootProjectRegistry rootProjectRegistry;
     private final ProjectModelUpdater<?> modelUpdater;
     private final PropertySource<NbGradleModel> currentModel;
     private final AtomicReference<Path> preferredSettingsFileRef;
 
-    public SettingsFileManager(File projectDir, ProjectModelUpdater<?> modelUpdater, PropertySource<NbGradleModel> currentModel) {
+    public SettingsFileManager(
+            File projectDir,
+            RootProjectRegistry rootProjectRegistry,
+            ProjectModelUpdater<?> modelUpdater,
+            PropertySource<NbGradleModel> currentModel) {
+        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
+        ExceptionHelper.checkNotNullArgument(rootProjectRegistry, "rootProjectRegistry");
+        ExceptionHelper.checkNotNullArgument(modelUpdater, "modelUpdater");
+        ExceptionHelper.checkNotNullArgument(currentModel, "currentModel");
+
         this.projectDir = projectDir;
+        this.rootProjectRegistry = rootProjectRegistry;
         this.modelUpdater = modelUpdater;
         this.currentModel = currentModel;
         this.preferredSettingsFileRef = new AtomicReference<>(tryGetPreferredSettingsFile(projectDir));
@@ -42,11 +54,11 @@ final class SettingsFileManager {
         updateSettingsFile(tryGetPreferredSettingsFile(projectDir));
     }
 
-    private static Path tryGetPreferredSettingsFile(File projectDir) {
+    private Path tryGetPreferredSettingsFile(File projectDir) {
         if (NbGradleModel.isBuildSrcDirectory(projectDir)) {
             return null;
         }
-        Path explicitSettingsFile = RootProjectRegistry.getDefault().tryGetSettingsFile(projectDir);
+        Path explicitSettingsFile = rootProjectRegistry.tryGetSettingsFile(projectDir);
         if (explicitSettingsFile != null) {
             return explicitSettingsFile;
         }
