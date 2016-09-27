@@ -15,10 +15,17 @@ afterProject { org.gradle.api.Project project ->
         if (definedMainClass == null) definedMainClass = '';
         definedMainClass = definedMainClass.toString()
 
+        def cmdLineArgs = project.hasProperty('cmdLineArgs') ? project.cmdLineArgs : ''
+        cmdLineArgs = cmdLineArgs?.toString()?.trim()
+        if (cmdLineArgs == null) cmdLineArgs = ''
+
         def configJavaExec = { JavaExec task ->
             task.main = definedMainClass
             task.classpath = project.sourceSets.main.runtimeClasspath
             task.standardInput = System.in
+            if (cmdLineArgs != '') {
+                task.args splitArgs(cmdLineArgs)
+            }
         }
 
         if (!hasRun) {
@@ -137,4 +144,89 @@ void updateJvmArgs(def task, List additionalArgs) {
         additionalArgsSet.remove(arg?.toString())
     }
     task.jvmArgs(additionalArgsSet)
+}
+
+List<String> splitArgs(String cmdLine) {
+    char quoteChar = '"'
+    List<String> result = new ArrayList<>();
+    int index = indexOfNonWs(cmdLine, 0);
+    while (index < cmdLine.length()) {
+        if (cmdLine.charAt(index) == quoteChar) {
+            int argStartIndex = index + 1;
+            index = unescapedIndexOf(cmdLine, argStartIndex, quoteChar);
+
+            int argEndIndex;
+            if (index < 0) {
+                index = cmdLine.length();
+                argEndIndex = index;
+            }
+            else {
+                argEndIndex = index;
+                index++;
+            }
+
+            result.add(unescapeString(cmdLine.substring(argStartIndex, argEndIndex)));
+        }
+        else {
+            int argStartIndex = index;
+            index = indexOfWs(cmdLine, index);
+            result.add(cmdLine.substring(argStartIndex, index));
+        }
+
+        index = indexOfNonWs(cmdLine, index);
+    }
+    return result;
+}
+
+int indexOfNonWs(String str, int startIndex) {
+    return indexOfWs(str, startIndex, false);
+}
+
+int indexOfWs(String str, int startIndex) {
+    return indexOfWs(str, startIndex, true);
+}
+
+int indexOfWs(String str, int startIndex, boolean findWs) {
+    char spaceChar = ' '
+    for (int i = startIndex; i < str.length(); i++) {
+        if ((str.charAt(i) <= spaceChar) == findWs) {
+            return i;
+        }
+    }
+    return str.length();
+}
+
+int unescapedIndexOf(String str, int startIndex, char toFind) {
+    char escapeChar = '\\'
+    int i = startIndex;
+    while (i < str.length()) {
+        char ch = str.charAt(i);
+        if (ch == toFind) {
+            return i;
+        }
+
+        if (ch == escapeChar) i += 2;
+        else i++;
+    }
+    return -1;
+}
+
+String unescapeString(String str) {
+    char escapeChar = '\\'
+    StringBuilder result = new StringBuilder(str.length());
+    int i = 0;
+    while (i < str.length()) {
+        char ch = str.charAt(i);
+        if (ch == escapeChar) {
+            if (i + 1 < str.length()) {
+                result.append(str.charAt(i + 1));
+                i += 2;
+                continue;
+            }
+        }
+
+        result.append(ch);
+        i++;
+    }
+    return result.toString();
 }
