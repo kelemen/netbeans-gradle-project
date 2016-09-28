@@ -21,22 +21,33 @@ public final class ProjectIssue {
 
     public static final class Entry {
         private final Kind kind;
-        private final String info;
+        private final String summary;
+        private final String details;
 
-        public Entry(Kind kind, String info) {
+        public Entry(Kind kind, String summary) {
+            this(kind, summary, summary);
+        }
+
+        public Entry(Kind kind, String summary, String details) {
             ExceptionHelper.checkNotNullArgument(kind, "kind");
-            ExceptionHelper.checkNotNullArgument(info, "info");
+            ExceptionHelper.checkNotNullArgument(summary, "summary");
+            ExceptionHelper.checkNotNullArgument(details, "details");
 
             this.kind = kind;
-            this.info = info;
+            this.summary = summary;
+            this.details = details;
         }
 
         public Kind getKind() {
             return kind;
         }
 
-        public String getInfo() {
-            return info;
+        public String getSummary() {
+            return summary;
+        }
+
+        public String getDetails() {
+            return details;
         }
     }
 

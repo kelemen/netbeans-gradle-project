@@ -8,6 +8,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -342,7 +343,10 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         if (!issues.isEmpty()) {
             List<ProjectIssue.Entry> entries = new ArrayList<>(issues.size());
             for (DependencyResolutionIssue issue: issues) {
-                entries.add(new ProjectIssue.Entry(ProjectIssue.Kind.ERROR, issue.getMessage()));
+                entries.add(new ProjectIssue.Entry(
+                        ProjectIssue.Kind.ERROR,
+                        issue.getMessage(),
+                        getIssueDescription(issue)));
             }
 
             dependencyResolutionFailureRef.setInfo(new ProjectIssue(entries));
@@ -351,6 +355,51 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         else {
             dependencyResolutionFailureRef.setInfo(null);
         }
+    }
+
+    private static String getIssueDescription(DependencyResolutionIssue issue) {
+        StringBuilder result = new StringBuilder(1024);
+        result.append(issue.getMessage());
+        result.append("\n");
+
+        // TODO: I18N
+
+        result.append("Project: ");
+        result.append(issue.getProjectName());
+        result.append("\n");
+
+        result.append("Source set: ");
+        result.append(issue.getSourceSetName());
+        result.append("\n");
+
+        result.append("Dependecy type: ");
+        result.append(issue.getDependencyKind().toString());
+        result.append("\n");
+
+        result.append("Exception messages: ");
+        for (String message: getExceptionMessages(issue.getStackTrace())) {
+            result.append("\n  - ");
+            result.append(message);
+        }
+
+        return result.toString();
+    }
+
+    private static List<String> getExceptionMessages(Throwable ex) {
+        List<String> result = new ArrayList<>();
+
+        Throwable current = ex;
+        while (current != null) {
+            for (Throwable suppressed: current.getSuppressed()) {
+                result.add(suppressed.getMessage());
+            }
+            result.add(current.getMessage());
+
+            current = current.getCause();
+        }
+
+        Collections.reverse(result);
+        return result;
     }
 
     private void markOwnerIfNecessary(Path projectDir, File dir) {

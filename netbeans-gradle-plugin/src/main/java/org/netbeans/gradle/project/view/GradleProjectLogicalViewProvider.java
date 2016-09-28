@@ -376,7 +376,7 @@ implements
                         if (mostImportantKind.getImportance() < kind.getImportance()) {
                             mostImportantKind = kind;
                         }
-                        infoMap.get(kind).add(entry.getInfo());
+                        infoMap.get(kind).add(entry.getSummary());
                     }
                 }
 

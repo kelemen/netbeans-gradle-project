@@ -156,12 +156,12 @@ public final class ProjectIssueManager {
             switch (entry.getKind()) {
                 case WARNING:
                     return ProjectProblemsProvider.ProjectProblem.createWarning(
-                            "Warning",
-                            entry.getInfo());
+                            entry.getSummary(),
+                            entry.getDetails());
                 case ERROR:
                     return ProjectProblemsProvider.ProjectProblem.createError(
-                            "Error",
-                            entry.getInfo());
+                            entry.getSummary(),
+                            entry.getDetails());
                 default:
                     return null;
             }

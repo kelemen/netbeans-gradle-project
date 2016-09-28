@@ -229,6 +229,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.ProjectPropertiesTitle", projectName);
     }
 
+    public static String getInvalidClassPathEntryTitle() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.InvalidClassPathEntryTitle");
+    }
+
     public static String getInvalidClassPathEntry(String entryName) {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.InvalidClassPathEntry", entryName);
     }

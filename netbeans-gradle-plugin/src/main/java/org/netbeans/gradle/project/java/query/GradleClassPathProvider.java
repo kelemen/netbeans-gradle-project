@@ -348,6 +348,7 @@ implements
             List<ProjectIssue.Entry> infos = new LinkedList<>();
             for (File missingDep: missing) {
                 infos.add(new ProjectIssue.Entry(ProjectIssue.Kind.WARNING,
+                        NbStrings.getInvalidClassPathEntryTitle(),
                         NbStrings.getInvalidClassPathEntry(missingDep.getPath())));
             }
             getInfoRef().setInfo(new ProjectIssue(infos));
