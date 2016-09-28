@@ -297,6 +297,7 @@ implements
             projectActions.add(customTasksAction);
             projectActions.add(tasksAction);
             projectActions.add(null);
+            tryAddActionObj("Actions/Project/org-netbeans-modules-project-ui-problems-BrokenProjectActionFactory.instance", projectActions);
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
                     NbStrings.getReloadCommandCaption()));
