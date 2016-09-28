@@ -335,6 +335,8 @@ public final class NbGradleProject implements Project {
                     new DefaultProjectSettingsProvider(configProvider, profileLoader),
                     serviceObjects);
 
+            add(projectIssueManager.asProblemProvider(), serviceObjects);
+
             serviceObjects.add(createOpenHook(
                     modelUpdater,
                     modelManager.currentModel(),

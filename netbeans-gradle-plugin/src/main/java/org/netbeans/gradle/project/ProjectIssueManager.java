@@ -4,18 +4,15 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.collections.RefLinkedList;
 import org.jtrim.collections.RefList;
-import org.jtrim.concurrent.DoneFuture;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
-import org.netbeans.spi.project.ui.ProjectProblemResolver;
 import org.netbeans.spi.project.ui.ProjectProblemsProvider;
 
 public final class ProjectIssueManager {
@@ -122,18 +119,6 @@ public final class ProjectIssueManager {
         }
     }
 
-    private static enum UnresolvableError implements ProjectProblemResolver {
-        INSTANCE;
-
-        private static final ProjectProblemsProvider.Result UNRESOLVED_RESULT
-                = ProjectProblemsProvider.Result.create(ProjectProblemsProvider.Status.UNRESOLVED);
-
-        @Override
-        public Future<ProjectProblemsProvider.Result> resolve() {
-            return new DoneFuture<>(UNRESOLVED_RESULT);
-        }
-    }
-
     private static class ProjectProblemsProviderImpl implements ProjectProblemsProvider {
         private final PropertySource<Collection<ProjectIssue>> informations;
         private final SwingPropertyChangeForwarder properties;
@@ -172,13 +157,11 @@ public final class ProjectIssueManager {
                 case WARNING:
                     return ProjectProblemsProvider.ProjectProblem.createWarning(
                             "Warning",
-                            entry.getInfo(),
-                            UnresolvableError.INSTANCE);
+                            entry.getInfo());
                 case ERROR:
                     return ProjectProblemsProvider.ProjectProblem.createError(
                             "Error",
-                            entry.getInfo(),
-                            UnresolvableError.INSTANCE);
+                            entry.getInfo());
                 default:
                     return null;
             }

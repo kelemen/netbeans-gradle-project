@@ -385,9 +385,6 @@ implements
                 appendHtmlList(NbStrings.getInfoCaption(), infoMap.get(ProjectIssue.Kind.INFO), completeText);
 
                 icon = ImageUtilities.addToolTipToImage(icon, completeText.toString());
-                if (mostImportantKind.getImportance() >= ProjectIssue.Kind.WARNING.getImportance()) {
-                    icon = ImageUtilities.mergeImages(icon, NbIcons.getWarningBadge(), 0, 0);
-                }
             }
             return icon;
         }
