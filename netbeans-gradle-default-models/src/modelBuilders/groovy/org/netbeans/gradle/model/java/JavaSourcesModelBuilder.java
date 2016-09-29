@@ -8,10 +8,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.scala.ScalaPlugin;
+import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -140,14 +142,28 @@ implements
             return result.create();
         }
 
+        private Set<File> getLenientClasspath(String configName, Throwable baseError) {
+            try {
+                Configuration config = project.getConfigurations().findByName(configName);
+                if (config != null) {
+                    return config.getResolvedConfiguration().getLenientConfiguration().getFiles(Specs.SATISFIES_ALL);
+                }
+            } catch (Throwable ex) {
+                Exceptions.tryAddSuppressedException(baseError, ex);
+            }
+
+            return Collections.emptySet();
+        }
+
         private void parseClassPaths(SourceSet sourceSet, JavaSourceSet.Builder result) {
-            Set<File> compile = Collections.emptySet();
+            Set<File> compile;
             boolean compileResolved = false;
             try {
                 compile = sourceSet.getCompileClasspath().getFiles();
                 compileResolved = true;
             } catch (Throwable ex) {
                 result.setCompileClassPathProblem(ex);
+                compile = getLenientClasspath(sourceSet.getCompileConfigurationName(), ex);
             }
 
             if (!needRuntime) {
