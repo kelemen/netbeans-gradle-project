@@ -15,7 +15,7 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.CompatibilityUtils;
 
 /**
- * Defines the information need from the Gradle daemon by an extension of the
+ * Defines the information needed from the Gradle daemon by an extension of the
  * Gradle plugin of NetBeans.
  * <P>
  * Currently, you can request the following information:
