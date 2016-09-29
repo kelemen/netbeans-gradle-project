@@ -30,35 +30,31 @@ repositories {
     }
 }
 
-configurations {
-    provided
-}
-
 sourceSets {
     main {
         groovy.srcDirs = []
     }
     modelBuilders {
         compileClasspath += main.output
-        compileClasspath += configurations.provided
         java.srcDirs = []
     }
     test {
         groovy.srcDirs = []
 
-        compileClasspath += configurations.provided
+        compileClasspath += configurations.modelBuildersCompile
         runtimeClasspath -= main.output
         runtimeClasspath += files(jar.archivePath)
     }
 }
 
+configurations {
+    modelBuildersCompile.extendsFrom compile
+    modelBuildersCompile.exclude module: 'gradle-tooling-api'
+}
+
 configureJavaCompilers(5)
 
 compileTestJava.dependsOn(jar)
-
-configurations {
-    modelBuildersCompile.extendsFrom compile
-}
 
 jar {
     from sourceSets.modelBuilders.output
@@ -80,7 +76,7 @@ artifacts {
 
 dependencies {
     compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
-    provided group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6'
+    modelBuildersCompileOnly group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6'
 
     def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
         project,
@@ -88,7 +84,7 @@ dependencies {
         ['gradle-api'],
         ['gradle-1.8', 'lib']
     );
-    provided gradleApiDependency;
+    modelBuildersCompileOnly gradleApiDependency;
 
     testCompile group: 'junit', name: 'junit', version: '4.11';
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5';
