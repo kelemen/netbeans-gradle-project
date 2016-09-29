@@ -10,7 +10,7 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
 @SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
-    public static <T> Collection<GradleProjectInfoQuery2<?>> toQuery2All(
+    public static Collection<GradleProjectInfoQuery2<?>> toQuery2All(
             Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> src) {
         List<GradleProjectInfoQuery2<?>> result = new ArrayList<GradleProjectInfoQuery2<?>>(src.size());
         for (org.netbeans.gradle.model.api.GradleProjectInfoQuery<?> query: src) {
@@ -19,7 +19,7 @@ public final class CompatibilityUtils {
         return result;
     }
 
-    public static <T> Collection<org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> toQueryAll(
+    public static Collection<org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> toQueryAll(
             Collection<? extends GradleProjectInfoQuery2<?>> src) {
         List<org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> result
                 = new ArrayList<org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>>(src.size());

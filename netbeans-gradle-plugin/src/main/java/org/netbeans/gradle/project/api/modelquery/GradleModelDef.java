@@ -60,8 +60,7 @@ public final class GradleModelDef {
     public GradleModelDef(
             @Nonnull Collection<? extends Class<?>> toolingModels,
             @Nonnull Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> projectInfoQueries) {
-        this.toolingModels = CollectionUtils.copyNullSafeList(toolingModels);
-        this.projectInfoQueries = CollectionUtils.copyNullSafeList(CompatibilityUtils.toQuery2All(projectInfoQueries));
+        this(toolingModels, CompatibilityUtils.toQuery2All(projectInfoQueries), false);
     }
 
     private GradleModelDef(
