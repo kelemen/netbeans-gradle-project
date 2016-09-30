@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.CancellationToken;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ui.OpenProjects;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
@@ -35,6 +36,7 @@ public final class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
     public static final String COMMAND_RELOAD = "reload";
+    public static final String COMMAND_SET_AS_MAIN_PROJECT = "setAsMain";
 
     private final NbGradleProject project;
 
@@ -50,9 +52,10 @@ public final class GradleActionProvider implements ActionProvider {
     @Override
     public String[] getSupportedActions() {
         String[] actions = project.getMergedCommandQuery().getSupportedCommands().toArray(new String[0]);
-        String[] result = new String[actions.length + 1];
+        String[] result = new String[actions.length + 2];
         System.arraycopy(actions, 0, result, 0, actions.length);
-        result[actions.length] = COMMAND_RELOAD;
+        result[actions.length + 0] = COMMAND_RELOAD;
+        result[actions.length + 1] = COMMAND_SET_AS_MAIN_PROJECT;
         return result;
     }
 
@@ -171,13 +174,21 @@ public final class GradleActionProvider implements ActionProvider {
             return null;
         }
 
-        if (COMMAND_RELOAD.equals(command)) {
-            return new Runnable() {
-                @Override
-                public void run() {
-                    project.reloadProject();
-                }
-            };
+        switch( command ) {
+            case COMMAND_RELOAD:
+                return new Runnable() {
+                    @Override
+                    public void run() {
+                        project.reloadProject();
+                    }
+                };
+            case COMMAND_SET_AS_MAIN_PROJECT:
+                return new Runnable() {
+                    @Override
+                    public void run() {
+                        OpenProjects.getDefault().setMainProject(project);
+                    }
+                };
         }
 
         final Lookup appliedContext = getAppliedContext(command, context);
