@@ -6,6 +6,14 @@ afterProject { org.gradle.api.Project project ->
         return;
     }
 
+    try {
+        configureProject(project)
+    } catch (Throwable ex) {
+        project.println "Warning: Init script added by NB for project ${project.path} has failed with an exception: ${ex}"
+    }
+}
+
+void configureProject(def project) {
     def tasks = project.tasks
     def runTask =  tasks.findByName('run')
     def debugTask = tasks.findByName('debug')
@@ -17,6 +25,8 @@ afterProject { org.gradle.api.Project project ->
         def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
         if (definedMainClass == null) definedMainClass = '';
         definedMainClass = definedMainClass.toString()
+
+        definedMainClass = updateMainClass(project, definedMainClass)
 
         def cmdLineArgs = getCmdLineArgs(project)
 
@@ -35,7 +45,7 @@ afterProject { org.gradle.api.Project project ->
             }
             else {
                 project.task('run').doLast {
-                    println 'Cannot execute run because the property "mainClass" is not defined or empty.'
+                    project.println 'Cannot execute run because the property "mainClass" is not defined or empty.'
                 }
             }
         }
@@ -52,7 +62,7 @@ afterProject { org.gradle.api.Project project ->
             }
             else {
                 project.task('debug').doLast {
-                    println 'Cannot execute debug because the property "mainClass" is not defined or empty.'
+                    project.println 'Cannot execute debug because the property "mainClass" is not defined or empty.'
                 }
             }
         }
@@ -62,14 +72,10 @@ afterProject { org.gradle.api.Project project ->
     }
     else {
         if (!hasRun) {
-            project.task('run').doLast {
-                println 'Cannot execute run because the project does not have classes or source sets.'
-            }
+            createReportingRunTask('run')
         }
         if (!hasDebug) {
-            project.task('debug').doLast {
-                println 'Cannot execute debug because the project does not have classes or source sets.'
-            }
+            createReportingRunTask('debug')
         }
     }
 
@@ -84,6 +90,30 @@ afterProject { org.gradle.api.Project project ->
     }
 
     updateDebugTaskArgs(project)
+}
+
+void createReportingRunTask(def project, String taskName) {
+    project.task(taskName, {
+        ext.main = ''
+        doLast {
+            project.println "Cannot execute ${taskName} because the project does not have classes or source sets."
+        }
+    })
+}
+
+String updateMainClass(def project, String srcMainClass) {
+    boolean hasAppPlugin = project.plugins.hasPlugin("application")
+    if ('' != srcMainClass) {
+        if (hasAppPlugin) {
+            project.mainClassName = srcMainClass
+        }
+    }
+    else {
+        if (hasAppPlugin) {
+            return project.mainClassName
+        }
+    }
+    return srcMainClass
 }
 
 List<String> getCmdLineArgs(def project) {
