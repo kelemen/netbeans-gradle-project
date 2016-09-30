@@ -31,7 +31,6 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 
-
 public final class GradleActionProvider implements ActionProvider {
     private static final Logger LOGGER = Logger.getLogger(GradleActionProvider.class.getName());
 
@@ -174,7 +173,7 @@ public final class GradleActionProvider implements ActionProvider {
             return null;
         }
 
-        switch( command ) {
+        switch (command) {
             case COMMAND_RELOAD:
                 return new Runnable() {
                     @Override
