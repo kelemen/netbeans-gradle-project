@@ -82,20 +82,28 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SourceSetInherits", baseName, inherited);
     }
 
-    public static String getRunCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.Run");
+    private static String removeHotKey(String str) {
+        return str.replace("&", "");
     }
 
-    public static String getDebugCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.Debug");
+    private static String adjustCaption(String str, boolean hotKey) {
+        return hotKey ? str : removeHotKey(str);
     }
 
-    public static String getBuildCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.Build");
+    public static String getRunCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.Run"), hotKey);
     }
 
-    public static String getTestCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.Test");
+    public static String getDebugCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.Debug"), hotKey);
+    }
+
+    public static String getBuildCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.Build"), hotKey);
+    }
+
+    public static String getTestCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.Test"), hotKey);
     }
 
     public static String getTestWithCoverageCommandCaption() {
@@ -106,8 +114,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CustomTestsAction");
     }
 
-    public static String getCleanCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.Clean");
+    public static String getCleanCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.Clean"), hotKey);
     }
 
     public static String getRebuildCommandCaption() {
@@ -170,8 +178,8 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.SetAsMain");
     }
 
-    public static String getReloadCommandCaption() {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.ReloadProject");
+    public static String getReloadCommandCaption(boolean hotKey) {
+        return adjustCaption(NbBundle.getMessage(NbStrings.class, "NbStrings.ReloadProject"), hotKey);
     }
 
     public static String getRefreshNodeCommandCaption() {

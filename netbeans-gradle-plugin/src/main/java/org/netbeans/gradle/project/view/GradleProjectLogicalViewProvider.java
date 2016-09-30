@@ -273,20 +273,20 @@ implements
             projectActions.add(null);
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_RUN,
-                    NbStrings.getRunCommandCaption()));
+                    NbStrings.getRunCommandCaption(true)));
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_DEBUG,
-                    NbStrings.getDebugCommandCaption()));
+                    NbStrings.getDebugCommandCaption(true)));
             projectActions.add(null);
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_BUILD,
-                    NbStrings.getBuildCommandCaption()));
+                    NbStrings.getBuildCommandCaption(true)));
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_TEST,
-                    NbStrings.getTestCommandCaption()));
+                    NbStrings.getTestCommandCaption(true)));
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_CLEAN,
-                    NbStrings.getCleanCommandCaption()));
+                    NbStrings.getCleanCommandCaption(true)));
             projectActions.add(createProjectAction(
                     ActionProvider.COMMAND_REBUILD,
                     NbStrings.getRebuildCommandCaption()));
@@ -300,7 +300,7 @@ implements
             tryAddActionObj("Actions/Project/org-netbeans-modules-project-ui-problems-BrokenProjectActionFactory.instance", projectActions);
             projectActions.add(createProjectAction(
                     GradleActionProvider.COMMAND_RELOAD,
-                    NbStrings.getReloadCommandCaption()));
+                    NbStrings.getReloadCommandCaption(true)));
             // Add the commented code below to provide a "Refresh project node" action.
             // It was removed because it confused many, users can't easily distinguish it from "Reload project".
             // projectActions.add(NodeUtils.getRefreshNodeAction(this, NbStrings.getRefreshNodeCommandCaption()));
