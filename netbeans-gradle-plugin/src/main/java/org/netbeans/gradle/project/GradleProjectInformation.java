@@ -9,7 +9,6 @@ import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.gradle.project.properties.SwingPropertyChangeForwarder;
-import org.openide.util.ImageUtilities;
 
 public final class GradleProjectInformation implements ProjectInformation {
     private final NbGradleProject project;
@@ -38,7 +37,7 @@ public final class GradleProjectInformation implements ProjectInformation {
 
     @Override
     public Icon getIcon() {
-        return ImageUtilities.image2Icon(NbIcons.getGradleIcon());
+        return NbIcons.getGradleIconAsIcon();
     }
 
     @Override
