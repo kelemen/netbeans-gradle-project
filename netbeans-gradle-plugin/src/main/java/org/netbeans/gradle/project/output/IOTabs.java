@@ -63,7 +63,7 @@ public final class IOTabs {
 
             this.tabCaption = tabCaption;
 
-            putValue(Action.SMALL_ICON, ImageUtilities.loadImage(ICON));
+            putValue(Action.SMALL_ICON, ImageUtilities.loadImageIcon(ICON, false));
 
             putValue(Action.NAME, NbStrings.getStopTaskCaption());
             putValue(Action.SHORT_DESCRIPTION, NbStrings.getStopTaskDescription());
@@ -92,7 +92,7 @@ public final class IOTabs {
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-icon.png";
 
         public ReRunTask() {
-            putValue(Action.SMALL_ICON, ImageUtilities.loadImage(ICON));
+            putValue(Action.SMALL_ICON, ImageUtilities.loadImageIcon(ICON, false));
 
             putValue(Action.NAME, NbStrings.getReRunName());
             putValue(Action.SHORT_DESCRIPTION, NbStrings.getReRunDescription());
@@ -113,7 +113,7 @@ public final class IOTabs {
         private static final String ICON = "org/netbeans/gradle/project/resources/rerun-diff-args-icon.png";
 
         public ReRunWithDifferentArgsTask() {
-            putValue(Action.SMALL_ICON, ImageUtilities.loadImage(ICON));
+            putValue(Action.SMALL_ICON, ImageUtilities.loadImageIcon(ICON, false));
 
             putValue(Action.NAME, NbStrings.getReRunDiffName());
             putValue(Action.SHORT_DESCRIPTION, NbStrings.getReRunDiffDescription());
