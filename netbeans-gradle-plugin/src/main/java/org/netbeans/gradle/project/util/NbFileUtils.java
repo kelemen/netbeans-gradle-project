@@ -327,6 +327,14 @@ public final class NbFileUtils {
         }
     }
 
+    public static Path toSafeRealPath(Path src) {
+        try {
+            return src.toRealPath();
+        } catch (IOException ex) {
+            return src.normalize();
+        }
+    }
+
     private NbFileUtils() {
         throw new AssertionError();
     }

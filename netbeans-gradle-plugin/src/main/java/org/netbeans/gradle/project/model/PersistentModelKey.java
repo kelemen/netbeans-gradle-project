@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.model;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class PersistentModelKey {
     private final Path rootPath;
@@ -29,8 +30,8 @@ public final class PersistentModelKey {
     }
 
     public PersistentModelKey normalize() throws IOException {
-        Path newRootPath = rootPath.toRealPath();
-        Path newProjectDir = projectDir.toRealPath();
+        Path newRootPath = NbFileUtils.toSafeRealPath(rootPath);
+        Path newProjectDir = NbFileUtils.toSafeRealPath(projectDir);
 
         if (rootPath.equals(newRootPath) && projectDir.equals(newProjectDir)) {
             return this;
