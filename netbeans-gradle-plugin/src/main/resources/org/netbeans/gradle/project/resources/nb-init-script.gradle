@@ -72,10 +72,10 @@ void configureProject(def project) {
     }
     else {
         if (!hasRun) {
-            createReportingRunTask('run')
+            createReportingRunTask(project, 'run')
         }
         if (!hasDebug) {
-            createReportingRunTask('debug')
+            createReportingRunTask(project, 'debug')
         }
     }
 
