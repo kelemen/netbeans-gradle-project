@@ -55,6 +55,11 @@ public final class ZipUtils {
         }
     }
 
+    private static File getEntryOutputPath(File baseDir, ZipEntry entry) {
+        String name = entry.getName().replace("/", File.separator);
+        return new File(baseDir, name);
+    }
+
     public static void unzip(InputStream input, File destDir) throws IOException {
         if (input == null) throw new NullPointerException("input");
         if (destDir == null) throw new NullPointerException("destDir");
@@ -73,7 +78,7 @@ public final class ZipUtils {
                     int count;
                     byte contents[] = new byte[BUFFER];
                     // write the files to the disk
-                    FileOutputStream fos = new FileOutputStream(new File(destDir, entry.getName()));
+                    FileOutputStream fos = new FileOutputStream(getEntryOutputPath(destDir, entry));
                     try {
                         BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
                         try {
