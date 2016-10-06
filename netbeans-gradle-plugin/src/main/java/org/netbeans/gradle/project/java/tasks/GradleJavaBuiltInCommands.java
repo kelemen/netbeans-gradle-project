@@ -328,8 +328,6 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static String testSingleArgument() {
         StringBuilder result = new StringBuilder(64);
         result.append("-D");
-        result.append(StandardTaskVariable.PROJECT_PATH_NOT_NORMALIZED.getScriptReplaceConstant());
-        result.append(":");
         result.append(JavaGradleTaskVariableQuery.TEST_TASK_NAME.getScriptReplaceConstant());
         result.append(".single=");
         result.append(StandardTaskVariable.TEST_FILE_PATH.getScriptReplaceConstant());
