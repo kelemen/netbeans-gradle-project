@@ -130,6 +130,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             progress.progress(NbStrings.getParsingModel());
 
             ModelLoadResult modelLoadResult = new ModelLoadResult(
+                    gradleTarget,
                     project.getProjectDirectoryAsFile(),
                     Lookups.fixed(extensionModels.toArray()));
 

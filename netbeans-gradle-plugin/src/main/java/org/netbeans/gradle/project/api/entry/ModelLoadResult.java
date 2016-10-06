@@ -7,6 +7,8 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.util.GradleVersions;
 import org.openide.util.Lookup;
 
 /**
@@ -22,12 +24,17 @@ import org.openide.util.Lookup;
  * @see GradleProjectExtensionDef#parseModel(ModelLoadResult)
  */
 public final class ModelLoadResult {
+    private final GradleTarget evaluationEnvironment;
     private final File mainProjectDir;
     private final Lookup mainProjectModels;
 
     private final Map<File, Lookup> evaluatedProjectsModel;
 
     /**
+     * @deprecated Use the constructor accepting a {@link GradleTarget} argument. This
+     *   constructor will assume the Gradle version 1.0 and that the default JDK
+     *   was used.
+     * <P>
      * Creates a {@code ModelLoadResult} with the specified main project
      * (given by its project directory) and retrieved models for all evaluated
      * projects.
@@ -40,12 +47,37 @@ public final class ModelLoadResult {
      *   cannot be {@code null} and neither can its keys and values be
      *   {@code null}.
      */
+    @Deprecated
     public ModelLoadResult(
             @Nonnull File mainProjectDir,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
+        this(getDefaultTarget(), mainProjectDir, evaluatedProjectsModel);
+    }
 
+    /**
+     * Creates a {@code ModelLoadResult} with the specified main project
+     * (given by its project directory) and retrieved models for all evaluated
+     * projects.
+     *
+     * @param evaluationEnvironment defines the Java and Gradle versions used
+     *   when the project was evaluated. This argument cannot be {@code null}.
+     * @param mainProjectDir the project directory of the main project.
+     *   This argument cannot be {@code null}.
+     * @param evaluatedProjectsModel the map mapping projects (specified by
+     *   their project directory) to retrieved models. This map must contain a
+     *   {@code Lookup} for the specified {@code mainProjectDir}. This argument
+     *   cannot be {@code null} and neither can its keys and values be
+     *   {@code null}.
+     */
+    public ModelLoadResult(
+            @Nonnull GradleTarget evaluationEnvironment,
+            @Nonnull File mainProjectDir,
+            @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
+
+        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
         ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
 
+        this.evaluationEnvironment = evaluationEnvironment;
         this.mainProjectDir = mainProjectDir;
         this.evaluatedProjectsModel = CollectionUtils.copyNullSafeHashMap(evaluatedProjectsModel);
         this.mainProjectModels = this.evaluatedProjectsModel.get(mainProjectDir);
@@ -54,6 +86,10 @@ public final class ModelLoadResult {
     }
 
     /**
+     * @deprecated Use the constructor accepting a {@link GradleTarget} argument. This
+     *   constructor will assume the Gradle version 1.0 and that the default JDK
+     *   was used.
+     * <P>
      * Creates a {@code ModelLoadResult} with the specified main project
      * (given by its project directory) assuming a single evaluated project.
      * The evaluated projects map will contain a single entry: The main project.
@@ -63,26 +99,58 @@ public final class ModelLoadResult {
      * @param mainProjectModels the models retrieved for the main project.
      *   This argument cannot be {@code null}.
      */
+    @Deprecated
     public ModelLoadResult(
             @Nonnull File mainProjectDir,
             @Nonnull Lookup mainProjectModels) {
 
-        this(mainProjectDir,
+        this(getDefaultTarget(),
+                mainProjectDir,
+                mainProjectModels,
+                Collections.singletonMap(mainProjectDir, mainProjectModels));
+    }
+
+    /**
+     * Creates a {@code ModelLoadResult} with the specified main project
+     * (given by its project directory) assuming a single evaluated project.
+     * The evaluated projects map will contain a single entry: The main project.
+     *
+     * @param evaluationEnvironment defines the Java and Gradle versions used
+     *   when the project was evaluated. This argument cannot be {@code null}.
+     * @param mainProjectDir the project directory of the main project.
+     *   This argument cannot be {@code null}.
+     * @param mainProjectModels the models retrieved for the main project.
+     *   This argument cannot be {@code null}.
+     */
+    public ModelLoadResult(
+            @Nonnull GradleTarget evaluationEnvironment,
+            @Nonnull File mainProjectDir,
+            @Nonnull Lookup mainProjectModels) {
+
+        this(evaluationEnvironment,
+                mainProjectDir,
                 mainProjectModels,
                 Collections.singletonMap(mainProjectDir, mainProjectModels));
     }
 
     private ModelLoadResult(
+            @Nonnull GradleTarget evaluationEnvironment,
             @Nonnull File mainProjectDir,
             @Nonnull Lookup mainProjectModels,
             @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
 
+        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
         ExceptionHelper.checkNotNullArgument(mainProjectDir, "mainProjectDir");
         ExceptionHelper.checkNotNullArgument(mainProjectModels, "mainProjectModels");
 
+        this.evaluationEnvironment = evaluationEnvironment;
         this.mainProjectDir = mainProjectDir;
         this.mainProjectModels = mainProjectModels;
         this.evaluatedProjectsModel = evaluatedProjectsModel;
+    }
+
+    private static GradleTarget getDefaultTarget() {
+        return GradleVersions.DEFAULT_TARGET;
     }
 
     /**
@@ -105,7 +173,18 @@ public final class ModelLoadResult {
             throw new IllegalArgumentException("Not an evaluated project: " + projectDir);
         }
 
-        return new ModelLoadResult(projectDir, models, evaluatedProjectsModel);
+        return new ModelLoadResult(evaluationEnvironment, projectDir, models, evaluatedProjectsModel);
+    }
+
+    /**
+     * Returns the Java and Gradle versions used to evaluate the projects for these models.
+     *
+     * @return the Java and Gradle versions used to evaluate the projects for these models.
+     *   This method never returns {@code null}.
+     */
+    @Nonnull
+    public GradleTarget getEvaluationEnvironment() {
+        return evaluationEnvironment;
     }
 
     /**

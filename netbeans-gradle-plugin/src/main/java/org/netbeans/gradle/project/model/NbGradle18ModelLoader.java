@@ -77,7 +77,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
 
         progress.progress(NbStrings.getParsingModel());
 
-        ProjectModelParser parser = new ProjectModelParser(project, settingsGradleDef, modelFetcher);
+        ProjectModelParser parser = new ProjectModelParser(gradleTarget, project, settingsGradleDef, modelFetcher);
         return parser.parseModel(fetchedModels);
     }
 
@@ -90,6 +90,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
     }
 
     private static final class ProjectModelParser {
+        private final GradleTarget gradleTarget;
         private final NbGradleProject mainProject;
         private final List<NbGradleExtensionRef> extensions;
         private final ProjectModelFetcher modelFetcher;
@@ -99,10 +100,12 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final SettingsGradleDef settingsGradleDef;
 
         public ProjectModelParser(
+                GradleTarget gradleTarget,
                 NbGradleProject mainProject,
                 SettingsGradleDef settingsGradleDef,
                 ProjectModelFetcher modelFetcher) {
 
+            this.gradleTarget = gradleTarget;
             this.mainProject = mainProject;
             this.settingsGradleDef = settingsGradleDef;
             this.extensions = mainProject.getExtensions().getExtensionRefs();
@@ -175,7 +178,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
                 lookups.put(entry.getKey(), lookup);
             }
 
-            return new ModelLoadResult(defaultProjectDir, lookups);
+            return new ModelLoadResult(gradleTarget, defaultProjectDir, lookups);
         }
 
         public Result parseModel(FetchedModels fetchedModels) {
