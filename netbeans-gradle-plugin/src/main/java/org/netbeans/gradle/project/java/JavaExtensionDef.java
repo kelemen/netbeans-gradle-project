@@ -61,18 +61,24 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
     }
 
     private static NbJavaModel createReliableModel(
+            GradleTarget evaluationEnvironment,
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
-        return NbJavaModel.createModel(JavaModelSource.GRADLE_1_8_API, mainModule, possibleDependencies);
+        return NbJavaModel.createModel(
+                evaluationEnvironment,
+                JavaModelSource.GRADLE_1_8_API,
+                mainModule,
+                possibleDependencies);
     }
 
     private Map<File, NbJavaModel> parseFromNewModels(ModelLoadResult retrievedModels) {
+        GradleTarget evaluationEnvironment = retrievedModels.getEvaluationEnvironment();
         Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(retrievedModels);
         Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
 
         Map<File, NbJavaModel> result = CollectionUtils.newHashMap(modules.size());
         for (NbJavaModule module: modules) {
-            NbJavaModel model = createReliableModel(module, moduleDependencies);
+            NbJavaModel model = createReliableModel(evaluationEnvironment, module, moduleDependencies);
             result.put(module.getModuleDir(), model);
         }
 
@@ -85,8 +91,13 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         return result;
     }
 
-    private Map<File, NbJavaModel> parseFromIdeaProject(File mainModuleDir, IdeaProject ideaProject) throws IOException {
-        return IdeaJavaModelUtils.parseFromIdeaModel(mainModuleDir, ideaProject);
+    private Map<File, NbJavaModel> parseFromIdeaProject(
+            ModelLoadResult retrievedModels,
+            IdeaProject ideaProject) throws IOException {
+        return IdeaJavaModelUtils.parseFromIdeaModel(
+                retrievedModels.getEvaluationEnvironment(),
+                retrievedModels.getMainProjectDir(),
+                ideaProject);
     }
 
     private ParsedModel<NbJavaModel> parseModelImpl(ModelLoadResult retrievedModels) throws IOException {
@@ -96,7 +107,7 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         IdeaProject ideaProject = retrievedModels.getMainProjectModels().lookup(IdeaProject.class);
 
         Map<File, NbJavaModel> result = ideaProject != null
-                ? parseFromIdeaProject(retrievedModels.getMainProjectDir(), ideaProject)
+                ? parseFromIdeaProject(retrievedModels, ideaProject)
                 : parseFromNewModels(retrievedModels);
 
         NbJavaModel mainModule = result.get(retrievedModels.getMainProjectDir());

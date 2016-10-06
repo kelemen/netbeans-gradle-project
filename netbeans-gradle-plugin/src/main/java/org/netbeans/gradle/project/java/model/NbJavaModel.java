@@ -15,20 +15,25 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaClassPaths;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.util.GradleVersions;
 
 public final class NbJavaModel implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private final GradleTarget evaluationEnvironment;
     private final JavaModelSource modelSource;
     private final NbJavaModule mainModule;
     private final Map<File, JavaProjectDependency> projectDependencies;
     private final AtomicReference<Set<JavaProjectReference>> allDependenciesRef;
 
     private NbJavaModel(
+            GradleTarget evaluationEnvironment,
             JavaModelSource modelSource,
             NbJavaModule mainModule,
             Map<File, JavaProjectDependency> projectDependencies) {
 
+        this.evaluationEnvironment = evaluationEnvironment;
         this.modelSource = modelSource;
         this.mainModule = mainModule;
         this.projectDependencies = projectDependencies;
@@ -49,10 +54,12 @@ public final class NbJavaModel implements Serializable {
     }
 
     public static NbJavaModel createModel(
+            GradleTarget evaluationEnvironment,
             JavaModelSource modelSource,
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
 
+        ExceptionHelper.checkNotNullArgument(evaluationEnvironment, "evaluationEnvironment");
         ExceptionHelper.checkNotNullArgument(modelSource, "modelSource");
         ExceptionHelper.checkNotNullArgument(mainModule, "mainModule");
         ExceptionHelper.checkNotNullArgument(possibleDependencies, "possibleDependencies");
@@ -66,7 +73,11 @@ public final class NbJavaModel implements Serializable {
             addAll(classpaths.getRuntimeClasspaths(), possibleDependencies, relevantDependencies);
         }
 
-        return new NbJavaModel(modelSource, mainModule, relevantDependencies);
+        return new NbJavaModel(evaluationEnvironment, modelSource, mainModule, relevantDependencies);
+    }
+
+    public GradleTarget getEvaluationEnvironment() {
+        return evaluationEnvironment;
     }
 
     public JavaProjectDependency tryGetDepedency(File outputDir) {
@@ -109,18 +120,24 @@ public final class NbJavaModel implements Serializable {
     private static final class SerializedFormat implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        private final GradleTarget evaluationEnvironment;
         private final JavaModelSource modelSource;
         private final NbJavaModule mainModule;
         private final Map<File, JavaProjectDependency> projectDependencies;
 
         public SerializedFormat(NbJavaModel source) {
+            this.evaluationEnvironment = source.evaluationEnvironment;
             this.modelSource = source.modelSource;
             this.mainModule = source.mainModule;
             this.projectDependencies = source.projectDependencies;
         }
 
+        public GradleTarget getEvaluationEnvironment() {
+            return evaluationEnvironment != null ? evaluationEnvironment : GradleVersions.DEFAULT_TARGET;
+        }
+
         private Object readResolve() throws ObjectStreamException {
-            return new NbJavaModel(modelSource, mainModule, projectDependencies);
+            return new NbJavaModel(evaluationEnvironment, modelSource, mainModule, projectDependencies);
         }
     }
 }

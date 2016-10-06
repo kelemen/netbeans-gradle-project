@@ -35,6 +35,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.JavaProjectReference;
@@ -44,6 +45,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.util.GradleVersions;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
@@ -96,9 +98,14 @@ public final class IdeaJavaModelUtils {
     }
 
     private static NbJavaModel createUnreliableModel(
+            GradleTarget evaluationEnvironment,
             NbJavaModule mainModule,
             Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
-        return NbJavaModel.createModel(JavaModelSource.COMPATIBLE_API, mainModule, possibleDependencies);
+        return NbJavaModel.createModel(
+                evaluationEnvironment,
+                JavaModelSource.COMPATIBLE_API,
+                mainModule,
+                possibleDependencies);
     }
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
@@ -118,7 +125,9 @@ public final class IdeaJavaModelUtils {
                 NbCodeCoverage.NO_CODE_COVERAGE
         );
 
-        return createUnreliableModel(result,
+        return createUnreliableModel(
+                GradleVersions.DEFAULT_TARGET,
+                result,
                 Collections.<File, JavaProjectDependency>emptyMap());
     }
 
@@ -353,7 +362,10 @@ public final class IdeaJavaModelUtils {
                 testModel, NbCodeCoverage.NO_CODE_COVERAGE);
     }
 
-    public static Map<File, NbJavaModel> parseFromIdeaModel(File projectDir, IdeaProject ideaModel) throws IOException {
+    public static Map<File, NbJavaModel> parseFromIdeaModel(
+            GradleTarget evaluationEnvironment,
+            File projectDir,
+            IdeaProject ideaModel) throws IOException {
         IdeaModule mainModule = tryFindMainModule(projectDir, ideaModel);
         if (mainModule == null) {
             throw new IOException("Unable to find the main project in the model.");
@@ -400,7 +412,7 @@ public final class IdeaJavaModelUtils {
                         module.getProperties().getProjectDir());
             }
             else {
-                NbJavaModel model = createUnreliableModel(module, outputDirToProject);
+                NbJavaModel model = createUnreliableModel(evaluationEnvironment, module, outputDirToProject);
                 result.put(module.getModuleDir(), model);
             }
         }

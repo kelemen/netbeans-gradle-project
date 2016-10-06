@@ -14,6 +14,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaTestModel;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.model.NbGradleProjectTreeTest;
+import org.netbeans.gradle.project.util.GradleVersions;
 
 import static org.junit.Assert.*;
 
@@ -52,6 +53,7 @@ public class NbJavaModelTest {
     public void testSerialization() throws ClassNotFoundException {
         NbJavaModule mainModule = createModule("mainModule");
         NbJavaModel source = NbJavaModel.createModel(
+                GradleVersions.DEFAULT_TARGET,
                 JavaModelSource.GRADLE_1_8_API,
                 mainModule,
                 Collections.<File, JavaProjectDependency>emptyMap());

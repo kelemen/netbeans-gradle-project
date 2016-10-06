@@ -48,6 +48,7 @@ import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.util.GradleVersions;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.SingleMethod;
@@ -106,10 +107,16 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Collections.<String>emptyList(),
             true,
             true);
-    private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK = nonBlockingCommand(
+    private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK_1 = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(cleanAndTestTasks()),
             Arrays.asList(testSingleArgument()),
+            displayTestResults(),
+            hideTestFailures());
+    private static final CommandWithActions DEFAULT_TEST_SINGLE_TASK_2 = nonBlockingCommand(
+            TaskKind.BUILD,
+            Arrays.asList(cleanAndTestClassTasks()),
+            Collections.<String>emptyList(),
             displayTestResults(),
             hideTestFailures());
     private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_1 = blockingCommand(
@@ -123,6 +130,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             TaskKind.DEBUG,
             Arrays.asList(cleanAndTestTasks()),
             debuggeeAttachesArguments(testTask(), testSingleArgument()),
+            displayTestResults(),
+            hideTestFailures(),
+            listenDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_3 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList(cleanAndTestClassTasks()),
+            Arrays.asList(debugTestArgument()),
+            displayTestResults(),
+            hideTestFailures(),
+            attachDebugger());
+    private static final CommandWithActions DEFAULT_DEBUG_TEST_SINGLE_TASK_4 = blockingCommand(
+            TaskKind.DEBUG,
+            Arrays.asList(cleanAndTestClassTasks()),
+            debuggeeAttachesArguments(testTask()),
             displayTestResults(),
             hideTestFailures(),
             listenDebugger());
@@ -185,14 +206,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         addToDefaults(ActionProvider.COMMAND_RUN, DEFAULT_RUN_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_JAVADOC, DEFAULT_JAVADOC_TASK);
         addToDefaults(ActionProvider.COMMAND_REBUILD, DEFAULT_REBUILD_TASK);
-        addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, DEFAULT_TEST_SINGLE_TASK);
         addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
 
-        addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, debugModeSelector(), Arrays.asList(
-                new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TEST_SINGLE_TASK_1),
-                new CommandChoice<>(DebugMode.DEBUGGER_LISTENS, DEFAULT_DEBUG_TEST_SINGLE_TASK_2)
+        addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, newSingleTestArgSelector(), Arrays.asList(
+                new CommandChoice<>(false, DEFAULT_TEST_SINGLE_TASK_1),
+                new CommandChoice<>(true, DEFAULT_TEST_SINGLE_TASK_2)
+        ));
+
+        addToDefaults(ActionProvider.COMMAND_DEBUG_TEST_SINGLE, debugTestModeSelector(), Arrays.asList(
+                new CommandChoice<>(new DebugTestMode(false, DebugMode.DEBUGGER_ATTACHES), DEFAULT_DEBUG_TEST_SINGLE_TASK_1),
+                new CommandChoice<>(new DebugTestMode(false, DebugMode.DEBUGGER_LISTENS), DEFAULT_DEBUG_TEST_SINGLE_TASK_2),
+                new CommandChoice<>(new DebugTestMode(true, DebugMode.DEBUGGER_ATTACHES), DEFAULT_DEBUG_TEST_SINGLE_TASK_3),
+                new CommandChoice<>(new DebugTestMode(true, DebugMode.DEBUGGER_LISTENS), DEFAULT_DEBUG_TEST_SINGLE_TASK_4)
         ));
         addToDefaults(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, debugModeSelector(), Arrays.asList(
                 new CommandChoice<>(DebugMode.DEBUGGER_ATTACHES, DEFAULT_DEBUG_TEST_SINGLE_METHOD_TASK_1),
@@ -220,6 +247,30 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static String gradlePropertyArg(String propertyName, String value) {
         // TODO: Escape value
         return "-P" + propertyName + "=" + value;
+    }
+
+    private static CommandSelector<Boolean> newSingleTestArgSelector() {
+        return new CommandSelector<Boolean>() {
+            @Override
+            public Boolean choose(JavaExtension javaExt) {
+                GradleTarget env = javaExt.getCurrentModel().getEvaluationEnvironment();
+                env.getGradleVersion();
+                return GradleVersions.VERSION_2_3.compareTo(env.getGradleVersion()) <= 0;
+            }
+        };
+    }
+
+    private static CommandSelector<DebugTestMode> debugTestModeSelector() {
+        final CommandSelector<DebugMode> debugModeSelector = debugModeSelector();
+        final CommandSelector<Boolean> newSingleTestArgSelector = newSingleTestArgSelector();
+        return new CommandSelector<DebugTestMode>() {
+            @Override
+            public DebugTestMode choose(JavaExtension javaExt) {
+                return new DebugTestMode(
+                        newSingleTestArgSelector.choose(javaExt),
+                        debugModeSelector.choose(javaExt));
+            }
+        };
     }
 
     private static CommandSelector<DebugMode> debugModeSelector() {
@@ -291,6 +342,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static String testTask() {
         return projectTask(JavaGradleTaskVariableQuery.TEST_TASK_NAME.getScriptReplaceConstant());
+    }
+
+    private static String[] cleanAndTestClassTasks() {
+        return cleanAndTestTasks("--tests", StandardTaskVariable.SELECTED_CLASS.getScriptReplaceConstant());
     }
 
     private static String[] cleanAndTestMethodTasks() {
@@ -723,5 +778,34 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private interface CustomCommandAdjuster {
         public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions);
+    }
+
+    private static final class DebugTestMode {
+        private final boolean mayUseNewTestArgument;
+        private final DebugMode debugMode;
+
+        public DebugTestMode(boolean mayUseNewTestArgument, DebugMode debugMode) {
+            this.mayUseNewTestArgument = mayUseNewTestArgument;
+            this.debugMode = debugMode;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 97 * hash + (mayUseNewTestArgument ? 1 : 0);
+            hash = 97 * hash + Objects.hashCode(debugMode);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+
+            final DebugTestMode other = (DebugTestMode)obj;
+            return this.mayUseNewTestArgument == other.mayUseNewTestArgument
+                    && this.debugMode == other.debugMode;
+        }
     }
 }
