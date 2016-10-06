@@ -1,5 +1,9 @@
 package org.netbeans.gradle.project.api.modelquery;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import javax.annotation.Nonnull;
 import org.gradle.util.GradleVersion;
 import org.jtrim.utils.ExceptionHelper;
@@ -11,7 +15,9 @@ import org.openide.modules.SpecificationVersion;
  * Instances of this class are immutable and therefore are safe to be shared
  * by multiple threads concurrently.
  */
-public final class GradleTarget {
+public final class GradleTarget implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final SpecificationVersion jdkVersion;
     private final GradleVersion gradleVersion;
 
@@ -52,5 +58,47 @@ public final class GradleTarget {
     @Nonnull
     public GradleVersion getGradleVersion() {
         return gradleVersion;
+    }
+
+    private Object writeReplace() {
+        return new SerializedFormat(this);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Use proxy.");
+    }
+
+    private static final class SerializedFormat implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final String javaVersion;
+        private final String gradleVersion;
+
+        public SerializedFormat(GradleTarget source) {
+            this.javaVersion = source.getJavaVersion().toString();
+
+            GradleVersion sourceVersion = source.getGradleVersion();
+            this.gradleVersion = sourceVersion.getVersion();
+        }
+
+        private GradleVersion getGradleVersion() {
+            GradleVersion result = GradleVersion.version(gradleVersion);
+            if (GradleVersion.current().equals(result)) {
+                // There can be properties only set for GradleVersion.current(),
+                // so try to be as good as possible (this is only a best effort
+                // because the current version might have changed since the version
+                // was serialized.
+                result = GradleVersion.current();
+            }
+            return result;
+        }
+
+        public SpecificationVersion getJavaVersion() {
+            return new SpecificationVersion(javaVersion);
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new GradleTarget(getJavaVersion(), getGradleVersion());
+        }
     }
 }
