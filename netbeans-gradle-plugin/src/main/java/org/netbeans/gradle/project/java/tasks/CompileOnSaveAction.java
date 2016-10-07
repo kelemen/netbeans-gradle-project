@@ -48,7 +48,7 @@ public final class CompileOnSaveAction implements OnSaveTask {
     }
 
     private static boolean isGradleProject(Project project) {
-        return NbGradleProjectFactory.getGradleProject(project) != null;
+        return NbGradleProjectFactory.tryGetGradleProject(project) != null;
     }
 
     @Override
