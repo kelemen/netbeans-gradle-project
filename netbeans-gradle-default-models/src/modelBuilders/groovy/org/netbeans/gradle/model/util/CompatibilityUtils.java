@@ -1,5 +1,6 @@
 package org.netbeans.gradle.model.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -10,6 +11,16 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
 @SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
+    public static File getClassPathOfBuilder(Object builder) {
+        if (builder instanceof ProjectInfoBuilder2Wrapper) {
+            ProjectInfoBuilder2Wrapper<?> wrapper = (ProjectInfoBuilder2Wrapper<?>)builder;
+            return getClassPathOfBuilder(wrapper.src);
+        }
+        else {
+            return ModelClassPathDef.getClassPathOfClass(builder.getClass());
+        }
+    }
+
     public static Collection<GradleProjectInfoQuery2<?>> toQuery2All(
             Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> src) {
         List<GradleProjectInfoQuery2<?>> result = new ArrayList<GradleProjectInfoQuery2<?>>(src.size());

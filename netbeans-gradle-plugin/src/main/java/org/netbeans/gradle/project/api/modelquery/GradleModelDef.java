@@ -263,7 +263,7 @@ public final class GradleModelDef {
         ExceptionHelper.checkNotNullArgument(builder, "builder");
 
         ClassLoader classLoader = builder.getClass().getClassLoader();
-        File classPath = ModelClassPathDef.getClassPathOfClass(builder.getClass());
+        File classPath = CompatibilityUtils.getClassPathOfBuilder(builder);
 
         final ModelClassPathDef classPathDef = ModelClassPathDef.isImplicitlyAssumed(classPath)
                 ? ModelClassPathDef.EMPTY
