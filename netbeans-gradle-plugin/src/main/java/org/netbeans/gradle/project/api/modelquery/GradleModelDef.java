@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.api.modelquery;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -262,12 +261,7 @@ public final class GradleModelDef {
     private static <T> GradleProjectInfoQuery2<T> createDefaultQuery(final ProjectInfoBuilder2<T> builder) {
         ExceptionHelper.checkNotNullArgument(builder, "builder");
 
-        ClassLoader classLoader = builder.getClass().getClassLoader();
-        File classPath = CompatibilityUtils.getClassPathOfBuilder(builder);
-
-        final ModelClassPathDef classPathDef = ModelClassPathDef.isImplicitlyAssumed(classPath)
-                ? ModelClassPathDef.EMPTY
-                : ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPath));
+        final ModelClassPathDef classPathDef = CompatibilityUtils.getClassPathOfBuilder(builder);
 
         return new GradleProjectInfoQuery2<T>() {
             @Override

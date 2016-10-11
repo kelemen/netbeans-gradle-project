@@ -3,6 +3,7 @@ package org.netbeans.gradle.model.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
@@ -11,13 +12,19 @@ import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
 @SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
-    public static File getClassPathOfBuilder(Object builder) {
+    public static ModelClassPathDef getClassPathOfBuilder(Object builder) {
         if (builder instanceof ProjectInfoBuilder2Wrapper) {
             ProjectInfoBuilder2Wrapper<?> wrapper = (ProjectInfoBuilder2Wrapper<?>)builder;
             return getClassPathOfBuilder(wrapper.src);
         }
         else {
-            return ModelClassPathDef.getClassPathOfClass(builder.getClass());
+            Class<? extends Object> builderClass = builder.getClass();
+            ClassLoader classLoader = builderClass.getClassLoader();
+            File classPath = ModelClassPathDef.getClassPathOfClass(builderClass);
+
+            return ModelClassPathDef.isImplicitlyAssumed(classPath)
+                    ? ModelClassPathDef.EMPTY
+                    : ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPath));
         }
     }
 
