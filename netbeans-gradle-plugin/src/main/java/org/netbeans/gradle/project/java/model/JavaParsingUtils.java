@@ -250,6 +250,10 @@ public final class JavaParsingUtils {
 
     private static List<NbJarOutput> getJarOutputs(Lookup projectInfo, Map<File, Set<File>> jarsToBuildDirs) {
         JarOutputsModel model = projectInfo.lookup(JarOutputsModel.class);
+        if (model == null) {
+            return Collections.emptyList();
+        }
+
         Collection<JarOutput> jars = model.getJars();
         List<NbJarOutput> result = new ArrayList<>(jars.size());
 
