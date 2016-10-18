@@ -25,6 +25,9 @@ public class JavaModelBuilders {
     public static final ProjectInfoBuilder2<WarFoldersModel> WAR_FOLDERS_BUILDER
             = new EnumProjectInfoBuilderRef<WarFoldersModel>(WarFoldersModel.class, "WarFoldersModelBuilder");
 
+    public static final ProjectInfoBuilder2<GroovyBaseModel> GROOVY_BASE_BUILDER
+            = new EnumProjectInfoBuilderRef<GroovyBaseModel>(GroovyBaseModel.class, "GroovyBaseModelBuilder");
+
     private JavaModelBuilders() {
         throw new AssertionError();
     }

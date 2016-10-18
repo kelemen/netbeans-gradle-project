@@ -10,11 +10,12 @@ public final class NbGradleModuleInstall extends Yenta {
     private static final Set<String> FRIENDS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "org.netbeans.modules.gsf.testrunner",
             "org.netbeans.modules.gsf.testrunner.ui",
-            "org.netbeans.modules.gsf.codecoverage")));
+            "org.netbeans.modules.gsf.codecoverage",
+            "org.netbeans.modules.groovy.support")));
 
     @Override
     protected Set<String> friends() {
         return FRIENDS;
     }
-    
+
 }
