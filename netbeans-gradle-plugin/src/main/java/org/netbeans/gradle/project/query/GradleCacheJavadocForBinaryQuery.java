@@ -12,7 +12,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 
-@ServiceProviders({@ServiceProvider(service = JavadocForBinaryQueryImplementation.class)})
+@ServiceProviders({@ServiceProvider(service = JavadocForBinaryQueryImplementation.class, position = 70)})
 public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBinaryQuery {
     private final GradleCacheByBinaryLookup sourceForBinary;
     private final GradleCacheByBinaryLookup javadocForBinary;
