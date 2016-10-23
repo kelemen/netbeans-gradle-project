@@ -17,6 +17,8 @@ public final class ModelBuilders {
     /**
      * Returns a wrapper of an {@code enum} based implementation of {@code ProjectInfoBuilder2} and creates it via
      * reflection.
+     * <P>
+     * The class loader of the specified model type will be used to load the wrapped builder.
      *
      * @param <T> the type of the model created by the wrapped {@code ProjectInfoBuilder2}
      * @param modelType the type of the model created by the wrapped {@code ProjectInfoBuilder2}. This argument
@@ -37,6 +39,8 @@ public final class ModelBuilders {
     /**
      * Returns a wrapper of an {@code enum} based implementation of {@code ProjectInfoBuilder2} and creates it via
      * reflection.
+     * <P>
+     * The class loader of the specified model type will be used to load the wrapped builder.
      *
      * @param <T> the type of the model created by the wrapped {@code ProjectInfoBuilder2}
      * @param modelType the type of the model created by the wrapped {@code ProjectInfoBuilder2}. This argument
