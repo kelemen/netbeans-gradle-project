@@ -49,6 +49,7 @@ nbm {
     friendPackages {
         addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api';
         add 'org.netbeans.gradle.model.api';
+        add 'org.netbeans.gradle.model.api.util';
 
         add 'org.gradle.api';
         add 'org.gradle.api.artifacts';
