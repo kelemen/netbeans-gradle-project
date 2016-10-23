@@ -9,23 +9,33 @@ import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.internal.BuilderWrapper;
 
 @SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
-    public static ModelClassPathDef getClassPathOfBuilder(Object builder) {
-        if (builder instanceof ProjectInfoBuilder2Wrapper) {
-            ProjectInfoBuilder2Wrapper<?> wrapper = (ProjectInfoBuilder2Wrapper<?>)builder;
-            return getClassPathOfBuilder(wrapper.src);
-        }
-        else {
-            Class<? extends Object> builderClass = builder.getClass();
-            ClassLoader classLoader = builderClass.getClassLoader();
-            File classPath = ModelClassPathDef.getClassPathOfClass(builderClass);
+    public static ModelClassPathDef getClassPathOfBuilder(ProjectInfoBuilder2<?> builder) {
+        Object currentObj = builder;
+        Class<?> currentObjClass = currentObj.getClass();
 
-            return ModelClassPathDef.isImplicitlyAssumed(classPath)
-                    ? ModelClassPathDef.EMPTY
-                    : ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPath));
+        while (currentObjClass != null) {
+            File classPathOfClass = ModelClassPathDef.getClassPathOfClass(currentObjClass);
+            if (!ModelClassPathDef.isImplicitlyAssumed(classPathOfClass)) {
+                ClassLoader classLoader = currentObjClass.getClassLoader();
+                return ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPathOfClass));
+            }
+
+            if (currentObj instanceof BuilderWrapper) {
+                BuilderWrapper wrapper = (BuilderWrapper)currentObj;
+                currentObjClass = wrapper.getWrappedType();
+                currentObj = wrapper.getWrappedObject();
+            }
+            else {
+                currentObjClass = null;
+                currentObj = null;
+            }
         }
+
+        return ModelClassPathDef.EMPTY;
     }
 
     public static Collection<GradleProjectInfoQuery2<?>> toQuery2All(
@@ -63,7 +73,10 @@ public final class CompatibilityUtils {
         return new ProjectInfoBuilderWrapper<T>(src);
     }
 
-    private static final class ProjectInfoBuilder2Wrapper<T> implements ProjectInfoBuilder2<T> {
+    private static final class ProjectInfoBuilder2Wrapper<T>
+    implements
+            ProjectInfoBuilder2<T>,
+            BuilderWrapper {
         private static final long serialVersionUID = 1L;
 
         private final org.netbeans.gradle.model.api.ProjectInfoBuilder<T> src;
@@ -80,10 +93,21 @@ public final class CompatibilityUtils {
         public String getName() {
             return src.getName();
         }
+
+        public Object getWrappedObject() {
+            return src;
+        }
+
+        public Class<?> getWrappedType() {
+            return getWrappedObject().getClass();
+        }
     }
 
     @SuppressWarnings("deprecation")
-    private static class GradleProjectInfoQuery2Wrapper<T> implements GradleProjectInfoQuery2<T> {
+    private static class GradleProjectInfoQuery2Wrapper<T>
+    implements
+            GradleProjectInfoQuery2<T>,
+            BuilderWrapper {
         private final org.netbeans.gradle.model.api.GradleProjectInfoQuery<T> src;
 
         public GradleProjectInfoQuery2Wrapper(org.netbeans.gradle.model.api.GradleProjectInfoQuery<T> src) {
@@ -98,13 +122,22 @@ public final class CompatibilityUtils {
         public ModelClassPathDef getInfoClassPath() {
             return src.getInfoClassPath();
         }
+
+        public Object getWrappedObject() {
+            return src;
+        }
+
+        public Class<?> getWrappedType() {
+            return getWrappedObject().getClass();
+        }
     }
 
     /** @deprecated  */
     @Deprecated
     private static final class ProjectInfoBuilderWrapper<T>
     implements
-            org.netbeans.gradle.model.api.ProjectInfoBuilder<T> {
+            org.netbeans.gradle.model.api.ProjectInfoBuilder<T>,
+            BuilderWrapper {
         private static final long serialVersionUID = 1L;
 
         private final ProjectInfoBuilder2<T> src;
@@ -121,13 +154,22 @@ public final class CompatibilityUtils {
         public String getName() {
             return src.getName();
         }
+
+        public Object getWrappedObject() {
+            return src;
+        }
+
+        public Class<?> getWrappedType() {
+            return getWrappedObject().getClass();
+        }
     }
 
     /** @deprecated  */
     @Deprecated
     private static class GradleProjectInfoQueryWrapper<T>
     implements
-            org.netbeans.gradle.model.api.GradleProjectInfoQuery<T> {
+            org.netbeans.gradle.model.api.GradleProjectInfoQuery<T>,
+            BuilderWrapper {
         private final org.netbeans.gradle.model.api.GradleProjectInfoQuery2<T> src;
 
         public GradleProjectInfoQueryWrapper(org.netbeans.gradle.model.api.GradleProjectInfoQuery2<T> src) {
@@ -141,6 +183,14 @@ public final class CompatibilityUtils {
 
         public ModelClassPathDef getInfoClassPath() {
             return src.getInfoClassPath();
+        }
+
+        public Object getWrappedObject() {
+            return src;
+        }
+
+        public Class<?> getWrappedType() {
+            return getWrappedObject().getClass();
         }
     }
 

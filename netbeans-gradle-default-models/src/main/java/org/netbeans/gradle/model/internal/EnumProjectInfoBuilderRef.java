@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 
-public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T> {
+public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T>, BuilderWrapper {
     private static final long serialVersionUID = 1L;
 
     private final Class<? extends T> modelType;
@@ -98,6 +98,14 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T
 
     public String getName() {
         return getWrapped().getName();
+    }
+
+    public Object getWrappedObject() {
+        return null;
+    }
+
+    public Class<?> getWrappedType() {
+        return modelType;
     }
 
     private Object writeReplace() {
