@@ -8,6 +8,7 @@ import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.bundling.Jar;
@@ -29,7 +30,7 @@ implements
     }
 
     private JarOutputsModel getProjectInfo(Project project) {
-        if (!project.getPlugins().hasPlugin("java")) {
+        if (project.getConvention().findPlugin(JavaPluginConvention.class) == null) {
             return null;
         }
 
