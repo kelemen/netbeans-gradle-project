@@ -5,7 +5,7 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BuilderUtils;
 
-public enum GroovyBaseModelBuilder implements ProjectInfoBuilder2<GroovyBaseModel> {
+enum GroovyBaseModelBuilder implements ProjectInfoBuilder2<GroovyBaseModel> {
     INSTANCE;
 
     public GroovyBaseModel getProjectInfo(Object project) {
