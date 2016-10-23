@@ -9,6 +9,13 @@ import java.util.Arrays;
 public final class ReflectionUtils {
     private static final Object[] EMPTY_ARR = new Object[0];
 
+    public static String updateTypeName(Class<?> defaultPackage, String typeName) {
+        if (typeName.indexOf('.') >= 0) {
+            return typeName;
+        }
+        return defaultPackage.getPackage().getName() + "." + typeName;
+    }
+
     public static Method getAccessibleMethod(Class<?> type, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
         for (Method method: type.getMethods()) {
             if (!Modifier.isPublic(method.getModifiers())) {

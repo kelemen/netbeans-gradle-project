@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.util.ReflectionUtils;
 
 public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T>, BuilderWrapper {
     private static final long serialVersionUID = 1L;
@@ -24,7 +25,7 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T
         if (wrappedTypeName == null) throw new NullPointerException("wrappedTypeName");
 
         this.modelType = modelType;
-        this.wrappedTypeName = updateTypeName(modelType, wrappedTypeName);
+        this.wrappedTypeName = ReflectionUtils.updateTypeName(modelType, wrappedTypeName);
         this.wrappedConstName = null;
         this.wrappedRef = new AtomicReference<ProjectInfoBuilder2<?>>(null);
     }
@@ -38,16 +39,9 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T
         if (wrappedConstName == null) throw new NullPointerException("wrappedConstName");
 
         this.modelType = modelType;
-        this.wrappedTypeName = updateTypeName(modelType, wrappedTypeName);
+        this.wrappedTypeName = ReflectionUtils.updateTypeName(modelType, wrappedTypeName);
         this.wrappedConstName = wrappedConstName;
         this.wrappedRef = new AtomicReference<ProjectInfoBuilder2<?>>(null);
-    }
-
-    private static String updateTypeName(Class<?> defaultPackage, String typeName) {
-        if (typeName.indexOf('.') >= 0) {
-            return typeName;
-        }
-        return defaultPackage.getPackage().getName() + "." + typeName;
     }
 
     private static Object unsafeEnumValueOf(Class<?> type, String constName) {
@@ -71,7 +65,9 @@ public final class EnumProjectInfoBuilderRef<T> implements ProjectInfoBuilder2<T
 
     private ProjectInfoBuilder2<?> createWrapped() {
         try {
-            return (ProjectInfoBuilder2<?>)unsafeEnumValueOf(Class.forName(wrappedTypeName), wrappedConstName);
+            return (ProjectInfoBuilder2<?>)unsafeEnumValueOf(
+                    Class.forName(wrappedTypeName, false, modelType.getClassLoader()),
+                    wrappedConstName);
         } catch (Exception ex) {
             if (ex instanceof RuntimeException) {
                 throw (RuntimeException)ex;
