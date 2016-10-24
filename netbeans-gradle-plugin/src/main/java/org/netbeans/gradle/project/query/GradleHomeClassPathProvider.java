@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -36,27 +38,48 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
         this.binPathsCache = new SimpleCache<>(1);
     }
 
-    public static URL[] getGradleLibs(FileObject gradleHomeObj, FilenameFilter filter) {
-        File gradleHome = FileUtil.toFile(gradleHomeObj);
-        if (gradleHome == null) {
-            return NO_URLS;
+    private static File[] tryListFiles(File dir, FilenameFilter filter) {
+        if (!dir.isDirectory()) {
+            return null;
         }
 
+        return dir.listFiles(filter);
+    }
+
+    private static List<File> getLibsFromGradleRoot(File gradleHome, FilenameFilter filter) {
         if (!gradleHome.isDirectory()) {
-            return NO_URLS;
+            return Collections.emptyList();
         }
 
         File libDir = GradleFileUtils.getLibDirOfGradle(gradleHome);
-        if (!libDir.isDirectory()) {
-            return NO_URLS;
-        }
-
-        File[] jars = libDir.listFiles(filter);
+        File[] jars = tryListFiles(libDir, filter);
         if (jars == null) {
+            return Collections.emptyList();
+        }
+
+        List<File> result = new ArrayList<>(Arrays.asList(jars));
+
+        File pluginsDir = new File(libDir, "plugins");
+        File[] pluginJars = tryListFiles(pluginsDir, filter);
+        if (pluginJars != null) {
+            result.addAll(Arrays.asList(pluginJars));
+        }
+
+        return result;
+    }
+
+    public static URL[] getGradleLibs(FileObject gradleHomeObj, FilenameFilter filter) {
+        File gradleHome = FileUtil.toFile(gradleHomeObj);
+        if (gradleHome == null || !gradleHome.isDirectory()) {
             return NO_URLS;
         }
 
-        List<URL> result = new ArrayList<>(jars.length);
+        List<File> jars = getLibsFromGradleRoot(gradleHome, filter);
+        if (jars.isEmpty()) {
+            return NO_URLS;
+        }
+
+        List<URL> result = new ArrayList<>(jars.size());
         for (File jar: jars) {
             URL url = FileUtil.urlForArchiveOrDir(jar);
             if (url != null) {
