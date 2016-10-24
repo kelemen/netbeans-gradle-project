@@ -23,6 +23,7 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
+import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectIssueManager;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.api.task.GradleCommandExecutor;
@@ -232,13 +233,15 @@ public class SimpleJavaProjectTest extends SwingTestAware {
     }
 
     private static void verifyJavaDocActionIsAdded(Action[] actions) {
+        String searchedCaption = NbStrings.getJavadocCommandCaption();
+
         for (Action action: actions) {
             if (action == null) continue;
 
             Object name = action.getValue("Name");
             if (name == null) continue;
 
-            if ("projectCommand:javadoc".equals(name.toString())) {
+            if (searchedCaption.equals(name.toString())) {
                 return;
             }
         }
