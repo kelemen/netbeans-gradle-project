@@ -1,6 +1,9 @@
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.testing.Test
 
+System.properties.remove('socksProxyHost')
+System.properties.remove('socksProxyPort')
+
 afterProject { org.gradle.api.Project project ->
     if (project == null) {
         return;
