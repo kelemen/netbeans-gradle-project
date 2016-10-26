@@ -1,9 +1,7 @@
 package org.netbeans.gradle.model.util;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import org.gradle.api.Project;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
@@ -13,31 +11,6 @@ import org.netbeans.gradle.model.internal.BuilderWrapper;
 
 @SuppressWarnings("deprecation")
 public final class CompatibilityUtils {
-    public static ModelClassPathDef getClassPathOfBuilder(ProjectInfoBuilder2<?> builder) {
-        Object currentObj = builder;
-        Class<?> currentObjClass = currentObj.getClass();
-
-        while (currentObjClass != null) {
-            File classPathOfClass = ModelClassPathDef.getClassPathOfClass(currentObjClass);
-            if (!ModelClassPathDef.isImplicitlyAssumed(classPathOfClass)) {
-                ClassLoader classLoader = currentObjClass.getClassLoader();
-                return ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPathOfClass));
-            }
-
-            if (currentObj instanceof BuilderWrapper) {
-                BuilderWrapper wrapper = (BuilderWrapper)currentObj;
-                currentObjClass = wrapper.getWrappedType();
-                currentObj = wrapper.getWrappedObject();
-            }
-            else {
-                currentObjClass = null;
-                currentObj = null;
-            }
-        }
-
-        return ModelClassPathDef.EMPTY;
-    }
-
     public static Collection<GradleProjectInfoQuery2<?>> toQuery2All(
             Collection<? extends org.netbeans.gradle.model.api.GradleProjectInfoQuery<?>> src) {
         List<GradleProjectInfoQuery2<?>> result = new ArrayList<GradleProjectInfoQuery2<?>>(src.size());

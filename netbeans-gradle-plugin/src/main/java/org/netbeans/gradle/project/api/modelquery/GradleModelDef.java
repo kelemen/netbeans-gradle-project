@@ -10,6 +10,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.api.GradleProjectInfoQuery2;
 import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.CompatibilityUtils;
 
@@ -261,7 +262,7 @@ public final class GradleModelDef {
     private static <T> GradleProjectInfoQuery2<T> createDefaultQuery(final ProjectInfoBuilder2<T> builder) {
         ExceptionHelper.checkNotNullArgument(builder, "builder");
 
-        final ModelClassPathDef classPathDef = CompatibilityUtils.getClassPathOfBuilder(builder);
+        final ModelClassPathDef classPathDef = BuilderUtils.getClassPathOfBuilder(builder);
 
         return new GradleProjectInfoQuery2<T>() {
             @Override

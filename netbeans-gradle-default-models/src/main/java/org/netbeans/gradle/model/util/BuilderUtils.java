@@ -1,8 +1,12 @@
 package org.netbeans.gradle.model.util;
 
+import java.io.File;
+import java.util.Collections;
 import org.netbeans.gradle.model.BuildInfoBuilder;
 import org.netbeans.gradle.model.BuilderIssue;
+import org.netbeans.gradle.model.api.ModelClassPathDef;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.internal.BuilderWrapper;
 
 public final class BuilderUtils {
     public static String getNameForEnumBuilder(Enum<?> instance) {
@@ -11,6 +15,31 @@ public final class BuilderUtils {
 
     public static String getNameForGenericBuilder(Object instance, String args) {
         return instance.getClass().getSimpleName() + '(' + args + ')';
+    }
+
+    public static ModelClassPathDef getClassPathOfBuilder(ProjectInfoBuilder2<?> builder) {
+        Object currentObj = builder;
+        Class<?> currentObjClass = currentObj.getClass();
+
+        while (currentObjClass != null) {
+            File classPathOfClass = ModelClassPathDef.getClassPathOfClass(currentObjClass);
+            if (!ModelClassPathDef.isImplicitlyAssumed(classPathOfClass)) {
+                ClassLoader classLoader = currentObjClass.getClassLoader();
+                return ModelClassPathDef.fromJarFiles(classLoader, Collections.singleton(classPathOfClass));
+            }
+
+            if (currentObj instanceof BuilderWrapper) {
+                BuilderWrapper wrapper = (BuilderWrapper)currentObj;
+                currentObjClass = wrapper.getWrappedType();
+                currentObj = wrapper.getWrappedObject();
+            }
+            else {
+                currentObjClass = null;
+                currentObj = null;
+            }
+        }
+
+        return ModelClassPathDef.EMPTY;
     }
 
     private static String getSafeToString(Object obj) {
