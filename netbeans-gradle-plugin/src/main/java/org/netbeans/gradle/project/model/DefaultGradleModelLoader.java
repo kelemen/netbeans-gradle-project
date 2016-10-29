@@ -74,6 +74,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private static final MonitorableTaskExecutorService DEFAULT_MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
+    private static final MonitorableTaskExecutorService DEFAULT_MODEL_PERSISTER
+            = NbTaskExecutors.newExecutor("Gradle-Project-Model-Persister", 1);
+
     private static final AtomicReference<GradleModelCache> DEFAULT_CACHE_REF
             = new AtomicReference<>(null);
 
@@ -626,7 +629,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = new MultiFileModelCache<>(new ProjectModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
+            this.persistentCache = new MultiFileModelCache<>(defaultModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
                 @Override
                 public PersistentModelKey apply(NbGradleModel arg) {
                     try {
@@ -642,6 +645,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                     return getDefaultCache();
                 }
             };
+        }
+
+        private static ModelPersister<NbGradleModel> defaultModelPersister(NbGradleProject project) {
+            ModelPersister<NbGradleModel> result = new ProjectModelPersister(project);
+            return new LazyProjectModelPersister<>(result, DEFAULT_MODEL_PERSISTER);
         }
 
         public void setProjectLoader(TaskExecutor projectLoader) {
