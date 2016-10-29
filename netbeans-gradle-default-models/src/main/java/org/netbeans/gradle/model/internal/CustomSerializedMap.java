@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 public final class CustomSerializedMap implements Serializable {
@@ -17,6 +18,7 @@ public final class CustomSerializedMap implements Serializable {
 
     public static interface Deserializer {
         public Map<Object, List<?>> deserialize(
+                SerializationCache serializationCache,
                 ClassLoader parent,
                 IssueTransformer deserializationIssueTransformer);
     }

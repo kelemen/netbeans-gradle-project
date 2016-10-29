@@ -3,6 +3,7 @@ package org.netbeans.gradle.model.internal;
 import java.io.Serializable;
 import org.junit.Test;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
@@ -114,7 +115,7 @@ public class ConstrProjectInfoBuilderRefTest {
         ProjectInfoBuilder2<?> builderRef = create(TestObj.class, TestInfoBuilder.ABS_NAME, model, "MyName");
 
         byte[] serialized = SerializationUtils.serializeObject(builderRef);
-        builderRef = (ProjectInfoBuilder2<?>)SerializationUtils.deserializeObject(serialized);
+        builderRef = (ProjectInfoBuilder2<?>)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         Object returned = builderRef.getProjectInfo(new Object());
 

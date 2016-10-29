@@ -16,13 +16,16 @@ import org.netbeans.gradle.model.internal.IssueTransformer;
 import org.netbeans.gradle.model.internal.SerializedEntries;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.DefaultSerializationCache;
 import org.netbeans.gradle.model.util.MultiMapUtils;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 final class GradleInfoQueryMap {
     private final CustomSerializedMap builderMap;
     private final Map<KeyWrapper, ModelClassPathDef> classpath;
     private final Map<KeyWrapper, Throwable> serializationIssues;
+    private final SerializationCache serializationCache;
 
     private GradleInfoQueryMap(
             CustomSerializedMap builderMap,
@@ -30,6 +33,7 @@ final class GradleInfoQueryMap {
             Map<Object, Throwable> serializationIssues) {
         this.builderMap = builderMap;
         this.classpath = classpath;
+        this.serializationCache = new DefaultSerializationCache();
 
         if (serializationIssues.isEmpty()) {
             this.serializationIssues = Collections.emptyMap();
@@ -121,7 +125,7 @@ final class GradleInfoQueryMap {
 
         for (Map.Entry<Object, SerializedEntries> entry: map.getMap().entrySet()) {
             KeyWrapper key = (KeyWrapper)entry.getKey();
-            List<?> values = entry.getValue().getUnserialized(getClassLoaderForKey(key));
+            List<?> values = entry.getValue().getUnserialized(serializationCache, getClassLoaderForKey(key));
             MultiMapUtils.addAllToMultiMap(key.wrappedKey, values, result);
         }
 
@@ -227,6 +231,7 @@ final class GradleInfoQueryMap {
         }
 
         public Map<Object, List<?>> deserialize(
+                SerializationCache serializationCache,
                 ClassLoader parent,
                 IssueTransformer deserializationIssueTransformer) {
             Map<Set<File>, ClassLoader> cache = new HashMap<Set<File>, ClassLoader>();
@@ -238,7 +243,7 @@ final class GradleInfoQueryMap {
                 ClassLoader classLoader = getClassLoaderForKey(key, parent, cache);
                 List<?> deserializedValues;
                 try {
-                    deserializedValues = entry.getValue().getUnserialized(classLoader);
+                    deserializedValues = entry.getValue().getUnserialized(serializationCache, classLoader);
                 } catch (Throwable deserializeEx) {
                     Object issue = deserializationIssueTransformer.transformIssue(deserializeEx);
                     deserializedValues = Collections.singletonList(issue);

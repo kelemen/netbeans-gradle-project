@@ -12,6 +12,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceGroupName;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.model.java.JavaTestModel;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.model.NbGradleProjectTreeTest;
 import org.netbeans.gradle.project.util.GradleVersions;
@@ -60,7 +61,7 @@ public class NbJavaModelTest {
 
 
         byte[] serialized = SerializationUtils.serializeObject(source);
-        NbJavaModel deserialized = (NbJavaModel)SerializationUtils.deserializeObject(serialized);
+        NbJavaModel deserialized = (NbJavaModel)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         assertEquals(
                 source.getMainModule().getModuleDir().toString(),

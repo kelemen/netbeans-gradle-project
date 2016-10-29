@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 public final class ModelQueryInput implements Serializable {
@@ -17,8 +18,9 @@ public final class ModelQueryInput implements Serializable {
         this.projectInfoRequests = projectInfoRequests;
     }
 
-    public Map<Object, List<?>> getProjectInfoRequests(ClassLoader parent) {
+    public Map<Object, List<?>> getProjectInfoRequests(SerializationCache cache, ClassLoader parent) {
         return projectInfoRequests.deserialize(
+                cache,
                 parent,
                 projectInfoBuilderIssueTransformer());
     }

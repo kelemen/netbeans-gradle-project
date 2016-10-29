@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.model;
 
 import org.junit.Test;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
@@ -21,7 +22,7 @@ public class NbGradleMultiProjectDefTest {
         NbGradleMultiProjectDef source = createTestMultiProject();
 
         byte[] serialized = SerializationUtils.serializeObject(source);
-        NbGradleMultiProjectDef deserialized = (NbGradleMultiProjectDef)SerializationUtils.deserializeObject(serialized);
+        NbGradleMultiProjectDef deserialized = (NbGradleMultiProjectDef)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         assertEquals(source.getProjectDir().toString(), deserialized.getProjectDir().toString());
         assertEquals(

@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.DefaultSerializationCache;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
@@ -59,6 +61,7 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
+        SerializationCache serializationCache = new DefaultSerializationCache();
         Map<String, Object> deserializedModels = CollectionUtils.newHashMap(extensionModels.size());
 
         for (NbGradleExtensionRef extensionRef: ownerProject.getExtensions().getExtensionRefs()) {
@@ -67,7 +70,7 @@ public final class SerializedNbGradleModels implements Serializable {
             if (serializedModel != null) {
                 try {
                     ClassLoader modelClassLoader = extensionRef.getExtensionDef().getModelType().getClassLoader();
-                    Object model = SerializationUtils.deserializeObject(serializedModel, modelClassLoader);
+                    Object model = SerializationUtils.deserializeObject(serializedModel, serializationCache, modelClassLoader);
                     deserializedModels.put(extensionRef.getName(), model);
                 } catch (Throwable ex) {
                     LOGGER.log(Level.INFO,

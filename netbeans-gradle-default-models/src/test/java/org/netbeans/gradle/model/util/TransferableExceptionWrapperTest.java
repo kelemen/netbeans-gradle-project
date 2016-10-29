@@ -36,7 +36,7 @@ public class TransferableExceptionWrapperTest {
     private static void checkSerializable(TransferableExceptionWrapper obj) throws ClassNotFoundException {
         byte[] serialized = SerializationUtils.serializeObject(obj);
         TransferableExceptionWrapper deserialized
-                = (TransferableExceptionWrapper)SerializationUtils.deserializeObject(serialized);
+                = (TransferableExceptionWrapper)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         assertEquals(obj.getMessage(), deserialized.getMessage());
         assertEquals(obj.getOriginalClassName(), deserialized.getOriginalClassName());

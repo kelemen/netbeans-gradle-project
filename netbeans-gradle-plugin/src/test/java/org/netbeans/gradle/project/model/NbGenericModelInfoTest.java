@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.model;
 
 import java.nio.file.Paths;
 import org.junit.Test;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
@@ -14,7 +15,7 @@ public class NbGenericModelInfoTest {
         NbGenericModelInfo source = new NbGenericModelInfo(projectDef, Paths.get("settings.gradle"));
 
         byte[] serialized = SerializationUtils.serializeObject(source);
-        NbGenericModelInfo deserialized = (NbGenericModelInfo)SerializationUtils.deserializeObject(serialized);
+        NbGenericModelInfo deserialized = (NbGenericModelInfo)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         assertEquals(source.getProjectDir().toString(), deserialized.getProjectDir().toString());
         assertEquals(

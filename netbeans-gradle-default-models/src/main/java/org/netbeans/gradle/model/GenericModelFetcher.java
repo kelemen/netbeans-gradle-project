@@ -32,6 +32,8 @@ import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.model.util.DefaultSerializationCache;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 import org.netbeans.gradle.model.util.TemporaryFileManager;
 import org.netbeans.gradle.model.util.TemporaryFileRef;
@@ -262,12 +264,12 @@ public final class GenericModelFetcher {
         };
     }
 
-    private static ModelQueryOutput getModelOutput(ModelGetter getter) {
+    private static ModelQueryOutput getModelOutput(SerializationCache cache, ModelGetter getter) {
         byte[] serializedResult = getModel(getter, ModelQueryOutputRef.class)
                 .getSerializedModelQueryOutput();
 
         try {
-            return (ModelQueryOutput)SerializationUtils.deserializeObject(serializedResult);
+            return (ModelQueryOutput)SerializationUtils.deserializeObject(serializedResult, cache);
         } catch (ClassNotFoundException ex) {
             throw new RuntimeException(ex);
         }
@@ -290,6 +292,7 @@ public final class GenericModelFetcher {
         private CustomSerializedMap getBuildInfoResults(BuildController controller) {
             ClassLoader parentClassLoader = getClass().getClassLoader();
             Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(
+                    new DefaultSerializationCache(),
                     parentClassLoader,
                     GradleInfoQueryMap.buildInfoBuilderIssueTransformer());
 
@@ -376,12 +379,15 @@ public final class GenericModelFetcher {
         private final BasicGradleProject basicRootProject;
         private final String defaultProjectPath;
 
+        private final SerializationCache serializationCache;
+
         public AllProjectInfoBuilder(Set<Class<?>> modelClasses, EvaluatedBuild evaluatedBuild) {
             int projectCount = evaluatedBuild.allProjects.size();
             this.modelClasses = modelClasses;
             this.basicInfos = CollectionUtils.newHashMap(projectCount);
             this.customInfos = CollectionUtils.newHashMap(projectCount);
             this.basicRootProject = evaluatedBuild.buildModel.getRootProject();
+            this.serializationCache = new DefaultSerializationCache();
             this.defaultProjectPath = addCustomInfo(defaultModelGetter(evaluatedBuild.controller));
 
             // TODO: If lazy project evaluation is available, review this
@@ -392,7 +398,9 @@ public final class GenericModelFetcher {
         }
 
         private String addCustomInfo(ModelGetter modelGetter) {
-            ModelQueryOutput customInfo = getModelOutput(modelGetter);
+            assert serializationCache != null : "serializationCache is null in addCustomInfo";
+
+            ModelQueryOutput customInfo = getModelOutput(serializationCache, modelGetter);
             String projectPath = customInfo.getBasicInfo().getProjectFullName();
 
             customInfos.put(projectPath, customInfo);

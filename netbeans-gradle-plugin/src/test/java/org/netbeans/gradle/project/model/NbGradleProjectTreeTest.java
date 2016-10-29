@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.ProjectId;
+import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
 
 import static org.junit.Assert.*;
@@ -38,7 +39,7 @@ public class NbGradleProjectTreeTest {
         NbGradleProjectTree source = createTree("testapp", child1, child2);
 
         byte[] serialized = SerializationUtils.serializeObject(source);
-        NbGradleProjectTree deserialized = (NbGradleProjectTree)SerializationUtils.deserializeObject(serialized);
+        NbGradleProjectTree deserialized = (NbGradleProjectTree)SerializationUtils.deserializeObject(serialized, SerializationCache.NO_CACHE);
 
         assertEquals(source.getProjectDir().toString(), deserialized.getProjectDir().toString());
     }
