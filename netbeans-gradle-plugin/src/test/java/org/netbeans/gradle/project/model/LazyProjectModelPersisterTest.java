@@ -1,10 +1,7 @@
 package org.netbeans.gradle.project.model;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import org.jtrim.concurrent.ContextAwareWrapper;
 import org.jtrim.concurrent.ManualTaskExecutor;
 import org.jtrim.concurrent.TaskExecutors;
@@ -14,6 +11,7 @@ import org.mockito.stubbing.Answer;
 import org.netbeans.gradle.project.util.NbConsumer;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 public class LazyProjectModelPersisterTest {
@@ -25,10 +23,10 @@ public class LazyProjectModelPersisterTest {
 
     @Test
     public void testPersistOne() throws Exception {
-        TestModelPersister modelStore = new TestModelPersister();
+        MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyProjectModelPersister<Object> persister = new LazyProjectModelPersister<>(modelStore, executor);
+        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
 
         Object model = "MyModel";
         Path dest = Paths.get("MyTestDest");
@@ -48,7 +46,7 @@ public class LazyProjectModelPersisterTest {
         final NbConsumer<Boolean> modelStorePersistModel = (NbConsumer<Boolean>)mock(NbConsumer.class);
 
         @SuppressWarnings("unchecked")
-        ModelPersister<Object> modelStore = (ModelPersister<Object>)mock(ModelPersister.class);
+        PersistentModelStore<Object> modelStore = (PersistentModelStore<Object>)mock(PersistentModelStore.class);
         doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -57,7 +55,7 @@ public class LazyProjectModelPersisterTest {
             }
         }).when(modelStore).persistModel(any(), any(Path.class));
 
-        LazyProjectModelPersister<Object> persister = new LazyProjectModelPersister<>(modelStore, contextAwareExecutor);
+        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, contextAwareExecutor);
 
         persister.persistModel("MyModel", Paths.get("MyTestDest"));
         executeAll(executor);
@@ -68,10 +66,10 @@ public class LazyProjectModelPersisterTest {
 
     @Test
     public void testGetQueuedModel() throws Exception {
-        TestModelPersister modelStore = new TestModelPersister();
+        MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyProjectModelPersister<Object> persister = new LazyProjectModelPersister<>(modelStore, executor);
+        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
 
         Path dest = Paths.get("MyTestDest");
         Object model = "MyModel";
@@ -81,10 +79,10 @@ public class LazyProjectModelPersisterTest {
 
     @Test
     public void testOverwrite1() throws Exception {
-        TestModelPersister modelStore = new TestModelPersister();
+        MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyProjectModelPersister<Object> persister = new LazyProjectModelPersister<>(modelStore, executor);
+        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
 
         Object model1 = "MyModel1";
         Object model2 = "MyModel2";
@@ -100,10 +98,10 @@ public class LazyProjectModelPersisterTest {
 
     @Test
     public void testOverwrite2() throws Exception {
-        TestModelPersister modelStore = new TestModelPersister();
+        MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyProjectModelPersister<Object> persister = new LazyProjectModelPersister<>(modelStore, executor);
+        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
 
         Object model1 = "MyModel1";
         Object model2 = "MyModel2";
@@ -120,23 +118,5 @@ public class LazyProjectModelPersisterTest {
 
     @Test
     public void testTryLoadModel() throws Exception {
-    }
-
-    private static final class TestModelPersister implements ModelPersister<Object> {
-        private final ConcurrentMap<Path, Object> models;
-
-        public TestModelPersister() {
-            this.models = new ConcurrentHashMap<>();
-        }
-
-        @Override
-        public void persistModel(Object model, Path dest) throws IOException {
-            models.put(dest, model);
-        }
-
-        @Override
-        public Object tryLoadModel(Path src) throws IOException {
-            return models.get(src);
-        }
     }
 }

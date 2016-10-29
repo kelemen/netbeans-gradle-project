@@ -647,9 +647,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             };
         }
 
-        private static ModelPersister<NbGradleModel> defaultModelPersister(NbGradleProject project) {
-            ModelPersister<NbGradleModel> result = new ProjectModelPersister(project);
-            return new LazyProjectModelPersister<>(result, DEFAULT_MODEL_PERSISTER);
+        private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {
+            PersistentModelStore<NbGradleModel> result = new PersistentProjectModelStore(project);
+            return new LazyPersistentModelStore<>(result, DEFAULT_MODEL_PERSISTER);
         }
 
         public void setProjectLoader(TaskExecutor projectLoader) {

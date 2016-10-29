@@ -14,17 +14,17 @@ import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 
-public final class LazyProjectModelPersister<T> implements ModelPersister<T> {
-    private static final Logger LOGGER = Logger.getLogger(LazyProjectModelPersister.class.getName());
+public final class LazyPersistentModelStore<T> implements PersistentModelStore<T> {
+    private static final Logger LOGGER = Logger.getLogger(LazyPersistentModelStore.class.getName());
 
-    private final ModelPersister<T> wrapped;
+    private final PersistentModelStore<T> wrapped;
     private final UpdateTaskExecutor persisterExecutor;
 
     private final ReentrantLock queueLock;
     private final Queue<Path> taskQueue;
     private final Map<Path, T> toSave;
 
-    public LazyProjectModelPersister(ModelPersister<T> wrapped, TaskExecutor persisterExecutor) {
+    public LazyPersistentModelStore(PersistentModelStore<T> wrapped, TaskExecutor persisterExecutor) {
         ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
 
         this.wrapped = wrapped;
@@ -34,7 +34,6 @@ public final class LazyProjectModelPersister<T> implements ModelPersister<T> {
         this.taskQueue = new LinkedList<>();
         this.toSave = new HashMap<>();
     }
-
 
     @Override
     public void persistModel(T model, Path dest) throws IOException {

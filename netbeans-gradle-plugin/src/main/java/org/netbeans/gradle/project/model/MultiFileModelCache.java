@@ -11,11 +11,11 @@ import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.StringUtils;
 
 public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
-    private final ModelPersister<T> modelPersister;
+    private final PersistentModelStore<T> modelPersister;
     private final NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory;
 
     public MultiFileModelCache(
-            ModelPersister<T> modelPersister,
+            PersistentModelStore<T> modelPersister,
             NbFunction<? super T, ? extends PersistentModelKey> modelKeyFactory) {
         ExceptionHelper.checkNotNullArgument(modelPersister, "modelPersister");
         ExceptionHelper.checkNotNullArgument(modelKeyFactory, "modelKeyFactory");

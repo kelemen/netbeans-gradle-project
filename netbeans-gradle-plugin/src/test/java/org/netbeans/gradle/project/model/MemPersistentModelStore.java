@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class MemModelPersister<T> implements ModelPersister<T> {
+public final class MemPersistentModelStore<T> implements PersistentModelStore<T> {
     private final Map<Path, T> models;
 
-    public MemModelPersister() {
+    public MemPersistentModelStore() {
         this.models = new ConcurrentHashMap<>();
     }
 

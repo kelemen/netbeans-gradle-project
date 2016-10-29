@@ -7,10 +7,10 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.util.SerializationUtils2;
 
-public final class ProjectModelPersister implements ModelPersister<NbGradleModel> {
+public final class PersistentProjectModelStore implements PersistentModelStore<NbGradleModel> {
     private final NbGradleProject ownerProject;
 
-    public ProjectModelPersister(NbGradleProject ownerProject) {
+    public PersistentProjectModelStore(NbGradleProject ownerProject) {
         ExceptionHelper.checkNotNullArgument(ownerProject, "ownerProject");
         this.ownerProject = ownerProject;
     }
