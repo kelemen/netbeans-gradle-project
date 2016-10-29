@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.jtrim.concurrent.ContextAwareWrapper;
 import org.jtrim.concurrent.ManualTaskExecutor;
+import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.TaskExecutors;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -14,11 +15,18 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-public class LazyProjectModelPersisterTest {
+public class LazyProjectModelPersisterFactoryTest {
     private static void executeAll(ManualTaskExecutor executor) {
         while (executor.executeCurrentlySubmitted() > 0) {
             // One more time to execute tasks submitted by the executed tasks.
         }
+    }
+
+    private static PersistentModelStore<Object> createLazyStore(
+            PersistentModelStore<Object> wrapped,
+            TaskExecutor persisterExecutor) {
+        LazyPersistentModelStoreFactory<Object> factory = new LazyPersistentModelStoreFactory<>(wrapped, persisterExecutor);
+        return factory.createStore(wrapped);
     }
 
     @Test
@@ -26,7 +34,7 @@ public class LazyProjectModelPersisterTest {
         MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, executor);
 
         Object model = "MyModel";
         Path dest = Paths.get("MyTestDest");
@@ -55,7 +63,7 @@ public class LazyProjectModelPersisterTest {
             }
         }).when(modelStore).persistModel(any(), any(Path.class));
 
-        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, contextAwareExecutor);
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, contextAwareExecutor);
 
         persister.persistModel("MyModel", Paths.get("MyTestDest"));
         executeAll(executor);
@@ -69,7 +77,7 @@ public class LazyProjectModelPersisterTest {
         MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, executor);
 
         Path dest = Paths.get("MyTestDest");
         Object model = "MyModel";
@@ -82,7 +90,7 @@ public class LazyProjectModelPersisterTest {
         MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, executor);
 
         Object model1 = "MyModel1";
         Object model2 = "MyModel2";
@@ -101,7 +109,7 @@ public class LazyProjectModelPersisterTest {
         MemPersistentModelStore<Object> modelStore = new MemPersistentModelStore<>();
         ManualTaskExecutor executor = new ManualTaskExecutor(true);
 
-        LazyPersistentModelStore<Object> persister = new LazyPersistentModelStore<>(modelStore, executor);
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, executor);
 
         Object model1 = "MyModel1";
         Object model2 = "MyModel2";
@@ -114,9 +122,5 @@ public class LazyProjectModelPersisterTest {
 
         Object storedModel = modelStore.tryLoadModel(dest);
         assertSame("model", model2, storedModel);
-    }
-
-    @Test
-    public void testTryLoadModel() throws Exception {
     }
 }

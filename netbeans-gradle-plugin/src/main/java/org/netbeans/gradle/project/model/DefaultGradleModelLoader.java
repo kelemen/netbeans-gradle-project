@@ -614,6 +614,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     }
 
     public static final class Builder {
+        private static final PersistentProjectModelStoreFactory DEFAULT_MODEL_STORE_FACTORY
+                = new PersistentProjectModelStoreFactory();
+        private static final LazyPersistentModelStoreFactory<NbGradleModel> DEFAULT_LAZY_MODEL_STORE_FACTORY
+                = new LazyPersistentModelStoreFactory<>(DEFAULT_MODEL_STORE_FACTORY.getModelPersister(), DEFAULT_MODEL_PERSISTER);
+
         private final NbGradleProject project;
 
         private TaskExecutor projectLoader;
@@ -648,8 +653,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         }
 
         private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {
-            PersistentModelStore<NbGradleModel> result = new PersistentProjectModelStore(project);
-            return new LazyPersistentModelStore<>(result, DEFAULT_MODEL_PERSISTER);
+            return DEFAULT_LAZY_MODEL_STORE_FACTORY.createStore(DEFAULT_MODEL_STORE_FACTORY.createModelStore(project));
         }
 
         public void setProjectLoader(TaskExecutor projectLoader) {
