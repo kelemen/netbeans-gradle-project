@@ -94,7 +94,7 @@ public final class LazyPersistentModelStoreFactory<T> {
                         fixEmptyQueue();
                         return;
                     }
-                    model = toSave.get(dest);
+                    model = toSave.remove(dest);
                 } finally {
                     queueLock.unlock();
                 }

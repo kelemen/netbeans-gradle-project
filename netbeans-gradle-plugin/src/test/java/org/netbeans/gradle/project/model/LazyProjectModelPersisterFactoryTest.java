@@ -123,4 +123,26 @@ public class LazyProjectModelPersisterFactoryTest {
         Object storedModel = modelStore.tryLoadModel(dest);
         assertSame("model", model2, storedModel);
     }
+
+    @Test
+    public void testStoreRetrievesFromWrapped() throws Exception {
+        ManualTaskExecutor executor = new ManualTaskExecutor(true);
+
+        Object model2 = "MyModel2";
+
+        @SuppressWarnings("unchecked")
+        PersistentModelStore<Object> modelStore = (PersistentModelStore<Object>)mock(PersistentModelStore.class);
+        doReturn(model2).when(modelStore).tryLoadModel(any(Path.class));
+
+        PersistentModelStore<Object> persister = createLazyStore(modelStore, executor);
+
+        Object model1 = "MyModel1";
+
+        Path dest = Paths.get("MyTestDest");
+        persister.persistModel(model1, dest);
+        executeAll(executor);
+
+        Object storedModel = persister.tryLoadModel(dest);
+        assertSame("model", model2, storedModel);
+    }
 }
