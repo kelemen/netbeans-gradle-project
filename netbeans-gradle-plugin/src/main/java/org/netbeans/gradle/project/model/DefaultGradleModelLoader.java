@@ -74,6 +74,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private static final MonitorableTaskExecutorService DEFAULT_MODEL_LOAD_NOTIFIER
             = NbTaskExecutors.newExecutor("Gradle-Project-Load-Notifier", 1);
 
+    private static final MonitorableTaskExecutorService DEFAULT_MODEL_PERSISTER
+            = NbTaskExecutors.newExecutor("Gradle-Project-Model-Persister", 1);
+
     private static final AtomicReference<GradleModelCache> DEFAULT_CACHE_REF
             = new AtomicReference<>(null);
 
@@ -611,6 +614,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     }
 
     public static final class Builder {
+        private static final PersistentProjectModelStoreFactory DEFAULT_MODEL_STORE_FACTORY
+                = new PersistentProjectModelStoreFactory();
+        private static final LazyPersistentModelStoreFactory<NbGradleModel> DEFAULT_LAZY_MODEL_STORE_FACTORY
+                = new LazyPersistentModelStoreFactory<>(DEFAULT_MODEL_STORE_FACTORY.getModelPersister(), DEFAULT_MODEL_PERSISTER);
+
         private final NbGradleProject project;
 
         private TaskExecutor projectLoader;
@@ -626,7 +634,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = new MultiFileModelCache<>(new ProjectModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
+            this.persistentCache = new MultiFileModelCache<>(defaultModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
                 @Override
                 public PersistentModelKey apply(NbGradleModel arg) {
                     try {
@@ -642,6 +650,10 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                     return getDefaultCache();
                 }
             };
+        }
+
+        private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {
+            return DEFAULT_LAZY_MODEL_STORE_FACTORY.createStore(DEFAULT_MODEL_STORE_FACTORY.createModelStore(project));
         }
 
         public void setProjectLoader(TaskExecutor projectLoader) {

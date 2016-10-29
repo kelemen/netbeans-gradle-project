@@ -10,7 +10,7 @@ import org.netbeans.gradle.project.util.NbFunction;
 import static org.junit.Assert.*;
 
 public class MultiFileModelCacheTest {
-    private static MultiFileModelCache<TestModel> getTestCache(ModelPersister<TestModel> persister) {
+    private static MultiFileModelCache<TestModel> getTestCache(PersistentModelStore<TestModel> persister) {
         return new MultiFileModelCache<>(persister, new NbFunction<TestModel, PersistentModelKey>() {
             @Override
             public PersistentModelKey apply(TestModel model) {
@@ -25,7 +25,7 @@ public class MultiFileModelCacheTest {
 
     @Test
     public void testGetNonExistant() throws Exception {
-        MemModelPersister<TestModel> persister = new MemModelPersister<>();
+        MemPersistentModelStore<TestModel> persister = new MemPersistentModelStore<>();
         MultiFileModelCache<TestModel> cache = getTestCache(persister);
 
         TestModel model = cache.tryGetModel(getKey("TestRoot", "TestSub"));
@@ -34,7 +34,7 @@ public class MultiFileModelCacheTest {
 
     @Test
     public void testSave1Get1() throws Exception {
-        MemModelPersister<TestModel> persister = new MemModelPersister<>();
+        MemPersistentModelStore<TestModel> persister = new MemPersistentModelStore<>();
         MultiFileModelCache<TestModel> cache = getTestCache(persister);
 
         TestModel model = new TestModel("TestRoot", "TestSub");
@@ -49,7 +49,7 @@ public class MultiFileModelCacheTest {
 
     @Test
     public void testSaveMultipleGet1() throws Exception {
-        MemModelPersister<TestModel> persister = new MemModelPersister<>();
+        MemPersistentModelStore<TestModel> persister = new MemPersistentModelStore<>();
         MultiFileModelCache<TestModel> cache = getTestCache(persister);
 
         TestModel model1 = new TestModel("TestRoot1", "TestSub1");
@@ -68,7 +68,7 @@ public class MultiFileModelCacheTest {
 
     @Test
     public void testOverwrite() throws Exception {
-        MemModelPersister<TestModel> persister = new MemModelPersister<>();
+        MemPersistentModelStore<TestModel> persister = new MemPersistentModelStore<>();
         MultiFileModelCache<TestModel> cache = getTestCache(persister);
 
         TestModel model1 = new TestModel("TestRoot", "TestSub");
