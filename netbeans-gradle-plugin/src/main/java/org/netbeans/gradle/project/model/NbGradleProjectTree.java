@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
@@ -27,6 +28,7 @@ public final class NbGradleProjectTree implements Serializable {
     private final AtomicReference<NbGradleProjectTree> parentRef;
 
     private final AtomicReference<Map<String, NbGradleProjectTree>> childrenMap;
+    private final AtomicInteger numberOfSubprojectsRef;
 
     public NbGradleProjectTree(
             GenericProjectProperties genericProperties,
@@ -40,6 +42,7 @@ public final class NbGradleProjectTree implements Serializable {
 
         this.childrenMap = new AtomicReference<>(null);
         this.parentRef = new AtomicReference<>(null);
+        this.numberOfSubprojectsRef = new AtomicInteger(-1);
     }
 
     public NbGradleProjectTree(GradleProjectTree tree) {
@@ -51,6 +54,25 @@ public final class NbGradleProjectTree implements Serializable {
 
         this.childrenMap = new AtomicReference<>(null);
         this.parentRef = new AtomicReference<>(null);
+        this.numberOfSubprojectsRef = new AtomicInteger(-1);
+    }
+
+    public int getNumberOfSubprojects() {
+        int result = numberOfSubprojectsRef.get();
+        if (result < 0) {
+            result = calculateNumberOfSubprojects();
+            numberOfSubprojectsRef.set(result);
+        }
+        return result;
+    }
+
+    private int calculateNumberOfSubprojects() {
+        int result = 0;
+        for (NbGradleProjectTree child: children) {
+            result++;
+            result += child.getNumberOfSubprojects();
+        }
+        return result;
     }
 
     public NbGradleProjectTree getParent(NbGradleProjectTree root) {

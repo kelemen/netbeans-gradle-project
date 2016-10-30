@@ -48,6 +48,10 @@ public final class NbGradleMultiProjectDef implements Serializable {
         }
     }
 
+    public int getNumberOfProjectsInThisBuild() {
+        return rootProject.getNumberOfSubprojects() + 1;
+    }
+
     public NbGradleProjectTree getParentTree() {
         return mainProject.getParent(rootProject);
     }

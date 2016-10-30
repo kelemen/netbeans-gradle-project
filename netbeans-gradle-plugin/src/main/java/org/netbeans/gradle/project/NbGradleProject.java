@@ -238,6 +238,10 @@ public final class NbGradleProject implements Project {
         }
     }
 
+    public boolean wasModelEverSet() {
+        return getServiceObjects().modelUpdater.wasModelEverSet();
+    }
+
     @Override
     public Lookup getLookup() {
         return getServiceObjects().projectLookups.getMainLookup();
@@ -346,6 +350,7 @@ public final class NbGradleProject implements Project {
             add(ProjectPropertiesApi.scriptPlatform(commonProperties.scriptPlatform().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceEncoding(commonProperties.sourceEncoding().getActiveSource()), serviceObjects);
             add(ProjectPropertiesApi.sourceLevel(commonProperties.sourceLevel().getActiveSource()), serviceObjects);
+            add(ModelCacheSizeAutoUpdater.getDefault(), serviceObjects);
 
             this.services = Lookups.fixed(serviceObjects.toArray());
             this.projectLookups = new NbGradleProjectLookups(project, services);

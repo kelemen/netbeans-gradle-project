@@ -42,6 +42,10 @@ public final class ProjectModelUpdater<M> {
         this.lastInProgressRef = new AtomicReference<>(null);
     }
 
+    public boolean wasModelEverSet() {
+        return loadedAtLeastOnceSignal.isSignaled();
+    }
+
     public void ensureLoadRequested() {
         loadProject(true, true);
     }
