@@ -41,6 +41,7 @@ import org.netbeans.gradle.project.LoadedProjectManager;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.api.task.DaemonTaskContext;
@@ -86,6 +87,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     private final LoadedProjectManager loadedProjectManager;
     private final PersistentModelCache<NbGradleModel> persistentCache;
     private final NbSupplier<? extends GradleModelCache> cacheRef;
+    private final CacheSizeIncreaser cacheSizeIncreaser;
 
     private final AtomicBoolean modelWasSetOnce;
 
@@ -96,6 +98,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         this.loadedProjectManager = builder.loadedProjectManager;
         this.persistentCache = builder.persistentCache;
         this.cacheRef = builder.cacheRef;
+        this.cacheSizeIncreaser = builder.cacheSizeIncreaser;
         this.modelWasSetOnce = new AtomicBoolean(false);
     }
 
@@ -467,7 +470,10 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             List<NbGradleModel> otherModels,
             NbGradleModel mainModel) {
 
-        List<NbGradleModel> toSave = new ArrayList<>(otherModels.size() + 1);
+        int numberOfModels = otherModels.size() + 1;
+        cacheSizeIncreaser.requiresCacheSize(getCache(), numberOfModels);
+
+        List<NbGradleModel> toSave = new ArrayList<>(numberOfModels);
         for (NbGradleModel model: otherModels) {
             toSave.add(introduceLoadedModel(model, false));
         }
@@ -626,6 +632,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         private LoadedProjectManager loadedProjectManager;
         private PersistentModelCache<NbGradleModel> persistentCache;
         private NbSupplier<? extends GradleModelCache> cacheRef;
+        private CacheSizeIncreaser cacheSizeIncreaser;
 
         public Builder(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
@@ -650,6 +657,28 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                     return getDefaultCache();
                 }
             };
+            this.cacheSizeIncreaser = new CacheSizeIncreaser() {
+                @Override
+                public void requiresCacheSize(GradleModelCache cache, int minimumCacheSize) {
+                    increaseDefaultCacheSize(cache, minimumCacheSize);
+                }
+            };
+        }
+
+        private static void increaseDefaultCacheSize(GradleModelCache cache, int minimumCacheSize) {
+            if (cache.getMaxCapacity() >= minimumCacheSize) {
+                return;
+            }
+
+            PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.getDefault().projectCacheSize();
+            Integer prevCacheSize = projectCacheSize.getActiveValue();
+            if (prevCacheSize >= minimumCacheSize) {
+                return;
+            }
+            projectCacheSize.setValue(minimumCacheSize);
+            cache.setMaxCapacityToAtLeast(minimumCacheSize);
+
+            GlobalErrorReporter.showWarning(NbStrings.getTooSmallCache(prevCacheSize, minimumCacheSize));
         }
 
         private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {

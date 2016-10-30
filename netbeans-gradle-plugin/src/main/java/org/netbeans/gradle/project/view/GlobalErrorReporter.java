@@ -12,7 +12,7 @@ import org.openide.awt.NotificationDisplayer;
 public final class GlobalErrorReporter {
     private static final Icon ERROR_ICON = NbIcons.getPriorityHighIcon();
 
-    public static void showIssue(final String message) {
+    public static void showIssue(final String message, final Icon icon) {
         ExceptionHelper.checkNotNullArgument(message, "message");
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -21,7 +21,7 @@ public final class GlobalErrorReporter {
                 NotificationDisplayer displayer = NotificationDisplayer.getDefault();
                 JLabel messageLabel = new JLabel(
                         message,
-                        NbIcons.getUIErrorIcon(),
+                        icon,
                         SwingConstants.LEADING);
                 JLabel lineLabel = new JLabel(message);
 
@@ -33,6 +33,14 @@ public final class GlobalErrorReporter {
                         NotificationDisplayer.Priority.HIGH);
             }
         });
+    }
+
+    public static void showIssue(String message) {
+        showIssue(message, NbIcons.getUIErrorIcon());
+    }
+
+    public static void showWarning(String message) {
+        showIssue(message, NbIcons.getUIWarningIcon());
     }
 
     private GlobalErrorReporter() {

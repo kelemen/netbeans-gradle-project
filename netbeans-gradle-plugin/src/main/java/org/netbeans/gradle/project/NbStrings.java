@@ -475,6 +475,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.GlobalErrorReporterTitle");
     }
 
+    public static String getTooSmallCache(int prevCacheSize, int newCacheSize) {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.TooSmallCache", prevCacheSize, newCacheSize);
+    }
+
     public static String getCachedJarIssueMessage() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.CachedJarIssueMessage");
     }

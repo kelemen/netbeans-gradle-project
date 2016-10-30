@@ -58,6 +58,10 @@ public final class GradleModelCache {
         }
     }
 
+    public int getMaxCapacity() {
+        return maxCapacity.get();
+    }
+
     public void setMaxCapacity(int newMaxCapacity) {
         if (newMaxCapacity < 0) {
             throw new IllegalArgumentException("Illegal max. capacity value: " + newMaxCapacity);
