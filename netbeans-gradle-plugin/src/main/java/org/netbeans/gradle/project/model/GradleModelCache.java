@@ -33,7 +33,7 @@ public final class GradleModelCache {
         this.updateListeners = new CopyOnTriggerListenerManager<>();
     }
 
-    private void cleanupCache() {
+    private void cleanupCacheUnsafe() {
         assert cacheLock.isHeldByCurrentThread();
 
         int currentMaxCapacity = maxCapacity.get();
@@ -49,20 +49,37 @@ public final class GradleModelCache {
         }
     }
 
-    public void setMaxCapacity(int maxCapacity) {
-        if (maxCapacity < 0) {
-            throw new IllegalArgumentException("Illegal max. capacity value: " + maxCapacity);
+    private void cleanupCache() {
+        cacheLock.lock();
+        try {
+            cleanupCacheUnsafe();
+        } finally {
+            cacheLock.unlock();
+        }
+    }
+
+    public void setMaxCapacity(int newMaxCapacity) {
+        if (newMaxCapacity < 0) {
+            throw new IllegalArgumentException("Illegal max. capacity value: " + newMaxCapacity);
         }
 
-        int prevCapacity = this.maxCapacity.getAndSet(maxCapacity);
-        if (prevCapacity > maxCapacity) {
-            cacheLock.lock();
-            try {
-                cleanupCache();
-            } finally {
-                cacheLock.unlock();
-            }
+        int prevCapacity = maxCapacity.getAndSet(newMaxCapacity);
+        if (prevCapacity > newMaxCapacity) {
+            cleanupCache();
         }
+    }
+
+    public void setMaxCapacityToAtLeast(int newMaxCapacity) {
+        if (newMaxCapacity < 0) {
+            throw new IllegalArgumentException("Illegal max. capacity value: " + newMaxCapacity);
+        }
+
+        int prevCapacity = maxCapacity.get();
+        do {
+            if (prevCapacity >= newMaxCapacity) {
+                break;
+            }
+        } while (maxCapacity.compareAndSet(prevCapacity, newMaxCapacity));
     }
 
     private static CacheKey tryCreateKey(NbGradleModel model) {
@@ -103,7 +120,7 @@ public final class GradleModelCache {
             prevModel = cache.get(key);
             if (prevModel == null) {
                 cache.put(key, newModel);
-                cleanupCache();
+                cleanupCacheUnsafe();
             }
             else {
                 newModel = prevModel.updateEntry(newModel);
@@ -129,7 +146,7 @@ public final class GradleModelCache {
         cacheLock.lock();
         try {
             prevModel = cache.put(key, model);
-            cleanupCache();
+            cleanupCacheUnsafe();
         } finally {
             cacheLock.unlock();
         }
