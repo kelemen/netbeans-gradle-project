@@ -7,6 +7,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import org.netbeans.api.annotations.common.StaticResource;
+import org.openide.awt.NotificationDisplayer;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataFolder;
 import org.openide.nodes.Node;
@@ -32,9 +33,6 @@ public final class NbIcons {
 
     @StaticResource
     private static final String WARNING_BADGE_ICON_PATH = "org/netbeans/gradle/project/resources/warning-badge.png";
-
-    @StaticResource
-    private static final String PRIORITY_HIGH_PATH = "org/netbeans/gradle/project/resources/priority_high.png";
 
     public static Image getGradleIcon() {
         return ImageUtilities.loadImage(PROJECT_ICON_PATH);
@@ -65,10 +63,7 @@ public final class NbIcons {
     }
 
     public static Icon getPriorityHighIcon() {
-        // This icon is the same as NotificationDisplayer.Priority.HIGH.getIcon()
-        // in NB 7.4.
-        // TODO: Remove this method and replace it with the above call.
-        return ImageUtilities.loadImageIcon(PRIORITY_HIGH_PATH, false);
+        return NotificationDisplayer.Priority.HIGH.getIcon();
     }
 
     public static Icon getUIQuestionIcon() {
