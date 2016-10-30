@@ -620,6 +620,26 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                 daemonTaskContext(projectLoadKey.project));
     }
 
+    public static void ensureCacheSize(int minimumCacheSize) {
+        ensureCacheSize(getDefaultCache(), minimumCacheSize);
+    }
+
+    private static void ensureCacheSize(GradleModelCache cache, int minimumCacheSize) {
+        if (cache.getMaxCapacity() >= minimumCacheSize) {
+            return;
+        }
+
+        PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.getDefault().projectCacheSize();
+        Integer prevCacheSize = projectCacheSize.getActiveValue();
+        if (prevCacheSize >= minimumCacheSize) {
+            return;
+        }
+        projectCacheSize.setValue(minimumCacheSize);
+        cache.setMaxCapacityToAtLeast(minimumCacheSize);
+
+        GlobalErrorReporter.showWarning(NbStrings.getTooSmallCache(prevCacheSize, minimumCacheSize));
+    }
+
     public static final class Builder {
         private static final PersistentProjectModelStoreFactory DEFAULT_MODEL_STORE_FACTORY
                 = new PersistentProjectModelStoreFactory();
@@ -661,25 +681,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.cacheSizeIncreaser = new CacheSizeIncreaser() {
                 @Override
                 public void requiresCacheSize(GradleModelCache cache, int minimumCacheSize) {
-                    increaseDefaultCacheSize(cache, minimumCacheSize);
+                    ensureCacheSize(cache, minimumCacheSize);
                 }
             };
-        }
-
-        private static void increaseDefaultCacheSize(GradleModelCache cache, int minimumCacheSize) {
-            if (cache.getMaxCapacity() >= minimumCacheSize) {
-                return;
-            }
-
-            PropertyReference<Integer> projectCacheSize = CommonGlobalSettings.getDefault().projectCacheSize();
-            Integer prevCacheSize = projectCacheSize.getActiveValue();
-            if (prevCacheSize >= minimumCacheSize) {
-                return;
-            }
-            projectCacheSize.setValue(minimumCacheSize);
-            cache.setMaxCapacityToAtLeast(minimumCacheSize);
-
-            GlobalErrorReporter.showWarning(NbStrings.getTooSmallCache(prevCacheSize, minimumCacheSize));
         }
 
         private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {
