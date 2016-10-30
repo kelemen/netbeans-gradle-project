@@ -471,7 +471,8 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             NbGradleModel mainModel) {
 
         int numberOfModels = otherModels.size() + 1;
-        cacheSizeIncreaser.requiresCacheSize(getCache(), numberOfModels);
+        // Required one more than actually needed to create room for a buildSrc project.
+        cacheSizeIncreaser.requiresCacheSize(getCache(), numberOfModels + 1);
 
         List<NbGradleModel> toSave = new ArrayList<>(numberOfModels);
         for (NbGradleModel model: otherModels) {
