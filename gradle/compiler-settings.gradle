@@ -6,24 +6,25 @@ ext.configureJavaCompilers = { int javaVersion ->
     sourceCompatibility = requiredVersion
     targetCompatibility = requiredVersion
 
-    def compileTasks = tasks.withType(JavaCompile);
-    def compilerOptions = compileTasks*.options;
-    compilerOptions*.encoding = 'UTF-8';
-    compilerOptions*.compilerArgs = ['-Xlint'];
+    tasks.withType(JavaCompile, { compileTask ->
+        def compilerOptions = compileTask.options;
+        compilerOptions.encoding = 'UTF-8';
+        compilerOptions.compilerArgs = ['-Xlint'];
 
-    if (JavaVersion.current() != requiredVersion) {
-        String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, javaVersion);
-        if (explicitJavaCompiler != null) {
-            compilerOptions*.fork = true;
-            compilerOptions*.forkOptions*.executable = explicitJavaCompiler;
-        }
-        else {
-            compileTasks*.doFirst {
-                String jdkProperty = getJdkPropertyName(javaVersion);
-                logger.warn "Warning: ${jdkProperty} property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
+        if (JavaVersion.current() != requiredVersion) {
+            String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, javaVersion);
+            if (explicitJavaCompiler != null) {
+                compilerOptions.fork = true;
+                compilerOptions.forkOptions*.executable = explicitJavaCompiler;
+            }
+            else {
+                compileTask.doFirst {
+                    String jdkProperty = getJdkPropertyName(javaVersion);
+                    logger.warn "Warning: ${jdkProperty} property is missing and not compiling with Java ${requiredVersion}. Using ${JavaVersion.current()}";
+                }
             }
         }
-    }
+    })
 }
 
 ext.findToolsJar = { int javaVersion ->

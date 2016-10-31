@@ -9,6 +9,8 @@ ext.scriptFile = { String fileName ->
 
 apply from: scriptFile('compiler-settings.gradle');
 
+configureJavaCompilers(5)
+
 repositories {
     mavenCentral();
 
@@ -51,8 +53,6 @@ configurations {
     modelBuildersCompile.extendsFrom compile
     modelBuildersCompile.exclude module: 'gradle-tooling-api'
 }
-
-configureJavaCompilers(5)
 
 compileTestJava.dependsOn(jar)
 
