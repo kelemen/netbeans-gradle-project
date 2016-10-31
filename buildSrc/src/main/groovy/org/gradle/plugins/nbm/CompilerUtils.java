@@ -17,6 +17,7 @@ import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.ForkOptions;
+import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.netbeans.gradle.build.TaskConfigurations;
 
@@ -101,22 +102,35 @@ public final class CompilerUtils {
                 configureJavaCompiler(compileTask);
             }
         });
-    }
-
-    private static void configureJavaCompiler(final JavaCompile compileTask) {
-        CompileOptions options = compileTask.getOptions();
-        options.setEncoding("UTF-8");
-        options.setCompilerArgs(Arrays.asList("-Xlint"));
-
-        TaskConfigurations.lazilyConfiguredTask(compileTask, new Action<Task>() {
+        project.getTasks().withType(GroovyCompile.class, new Action<GroovyCompile>() {
             @Override
-            public void execute(Task task) {
-                configureJavacNow(compileTask);
+            public void execute(GroovyCompile compileTask) {
+                configureJavaCompiler(compileTask);
             }
         });
     }
 
-    private static void configureJavacNow(JavaCompile compileTask) {
+    private static void configureJavaCompiler(final JavaCompile compileTask) {
+        configureJavaCompiler(compileTask, compileTask.getOptions());
+    }
+
+    private static void configureJavaCompiler(final GroovyCompile compileTask) {
+        configureJavaCompiler(compileTask, compileTask.getOptions());
+    }
+
+    private static void configureJavaCompiler(final Task compileTask, final CompileOptions compilerOptions) {
+        compilerOptions.setEncoding("UTF-8");
+        compilerOptions.setCompilerArgs(Arrays.asList("-Xlint"));
+
+        TaskConfigurations.lazilyConfiguredTask(compileTask, new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                configureJavacNow(compileTask, compilerOptions);
+            }
+        });
+    }
+
+    private static void configureJavacNow(Task compileTask, CompileOptions compilerOptions) {
         final JavaVersion targetCompatibility = getTargetCompatibility(compileTask.getProject());
         if (Objects.equals(JavaVersion.current(), targetCompatibility)) {
             return;
@@ -125,7 +139,6 @@ public final class CompilerUtils {
         final Project project = compileTask.getProject();
         String explicitJavaCompiler = tryGetExplicitJdkCompiler(project, targetCompatibility);
         if (explicitJavaCompiler != null) {
-            CompileOptions compilerOptions = compileTask.getOptions();
             compilerOptions.setFork(true);
             compilerOptions.getForkOptions().setExecutable(explicitJavaCompiler);
         }
