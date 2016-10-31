@@ -2,6 +2,7 @@ import java.nio.file.*
 
 apply plugin: 'nbm'
 apply plugin: 'jacoco'
+apply plugin: 'custom-java-compilers'
 
 jacocoTestReport {
     reports {
@@ -13,10 +14,8 @@ ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName);
 }
 
-apply from: scriptFile('compiler-settings.gradle');
-int javaVersion = 7;
-
-configureJavaCompilers(javaVersion);
+sourceCompatibility = '1.7'
+targetCompatibility = sourceCompatibility
 
 String netbeansVersion = 'RELEASE81'
 
@@ -163,7 +162,7 @@ dependencies {
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-testrunner-ui')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-modules-gsf-codecoverage')
     providedCompile netbeansModule('org.netbeans.modules', 'org-netbeans-insane')
-    providedCompile files(findToolsJar(javaVersion))
+    providedCompile files(customJavaCompilers.toolsJar)
 
     compile 'org.slf4j:slf4j-api:1.7.2'
     compile 'com.google.code.findbugs:jsr305:2.0.1'
