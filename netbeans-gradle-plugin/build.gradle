@@ -12,7 +12,7 @@ jacocoTestReport {
 }
 
 ext.scriptFile = { String fileName ->
-    return new File(new File(rootDir, 'gradle'), fileName);
+    return new File(new File(rootDir, 'gradle'), fileName)
 }
 
 sourceCompatibility = '1.7'
@@ -29,7 +29,7 @@ repositories {
 }
 
 compileJava {
-    String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator);
+    String resDirsPath = sourceSets.main.resources.srcDirs.collect({ it.path }).join(File.pathSeparator)
     options.compilerArgs = ['-Xlint', '-sourcepath', resDirsPath]
 }
 
@@ -40,67 +40,67 @@ def tryGetProperty = { String name, String defaultValue ->
 }
 
 nbm {
-    moduleName = 'org.netbeans.gradle.project';
-    moduleInstall = 'org.netbeans.gradle.project.NbGradleModuleInstall';
-    moduleLayer = 'org/netbeans/gradle/project/layer.xml';
-    localizingBundle = 'org/netbeans/gradle/project/Bundle.properties';
+    moduleName = 'org.netbeans.gradle.project'
+    moduleInstall = 'org.netbeans.gradle.project.NbGradleModuleInstall'
+    moduleLayer = 'org/netbeans/gradle/project/layer.xml'
+    localizingBundle = 'org/netbeans/gradle/project/Bundle.properties'
     friendPackages {
-        addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api';
-        add 'org.netbeans.gradle.model.api';
-        add 'org.netbeans.gradle.model.api.util';
+        addWithSubPackages sourceSets.main, 'org.netbeans.gradle.project.api'
+        add 'org.netbeans.gradle.model.api'
+        add 'org.netbeans.gradle.model.api.util'
 
-        add 'org.gradle.api';
-        add 'org.gradle.api.artifacts';
-        add 'org.gradle.api.artifacts.dsl';
-        add 'org.gradle.api.artifacts.repositories';
-        add 'org.gradle.api.artifacts.result';
-        add 'org.gradle.api.component';
-        add 'org.gradle.api.execution';
-        add 'org.gradle.api.file';
-        add 'org.gradle.api.initialization';
-        add 'org.gradle.api.initialization.dsl';
-        add 'org.gradle.api.invocation';
-        add 'org.gradle.api.logging';
-        add 'org.gradle.api.plugins';
-        add 'org.gradle.api.resources';
-        add 'org.gradle.api.specs';
-        add 'org.gradle.api.tasks';
-        add 'org.gradle.api.tasks.util';
-        add 'org.gradle.tooling';
-        add 'org.gradle.tooling.exceptions';
-        add 'org.gradle.tooling.model';
-        add 'org.gradle.tooling.model.build';
-        add 'org.gradle.tooling.model.eclipse';
-        add 'org.gradle.tooling.model.gradle';
-        add 'org.gradle.tooling.model.idea';
-        add 'org.gradle.tooling.provider';
-        add 'org.gradle.tooling.provider.model';
-        add 'org.jtrim.access';
-        add 'org.jtrim.cache';
-        add 'org.jtrim.cancel';
-        add 'org.jtrim.collections';
-        add 'org.jtrim.concurrent';
-        add 'org.jtrim.concurrent.async';
-        add 'org.jtrim.concurrent.async.io';
-        add 'org.jtrim.event';
-        add 'org.jtrim.image';
-        add 'org.jtrim.image.async';
-        add 'org.jtrim.image.transform';
-        add 'org.jtrim.property';
-        add 'org.jtrim.property.swing';
-        add 'org.jtrim.swing.component';
-        add 'org.jtrim.swing.concurrent';
-        add 'org.jtrim.swing.concurrent.async';
-        add 'org.jtrim.utils';
+        add 'org.gradle.api'
+        add 'org.gradle.api.artifacts'
+        add 'org.gradle.api.artifacts.dsl'
+        add 'org.gradle.api.artifacts.repositories'
+        add 'org.gradle.api.artifacts.result'
+        add 'org.gradle.api.component'
+        add 'org.gradle.api.execution'
+        add 'org.gradle.api.file'
+        add 'org.gradle.api.initialization'
+        add 'org.gradle.api.initialization.dsl'
+        add 'org.gradle.api.invocation'
+        add 'org.gradle.api.logging'
+        add 'org.gradle.api.plugins'
+        add 'org.gradle.api.resources'
+        add 'org.gradle.api.specs'
+        add 'org.gradle.api.tasks'
+        add 'org.gradle.api.tasks.util'
+        add 'org.gradle.tooling'
+        add 'org.gradle.tooling.exceptions'
+        add 'org.gradle.tooling.model'
+        add 'org.gradle.tooling.model.build'
+        add 'org.gradle.tooling.model.eclipse'
+        add 'org.gradle.tooling.model.gradle'
+        add 'org.gradle.tooling.model.idea'
+        add 'org.gradle.tooling.provider'
+        add 'org.gradle.tooling.provider.model'
+        add 'org.jtrim.access'
+        add 'org.jtrim.cache'
+        add 'org.jtrim.cancel'
+        add 'org.jtrim.collections'
+        add 'org.jtrim.concurrent'
+        add 'org.jtrim.concurrent.async'
+        add 'org.jtrim.concurrent.async.io'
+        add 'org.jtrim.event'
+        add 'org.jtrim.image'
+        add 'org.jtrim.image.async'
+        add 'org.jtrim.image.transform'
+        add 'org.jtrim.property'
+        add 'org.jtrim.property.swing'
+        add 'org.jtrim.swing.component'
+        add 'org.jtrim.swing.concurrent'
+        add 'org.jtrim.swing.concurrent.async'
+        add 'org.jtrim.utils'
     }
 
-    requires('cnb.org.netbeans.modules.groovy.kit');
-    requires('cnb.org.netbeans.modules.java.j2seproject');
+    requires('cnb.org.netbeans.modules.groovy.kit')
+    requires('cnb.org.netbeans.modules.java.j2seproject')
 
     keyStore {
-        keyStoreFile = tryGetProperty('nbGradlePluginKeyStore', null);
-        username = tryGetProperty('nbGradlePluginKeyStoreUser', 'kelemen');
-        password = tryGetProperty('nbGradlePluginKeyStorePass', '');
+        keyStoreFile = tryGetProperty('nbGradlePluginKeyStore', null)
+        username = tryGetProperty('nbGradlePluginKeyStoreUser', 'kelemen')
+        password = tryGetProperty('nbGradlePluginKeyStorePass', '')
     }
 }
 
@@ -109,7 +109,7 @@ def netbeansModule = { String groupName, String moduleName ->
         group: groupName,
         name: moduleName,
         version: netbeansVersion
-    ];
+    ]
 }
 
 def netbeansApi = { String moduleName ->
@@ -179,8 +179,8 @@ dependencies {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
-    classifier = 'sources';
-    from sourceSets.main.allSource;
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 artifacts {
@@ -188,11 +188,11 @@ artifacts {
     archives sourcesJar
 }
 
-uploadArchives.dependsOn tasks.nbm;
+uploadArchives.dependsOn tasks.nbm
 artifacts {
     archives (tasks.nbm.outputFile) {
-        name = "${project.name}-${project.version}";
-        extension = 'nbm';
-        type = 'nbm';
+        name = "${project.name}-${project.version}"
+        extension = 'nbm'
+        type = 'nbm'
     }
 }

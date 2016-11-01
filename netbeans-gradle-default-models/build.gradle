@@ -1,18 +1,18 @@
-apply plugin: 'groovy';
+apply plugin: 'groovy'
 apply plugin: 'custom-java-compilers'
 
 sourceCompatibility = '1.5'
 targetCompatibility = sourceCompatibility
 
-String gradleVersion = '2.13';
-List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2', '2.7', '2.8', '2.9', '2.11', '2.12', '2.14.1', '3.0'];
+String gradleVersion = '2.13'
+List otherGradleVersions = ['1.8', '1.9', '1.10', '1.11', '2.0', '2.1', '2.2', '2.7', '2.8', '2.9', '2.11', '2.12', '2.14.1', '3.0']
 
 ext.scriptFile = { String fileName ->
-    return new File(new File(rootDir, 'gradle'), fileName);
+    return new File(new File(rootDir, 'gradle'), fileName)
 }
 
 repositories {
-    mavenCentral();
+    mavenCentral()
 
     maven {
         url 'http://repo.gradle.org/gradle/libs-releases-local'
@@ -75,7 +75,7 @@ artifacts {
 }
 
 dependencies {
-    compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion;
+    compile group: 'org.gradle', name: 'gradle-tooling-api', version: gradleVersion
     modelBuildersCompileOnly group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.6'
 
     def gradleApiDependency = new org.netbeans.gradle.build.ZippedJarsFileCollection(
@@ -83,46 +83,46 @@ dependencies {
         'distributions:gradle:1.8-bin@zip',
         ['gradle-api'],
         ['gradle-1.8', 'lib']
-    );
-    modelBuildersCompileOnly gradleApiDependency;
+    )
+    modelBuildersCompileOnly gradleApiDependency
 
-    testCompile group: 'junit', name: 'junit', version: '4.11';
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5';
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
 }
 
-setTestedGradleVersion(test, gradleVersion);
+setTestedGradleVersion(test, gradleVersion)
 task testAll {
-    dependsOn test;
+    dependsOn test
 }
 
 otherGradleVersions.each { String otherGradleVersion ->
-    def currentTask = createTestTask(otherGradleVersion);
-    testAll.dependsOn currentTask;
+    def currentTask = createTestTask(otherGradleVersion)
+    testAll.dependsOn currentTask
 }
 
 task testAllFiltered {
     dependsOn 'testGradle1.8'
-    dependsOn test;
+    dependsOn test
 }
 
 // Create the custom test task for the specific version for consistency
-createTestTask(gradleVersion);
+createTestTask(gradleVersion)
 
 afterEvaluate {
-    System.setProperty('line.separator', '\n');
+    System.setProperty('line.separator', '\n')
 }
 
 def createTestTask(String gradleVersion) {
-    Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**'];
+    Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**']
 
     return task(['type': Test], "testGradle${gradleVersion}", { testTask ->
-        setTestedGradleVersion(testTask, gradleVersion);
+        setTestedGradleVersion(testTask, gradleVersion)
         daemonTestPackagePatterns.each { pattern ->
-            testTask.include pattern;
+            testTask.include pattern
         }
-    });
+    })
 }
 
 def setTestedGradleVersion(def testTask, String gradleVersion) {
-    testTask.systemProperty 'TESTED_GRADLE_DAEMON_VERSION', gradleVersion;
+    testTask.systemProperty 'TESTED_GRADLE_DAEMON_VERSION', gradleVersion
 }
