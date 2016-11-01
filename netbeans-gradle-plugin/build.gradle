@@ -3,6 +3,7 @@ import java.nio.file.*
 apply plugin: 'nbm'
 apply plugin: 'jacoco'
 apply plugin: 'custom-java-compilers'
+apply plugin: 'nb-gradle-maven-publish'
 
 jacocoTestReport {
     reports {
@@ -32,12 +33,10 @@ compileJava {
     options.compilerArgs = ['-Xlint', '-sourcepath', resDirsPath]
 }
 
-def tryGetProperty = {String name, String defaultValue ->
-    if (!project.hasProperty(name)) {
-        return defaultValue;
-    }
+test.systemProperties['org.netbeans.gradle.runningTests'] = 'true'
 
-    return project.property(name)?.toString();
+def tryGetProperty = { String name, String defaultValue ->
+    return org.netbeans.gradle.build.PropertyUtils.getStringProperty(project, name, defaultValue)
 }
 
 nbm {
@@ -184,9 +183,10 @@ task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from 
     from sourceSets.main.allSource;
 }
 
-test.systemProperties['org.netbeans.gradle.runningTests'] = 'true'
-
-apply from: scriptFile('maven-publish.gradle');
+artifacts {
+    archives jar
+    archives sourcesJar
+}
 
 uploadArchives.dependsOn tasks.nbm;
 artifacts {

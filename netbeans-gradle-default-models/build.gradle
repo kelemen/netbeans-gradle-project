@@ -112,8 +112,6 @@ afterEvaluate {
     System.setProperty('line.separator', '\n');
 }
 
-apply from: scriptFile('maven-publish.gradle');
-
 def createTestTask(String gradleVersion) {
     Set daemonTestPackagePatterns = ['org/netbeans/gradle/model/java/**'];
 
