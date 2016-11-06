@@ -26,6 +26,7 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "junit",
         "simple-files",
         "ear-types",
+        "persistence",
         GradleTemplateConsts.CATEGORY_NAME
     };
     private static final String[] PRIVILEGED_TEMPLATES = {
@@ -34,6 +35,8 @@ public final class GradleProjectTemplates implements PrivilegedTemplates, Recomm
         "Templates/Classes/Interface.java",
         "Templates/GUIForms/JPanel.java",
         "Templates/GUIForms/JFrame.java",
+        "Templates/Persistence/Entity.java", 
+        "Templates/Persistence/RelatedCMP",   
         "Templates/WebServices/WebServiceClient"
     };
 
