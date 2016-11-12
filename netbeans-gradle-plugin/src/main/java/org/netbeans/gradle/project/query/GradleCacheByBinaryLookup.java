@@ -7,6 +7,7 @@ import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -16,13 +17,19 @@ public final class GradleCacheByBinaryLookup {
     private static final LazyChangeSupport CHANGES = LazyChangeSupport.createSwing(new EventSource());
 
     private final String searchedPackaging;
+    private final NbSupplier<File> gradleUserHomeProvider;
     private final NbFunction<FileObject, String> binaryToSearchedEntry;
 
-    public GradleCacheByBinaryLookup(String searchedPackaging, NbFunction<FileObject, String> binaryToSearchedEntry) {
+    public GradleCacheByBinaryLookup(
+            String searchedPackaging,
+            NbSupplier<File> gradleUserHomeProvider,
+            NbFunction<FileObject, String> binaryToSearchedEntry) {
         ExceptionHelper.checkNotNullArgument(searchedPackaging, "searchedPackaging");
+        ExceptionHelper.checkNotNullArgument(gradleUserHomeProvider, "gradleUserHomeProvider");
         ExceptionHelper.checkNotNullArgument(binaryToSearchedEntry, "binaryToSearchedEntry");
 
         this.searchedPackaging = searchedPackaging;
+        this.gradleUserHomeProvider = gradleUserHomeProvider;
         this.binaryToSearchedEntry = binaryToSearchedEntry;
     }
 
@@ -31,7 +38,7 @@ public final class GradleCacheByBinaryLookup {
     }
 
     public SourceForBinaryQueryImplementation2.Result tryFindEntryByBinary(File binaryRoot) {
-        File gradleUserHome = GradleFileUtils.GRADLE_USER_HOME.getValue();
+        File gradleUserHome = gradleUserHomeProvider.get();
         if (gradleUserHome == null) {
             return null;
         }

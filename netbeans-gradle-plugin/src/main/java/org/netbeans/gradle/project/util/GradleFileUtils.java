@@ -23,6 +23,13 @@ public final class GradleFileUtils {
     private static final File NORM_USER_HOME = getUserHome();
 
     public static final PropertySource<File> GRADLE_USER_HOME = getGradleUserHome();
+    public static final NbSupplier<File> GRADLE_USER_HOME_PROVIDER = new NbSupplier<File>() {
+        @Override
+        public File get() {
+            return GRADLE_USER_HOME.getValue();
+        }
+    };
+
     public static final Set<String> BINARY_DIR_NAMES =  Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("jar", "bundle")));
     public static final String POM_DIR_NAME = "pom";
