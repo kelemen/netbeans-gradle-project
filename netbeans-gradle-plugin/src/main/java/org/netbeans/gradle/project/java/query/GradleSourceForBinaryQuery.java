@@ -12,11 +12,11 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
-import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractSourceForBinaryQuery;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -42,13 +42,24 @@ implements
 
     private static final FileObject[] NO_ROOTS = new FileObject[0];
 
-    private final JavaExtension javaExt;
+    private final NbSupplier<? extends NbJavaModule> moduleProvider;
     private final LazyChangeSupport changes;
 
-    public GradleSourceForBinaryQuery(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+    public GradleSourceForBinaryQuery(final JavaExtension javaExt) {
+        this(new NbSupplier<NbJavaModule>() {
+            @Override
+            public NbJavaModule get() {
+                return javaExt.getCurrentModel().getMainModule();
+            }
+        });
 
-        this.javaExt = javaExt;
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+    }
+
+    public GradleSourceForBinaryQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {
+        ExceptionHelper.checkNotNullArgument(moduleProvider, "moduleProvider");
+
+        this.moduleProvider = moduleProvider;
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
@@ -95,7 +106,7 @@ implements
 
     @Override
     protected Result tryFindSourceRoot(final File binaryRoot) {
-        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+        NbJavaModule mainModule = moduleProvider.get();
         if (tryGetSourceRoots(mainModule, binaryRoot) == null) {
             return null;
         }
@@ -108,8 +119,7 @@ implements
 
             @Override
             public FileObject[] getRoots() {
-                NbJavaModel projectModel = javaExt.getCurrentModel();
-                NbJavaModule mainModule = projectModel.getMainModule();
+                NbJavaModule mainModule = moduleProvider.get();
 
                 return getSourceRoots(mainModule, binaryRoot);
             }
