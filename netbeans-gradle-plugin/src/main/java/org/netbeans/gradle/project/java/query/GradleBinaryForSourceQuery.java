@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
@@ -16,9 +17,8 @@ import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 public final class GradleBinaryForSourceQuery
@@ -52,13 +52,12 @@ implements
     }
 
     private static File tryGetOutputDir(
-            NbJavaModule module, FileObject root) {
+            NbJavaModule module, File root) {
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                    FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
-                    if (sourceRootObj != null && FileUtil.getRelativePath(sourceRootObj, root) != null) {
+                    if (Objects.equals(sourceRoot, root)) {
                         return sourceSet.getOutputDirs().getClassesDir();
                     }
                 }
@@ -68,7 +67,7 @@ implements
     }
 
     private static URL[] getRootsAsURLs(
-            NbJavaModule module, FileObject root) {
+            NbJavaModule module, File root) {
 
         File outputDir = tryGetOutputDir(module, root);
         if (outputDir == null) {
@@ -90,22 +89,29 @@ implements
     }
 
     @Override
-    protected BinaryForSourceQuery.Result tryFindBinaryRoots(File sourceRoot) {
-        final FileObject sourceRootObj = FileUtil.toFileObject(sourceRoot);
-        if (sourceRootObj == null) {
-            return null;
+    protected File normalizeSourcePath(File sourcePath) {
+        NbJavaModule module = moduleProvider.get();
+        for (JavaSourceSet sourceSet: module.getSources()) {
+            for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                for (File sourceRoot: sourceGroup.getSourceRoots()) {
+                    if (NbFileUtils.isParentOrSame(sourceRoot, sourcePath)) {
+                        return sourceRoot;
+                    }
+                }
+            }
         }
+        return null;
+    }
 
-        NbJavaModule mainModule = moduleProvider.get();
-        if (tryGetOutputDir(mainModule, sourceRootObj) == null) {
-            return null;
-        }
+    @Override
+    protected BinaryForSourceQuery.Result tryFindBinaryRoots(final File sourceRoot) {
+        // If source path normalization succeeds, it is a source root we own.
 
         return new BinaryForSourceQuery.Result() {
             @Override
             public URL[] getRoots() {
                 NbJavaModule mainModule = moduleProvider.get();
-                return getRootsAsURLs(mainModule, sourceRootObj);
+                return getRootsAsURLs(mainModule, sourceRoot);
             }
 
             @Override

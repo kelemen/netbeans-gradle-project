@@ -19,6 +19,12 @@ public abstract class AbstractBinaryForSourceQuery implements BinaryForSourceQue
         this.cache = new ConcurrentHashMap<>();
     }
 
+    // TODO: Instead of protected methods, they should be provided as an argument.
+
+    protected File normalizeSourcePath(File sourceRoot) {
+        return sourceRoot;
+    }
+
     protected abstract BinaryForSourceQuery.Result tryFindBinaryRoots(File sourceRoot);
 
     @Override
@@ -28,17 +34,22 @@ public abstract class AbstractBinaryForSourceQuery implements BinaryForSourceQue
             return null;
         }
 
-        BinaryForSourceQuery.Result result = cache.get(sourceRootFile);
+        File normSourceRoot = normalizeSourcePath(sourceRootFile);
+        if (normSourceRoot == null) {
+            return null;
+        }
+
+        BinaryForSourceQuery.Result result = cache.get(normSourceRoot);
         if (result != null) {
             return result;
         }
 
-        result = tryFindBinaryRoots(sourceRootFile);
+        result = tryFindBinaryRoots(normSourceRoot);
         if (result == null) {
             return null;
         }
 
-        BinaryForSourceQuery.Result oldResult = cache.putIfAbsent(sourceRootFile, result);
+        BinaryForSourceQuery.Result oldResult = cache.putIfAbsent(normSourceRoot, result);
         return oldResult != null ? oldResult : result;
     }
 }
