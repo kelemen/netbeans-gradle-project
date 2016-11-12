@@ -35,6 +35,9 @@ public abstract class AbstractSourceForBinaryQuery implements SourceForBinaryQue
         }
 
         File normBinaryRoot = normalizeBinaryPath(binaryRootFile);
+        if (normBinaryRoot == null) {
+            return null;
+        }
 
         Result result = cache.get(normBinaryRoot);
         if (result != null) {
