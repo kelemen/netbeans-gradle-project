@@ -7,29 +7,40 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class SharedTypesSerializationCache implements SerializationCache {
+    private final Class<?>[] shareableTypes;
     private final Lock cacheLock;
     private final Map<Object, Object> cache;
 
-    public SharedTypesSerializationCache() {
+    public SharedTypesSerializationCache(Class<?>... shareableTypes) {
+        this.shareableTypes = shareableTypes;
         this.cacheLock = new ReentrantLock();
         this.cache = new HashMap<Object, Object>(256);
+
+        for (Class<?> type: this.shareableTypes) {
+            if (type == null) throw new NullPointerException("Shareable types must be non-null");
+        }
+    }
+
+    public static SharedTypesSerializationCache createWithDefaultShare() {
+        return new SharedTypesSerializationCache(new Class<?>[]{ File.class });
     }
 
     public Object getCached(Object src) {
-        if (src instanceof File) {
-            cacheLock.lock();
-            try {
-                Object result = cache.get(src);
-                if (result == null) {
-                    result = src;
-                    cache.put(result, result);
+        for (Class<?> type: shareableTypes) {
+            if (type.isInstance(src)) {
+                cacheLock.lock();
+                try {
+                    Object result = cache.get(src);
+                    if (result == null) {
+                        result = src;
+                        cache.put(result, result);
+                    }
+                    return result;
+                } finally {
+                    cacheLock.unlock();
                 }
-                return result;
-            } finally {
-                cacheLock.unlock();
             }
         }
-
         return src;
     }
 }

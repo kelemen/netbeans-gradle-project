@@ -61,7 +61,7 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
-        SerializationCache serializationCache = new SharedTypesSerializationCache();
+        SerializationCache serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
         Map<String, Object> deserializedModels = CollectionUtils.newHashMap(extensionModels.size());
 
         for (NbGradleExtensionRef extensionRef: ownerProject.getExtensions().getExtensionRefs()) {

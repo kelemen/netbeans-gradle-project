@@ -291,7 +291,7 @@ public final class GenericModelFetcher {
 
         private CustomSerializedMap getBuildInfoResults(BuildController controller) {
             ClassLoader parentClassLoader = getClass().getClassLoader();
-            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(new SharedTypesSerializationCache(),
+            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(SharedTypesSerializationCache.createWithDefaultShare(),
                     parentClassLoader,
                     GradleInfoQueryMap.buildInfoBuilderIssueTransformer());
 
@@ -386,7 +386,7 @@ public final class GenericModelFetcher {
             this.basicInfos = CollectionUtils.newHashMap(projectCount);
             this.customInfos = CollectionUtils.newHashMap(projectCount);
             this.basicRootProject = evaluatedBuild.buildModel.getRootProject();
-            this.serializationCache = new SharedTypesSerializationCache();
+            this.serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
             this.defaultProjectPath = addCustomInfo(defaultModelGetter(evaluatedBuild.controller));
 
             // TODO: If lazy project evaluation is available, review this

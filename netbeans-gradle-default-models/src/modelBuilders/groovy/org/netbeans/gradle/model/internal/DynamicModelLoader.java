@@ -38,7 +38,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
     }
 
     private CustomSerializedMap fetchProjectInfos(Project project) {
-        SerializationCache serializationCache = new SharedTypesSerializationCache();
+        SerializationCache serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
         Map<Object, List<?>> projectInfoRequests = input.getProjectInfoRequests(serializationCache, classLoader);
         int requestCount = projectInfoRequests.size();
         CustomSerializedMap.Builder projectInfosBuilder = new CustomSerializedMap.Builder(requestCount);

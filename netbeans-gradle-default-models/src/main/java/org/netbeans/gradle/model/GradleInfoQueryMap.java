@@ -33,7 +33,7 @@ final class GradleInfoQueryMap {
             Map<Object, Throwable> serializationIssues) {
         this.builderMap = builderMap;
         this.classpath = classpath;
-        this.serializationCache = new SharedTypesSerializationCache();
+        this.serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
 
         if (serializationIssues.isEmpty()) {
             this.serializationIssues = Collections.emptyMap();
