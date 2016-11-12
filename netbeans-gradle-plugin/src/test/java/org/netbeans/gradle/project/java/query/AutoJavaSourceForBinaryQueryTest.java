@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -10,30 +9,14 @@ import org.junit.rules.TemporaryFolder;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.project.util.TestBinaryUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
 
 import static org.junit.Assert.*;
+import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class AutoJavaSourceForBinaryQueryTest {
     @ClassRule
     public static final TemporaryFolder TMP_DIR_ROOT = new TemporaryFolder();
-
-    private static FileObject expectedSingleFile(SourceForBinaryQuery.Result result) {
-        return expectedSingleFile(result.getRoots());
-    }
-
-    private static FileObject expectedSingleFile(FileObject[] fileObjs) {
-        assertEquals("Expected exactly one file object", 1, fileObjs.length);
-        return fileObjs[0];
-    }
-
-    private static void expectSameArchive(String name, File expected, FileObject actual) {
-        URI expectedUri = FileUtil.getArchiveRoot(FileUtil.toFileObject(expected)).toURI();
-        URI actualUri = actual.toURI();
-        assertEquals(name, expectedUri, actualUri);
-    }
 
     @Test
     public void testFindZipSource() throws IOException {
