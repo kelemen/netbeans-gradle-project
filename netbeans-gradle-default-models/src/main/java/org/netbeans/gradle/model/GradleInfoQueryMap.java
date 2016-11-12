@@ -18,7 +18,7 @@ import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.MultiMapUtils;
 import org.netbeans.gradle.model.util.SerializationCache;
-import org.netbeans.gradle.model.util.SharedTypesSerializationCache;
+import org.netbeans.gradle.model.util.SerializationCaches;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 final class GradleInfoQueryMap {
@@ -33,7 +33,7 @@ final class GradleInfoQueryMap {
             Map<Object, Throwable> serializationIssues) {
         this.builderMap = builderMap;
         this.classpath = classpath;
-        this.serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
+        this.serializationCache = SerializationCaches.getDefault();
 
         if (serializationIssues.isEmpty()) {
             this.serializationIssues = Collections.emptyMap();

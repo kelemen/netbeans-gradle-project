@@ -6,8 +6,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.model.util.SerializationCache;
+import org.netbeans.gradle.model.util.SerializationCaches;
 import org.netbeans.gradle.model.util.SerializationUtils;
-import org.netbeans.gradle.model.util.SharedTypesSerializationCache;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 
@@ -61,7 +61,7 @@ public final class SerializedNbGradleModels implements Serializable {
     }
 
     public NbGradleModel deserializeModel(NbGradleProject ownerProject) {
-        SerializationCache serializationCache = SharedTypesSerializationCache.createWithDefaultShare();
+        SerializationCache serializationCache = SerializationCaches.getDefault();
         Map<String, Object> deserializedModels = CollectionUtils.newHashMap(extensionModels.size());
 
         for (NbGradleExtensionRef extensionRef: ownerProject.getExtensions().getExtensionRefs()) {

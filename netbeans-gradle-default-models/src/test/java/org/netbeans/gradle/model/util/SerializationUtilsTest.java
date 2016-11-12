@@ -16,7 +16,7 @@ public class SerializationUtilsTest {
 
         byte[] serialized = SerializationUtils.serializeObject(src);
 
-        Map<?, ?> deserialized = (Map<?, ?>)SerializationUtils.deserializeObject(serialized, SharedTypesSerializationCache.createWithDefaultShare());
+        Map<?, ?> deserialized = (Map<?, ?>)SerializationUtils.deserializeObject(serialized, SerializationCaches.getDefault());
 
         assertSame("File references must be the same", deserialized.get(1), deserialized.get(2));
     }
@@ -33,7 +33,7 @@ public class SerializationUtilsTest {
 
         byte[] serialized = SerializationUtils.serializeObject(src);
 
-        Map<?, ?> deserialized = (Map<?, ?>)SerializationUtils.deserializeObject(serialized, SharedTypesSerializationCache.createWithDefaultShare());
+        Map<?, ?> deserialized = (Map<?, ?>)SerializationUtils.deserializeObject(serialized, SerializationCaches.getDefault());
 
         assertEquals("file1", file1, deserialized.get(1));
         assertEquals("file2", file2, deserialized.get(2));

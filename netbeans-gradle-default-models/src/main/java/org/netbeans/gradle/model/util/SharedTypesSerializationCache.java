@@ -1,6 +1,5 @@
 package org.netbeans.gradle.model.util;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -19,10 +18,6 @@ public final class SharedTypesSerializationCache implements SerializationCache {
         for (Class<?> type: this.shareableTypes) {
             if (type == null) throw new NullPointerException("Shareable types must be non-null");
         }
-    }
-
-    public static SharedTypesSerializationCache createWithDefaultShare() {
-        return new SharedTypesSerializationCache(new Class<?>[]{ File.class });
     }
 
     public Object getCached(Object src) {
