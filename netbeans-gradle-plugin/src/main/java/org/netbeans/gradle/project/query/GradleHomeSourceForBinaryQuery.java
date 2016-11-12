@@ -2,8 +2,10 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import javax.swing.event.ChangeListener;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.GradleFileUtils;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
@@ -15,7 +17,20 @@ import org.openide.util.lookup.ServiceProviders;
     @ServiceProvider(service = SourceForBinaryQueryImplementation2.class),
     @ServiceProvider(service = SourceForBinaryQueryImplementation.class)})
 public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinaryQuery {
+    private final NbSupplier<? extends FileObject> gradleHomeProvider;
+
     public GradleHomeSourceForBinaryQuery() {
+        this(new NbSupplier<FileObject>() {
+            @Override
+            public FileObject get() {
+                return CommonGlobalSettings.getDefault().tryGetGradleInstallation();
+            }
+        });
+    }
+
+    public GradleHomeSourceForBinaryQuery(NbSupplier<? extends FileObject> gradleHomeProvider) {
+        ExceptionHelper.checkNotNullArgument(gradleHomeProvider, "gradleHomeProvider");
+        this.gradleHomeProvider = gradleHomeProvider;
     }
 
     @Override
@@ -25,7 +40,7 @@ public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinar
             return null;
         }
 
-        FileObject gradleHomeObj = CommonGlobalSettings.getDefault().tryGetGradleInstallation();
+        FileObject gradleHomeObj = gradleHomeProvider.get();
         if (gradleHomeObj == null) {
             return null;
         }
