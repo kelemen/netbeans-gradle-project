@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.java.JavaModelChangeListener;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.query.AbstractBinaryForSourceQuery;
 import org.netbeans.gradle.project.util.LazyChangeSupport;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
@@ -29,13 +30,24 @@ implements
 
     private static final URL[] NO_ROOTS = new URL[0];
 
-    private final JavaExtension javaExt;
+    private final NbSupplier<? extends NbJavaModule> moduleProvider;
     private final LazyChangeSupport changes;
 
-    public GradleBinaryForSourceQuery(JavaExtension javaExt) {
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+    public GradleBinaryForSourceQuery(final JavaExtension javaExt) {
+        this(new NbSupplier<NbJavaModule>() {
+            @Override
+            public NbJavaModule get() {
+                return javaExt.getCurrentModel().getMainModule();
+            }
+        });
 
-        this.javaExt = javaExt;
+        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+    }
+
+    public GradleBinaryForSourceQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {
+        ExceptionHelper.checkNotNullArgument(moduleProvider, "moduleProvider");
+
+        this.moduleProvider = moduleProvider;
         this.changes = LazyChangeSupport.createSwing(new EventSource());
     }
 
@@ -84,7 +96,7 @@ implements
             return null;
         }
 
-        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+        NbJavaModule mainModule = moduleProvider.get();
         if (tryGetOutputDir(mainModule, sourceRootObj) == null) {
             return null;
         }
@@ -92,8 +104,7 @@ implements
         return new BinaryForSourceQuery.Result() {
             @Override
             public URL[] getRoots() {
-                NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
-
+                NbJavaModule mainModule = moduleProvider.get();
                 return getRootsAsURLs(mainModule, sourceRootObj);
             }
 
