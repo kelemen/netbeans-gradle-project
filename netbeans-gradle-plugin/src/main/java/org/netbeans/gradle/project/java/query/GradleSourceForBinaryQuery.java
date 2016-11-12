@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
@@ -66,7 +67,7 @@ implements
     private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-            if (NbFileUtils.isParentOrSame(outputDirs.getClassesDir(), binaryRoot)) {
+            if (Objects.equals(outputDirs.getClassesDir(), binaryRoot)) {
                 List<File> result = new LinkedList<>();
 
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
@@ -102,6 +103,19 @@ implements
     @Override
     public void onModelChange() {
         changes.fireChange();
+    }
+
+    @Override
+    protected File normalizeBinaryPath(File binaryRoot) {
+        NbJavaModule mainModule = moduleProvider.get();
+        for (JavaSourceSet sourceSet: mainModule.getSources()) {
+            JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+            File classesDir = outputDirs.getClassesDir();
+            if (NbFileUtils.isParentOrSame(classesDir, binaryRoot)) {
+                return classesDir;
+            }
+        }
+        return null;
     }
 
     @Override
