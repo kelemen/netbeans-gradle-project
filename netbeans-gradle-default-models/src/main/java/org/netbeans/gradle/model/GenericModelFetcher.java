@@ -32,9 +32,9 @@ import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
 import org.netbeans.gradle.model.util.ClassLoaderUtils;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.model.util.DefaultSerializationCache;
 import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
+import org.netbeans.gradle.model.util.SharedTypesSerializationCache;
 import org.netbeans.gradle.model.util.TemporaryFileManager;
 import org.netbeans.gradle.model.util.TemporaryFileRef;
 
@@ -291,8 +291,7 @@ public final class GenericModelFetcher {
 
         private CustomSerializedMap getBuildInfoResults(BuildController controller) {
             ClassLoader parentClassLoader = getClass().getClassLoader();
-            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(
-                    new DefaultSerializationCache(),
+            Map<Object, List<?>> buildInfoRequests = serializedBuildInfoRequests.deserialize(new SharedTypesSerializationCache(),
                     parentClassLoader,
                     GradleInfoQueryMap.buildInfoBuilderIssueTransformer());
 
@@ -387,7 +386,7 @@ public final class GenericModelFetcher {
             this.basicInfos = CollectionUtils.newHashMap(projectCount);
             this.customInfos = CollectionUtils.newHashMap(projectCount);
             this.basicRootProject = evaluatedBuild.buildModel.getRootProject();
-            this.serializationCache = new DefaultSerializationCache();
+            this.serializationCache = new SharedTypesSerializationCache();
             this.defaultProjectPath = addCustomInfo(defaultModelGetter(evaluatedBuild.controller));
 
             // TODO: If lazy project evaluation is available, review this

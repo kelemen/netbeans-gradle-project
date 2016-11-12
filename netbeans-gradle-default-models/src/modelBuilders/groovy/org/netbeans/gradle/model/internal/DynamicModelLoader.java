@@ -17,10 +17,10 @@ import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.api.ProjectInfoBuilder2;
 import org.netbeans.gradle.model.util.BasicFileUtils;
 import org.netbeans.gradle.model.util.BuilderUtils;
-import org.netbeans.gradle.model.util.DefaultSerializationCache;
 import org.netbeans.gradle.model.util.Exceptions;
 import org.netbeans.gradle.model.util.SerializationCache;
 import org.netbeans.gradle.model.util.SerializationUtils;
+import org.netbeans.gradle.model.util.SharedTypesSerializationCache;
 
 public final class DynamicModelLoader implements ToolingModelBuilder {
     private final ModelQueryInput input;
@@ -38,7 +38,7 @@ public final class DynamicModelLoader implements ToolingModelBuilder {
     }
 
     private CustomSerializedMap fetchProjectInfos(Project project) {
-        SerializationCache serializationCache = new DefaultSerializationCache();
+        SerializationCache serializationCache = new SharedTypesSerializationCache();
         Map<Object, List<?>> projectInfoRequests = input.getProjectInfoRequests(serializationCache, classLoader);
         int requestCount = projectInfoRequests.size();
         CustomSerializedMap.Builder projectInfosBuilder = new CustomSerializedMap.Builder(requestCount);

@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class DefaultSerializationCache implements SerializationCache {
+public final class SharedTypesSerializationCache implements SerializationCache {
     private final Lock cacheLock;
     private final Map<Object, Object> cache;
 
-    public DefaultSerializationCache() {
+    public SharedTypesSerializationCache() {
         this.cacheLock = new ReentrantLock();
         this.cache = new HashMap<Object, Object>(256);
     }
