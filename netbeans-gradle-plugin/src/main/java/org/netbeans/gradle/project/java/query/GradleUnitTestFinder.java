@@ -2,8 +2,8 @@ package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -11,6 +11,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.queries.MultipleRootsUnitTestForSourceQueryImplementation;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -39,11 +40,13 @@ public final class GradleUnitTestFinder implements MultipleRootsUnitTestForSourc
     }
 
     private static URL[] urlsFromSourceSets(Collection<JavaSourceSet> sourceSets) {
-        List<URL> result = new LinkedList<>();
+        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
+
+        List<URL> result = new ArrayList<>();
         for (JavaSourceSet sourceSet: sourceSets) {
             for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                 for (File sourceRoot: sourceGroup.getSourceRoots()) {
-                    URL url = FileUtil.urlForArchiveOrDir(sourceRoot);
+                    URL url = urlFactory.toUrl(sourceRoot);
                     if (url != null) {
                         result.add(url);
                     }

@@ -5,10 +5,10 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.FilteringPathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.PathResourceBase;
-import org.openide.filesystems.FileUtil;
 
 final class ExcludeAwarePathResource extends PathResourceBase implements FilteringPathResourceImplementation {
     private final Path root;
@@ -21,8 +21,11 @@ final class ExcludeAwarePathResource extends PathResourceBase implements Filteri
         this.includeRules = includeRules;
     }
 
-    public static ExcludeAwarePathResource tryCreate(File root, ExcludeIncludeRules includeRules) {
-        URL url = FileUtil.urlForArchiveOrDir(root);
+    public static ExcludeAwarePathResource tryCreate(
+            File root,
+            ExcludeIncludeRules includeRules,
+            UrlFactory urlForArchiveFactory) {
+        URL url = urlForArchiveFactory.toUrl(root);
         if (url == null) {
             return null;
         }

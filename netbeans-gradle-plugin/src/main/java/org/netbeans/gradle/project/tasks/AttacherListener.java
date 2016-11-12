@@ -33,9 +33,9 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
+import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 public final class AttacherListener implements DebugTextListener.DebugeeListener {
     private static final Logger LOGGER = Logger.getLogger(AttacherListener.class.getName());
@@ -72,8 +72,9 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
     }
 
     private static void addSourcesOfBinaries(Collection<File> binaries, Set<FileObject> result) {
+        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
         for (File binary: binaries) {
-            URL url = FileUtil.urlForArchiveOrDir(binary);
+            URL url = urlFactory.toUrl(binary);
             if (url == null) continue;
 
             SourceForBinaryQuery.Result2 sourceResult = SourceForBinaryQuery.findSourceRoots2(url);

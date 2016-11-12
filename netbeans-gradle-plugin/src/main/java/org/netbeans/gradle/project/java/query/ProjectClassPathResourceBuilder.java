@@ -33,12 +33,11 @@ import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
-// TODO: Optimize this class by merging equivalent class path lists into a single one (or maybe concat lists?)
 public final class ProjectClassPathResourceBuilder {
     private static final Logger LOGGER = Logger.getLogger(ProjectClassPathResourceBuilder.class.getName());
 
@@ -51,6 +50,8 @@ public final class ProjectClassPathResourceBuilder {
     // Maps JAR name to source set output directory.
     private Map<String, Set<File>> openedProjectsOutput;
 
+    private final UrlFactory urlForArchiveFactory;
+
     public ProjectClassPathResourceBuilder(NbJavaModel projectModel, ProjectPlatform currentPlatform) {
         ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
         ExceptionHelper.checkNotNullArgument(currentPlatform, "currentPlatform");
@@ -60,6 +61,7 @@ public final class ProjectClassPathResourceBuilder {
         this.classpathResources = null;
         this.missing = null;
         this.openedProjectsOutput = null;
+        this.urlForArchiveFactory = UrlFactory.getDefaultArchiveOrDirFactory();
     }
 
     public void build() {
@@ -132,10 +134,10 @@ public final class ProjectClassPathResourceBuilder {
         return result;
     }
 
-    private static List<PathResourceImplementation> getBuildOutputDirsAsPathResources(JavaSourceSet sourceSet) {
+    private List<PathResourceImplementation> getBuildOutputDirsAsPathResources(JavaSourceSet sourceSet) {
         JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
-        PathResourceImplementation classesDir = toPathResource(outputDirs.getClassesDir());
-        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getResourcesDir());
+        PathResourceImplementation classesDir = toPathResource(outputDirs.getClassesDir(), urlForArchiveFactory);
+        PathResourceImplementation resourcesDir = toPathResource(outputDirs.getResourcesDir(), urlForArchiveFactory);
 
         List<PathResourceImplementation> result = new ArrayList<>(2);
         if (classesDir != null) result.add(classesDir);
@@ -319,13 +321,16 @@ public final class ProjectClassPathResourceBuilder {
     }
 
 
-    private static PathResourceImplementation toPathResource(File file) {
-        URL url = FileUtil.urlForArchiveOrDir(file);
+    private static PathResourceImplementation toPathResource(File file, UrlFactory urlForArchiveFactory) {
+        URL url = urlForArchiveFactory.toUrl(file);
         return url != null ? ClassPathSupport.createResource(url) : null;
     }
 
-    private static PathResourceImplementation toPathResource(File file, ExcludeIncludeRules includeRules) {
-        return ExcludeAwarePathResource.tryCreate(file, includeRules);
+    private static PathResourceImplementation toPathResource(
+            File file,
+            ExcludeIncludeRules includeRules,
+            UrlFactory urlForArchiveFactory) {
+        return ExcludeAwarePathResource.tryCreate(file, includeRules, urlForArchiveFactory);
     }
 
     private static List<PathResourceImplementation> getPathResources(
@@ -334,15 +339,23 @@ public final class ProjectClassPathResourceBuilder {
         return getPathResources(files, invalid, ExcludeIncludeRules.ALLOW_ALL);
     }
 
+    private static <T> Set<T> asSet(Collection<T> input) {
+        return input instanceof Set
+                ? (Set<T>)input
+                : new LinkedHashSet<>(input);
+    }
+
     public static List<PathResourceImplementation> getPathResources(
             Collection<File> files,
             Set<File> invalid,
             ExcludeIncludeRules includeRules) {
+
+        UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
-        for (File file: new LinkedHashSet<>(files)) {
+        for (File file: asSet(files)) {
             PathResourceImplementation pathResource = includeRules.isAllowAll()
-                    ? toPathResource(file)
-                    : toPathResource(file, includeRules);
+                    ? toPathResource(file, urlFactory)
+                    : toPathResource(file, includeRules, urlFactory);
             // Ignore invalid classpath entries
             if (pathResource != null) {
                 result.add(pathResource);
