@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.query;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -10,7 +11,13 @@ import static org.junit.Assert.*;
 
 public final class TestSourceQueryUtils {
     public static void expectSameArchive(String name, File expected, FileObject actual) {
-        URI expectedUri = FileUtil.getArchiveRoot(FileUtil.toFileObject(expected)).toURI();
+        URI expectedUri;
+        try {
+            expectedUri = FileUtil.urlForArchiveOrDir(expected).toURI();
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException(ex);
+        }
+
         URI actualUri = actual.toURI();
         assertEquals(name, expectedUri, actualUri);
     }
