@@ -1,16 +1,21 @@
 package org.netbeans.gradle.project.util;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.model.util.ConstructableWeakRef;
+import org.netbeans.gradle.model.util.NbSupplier5;
 import org.openide.filesystems.FileUtil;
 
 public final class UrlFactory {
-    private static final AtomicReference<WeakReference<UrlFactory>> DEFAULT_REF_REF = new AtomicReference<>();
+    private static final NbSupplier5<UrlFactory> DEFAULT_REF = new ConstructableWeakRef<>(new NbSupplier5<UrlFactory>() {
+        @Override
+        public UrlFactory get() {
+            return new UrlFactory();
+        }
+    });
 
     private final NbFunction<? super File, ? extends URL> urlCreator;
     private final ConcurrentMap<File, URL> cache;
@@ -36,22 +41,7 @@ public final class UrlFactory {
     }
 
     public static UrlFactory getDefaultArchiveOrDirFactory() {
-        while (true) {
-            WeakReference<UrlFactory> defaultRef = DEFAULT_REF_REF.get();
-            UrlFactory defaultFactory = defaultRef != null ? defaultRef.get() : null;
-
-            if (defaultFactory == null) {
-                defaultFactory = createDefault();
-                if (!DEFAULT_REF_REF.compareAndSet(defaultRef, new WeakReference<>(defaultFactory))) {
-                    continue;
-                }
-            }
-            return defaultFactory;
-        }
-    }
-
-    private static UrlFactory createDefault() {
-        return new UrlFactory();
+        return DEFAULT_REF.get();
     }
 
     public URL toUrl(File entry) {
