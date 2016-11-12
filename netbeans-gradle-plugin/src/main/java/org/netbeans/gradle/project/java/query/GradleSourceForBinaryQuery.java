@@ -174,10 +174,4 @@ implements
             changes.removeChangeListener(l);
         }
     }
-
-    private enum BinaryType {
-        NORMAL,
-        TEST,
-        UNKNOWN
-    }
 }
