@@ -359,7 +359,7 @@ implements
         Map<File, JavaProjectDependencyDef> translatedDependencies = projectDependencies
                 .translatedDependencies()
                 .getValue();
-        // TODO: Request project load for all candidates
+
         ProjectClassPathResourceBuilder builder = new ProjectClassPathResourceBuilder(
                 projectModel, translatedDependencies, getCurrentPlatform());
         builder.build();
