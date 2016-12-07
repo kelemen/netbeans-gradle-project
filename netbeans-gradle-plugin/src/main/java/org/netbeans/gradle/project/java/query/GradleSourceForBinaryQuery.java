@@ -65,6 +65,17 @@ implements
     }
 
     private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
+        List<JavaSourceSet> jarSources = module.getSourceSetsForOutput(binaryRoot);
+        if (!jarSources.isEmpty()) {
+            List<File> result = new ArrayList<>();
+            for (JavaSourceSet sourceSet: module.getSources()) {
+                for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
+                    result.addAll(sourceGroup.getSourceRoots());
+                }
+            }
+            return result;
+        }
+
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
             if (Objects.equals(outputDirs.getClassesDir(), binaryRoot)) {
@@ -108,6 +119,12 @@ implements
     @Override
     protected File normalizeBinaryPath(File binaryRoot) {
         NbJavaModule mainModule = moduleProvider.get();
+
+        // Is Jar output?
+        if (!mainModule.getSourceSetsForOutput(binaryRoot).isEmpty()) {
+            return binaryRoot;
+        }
+
         for (JavaSourceSet sourceSet: mainModule.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
             File classesDir = outputDirs.getClassesDir();
