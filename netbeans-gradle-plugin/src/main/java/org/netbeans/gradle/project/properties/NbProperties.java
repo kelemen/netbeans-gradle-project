@@ -12,6 +12,7 @@ import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.SimpleListenerRegistry;
+import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
@@ -160,6 +161,10 @@ public final class NbProperties {
         });
     }
 
+    public static <T> PropertySource<T> cacheFirstNonNull(final PropertySource<? extends T> src) {
+        return new CacheFirstNonNullProperty<>(src);
+    }
+
     public static <T> PropertySource<T> lookupProperty(Lookup lookup, Class<? extends T> type) {
         ExceptionHelper.checkNotNullArgument(lookup, "lookup");
         ExceptionHelper.checkNotNullArgument(type, "type");
@@ -177,6 +182,50 @@ public final class NbProperties {
                 };
             }
         });
+    }
+
+    private static final class CacheFirstNonNullProperty<T> implements PropertySource<T> {
+        private final PropertySource<? extends T> src;
+        private final AtomicReference<T> cache;
+
+        public CacheFirstNonNullProperty(PropertySource<? extends T> src) {
+            ExceptionHelper.checkNotNullArgument(src, "src");
+            this.src = src;
+            this.cache = new AtomicReference<>(null);
+        }
+
+        @Override
+        public T getValue() {
+            T result = cache.get();
+            if (result == null) {
+                result = src.getValue();
+                if (!cache.compareAndSet(null, result)) {
+                    result = cache.get();
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public ListenerRef addChangeListener(final Runnable listener) {
+            ExceptionHelper.checkNotNullArgument(listener, "listener");
+
+            if (cache.get() != null) {
+                return UnregisteredListenerRef.INSTANCE;
+            }
+
+            return src.addChangeListener(new Runnable() {
+                private volatile boolean stopNotifying = false;
+
+                @Override
+                public void run() {
+                    if (!stopNotifying) {
+                        stopNotifying = cache.get() != null;
+                        listener.run();
+                    }
+                }
+            });
+        }
     }
 
     private static final class LookupResultProperty<T> implements SwingPropertySource<T, LookupListener> {
