@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -362,22 +361,6 @@ public final class ProjectClassPathResourceBuilder {
         return result;
     }
 
-    private static ProjectArtifactId tryExtractArtifactIdFromName(String fileName) {
-        int versionSepIndex = fileName.indexOf('-');
-        if (versionSepIndex < 0) {
-            return null;
-        }
-
-        final String expectedExtension = ".jar";
-        if (!fileName.toLowerCase(Locale.ROOT).endsWith(expectedExtension)) {
-            return null;
-        }
-
-        String artifactName = fileName.substring(0, versionSepIndex);
-        String version = fileName.substring(versionSepIndex + 1, fileName.length() - expectedExtension.length());
-        return new ProjectArtifactId(artifactName, version);
-    }
-
     private static void throwUnbuilt() {
         throw new IllegalStateException("Call build() first before calling this method.");
     }
@@ -443,35 +426,6 @@ public final class ProjectClassPathResourceBuilder {
 
             return this.sourceSetName.equals(other.sourceSetName)
                     && this.classPathType == other.classPathType;
-        }
-    }
-
-    private static final class ProjectArtifactId {
-        private final String expectedName;
-
-        public ProjectArtifactId(String name, String version) {
-            this(name + "-" + version + ".jar");
-        }
-
-        public ProjectArtifactId(String expectedName) {
-            this.expectedName = expectedName.toLowerCase(Locale.ROOT);
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 5;
-            hash = 29 * hash + Objects.hashCode(expectedName);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-
-            final ProjectArtifactId other = (ProjectArtifactId)obj;
-            return Objects.equals(this.expectedName, other.expectedName);
         }
     }
 }
