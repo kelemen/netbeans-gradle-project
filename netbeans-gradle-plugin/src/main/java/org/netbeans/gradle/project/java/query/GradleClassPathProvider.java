@@ -15,6 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
+import org.jtrim.concurrent.GenericUpdateTaskExecutor;
+import org.jtrim.concurrent.TaskExecutor;
+import org.jtrim.concurrent.TaskExecutors;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
@@ -34,9 +37,10 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
-import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathKey;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.ClassPathType;
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SourceSetClassPathType;
@@ -91,7 +95,9 @@ implements
         this.classpaths = new ConcurrentHashMap<>();
         this.allSources = Collections.emptyList();
         this.allSourcesClassPathRef = new AtomicReference<>(null);
-        this.classpathUpdateExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
+
+        TaskExecutor pathUpdater = TaskExecutors.inOrderSimpleExecutor(NbTaskExecutors.DEFAULT_EXECUTOR);
+        this.classpathUpdateExecutor = new GenericUpdateTaskExecutor(pathUpdater);
         this.propertyListenerRefs = new ListenerRegistrations();
 
         EventSource eventSource = new EventSource();
@@ -194,10 +200,20 @@ implements
             }
         }));
 
-        PropertyReference<Boolean> detectProjectDependenciesByJarNameRef = CommonGlobalSettings.getDefault().detectProjectDependenciesByJarName();
+        PropertyReference<Boolean> detectProjectDependenciesByJarNameRef = CommonGlobalSettings.getDefault()
+                .detectProjectDependenciesByJarName();
         PropertySource<Boolean> detectProjectDependenciesByJarName
                 = NbProperties.weakListenerProperty(PropertyFactory.lazilyNotifiedProperty(detectProjectDependenciesByJarNameRef.getForActiveProfile()));
         propertyListenerRefs.add(detectProjectDependenciesByJarName.addChangeListener(new Runnable() {
+            @Override
+            public void run() {
+                scheduleReloadPathResources();
+            }
+        }));
+
+        PropertySource<Map<File, ProjectDependencyCandidate>> translatedDependencies
+                = NbProperties.weakListenerProperty(javaExt.getProjectDependencies().translatedDependencies());
+        propertyListenerRefs.add(translatedDependencies.addChangeListener(new Runnable() {
             @Override
             public void run() {
                 scheduleReloadPathResources();
@@ -303,16 +319,17 @@ implements
         }
     }
 
-    private void updateAllSources() {
+    private void updateAllSources(Map<File, ProjectDependencyCandidate> translatedDependencies) {
         NbJavaModel currentModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = currentModel.getMainModule();
 
         List<PathResourceImplementation> sources = new LinkedList<>();
         addSourcesOfModule(mainModule, sources);
 
-        for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
-            NbJavaModule module = projectRef.tryGetModule();
-            if (module != null) {
+        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
+            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
+            if (dependency != null) {
+                NbJavaModule module = dependency.getJavaModule();
                 addSourcesOfModule(module, sources);
             }
         }
@@ -328,10 +345,12 @@ implements
     }
 
     private void loadPathResources(NbJavaModel projectModel) {
-        // TODO: This method must be called whenever any of the dependent projects
-        //   is reloaded.
-
-        ProjectClassPathResourceBuilder builder = new ProjectClassPathResourceBuilder(projectModel, getCurrentPlatform());
+        Map<File, ProjectDependencyCandidate> translatedDependencies = javaExt
+                .getProjectDependencies()
+                .translatedDependencies()
+                .getValue();
+        ProjectClassPathResourceBuilder builder = new ProjectClassPathResourceBuilder(
+                projectModel, translatedDependencies, getCurrentPlatform());
         builder.build();
 
         Map<ClassPathKey, List<PathResourceImplementation>> newClasspathResources = builder.getClasspathResources();
@@ -354,7 +373,7 @@ implements
             getInfoRef().setInfo(new ProjectIssue(infos));
         }
 
-        updateAllSources();
+        updateAllSources(translatedDependencies);
 
         boolean changed = !prevClasspathResources.equals(newClasspathResources);
         if (changed) {
@@ -415,9 +434,14 @@ implements
         return classpaths.get(classPathKey);
     }
 
-    private abstract class AbstractGradleClassPaths implements ClassPathImplementation {
+    private class AllSourcesClassPaths implements ClassPathImplementation {
         @Override
-        public final void addPropertyChangeListener(PropertyChangeListener listener) {
+        public List<PathResourceImplementation> getResources() {
+            return allSources;
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
             changes.addPropertyChangeListener(listener);
         }
 
@@ -427,14 +451,7 @@ implements
         }
     }
 
-    private class AllSourcesClassPaths extends AbstractGradleClassPaths {
-        @Override
-        public List<PathResourceImplementation> getResources() {
-            return allSources;
-        }
-    }
-
-    private class GradleClassPaths extends AbstractGradleClassPaths {
+    private class GradleClassPaths implements ClassPathImplementation {
         private final ClassPathKey classPathKey;
 
         public GradleClassPaths(ClassPathKey classPathKey) {
@@ -448,6 +465,16 @@ implements
             return result != null
                     ? result
                     : Collections.<PathResourceImplementation>emptyList();
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            changes.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            changes.removePropertyChangeListener(listener);
         }
     }
 

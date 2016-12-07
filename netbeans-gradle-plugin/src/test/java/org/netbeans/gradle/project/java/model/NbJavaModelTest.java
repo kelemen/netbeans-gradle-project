@@ -56,8 +56,7 @@ public class NbJavaModelTest {
         NbJavaModel source = NbJavaModel.createModel(
                 GradleVersions.DEFAULT_TARGET,
                 JavaModelSource.GRADLE_1_8_API,
-                mainModule,
-                Collections.<File, JavaProjectDependency>emptyMap());
+                mainModule);
 
 
         byte[] serialized = SerializationUtils.serializeObject(source);

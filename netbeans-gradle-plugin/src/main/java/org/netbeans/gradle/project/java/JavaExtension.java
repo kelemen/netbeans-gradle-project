@@ -37,6 +37,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.coverage.GradleCoverageProvider;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
@@ -81,6 +82,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private final GradleClassPathProvider cpProvider;
     private final AtomicReference<JavaSourceDirHandler> sourceDirsHandlerRef;
     private final ProjectIssueRef dependencyResolutionFailureRef;
+    private final JavaProjectDependencies projectDependencies;
 
     private final AtomicReference<Lookup> projectLookupRef;
     private final AtomicReference<Lookup> permanentLookupRef;
@@ -102,6 +104,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.project = project;
         this.currentModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
         this.cpProvider = new GradleClassPathProvider(this);
+        this.projectDependencies = new JavaProjectDependencies(this);
         this.projectLookupRef = new AtomicReference<>(null);
         this.permanentLookupRef = new AtomicReference<>(null);
         this.extensionLookupRef = new AtomicReference<>(null);
@@ -201,6 +204,10 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
 
         return project.getProjectDirectory().equals(owner.getProjectDirectory());
+    }
+
+    public JavaProjectDependencies getProjectDependencies() {
+        return projectDependencies;
     }
 
     public NbJavaModel getCurrentModel() {
@@ -314,6 +321,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         for (JavaModelChangeListener listener: getCombinedLookup().lookupAll(JavaModelChangeListener.class)) {
             listener.onModelChange();
         }
+        projectDependencies.updateDependencies();
         modelChangeListeners.fireEventually();
     }
 

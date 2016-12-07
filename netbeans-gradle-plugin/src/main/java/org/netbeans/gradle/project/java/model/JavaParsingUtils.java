@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -272,19 +271,6 @@ public final class JavaParsingUtils {
     private static NbCodeCoverage getCodeCoverage(Lookup projectInfo) {
         JacocoModel jacocoModel = projectInfo.lookup(JacocoModel.class);
         return new NbCodeCoverage(jacocoModel);
-    }
-
-    public static Map<File, JavaProjectDependency> asDependencies(Collection<NbJavaModule> modules) {
-        Map<File, JavaProjectDependency> result = new HashMap<>(3 * modules.size());
-        for (NbJavaModule module: modules) {
-            JavaProjectReference projectRef = new JavaProjectReference(module.getModuleDir(), module);
-
-            for (JavaSourceSet sourceSet: module.getSources()) {
-                JavaProjectDependency depedency = new JavaProjectDependency(sourceSet.getName(), projectRef);
-                result.put(sourceSet.getOutputDirs().getClassesDir(), depedency);
-            }
-        }
-        return result;
     }
 
     private JavaParsingUtils() {

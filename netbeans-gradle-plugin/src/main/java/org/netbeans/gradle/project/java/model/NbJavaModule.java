@@ -7,12 +7,15 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jtrim.collections.CollectionsEx;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaCompatibilityModel;
@@ -42,6 +45,7 @@ public final class NbJavaModule implements Serializable {
     private final AtomicReference<Map<String, JavaSourceSet>> nameToSourceSetRef;
     private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
     private final AtomicReference<Set<File>> allBuildOutputRefs;
+    private final AtomicReference<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
 
     public NbJavaModule(
             GenericProjectProperties properties,
@@ -76,6 +80,7 @@ public final class NbJavaModule implements Serializable {
         this.nameToSourceSetRef = new AtomicReference<>(null);
         this.testNameToModelRef = new AtomicReference<>(null);
         this.allBuildOutputRefs = new AtomicReference<>(null);
+        this.outputsToSourceSets = new AtomicReference<>(null);
     }
 
     public GenericProjectProperties getProperties() {
@@ -116,6 +121,42 @@ public final class NbJavaModule implements Serializable {
 
     public List<NbJarOutput> getJarOutputs() {
         return jarOutputs;
+    }
+
+    private Map<File, List<JavaSourceSet>> createOutputsToSourceSets() {
+        Map<File, List<JavaSourceSet>> result = new HashMap<>();
+
+        for (JavaSourceSet sourceSet: sources) {
+            JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
+            result.put(outputDirs.getClassesDir(), Collections.singletonList(sourceSet));
+        }
+
+        for (NbJarOutput jar: jarOutputs) {
+            Set<File> classDirs = jar.getClassDirs();
+            Set<JavaSourceSet> sourceSets = new LinkedHashSet<>(2 * classDirs.size());
+            for (File classDir: classDirs) {
+                List<JavaSourceSet> classDirSourceSets = result.get(classDir);
+                if (classDirSourceSets != null) {
+                    sourceSets.addAll(classDirSourceSets);
+                }
+            }
+            result.put(jar.getJar(), CollectionsEx.readOnlyCopy(sourceSets));
+        }
+        return result;
+    }
+
+    private Map<File, List<JavaSourceSet>> getOutputsToProjectDeps() {
+        Map<File, List<JavaSourceSet>> result = outputsToSourceSets.get();
+        if (result == null) {
+            result = createOutputsToSourceSets();
+            outputsToSourceSets.set(result);
+        }
+        return result;
+    }
+
+    public List<JavaSourceSet> getSourceSetsForOutput(File outputPath) {
+        List<JavaSourceSet> result = getOutputsToProjectDeps().get(outputPath);
+        return result != null ? result : Collections.<JavaSourceSet>emptyList();
     }
 
     private JavaSourceSet emptySourceSet(String name) {
@@ -283,6 +324,9 @@ public final class NbJavaModule implements Serializable {
         Set<File> result = CollectionUtils.newHashSet(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             result.add(sourceSet.getOutputDirs().getClassesDir());
+        }
+        for (NbJarOutput jar: jarOutputs) {
+            result.add(jar.getJar());
         }
         return Collections.unmodifiableSet(result);
     }

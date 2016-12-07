@@ -37,8 +37,6 @@ import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
-import org.netbeans.gradle.project.java.model.JavaProjectDependency;
-import org.netbeans.gradle.project.java.model.JavaProjectReference;
 import org.netbeans.gradle.project.java.model.NbCodeCoverage;
 import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
@@ -97,15 +95,8 @@ public final class IdeaJavaModelUtils {
         return null;
     }
 
-    private static NbJavaModel createUnreliableModel(
-            GradleTarget evaluationEnvironment,
-            NbJavaModule mainModule,
-            Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
-        return NbJavaModel.createModel(
-                evaluationEnvironment,
-                JavaModelSource.COMPATIBLE_API,
-                mainModule,
-                possibleDependencies);
+    private static NbJavaModel createUnreliableModel(GradleTarget evaluationEnvironment, NbJavaModule mainModule) {
+        return NbJavaModel.createModel(evaluationEnvironment, JavaModelSource.COMPATIBLE_API, mainModule);
     }
 
     public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
@@ -125,10 +116,7 @@ public final class IdeaJavaModelUtils {
                 NbCodeCoverage.NO_CODE_COVERAGE
         );
 
-        return createUnreliableModel(
-                GradleVersions.DEFAULT_TARGET,
-                result,
-                Collections.<File, JavaProjectDependency>emptyMap());
+        return createUnreliableModel(GradleVersions.DEFAULT_TARGET, result);
     }
 
     private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {
@@ -388,22 +376,6 @@ public final class IdeaJavaModelUtils {
             throw new IOException("Unable to parse the main project from the model.");
         }
 
-        Map<File, JavaProjectReference> asDependency = CollectionUtils.newHashMap(modulesCount);
-        Map<File, JavaProjectDependency> outputDirToProject = CollectionUtils.newHashMap(modulesCount);
-
-        for (NbJavaModule module: parsedModules.values()) {
-            File moduleDir = module.getModuleDir();
-            JavaProjectReference projectRef = new JavaProjectReference(moduleDir, module);
-            asDependency.put(moduleDir, projectRef);
-
-            for (JavaSourceSet sourceSet: module.getSources()) {
-                File classesDir = sourceSet.getOutputDirs().getClassesDir();
-                String sourceSetName = sourceSet.getName();
-
-                outputDirToProject.put(classesDir, new JavaProjectDependency(sourceSetName, projectRef));
-            }
-        }
-
         Map<File, NbJavaModel> result = CollectionUtils.newHashMap(modulesCount);
         for (NbJavaModule module: parsedModules.values()) {
             if (module.getSources().isEmpty()) {
@@ -412,7 +384,7 @@ public final class IdeaJavaModelUtils {
                         module.getProperties().getProjectDir());
             }
             else {
-                NbJavaModel model = createUnreliableModel(evaluationEnvironment, module, outputDirToProject);
+                NbJavaModel model = createUnreliableModel(evaluationEnvironment, module);
                 result.put(module.getModuleDir(), model);
             }
         }

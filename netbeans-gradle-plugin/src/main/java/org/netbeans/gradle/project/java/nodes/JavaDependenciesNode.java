@@ -32,8 +32,8 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.model.JavaProjectDependency;
-import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.tasks.DaemonTaskDef;
@@ -172,6 +172,11 @@ public final class JavaDependenciesNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
+            // FIXME: We have to refresh this node in case a project dependency might appear.
+            //   That is, every time a project of JavaProjectDependencyDef gets its model refreshed.
+            //   However, we have to be careful not to refresh needlessly as it would be very annoying to the user.
+            //   One way to do this is to calculate all the nodes in the background and then check if it is the
+            //   same as the one currently being displayed.
             lastModule.set(javaExt.getCurrentModel().getMainModule());
             listenerRefs.add(javaExt.addModelChangeListener(new Runnable() {
                 @Override
@@ -198,30 +203,32 @@ public final class JavaDependenciesNode extends AbstractNode {
             toPopulate.add(new DependencyGroupNodeFactory(groupName, dependencies));
         }
 
-        private static List<SingleNodeFactory> filesToNodes(NbJavaModel currentModel, Collection<File> files) {
+        private List<SingleNodeFactory> filesToNodes(Collection<File> files) {
             List<SingleNodeFactory> result = new ArrayList<>(files.size());
 
-            Map<JavaProjectReference, List<JavaProjectDependency>> allProjectDependencies = new HashMap<>();
+            Map<FileObject, List<JavaProjectDependencyDef>> allProjectDependencies = new HashMap<>();
+
+            JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
 
             for (File file: files) {
-                JavaProjectDependency projectDep = currentModel.tryGetDepedency(file);
+                JavaProjectDependencyDef projectDep = projectDependencies.tryGetDependency(file);
                 if (projectDep == null) {
                     result.add(new FileDependency(file));
                 }
                 else {
-                    JavaProjectReference projectRef = projectDep.getProjectReference();
-                    List<JavaProjectDependency> dependencySourceSets = allProjectDependencies.get(projectRef);
+                    FileObject projectDir = projectDep.getProject().getProjectDirectory();
+                    List<JavaProjectDependencyDef> dependencySourceSets = allProjectDependencies.get(projectDir);
                     if (dependencySourceSets == null) {
                         dependencySourceSets = new ArrayList<>();
-                        allProjectDependencies.put(projectRef, dependencySourceSets);
+                        allProjectDependencies.put(projectDir, dependencySourceSets);
                     }
                     dependencySourceSets.add(projectDep);
                 }
             }
 
-            for (List<JavaProjectDependency> dependencySourceSets: allProjectDependencies.values()) {
+            for (List<JavaProjectDependencyDef> dependencySourceSets: allProjectDependencies.values()) {
                 boolean showSourceSetName = dependencySourceSets.size() > 1;
-                for (JavaProjectDependency projectDependency: dependencySourceSets) {
+                for (JavaProjectDependencyDef projectDependency: dependencySourceSets) {
                     result.add(new ProjectDependencyFactory(projectDependency, showSourceSetName));
                 }
             }
@@ -278,20 +285,12 @@ public final class JavaDependenciesNode extends AbstractNode {
         }
 
         private static int compareProjectDependencyNodes(ProjectDependencyFactory node1, ProjectDependencyFactory node2) {
-            NbJavaModule module1 = node1.projectDep.tryGetModule();
-            NbJavaModule module2 = node2.projectDep.tryGetModule();
+            NbJavaModule module1 = node1.projectDep.getJavaModule();
+            NbJavaModule module2 = node2.projectDep.getJavaModule();
 
             if (module1 == module2) {
                 return 0;
             }
-
-            if (module1 == null) {
-                return 1;
-            }
-            if (module2 == null) {
-                return -1;
-            }
-
             return StringUtils.STR_CMP.compare(module1.getShortName(), module2.getShortName());
         }
 
@@ -358,7 +357,7 @@ public final class JavaDependenciesNode extends AbstractNode {
                 }
             }
 
-            List<SingleNodeFactory> dependencyNodes = filesToNodes(currentModel, classpaths);
+            List<SingleNodeFactory> dependencyNodes = filesToNodes(classpaths);
             dependencyNodes = sortDependencyNodes(dependencyNodes);
 
             addDependencyGroup(nodeGroupName, dependencyNodes, toPopulate);
@@ -624,25 +623,29 @@ public final class JavaDependenciesNode extends AbstractNode {
     }
 
     private static final class ProjectDependencyFactory implements SingleNodeFactory {
-        private final JavaProjectDependency projectDep;
+        private final JavaProjectDependencyDef projectDep;
         private final boolean showSourceSet;
 
-        public ProjectDependencyFactory(JavaProjectDependency projectDep, boolean showSourceSet) {
+        public ProjectDependencyFactory(JavaProjectDependencyDef projectDep, boolean showSourceSet) {
             this.projectDep = projectDep;
             this.showSourceSet = showSourceSet;
         }
 
         private DataObject getProjectDirObj() {
-            Project project = projectDep.getProjectReference().tryGetProject();
-            if (project == null) {
-                return null;
-            }
+            Project project = projectDep.getProject();
             try {
                 return DataObject.find(project.getProjectDirectory());
             } catch (DataObjectNotFoundException ex) {
                 LOGGER.log(Level.INFO, "Failed to find node for project directory: " + project.getProjectDirectory(), ex);
                 return null;
             }
+        }
+
+        public String tryGetModuleName() {
+            JavaExtension javaExt = projectDep.getProject().getLookup().lookup(JavaExtension.class);
+            return javaExt != null
+                    ? javaExt.getCurrentModel().getMainModule().getShortName()
+                    : null;
         }
 
         @Override
@@ -667,12 +670,12 @@ public final class JavaDependenciesNode extends AbstractNode {
 
                 @Override
                 public String getDisplayName() {
-                    NbJavaModule module = projectDep.tryGetModule();
-                    String projectName = module != null
-                            ? module.getShortName()
+                    String moduleName = tryGetModuleName();
+                    String projectName = moduleName != null
+                            ? moduleName
                             : super.getDisplayName();
                     return showSourceSet
-                            ? projectName + " [" + projectDep.getSourceSetName() + "]"
+                            ? projectName + " [" + projectDep.getDisplaySourceSetNames()+ "]"
                             : projectName;
                 }
             };

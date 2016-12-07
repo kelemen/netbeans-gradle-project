@@ -27,9 +27,11 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -97,9 +99,11 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         addSourcesOfModule(mainModule, srcRoots);
         getBinaryRuntimeDependencies(mainModule, runtimeDependencies);
 
-        for (JavaProjectReference projectRef: currentModel.getAllDependencies()) {
-            NbJavaModule module = projectRef.tryGetModule();
-            if (module != null) {
+        JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
+        for (ProjectDependencyCandidate candidate: projectDependencies.translatedDependencies().getValue().values()) {
+            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
+            if (dependency != null) {
+                NbJavaModule module = dependency.getJavaModule();
                 addSourcesOfModule(module, srcRoots);
                 getBinaryRuntimeDependencies(module, runtimeDependencies);
             }

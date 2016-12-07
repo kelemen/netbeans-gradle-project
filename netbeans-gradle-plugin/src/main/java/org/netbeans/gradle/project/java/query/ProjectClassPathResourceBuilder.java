@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.java.query;
 
 import java.io.File;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,10 +26,12 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.java.JavaExtension;
-import org.netbeans.gradle.project.java.model.JavaProjectReference;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
+import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.UrlFactory;
@@ -42,6 +43,7 @@ public final class ProjectClassPathResourceBuilder {
     private static final Logger LOGGER = Logger.getLogger(ProjectClassPathResourceBuilder.class.getName());
 
     private final NbJavaModel projectModel;
+    private final Map<File, ProjectDependencyCandidate> translatedDependencies;
     private final ProjectPlatform currentPlatform;
 
     private Set<File> missing;
@@ -52,11 +54,16 @@ public final class ProjectClassPathResourceBuilder {
 
     private final UrlFactory urlForArchiveFactory;
 
-    public ProjectClassPathResourceBuilder(NbJavaModel projectModel, ProjectPlatform currentPlatform) {
+    public ProjectClassPathResourceBuilder(
+            NbJavaModel projectModel,
+            Map<File, ProjectDependencyCandidate> translatedDependencies,
+            ProjectPlatform currentPlatform) {
         ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
+        ExceptionHelper.checkNotNullArgument(translatedDependencies, "translatedDependencies");
         ExceptionHelper.checkNotNullArgument(currentPlatform, "currentPlatform");
 
         this.projectModel = projectModel;
+        this.translatedDependencies = translatedDependencies;
         this.currentPlatform = currentPlatform;
         this.classpathResources = null;
         this.missing = null;
@@ -88,7 +95,7 @@ public final class ProjectClassPathResourceBuilder {
      */
     private static Collection<JavaExtension> getAllOpenedGradleJavaProjects() {
         Project[] openedProjects = OpenProjects.getDefault().getOpenProjects();
-        Map<Path, JavaExtension> result = new HashMap<>();
+        Map<File, JavaExtension> result = new HashMap<>();
 
         for (Project project: openedProjects) {
             Lookup lookup = project.getLookup();
@@ -96,15 +103,14 @@ public final class ProjectClassPathResourceBuilder {
             JavaExtension javaExt = lookup.lookup(JavaExtension.class);
 
             if (javaExt != null && gradleProject != null) {
-                result.put(gradleProject.getProjectDirectoryAsPath(), javaExt);
+                result.put(gradleProject.getProjectDirectoryAsFile(), javaExt);
 
-                for (JavaProjectReference projectRef: javaExt.getCurrentModel().getAllDependencies()) {
-                    Project dependency = projectRef.tryGetProject();
+                JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
+                for (ProjectDependencyCandidate candidate: projectDependencies.translatedDependencies().getValue().values()) {
+                    JavaProjectDependencyDef dependency = candidate.tryGetDependency();
                     if (dependency != null) {
-                        JavaExtension dependencyJavaExt = dependency.getLookup().lookup(JavaExtension.class);
-                        if (dependencyJavaExt != null) {
-                            result.put(dependencyJavaExt.getProjectDirectoryAsFile().toPath(), dependencyJavaExt);
-                        }
+                        JavaExtension dependencyJavaExt = dependency.getJavaExt();
+                        result.put(dependencyJavaExt.getProjectDirectoryAsFile(), dependencyJavaExt);
                     }
                 }
             }
@@ -270,11 +276,11 @@ public final class ProjectClassPathResourceBuilder {
                 getPathResources(classPaths, new HashSet<File>()));
     }
 
-    private static void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
-        for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
-            NbJavaModule module = dependency.tryGetModule();
-            if (module != null) {
-                for (JavaSourceSet sourceSet: module.getSources()) {
+    private void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
+        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
+            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
+            if (dependency != null) {
+                for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
                     classPaths.remove(sourceSet.getOutputDirs().getClassesDir());
                 }
             }
@@ -288,12 +294,15 @@ public final class ProjectClassPathResourceBuilder {
             classPaths.add(sourceSet.getOutputDirs().getClassesDir());
         }
 
-        for (JavaProjectReference dependency: projectModel.getAllDependencies()) {
-            dependency.ensureProjectLoaded();
+        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
+            NbGradleProject gradleProject = candidate.getProject().getLookup().lookup(NbGradleProject.class);
+            if (gradleProject != null) {
+                gradleProject.ensureLoadRequested();
+            }
 
-            NbJavaModule module = dependency.tryGetModule();
-            if (module != null) {
-                for (JavaSourceSet sourceSet: module.getSources()) {
+            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
+            if (dependency != null) {
+                for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
                     classPaths.add(sourceSet.getOutputDirs().getClassesDir());
                 }
             }

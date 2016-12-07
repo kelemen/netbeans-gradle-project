@@ -20,7 +20,6 @@ import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery2;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.java.model.JavaModelSource;
 import org.netbeans.gradle.project.java.model.JavaParsingUtils;
-import org.netbeans.gradle.project.java.model.JavaProjectDependency;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
@@ -60,25 +59,20 @@ public final class JavaExtensionDef implements GradleProjectExtensionDef<NbJavaM
         return NbJavaModel.class;
     }
 
-    private static NbJavaModel createReliableModel(
-            GradleTarget evaluationEnvironment,
-            NbJavaModule mainModule,
-            Map<? extends File, ? extends JavaProjectDependency> possibleDependencies) {
+    private static NbJavaModel createReliableModel(GradleTarget evaluationEnvironment, NbJavaModule mainModule) {
         return NbJavaModel.createModel(
                 evaluationEnvironment,
                 JavaModelSource.GRADLE_1_8_API,
-                mainModule,
-                possibleDependencies);
+                mainModule);
     }
 
     private Map<File, NbJavaModel> parseFromNewModels(ModelLoadResult retrievedModels) {
         GradleTarget evaluationEnvironment = retrievedModels.getEvaluationEnvironment();
         Collection<NbJavaModule> modules = JavaParsingUtils.parseModules(retrievedModels);
-        Map<File, JavaProjectDependency> moduleDependencies = JavaParsingUtils.asDependencies(modules);
 
         Map<File, NbJavaModel> result = CollectionUtils.newHashMap(modules.size());
         for (NbJavaModule module: modules) {
-            NbJavaModel model = createReliableModel(evaluationEnvironment, module, moduleDependencies);
+            NbJavaModel model = createReliableModel(evaluationEnvironment, module);
             result.put(module.getModuleDir(), model);
         }
 
