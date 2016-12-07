@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.properties;
 
 import java.lang.ref.WeakReference;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
@@ -14,12 +15,16 @@ import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
+import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
 
 public final class NbProperties {
     public static <Value> PropertySource<Value> weakListenerProperty(PropertySource<? extends Value> src) {
@@ -153,6 +158,50 @@ public final class NbProperties {
                 eventListener.stateChanged(event);
             }
         });
+    }
+
+    public static <T> PropertySource<T> lookupProperty(Lookup lookup, Class<? extends T> type) {
+        ExceptionHelper.checkNotNullArgument(lookup, "lookup");
+        ExceptionHelper.checkNotNullArgument(type, "type");
+
+        Lookup.Result<? extends T> lookupResult = lookup.lookupResult(type);
+        LookupResultProperty<T> oldProperty = new LookupResultProperty<>(lookupResult);
+        return SwingProperties.fromSwingSource(oldProperty, new SwingForwarderFactory<LookupListener>() {
+            @Override
+            public LookupListener createForwarder(final Runnable listener) {
+                return new LookupListener() {
+                    @Override
+                    public void resultChanged(LookupEvent ev) {
+                        listener.run();
+                    }
+                };
+            }
+        });
+    }
+
+    private static final class LookupResultProperty<T> implements SwingPropertySource<T, LookupListener> {
+        private final Lookup.Result<? extends T> lookupResult;
+
+        public LookupResultProperty(Lookup.Result<? extends T> lookupResult) {
+            ExceptionHelper.checkNotNullArgument(lookupResult, "lookupResult");
+            this.lookupResult = lookupResult;
+        }
+
+        @Override
+        public T getValue() {
+            Iterator<? extends T> resultItr = lookupResult.allInstances().iterator();
+            return resultItr.hasNext() ? resultItr.next() : null;
+        }
+
+        @Override
+        public void addChangeListener(LookupListener listener) {
+            lookupResult.addLookupListener(listener);
+        }
+
+        @Override
+        public void removeChangeListener(LookupListener listener) {
+            lookupResult.removeLookupListener(listener);
+        }
     }
 
     private static class ReferenceHolderListenerRef implements ListenerRef {
