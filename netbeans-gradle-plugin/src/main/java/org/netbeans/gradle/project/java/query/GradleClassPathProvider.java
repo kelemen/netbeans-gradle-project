@@ -14,13 +14,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.TaskExecutors;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
@@ -83,6 +83,7 @@ implements
     private volatile boolean loadedOnce;
 
     private final UpdateTaskExecutor classpathUpdateExecutor;
+    private final UpdateTaskExecutor changesNotifier;
 
     private final ListenerRegistrations propertyListenerRefs;
 
@@ -101,6 +102,7 @@ implements
 
         TaskExecutor pathUpdater = TaskExecutors.inOrderSimpleExecutor(NbTaskExecutors.DEFAULT_EXECUTOR);
         this.classpathUpdateExecutor = new GenericUpdateTaskExecutor(pathUpdater);
+        this.changesNotifier = new SwingUpdateTaskExecutor(true);
         this.propertyListenerRefs = new ListenerRegistrations();
 
         EventSource eventSource = new EventSource();
@@ -388,7 +390,7 @@ implements
 
         boolean changed = !prevClasspathResources.equals(newClasspathResources);
         if (changed) {
-            SwingUtilities.invokeLater(new Runnable() {
+            changesNotifier.execute(new Runnable() {
                 @Override
                 public void run() {
                     changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
