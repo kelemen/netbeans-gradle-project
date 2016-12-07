@@ -27,6 +27,7 @@ import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.JavaSourceSet;
+import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.ProjectInitListener;
 import org.netbeans.gradle.project.ProjectIssue;
@@ -37,6 +38,7 @@ import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.api.property.GradleProperty;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.JavaModelChangeListener;
+import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
 import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
@@ -50,6 +52,7 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
+import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
@@ -211,7 +214,7 @@ implements
             }
         }));
 
-        PropertySource<Map<File, ProjectDependencyCandidate>> translatedDependencies
+        PropertySource<?> translatedDependencies
                 = NbProperties.weakListenerProperty(javaExt.getProjectDependencies().translatedDependencies());
         propertyListenerRefs.add(translatedDependencies.addChangeListener(new Runnable() {
             @Override
@@ -319,19 +322,16 @@ implements
         }
     }
 
-    private void updateAllSources(Map<File, ProjectDependencyCandidate> translatedDependencies) {
+    private void updateAllSources(Map<File, JavaProjectDependencyDef> translatedDependencies) {
         NbJavaModel currentModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = currentModel.getMainModule();
 
         List<PathResourceImplementation> sources = new LinkedList<>();
         addSourcesOfModule(mainModule, sources);
 
-        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
-            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
-            if (dependency != null) {
-                NbJavaModule module = dependency.getJavaModule();
-                addSourcesOfModule(module, sources);
-            }
+        for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
+            NbJavaModule module = dependency.getJavaModule();
+            addSourcesOfModule(module, sources);
         }
 
         allSources = Collections.unmodifiableList(new ArrayList<>(sources));
@@ -345,10 +345,21 @@ implements
     }
 
     private void loadPathResources(NbJavaModel projectModel) {
-        Map<File, ProjectDependencyCandidate> translatedDependencies = javaExt
-                .getProjectDependencies()
+        JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
+        projectDependencies.forAllCandidates(new NbConsumer<ProjectDependencyCandidate>() {
+            @Override
+            public void accept(ProjectDependencyCandidate candidate) {
+                NbGradleProject gradleProject = candidate.getProject().getLookup().lookup(NbGradleProject.class);
+                if (gradleProject != null) {
+                    gradleProject.ensureLoadRequested();
+                }
+            }
+        });
+
+        Map<File, JavaProjectDependencyDef> translatedDependencies = projectDependencies
                 .translatedDependencies()
                 .getValue();
+        // TODO: Request project load for all candidates
         ProjectClassPathResourceBuilder builder = new ProjectClassPathResourceBuilder(
                 projectModel, translatedDependencies, getCurrentPlatform());
         builder.build();

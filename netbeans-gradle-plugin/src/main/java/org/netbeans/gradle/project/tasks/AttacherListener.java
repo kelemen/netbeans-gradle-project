@@ -31,7 +31,6 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
 import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -100,13 +99,10 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         getBinaryRuntimeDependencies(mainModule, runtimeDependencies);
 
         JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
-        for (ProjectDependencyCandidate candidate: projectDependencies.translatedDependencies().getValue().values()) {
-            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
-            if (dependency != null) {
-                NbJavaModule module = dependency.getJavaModule();
-                addSourcesOfModule(module, srcRoots);
-                getBinaryRuntimeDependencies(module, runtimeDependencies);
-            }
+        for (JavaProjectDependencyDef dependency: projectDependencies.translatedDependencies().getValue().values()) {
+            NbJavaModule module = dependency.getJavaModule();
+            addSourcesOfModule(module, srcRoots);
+            getBinaryRuntimeDependencies(module, runtimeDependencies);
         }
 
         addSourcesOfBinaries(runtimeDependencies, srcRoots);

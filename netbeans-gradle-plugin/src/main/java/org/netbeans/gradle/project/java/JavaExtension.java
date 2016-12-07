@@ -15,10 +15,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.event.ListenerRef;
+import org.jtrim.property.MutableProperty;
+import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
+import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.GlobalPathRegistry;
@@ -60,8 +63,10 @@ import org.netbeans.gradle.project.java.tasks.GradleJavaBuiltInCommands;
 import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
+import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
+import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
@@ -76,7 +81,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
     private final Project project;
     private final File projectDirectoryAsFile;
-    private volatile NbJavaModel currentModel;
+    private final MutableProperty<NbJavaModel> currentModel;
     private volatile boolean hasEverBeenLoaded;
 
     private final GradleClassPathProvider cpProvider;
@@ -102,7 +107,10 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         }
 
         this.project = project;
-        this.currentModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
+
+        NbJavaModel defaultModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
+        this.currentModel = PropertyFactory.memPropertyConcurrent(defaultModel, SwingTaskExecutor.getStrictExecutor(false));
+
         this.cpProvider = new GradleClassPathProvider(this);
         this.projectDependencies = new JavaProjectDependencies(this);
         this.projectLookupRef = new AtomicReference<>(null);
@@ -115,6 +123,26 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         this.modelChangeListeners = new GenericChangeListenerManager();
         this.projectPropertiesRef = new AtomicReference<>(null);
         this.extensionSettingsRef = new AtomicReference<>(null);
+    }
+
+    public static PropertySource<JavaExtension> extensionOfProject(Project project) {
+        ExceptionHelper.checkNotNullArgument(project, "project");
+
+        PropertySource<JavaExtension> extRef = NbProperties.lookupProperty(project.getLookup(), JavaExtension.class);
+        return NbProperties.cacheFirstNonNull(extRef);
+    }
+
+    public static PropertySource<NbJavaModel> javaModelOfProject(Project project) {
+        PropertySource<JavaExtension> extRef = extensionOfProject(project);
+
+        return NbProperties.propertyOfProperty(extRef, new NbFunction<JavaExtension, PropertySource<NbJavaModel>>() {
+            @Override
+            public PropertySource<NbJavaModel> apply(JavaExtension ext) {
+                return ext != null
+                        ? ext.currentModel
+                        : PropertyFactory.<NbJavaModel>constSource(null);
+            }
+        });
     }
 
     public ProjectSettingsProvider.ExtensionSettings getExtensionSettings() {
@@ -210,8 +238,12 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         return projectDependencies;
     }
 
-    public NbJavaModel getCurrentModel() {
+    public MutableProperty<NbJavaModel> currentModel() {
         return currentModel;
+    }
+
+    public NbJavaModel getCurrentModel() {
+        return currentModel().getValue();
     }
 
     private void initLookup(Lookup lookup) {
@@ -297,7 +329,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     }
 
     public String getName() {
-        return currentModel.getMainModule().getShortName();
+        return getCurrentModel().getMainModule().getShortName();
     }
 
     public boolean hasEverBeenLoaded() {
@@ -445,7 +477,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public void activateExtension(NbJavaModel parsedModel) {
         ExceptionHelper.checkNotNullArgument(parsedModel, "parsedModel");
 
-        currentModel = parsedModel;
+        currentModel.setValue(parsedModel);
         hasEverBeenLoaded = true;
 
         NbJavaModule mainModule = parsedModel.getMainModule();

@@ -31,7 +31,6 @@ import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
 import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.ProjectDependencyCandidate;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.UrlFactory;
@@ -43,7 +42,7 @@ public final class ProjectClassPathResourceBuilder {
     private static final Logger LOGGER = Logger.getLogger(ProjectClassPathResourceBuilder.class.getName());
 
     private final NbJavaModel projectModel;
-    private final Map<File, ProjectDependencyCandidate> translatedDependencies;
+    private final Map<File, JavaProjectDependencyDef> translatedDependencies;
     private final ProjectPlatform currentPlatform;
 
     private Set<File> missing;
@@ -56,7 +55,7 @@ public final class ProjectClassPathResourceBuilder {
 
     public ProjectClassPathResourceBuilder(
             NbJavaModel projectModel,
-            Map<File, ProjectDependencyCandidate> translatedDependencies,
+            Map<File, JavaProjectDependencyDef> translatedDependencies,
             ProjectPlatform currentPlatform) {
         ExceptionHelper.checkNotNullArgument(projectModel, "projectModel");
         ExceptionHelper.checkNotNullArgument(translatedDependencies, "translatedDependencies");
@@ -106,12 +105,9 @@ public final class ProjectClassPathResourceBuilder {
                 result.put(gradleProject.getProjectDirectoryAsFile(), javaExt);
 
                 JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
-                for (ProjectDependencyCandidate candidate: projectDependencies.translatedDependencies().getValue().values()) {
-                    JavaProjectDependencyDef dependency = candidate.tryGetDependency();
-                    if (dependency != null) {
-                        JavaExtension dependencyJavaExt = dependency.getJavaExt();
-                        result.put(dependencyJavaExt.getProjectDirectoryAsFile(), dependencyJavaExt);
-                    }
+                for (JavaProjectDependencyDef dependency: projectDependencies.translatedDependencies().getValue().values()) {
+                    JavaExtension dependencyJavaExt = dependency.getJavaExt();
+                    result.put(dependencyJavaExt.getProjectDirectoryAsFile(), dependencyJavaExt);
                 }
             }
         }
@@ -277,12 +273,9 @@ public final class ProjectClassPathResourceBuilder {
     }
 
     private void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
-        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
-            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
-            if (dependency != null) {
-                for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
-                    classPaths.remove(sourceSet.getOutputDirs().getClassesDir());
-                }
+        for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
+            for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
+                classPaths.remove(sourceSet.getOutputDirs().getClassesDir());
             }
         }
     }
@@ -294,17 +287,9 @@ public final class ProjectClassPathResourceBuilder {
             classPaths.add(sourceSet.getOutputDirs().getClassesDir());
         }
 
-        for (ProjectDependencyCandidate candidate: translatedDependencies.values()) {
-            NbGradleProject gradleProject = candidate.getProject().getLookup().lookup(NbGradleProject.class);
-            if (gradleProject != null) {
-                gradleProject.ensureLoadRequested();
-            }
-
-            JavaProjectDependencyDef dependency = candidate.tryGetDependency();
-            if (dependency != null) {
-                for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
-                    classPaths.add(sourceSet.getOutputDirs().getClassesDir());
-                }
+        for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
+            for (JavaSourceSet sourceSet: dependency.getJavaModule().getSources()) {
+                classPaths.add(sourceSet.getOutputDirs().getClassesDir());
             }
         }
 
