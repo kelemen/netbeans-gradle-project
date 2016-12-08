@@ -65,7 +65,7 @@ implements
     }
 
     private static List<File> tryGetSourceRoots(NbJavaModule module, File binaryRoot) {
-        List<JavaSourceSet> jarSources = module.getSourceSetsForOutput(binaryRoot);
+        List<JavaSourceSet> jarSources = module.getSourceSetsForJarOutput(binaryRoot);
         if (!jarSources.isEmpty()) {
             List<File> result = new ArrayList<>();
             for (JavaSourceSet sourceSet: module.getSources()) {
@@ -121,7 +121,7 @@ implements
         NbJavaModule mainModule = moduleProvider.get();
 
         // Is Jar output?
-        if (!mainModule.getSourceSetsForOutput(binaryRoot).isEmpty()) {
+        if (!mainModule.getSourceSetsForJarOutput(binaryRoot).isEmpty()) {
             return binaryRoot;
         }
 
