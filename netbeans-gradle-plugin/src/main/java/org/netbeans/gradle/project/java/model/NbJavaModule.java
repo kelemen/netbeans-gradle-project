@@ -46,6 +46,7 @@ public final class NbJavaModule implements Serializable {
     private final AtomicReference<Map<String, JavaTestTask>> testNameToModelRef;
     private final AtomicReference<Set<File>> allBuildOutputRefs;
     private final AtomicReference<Map<File, List<JavaSourceSet>>> outputsToSourceSets;
+    private final AtomicReference<Map<File, List<JavaSourceSet>>> jarOutputsToSourceSets;
 
     public NbJavaModule(
             GenericProjectProperties properties,
@@ -81,6 +82,7 @@ public final class NbJavaModule implements Serializable {
         this.testNameToModelRef = new AtomicReference<>(null);
         this.allBuildOutputRefs = new AtomicReference<>(null);
         this.outputsToSourceSets = new AtomicReference<>(null);
+        this.jarOutputsToSourceSets = new AtomicReference<>(null);
     }
 
     public GenericProjectProperties getProperties() {
@@ -131,17 +133,8 @@ public final class NbJavaModule implements Serializable {
             result.put(outputDirs.getClassesDir(), Collections.singletonList(sourceSet));
         }
 
-        for (NbJarOutput jar: jarOutputs) {
-            Set<File> classDirs = jar.getClassDirs();
-            Set<JavaSourceSet> sourceSets = new LinkedHashSet<>(2 * classDirs.size());
-            for (File classDir: classDirs) {
-                List<JavaSourceSet> classDirSourceSets = result.get(classDir);
-                if (classDirSourceSets != null) {
-                    sourceSets.addAll(classDirSourceSets);
-                }
-            }
-            result.put(jar.getJar(), CollectionsEx.readOnlyCopy(sourceSets));
-        }
+        result.putAll(getJarOutputsToProjectDeps());
+
         return result;
     }
 
@@ -156,6 +149,37 @@ public final class NbJavaModule implements Serializable {
 
     public List<JavaSourceSet> getSourceSetsForOutput(File outputPath) {
         List<JavaSourceSet> result = getOutputsToProjectDeps().get(outputPath);
+        return result != null ? result : Collections.<JavaSourceSet>emptyList();
+    }
+
+    private Map<File, List<JavaSourceSet>> createJarOutputsToSourceSets() {
+        Map<File, List<JavaSourceSet>> result = new HashMap<>();
+
+        for (NbJarOutput jar: jarOutputs) {
+            Set<File> classDirs = jar.getClassDirs();
+            Set<JavaSourceSet> sourceSets = new LinkedHashSet<>(2 * classDirs.size());
+            for (File classDir: classDirs) {
+                List<JavaSourceSet> classDirSourceSets = result.get(classDir);
+                if (classDirSourceSets != null) {
+                    sourceSets.addAll(classDirSourceSets);
+                }
+            }
+            result.put(jar.getJar(), CollectionsEx.readOnlyCopy(sourceSets));
+        }
+        return result;
+    }
+
+    private Map<File, List<JavaSourceSet>> getJarOutputsToProjectDeps() {
+        Map<File, List<JavaSourceSet>> result = jarOutputsToSourceSets.get();
+        if (result == null) {
+            result = createJarOutputsToSourceSets();
+            jarOutputsToSourceSets.set(result);
+        }
+        return result;
+    }
+
+    public List<JavaSourceSet> getSourceSetsForJarOutput(File jarPath) {
+        List<JavaSourceSet> result = getJarOutputsToProjectDeps().get(jarPath);
         return result != null ? result : Collections.<JavaSourceSet>emptyList();
     }
 
