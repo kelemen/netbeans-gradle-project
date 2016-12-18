@@ -4,6 +4,7 @@ apply plugin: 'nbm'
 apply plugin: 'jacoco'
 apply plugin: 'custom-java-compilers'
 apply plugin: 'nb-gradle-maven-publish'
+apply plugin: 'nbm-dependency-verifier'
 
 jacocoTestReport {
     reports {
