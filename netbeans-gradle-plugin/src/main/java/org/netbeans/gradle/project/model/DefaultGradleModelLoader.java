@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -369,7 +371,12 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         ProjectLoadRequest rootLoadKey = new ProjectLoadRequest(rootProject, projectLoadKey.settingsGradleDef);
         NbGradleModel rootModel = tryGetFromCache(rootLoadKey);
-        if (rootModel == null) {
+        if (rootModel == null || !isUpToDateModel(rootModel, project.getProjectDirectoryAsPath())) {
+            if (rootModel != null) {
+                LOGGER.log(Level.INFO,
+                        "Reloading the guessed root project of {0} because its project directory was created after parsing the root project.",
+                        project.getProjectDirectoryAsPath());
+            }
             rootModel = loadModelWithProgress(cancelToken, rootLoadKey, progress, null);
             assert rootModel != null;
         }
@@ -381,6 +388,20 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         }
 
         return projectLoadKey;
+    }
+
+    private static boolean isUpToDateModel(NbGradleModel rootModel, Path dir) {
+        try {
+            BasicFileAttributes attrs = Files.readAttributes(dir, BasicFileAttributes.class);
+            FileTime creationTime = attrs.creationTime();
+            if (creationTime == null) {
+                return true;
+            }
+
+            return rootModel.getGenericInfo().getCreateTimeEpochMs() >= creationTime.toMillis();
+        } catch (IOException ex) {
+            return true;
+        }
     }
 
     private CommandCompleteListener projectTaskCompleteListener(final Runnable loadCompletedListener) {
