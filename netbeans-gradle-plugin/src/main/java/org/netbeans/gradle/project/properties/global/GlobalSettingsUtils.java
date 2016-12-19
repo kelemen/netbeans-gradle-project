@@ -3,6 +3,7 @@ package org.netbeans.gradle.project.properties.global;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.util.LazyValue;
@@ -21,18 +22,38 @@ public final class GlobalSettingsUtils {
         }
     });
 
+    public static Path tryGetGlobalConfigPath(List<String> subPaths) {
+        Path result = tryGetGlobalConfigPath0();
+        if (result == null) {
+            return null;
+        }
+
+        for (String subPath: subPaths) {
+            result = result.resolve(subPath);
+        }
+        return result;
+    }
+
     public static Path tryGetGlobalConfigPath(String... subPaths) {
+        Path result = tryGetGlobalConfigPath0();
+        if (result == null) {
+            return null;
+        }
+
+        for (String subPath: subPaths) {
+            result = result.resolve(subPath);
+        }
+        return result;
+    }
+
+    private static Path tryGetGlobalConfigPath0() {
         Path rootPath = CONFIG_ROOT_REF.get();
         if (rootPath == null) {
             LOGGER.log(Level.WARNING, "Unable to get config root folder.");
             return null;
         }
 
-        Path result = rootPath.resolve("org").resolve("netbeans").resolve("gradle");
-        for (String subPath: subPaths) {
-            result = result.resolve(subPath);
-        }
-        return result;
+        return rootPath.resolve("org").resolve("netbeans").resolve("gradle");
     }
 
     private static File tryGetConfigRoot() {

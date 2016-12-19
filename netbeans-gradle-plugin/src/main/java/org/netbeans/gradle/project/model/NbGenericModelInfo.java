@@ -18,16 +18,26 @@ public final class NbGenericModelInfo implements Serializable {
 
     private final NbGradleMultiProjectDef projectDef;
     private final Path settingsFile;
+    private final long createTimeEpochMs;
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef) {
         this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
     }
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile) {
+        this(projectDef, settingsFile, System.currentTimeMillis());
+    }
+
+    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile, long createTimeEpochMs) {
         ExceptionHelper.checkNotNullArgument(projectDef, "projectDef");
 
         this.settingsFile = settingsFile;
         this.projectDef = projectDef;
+        this.createTimeEpochMs = createTimeEpochMs;
+    }
+
+    public long getCreateTimeEpochMs() {
+        return createTimeEpochMs;
     }
 
     public File getProjectDir() {
@@ -160,6 +170,7 @@ public final class NbGenericModelInfo implements Serializable {
         private final NbGradleMultiProjectDef projectDef;
         private final File settingsFile; // for backward compatibility
         private final String settingsPath;
+        private final Long createTimeEpochMs;
 
         public SerializedFormat(NbGenericModelInfo source) {
             this.projectDef = source.projectDef;
@@ -167,6 +178,7 @@ public final class NbGenericModelInfo implements Serializable {
             this.settingsPath = source.settingsFile != null
                     ? source.settingsFile.toString()
                     : null;
+            this.createTimeEpochMs = source.createTimeEpochMs;
         }
 
         public Path getSettingsPath() {
@@ -177,8 +189,12 @@ public final class NbGenericModelInfo implements Serializable {
             return settingsFile != null ? settingsFile.toPath() : null;
         }
 
+        public long getCreateTimeEpochMs() {
+            return createTimeEpochMs != null ? createTimeEpochMs : System.currentTimeMillis();
+        }
+
         private Object readResolve() throws ObjectStreamException {
-            return new NbGenericModelInfo(projectDef, getSettingsPath());
+            return new NbGenericModelInfo(projectDef, getSettingsPath(), getCreateTimeEpochMs());
         }
     }
 }

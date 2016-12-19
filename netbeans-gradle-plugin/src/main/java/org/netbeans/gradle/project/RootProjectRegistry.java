@@ -43,37 +43,7 @@ public final class RootProjectRegistry {
             return CloseableAction.CLOSED_REF;
         }
 
-        CloseableAction.Ref result = registerRootProjectModel(input);
-        try {
-            updateProjects(input);
-        } catch (Throwable ex) {
-            try {
-                result.close();
-            } catch (Throwable subEx) {
-                ex.addSuppressed(subEx);
-            }
-            throw ex;
-        }
-        return result;
-    }
-
-    private static void updateProjects(NbGradleModel model) {
-        updateProjects(LoadedProjectManager.getDefault(), model.getSettingsFile(), model.getMainProject());
-    }
-
-    private static void updateProjects(
-            LoadedProjectManager loadedProjects,
-            Path settingsFile,
-            NbGradleProjectTree projectTree) {
-
-        for (NbGradleProjectTree child: projectTree.getChildren()) {
-            NbGradleProject childProject = loadedProjects.tryGetLoadedProject(child.getProjectDir());
-            if (childProject != null) {
-                childProject.updateSettingsFile();
-            }
-
-            updateProjects(loadedProjects, settingsFile, child);
-        }
+        return registerRootProjectModel(input);
     }
 
     private CloseableAction registerAsCloseableAction(final NbGradleModel input) {

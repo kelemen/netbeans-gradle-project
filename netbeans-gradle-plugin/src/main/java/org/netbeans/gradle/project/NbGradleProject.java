@@ -26,6 +26,7 @@ import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
+import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
@@ -104,7 +105,6 @@ public final class NbGradleProject implements Project {
         serviceObjects.updateExtensions(ExtensionLoader.loadExtensions(project));
 
         LoadedProjectManager.getDefault().addProject(project);
-        project.updateSettingsFile();
         return project;
     }
 
@@ -114,10 +114,6 @@ public final class NbGradleProject implements Project {
 
     public SettingsGradleDef getPreferredSettingsGradleDef() {
         return getSettingsFileManager().getPreferredSettingsGradleDef();
-    }
-
-    public void updateSettingsFile() {
-        getSettingsFileManager().updateSettingsFile();
     }
 
     @Nonnull
@@ -271,6 +267,8 @@ public final class NbGradleProject implements Project {
                 = LicenseManagers.createProjectLicenseManager(LICENSE_STORE);
 
         public static final RootProjectRegistry ROOT_PROJECT_REGISTRY = new RootProjectRegistry();
+        public static final GlobalSettingsFileManager SETTINGS_FILE_MANAGER
+                = new DefaultGlobalSettingsFileManager(ROOT_PROJECT_REGISTRY);
 
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;
@@ -311,12 +309,18 @@ public final class NbGradleProject implements Project {
             this.commonProperties = configProvider.getCommonProperties(configProvider.getActiveSettingsQuery());
 
             this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
-            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelManager);
-            this.settingsFileManager = new SettingsFileManager(
-                    projectDir,
-                    ROOT_PROJECT_REGISTRY,
-                    modelUpdater,
-                    modelManager.currentModel());
+            ModelRetrievedListener<NbGradleModel> modelUpdateListener = new ModelRetrievedListener<NbGradleModel>() {
+                @Override
+                public void updateModel(NbGradleModel model, Throwable error) {
+                    modelManager.updateModel(model, error);
+                    if (model != null && error == null) {
+                        SETTINGS_FILE_MANAGER.updateSettingsFile(model);
+                    }
+                }
+            };
+
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelUpdateListener);
+            this.settingsFileManager = new SettingsFileManager(projectDir, SETTINGS_FILE_MANAGER);
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
