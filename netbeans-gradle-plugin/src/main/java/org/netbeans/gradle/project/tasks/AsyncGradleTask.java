@@ -75,6 +75,7 @@ import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
+import org.netbeans.gradle.project.util.Closeables;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.util.StringUtils;
@@ -135,16 +136,6 @@ public final class AsyncGradleTask implements Runnable {
     @Override
     public void run() {
         submitGradleTask(taskDefFactroy, listener);
-    }
-
-    private static void closeAll(List<? extends Closeable> toClose) {
-        for (Closeable ref: toClose) {
-            try {
-                ref.close();
-            } catch (Throwable ex) {
-                LOGGER.log(Level.SEVERE, "Failed to close reference: " + ref, ex);
-            }
-        }
     }
 
     private static TemporaryFileRef getManualInitScript(File baseDir, InitScriptQueryEx scriptQuery) throws IOException {
@@ -210,7 +201,7 @@ public final class AsyncGradleTask implements Runnable {
             return results;
         } catch (Throwable ex) {
             LOGGER.log(Level.SEVERE, "Failed to create initialization scripts.", ex);
-            closeAll(results);
+            Closeables.closeAll(results);
             return Collections.emptyList();
         }
     }
@@ -526,7 +517,7 @@ public final class AsyncGradleTask implements Runnable {
                 buildItem.markFinished();
                 BuildExecutionSupport.registerFinishedItem(buildItem);
             } finally {
-                closeAll(initScripts);
+                Closeables.closeAll(initScripts);
             }
         } finally {
             try {

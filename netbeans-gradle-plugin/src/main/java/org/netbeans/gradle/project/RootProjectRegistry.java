@@ -15,8 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
@@ -24,11 +22,10 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.util.CloseableAction;
+import org.netbeans.gradle.project.util.Closeables;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class RootProjectRegistry {
-    private static final Logger LOGGER = Logger.getLogger(RootProjectRegistry.class.getName());
-
     private final Lock mainLock;
     private final Map<RootProjectKey, RegisteredProjects> rootProjects;
 
@@ -95,7 +92,7 @@ public final class RootProjectRegistry {
                         rootProjects.remove(key);
                     }
 
-                    closeAll(safeRefs);
+                    Closeables.closeAll(safeRefs);
                 } finally {
                     mainLock.unlock();
                 }
@@ -110,16 +107,6 @@ public final class RootProjectRegistry {
         }
 
         return result;
-    }
-
-    private static void closeAll(Collection<? extends AutoCloseable> resources) {
-        for (AutoCloseable resource: resources) {
-            try {
-                resource.close();
-            } catch (Throwable ex) {
-                LOGGER.log(Level.SEVERE, "Failed to close resource: " + resource, ex);
-            }
-        }
     }
 
     private static void safeToOpenChildren(NbGradleProjectTree root, Collection<? super Closeable> safeRefs) {
