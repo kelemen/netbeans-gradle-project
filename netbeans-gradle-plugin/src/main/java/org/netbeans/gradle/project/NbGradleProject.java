@@ -266,9 +266,10 @@ public final class NbGradleProject implements Project {
         public static final LicenseManager<NbGradleModel> LICENSE_MANAGER
                 = LicenseManagers.createProjectLicenseManager(LICENSE_STORE);
 
-        public static final RootProjectRegistry ROOT_PROJECT_REGISTRY = new RootProjectRegistry();
+        public static final RootProjectRegistry ROOT_PROJECT_REGISTRY
+                = NbGradleProjectFactory.ROOT_PROJECT_REGISTRY;
         public static final GlobalSettingsFileManager SETTINGS_FILE_MANAGER
-                = new DefaultGlobalSettingsFileManager(ROOT_PROJECT_REGISTRY);
+                = NbGradleProjectFactory.SETTINGS_FILE_MANAGER;
 
         public final GradleAuxiliaryConfiguration auxConfig;
         public final NbGradleSingleProjectConfigProvider configProvider;

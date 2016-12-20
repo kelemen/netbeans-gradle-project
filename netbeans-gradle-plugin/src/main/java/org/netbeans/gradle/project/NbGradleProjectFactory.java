@@ -24,6 +24,10 @@ import org.openide.filesystems.FileUtil;
 public class NbGradleProjectFactory implements ProjectFactory2 {
     private static final Logger LOGGER = Logger.getLogger(NbGradleProjectFactory.class.getName());
 
+    static final RootProjectRegistry ROOT_PROJECT_REGISTRY = new RootProjectRegistry();
+    static final GlobalSettingsFileManager SETTINGS_FILE_MANAGER
+            = new DefaultGlobalSettingsFileManager(ROOT_PROJECT_REGISTRY);
+
     private static final ConcurrentMap<Path, RefCounter> SAFE_TO_OPEN_PROJECTS
             = new ConcurrentHashMap<>();
 
