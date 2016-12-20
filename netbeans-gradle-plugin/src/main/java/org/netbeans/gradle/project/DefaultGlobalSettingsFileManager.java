@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
@@ -45,12 +46,15 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     private final Lock outstandingDefsLock;
     private final Map<File, SettingsDef> outstandingDefs;
 
+    private final Locker locker;
+
     public DefaultGlobalSettingsFileManager(RootProjectRegistry rootProjectRegistry) {
         ExceptionHelper.checkNotNullArgument(rootProjectRegistry, "rootProjectRegistry");
         this.rootProjectRegistry = rootProjectRegistry;
         this.settingsDefPersistor = new GenericUpdateTaskExecutor(SETTINGS_FILE_UPDATER);
         this.outstandingDefsLock = new ReentrantLock();
         this.outstandingDefs = new HashMap<>();
+        this.locker = new Locker();
     }
 
     @Override
@@ -130,7 +134,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     }
 
     private void persistSettingsDefsNow0() throws IOException {
-        List<SettingsDef> toSave;
+        final List<SettingsDef> toSave;
         outstandingDefsLock.lock();
         try {
             if (outstandingDefs.isEmpty()) {
@@ -142,29 +146,33 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             outstandingDefsLock.unlock();
         }
 
-        // FIXME: We should use a file lock here.
+        getLocker().doWrite(new IoTask<Void>() {
+            @Override
+            public Void run() throws IOException {
+                MessageDigest hashCalculator = getNameHasher();
+                for (SettingsDef def: toSave) {
+                    Path savePath = tryGetProjectSaveFile(def.projectDir, hashCalculator);
+                    if (savePath == null) {
+                        LOGGER.log(Level.WARNING, "Cannot save settings.gradle location for projects.");
+                        break;
+                    }
 
-        MessageDigest hashCalculator = getNameHasher();
-        for (SettingsDef def: toSave) {
-            Path savePath = tryGetProjectSaveFile(def.projectDir, hashCalculator);
-            if (savePath == null) {
-                LOGGER.log(Level.WARNING, "Cannot save settings.gradle location for projects.");
-                break;
+                    Path settingsGradle = def.settingsGradleDef.getSettingsGradle();
+
+                    Properties output = new Properties();
+                    output.put("rootProjectDir", def.rootProjectDir.toString());
+                    output.put("maySearchUpwards", Boolean.toString(def.settingsGradleDef.isMaySearchUpwards()));
+                    output.put("settingsGradle", settingsGradle != null ? settingsGradle.toString() : "");
+                    output.put("stamp", def.stamp);
+
+                    Files.createDirectories(savePath.getParent());
+                    try (OutputStream outputStream = Files.newOutputStream(savePath)) {
+                        output.store(outputStream, null);
+                    }
+                }
+                return null;
             }
-
-            Path settingsGradle = def.settingsGradleDef.getSettingsGradle();
-
-            Properties output = new Properties();
-            output.put("rootProjectDir", def.rootProjectDir.toString());
-            output.put("maySearchUpwards", Boolean.toString(def.settingsGradleDef.isMaySearchUpwards()));
-            output.put("settingsGradle", settingsGradle != null ? settingsGradle.toString() : "");
-            output.put("stamp", def.stamp);
-
-            Files.createDirectories(savePath.getParent());
-            try (OutputStream outputStream = Files.newOutputStream(savePath)) {
-                output.store(outputStream, null);
-            }
-        }
+        });
 
         outstandingDefsLock.lock();
         try {
@@ -205,23 +213,34 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     }
 
     private SettingsDef tryGetStoredSettingsDef(File projectDir) {
-        // FIXME: We should use a file lock here.
-
-        SettingsDef result = tryGetStoredSettingsDefUnsafe(projectDir);
-        if (result == null) {
-            return null;
+        try {
+            return tryGetStoredSettingsDef0(projectDir);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
+    }
 
-        if (Objects.equals(projectDir, result.projectDir)) {
-            return result;
-        }
+    private SettingsDef tryGetStoredSettingsDef0(final File projectDir) throws IOException {
+        return getLocker().doRead(new IoTask<SettingsDef>() {
+            @Override
+            public SettingsDef run() throws IOException {
+                SettingsDef result = tryGetStoredSettingsDefUnsafe(projectDir);
+                if (result == null) {
+                    return null;
+                }
 
-        SettingsDef rootDef = tryGetStoredSettingsDefUnsafe(projectDir);
-        if (rootDef == null) {
-            return null;
-        }
+                if (Objects.equals(projectDir, result.projectDir)) {
+                    return result;
+                }
 
-        return Objects.equals(result.stamp, rootDef.stamp) ? result : null;
+                SettingsDef rootDef = tryGetStoredSettingsDefUnsafe(projectDir);
+                if (rootDef == null) {
+                    return null;
+                }
+
+                return Objects.equals(result.stamp, rootDef.stamp) ? result : null;
+            }
+        });
     }
 
     private SettingsDef tryGetStoredSettingsDefUnsafe(File projectDir) {
@@ -278,6 +297,10 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
         return GlobalSettingsUtils.tryGetGlobalConfigPath(subPaths);
     }
 
+    private Locker getLocker() {
+        return locker;
+    }
+
     private static MessageDigest getNameHasher() {
         try {
             return MessageDigest.getInstance("MD5");
@@ -307,5 +330,41 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             this.settingsGradleDef = settingsGradleDef;
             this.stamp = stamp;
         }
+    }
+
+    private static final class Locker {
+        private final Lock readLock;
+        private final Lock writeLock;
+
+        public Locker() {
+            // TODO: We should also use file lock (though it is not a big issue since
+            //       NB cannot run concurrently with itself anyway).
+
+            ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+            this.readLock = readWriteLock.readLock();
+            this.writeLock = readWriteLock.writeLock();
+        }
+
+        public <R> R doRead(IoTask<? extends R> task) throws IOException {
+            readLock.lock();
+            try {
+                return task.run();
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public <R> R doWrite(IoTask<? extends R> task) throws IOException {
+            writeLock.lock();
+            try {
+                return task.run();
+            } finally {
+                writeLock.unlock();
+            }
+        }
+    }
+
+    private interface IoTask<R> {
+        public R run() throws IOException;
     }
 }
