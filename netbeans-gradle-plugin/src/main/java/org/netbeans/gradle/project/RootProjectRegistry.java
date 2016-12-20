@@ -1,16 +1,22 @@
 package org.netbeans.gradle.project;
 
+import java.io.Closeable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
@@ -21,6 +27,8 @@ import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class RootProjectRegistry {
+    private static final Logger LOGGER = Logger.getLogger(RootProjectRegistry.class.getName());
+
     private final Lock mainLock;
     private final Map<RootProjectKey, RegisteredProjects> rootProjects;
 
@@ -76,7 +84,8 @@ public final class RootProjectRegistry {
             mainLock.unlock();
         }
 
-        return new CloseableAction.Ref() {
+        final List<Closeable> safeRefs = new ArrayList<>();
+        CloseableAction.Ref result = new CloseableAction.Ref() {
             @Override
             public void close() {
                 mainLock.lock();
@@ -85,11 +94,39 @@ public final class RootProjectRegistry {
                     if (value != null && value.id == regId) {
                         rootProjects.remove(key);
                     }
+
+                    closeAll(safeRefs);
                 } finally {
                     mainLock.unlock();
                 }
             }
         };
+
+        try {
+            safeToOpenChildren(model.getProjectDef().getRootProject(), safeRefs);
+        } catch (Throwable ex) {
+            result.close();
+            throw ex;
+        }
+
+        return result;
+    }
+
+    private static void closeAll(Collection<? extends AutoCloseable> resources) {
+        for (AutoCloseable resource: resources) {
+            try {
+                resource.close();
+            } catch (Throwable ex) {
+                LOGGER.log(Level.SEVERE, "Failed to close resource: " + resource, ex);
+            }
+        }
+    }
+
+    private static void safeToOpenChildren(NbGradleProjectTree root, Collection<? super Closeable> safeRefs) {
+        for (NbGradleProjectTree child: root.getChildren()) {
+            safeRefs.add(NbGradleProjectFactory.safeToOpen(child.getProjectDir()));
+            safeToOpenChildren(root, safeRefs);
+        }
     }
 
     public Path tryGetSettingsFile(File projectDir) {
