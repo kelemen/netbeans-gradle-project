@@ -112,7 +112,7 @@ public final class RootProjectRegistry {
     private static void safeToOpenChildren(NbGradleProjectTree root, Collection<? super Closeable> safeRefs) {
         for (NbGradleProjectTree child: root.getChildren()) {
             safeRefs.add(NbGradleProjectFactory.safeToOpen(child.getProjectDir()));
-            safeToOpenChildren(root, safeRefs);
+            safeToOpenChildren(child, safeRefs);
         }
     }
 
