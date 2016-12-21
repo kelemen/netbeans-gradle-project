@@ -10,6 +10,7 @@ import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.modules.Places;
 
 public final class GlobalSettingsUtils {
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsUtils.class.getName());
@@ -19,6 +20,13 @@ public final class GlobalSettingsUtils {
         public Path get() {
             File rootFile = tryGetConfigRoot();
             return rootFile != null ? rootFile.toPath() : null;
+        }
+    });
+
+    private static final LazyValue<Path> CACHE_ROOT_REF = new LazyValue<>(new NbSupplier<Path>() {
+        @Override
+        public Path get() {
+            return tryGetCacheRoot();
         }
     });
 
@@ -46,6 +54,30 @@ public final class GlobalSettingsUtils {
         return result;
     }
 
+    public static Path tryGetGlobalCachePath(List<String> subPaths) {
+        Path result = CACHE_ROOT_REF.get();
+        if (result == null) {
+            return null;
+        }
+
+        for (String subPath: subPaths) {
+            result = result.resolve(subPath);
+        }
+        return result;
+    }
+
+    public static Path tryGetGlobalCachePath(String... subPaths) {
+        Path result = CACHE_ROOT_REF.get();
+        if (result == null) {
+            return null;
+        }
+
+        for (String subPath: subPaths) {
+            result = result.resolve(subPath);
+        }
+        return result;
+    }
+
     private static Path tryGetGlobalConfigPath0() {
         Path rootPath = CONFIG_ROOT_REF.get();
         if (rootPath == null) {
@@ -59,6 +91,15 @@ public final class GlobalSettingsUtils {
     private static File tryGetConfigRoot() {
         FileObject result = tryGetConfigRootObj();
         return result != null ? FileUtil.toFile(result) : null;
+    }
+
+    private static Path tryGetCacheRoot() {
+        File globalRoot = Places.getCacheDirectory();
+        if (globalRoot == null) {
+            return null;
+        }
+
+        return globalRoot.toPath().resolve("gradle");
     }
 
     private static FileObject tryGetConfigRootObj() {
