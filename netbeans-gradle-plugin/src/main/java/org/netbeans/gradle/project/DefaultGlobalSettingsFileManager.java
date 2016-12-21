@@ -160,6 +160,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
                     Path settingsGradle = def.settingsGradleDef.getSettingsGradle();
 
                     Properties output = new Properties();
+                    output.put("projectDir", def.projectDir);
                     output.put("rootProjectDir", def.rootProjectDir.toString());
                     output.put("maySearchUpwards", Boolean.toString(def.settingsGradleDef.isMaySearchUpwards()));
                     output.put("settingsGradle", settingsGradle != null ? settingsGradle.toString() : "");
@@ -254,6 +255,11 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             settings.load(input);
         } catch (IOException | IllegalArgumentException ex) {
             LOGGER.log(Level.INFO, "Failed to load settings from: " + settingsFile, ex);
+            return null;
+        }
+
+        String storedProjectDir = settings.getProperty("projectDir", "");
+        if (!storedProjectDir.isEmpty() && !projectDir.equals(new File(storedProjectDir))) {
             return null;
         }
 
