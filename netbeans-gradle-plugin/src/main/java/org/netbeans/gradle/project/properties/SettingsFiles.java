@@ -16,6 +16,7 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.model.NbGradleModel;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class SettingsFiles {
     private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
@@ -48,7 +49,7 @@ public final class SettingsFiles {
                     continue;
                 }
 
-                String fileName = file.getFileName().toString();
+                String fileName = NbFileUtils.getFileNameStr(file);
                 String normFileName = fileName.toLowerCase(Locale.ROOT);
                 if (!normFileName.endsWith(PROFILE_FILE_NAME_SUFFIX)) {
                     continue;

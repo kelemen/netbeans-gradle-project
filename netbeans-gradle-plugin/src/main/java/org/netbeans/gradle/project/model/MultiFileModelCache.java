@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.StringUtils;
 
@@ -72,7 +73,7 @@ public final class MultiFileModelCache<T> implements PersistentModelCache<T> {
         // We do this to limit the key length and make it usable as part of a file name.
         hashCalculator.reset();
         String keyHash = StringUtils.byteArrayToHex(hashCalculator.digest(cacheKey.getBytes(StringUtils.UTF8)));
-        return limitLength(modelKey.getProjectDir().getFileName().toString(), 16) + "-" + keyHash;
+        return limitLength(NbFileUtils.getFileNameStr(modelKey.getProjectDir()), 16) + "-" + keyHash;
     }
 
     private Path getCacheFilePath(T model, MessageDigest hashCalculator) throws IOException {

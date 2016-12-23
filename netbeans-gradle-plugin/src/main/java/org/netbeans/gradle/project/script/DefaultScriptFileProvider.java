@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.util.NbConsumer;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbPredicate;
 
 public final class DefaultScriptFileProvider implements ScriptFileProvider {
@@ -79,7 +80,7 @@ public final class DefaultScriptFileProvider implements ScriptFileProvider {
 
         try (DirectoryStream<Path> files = Files.newDirectoryStream(baseDir)) {
             for (Path candidate: files) {
-                String name = candidate.getFileName().toString();
+                String name = NbFileUtils.getFileNameStr(candidate);
                 String normName = name.toLowerCase(Locale.ROOT);
                 for (String ext: EXTENSIONS) {
                     if (normName.endsWith(ext)) {

@@ -20,6 +20,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.GroovyScripts;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -59,7 +60,7 @@ implements
 
     private static void createSettingsGradle(Path projectDir) throws IOException {
         Map<String, String> varReplaceMap =
-                Collections.singletonMap("${PROJECT_NAME}", projectDir.getFileName().toString());
+                Collections.singletonMap("${PROJECT_NAME}", NbFileUtils.getFileNameStr(projectDir));
 
         NewProjectUtils.copyTemplateFile(MULTI_PROJECT_SETTINGS_GRADLE,
                 projectDir.resolve(CommonScripts.SETTINGS_BASE_NAME + EXTENSION),

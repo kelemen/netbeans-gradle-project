@@ -5,6 +5,7 @@ import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.util.NbBiFunction;
+import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 
@@ -20,7 +21,7 @@ public final class LicenseManagers {
         NbFunction<NbGradleModel, String> modelNameProvider = new NbFunction<NbGradleModel, String>() {
             @Override
             public String apply(NbGradleModel ownerModel) {
-                return ownerModel.getSettingsDir().getFileName().toString();
+                return NbFileUtils.getFileNameStr(ownerModel.getSettingsDir());
             }
         };
 
