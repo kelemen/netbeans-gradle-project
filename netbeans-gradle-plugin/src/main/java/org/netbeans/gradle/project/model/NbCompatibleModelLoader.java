@@ -33,6 +33,7 @@ import org.netbeans.gradle.project.api.modelquery.GradleModelDefQuery1;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.openide.util.lookup.Lookups;
 
 public final class NbCompatibleModelLoader implements NbModelLoader {
@@ -156,7 +157,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         return result;
     }
 
-    private static NbGradleProjectTree tryCreateProjectTreeFromIdea(IdeaModule module) {
+    private static NbGradleProjectTree tryCreateProjectTreeFromIdea(IdeaModule module, ScriptFileProvider scriptProvider) {
         File moduleDir = IdeaJavaModelUtils.tryGetModuleDir(module);
         if (moduleDir == null) {
             return null;
@@ -165,7 +166,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         int expectedChildCount = module.getGradleProject().getChildren().size();
         List<NbGradleProjectTree> children = new ArrayList<>(expectedChildCount);
         for (IdeaModule child: getChildModules(module)) {
-            NbGradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child);
+            NbGradleProjectTree childInfo = tryCreateProjectTreeFromIdea(child, scriptProvider);
             if (childInfo != null) {
                 children.add(childInfo);
             }
@@ -174,8 +175,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         GradleProject gradleProject = module.getGradleProject();
         String projectName = gradleProject.getName();
         String projectFullName = gradleProject.getPath();
-        GenericProjectProperties properties
-                = new GenericProjectProperties(projectName, projectFullName, moduleDir);
+        GenericProjectProperties properties = NbGenericModelInfo
+                .createProjectProperties(projectName, projectFullName, moduleDir.toPath(), scriptProvider);
 
         return new NbGradleProjectTree(properties, getTasksOfModule(module), children);
     }
@@ -198,16 +199,17 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
     private static NbGradleModel loadMainModelFromIdeaModule(
             NbGradleProjectTree rootProject,
-            IdeaModule ideaModule) throws IOException {
+            IdeaModule ideaModule,
+            ScriptFileProvider scriptProvider) throws IOException {
         ExceptionHelper.checkNotNullArgument(rootProject, "rootProject");
         ExceptionHelper.checkNotNullArgument(ideaModule, "ideaModule");
 
-        NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule);
+        NbGradleProjectTree projectTree = tryCreateProjectTreeFromIdea(ideaModule, scriptProvider);
         if (projectTree == null) {
             throw new IOException("Failed to create project tree for project: " + ideaModule.getName());
         }
 
-        return new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree));
+        return new NbGradleModel(new NbGradleMultiProjectDef(rootProject, projectTree), scriptProvider);
     }
 
     private NbGradleModel.Builder loadMainModel(
@@ -225,8 +227,8 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
         builder.setRootWithoutSettingsGradle(!settingsGradleDef.isMaySearchUpwards());
     }
 
-    private NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef) {
-        NbGradleModel.Builder result = new NbGradleModel.Builder(new NbGenericModelInfo(projectDef));
+    private NbGradleModel.Builder toBuilder(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
+        NbGradleModel.Builder result = new NbGradleModel.Builder(new NbGenericModelInfo(projectDef, scriptProvider));
         initBuilder(result);
         return result;
     }
@@ -256,7 +258,9 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find root module for project: " + project.getDisplayName());
         }
 
-        NbGradleProjectTree rootTree = tryCreateProjectTreeFromIdea(rootModule);
+        ScriptFileProvider scriptProvider = project.getScriptFileProvider();
+
+        NbGradleProjectTree rootTree = tryCreateProjectTreeFromIdea(rootModule, scriptProvider);
         if (rootTree == null) {
             throw new IOException("Failed to find root tree for project: " + rootModule.getName());
         }
@@ -267,10 +271,10 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             // to reparse the main project.
             if (otherModule != mainModule) {
                 if (rootPath.equals(otherModule.getGradleProject().getPath())) {
-                    otherModels.add(toBuilder(new NbGradleMultiProjectDef(rootTree, rootTree)));
+                    otherModels.add(toBuilder(new NbGradleMultiProjectDef(rootTree, rootTree), scriptProvider));
                 }
                 else {
-                    otherModels.add(toBuilder(loadMainModelFromIdeaModule(rootTree, otherModule)));
+                    otherModels.add(toBuilder(loadMainModelFromIdeaModule(rootTree, otherModule, scriptProvider)));
                 }
             }
         }
@@ -280,14 +284,14 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             mainTree = rootTree;
         }
         else {
-            mainTree = tryCreateProjectTreeFromIdea(mainModule);
+            mainTree = tryCreateProjectTreeFromIdea(mainModule, scriptProvider);
         }
 
         if (mainTree == null) {
             throw new IOException("Failed to find tree for project: " + mainModule.getName());
         }
 
-        return toBuilder(new NbGradleMultiProjectDef(rootTree, mainTree));
+        return toBuilder(new NbGradleMultiProjectDef(rootTree, mainTree), scriptProvider);
     }
 
     private static IdeaModule tryFindRootModule(IdeaProject ideaModel) {

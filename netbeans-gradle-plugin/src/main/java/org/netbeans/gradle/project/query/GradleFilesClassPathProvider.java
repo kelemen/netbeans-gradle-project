@@ -20,11 +20,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jtrim.concurrent.UpdateTaskExecutor;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.classpath.JavaClassPathConstants;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
-import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.script.DefaultScriptFileProvider;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -44,11 +46,18 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     private final ConcurrentMap<ClassPathType, List<PathResourceImplementation>> classpathResources;
     private final Map<ClassPathType, ClassPath> classpaths;
     private final UpdateTaskExecutor classpathUpdateExecutor;
+    private final ScriptFileProvider scriptProvider;
 
     private final PropertyChangeSupport changes;
 
-    @SuppressWarnings("MapReplaceableByEnumMap") // no, it's not.
     public GradleFilesClassPathProvider() {
+        this(new DefaultScriptFileProvider());
+    }
+
+    public GradleFilesClassPathProvider(ScriptFileProvider scriptProvider) {
+        ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+
+        this.scriptProvider = scriptProvider;
         this.initLock = new ReentrantLock();
         this.initialized = false;
         this.classpaths = new EnumMap<>(ClassPathType.class);
@@ -58,11 +67,6 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
         EventSource eventSource = new EventSource();
         this.changes = new PropertyChangeSupport(eventSource);
         eventSource.init(this.changes);
-    }
-
-    public static boolean isGradleFile(FileObject file) {
-        // case-insensitive check, so that there is no surprise on Windows.
-        return SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(file.getExt());
     }
 
     // These PropertyChangeListener methods are declared because
@@ -178,8 +182,7 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        // case-insensitive check, so that there is no surprise on Windows.
-        if (!isGradleFile(file)) {
+        if (!scriptProvider.isScriptFileName(file.getNameExt())) {
             return null;
         }
 

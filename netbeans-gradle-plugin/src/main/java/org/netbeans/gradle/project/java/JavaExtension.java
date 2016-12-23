@@ -40,11 +40,11 @@ import org.netbeans.gradle.project.api.entry.GradleProjectExtension2;
 import org.netbeans.gradle.project.coverage.GradleCoverageProvider;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
+import org.netbeans.gradle.project.java.model.JavaParsingUtils;
 import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
 import org.netbeans.gradle.project.java.model.JavaSourceDirHandler;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
-import org.netbeans.gradle.project.java.model.idea.IdeaJavaModelUtils;
 import org.netbeans.gradle.project.java.nodes.JavaExtensionNodes;
 import org.netbeans.gradle.project.java.nodes.JavaProjectContextActions;
 import org.netbeans.gradle.project.java.properties.JavaDebuggingPanel;
@@ -64,6 +64,7 @@ import org.netbeans.gradle.project.java.tasks.JavaGradleTaskVariableQuery;
 import org.netbeans.gradle.project.model.issue.DependencyResolutionIssue;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssueReporter;
 import org.netbeans.gradle.project.properties.NbProperties;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -108,7 +109,9 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
 
         this.project = project;
 
-        NbJavaModel defaultModel = IdeaJavaModelUtils.createEmptyModel(project.getProjectDirectory());
+        NbJavaModel defaultModel = JavaParsingUtils.createEmptyModel(
+                project.getProjectDirectory(),
+                project.getLookup().lookup(ScriptFileProvider.class));
         this.currentModel = PropertyFactory.memPropertyConcurrent(defaultModel, SwingTaskExecutor.getStrictExecutor(false));
 
         this.cpProvider = new GradleClassPathProvider(this);

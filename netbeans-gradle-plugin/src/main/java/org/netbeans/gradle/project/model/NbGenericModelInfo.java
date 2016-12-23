@@ -8,7 +8,9 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.model.GenericProjectProperties;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -20,8 +22,8 @@ public final class NbGenericModelInfo implements Serializable {
     private final Path settingsFile;
     private final long createTimeEpochMs;
 
-    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef) {
-        this(projectDef, findSettingsGradle(projectDef.getProjectDir()));
+    public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
+        this(projectDef, findSettingsGradle(projectDef.getProjectDir().toPath(), scriptProvider));
     }
 
     public NbGenericModelInfo(NbGradleMultiProjectDef projectDef, Path settingsFile) {
@@ -45,7 +47,7 @@ public final class NbGenericModelInfo implements Serializable {
     }
 
     public boolean isBuildSrc() {
-        return getProjectDir().getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+        return getProjectDir().getName().equalsIgnoreCase(CommonScripts.BUILD_SRC_NAME);
     }
 
     public File getBuildDir() {
@@ -115,45 +117,71 @@ public final class NbGenericModelInfo implements Serializable {
         return result;
     }
 
-    public static File getBuildFile(File projectDir) {
-        File buildFile = new File(projectDir, SettingsFiles.BUILD_FILE_NAME);
-        if (buildFile.isFile()) {
-            return buildFile;
+    public static Path findSettingsGradle(Path projectDir, ScriptFileProvider scriptProvider) {
+        Path settingsGradle = scriptProvider.findScriptFile(projectDir, CommonScripts.SETTINGS_BASE_NAME);
+        if (settingsGradle != null) {
+            return settingsGradle;
         }
 
-        buildFile = new File(projectDir, projectDir.getName() + SettingsFiles.DEFAULT_GRADLE_EXTENSION);
-        if (buildFile.isFile()) {
-            return buildFile;
+        Path parentDir = projectDir.getParent();
+        if (parentDir != null) {
+            return findSettingsGradle(parentDir, scriptProvider);
         }
-
-        return null;
+        else {
+            return null;
+        }
     }
 
-    private static File findSettingsGradleAsFile(File projectDir) {
-        FileObject projectDirObj = FileUtil.toFileObject(projectDir);
-        FileObject resultObj = findSettingsGradle(projectDirObj);
-        return resultObj != null
-                ? FileUtil.toFile(resultObj)
-                : null;
-    }
-
-    public static Path findSettingsGradle(File projectDir) {
-        File result = findSettingsGradleAsFile(projectDir);
-        return result != null ? result.toPath() : null;
-    }
-
-    public static FileObject findSettingsGradle(FileObject projectDir) {
+    public static FileObject findSettingsGradle(FileObject projectDir, ScriptFileProvider scriptProvider) {
         if (projectDir == null) {
             return null;
         }
 
-        FileObject settingsGradle = projectDir.getFileObject(SettingsFiles.SETTINGS_GRADLE);
-        if (settingsGradle != null && !settingsGradle.isVirtual()) {
-            return settingsGradle;
+        File projectDirFile = FileUtil.toFile(projectDir);
+        if (projectDirFile == null) {
+            return null;
         }
-        else {
-            return findSettingsGradle(projectDir.getParent());
+
+        Path resultPath = findSettingsGradle(projectDirFile.toPath(), scriptProvider);
+        if (resultPath == null) {
+            return null;
         }
+
+        return FileUtil.toFileObject(resultPath.toFile());
+    }
+
+    public static Path tryGuessBuildFilePath(Path projectDir, ScriptFileProvider scriptProvider) {
+        Path result = scriptProvider.findScriptFile(projectDir, CommonScripts.BUILD_BASE_NAME);
+        if (result != null) {
+            return result;
+        }
+
+        result = scriptProvider.findScriptFile(projectDir, CommonScripts.SETTINGS_BASE_NAME);
+        if (result != null) {
+            return result;
+        }
+
+        String baseName = NbFileUtils.getFileNameStr(projectDir);
+        result = scriptProvider.findScriptFile(projectDir, baseName);
+        if (result != null) {
+            return result;
+        }
+
+        return scriptProvider.findScriptFile(projectDir, baseName + "-" + CommonScripts.BUILD_BASE_NAME);
+    }
+
+    public static GenericProjectProperties createProjectProperties(
+            String projectName,
+            String projectFullName,
+            Path projectDir,
+            ScriptFileProvider scriptProvider) {
+
+        Path buildFile = tryGuessBuildFilePath(projectDir, scriptProvider);
+        if (buildFile == null) {
+            buildFile = projectDir.resolve(CommonScripts.BUILD_BASE_NAME + CommonScripts.DEFAULT_SCRIPT_EXTENSION);
+        }
+
+        return new GenericProjectProperties(projectName, projectFullName, projectDir.toFile(), buildFile.toFile());
     }
 
     private Object writeReplace() {

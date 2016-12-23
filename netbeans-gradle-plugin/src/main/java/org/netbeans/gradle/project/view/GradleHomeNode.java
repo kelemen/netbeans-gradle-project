@@ -5,7 +5,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -19,12 +21,13 @@ import org.jtrim.event.EventListeners;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ProxyListenerRegistry;
 import org.jtrim.event.SimpleListenerRegistry;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.event.NbListenerManagers;
-import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
@@ -42,42 +45,62 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 public final class GradleHomeNode extends AbstractNode {
-    private static final String INIT_GRADLE_NAME = "init.gradle";
+    // Though as of Gradle 3.2.1, Kotling init scripts are not supported, we will assume support
+    // because it is reasonable to expect support for them in the future.
+
+    private static final String INIT_GRADLE_BASE_NAME = "init";
     private static final String INIT_D_NAME = "init.d";
 
     private final GradleHomeNodeChildFactory childFactory;
+    private final ScriptFileProvider scriptProvider;
 
-    public GradleHomeNode() {
-        this(new GradleHomeNodeChildFactory());
+    public GradleHomeNode(ScriptFileProvider scriptProvider) {
+        this(new GradleHomeNodeChildFactory(scriptProvider), scriptProvider);
     }
 
-    private GradleHomeNode(GradleHomeNodeChildFactory childFactory) {
-        this(childFactory, Children.create(childFactory, true));
+    private GradleHomeNode(GradleHomeNodeChildFactory childFactory, ScriptFileProvider scriptProvider) {
+        this(childFactory, scriptProvider, Children.create(childFactory, true));
     }
 
-    private GradleHomeNode(GradleHomeNodeChildFactory childFactory, Children children) {
-        super(children, createLookup(childFactory, children));
+    private GradleHomeNode(GradleHomeNodeChildFactory childFactory, ScriptFileProvider scriptProvider, Children children) {
+        super(children, createLookup(childFactory, scriptProvider, children));
 
         this.childFactory = childFactory;
+        this.scriptProvider = scriptProvider;
 
         setName(getClass().getSimpleName());
     }
 
-    private static Lookup createLookup(GradleHomeNodeChildFactory childFactory, Children children) {
+    private static Lookup createLookup(
+            GradleHomeNodeChildFactory childFactory,
+            ScriptFileProvider scriptProvider,
+            Children children) {
         return Lookups.fixed(
-                GradleHomePathFinder.INSTANCE,
+                new GradleHomePathFinder(scriptProvider),
                 NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
-    public static SingleNodeFactory getFactory() {
-        return FactoryImpl.INSTANCE;
+    public static SingleNodeFactory getFactory(ScriptFileProvider scriptProvider) {
+        return new FactoryImpl(scriptProvider);
     }
 
     private Action openGradleHomeFile(String name) {
-        File userHome = getGradleUserHome();
-        File file = userHome != null ? new File(userHome, name) : new File(name);
+        Path userHome = getGradleUserHome();
+        Path file = userHome != null ? userHome.resolve(name) : Paths.get(name);
 
-        Action result = new OpenAlwaysFileAction(file.toPath());
+        Action result = new OpenAlwaysFileAction(file);
+        if (userHome == null) {
+            result.setEnabled(false);
+        }
+
+        return result;
+    }
+
+    private Action openGradleHomeScriptFile(String baseName) {
+        Path userHome = getGradleUserHome();
+        Path baseDir = userHome != null ? userHome : Paths.get(".");
+
+        Action result = OpenAlwaysFileAction.openScriptAction(baseDir, baseName, scriptProvider);
         if (userHome == null) {
             result.setEnabled(false);
         }
@@ -89,8 +112,8 @@ public final class GradleHomeNode extends AbstractNode {
     public Action[] getActions(boolean context) {
         List<Action> result = new ArrayList<>();
 
-        result.add(openGradleHomeFile(INIT_GRADLE_NAME));
-        result.add(openGradleHomeFile(SettingsFiles.GRADLE_PROPERTIES_NAME));
+        result.add(openGradleHomeScriptFile(INIT_GRADLE_BASE_NAME));
+        result.add(openGradleHomeFile(CommonScripts.GRADLE_PROPERTIES_NAME));
         if (!childFactory.hasInitDDirDisplayed) {
             result.add(new CreateInitDAction());
         }
@@ -115,12 +138,22 @@ public final class GradleHomeNode extends AbstractNode {
         return NbStrings.getGradleHomeNodeCaption();
     }
 
-    private static File getGradleUserHome() {
+    private static File getGradleUserHomeFile() {
         return GradleFileUtils.GRADLE_USER_HOME.getValue();
     }
 
-    private enum GradleHomePathFinder implements PathFinder {
-        INSTANCE;
+    private static Path getGradleUserHome() {
+        File result = getGradleUserHomeFile();
+        return result != null ? result.toPath() : null;
+    }
+
+    private static final class GradleHomePathFinder implements PathFinder {
+        private final ScriptFileProvider scriptProvider;
+
+        public GradleHomePathFinder(ScriptFileProvider scriptProvider) {
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+            this.scriptProvider = scriptProvider;
+        }
 
         @Override
         public Node findPath(Node root, Object target) {
@@ -129,15 +162,16 @@ public final class GradleHomeNode extends AbstractNode {
                 return null;
             }
 
-            boolean canBeFound =
-                SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(targetFile.getNameExt())
-                || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(targetFile.getExt());
+            String baseName = targetFile.getNameExt();
+
+            boolean canBeFound = CommonScripts.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(baseName)
+                || scriptProvider.isScriptFileName(baseName);
             // We have only gradle files and the gradle.properties.
             if (!canBeFound) {
                 return null;
             }
 
-            File userHome = getGradleUserHome();
+            File userHome = getGradleUserHomeFile();
             if (userHome == null) {
                 // Most likely we could not create the nodes, so
                 // don't bother looking at subnodes.
@@ -169,12 +203,17 @@ public final class GradleHomeNode extends AbstractNode {
             ChildFactory.Detachable<SingleNodeFactory>
     implements
             RefreshableChildren {
+
+        private final ScriptFileProvider scriptProvider;
         private final ListenerRegistrations listenerRefs;
         private final ProxyListenerRegistry<Runnable> userHomeChangeListeners;
         private volatile boolean hasInitDDirDisplayed;
         private volatile boolean createdOnce;
 
-        public GradleHomeNodeChildFactory() {
+        public GradleHomeNodeChildFactory(ScriptFileProvider scriptProvider) {
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+
+            this.scriptProvider = scriptProvider;
             this.listenerRefs = new ListenerRegistrations();
             this.userHomeChangeListeners = new ProxyListenerRegistry<>(NbListenerManagers.neverNotifingRegistry());
             this.hasInitDDirDisplayed = false;
@@ -235,12 +274,26 @@ public final class GradleHomeNode extends AbstractNode {
             listenerRefs.unregisterAll();
         }
 
-        private static FileObject tryGetFile(File dir, String name) {
-            return FileUtil.toFileObject(new File(dir, name));
+        private static FileObject tryGetFile(Path dir, String name) {
+            return FileUtil.toFileObject(dir.resolve(name).toFile());
         }
 
-        private void addGradleProperties(File userHome, List<SingleNodeFactory> toPopulate) {
-            FileObject gradleProperties = tryGetFile(userHome, SettingsFiles.GRADLE_PROPERTIES_NAME);
+        private List<FileObject> getScriptFiles(Path dir, String baseName) {
+            Iterable<Path> paths = scriptProvider.findScriptFiles(dir, baseName);
+
+            List<FileObject> result = new ArrayList<>();
+            for (Path path: paths) {
+                FileObject fileObj = FileUtil.toFileObject(path.toFile());
+                if (fileObj != null) {
+                    result.add(fileObj);
+                }
+            }
+
+            return result;
+        }
+
+        private void addGradleProperties(Path userHome, List<SingleNodeFactory> toPopulate) {
+            FileObject gradleProperties = tryGetFile(userHome, CommonScripts.GRADLE_PROPERTIES_NAME);
             if (gradleProperties != null) {
                 SingleNodeFactory node = NodeUtils.tryGetFileNode(gradleProperties);
                 if (node != null) {
@@ -249,9 +302,9 @@ public final class GradleHomeNode extends AbstractNode {
             }
         }
 
-        private void addInitGradle(File userHome, List<SingleNodeFactory> toPopulate) {
-            FileObject initGradle = tryGetFile(userHome, INIT_GRADLE_NAME);
-            if (initGradle != null) {
+        private Collection<FileObject> addInitGradle(Path userHome, List<SingleNodeFactory> toPopulate) {
+            List<FileObject> initGradles = getScriptFiles(userHome, INIT_GRADLE_BASE_NAME);
+            for (FileObject initGradle: initGradles) {
                 SingleNodeFactory node = NodeUtils.tryGetFileNode(
                         initGradle,
                         initGradle.getNameExt(),
@@ -260,34 +313,37 @@ public final class GradleHomeNode extends AbstractNode {
                     toPopulate.add(node);
                 }
             }
+            return initGradles;
         }
 
-        private void addInitDDir(File userHome, List<SingleNodeFactory> toPopulate) {
+        private void addInitDDir(Path userHome, List<SingleNodeFactory> toPopulate) {
             final FileObject initD = tryGetFile(userHome, INIT_D_NAME);
 
             if (initD != null && initD.isFolder()) {
                 hasInitDDirDisplayed = true;
                 toPopulate.add(GradleFolderNode.getFactory(
                         NbStrings.getGlobalInitScriptsNodeCaption(),
-                        initD));
+                        initD,
+                        scriptProvider));
             }
         }
 
-        private void addOtherGradleFiles(File userHome, List<SingleNodeFactory> toPopulate) {
-            FileObject userHomeObj = FileUtil.toFileObject(userHome);
+        private void addOtherGradleFiles(
+                Path userHome,
+                Collection<FileObject> filtered,
+                List<SingleNodeFactory> toPopulate) {
+            FileObject userHomeObj = FileUtil.toFileObject(userHome.toFile());
             if (userHomeObj == null) {
                 return;
             }
 
-            FileObject initD = userHomeObj.getFileObject(INIT_GRADLE_NAME);
-
             List<FileObject> gradleFiles = new LinkedList<>();
             for (FileObject file: userHomeObj.getChildren()) {
-                if (file.equals(initD)) {
+                if (filtered.contains(file)) {
                     continue;
                 }
 
-                if (GradleFilesClassPathProvider.isGradleFile(file)) {
+                if (scriptProvider.isScriptFileName(file.getNameExt())) {
                     gradleFiles.add(file);
                 }
             }
@@ -313,16 +369,16 @@ public final class GradleHomeNode extends AbstractNode {
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             hasInitDDirDisplayed = false;
 
-            File userHome = getGradleUserHome();
+            Path userHome = getGradleUserHome();
             if (userHome == null) {
                 return;
             }
 
             addGradleProperties(userHome, toPopulate);
-            addInitGradle(userHome, toPopulate);
+            Collection<FileObject> initGradles = addInitGradle(userHome, toPopulate);
             addInitDDir(userHome, toPopulate);
 
-            addOtherGradleFiles(userHome, toPopulate);
+            addOtherGradleFiles(userHome, initGradles, toPopulate);
         }
 
         @Override
@@ -338,12 +394,17 @@ public final class GradleHomeNode extends AbstractNode {
         }
     }
 
-    private enum FactoryImpl implements SingleNodeFactory {
-        INSTANCE;
+    private static final class FactoryImpl implements SingleNodeFactory {
+        private final ScriptFileProvider scriptProvider;
+
+        public FactoryImpl(ScriptFileProvider scriptProvider) {
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+            this.scriptProvider = scriptProvider;
+        }
 
         @Override
         public Node createNode() {
-            return new GradleHomeNode();
+            return new GradleHomeNode(scriptProvider);
         }
     }
 
@@ -358,9 +419,9 @@ public final class GradleHomeNode extends AbstractNode {
             NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
                 @Override
                 public void execute(CancellationToken cancelToken) throws Exception {
-                    File userHome = getGradleUserHome();
+                    Path userHome = getGradleUserHome();
                     if (userHome != null) {
-                        Path initDPath = userHome.toPath().resolve(INIT_D_NAME);
+                        Path initDPath = userHome.resolve(INIT_D_NAME);
                         Files.createDirectories(initDPath);
                     }
                 }

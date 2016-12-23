@@ -15,8 +15,8 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.SettingsFiles;
-import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.RefreshableChildren;
@@ -51,7 +51,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             NbGradleProject project,
             ProjectScriptFilesChildFactory childFactory,
             Children children) {
-        super(children, createLookup(childFactory, children));
+        super(children, createLookup(project.getScriptFileProvider(), childFactory, children));
 
         ExceptionHelper.checkNotNullArgument(caption, "caption");
         ExceptionHelper.checkNotNullArgument(project, "project");
@@ -62,9 +62,12 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         setName(caption);
     }
 
-    private static Lookup createLookup(ProjectScriptFilesChildFactory childFactory, Children children) {
+    private static Lookup createLookup(
+            ScriptFileProvider scriptProvider,
+            ProjectScriptFilesChildFactory childFactory,
+            Children children) {
         return Lookups.fixed(
-                ProjectScriptFileFinder.INSTANCE,
+                new ProjectScriptFileFinder(scriptProvider),
                 NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
@@ -92,7 +95,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
             addOpenFileAction(currentModel.getSettingsFile(), actions);
         }
         addOpenFileAction(currentModel.getBuildFile().toPath(), actions);
-        actions.add(openProjectFileAction(SettingsFiles.GRADLE_PROPERTIES_NAME));
+        actions.add(openProjectFileAction(CommonScripts.GRADLE_PROPERTIES_NAME));
         actions.add(null);
         actions.add(NodeUtils.getRefreshNodeAction(this));
 
@@ -114,13 +117,18 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         return caption;
     }
 
-    private enum ProjectScriptFileFinder implements PathFinder {
-        INSTANCE;
+    private static final class ProjectScriptFileFinder implements PathFinder {
+        private final ScriptFileProvider scriptProvider;
+
+        public ProjectScriptFileFinder(ScriptFileProvider scriptProvider) {
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+            this.scriptProvider = scriptProvider;
+        }
 
         private Node findNodeByFile(Node root, FileObject target) {
-            boolean canBeFound =
-                    SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(target.getNameExt())
-                    || SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(target.getExt());
+            String baseName = target.getNameExt();
+            boolean canBeFound = CommonScripts.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(baseName)
+                    || scriptProvider.isScriptFileName(baseName);
             if (!canBeFound) {
                 return null;
             }
@@ -205,7 +213,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
         }
 
         private static File getLocalGradleProperties(NbGradleModel model) {
-            return new File(model.getProjectDir(), SettingsFiles.GRADLE_PROPERTIES_NAME);
+            return new File(model.getProjectDir(), CommonScripts.GRADLE_PROPERTIES_NAME);
         }
 
         private static FileObject tryGetLocalGradlePropertiesObj(NbGradleModel model) {
@@ -231,13 +239,15 @@ public final class ProjectScriptFilesNode extends AbstractNode {
                 addFileObject(propertiesFile, toPopulate);
             }
 
+            ScriptFileProvider scriptFileProvider = project.getScriptFileProvider();
+
             List<FileObject> gradleFiles = new LinkedList<>();
             for (FileObject file: project.getProjectDirectory().getChildren()) {
                 if (file.equals(buildGradle) || file.equals(settingsGradle)) {
                     continue;
                 }
 
-                if (GradleFilesClassPathProvider.isGradleFile(file)) {
+                if (scriptFileProvider.isScriptFileName(file.getNameExt())) {
                     gradleFiles.add(file);
                 }
             }

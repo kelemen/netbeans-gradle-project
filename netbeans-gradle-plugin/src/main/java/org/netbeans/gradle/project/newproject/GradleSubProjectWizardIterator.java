@@ -14,7 +14,8 @@ import javax.swing.event.ChangeListener;
 import org.netbeans.api.annotations.common.StaticResource;
 import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -36,6 +37,8 @@ implements
 
     @StaticResource
     private static final String SINGLE_PROJECT_BUILD_GRADLE = "org/netbeans/gradle/project/resources/newproject/subproject2.gradle";
+
+    private static final String EXTENSION = GroovyScripts.EXTENSION;
 
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
@@ -75,7 +78,7 @@ implements
 
         buildGradleContent = StringUtils.replaceLFWithPreferredLineSeparator(buildGradleContent);
 
-        Path buildGradle = projectDir.resolve(SettingsFiles.BUILD_FILE_NAME);
+        Path buildGradle = projectDir.resolve(CommonScripts.BUILD_BASE_NAME + EXTENSION);
         StringUtils.writeStringToFile(buildGradleContent, NewProjectUtils.DEFAULT_FILE_ENCODING, buildGradle);
     }
 

@@ -14,6 +14,7 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
+import org.netbeans.gradle.project.script.CommonScripts;
 
 import static org.junit.Assert.*;
 
@@ -115,7 +116,11 @@ public class PredefinedTaskTest {
             Collection<NbGradleProjectTree> subProjects) {
         String[] names = fullName.split(":");
         String name = names.length > 0 ? names[names.length - 1] : "";
-        GenericProjectProperties properties = new GenericProjectProperties(name, fullName, new File(""));
+        GenericProjectProperties properties = new GenericProjectProperties(
+                name,
+                fullName,
+                new File(""),
+                new File(CommonScripts.BUILD_BASE_NAME + CommonScripts.DEFAULT_SCRIPT_EXTENSION));
 
         return new NbGradleProjectTree(properties, tasks, subProjects);
     }

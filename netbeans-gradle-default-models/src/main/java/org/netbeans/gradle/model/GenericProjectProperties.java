@@ -24,6 +24,9 @@ public final class GenericProjectProperties implements Serializable {
     private final File buildDir;
 
     /**
+     * @deprecated This constructor has a poor logic of detecting the build file, you
+     *   should explicitly provide the build file instead.
+     * <P>
      * Creates a new {@code GenericProjectProperties} with the specified
      * properties and with a build script chosen by an implementation dependent
      * heuristic.
@@ -41,6 +44,7 @@ public final class GenericProjectProperties implements Serializable {
      * @throws NullPointerException thrown if any of the arguments is
      *   {@code null}
      */
+    @Deprecated
     public GenericProjectProperties(
             String projectName,
             String projectFullName,
@@ -61,6 +65,33 @@ public final class GenericProjectProperties implements Serializable {
         }
 
         return defaultBuildFile;
+    }
+
+    /**
+     * Creates a new {@code GenericProjectProperties} with the specified
+     * properties.
+     *
+     * @param projectName the short name of the project as returned by
+     *   {@link org.gradle.api.Project.getName()}. This argument cannot be
+     *   {@code null}.
+     * @param projectFullName the fully-qualified name of the project as
+     *   returned by {@link org.gradle.api.Project.getPath()}. This argument
+     *   cannot be {@code null}.
+     * @param projectDir the project directory as returned by
+     *   {@link org.gradle.api.Project.getProjectDir()}. This argument cannot
+     *   be {@code null}.
+     * @param buildScript the path to the build script file. Can be {@code null},
+     *   if there is no build script file to use.
+     *
+     * @throws NullPointerException thrown if any of the arguments is
+     *   {@code null}
+     */
+    public GenericProjectProperties(
+            String projectName,
+            String projectFullName,
+            File projectDir,
+            File buildScript) {
+        this(defaultProjectId(projectName), projectFullName, projectDir, buildScript);
     }
 
     /**

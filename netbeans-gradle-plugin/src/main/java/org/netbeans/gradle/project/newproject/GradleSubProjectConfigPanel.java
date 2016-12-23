@@ -5,13 +5,16 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.validate.Problem;
 import org.netbeans.gradle.project.validate.Validator;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
 public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+    private static final String EXTENSION = GroovyScripts.EXTENSION;
+
     private final AtomicReference<GradleSingleProjectPropertiesPanel> panel;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
     private final WizardDescriptor wizard;
@@ -42,12 +45,12 @@ public final class GradleSubProjectConfigPanel implements WizardDescriptor.Panel
                     public Problem validateInput(String inputType) {
                         File rootProject = new File(inputType);
 
-                        Problem problemRootBuild = checkFile(rootProject, SettingsFiles.BUILD_FILE_NAME);
+                        Problem problemRootBuild = checkFile(rootProject, CommonScripts.BUILD_BASE_NAME + EXTENSION);
                         if (problemRootBuild != null) {
                             return problemRootBuild;
                         }
 
-                        Problem problemRootSettings = checkFile(rootProject, SettingsFiles.SETTINGS_GRADLE);
+                        Problem problemRootSettings = checkFile(rootProject, CommonScripts.SETTINGS_BASE_NAME + EXTENSION);
                         if (problemRootSettings != null) {
                             return problemRootSettings;
                         }

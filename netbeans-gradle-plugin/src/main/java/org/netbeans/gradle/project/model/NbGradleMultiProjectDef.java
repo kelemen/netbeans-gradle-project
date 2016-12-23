@@ -5,12 +5,14 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleMultiProjectDef;
 import org.netbeans.gradle.model.GradleProjectTree;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 
 public final class NbGradleMultiProjectDef implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -83,11 +85,10 @@ public final class NbGradleMultiProjectDef implements Serializable {
         return prop1.getProjectName().equals(prop2.getProjectName());
     }
 
-    public static NbGradleMultiProjectDef createEmpty(File projectDir) {
-        NbGradleProjectTree emptyTree = NbGradleProjectTree.createEmpty(projectDir);
+    public static NbGradleMultiProjectDef createEmpty(Path projectDir, ScriptFileProvider scriptProvider) {
+        NbGradleProjectTree emptyTree = NbGradleProjectTree.createEmpty(projectDir, scriptProvider);
         return new NbGradleMultiProjectDef(emptyTree, emptyTree);
     }
-
 
     public NbGradleProjectTree getRootProject() {
         return rootProject;

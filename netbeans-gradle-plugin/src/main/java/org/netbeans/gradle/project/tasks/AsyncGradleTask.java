@@ -75,6 +75,7 @@ import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.util.Closeables;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -139,7 +140,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static TemporaryFileRef getManualInitScript(File baseDir, InitScriptQueryEx scriptQuery) throws IOException {
-        final File scriptFile = new File(baseDir, scriptQuery.getBaseFileName() + ".gradle");
+        final File scriptFile = new File(baseDir, scriptQuery.getBaseFileName() + GroovyScripts.EXTENSION);
         if (!scriptFile.isFile()) {
             String content = scriptQuery.getInitScript();
             try (RandomAccessFile editor = new RandomAccessFile(scriptFile, "rw")) {

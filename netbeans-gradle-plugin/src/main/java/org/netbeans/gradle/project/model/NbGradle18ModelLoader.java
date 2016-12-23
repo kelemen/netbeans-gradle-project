@@ -345,7 +345,9 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
         private final GenericModelFetcher modelFetcher;
 
         public ProjectModelFetcher(NbGradleProject project, GradleTarget gradleTarget) {
-            this.settingsFile = NbGenericModelInfo.findSettingsGradle(project.getProjectDirectoryAsFile());
+            this.settingsFile = NbGenericModelInfo.findSettingsGradle(
+                    project.getProjectDirectoryAsPath(),
+                    project.getScriptFileProvider());
 
             List<NbGradleExtensionRef> extensions = project.getExtensions().getExtensionRefs();
             this.toolingModelNeeds = CollectionUtils.newHashMap(extensions.size());

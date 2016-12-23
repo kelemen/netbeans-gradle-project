@@ -21,7 +21,7 @@ import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.filesupport.GradleTemplateConsts;
 import org.netbeans.gradle.project.filesupport.GradleTemplateRegistration;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -45,8 +45,8 @@ public final class GradleFolderNode extends AbstractNode {
     private final String caption;
     private final FileObject dir;
 
-    public GradleFolderNode(String caption, FileObject dir) {
-        this(caption, dir, new ChildFactoryImpl(dir));
+    public GradleFolderNode(String caption, FileObject dir, ScriptFileProvider scriptProvider) {
+        this(caption, dir, new ChildFactoryImpl(dir, scriptProvider));
     }
 
     private GradleFolderNode(
@@ -70,11 +70,8 @@ public final class GradleFolderNode extends AbstractNode {
         setName(dir.toString());
     }
 
-    public static SingleNodeFactory getFactory(String caption, FileObject dir) {
-        ExceptionHelper.checkNotNullArgument(caption, "caption");
-        ExceptionHelper.checkNotNullArgument(dir, "dir");
-
-        return new FactoryImpl(caption, dir);
+    public static SingleNodeFactory getFactory(String caption, FileObject dir, ScriptFileProvider scriptProvider) {
+        return new FactoryImpl(caption, dir, scriptProvider);
     }
 
     private static Lookup createLookup(ChildFactoryImpl childFactory, Children children) {
@@ -154,13 +151,16 @@ public final class GradleFolderNode extends AbstractNode {
     implements
             RefreshableChildren {
         private final FileObject dir;
+        private final ScriptFileProvider scriptProvider;
         private final ListenerRegistrations listenerRegistrations;
         private volatile boolean createdOnce;
 
-        public ChildFactoryImpl(FileObject dir) {
+        public ChildFactoryImpl(FileObject dir, ScriptFileProvider scriptProvider) {
             ExceptionHelper.checkNotNullArgument(dir, "dir");
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
 
             this.dir = dir;
+            this.scriptProvider = scriptProvider;
             this.listenerRegistrations = new ListenerRegistrations();
             this.createdOnce = false;
         }
@@ -201,8 +201,7 @@ public final class GradleFolderNode extends AbstractNode {
             });
 
             for (FileObject child: children) {
-                String ext = child.getExt();
-                if (SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT.equalsIgnoreCase(ext)) {
+                if (scriptProvider.isScriptFileName(child.getNameExt())) {
                     SingleNodeFactory node = tryGetGradleNode(child);
                     if (node != null) {
                         toPopulate.add(node);
@@ -227,15 +226,21 @@ public final class GradleFolderNode extends AbstractNode {
     private static final class FactoryImpl implements SingleNodeFactory {
         private final String caption;
         private final FileObject dir;
+        private final ScriptFileProvider scriptProvider;
 
-        public FactoryImpl(String caption, FileObject dir) {
+        public FactoryImpl(String caption, FileObject dir, ScriptFileProvider scriptProvider) {
+            ExceptionHelper.checkNotNullArgument(caption, "caption");
+            ExceptionHelper.checkNotNullArgument(dir, "dir");
+            ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+
             this.caption = caption;
             this.dir = dir;
+            this.scriptProvider = scriptProvider;
         }
 
         @Override
         public Node createNode() {
-            return new GradleFolderNode(caption, dir);
+            return new GradleFolderNode(caption, dir, scriptProvider);
         }
 
         @Override

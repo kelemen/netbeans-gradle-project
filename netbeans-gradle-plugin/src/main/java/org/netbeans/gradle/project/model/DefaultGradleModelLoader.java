@@ -57,6 +57,7 @@ import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
@@ -627,8 +628,10 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         return result;
     }
 
-    public static NbGradleModel createEmptyModel(File projectDir) {
-        return new NbGradleModel(NbGradleMultiProjectDef.createEmpty(projectDir));
+    public static NbGradleModel createEmptyModel(Path projectDir, ScriptFileProvider scriptProvider) {
+        return new NbGradleModel(
+                NbGradleMultiProjectDef.createEmpty(projectDir, scriptProvider),
+                scriptProvider);
     }
 
     private static List<String> getModelEvaluateArguments(Project project, SettingsGradleDef settingsDef) {
@@ -774,7 +777,9 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
                 return settingsFile;
             }
 
-            return NbGradleModel.findSettingsGradle(project.getProjectDirectoryAsFile());
+            return NbGradleModel.findSettingsGradle(
+                    project.getProjectDirectoryAsPath(),
+                    project.getScriptFileProvider());
         }
 
         public Path getAppliedRootProjectDir() {

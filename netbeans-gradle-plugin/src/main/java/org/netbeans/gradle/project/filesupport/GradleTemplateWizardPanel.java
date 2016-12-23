@@ -12,7 +12,7 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.newproject.NewProjectStrings;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.validate.BackgroundValidator;
 import org.netbeans.gradle.project.validate.Problem;
@@ -101,12 +101,12 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
     }
 
     private static String toGradleFileName(String rawFileName) {
-        String ext = SettingsFiles.DEFAULT_GRADLE_EXTENSION;
+        String ext = GroovyScripts.EXTENSION;
         if (rawFileName.toLowerCase(Locale.ROOT).endsWith(ext)) {
             return rawFileName.substring(0, rawFileName.length() - ext.length()) + ext;
         }
         else if (rawFileName.endsWith(".")) {
-            return rawFileName + SettingsFiles.DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT;
+            return rawFileName + GroovyScripts.EXTENSION_WITHOUT_DOT;
         }
         else {
             return rawFileName + ext;

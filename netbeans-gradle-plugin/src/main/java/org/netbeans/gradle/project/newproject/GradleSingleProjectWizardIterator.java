@@ -19,6 +19,8 @@ import org.netbeans.api.templates.TemplateRegistration;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.properties.SettingsFiles;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.WizardDescriptor;
 import org.openide.filesystems.FileObject;
@@ -41,6 +43,8 @@ implements
     @StaticResource
     private static final String SINGLE_PROJECT_SETTINGS_GRADLE = "org/netbeans/gradle/project/resources/newproject/single-project-settings.gradle";
 
+    private static final String EXTENSION = GroovyScripts.EXTENSION;
+
     private final List<WizardDescriptor.Panel<WizardDescriptor>> descriptors;
     private final AtomicReference<GradleSingleProjectConfig> configRef;
     private int descriptorIndex;
@@ -62,7 +66,7 @@ implements
         varReplaceMap.put("${SOURCE_LEVEL}", sourceLevel);
 
         NewProjectUtils.copyTemplateFile(SINGLE_PROJECT_BUILD_GRADLE,
-                projectDir.resolve(SettingsFiles.BUILD_FILE_NAME),
+                projectDir.resolve(CommonScripts.BUILD_BASE_NAME + EXTENSION),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }
@@ -72,7 +76,7 @@ implements
                 Collections.singletonMap("${PROJECT_NAME}", projectDir.getFileName().toString());
 
         NewProjectUtils.copyTemplateFile(SINGLE_PROJECT_SETTINGS_GRADLE,
-                projectDir.resolve(SettingsFiles.SETTINGS_GRADLE),
+                projectDir.resolve(CommonScripts.SETTINGS_BASE_NAME + EXTENSION),
                 NewProjectUtils.DEFAULT_FILE_ENCODING,
                 varReplaceMap);
     }

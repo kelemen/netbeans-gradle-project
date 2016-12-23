@@ -13,7 +13,8 @@ import org.netbeans.gradle.model.ProjectId;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
@@ -66,8 +67,11 @@ public final class NbGradleModel {
     // If true, we must instruct Gradle not to search for a settings.gradle.
     private final boolean rootWithoutSettingsGradle;
 
-    public NbGradleModel(NbGradleMultiProjectDef projectDef) {
-        this(new NbGenericModelInfo(projectDef), Collections.<String, Object>emptyMap(), false, false);
+    public NbGradleModel(NbGradleMultiProjectDef projectDef, ScriptFileProvider scriptProvider) {
+        this(new NbGenericModelInfo(projectDef, scriptProvider),
+                Collections.<String, Object>emptyMap(),
+                false,
+                false);
     }
 
     public NbGradleModel(
@@ -132,16 +136,12 @@ public final class NbGradleModel {
         extension.setModelForExtension(extensionModels.get(extension.getName()));
     }
 
-    public static File getBuildFile(File projectDir) {
-        return NbGenericModelInfo.getBuildFile(projectDir);
+    public static Path findSettingsGradle(Path projectDir, ScriptFileProvider scriptProvider) {
+        return NbGenericModelInfo.findSettingsGradle(projectDir, scriptProvider);
     }
 
-    public static Path findSettingsGradle(File projectDir) {
-        return NbGenericModelInfo.findSettingsGradle(projectDir);
-    }
-
-    public static FileObject findSettingsGradle(FileObject projectDir) {
-        return NbGenericModelInfo.findSettingsGradle(projectDir);
+    public static FileObject findSettingsGradle(FileObject projectDir, ScriptFileProvider scriptProvider) {
+        return NbGenericModelInfo.findSettingsGradle(projectDir, scriptProvider);
     }
 
     public ProjectId getProjectId() {
@@ -196,7 +196,7 @@ public final class NbGradleModel {
     }
 
     public static boolean isBuildSrcDirectory(File projectDir) {
-        return projectDir.getName().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME);
+        return projectDir.getName().equalsIgnoreCase(CommonScripts.BUILD_SRC_NAME);
     }
 
     public boolean isBuildSrc() {

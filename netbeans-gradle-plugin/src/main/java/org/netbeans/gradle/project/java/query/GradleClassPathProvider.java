@@ -49,11 +49,13 @@ import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.So
 import org.netbeans.gradle.project.java.query.ProjectClassPathResourceBuilder.SpecialClassPath;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.query.GradleFilesClassPathProvider;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -87,13 +89,21 @@ implements
 
     private final ListenerRegistrations propertyListenerRefs;
 
-    public GradleClassPathProvider(JavaExtension javaExt) {
+    private final LazyValue<ScriptFileProvider> scriptFileProviderRef;
+
+    public GradleClassPathProvider(final JavaExtension javaExt) {
         ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
 
         this.javaExt = javaExt;
         this.currentPlatformRef = new AtomicReference<>(null);
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
+        this.scriptFileProviderRef = new LazyValue<>(new NbSupplier<ScriptFileProvider>() {
+            @Override
+            public ScriptFileProvider get() {
+                return javaExt.getProject().getLookup().lookup(ScriptFileProvider.class);
+            }
+        });
 
         this.classpathResourcesRef = new AtomicReference<>(Collections.<ClassPathKey, List<PathResourceImplementation>>emptyMap());
         this.classpaths = new ConcurrentHashMap<>();
@@ -411,9 +421,18 @@ implements
         return classpathResourcesRef.get();
     }
 
+    private boolean isScriptFile(FileObject file) {
+        ScriptFileProvider scriptProvider = scriptFileProviderRef.get();
+        if (scriptProvider == null) {
+            return false;
+        }
+
+        return scriptProvider.isScriptFileName(file.getNameExt());
+    }
+
     @Override
     public ClassPath findClassPath(FileObject file, String type) {
-        if (GradleFilesClassPathProvider.isGradleFile(file)) {
+        if (isScriptFile(file)) {
             return null;
         }
 

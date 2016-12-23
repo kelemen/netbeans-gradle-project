@@ -3,7 +3,8 @@ package org.netbeans.gradle.project.filesupport;
 import java.io.IOException;
 import org.netbeans.core.api.multiview.MultiViews;
 import org.netbeans.gradle.project.NbIcons;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.GroovyScripts;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -88,6 +89,9 @@ public final class GradleDataObject extends MultiDataObject {
 
     public static final String GRADLE_MIME_TYPE = "text/x-gradle";
     private static final String GROOVY_MIME_TYPE = "text/x-groovy";
+
+    private static final String BUILD_FILE_NAME = CommonScripts.BUILD_BASE_NAME + GroovyScripts.EXTENSION;
+    private static final String SETTINGS_FILE_NAME = CommonScripts.SETTINGS_BASE_NAME + GroovyScripts.EXTENSION;
 
     public GradleDataObject(FileObject pf, MultiFileLoader loader) throws DataObjectExistsException {
         super(pf, loader);
@@ -181,8 +185,8 @@ public final class GradleDataObject extends MultiDataObject {
         }
 
         private boolean shouldAnnotate(String baseFileName) {
-            return SettingsFiles.BUILD_FILE_NAME.equalsIgnoreCase(baseFileName)
-                    || SettingsFiles.SETTINGS_GRADLE.equalsIgnoreCase(baseFileName);
+            return BUILD_FILE_NAME.equalsIgnoreCase(baseFileName)
+                    || SETTINGS_FILE_NAME.equalsIgnoreCase(baseFileName);
         }
 
         private String annotateWithFolder(String name) {

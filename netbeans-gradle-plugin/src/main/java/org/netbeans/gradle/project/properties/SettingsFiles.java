@@ -20,13 +20,6 @@ import org.netbeans.gradle.project.model.NbGradleModel;
 public final class SettingsFiles {
     private static final Logger LOGGER = Logger.getLogger(SettingsFiles.class.getName());
 
-    public static final String SETTINGS_GRADLE = "settings.gradle";
-    public static final String BUILD_FILE_NAME = "build.gradle";
-    public static final String GRADLE_PROPERTIES_NAME = "gradle.properties";
-    public static final String BUILD_SRC_NAME = "buildSrc";
-    public static final String DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT = "gradle";
-    public static final String DEFAULT_GRADLE_EXTENSION = "." + DEFAULT_GRADLE_EXTENSION_WITHOUT_DOT;
-
     private static final String DEFAULT_PROPERTIES_FILENAME = ".nb-gradle-properties";
     private static final String PROFILE_FILE_NAME_SUFFIX = ".profile";
     private static final String SETTINGS_DIR_NAME = ".nb-gradle";

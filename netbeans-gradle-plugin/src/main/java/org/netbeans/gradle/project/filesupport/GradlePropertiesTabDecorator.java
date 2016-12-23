@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.filesupport;
 
 import java.awt.Component;
 import org.netbeans.core.multitabs.TabDecorator;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.swing.tabcontrol.TabData;
 import org.openide.filesystems.FileObject;
@@ -29,7 +29,7 @@ public class GradlePropertiesTabDecorator extends TabDecorator {
     }
 
     private boolean shouldAnnotate(FileObject file) {
-        if (!SettingsFiles.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(file.getNameExt())) {
+        if (!CommonScripts.GRADLE_PROPERTIES_NAME.equalsIgnoreCase(file.getNameExt())) {
             return false;
         }
 

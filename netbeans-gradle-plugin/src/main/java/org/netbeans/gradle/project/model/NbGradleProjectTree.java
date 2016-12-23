@@ -5,6 +5,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +18,8 @@ import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.GradleProjectTree;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
+import org.netbeans.gradle.project.util.NbFileUtils;
 
 public final class NbGradleProjectTree implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -117,9 +120,10 @@ public final class NbGradleProjectTree implements Serializable {
         return Collections.unmodifiableList(result);
     }
 
-    public static NbGradleProjectTree createEmpty(File projectDir) {
+    public static NbGradleProjectTree createEmpty(Path projectDir, ScriptFileProvider scriptProvider) {
+        String baseName = NbFileUtils.getFileNameStr(projectDir);
         return new NbGradleProjectTree(
-                new GenericProjectProperties(projectDir.getName(), ":" + projectDir.getName(), projectDir),
+                NbGenericModelInfo.createProjectProperties(baseName, ":" + baseName, projectDir, scriptProvider),
                 Collections.<GradleTaskID>emptyList(),
                 Collections.<NbGradleProjectTree>emptyList());
     }

@@ -13,37 +13,70 @@ import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbFileUtils;
+import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 
 @SuppressWarnings("serial")
 public final class OpenAlwaysFileAction extends AbstractAction {
-    private final Path file;
+    private final NbSupplier<? extends Path> fileRef;
 
     public OpenAlwaysFileAction(Path file) {
         this(NbStrings.getOpenFileCaption(NbFileUtils.getFileNameStr(file)), file);
     }
 
-    public OpenAlwaysFileAction(String name, Path file) {
-        super(name);
+    public OpenAlwaysFileAction(String name, final Path file) {
+        this(name, new NbSupplier<Path>() {
+            @Override
+            public Path get() {
+                return file;
+            }
+        });
 
         ExceptionHelper.checkNotNullArgument(file, "file");
-        this.file = file;
     }
 
-    private void createNewFile() throws IOException {
-        Files.createFile(file);
+    public OpenAlwaysFileAction(String name, NbSupplier<? extends Path> fileRef) {
+        super(name);
+
+        ExceptionHelper.checkNotNullArgument(fileRef, "fileRef");
+        this.fileRef = fileRef;
+    }
+
+    public static OpenAlwaysFileAction openScriptAction(
+            final Path baseDir,
+            final String scriptBaseName,
+            final ScriptFileProvider scriptProvider) {
+        ExceptionHelper.checkNotNullArgument(baseDir, "baseDir");
+        ExceptionHelper.checkNotNullArgument(scriptBaseName, "scriptBaseName");
+        ExceptionHelper.checkNotNullArgument(scriptProvider, "scriptProvider");
+
+        String caption = NbStrings.getOpenFileCaption(scriptBaseName + CommonScripts.DEFAULT_SCRIPT_EXTENSION);
+        final CommonScripts commonScripts = new CommonScripts(scriptProvider);
+        return new OpenAlwaysFileAction(caption, new NbSupplier<Path>() {
+            @Override
+            public Path get() {
+                return commonScripts.getScriptFilePath(baseDir, scriptBaseName);
+            }
+        });
     }
 
     private FileObject tryGetFileObjectCreateIfNeeded() {
+        Path file = fileRef.get();
+        if (file == null) {
+            return null;
+        }
+
         if (!Files.isRegularFile(file)) {
             Path dir = file.getParent();
             if (dir != null) {
                 try {
                     Files.createDirectories(dir);
-                    createNewFile();
+                    Files.createFile(file);
                 } catch (IOException ex) {
                     return null;
                 }
@@ -55,7 +88,7 @@ public final class OpenAlwaysFileAction extends AbstractAction {
 
     private void showCannotCreateFile() {
         // TODO: I18N
-        String message = "Cannot create file: " + file;
+        String message = "Cannot create file: " + fileRef.get();
         String title = "File open error";
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }

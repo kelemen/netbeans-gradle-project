@@ -24,6 +24,7 @@ import org.netbeans.gradle.project.java.model.NbCodeCoverage;
 import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
+import org.netbeans.gradle.project.script.CommonScripts;
 
 public final class JavaModelTestUtils {
     private static JavaSourceSet createDefaultSourceSet(File rootDir, String name) throws IOException {
@@ -70,7 +71,8 @@ public final class JavaModelTestUtils {
         GenericProjectProperties properties = new GenericProjectProperties(
                 "testProject",
                 ":parent:testProject",
-                rootDir);
+                rootDir,
+                new File(rootDir, CommonScripts.BUILD_BASE_NAME + CommonScripts.DEFAULT_SCRIPT_EXTENSION));
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel("1.8", "1.8");
         Collection<JavaSourceSet> sources = Arrays.asList(
                 createDefaultSourceSet(rootDir, "main"),

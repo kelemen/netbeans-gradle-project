@@ -25,7 +25,7 @@ import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.model.NbGradleModel;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -69,7 +69,7 @@ public final class BuildScriptsNode extends AbstractNode {
                 NodeUtils.defaultNodeRefresher(children, childFactory));
     }
 
-    public static SingleNodeFactory getFactory(final NbGradleProject project) {
+    public static SingleNodeFactory getFactory(NbGradleProject project) {
         return new NodeFactoryImpl(project);
     }
 
@@ -124,7 +124,7 @@ public final class BuildScriptsNode extends AbstractNode {
     }
 
     private static Path getBuildSrcDir(NbGradleModel currentModel) {
-        return currentModel.getSettingsDir().resolve(SettingsFiles.BUILD_SRC_NAME);
+        return currentModel.getSettingsDir().resolve(CommonScripts.BUILD_SRC_NAME);
     }
 
     private static class BuildScriptChildFactory
@@ -139,6 +139,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         public BuildScriptChildFactory(NbGradleProject project) {
             ExceptionHelper.checkNotNullArgument(project, "project");
+
             this.project = project;
             this.listenerRefs = new ListenerRegistrations();
             this.createdOnce = false;
@@ -194,7 +195,7 @@ public final class BuildScriptsNode extends AbstractNode {
                 addProjectScriptsNode(NbStrings.getRootProjectScriptNodeCaption(), rootProjectDir, toPopulate);
             }
 
-            toPopulate.add(GradleHomeNode.getFactory());
+            toPopulate.add(GradleHomeNode.getFactory(project.getScriptFileProvider()));
         }
 
         @Override
@@ -252,7 +253,7 @@ public final class BuildScriptsNode extends AbstractNode {
         private void createBuildSrc(Path buildSrcDir) throws IOException {
             createDirs(buildSrcDir);
 
-            Path buildGradle = buildSrcDir.resolve(SettingsFiles.BUILD_FILE_NAME);
+            Path buildGradle = buildSrcDir.resolve(CommonScripts.BUILD_BASE_NAME + CommonScripts.DEFAULT_SCRIPT_EXTENSION);
             List<String> buildGradleContent = Arrays.asList(
                     "apply plugin: 'groovy'",
                     "",
@@ -390,6 +391,8 @@ public final class BuildScriptsNode extends AbstractNode {
         private final File projectDir;
 
         public NodeFactoryImpl(NbGradleProject project) {
+            ExceptionHelper.checkNotNullArgument(project, "project");
+
             this.project = project;
             this.projectDir = project.getProjectDirectoryAsFile();
         }

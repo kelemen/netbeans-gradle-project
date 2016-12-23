@@ -23,7 +23,6 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
-import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JavaClassPaths;
@@ -42,33 +41,16 @@ import org.netbeans.gradle.project.java.model.NbJarOutput;
 import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
+import org.netbeans.gradle.project.model.NbGenericModelInfo;
 import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
-import org.netbeans.gradle.project.util.GradleVersions;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Lookup;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 
 public final class IdeaJavaModelUtils {
     private static final Logger LOGGER = Logger.getLogger(IdeaJavaModelUtils.class.getName());
 
-    public static NbJavaModel createEmptyModel(FileObject projectDir) {
-        File projectDirAsFile = FileUtil.toFile(projectDir);
-        if (projectDirAsFile == null) {
-            throw new IllegalStateException("Project directory does not exist.");
-        }
-        return createEmptyModel(projectDirAsFile, Lookup.EMPTY);
-    }
-
-    public static NbJavaModel createEmptyModel(File projectDir) {
-        ExceptionHelper.checkNotNullArgument(projectDir, "projectDir");
-
-        return createEmptyModel(projectDir, Lookup.EMPTY);
-    }
-
     private static File getDefaultBuildDir(File projectDir) {
         return new File(projectDir, "build");
     }
-
 
     private static File getDefaultMainClasses(File projectDir) {
         File classesDir = new File(getDefaultBuildDir(projectDir), "classes");
@@ -97,26 +79,6 @@ public final class IdeaJavaModelUtils {
 
     private static NbJavaModel createUnreliableModel(GradleTarget evaluationEnvironment, NbJavaModule mainModule) {
         return NbJavaModel.createModel(evaluationEnvironment, JavaModelSource.COMPATIBLE_API, mainModule);
-    }
-
-    public static NbJavaModel createEmptyModel(File projectDir, Lookup otherModels) {
-        String name = projectDir.getName();
-        String level = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
-
-        GenericProjectProperties properties = new GenericProjectProperties(name, name, projectDir);
-        JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
-
-        NbJavaModule result = new NbJavaModule(
-                properties,
-                compatibilityModel,
-                Collections.<JavaSourceSet>emptyList(),
-                Collections.<NbListedDir>emptyList(),
-                Collections.<NbJarOutput>emptyList(),
-                JavaTestModel.getDefaulTestModel(projectDir),
-                NbCodeCoverage.NO_CODE_COVERAGE
-        );
-
-        return createUnreliableModel(GradleVersions.DEFAULT_TARGET, result);
     }
 
     private static Collection<JavaSourceGroup> fromIdeaSourceRoots(Collection<? extends IdeaSourceDirectory> roots) {
@@ -307,8 +269,10 @@ public final class IdeaJavaModelUtils {
         return result;
     }
 
-    private static NbJavaModule tryParseModule(IdeaModule module,
-            Map<String, IdeaDependencyBuilder> cache) {
+    private static NbJavaModule tryParseModule(
+            IdeaModule module,
+            Map<String, IdeaDependencyBuilder> cache,
+            ScriptFileProvider scriptProvider) {
         String uniqueName = module.getGradleProject().getPath();
 
         File moduleDir = tryGetModuleDir(module);
@@ -335,7 +299,8 @@ public final class IdeaJavaModelUtils {
         String scriptDisplayName = module.getName();
         if (scriptDisplayName == null) scriptDisplayName = "";
 
-        GenericProjectProperties properties = new GenericProjectProperties(scriptDisplayName, uniqueName, moduleDir);
+        GenericProjectProperties properties = NbGenericModelInfo
+                .createProjectProperties(scriptDisplayName, uniqueName, moduleDir.toPath(), scriptProvider);
         JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(sourceLevel, targetLevel);
 
         List<NbListedDir> listedDirs = lookupListedDirs(sourceSets);
@@ -353,7 +318,8 @@ public final class IdeaJavaModelUtils {
     public static Map<File, NbJavaModel> parseFromIdeaModel(
             GradleTarget evaluationEnvironment,
             File projectDir,
-            IdeaProject ideaModel) throws IOException {
+            IdeaProject ideaModel,
+            ScriptFileProvider scriptProvider) throws IOException {
         IdeaModule mainModule = tryFindMainModule(projectDir, ideaModel);
         if (mainModule == null) {
             throw new IOException("Unable to find the main project in the model.");
@@ -366,7 +332,7 @@ public final class IdeaJavaModelUtils {
 
         Map<File, NbJavaModule> parsedModules = CollectionUtils.newHashMap(modulesCount);
         for (IdeaModule module: modules) {
-            NbJavaModule parsedModule = tryParseModule(module, cache);
+            NbJavaModule parsedModule = tryParseModule(module, cache, scriptProvider);
             if (parsedModule != null) {
                 parsedModules.put(parsedModule.getModuleDir(), parsedModule);
             }

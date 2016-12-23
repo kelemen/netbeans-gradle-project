@@ -42,6 +42,7 @@ import org.netbeans.gradle.project.properties.ProjectPropertiesApi;
 import org.netbeans.gradle.project.query.GradleSharabilityQuery;
 import org.netbeans.gradle.project.query.GradleSourceEncodingQuery;
 import org.netbeans.gradle.project.query.GradleTemplateAttrProvider;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.util.CloseableAction;
@@ -200,6 +201,10 @@ public final class NbGradleProject implements Project {
         return ServiceObjects.LICENSE_STORE;
     }
 
+    public ScriptFileProvider getScriptFileProvider() {
+        return getServiceObjects().scriptFileProvider;
+    }
+
     @Nonnull
     public String getName() {
         return name;
@@ -292,6 +297,7 @@ public final class NbGradleProject implements Project {
         public final ProjectDisplayInfo projectDisplayInfo;
         public final BuiltInGradleCommandQuery mergedCommandQuery;
         public final SettingsFileManager settingsFileManager;
+        public final ScriptFileProvider scriptFileProvider;
 
         public final Lookup services;
         public final NbGradleProjectLookups projectLookups;
@@ -301,15 +307,19 @@ public final class NbGradleProject implements Project {
             List<Object> serviceObjects = new LinkedList<>();
             serviceObjects.add(project);
 
-            File projectDir = project.getProjectDirectoryAsFile();
+            Path projectDir = project.getProjectDirectoryAsPath();
+            File projectDirAsFile = project.getProjectDirectoryAsFile();
 
+            this.scriptFileProvider = add(NbGradleProjectFactory.DEFAULT_SCRIPT_FILE_PROVIDER, serviceObjects);
+            Path predictedSettingsDir = getSettingsDir(project.getProjectDirectoryAsPath(), this.scriptFileProvider);
             this.configProvider = add(
-                    NbGradleSingleProjectConfigProvider.create(getSettingsDir(projectDir), project),
+                    NbGradleSingleProjectConfigProvider.create(predictedSettingsDir, project),
                     serviceObjects);
             this.profileLoader = new ProjectProfileLoader(configProvider);
             this.commonProperties = configProvider.getCommonProperties(configProvider.getActiveSettingsQuery());
 
-            this.modelManager = new ProjectModelManager(project, DefaultGradleModelLoader.createEmptyModel(projectDir));
+            this.modelManager = new ProjectModelManager(project,
+                    DefaultGradleModelLoader.createEmptyModel(projectDir, scriptFileProvider));
             ModelRetrievedListener<NbGradleModel> modelUpdateListener = new ModelRetrievedListener<NbGradleModel>() {
                 @Override
                 public void updateModel(NbGradleModel model, Throwable error) {
@@ -321,7 +331,7 @@ public final class NbGradleProject implements Project {
             };
 
             this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelUpdateListener);
-            this.settingsFileManager = new SettingsFileManager(projectDir, SETTINGS_FILE_MANAGER);
+            this.settingsFileManager = new SettingsFileManager(projectDirAsFile, SETTINGS_FILE_MANAGER);
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
                     commonProperties.displayNamePattern().getActiveSource());
@@ -380,10 +390,10 @@ public final class NbGradleProject implements Project {
             return result.create();
         }
 
-        private static Path getSettingsDir(File projectDir) {
-            Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir);
+        private static Path getSettingsDir(Path projectDir, ScriptFileProvider scriptProvider) {
+            Path settingsGradle = NbGradleModel.findSettingsGradle(projectDir, scriptProvider);
             Path rootDir = settingsGradle != null ? settingsGradle.getParent() : null;
-            return rootDir != null ? rootDir : projectDir.toPath();
+            return rootDir != null ? rootDir : projectDir;
         }
 
         private static ProjectOpenedHook createOpenHook(

@@ -12,7 +12,10 @@ import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectManager;
-import org.netbeans.gradle.project.properties.SettingsFiles;
+import org.netbeans.gradle.project.model.NbGenericModelInfo;
+import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.script.DefaultScriptFileProvider;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.ProjectFactory2;
@@ -27,6 +30,8 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     static final RootProjectRegistry ROOT_PROJECT_REGISTRY = new RootProjectRegistry();
     static final GlobalSettingsFileManager SETTINGS_FILE_MANAGER
             = new DefaultGlobalSettingsFileManager(ROOT_PROJECT_REGISTRY);
+
+    public static final ScriptFileProvider DEFAULT_SCRIPT_FILE_PROVIDER = new DefaultScriptFileProvider();
 
     private static final ConcurrentMap<Path, RefCounter> SAFE_TO_OPEN_PROJECTS
             = new ConcurrentHashMap<>();
@@ -159,10 +164,13 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static boolean hasBuildFile(FileObject directory) {
-        return directory.getFileObject(SettingsFiles.BUILD_FILE_NAME) != null
-                || directory.getFileObject(SettingsFiles.SETTINGS_GRADLE) != null
-                || directory.getFileObject(directory.getNameExt() + SettingsFiles.DEFAULT_GRADLE_EXTENSION) != null
-                || directory.getFileObject(directory.getNameExt() + "-" + SettingsFiles.BUILD_FILE_NAME) != null;
+        File dirAsFile = FileUtil.toFile(directory);
+        if (dirAsFile == null) {
+            return false;
+        }
+
+        Path dirAsPath = dirAsFile.toPath();
+        return NbGenericModelInfo.tryGuessBuildFilePath(dirAsPath, DEFAULT_SCRIPT_FILE_PROVIDER) != null;
     }
 
     @Override
@@ -198,7 +206,7 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
         if (hasBuildFile(projectDirectory)) {
             return true;
         }
-        if (projectDirectory.getNameExt().equalsIgnoreCase(SettingsFiles.BUILD_SRC_NAME)) {
+        if (projectDirectory.getNameExt().equalsIgnoreCase(CommonScripts.BUILD_SRC_NAME)) {
             FileObject parent = projectDirectory.getParent();
             if (parent != null) {
                 if (hasBuildFile(parent)) {

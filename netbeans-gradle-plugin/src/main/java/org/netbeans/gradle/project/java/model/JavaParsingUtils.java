@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.java.model;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.model.GenericProjectProperties;
 import org.netbeans.gradle.model.java.JacocoModel;
 import org.netbeans.gradle.model.java.JarOutput;
@@ -27,7 +29,15 @@ import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.entry.ModelLoadResult;
+import org.netbeans.gradle.project.api.modelquery.GradleTarget;
+import org.netbeans.gradle.project.model.NbGenericModelInfo;
 import org.netbeans.gradle.project.others.OtherPlugins;
+import org.netbeans.gradle.project.properties.standard.SourceLevelProperty;
+import org.netbeans.gradle.project.script.ScriptFileProvider;
+import org.netbeans.gradle.project.util.GradleVersions;
+import org.netbeans.gradle.project.util.NbFileUtils;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Lookup;
 
 public final class JavaParsingUtils {
@@ -271,6 +281,38 @@ public final class JavaParsingUtils {
     private static NbCodeCoverage getCodeCoverage(Lookup projectInfo) {
         JacocoModel jacocoModel = projectInfo.lookup(JacocoModel.class);
         return new NbCodeCoverage(jacocoModel);
+    }
+
+    public static NbJavaModel createEmptyModel(FileObject projectDir, ScriptFileProvider scriptProvider) {
+        File projectDirAsFile = FileUtil.toFile(projectDir);
+        if (projectDirAsFile == null) {
+            throw new IllegalStateException("Project directory does not exist.");
+        }
+        return createEmptyModel(projectDirAsFile.toPath(), scriptProvider);
+    }
+
+    private static NbJavaModel createUnreliableModel(GradleTarget evaluationEnvironment, NbJavaModule mainModule) {
+        return NbJavaModel.createModel(evaluationEnvironment, JavaModelSource.COMPATIBLE_API, mainModule);
+    }
+
+    private static NbJavaModel createEmptyModel(Path projectDir, ScriptFileProvider scriptProvider) {
+        String name = NbFileUtils.getFileNameStr(projectDir);
+        String level = SourceLevelProperty.getSourceLevelFromPlatform(JavaPlatform.getDefault());
+
+        GenericProjectProperties properties = NbGenericModelInfo.createProjectProperties(name, name, projectDir, scriptProvider);
+        JavaCompatibilityModel compatibilityModel = new JavaCompatibilityModel(level, level);
+
+        NbJavaModule result = new NbJavaModule(
+                properties,
+                compatibilityModel,
+                Collections.<JavaSourceSet>emptyList(),
+                Collections.<NbListedDir>emptyList(),
+                Collections.<NbJarOutput>emptyList(),
+                JavaTestModel.getDefaulTestModel(properties.getProjectDir()),
+                NbCodeCoverage.NO_CODE_COVERAGE
+        );
+
+        return createUnreliableModel(GradleVersions.DEFAULT_TARGET, result);
     }
 
     private JavaParsingUtils() {
