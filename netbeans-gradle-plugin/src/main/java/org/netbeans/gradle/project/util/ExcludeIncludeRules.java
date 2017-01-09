@@ -12,7 +12,7 @@ import org.netbeans.gradle.model.java.JavaSourceGroup;
 import org.netbeans.gradle.model.java.SourceIncludePatterns;
 import org.openide.filesystems.FileObject;
 
-public final class ExcludeIncludeRules implements Serializable {
+public final class ExcludeIncludeRules implements FileGroupFilter, Serializable {
     private static final long serialVersionUID = 1L;
 
     public static ExcludeIncludeRules ALLOW_ALL = new ExcludeIncludeRules(
@@ -37,6 +37,7 @@ public final class ExcludeIncludeRules implements Serializable {
         return create(sourceGroup.getExcludePatterns());
     }
 
+    @Override
     public boolean isAllowAll() {
         return sourceIncludePatterns.isAllowAll();
     }
@@ -68,6 +69,7 @@ public final class ExcludeIncludeRules implements Serializable {
         return isIncluded(rootPath, file.toPath());
     }
 
+    @Override
     public boolean isIncluded(Path rootPath, Path file) {
         ExceptionHelper.checkNotNullArgument(rootPath, "rootPath");
         ExceptionHelper.checkNotNullArgument(file, "file");

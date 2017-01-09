@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +33,8 @@ import org.netbeans.gradle.project.java.model.NbJavaModel;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.netbeans.gradle.project.util.FileGroupFilter;
+import org.netbeans.gradle.project.util.UnionFileGroupFilter;
 import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.PathResourceImplementation;
 import org.netbeans.spi.java.classpath.support.ClassPathSupport;
@@ -200,17 +203,40 @@ public final class ProjectClassPathResourceBuilder {
     }
 
     private void loadSourcePathResources(JavaSourceSet sourceSet, Set<File> invalid) {
-        List<PathResourceImplementation> sourcePaths = new LinkedList<>();
+        Map<File, FileGroupFilter> allRoots = new LinkedHashMap<>();
         for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
             Set<File> sourceRoots = sourceGroup.getSourceRoots();
             ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
 
-            sourcePaths.addAll(getPathResources(sourceRoots, invalid, includeRules));
+            for (File root: sourceRoots) {
+                FileGroupFilter prevFilter = allRoots.get(root);
+                FileGroupFilter newFilter;
+                if (prevFilter == null) {
+                    newFilter = includeRules;
+                }
+                else {
+                    newFilter = UnionFileGroupFilter.union(prevFilter, includeRules);
+                }
+                allRoots.put(root, newFilter);
+            }
         }
+
+        List<PathResourceImplementation> sourcePaths = new ArrayList<>(allRoots.size());
+        addPathResources(allRoots, invalid, sourcePaths);
 
         setClassPathResources(
                 new SourceSetClassPathType(sourceSet.getName(), ClassPathType.SOURCES),
                 sourcePaths);
+    }
+
+    private void addPathResources(
+            Map<File, FileGroupFilter> roots,
+            Set<File> invalid,
+            List<? super PathResourceImplementation> result) {
+
+        for (Map.Entry<File, FileGroupFilter> entry: roots.entrySet()) {
+            result.addAll(getPathResources(Collections.singleton(entry.getKey()), invalid, entry.getValue()));
+        }
     }
 
     private void loadPathResources(JavaSourceSet sourceSet, Set<File> invalid) {
@@ -321,7 +347,7 @@ public final class ProjectClassPathResourceBuilder {
 
     private static PathResourceImplementation toPathResource(
             File file,
-            ExcludeIncludeRules includeRules,
+            FileGroupFilter includeRules,
             UrlFactory urlForArchiveFactory) {
         return ExcludeAwarePathResource.tryCreate(file, includeRules, urlForArchiveFactory);
     }
@@ -341,12 +367,14 @@ public final class ProjectClassPathResourceBuilder {
     public static List<PathResourceImplementation> getPathResources(
             Collection<File> files,
             Set<File> invalid,
-            ExcludeIncludeRules includeRules) {
+            FileGroupFilter includeRules) {
+
+        boolean allowAll = includeRules.isAllowAll();
 
         UrlFactory urlFactory = UrlFactory.getDefaultArchiveOrDirFactory();
         List<PathResourceImplementation> result = new ArrayList<>(files.size());
         for (File file: asSet(files)) {
-            PathResourceImplementation pathResource = includeRules.isAllowAll()
+            PathResourceImplementation pathResource = allowAll
                     ? toPathResource(file, urlFactory)
                     : toPathResource(file, includeRules, urlFactory);
             // Ignore invalid classpath entries

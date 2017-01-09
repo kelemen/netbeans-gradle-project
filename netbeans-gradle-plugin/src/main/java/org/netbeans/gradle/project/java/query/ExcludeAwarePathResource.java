@@ -4,7 +4,8 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
-import org.netbeans.gradle.project.util.ExcludeIncludeRules;
+import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.util.FileGroupFilter;
 import org.netbeans.gradle.project.util.UrlFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
 import org.netbeans.spi.java.classpath.FilteringPathResourceImplementation;
@@ -13,9 +14,9 @@ import org.netbeans.spi.java.classpath.support.PathResourceBase;
 final class ExcludeAwarePathResource extends PathResourceBase implements FilteringPathResourceImplementation {
     private final Path root;
     private final URL url;
-    private final ExcludeIncludeRules includeRules;
+    private final FileGroupFilter includeRules;
 
-    private ExcludeAwarePathResource(File root, URL rootUrl, ExcludeIncludeRules includeRules) {
+    private ExcludeAwarePathResource(File root, URL rootUrl, FileGroupFilter includeRules) {
         this.root = root.toPath();
         this.url = rootUrl;
         this.includeRules = includeRules;
@@ -23,8 +24,10 @@ final class ExcludeAwarePathResource extends PathResourceBase implements Filteri
 
     public static ExcludeAwarePathResource tryCreate(
             File root,
-            ExcludeIncludeRules includeRules,
+            FileGroupFilter includeRules,
             UrlFactory urlForArchiveFactory) {
+        ExceptionHelper.checkNotNullArgument(includeRules, "includeRules");
+
         URL url = urlForArchiveFactory.toUrl(root);
         if (url == null) {
             return null;
