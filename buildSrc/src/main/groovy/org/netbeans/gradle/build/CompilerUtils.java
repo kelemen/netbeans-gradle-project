@@ -1,4 +1,4 @@
-package org.gradle.plugins.nbm;
+package org.netbeans.gradle.build;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
@@ -19,7 +21,6 @@ import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.ForkOptions;
 import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
-import org.netbeans.gradle.build.TaskConfigurations;
 
 public final class CompilerUtils {
     private static final String JAVAC_VERSION_PREFIX = "javac";
@@ -120,7 +121,7 @@ public final class CompilerUtils {
 
     private static void configureJavaCompiler(final Task compileTask, final CompileOptions compilerOptions) {
         compilerOptions.setEncoding("UTF-8");
-        compilerOptions.setCompilerArgs(Arrays.asList("-Xlint"));
+        addCompilerArgs(compilerOptions, "-Xlint");
 
         TaskConfigurations.lazilyConfiguredTask(compileTask, new Action<Task>() {
             @Override
@@ -128,6 +129,16 @@ public final class CompilerUtils {
                 configureJavacNow(compileTask, compilerOptions);
             }
         });
+    }
+
+    public static void addCompilerArgs(CompileOptions options, String... newArgs) {
+        List<String> prevArgs = options.getCompilerArgs();
+
+        List<String> args = new ArrayList<>(prevArgs.size() + newArgs.length);
+        args.addAll(prevArgs);
+        args.addAll(Arrays.asList(newArgs));
+
+        options.setCompilerArgs(args);
     }
 
     private static void configureJavacNow(Task compileTask, CompileOptions compilerOptions) {
