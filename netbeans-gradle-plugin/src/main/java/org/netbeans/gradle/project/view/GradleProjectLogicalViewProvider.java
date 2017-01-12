@@ -23,6 +23,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
 import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
@@ -30,6 +31,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.AutoDisplayState;
+import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -248,6 +250,11 @@ implements
         @SuppressWarnings("VolatileArrayField")
         private volatile Action[] actions;
 
+        private final UpdateTaskExecutor modelChanges;
+        private final UpdateTaskExecutor displayNameChanges;
+        private final UpdateTaskExecutor descriptionChanges;
+        private final UpdateTaskExecutor iconChanges;
+
         public GradleProjectNode(DataFolder projectFolder) {
             this(projectFolder, new GradleProjectChildFactory(project, GradleProjectLogicalViewProvider.this));
         }
@@ -264,6 +271,11 @@ implements
             super(projectFolder.getNodeDelegate().cloneNode(), children, createLookup(childFactory, children, projectFolder));
 
             updateActionsList();
+
+            this.modelChanges = new SwingUpdateTaskExecutor(true);
+            this.displayNameChanges = new SwingUpdateTaskExecutor(true);
+            this.descriptionChanges = new SwingUpdateTaskExecutor(true);
+            this.iconChanges = new SwingUpdateTaskExecutor(true);
         }
 
         private void updateActionsList() {
@@ -323,20 +335,40 @@ implements
         }
 
         public void fireDisplayNameChange() {
-            fireDisplayNameChange(null, null);
+            displayNameChanges.execute(new Runnable() {
+                @Override
+                public void run() {
+                    fireDisplayNameChange(null, null);
+                }
+            });
         }
 
         public void fireShortDescriptionChange() {
-            fireShortDescriptionChange(null, null);
+            descriptionChanges.execute(new Runnable() {
+                @Override
+                public void run() {
+                    fireShortDescriptionChange(null, null);
+                }
+            });
         }
 
         public void fireModelChange() {
-            updateActionsList();
+            modelChanges.execute(new Runnable() {
+                @Override
+                public void run() {
+                    updateActionsList();
+                }
+            });
         }
 
         public void fireInfoChangeEvent() {
-            fireIconChange();
-            fireOpenedIconChange();
+            iconChanges.execute(new Runnable() {
+                @Override
+                public void run() {
+                    fireIconChange();
+                    fireOpenedIconChange();
+                }
+            });
         }
 
         @Override
