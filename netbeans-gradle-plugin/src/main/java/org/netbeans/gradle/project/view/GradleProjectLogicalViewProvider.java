@@ -53,6 +53,7 @@ import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties.ui.AddNewTaskPanel;
 import org.netbeans.gradle.project.tasks.TaskVariableMaps;
+import org.netbeans.gradle.project.util.ArrayUtils;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ActionProvider;
@@ -133,7 +134,7 @@ implements
     public Node createLogicalView() {
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
 
-        final GradleProjectNode result = new GradleProjectNode(projectFolder.getNodeDelegate().cloneNode());
+        final GradleProjectNode result = new GradleProjectNode(projectFolder);
 
         ProjectDisplayInfo displayInfo = project.getDisplayInfo();
 
@@ -174,11 +175,12 @@ implements
         return result;
     }
 
-    private Lookup createLookup(GradleProjectChildFactory childFactory, Children children) {
+    private Lookup createLookup(GradleProjectChildFactory childFactory, Children children, Object... extraServices) {
         NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
-        return new ProxyLookup(
-                project.getLookup(),
-                Lookups.fixed(nodeRefresher, project.getProjectDirectory()));
+        Object[] services = ArrayUtils.concatArrays(
+                ArrayUtils.asArray(nodeRefresher, project.getProjectDirectory()),
+                extraServices);
+        return new ProxyLookup(project.getLookup(), Lookups.fixed(services));
     }
 
     private static <T> List<T> trimNulls(List<T> list) {
@@ -246,20 +248,20 @@ implements
         @SuppressWarnings("VolatileArrayField")
         private volatile Action[] actions;
 
-        public GradleProjectNode(Node node) {
-            this(node, new GradleProjectChildFactory(project, GradleProjectLogicalViewProvider.this));
+        public GradleProjectNode(DataFolder projectFolder) {
+            this(projectFolder, new GradleProjectChildFactory(project, GradleProjectLogicalViewProvider.this));
         }
 
-        private GradleProjectNode(Node node, GradleProjectChildFactory childFactory) {
-            this(node, childFactory, Children.create(childFactory, false));
+        private GradleProjectNode(DataFolder projectFolder, GradleProjectChildFactory childFactory) {
+            this(projectFolder, childFactory, Children.create(childFactory, false));
         }
 
         private GradleProjectNode(
-                Node node,
+                DataFolder projectFolder,
                 GradleProjectChildFactory childFactory,
                 org.openide.nodes.Children children) {
             // Do not add lookup of "node" because that might fool NB to believe that multiple projects are selected.
-            super(node, children, createLookup(childFactory, children));
+            super(projectFolder.getNodeDelegate().cloneNode(), children, createLookup(childFactory, children, projectFolder));
 
             updateActionsList();
         }
