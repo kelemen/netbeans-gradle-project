@@ -48,7 +48,6 @@ import org.openide.filesystems.FileChooserBuilder;
 import org.openide.modules.SpecificationVersion;
 import org.openide.util.Lookup;
 
-
 @SuppressWarnings("serial")
 public class CommonProjectPropertiesPanel extends JPanel implements ProfileEditorFactory {
     public static final CustomizerCategoryId CATEGORY_ID = new CustomizerCategoryId(
@@ -260,7 +259,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         private final PropertyReference<String> sourceLevelRef;
         private final PropertyReference<UserInitScriptPath> userInitScriptPathRef;
 
-        private final boolean selectByVersion;
+        private final ProfileInfo profileInfo;
 
         public PropertyRefs(
                 NbGradleProject ownerProject,
@@ -273,7 +272,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
             this.targetPlatformRef = NbGradleCommonProperties.targetPlatform(ownerProject, settingsQuery);
             this.sourceLevelRef = NbGradleCommonProperties.sourceLevel(ownerProject, settingsQuery);
 
-            this.selectByVersion = profileInfo.isSharedProfile();
+            this.profileInfo = profileInfo;
         }
 
         @Override
@@ -287,7 +286,18 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         }
 
         public boolean isSelectByVersion() {
-            return selectByVersion;
+            return profileInfo.isSharedProfile();
+        }
+
+        public boolean isCustomShouldPreferWrapper() {
+            if (profileInfo.isGlobal()) {
+                GradleLocationDef currentlyActiveLocation
+                        = gradleLocationRef.tryGetValueWithoutFallback();
+                return currentlyActiveLocation != null ? currentlyActiveLocation.isPreferWrapper() : false;
+            }
+            else {
+                return false;
+            }
         }
     }
 
@@ -703,9 +713,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
         GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
         if (newLocation != null) {
-            GradleLocationDef currentlyActiveLocation
-                    = currentValues.gradleLocationRef.tryGetValueWithoutFallback();
-            boolean preferWrapper = currentlyActiveLocation != null ? currentlyActiveLocation.isPreferWrapper() : false;
+            boolean preferWrapper = currentValues.isCustomShouldPreferWrapper();
             selectGradleLocation(new GradleLocationDef(newLocation, preferWrapper));
         }
     }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
