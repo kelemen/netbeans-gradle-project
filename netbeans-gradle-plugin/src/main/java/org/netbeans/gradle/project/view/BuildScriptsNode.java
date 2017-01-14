@@ -259,6 +259,7 @@ public final class BuildScriptsNode extends AbstractNode {
                     "",
                     "dependencies {",
                     "    compile gradleApi()",
+                    "    compile localGroovy()",
                     "}");
             NbFileUtils.writeLinesToFile(buildGradle, buildGradleContent, StringUtils.UTF8, project);
 
