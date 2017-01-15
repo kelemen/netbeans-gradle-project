@@ -180,7 +180,7 @@ implements
     private Lookup createLookup(GradleProjectChildFactory childFactory, Children children, Object... extraServices) {
         NodeRefresher nodeRefresher = NodeUtils.defaultNodeRefresher(children, childFactory);
         Object[] services = ArrayUtils.concatArrays(
-                ArrayUtils.asArray(nodeRefresher, project.getProjectDirectory()),
+                new Object[]{nodeRefresher, project.getProjectDirectory()},
                 extraServices);
         return new ProxyLookup(project.getLookup(), Lookups.fixed(services));
     }

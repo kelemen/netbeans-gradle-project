@@ -1,10 +1,6 @@
 package org.netbeans.gradle.project.util;
 
 public final class ArrayUtils {
-    public static Object[] asArray(Object... array) {
-        return array;
-    }
-
     public static Object[] concatArrays(Object[]... arrays) {
         int length = 0;
         for (Object[] array: arrays) {
