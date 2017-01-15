@@ -7,12 +7,12 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.util.JavaModelTestUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
+import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 
 public class GradleSourceForBinaryQueryTest {
     @ClassRule
-    public static final TemporaryFolder TMP_DIR_ROOT = new TemporaryFolder();
+    public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     public GradleSourceForBinaryQueryTest() {
     }

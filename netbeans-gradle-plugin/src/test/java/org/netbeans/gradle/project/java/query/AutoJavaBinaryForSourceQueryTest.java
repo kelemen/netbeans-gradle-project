@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.gradle.project.util.TestBinaryUtils;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.util.Utilities;
@@ -16,7 +16,7 @@ import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class AutoJavaBinaryForSourceQueryTest {
     @ClassRule
-    public static final TemporaryFolder TMP_DIR_ROOT = new TemporaryFolder();
+    public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     @Test
     public void testFindBinaryOfZipSource() throws IOException {

@@ -10,7 +10,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.gradle.model.java.JavaOutputDirs;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -18,6 +17,7 @@ import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.util.JavaModelTestUtils;
 import org.netbeans.gradle.project.util.NbSupplier;
+import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.spi.java.queries.BinaryForSourceQueryImplementation;
 import org.openide.util.Utilities;
 
@@ -26,7 +26,7 @@ import static org.netbeans.gradle.project.query.TestSourceQueryUtils.*;
 
 public class GradleBinaryForSourceQueryTest {
     @ClassRule
-    public static final TemporaryFolder TMP_DIR_ROOT = new TemporaryFolder();
+    public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     private NbSupplier<NbJavaModule> testModule(File rootDir) throws IOException {
         final NbJavaModule module = JavaModelTestUtils.createModule(rootDir);
