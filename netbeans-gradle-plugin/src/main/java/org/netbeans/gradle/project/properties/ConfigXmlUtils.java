@@ -516,7 +516,10 @@ final class ConfigXmlUtils {
         }
     }
 
-    private static void saveDocument(Result result, Document document) throws IOException {
+    public static void savePrettyXmlDocument(Document document, Result result) throws IOException {
+        ExceptionHelper.checkNotNullArgument(document, "document");
+        ExceptionHelper.checkNotNullArgument(result, "result");
+
         Source source = new DOMSource(document);
 
         try {
@@ -554,12 +557,12 @@ final class ConfigXmlUtils {
 
         if (lineSeparator == null) {
             Result result = new StreamResult(output.toFile());
-            saveDocument(result, document);
+            savePrettyXmlDocument(document, result);
         }
         else {
             StringWriter writer = new StringWriter(FILE_BUFFER_SIZE);
             Result result = new StreamResult(writer);
-            saveDocument(result, document);
+            savePrettyXmlDocument(document, result);
 
             String fileOutput = writer.toString();
             BufferedReader configContent = new BufferedReader(new StringReader(fileOutput));
