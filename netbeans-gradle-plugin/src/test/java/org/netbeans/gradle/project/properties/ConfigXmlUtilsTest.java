@@ -7,12 +7,7 @@ import java.io.StringWriter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.junit.Test;
 import org.netbeans.gradle.project.api.config.ConfigTree;
@@ -131,15 +126,7 @@ public class ConfigXmlUtilsTest {
     private String saveXmlToString(Document document) throws Exception {
         StringWriter output = new StringWriter(8 * 1024);
         Result result = new StreamResult(output);
-
-        Source source = new DOMSource(document);
-
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-        transformer.transform(source, result);
+        ConfigXmlUtils.savePrettyXmlDocument(document, result);
         return output.toString();
     }
 
