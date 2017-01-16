@@ -528,6 +528,13 @@ final class ConfigXmlUtils {
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
+            try {
+                // If not set, some JDKs might not emit a new line after the XML header.
+                transformer.setOutputProperty("http://www.oracle.com/xml/is-standalone", "yes");
+            } catch (IllegalArgumentException e) {
+                // Expected to be thrown by JDKs unaffected of this issu
+            }
+
             transformer.transform(source, result);
         } catch (TransformerException ex) {
             throw new IOException(ex);
