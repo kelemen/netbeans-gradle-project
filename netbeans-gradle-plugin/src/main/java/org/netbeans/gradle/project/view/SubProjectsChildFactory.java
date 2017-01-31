@@ -13,8 +13,10 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
+import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
@@ -199,6 +201,31 @@ extends
         return OpenProjectsAction.createFromModules(caption, projects);
     }
 
+    private static Action[] getSubProjectContextActions(NbGradleProjectTree module, Action... defaultActions) {
+        Project project = NbGradleProjectFactory.tryLoadSafeProject(module.getProjectDir());
+        if (project == null) {
+            return defaultActions;
+        }
+
+        return getSubProjectContextActions(project, defaultActions);
+    }
+
+    private static Action[] getSubProjectContextActions(Project project, Action... defaultActions) {
+        ContextActionProvider actionProvider = project.getLookup().lookup(ContextActionProvider.class);
+        if (actionProvider == null) {
+            return defaultActions;
+        }
+
+        Action[] projectActions = actionProvider.getActions();
+
+        Action[] result = new Action[defaultActions.length + projectActions.length + 1];
+        System.arraycopy(defaultActions, 0, result, 0, defaultActions.length);
+        result[defaultActions.length] = null;
+        System.arraycopy(projectActions, 0, result, defaultActions.length + 1, projectActions.length);
+
+        return result;
+    }
+
     private static class SubModuleWithChildren extends FilterNode {
         private final NbGradleProjectTree module;
         private final List<NbGradleProjectTree> immediateChildren;
@@ -228,11 +255,10 @@ extends
 
         @Override
         public Action[] getActions(boolean context) {
-            return new Action[] {
-                new OpenSubProjectAction(),
-                createOpenAction(NbStrings.getOpenImmediateSubProjectsCaption(), immediateChildren),
-                createOpenAction(NbStrings.getOpenSubProjectsCaption(), children)
-            };
+            return getSubProjectContextActions(module,
+                    new OpenSubProjectAction(),
+                    createOpenAction(NbStrings.getOpenImmediateSubProjectsCaption(), immediateChildren),
+                    createOpenAction(NbStrings.getOpenSubProjectsCaption(), children));
         }
 
         @Override
@@ -271,9 +297,7 @@ extends
 
         @Override
         public Action[] getActions(boolean context) {
-            return new Action[]{
-                new OpenSubProjectAction()
-            };
+            return getSubProjectContextActions(module, new OpenSubProjectAction());
         }
 
         @Override

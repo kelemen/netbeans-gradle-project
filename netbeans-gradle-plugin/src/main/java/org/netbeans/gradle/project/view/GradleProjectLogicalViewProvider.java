@@ -176,9 +176,9 @@ implements
             // Do not add lookup of "node" because that might fool NB to believe that multiple projects are selected.
             super(projectFolder.getNodeDelegate().cloneNode(), children, createLookup(childFactory, children, projectFolder));
 
-            updateActionsList();
-
             this.actionProvider = actionProvider;
+            // TODO: It would be nicer to lazily initialize this list.
+            this.actions = actionProvider.getActions();
             this.modelChanges = new SwingUpdateTaskExecutor(true);
             this.displayNameChanges = new SwingUpdateTaskExecutor(true);
             this.descriptionChanges = new SwingUpdateTaskExecutor(true);
