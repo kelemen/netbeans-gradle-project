@@ -226,6 +226,16 @@ extends
         return result;
     }
 
+    private static Lookup getSubProjectLookup(NbGradleProjectTree module) {
+        Project project = NbGradleProjectFactory.tryLoadSafeProject(module.getProjectDir());
+        if (project == null) {
+            return Lookups.fixed(module);
+        }
+        else {
+            return Lookups.fixed(module, project);
+        }
+    }
+
     private static class SubModuleWithChildren extends FilterNode {
         private final NbGradleProjectTree module;
         private final List<NbGradleProjectTree> immediateChildren;
@@ -242,7 +252,7 @@ extends
 
             super(createSimpleNode(project),
                     createSubprojectsChild(project, children),
-                    Lookups.fixed(module));
+                    getSubProjectLookup(module));
             this.module = module;
             this.immediateChildren = Collections.unmodifiableList(GradleProjectChildFactory.getAllChildren(module));
             this.children = Collections.unmodifiableList(new ArrayList<>(children));
@@ -291,7 +301,7 @@ extends
         private final NbGradleProjectTree module;
 
         public SubModuleNode(NbGradleProject project, NbGradleProjectTree module) {
-            super(Node.EMPTY.cloneNode(), null, Lookups.fixed(project, module));
+            super(Node.EMPTY.cloneNode(), null, getSubProjectLookup(module));
             this.module = module;
         }
 
