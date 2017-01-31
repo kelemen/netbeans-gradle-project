@@ -46,8 +46,10 @@ import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.tasks.DefaultGradleCommandExecutor;
 import org.netbeans.gradle.project.tasks.MergedBuiltInGradleCommandQuery;
 import org.netbeans.gradle.project.util.CloseableAction;
+import org.netbeans.gradle.project.view.ContextActionProvider;
 import org.netbeans.gradle.project.view.GradleActionProvider;
 import org.netbeans.gradle.project.view.GradleProjectLogicalViewProvider;
+import org.netbeans.gradle.project.view.ProjectContextActionProvider;
 import org.netbeans.spi.project.ProjectState;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
@@ -310,6 +312,9 @@ public final class NbGradleProject implements Project {
             Path projectDir = project.getProjectDirectoryAsPath();
             File projectDirAsFile = project.getProjectDirectoryAsFile();
 
+            ContextActionProvider provider = new ProjectContextActionProvider(project);
+            serviceObjects.add(provider);
+
             this.scriptFileProvider = add(NbGradleProjectFactory.DEFAULT_SCRIPT_FILE_PROVIDER, serviceObjects);
             Path predictedSettingsDir = getSettingsDir(project.getProjectDirectoryAsPath(), this.scriptFileProvider);
             this.configProvider = add(
@@ -339,7 +344,7 @@ public final class NbGradleProject implements Project {
             this.auxConfig = add(new GradleAuxiliaryConfiguration(profileLoader), serviceObjects);
             this.state = add(state, serviceObjects);
             this.projectInformation = add(new GradleProjectInformation(project), serviceObjects);
-            this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project), serviceObjects);
+            this.logicalViewProvider = add(new GradleProjectLogicalViewProvider(project, provider), serviceObjects);
             this.actionProvider = add(new GradleActionProvider(project), serviceObjects);
             this.sharabilityQuery = add(new GradleSharabilityQuery(modelManager.currentModel()), serviceObjects);
             this.sourceEncoding = add(
