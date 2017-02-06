@@ -24,9 +24,8 @@ String netbeansVersion = 'RELEASE81'
 repositories {
     mavenCentral()
     maven { url 'http://bits.netbeans.org/nexus/content/groups/netbeans' }
-    maven { url 'http://bits.netbeans.org/maven2/' }
+    jcenter()
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
-    maven { url 'http://dl.bintray.com/kelemen/maven' }
 }
 
 customJavaCompilers {
