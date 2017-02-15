@@ -243,6 +243,10 @@ public enum StandardTaskVariable {
         return new CachingVariableMap<>(TASK_VARIABLE_MAP, project, actionContext);
     }
 
+    public static String replaceGlobalVars(String str) {
+        return replaceVars(str, TaskVariableMaps.getGlobalVariableMap());
+    }
+
     public static String replaceVars(String str, TaskVariableMap varReplaceMap) {
         return replaceVars(str, varReplaceMap, null);
     }

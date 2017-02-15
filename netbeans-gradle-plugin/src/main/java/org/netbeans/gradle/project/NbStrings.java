@@ -569,7 +569,8 @@ public final class NbStrings {
     }
 
     public static String getGradleLocationLocal(File dir) {
-        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.LOCAL", dir);
+        String dirStr = dir != null ? dir.getPath() : NbStrings.getInvalidMark();
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.GradleLocation.LOCAL", dirStr);
     }
 
     public static String getCustomNamePatternLabel() {
@@ -650,6 +651,10 @@ public final class NbStrings {
 
     public static String getAddNewInitScriptCaption() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.AddNewInitScriptCaption");
+    }
+
+    public static String getInvalidMark() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.Invalid");
     }
 
     private NbStrings() {

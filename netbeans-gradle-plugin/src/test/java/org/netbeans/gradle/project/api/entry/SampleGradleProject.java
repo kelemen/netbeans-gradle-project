@@ -16,7 +16,7 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 
 public final class SampleGradleProject implements Closeable {
     public static final String DEFAULT_GRADLE_VERSION = GradleVersion.current().getVersion();
-    public static final GradleLocationDef DEFAULT_GRADLE_TARGET = new GradleLocationDef(DEFAULT_GRADLE_VERSION, false);
+    public static final GradleLocationDef DEFAULT_GRADLE_TARGET = GradleLocationDef.fromVersion(DEFAULT_GRADLE_VERSION, false);
 
     private static final int DAEMON_TIMEOUT_SEC = 60;
 

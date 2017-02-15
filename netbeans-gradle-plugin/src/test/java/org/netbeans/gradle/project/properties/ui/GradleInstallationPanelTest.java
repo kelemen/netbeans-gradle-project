@@ -24,7 +24,7 @@ public class GradleInstallationPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.gradleLocation().setValue(new GradleLocationDef("1.7", true));
+                input.gradleLocation().setValue(GradleLocationDef.fromVersion("1.7", true));
                 input.gradleUserHomeDir().setValue(new File("my-user-home1"));
             }
         });
@@ -35,7 +35,7 @@ public class GradleInstallationPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.gradleLocation().setValue(new GradleLocationDef("1.9", false));
+                input.gradleLocation().setValue(GradleLocationDef.fromVersion("1.9", false));
                 input.gradleUserHomeDir().setValue(new File("my-user-home2"));
             }
         });

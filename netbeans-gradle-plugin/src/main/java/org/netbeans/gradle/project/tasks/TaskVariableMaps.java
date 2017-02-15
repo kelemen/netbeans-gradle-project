@@ -12,6 +12,10 @@ import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.openide.util.Lookup;
 
 public final class TaskVariableMaps {
+    public static TaskVariableMap getGlobalVariableMap() {
+        return EnvTaskVariableMap.DEFAULT;
+    }
+
     public static TaskVariableMap createProjectActionVariableMap(NbGradleProject project, Lookup actionContext) {
         final List<TaskVariableMap> maps = new ArrayList<>();
 
@@ -25,7 +29,7 @@ public final class TaskVariableMaps {
 
         // Allow extensions to redefine variables.
         maps.add(StandardTaskVariable.createVarReplaceMap(project, actionContext));
-        maps.add(EnvTaskVariableMap.DEFAULT);
+        maps.add(getGlobalVariableMap());
 
         return new CombinedTaskVariableMap(maps);
     }

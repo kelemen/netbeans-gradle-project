@@ -252,7 +252,7 @@ public final class CommonGlobalSettings {
         GradleLocationDef locationDef = gradleLocation.getActiveValue();
         GradleLocation location = locationDef.getLocation();
         if (location instanceof GradleLocationDirectory) {
-            return ((GradleLocationDirectory)location).getGradleHome();
+            return ((GradleLocationDirectory)location).tryGetGradleHome();
         }
         return null;
     }

@@ -3,30 +3,35 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleLocationDirectory implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "INST";
 
+    private final String rawGradleHome;
     private final File gradleHome;
 
-    public GradleLocationDirectory(File gradleHome) {
+    public GradleLocationDirectory(String gradleHome) {
         ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
-        this.gradleHome = FileUtil.normalizeFile(gradleHome);
+        this.rawGradleHome = gradleHome;
+        this.gradleHome = FileUtil.normalizeFile(new File(StandardTaskVariable.replaceGlobalVars(gradleHome)));
     }
 
-    public File getGradleHome() {
+    public File tryGetGradleHome() {
         return gradleHome;
     }
 
     @Override
     public void applyLocation(Applier applier) {
-        applier.applyDirectory(gradleHome);
+        if (gradleHome != null) {
+            applier.applyDirectory(gradleHome);
+        }
     }
 
     @Override
     public String asString() {
-        return gradleHome.getPath();
+        return rawGradleHome;
     }
 
     @Override

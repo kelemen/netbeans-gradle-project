@@ -4,8 +4,9 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
+import javax.swing.JTextField;
 import org.gradle.util.GradleVersion;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
@@ -129,23 +130,24 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     }
 
     private void selectLocation(GradleLocation location) {
+        final AtomicReference<JTextField> locationEditRef = new AtomicReference<>();
         location.applyLocation(new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 jVersionCheck.setSelected(true);
-                jVersionEdit.setText(versionStr);
+                locationEditRef.set(jVersionEdit);
             }
 
             @Override
             public void applyDirectory(File gradleHome) {
                 jLocalDirCheck.setSelected(true);
-                jFolderEdit.setText(gradleHome.getPath());
+                locationEditRef.set(jFolderEdit);
             }
 
             @Override
-            public void applyDistribution(URI location) {
+            public void applyDistribution(URI uri) {
                 jDistCheck.setSelected(true);
-                jUriEdit.setText(location.toString());
+                locationEditRef.set(jUriEdit);
             }
 
             @Override
@@ -153,6 +155,11 @@ public class GradleLocationPanel extends javax.swing.JPanel {
                 jDefaultCheck.setSelected(true);
             }
         });
+
+        JTextField locationEdit = locationEditRef.get();
+        if (locationEdit != null) {
+            locationEdit.setText(location.asString());
+        }
     }
 
     public PropertySource<Boolean> validLocation() {
@@ -182,17 +189,10 @@ public class GradleLocationPanel extends javax.swing.JPanel {
             return new GradleLocationVersion(jVersionEdit.getText().trim());
         }
         if (jDistCheck.isSelected()) {
-            URI distUri;
-            try {
-                distUri = new URI(jUriEdit.getText().trim());
-            } catch (URISyntaxException ex) {
-                return null;
-            }
-
-            return new GradleLocationDistribution(distUri);
+            return new GradleLocationDistribution(jUriEdit.getText().trim());
         }
         if (jLocalDirCheck.isSelected()) {
-            return new GradleLocationDirectory(new File(jFolderEdit.getText().trim()));
+            return new GradleLocationDirectory(jFolderEdit.getText().trim());
         }
 
         return GradleLocationDefault.INSTANCE;

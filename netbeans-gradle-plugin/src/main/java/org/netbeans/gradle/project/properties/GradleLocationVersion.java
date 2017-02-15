@@ -2,15 +2,18 @@ package org.netbeans.gradle.project.properties;
 
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
 
 public final class GradleLocationVersion implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "VER";
 
+    private final String baseVersionStr;
     private final String versionStr;
 
     public GradleLocationVersion(String versionStr) {
         ExceptionHelper.checkNotNullArgument(versionStr, "versionStr");
-        this.versionStr = versionStr;
+        this.baseVersionStr = versionStr;
+        this.versionStr = StandardTaskVariable.replaceGlobalVars(versionStr);
     }
 
     public String getVersionStr() {
@@ -24,7 +27,7 @@ public final class GradleLocationVersion implements GradleLocation {
 
     @Override
     public String asString() {
-        return versionStr;
+        return baseVersionStr;
     }
 
     @Override

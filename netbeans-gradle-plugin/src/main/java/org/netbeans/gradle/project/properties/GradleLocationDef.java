@@ -1,16 +1,9 @@
 package org.netbeans.gradle.project.properties;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 
 public final class GradleLocationDef {
-    private static final Logger LOGGER = Logger.getLogger(GradleLocationDef.class.getName());
-
     public static final GradleLocationDef DEFAULT = new GradleLocationDef(GradleLocationDefault.INSTANCE, false);
 
     private static final String PREFER_WRAPPER_KEY = "W";
@@ -18,23 +11,15 @@ public final class GradleLocationDef {
     private final GradleLocation location;
     private final boolean preferWrapper;
 
-    public GradleLocationDef(String versionStr, boolean preferWrapper) {
-        this(new GradleLocationVersion(versionStr), preferWrapper);
-    }
-
-    public GradleLocationDef(URI location, boolean preferWrapper) {
-        this(new GradleLocationDistribution(location), preferWrapper);
-    }
-
-    public GradleLocationDef(File gradleHome, boolean preferWrapper) {
-        this(new GradleLocationDirectory(gradleHome), preferWrapper);
-    }
-
     public GradleLocationDef(GradleLocation location, boolean preferWrapper) {
         ExceptionHelper.checkNotNullArgument(location, "location");
 
         this.location = location;
         this.preferWrapper = preferWrapper;
+    }
+
+    public static GradleLocationDef fromVersion(String versionStr, boolean preferWrapper) {
+        return new GradleLocationDef(new GradleLocationVersion(versionStr), preferWrapper);
     }
 
     private static void appendKeyValue(String key, String value, StringBuilder result) {
@@ -88,14 +73,10 @@ public final class GradleLocationDef {
             return new GradleLocationVersion(value);
         }
         if (GradleLocationDirectory.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-            return new GradleLocationDirectory(new File(value));
+            return new GradleLocationDirectory(value);
         }
         if (GradleLocationDistribution.UNIQUE_TYPE_NAME.equalsIgnoreCase(typeName)) {
-            try {
-                return new GradleLocationDistribution(new URI(value));
-            } catch (URISyntaxException ex) {
-                LOGGER.log(Level.INFO, "Invalid URI for Gradle distribution: " + value, ex);
-            }
+            return new GradleLocationDistribution(value);
         }
 
         return null;
@@ -118,7 +99,7 @@ public final class GradleLocationDef {
             return GradleLocationDefault.INSTANCE;
         }
         else {
-            return new GradleLocationDirectory(new File(locationPath));
+            return new GradleLocationDirectory(locationPath);
         }
     }
 
