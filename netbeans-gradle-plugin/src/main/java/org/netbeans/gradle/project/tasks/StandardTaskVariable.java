@@ -244,7 +244,11 @@ public enum StandardTaskVariable {
     }
 
     public static String replaceGlobalVars(String str) {
-        return replaceVars(str, TaskVariableMaps.getGlobalVariableMap());
+        return replaceGlobalVars(str, null);
+    }
+
+    public static String replaceGlobalVars(String str, List<? super DisplayedTaskVariable> collectedVariables) {
+        return replaceVars(str, TaskVariableMaps.getGlobalVariableMap(), collectedVariables);
     }
 
     public static String replaceVars(String str, TaskVariableMap varReplaceMap) {

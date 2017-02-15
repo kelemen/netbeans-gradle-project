@@ -4,6 +4,9 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JTextField;
@@ -12,6 +15,7 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -19,12 +23,14 @@ import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.GradleLocationDistribution;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
+import org.netbeans.gradle.project.tasks.DisplayedTaskVariable;
+import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.TaskVariableMaps;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.filesystems.FileChooserBuilder;
 
-import static org.jtrim.property.BoolProperties.*;
 
 @SuppressWarnings("serial")
 public class GradleLocationPanel extends javax.swing.JPanel {
@@ -163,18 +169,10 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     }
 
     public PropertySource<Boolean> validLocation() {
-        return not(isNull(selectedLocation()));
-    }
-
-    private PropertySource<GradleLocation> selectedLocation() {
-        return new PropertySource<GradleLocation>() {
+        return new PropertySource<Boolean>() {
             @Override
-            public GradleLocation getValue() {
-                try {
-                    return getSelectedLocation();
-                } catch (Exception ex) {
-                    return null;
-                }
+            public Boolean getValue() {
+                return hasValidLocationSelected();
             }
 
             @Override
@@ -182,6 +180,53 @@ public class GradleLocationPanel extends javax.swing.JPanel {
                 return locationChangedListeners.registerListener(listener);
             }
         };
+    }
+
+    private static boolean isAllVarsValid(String str) {
+        return replaceIfAllVarsValid(str) != null;
+    }
+
+    private static String replaceIfAllVarsValid(String str) {
+        List<DisplayedTaskVariable> variables = new ArrayList<>();
+
+        String resolved = StandardTaskVariable.replaceGlobalVars(str, variables);
+
+        TaskVariableMap varMap = TaskVariableMaps.getGlobalVariableMap();
+        for (DisplayedTaskVariable var: variables) {
+            if (varMap.tryGetValueForVariable(var.getVariable()) == null) {
+                return null;
+            }
+        }
+
+        return resolved;
+    }
+
+    private URI tryParseUri(String str) {
+        try {
+            return new URI(str);
+        } catch (URISyntaxException ex) {
+            return null;
+        }
+    }
+
+    private boolean hasValidLocationSelected() {
+        if (jVersionCheck.isSelected()) {
+            String versionStr = jVersionEdit.getText().trim();
+            return isAllVarsValid(versionStr);
+        }
+        if (jDistCheck.isSelected()) {
+            String uriStr = jUriEdit.getText().trim();
+            String resolvedUri = replaceIfAllVarsValid(uriStr);
+            if (resolvedUri == null) {
+                return false;
+            }
+            return tryParseUri(resolvedUri) != null;
+        }
+        if (jLocalDirCheck.isSelected()) {
+            String dirStr = jFolderEdit.getText().trim();
+            return isAllVarsValid(dirStr);
+        }
+        return true;
     }
 
     public GradleLocation getSelectedLocation() {
