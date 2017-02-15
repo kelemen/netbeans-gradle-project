@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -45,7 +44,7 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
 
     @Override
     public List<Action> getContextActions() {
-        List<Action> result = new LinkedList<>();
+        List<Action> result = new ArrayList<>();
 
         CustomTestsAction customTestsAction = new CustomTestsAction();
         if (customTestsAction.hasCustomTestActions()) {

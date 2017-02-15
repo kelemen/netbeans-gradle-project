@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.io.File;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -196,7 +196,7 @@ public enum StandardTaskVariable {
     }
 
     private static List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<>();
+        List<FileObject> files = new ArrayList<>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
             if (file != null) {

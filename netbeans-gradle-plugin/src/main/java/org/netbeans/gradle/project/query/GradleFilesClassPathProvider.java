@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -116,11 +115,12 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
 
         ScriptPlatform platform = CommonGlobalSettings.getDefault().defaultJdk().getActiveValue();
         if (platform != null) {
-            List<PathResourceImplementation> platformResources = new LinkedList<>();
-            for (ClassPath.Entry entry: platform.getJavaPlatform().getBootstrapLibraries().entries()) {
+            List<ClassPath.Entry> classpathEntries = platform.getJavaPlatform().getBootstrapLibraries().entries();
+            List<PathResourceImplementation> platformResources = new ArrayList<>(classpathEntries.size());
+            for (ClassPath.Entry entry: classpathEntries) {
                 platformResources.add(ClassPathSupport.createResource(entry.getURL()));
             }
-            classpathResources.put(ClassPathType.BOOT, platformResources);
+            classpathResources.put(ClassPathType.BOOT, Collections.unmodifiableList(platformResources));
         }
     }
 

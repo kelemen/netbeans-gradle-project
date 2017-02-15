@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +64,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             ProjectConnection connection,
             ProgressHandle progress) throws IOException {
 
-        List<NbGradleModel.Builder> otherModels = new LinkedList<>();
+        ArrayList<NbGradleModel.Builder> otherModels = new ArrayList<>();
 
         NbGradleModel.Builder mainModel;
         if (baseModels == null) {
@@ -107,10 +106,12 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
 
         NbGradleModel initialMainModel = mainModel.create();
         for (NbGradleExtensionRef extensionRef: DefaultGradleModelLoader.getUnloadedExtensions(project, initialMainModel)) {
-            List<Object> extensionModels = new LinkedList<>();
-
             GradleModelDefQuery1 query1 = extensionRef.getModelNeeds().getQuery1();
-            for (Class<?> modelClass: query1.getToolingModels(gradleTarget)) {
+            Collection<Class<?>> toolingModels = query1.getToolingModels(gradleTarget);
+
+            List<Object> extensionModels = new ArrayList<>(toolingModels.size());
+
+            for (Class<?> modelClass: toolingModels) {
                 try {
                     Object model = found.get(modelClass);
                     if (model == null) {
@@ -188,7 +189,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             childrenPaths.add(child.getPath());
         }
 
-        List<IdeaModule> result = new LinkedList<>();
+        List<IdeaModule> result = new ArrayList<>();
         for (IdeaModule candidateChild: module.getProject().getModules()) {
             if (childrenPaths.contains(candidateChild.getGradleProject().getPath())) {
                 result.add(candidateChild);
@@ -215,7 +216,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private NbGradleModel.Builder loadMainModel(
             NbGradleProject project,
             ProjectConnection projectConnection,
-            List<NbGradleModel.Builder> otherModels) throws IOException {
+            ArrayList<NbGradleModel.Builder> otherModels) throws IOException {
 
         IdeaProject ideaProject
                 = getModelWithProgress(projectConnection, IdeaProject.class);
@@ -242,7 +243,7 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
     private NbGradleModel.Builder parseMainModel(
             NbGradleProject project,
             IdeaProject ideaProject,
-            List<NbGradleModel.Builder> otherModels) throws IOException {
+            ArrayList<NbGradleModel.Builder> otherModels) throws IOException {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(ideaProject, "ideaProject");
         ExceptionHelper.checkNotNullArgument(otherModels, "otherModels");
@@ -265,8 +266,11 @@ public final class NbCompatibleModelLoader implements NbModelLoader {
             throw new IOException("Failed to find root tree for project: " + rootModule.getName());
         }
 
+        DomainObjectSet<? extends IdeaModule> ideaModules = ideaProject.getModules();
+        otherModels.ensureCapacity(ideaModules.size());
+
         String rootPath = rootModule.getGradleProject().getPath();
-        for (IdeaModule otherModule: ideaProject.getModules()) {
+        for (IdeaModule otherModule: ideaModules) {
             // This comparison is not strictly necessary but there is no reason
             // to reparse the main project.
             if (otherModule != mainModule) {

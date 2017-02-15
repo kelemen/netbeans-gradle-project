@@ -236,7 +236,7 @@ public final class AsyncGradleTask implements Runnable {
 
         DefaultGradleModelLoader.setupLongRunningOP(targetSetup, buildLauncher);
 
-        List<String> arguments = new LinkedList<>();
+        List<String> arguments = new ArrayList<>();
         arguments.addAll(taskDef.getArguments());
 
         for (TemporaryFileRef initScript: initScripts) {
@@ -265,13 +265,13 @@ public final class AsyncGradleTask implements Runnable {
             BuildLauncher buildLauncher,
             TaskIOTab tab) {
 
-        List<SmartOutputHandler.Consumer> outputConsumers = new LinkedList<>();
+        List<SmartOutputHandler.Consumer> outputConsumers = new ArrayList<>();
         outputConsumers.add(new OutputLinkPrinter(
                 new StackTraceConsumer(project),
                 new OutputUrlConsumer(),
                 new ProjectFileConsumer(project)));
 
-        List<SmartOutputHandler.Consumer> errorConsumers = new LinkedList<>();
+        List<SmartOutputHandler.Consumer> errorConsumers = new ArrayList<>();
         errorConsumers.add(new BuildErrorConsumer());
         errorConsumers.add(new OutputLinkPrinter(
                 new StackTraceConsumer(project),

@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -41,7 +41,7 @@ public final class SettingsFiles {
             return Collections.emptySet();
         }
 
-        List<ProfileDef> result = new LinkedList<>();
+        List<ProfileDef> result = new ArrayList<>();
         try (DirectoryStream<Path> profileDirContent = Files.newDirectoryStream(profileDir)) {
             int suffixLength = PROFILE_FILE_NAME_SUFFIX.length();
             for (Path file: profileDirContent) {

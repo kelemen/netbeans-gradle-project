@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.test;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -275,7 +274,7 @@ public final class TestXmlDisplayer {
         public TestXmlContentHandler(NbGradleTestSession session, File reportFile) {
             this.session = session;
             this.reportFile = reportFile;
-            this.allTestcases = new LinkedList<>();
+            this.allTestcases = new ArrayList<>(64);
 
             this.level = 0;
             this.testSuite = null;

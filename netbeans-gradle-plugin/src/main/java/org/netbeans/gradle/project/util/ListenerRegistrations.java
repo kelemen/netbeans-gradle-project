@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.util;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import org.jtrim.event.ListenerRef;
 
@@ -8,7 +8,7 @@ public final class ListenerRegistrations {
     private final List<ListenerRef> listenerRefs;
 
     public ListenerRegistrations() {
-        this.listenerRefs = new LinkedList<>();
+        this.listenerRefs = new ArrayList<>();
     }
 
     public void add(ListenerRef listenerRef) {

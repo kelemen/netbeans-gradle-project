@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.extensions;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,7 +54,7 @@ public final class ModelNeeds {
         return new GradleModelDefQuery1() {
             @Override
             public Collection<Class<?>> getToolingModels(GradleTarget gradleTarget) {
-                List<Class<?>> result = new LinkedList<>();
+                List<Class<?>> result = new ArrayList<>();
                 for (GradleModelDefQuery1 query: queries) {
                     Collection<Class<?>> models = safelyReturn(query.getToolingModels(gradleTarget), query);
                     result.addAll(models);
@@ -101,10 +101,8 @@ public final class ModelNeeds {
         return new GradleModelDefQuery2() {
             @Override
             public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                List<GradleProjectInfoQuery2<?>> projectInfoQueries
-                        = new LinkedList<>();
-
-                List<Class<?>> toolingModels = new LinkedList<>();
+                List<GradleProjectInfoQuery2<?>> projectInfoQueries = new ArrayList<>();
+                List<Class<?>> toolingModels = new ArrayList<>();
 
                 for (GradleModelDefQuery2 query: queries) {
                     GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), query);

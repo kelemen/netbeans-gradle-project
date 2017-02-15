@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.properties;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -20,9 +20,9 @@ public final class JavaProjectPlatform implements ProjectPlatform {
     }
 
     private static Collection<URL> urlsOfClassPath(ClassPath classPath) {
-        List<URL> urls = new LinkedList<>();
-
-        for (ClassPath.Entry entry: classPath.entries()) {
+        List<ClassPath.Entry> entries = classPath.entries();
+        List<URL> urls = new ArrayList<>(entries.size());
+        for (ClassPath.Entry entry: entries) {
             urls.add(entry.getURL());
         }
         return urls;

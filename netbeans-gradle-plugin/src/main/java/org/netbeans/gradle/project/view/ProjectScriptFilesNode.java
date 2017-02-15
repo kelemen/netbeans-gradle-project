@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Action;
@@ -241,7 +240,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
             ScriptFileProvider scriptFileProvider = project.getScriptFileProvider();
 
-            List<FileObject> gradleFiles = new LinkedList<>();
+            List<FileObject> gradleFiles = new ArrayList<>();
             for (FileObject file: project.getProjectDirectory().getChildren()) {
                 if (file.equals(buildGradle) || file.equals(settingsGradle)) {
                     continue;

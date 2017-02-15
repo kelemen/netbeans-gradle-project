@@ -1,6 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,7 +60,7 @@ public final class GradleAuxiliaryProperties implements AuxiliaryProperties {
 
     @Override
     public Iterable<String> listKeys(boolean shared) {
-        List<String> result = new LinkedList<>();
+        List<String> result = new ArrayList<>();
         for (DomElementKey key: config.getConfigElements(shared)) {
             if (key.getNamespace() == null) {
                 result.add(key.getName());

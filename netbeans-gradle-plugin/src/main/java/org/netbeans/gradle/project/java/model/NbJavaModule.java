@@ -5,11 +5,11 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -220,7 +220,7 @@ public final class NbJavaModule implements Serializable {
     }
 
     private List<JavaSourceSet> findSourceSets(SourceSetFilter filter) {
-        List<JavaSourceSet> result = new LinkedList<>();
+        List<JavaSourceSet> result = new ArrayList<>(sources.size());
         for (JavaSourceSet sourceSet: sources) {
             if (!filter.needSourceSet(sourceSet)) {
                 continue;

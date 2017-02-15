@@ -3,7 +3,6 @@ package org.netbeans.gradle.model.java;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import org.netbeans.gradle.model.util.TransferableExceptionWrapper;
 
 /**
@@ -94,7 +93,7 @@ public final class JavaSourceSet implements Serializable {
 
             this.name = name;
             this.outputDirs = outputDirs;
-            this.sourceGroups = new LinkedList<JavaSourceGroup>();
+            this.sourceGroups = new ArrayList<JavaSourceGroup>();
             this.classpaths = JavaClassPaths.EMPTY;
             this.compileClassPathProblem = null;
             this.runtimeClassPathProblem = null;

@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.tasks;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -99,7 +98,7 @@ public final class GradleArguments {
     public static List<String> getExtraArgs(
             SettingsGradleDef preferredSettings,
             DaemonTaskContext context) {
-        List<String> result = new LinkedList<>();
+        List<String> result = new ArrayList<>();
 
         result.addAll(emptyIfNull(CommonGlobalSettings.getDefault().gradleArgs().getActiveValue()));
 
@@ -128,7 +127,7 @@ public final class GradleArguments {
     }
 
     public static List<String> getExtraJvmArgs(DaemonTaskContext context) {
-        List<String> result = new LinkedList<>();
+        List<String> result = new ArrayList<>();
 
         result.addAll(emptyIfNull(CommonGlobalSettings.getDefault().gradleJvmArgs().getActiveValue()));
         addExtensionJvmArgs(context, result);

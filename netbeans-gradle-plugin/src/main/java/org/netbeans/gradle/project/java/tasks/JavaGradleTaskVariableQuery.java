@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.java.tasks;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,7 +168,7 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     }
 
     private static List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<>();
+        List<FileObject> files = new ArrayList<>();
 
         SingleMethod method = context.lookup(SingleMethod.class);
         if (method != null) {

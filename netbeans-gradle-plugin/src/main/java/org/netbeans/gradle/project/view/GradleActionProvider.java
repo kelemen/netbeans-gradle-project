@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.view;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,7 +72,7 @@ public final class GradleActionProvider implements ActionProvider {
     }
 
     protected List<FileObject> getFilesOfContext(Lookup context) {
-        List<FileObject> files = new LinkedList<>();
+        List<FileObject> files = new ArrayList<>();
         for (DataObject dataObj: context.lookupAll(DataObject.class)) {
             FileObject file = dataObj.getPrimaryFile();
             if (file != null) {

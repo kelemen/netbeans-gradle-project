@@ -1,8 +1,8 @@
 package org.netbeans.gradle.project.java.nodes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
@@ -126,7 +126,7 @@ implements
 
     @Override
     public List<SingleNodeFactory> getNodeFactories() {
-        List<SingleNodeFactory> result = new LinkedList<>();
+        List<SingleNodeFactory> result = new ArrayList<>();
 
         addSourceRoots(result);
         addListedDirs(result);

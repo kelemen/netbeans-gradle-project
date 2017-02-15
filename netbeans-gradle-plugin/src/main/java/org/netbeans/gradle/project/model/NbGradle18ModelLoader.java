@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.gradle.tooling.ProjectConnection;
@@ -111,7 +110,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             this.extensions = mainProject.getExtensions().getExtensionRefs();
             this.modelFetcher = modelFetcher;
             this.cache = new ExtensionModelCache();
-            this.issues = new LinkedList<>();
+            this.issues = new ArrayList<>();
             this.modelLoadResultCache = CollectionUtils.newHashMap(extensions.size());
         }
 
@@ -357,7 +356,7 @@ public final class NbGradle18ModelLoader implements NbModelLoader {
             Map<Object, List<GradleProjectInfoQuery2<?>>> projectInfoRequests
                     = new HashMap<>();
 
-            List<Class<?>> models = new LinkedList<>();
+            List<Class<?>> models = new ArrayList<>();
             for (NbGradleExtensionRef extensionRef: extensions) {
                 String extensionName = extensionRef.getName();
 

@@ -43,7 +43,7 @@ public final class SwingPropertyChangeForwarder {
         private Builder(TaskExecutor eventExecutorSrc, UpdateTaskExecutor eventExecutor) {
             this.eventExecutorSrc = eventExecutorSrc;
             this.eventExecutor = eventExecutor;
-            this.properties = new LinkedList<>();
+            this.properties = new ArrayList<>();
         }
 
         public void addPropertyNoValue(String name, PropertySource<?> property, Object source) {

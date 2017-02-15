@@ -1,6 +1,7 @@
 package org.netbeans.gradle.project.output;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -67,7 +68,7 @@ public final class IOTabMaintainer<TabKey, IOTab extends IOTabDef> {
     }
 
     private Set<CountedTab<IOTab>> getTabsToClose() {
-        List<CountedTab<IOTab>> allTabs = new LinkedList<>();
+        List<CountedTab<IOTab>> allTabs = new ArrayList<>();
 
         mainLock.lock();
         try {

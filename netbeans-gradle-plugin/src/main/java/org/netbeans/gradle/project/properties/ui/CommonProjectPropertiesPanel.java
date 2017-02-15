@@ -5,7 +5,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.ComboBoxModel;
@@ -118,7 +117,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
     }
 
     private void fillProjectPlatformCombo() {
-        List<ProjectPlatformComboItem> comboItems = new LinkedList<>();
+        List<ProjectPlatformComboItem> comboItems = new ArrayList<>();
         for (GradleProjectPlatformQuery query: Lookup.getDefault().lookupAll(GradleProjectPlatformQuery.class)) {
             for (ProjectPlatform platform: query.getAvailablePlatforms()) {
                 comboItems.add(new ProjectPlatformComboItem(platform));

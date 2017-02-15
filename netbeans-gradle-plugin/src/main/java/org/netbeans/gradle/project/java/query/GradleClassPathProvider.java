@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -338,7 +337,7 @@ implements
         NbJavaModel currentModel = javaExt.getCurrentModel();
         NbJavaModule mainModule = currentModel.getMainModule();
 
-        List<PathResourceImplementation> sources = new LinkedList<>();
+        ArrayList<PathResourceImplementation> sources = new ArrayList<>();
         addSourcesOfModule(mainModule, sources);
 
         for (JavaProjectDependencyDef dependency: translatedDependencies.values()) {
@@ -346,7 +345,8 @@ implements
             addSourcesOfModule(module, sources);
         }
 
-        allSources = Collections.unmodifiableList(new ArrayList<>(sources));
+        sources.trimToSize();
+        allSources = Collections.unmodifiableList(sources);
     }
 
     public static List<PathResourceImplementation> getPathResources(
@@ -387,7 +387,7 @@ implements
             getInfoRef().setInfo(null);
         }
         else {
-            List<ProjectIssue.Entry> infos = new LinkedList<>();
+            List<ProjectIssue.Entry> infos = new ArrayList<>(missing.size());
             for (File missingDep: missing) {
                 infos.add(new ProjectIssue.Entry(ProjectIssue.Kind.WARNING,
                         NbStrings.getInvalidClassPathEntryTitle(),

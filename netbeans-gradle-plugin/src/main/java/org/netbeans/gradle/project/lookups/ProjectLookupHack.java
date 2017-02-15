@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.lookups;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -80,7 +80,7 @@ public final class ProjectLookupHack extends ProxyLookup {
     private static Collection<Class<?>> getNotImplementedServices() {
         Collection<Class<?>> result = NOT_IMPLEMENTED_SERVICES.get();
         if (result == null) {
-            result = new LinkedList<>();
+            result = new ArrayList<>();
 
             // We could implement these interfaces but do not want to
             // because for this information we need to parse the build script

@@ -1,10 +1,10 @@
 package org.netbeans.gradle.model.internal;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -33,7 +33,7 @@ public final class CustomSerializedMap implements Serializable {
         public void addValues(Object key, Collection<?> values) {
             List<Object> valueContainer = map.get(key);
             if (valueContainer == null) {
-                valueContainer = new LinkedList<Object>();
+                valueContainer = new ArrayList<Object>();
                 map.put(key, valueContainer);
             }
             valueContainer.addAll(values);
@@ -42,7 +42,7 @@ public final class CustomSerializedMap implements Serializable {
         public void addValue(Object key, Object value) {
             List<Object> valueContainer = map.get(key);
             if (valueContainer == null) {
-                valueContainer = new LinkedList<Object>();
+                valueContainer = new ArrayList<Object>();
                 map.put(key, valueContainer);
             }
             valueContainer.add(value);

@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -120,7 +119,7 @@ implements
     }
 
     private void updateExtensionProfiles() {
-        List<ProfileDef> customProfileDefs = new LinkedList<>();
+        List<ProfileDef> customProfileDefs = new ArrayList<>();
         for (CustomProfileQuery profileQuery: project.getLookup().lookupAll(CustomProfileQuery.class)) {
             for (ProfileDef profileDef: profileQuery.getCustomProfiles()) {
                 customProfileDefs.add(profileDef);

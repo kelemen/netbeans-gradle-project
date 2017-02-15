@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -105,7 +104,7 @@ public final class IdeaJavaModelUtils {
 
             List<File> rootsList = sourceRootMap.get(choice);
             if (rootsList == null) {
-                rootsList = new LinkedList<>();
+                rootsList = new ArrayList<>();
                 sourceRootMap.put(choice, rootsList);
             }
             rootsList.add(dir);
@@ -259,14 +258,13 @@ public final class IdeaJavaModelUtils {
     }
 
     private static List<NbListedDir> lookupListedDirs(Collection<JavaSourceSet> sources) {
-        List<NbListedDir> result = new LinkedList<>();
-
         NbListedDir webAppDir = findWebAppDir(sources);
         if (webAppDir != null) {
-            result.add(webAppDir);
+            return Collections.singletonList(webAppDir);
         }
-
-        return result;
+        else {
+            return Collections.emptyList();
+        }
     }
 
     private static NbJavaModule tryParseModule(

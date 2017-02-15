@@ -1,9 +1,9 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,7 +69,7 @@ implements
 
     @Override
     public void startRefresh() {
-        final List<ModelRefreshListener> listeners = new LinkedList<>();
+        final List<ModelRefreshListener> listeners = new ArrayList<>();
         childRefreshListeners.onEvent(new EventDispatcher<ModelRefreshListener, Void>() {
             @Override
             public void onEvent(ModelRefreshListener eventListener, Void arg) {
@@ -258,7 +258,7 @@ implements
                         = new EnumMap<>(ProjectIssue.Kind.class);
 
                 for (ProjectIssue.Kind kind: ProjectIssue.Kind.values()) {
-                    infoMap.put(kind, new LinkedList<String>());
+                    infoMap.put(kind, new ArrayList<String>());
                 }
 
                 Kind mostImportantKind = Kind.INFO;

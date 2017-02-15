@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -50,8 +49,7 @@ public final class GradleCustomizer implements CustomizerProvider {
     }
 
     private static ProjectCustomizer.CompositeCategoryProvider[] getExternalCustomizers() {
-        List<ProjectCustomizer.CompositeCategoryProvider> result
-                = new LinkedList<>();
+        List<ProjectCustomizer.CompositeCategoryProvider> result = new ArrayList<>();
 
         result.add(Customizers.createFormattingCategoryProvider(Collections.emptyMap()));
 

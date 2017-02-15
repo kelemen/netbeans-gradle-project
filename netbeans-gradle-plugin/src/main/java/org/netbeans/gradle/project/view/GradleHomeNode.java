@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -337,7 +336,7 @@ public final class GradleHomeNode extends AbstractNode {
                 return;
             }
 
-            List<FileObject> gradleFiles = new LinkedList<>();
+            List<FileObject> gradleFiles = new ArrayList<>();
             for (FileObject file: userHomeObj.getChildren()) {
                 if (filtered.contains(file)) {
                     continue;

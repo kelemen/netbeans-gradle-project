@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,7 +88,7 @@ public final class NamedSourceRoot {
     }
 
     public static List<NamedSourceRoot> getAllSourceRoots(NbJavaModule module) {
-        List<NamedSourceRoot> result = new LinkedList<>();
+        List<NamedSourceRoot> result = new ArrayList<>();
 
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
@@ -229,7 +228,7 @@ public final class NamedSourceRoot {
     private static <K, V> void addToMap(Map<K, List<V>> map, K key, V value) {
         List<V> valueList = map.get(key);
         if (valueList == null) {
-            valueList = new LinkedList<>();
+            valueList = new ArrayList<>();
             map.put(key, valueList);
         }
         valueList.add(value);

@@ -2,7 +2,6 @@ package org.netbeans.gradle.project;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
@@ -105,7 +104,7 @@ public final class NbGradleProjectLookups {
             Lookup providerContainer) {
         // baseContext must contain the Project instance.
 
-        List<Lookup> result = new LinkedList<>();
+        List<Lookup> result = new ArrayList<>();
         for (LookupProvider provider: providerContainer.lookupAll(LookupProvider.class)) {
             result.add(provider.createAdditionalLookup(baseContext));
         }

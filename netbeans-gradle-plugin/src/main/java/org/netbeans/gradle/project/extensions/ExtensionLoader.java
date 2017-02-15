@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -174,10 +173,11 @@ public final class ExtensionLoader {
     private static GradleModelDefQuery1 getModelQuery(
             org.netbeans.gradle.project.api.entry.GradleProjectExtension extension) {
 
-        List<Class<?>> allModels = new LinkedList<>();
+        ArrayList<Class<?>> allModels = new ArrayList<>();
         for (List<Class<?>> models: extension.getGradleModels()) {
             allModels.addAll(models);
         }
+        allModels.trimToSize();
 
         final List<Class<?>> toolingModels = Collections.unmodifiableList(allModels);
         return new GradleModelDefQuery1() {
@@ -254,7 +254,7 @@ public final class ExtensionLoader {
                 extension.deduceModelsForProjects(retrievedModels));
 
         if (!deduced.containsKey(projectDir)) {
-            List<Object> lookupContent = new LinkedList<>();
+            List<Object> lookupContent = new ArrayList<>();
             for (List<Class<?>> models: extension.getGradleModels()) {
                 for (Class<?> neededModel: models) {
                     Object model = retrievedModels.lookup(neededModel);

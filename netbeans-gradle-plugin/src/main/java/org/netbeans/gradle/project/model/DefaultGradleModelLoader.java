@@ -10,7 +10,6 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -224,7 +223,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             NbGradleProject project,
             NbGradleModel baseModels) {
 
-        List<NbGradleExtensionRef> result = new LinkedList<>();
+        List<NbGradleExtensionRef> result = new ArrayList<>();
         for (NbGradleExtensionRef extension: project.getExtensions().getExtensionRefs()) {
             if (!baseModels.hasModelOfExtension(extension)) {
                 result.add(extension);

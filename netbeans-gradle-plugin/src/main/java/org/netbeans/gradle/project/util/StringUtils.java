@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -63,7 +62,7 @@ public final class StringUtils {
 
     public static String[] splitText(String text, String delimiters) {
         StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
-        List<String> result = new LinkedList<>();
+        List<String> result = new ArrayList<>();
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken().trim();
             if (!token.isEmpty()) {
@@ -89,7 +88,7 @@ public final class StringUtils {
     private static List<String> toLinesUnsafe(String output) throws IOException {
         ExceptionHelper.checkNotNullArgument(output, "output");
 
-        List<String> lines = new LinkedList<>();
+        List<String> lines = new ArrayList<>();
         BufferedReader reader = new BufferedReader(new StringReader(output));
         String line = reader.readLine();
         while (line != null) {
@@ -222,7 +221,7 @@ public final class StringUtils {
             return new String[]{str};
         }
 
-        List<String> result = new LinkedList<>();
+        List<String> result = new ArrayList<>();
 
         int pos = 0;
         while (true) {

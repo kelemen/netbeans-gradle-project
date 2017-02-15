@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import javax.swing.AbstractAction;
@@ -63,7 +62,7 @@ public final class ProjectContextActionProvider implements ContextActionProvider
         TasksActionMenu tasksAction = new TasksActionMenu(project);
         CustomTasksActionMenu customTasksAction = new CustomTasksActionMenu(project);
 
-        List<Action> projectActions = new LinkedList<>();
+        List<Action> projectActions = new ArrayList<>(32);
         projectActions.add(CommonProjectActions.newFileAction());
         projectActions.add(null);
         projectActions.add(createProjectAction(
@@ -521,8 +520,8 @@ public final class ProjectContextActionProvider implements ContextActionProvider
         private GradleActionType lastActionType;
 
         public ExtensionActions() {
-            this.buildActions = new LinkedList<>();
-            this.projectManagementActions = new LinkedList<>();
+            this.buildActions = new ArrayList<>();
+            this.projectManagementActions = new ArrayList<>();
             this.lastActionType = GradleActionType.BUILD_ACTION;
         }
 

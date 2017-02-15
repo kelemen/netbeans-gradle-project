@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.properties.standard;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -109,7 +108,8 @@ public final class BuiltInTasksProperty {
 
     private static PredefinedTask templateToPredefined(
             String displayName, GradleCommandTemplate command) {
-        List<PredefinedTask.Name> taskNames = new LinkedList<>();
+        List<String> tasks = command.getTasks();
+        List<PredefinedTask.Name> taskNames = new ArrayList<>(tasks.size());
         for (String taskName: command.getTasks()) {
             taskNames.add(new PredefinedTask.Name(taskName, false));
         }

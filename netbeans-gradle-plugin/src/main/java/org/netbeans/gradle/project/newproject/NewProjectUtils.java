@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
@@ -113,7 +113,7 @@ public final class NewProjectUtils {
             packagePath = packagePath.resolve(relPackagePathStr);
         }
 
-        List<String> content = new LinkedList<>();
+        List<String> content = new ArrayList<>();
         if (!packageName.isEmpty()) {
             content.add("package " + packageName + ";");
             content.add("");
@@ -292,7 +292,7 @@ public final class NewProjectUtils {
         PropertySource<String> projectFolder = Validators.trimmedText(jProjectFolderEdit);
         PropertySource<String> projectLocation = Validators.trimmedText(jProjectLocationEdit);
 
-        List<ListenerRef> refs = new LinkedList<>();
+        List<ListenerRef> refs = new ArrayList<>();
 
         refs.add(bckgValidator.addValidator(
                 NewProjectUtils.createProjectNameValidator(),

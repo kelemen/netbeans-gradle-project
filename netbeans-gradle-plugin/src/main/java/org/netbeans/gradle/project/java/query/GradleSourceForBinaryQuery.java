@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.java.query;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.event.ChangeListener;
@@ -79,7 +78,7 @@ implements
         for (JavaSourceSet sourceSet: module.getSources()) {
             JavaOutputDirs outputDirs = sourceSet.getOutputDirs();
             if (Objects.equals(outputDirs.getClassesDir(), binaryRoot)) {
-                List<File> result = new LinkedList<>();
+                List<File> result = new ArrayList<>();
 
                 for (JavaSourceGroup sourceGroup: sourceSet.getSourceGroups()) {
                     result.addAll(sourceGroup.getSourceRoots());

@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -368,7 +367,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     private void checkDependencyResolveProblems(NbJavaModule module) {
         String projectName = module.getProperties().getProjectName();
 
-        List<DependencyResolutionIssue> issues = new LinkedList<>();
+        List<DependencyResolutionIssue> issues = new ArrayList<>();
         for (JavaSourceSet sourceSet: module.getSources()) {
             String sourceSetName = sourceSet.getName();
 

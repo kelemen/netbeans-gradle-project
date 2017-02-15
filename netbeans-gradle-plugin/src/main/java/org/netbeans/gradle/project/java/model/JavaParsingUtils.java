@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -179,7 +178,7 @@ public final class JavaParsingUtils {
             JavaSourcesModel sourcesModel,
             Map<File, ? extends Collection<File>> dependencyMap) {
 
-        List<JavaSourceSet> result = new LinkedList<>();
+        List<JavaSourceSet> result = new ArrayList<>();
         for (JavaSourceSet sourceSet: sourcesModel.getSourceSets()) {
             result.add(adjustedSources(sourceSet, dependencyMap));
         }
@@ -191,7 +190,7 @@ public final class JavaParsingUtils {
     }
 
     private static List<NbListedDir> getListedDirs(ModelLoadResult retrievedModels, Lookup projectInfo) {
-        List<NbListedDir> listedDirs = new LinkedList<>();
+        List<NbListedDir> listedDirs = new ArrayList<>();
 
         NbGradleProject project = getProject(retrievedModels.getMainProjectDir());
         if (project == null || !OtherPlugins.hasJavaEEExtension(project)) {

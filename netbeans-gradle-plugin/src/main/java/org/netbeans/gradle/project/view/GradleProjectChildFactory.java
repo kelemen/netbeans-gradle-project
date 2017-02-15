@@ -5,7 +5,6 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -234,13 +233,13 @@ implements
     }
 
     public static List<NbGradleProjectTree> getAllChildren(NbGradleProjectTree module) {
-        List<NbGradleProjectTree> result = new LinkedList<>();
+        List<NbGradleProjectTree> result = new ArrayList<>();
         getAllChildren(module, result);
         return result;
     }
 
     private static List<NbGradleProjectTree> getAllChildren(NbGradleModel model) {
-        List<NbGradleProjectTree> result = new LinkedList<>();
+        List<NbGradleProjectTree> result = new ArrayList<>();
         getAllChildren(model.getMainProject(), result);
         return result;
     }

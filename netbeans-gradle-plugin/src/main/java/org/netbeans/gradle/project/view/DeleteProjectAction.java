@@ -1,7 +1,7 @@
 package org.netbeans.gradle.project.view;
 
 import java.awt.event.ActionEvent;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,7 +43,7 @@ public final class DeleteProjectAction extends AbstractAction {
         OpenProjects openProjects = OpenProjects.getDefault();
         FileObject rootDir = project.getProjectDirectory();
 
-        List<Project> toClose = new LinkedList<>();
+        List<Project> toClose = new ArrayList<>();
         toClose.add(project);
         for (Project opened: openProjects.getOpenProjects()) {
             if (FileUtil.isParentOf(rootDir, opened.getProjectDirectory())) {

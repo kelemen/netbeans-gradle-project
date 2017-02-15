@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -246,8 +245,9 @@ public final class ProjectClassPathResourceBuilder {
     }
 
     private void loadBootClassPath() {
-        List<PathResourceImplementation> platformResources = new LinkedList<>();
-        for (URL url: currentPlatform.getBootLibraries()) {
+        Collection<URL> bootLibraries = currentPlatform.getBootLibraries();
+        List<PathResourceImplementation> platformResources = new ArrayList<>(bootLibraries.size());
+        for (URL url: bootLibraries) {
             platformResources.add(ClassPathSupport.createResource(url));
         }
 

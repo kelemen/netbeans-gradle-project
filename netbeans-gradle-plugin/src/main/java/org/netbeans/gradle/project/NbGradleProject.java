@@ -3,10 +3,10 @@ package org.netbeans.gradle.project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -306,7 +306,7 @@ public final class NbGradleProject implements Project {
         public final UpdatableProjectExtensions extensions;
 
         public ServiceObjects(NbGradleProject project, ProjectState state) {
-            List<Object> serviceObjects = new LinkedList<>();
+            List<Object> serviceObjects = new ArrayList<>();
             serviceObjects.add(project);
 
             Path projectDir = project.getProjectDirectoryAsPath();
