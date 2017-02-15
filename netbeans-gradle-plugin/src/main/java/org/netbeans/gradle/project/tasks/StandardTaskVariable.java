@@ -252,6 +252,11 @@ public enum StandardTaskVariable {
             TaskVariableMap varReplaceMap,
             List<? super DisplayedTaskVariable> collectedVariables) {
 
+        if (!str.contains("${")) {
+            // Fast path when there is no variable to replace.
+            return str;
+        }
+
         StringBuilder result = new StringBuilder(str.length() * 2);
 
         int index = 0;
