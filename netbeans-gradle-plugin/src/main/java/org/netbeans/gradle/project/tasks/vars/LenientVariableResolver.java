@@ -26,13 +26,7 @@ final class LenientVariableResolver implements VariableResolver {
         ExceptionHelper.checkNotNullArgument(varReplaceMap, "varReplaceMap");
         ExceptionHelper.checkNotNullArgument(collectedVariables, "collectedVariables");
 
-        if (!str.contains("${")) {
-            // Fast path when there is no variable to replace.
-            return str;
-        }
-
-        StringBuilder result = new StringBuilder(str.length() * 2);
-
+        StringBuilder result = null;
         int index = 0;
         while (index < str.length()) {
             char ch = str.charAt(index);
@@ -48,20 +42,34 @@ final class LenientVariableResolver implements VariableResolver {
                     if (taskVar != null) {
                         collectedVariables.add(taskVar);
 
+                        int nextIndex = varEnd + 1;
+
                         String value = varReplaceMap.tryGetValueForVariable(taskVar.getVariable());
                         if (value != null) {
+                            if (result == null) {
+                                result = new StringBuilder(str.length() * 2);
+                                result.append(str, 0, index);
+                            }
                             result.append(value);
-                            index = varEnd + 1;
-                            continue;
                         }
+                        else {
+                            if (result != null) {
+                                result.append(str, index, nextIndex);
+                            }
+                        }
+                        index = nextIndex;
+                        continue;
                     }
                 }
             }
 
-            result.append(ch);
+            if (result != null) {
+                result.append(ch);
+            }
+
             index++;
         }
-        return result.toString();
+        return result != null ? result.toString() : str;
     }
 
     @Override
