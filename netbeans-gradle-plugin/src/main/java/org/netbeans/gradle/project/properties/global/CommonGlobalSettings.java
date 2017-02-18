@@ -23,6 +23,7 @@ import org.netbeans.gradle.project.properties.ProfileSettingsContainer;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
 import org.netbeans.gradle.project.properties.SingleProfileSettingsEx;
 import org.netbeans.gradle.project.properties.standard.CommonProperties;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -250,7 +251,7 @@ public final class CommonGlobalSettings {
 
     public File tryGetGradleInstallationAsFile() {
         GradleLocationDef locationDef = gradleLocation.getActiveValue();
-        GradleLocation location = locationDef.getLocation();
+        GradleLocation location = locationDef.getLocation(StringResolvers.getDefaultGlobalResolver());
         if (location instanceof GradleLocationDirectory) {
             return ((GradleLocationDirectory)location).tryGetGradleHome();
         }

@@ -8,10 +8,12 @@ import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
 import org.netbeans.gradle.project.api.config.ui.StoredSettings;
-import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
+import org.netbeans.gradle.project.properties.GradleLocationRef;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.GlobalSettingsPage;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.openide.filesystems.FileChooserBuilder;
 
@@ -19,10 +21,12 @@ import org.openide.filesystems.FileChooserBuilder;
 public class GradleInstallationPanel extends javax.swing.JPanel implements ProfileEditorFactory {
     private static final URL HELP_URL = NbFileUtils.getSafeURL("https://github.com/kelemen/netbeans-gradle-project/wiki/Gradle-Installation");
 
-    private GradleLocation selectedGradleLocation;
+    private final StringResolver locationResolver;
+    private GradleLocationRef selectedGradleLocationRef;
 
     public GradleInstallationPanel() {
-        selectedGradleLocation = null;
+        selectedGradleLocationRef = null;
+        locationResolver = StringResolvers.getDefaultGlobalResolver();
 
         initComponents();
     }
@@ -35,7 +39,7 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Profi
 
     private void displayLocationDef(GradleLocationDef locationDef) {
         if (locationDef != null) {
-            selectGradleLocation(locationDef.getLocation());
+            selectGradleLocation(locationDef.getLocationRef());
             jPreferWrapperCheck.setSelected(locationDef.isPreferWrapper());
         }
         else {
@@ -48,9 +52,17 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Profi
         jGradleUserHomeEdit.setText(userHome != null ? userHome.getPath() : "");
     }
 
-    private void selectGradleLocation(GradleLocation newLocation) {
-        selectedGradleLocation = newLocation;
-        jGradleLocationDescription.setText(newLocation != null ? newLocation.toLocalizedString() : "");
+    private String toString(GradleLocationRef locationRef) {
+        if (locationRef == null) {
+            return "";
+        }
+
+        return locationRef.getLocation(locationResolver).toLocalizedString();
+    }
+
+    private void selectGradleLocation(GradleLocationRef newLocationRef) {
+        selectedGradleLocationRef = newLocationRef;
+        jGradleLocationDescription.setText(toString(newLocationRef));
     }
 
     @Override
@@ -59,11 +71,11 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Profi
     }
 
     private GradleLocationDef getGradleLocationDef() {
-        if (selectedGradleLocation == null) {
+        if (selectedGradleLocationRef == null) {
             return null;
         }
 
-        return new GradleLocationDef(selectedGradleLocation, jPreferWrapperCheck.isSelected());
+        return new GradleLocationDef(selectedGradleLocationRef, jPreferWrapperCheck.isSelected());
     }
 
     private File getGradleUserHomeDir() {
@@ -216,10 +228,10 @@ public class GradleInstallationPanel extends javax.swing.JPanel implements Profi
     }// </editor-fold>//GEN-END:initComponents
 
     private void jChangeGradleLocationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jChangeGradleLocationButtonActionPerformed
-        GradleLocation currentLocation = selectedGradleLocation;
-        GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
-        if (newLocation != null) {
-            selectGradleLocation(newLocation);
+        GradleLocationRef currentLocationRef = selectedGradleLocationRef;
+        GradleLocationRef newLocationRef = GradleLocationPanel.tryChooseLocation(this, locationResolver, currentLocationRef);
+        if (newLocationRef != null) {
+            selectGradleLocation(newLocationRef);
         }
     }//GEN-LAST:event_jChangeGradleLocationButtonActionPerformed
 

@@ -12,6 +12,7 @@ import org.gradle.util.GradleVersion;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
+import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
@@ -19,7 +20,9 @@ import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.GradleLocationDistribution;
+import org.netbeans.gradle.project.properties.GradleLocationRef;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
 import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.DialogDescriptor;
@@ -30,8 +33,13 @@ import org.openide.filesystems.FileChooserBuilder;
 @SuppressWarnings("serial")
 public class GradleLocationPanel extends javax.swing.JPanel {
     private final ChangeListenerManager locationChangedListeners;
+    private final StringResolver locationResolver;
 
-    public GradleLocationPanel(GradleLocation defaultLocation) {
+    public GradleLocationPanel(StringResolver locationResolver, GradleLocationRef defaultLocationRef) {
+        ExceptionHelper.checkNotNullArgument(locationResolver, "locationResolver");
+
+        this.locationResolver = locationResolver;
+
         locationChangedListeners = new GenericChangeListenerManager();
 
         initComponents();
@@ -51,9 +59,9 @@ public class GradleLocationPanel extends javax.swing.JPanel {
 
         jDefaultCheck.setSelected(true);
 
-        selectLocation(defaultLocation != null
-                ? defaultLocation
-                : GradleLocationDefault.INSTANCE);
+        selectLocation(defaultLocationRef != null
+                ? defaultLocationRef
+                : GradleLocationDefault.DEFAULT_REF);
 
         NbGuiUtils.enableBasedOnCheck(jDistCheck, true, jUriEdit);
         NbGuiUtils.enableBasedOnCheck(jLocalDirCheck, true, jFolderEdit, jFolderSelectButton);
@@ -62,10 +70,11 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         setupLocationChangeListeners();
     }
 
-    public static GradleLocation tryChooseLocation(
+    public static GradleLocationRef tryChooseLocation(
             Component parent,
-            GradleLocation defaultLocation) {
-        GradleLocationPanel panel = new GradleLocationPanel(defaultLocation);
+            StringResolver locationResolver,
+            GradleLocationRef defaultLocationRef) {
+        GradleLocationPanel panel = new GradleLocationPanel(locationResolver, defaultLocationRef);
 
         final DialogDescriptor dlgDescriptor = new DialogDescriptor(
             panel,
@@ -130,9 +139,9 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         }
     }
 
-    private void selectLocation(GradleLocation location) {
+    private void selectLocation(GradleLocationRef locationRef) {
         final AtomicReference<JTextField> locationEditRef = new AtomicReference<>();
-        location.applyLocation(new GradleLocation.Applier() {
+        locationRef.getLocation(locationResolver).applyLocation(new GradleLocation.Applier() {
             @Override
             public void applyVersion(String versionStr) {
                 jVersionCheck.setSelected(true);
@@ -159,7 +168,11 @@ public class GradleLocationPanel extends javax.swing.JPanel {
 
         JTextField locationEdit = locationEditRef.get();
         if (locationEdit != null) {
-            locationEdit.setText(location.asString());
+            String locationStr = locationRef.asString();
+            if (locationStr == null) {
+                locationStr = "";
+            }
+            locationEdit.setText(locationStr);
         }
     }
 
@@ -213,18 +226,18 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         return true;
     }
 
-    public GradleLocation getSelectedLocation() {
+    public GradleLocationRef getSelectedLocation() {
         if (jVersionCheck.isSelected()) {
-            return new GradleLocationVersion(jVersionEdit.getText().trim());
+            return GradleLocationVersion.getLocationRef(jVersionEdit.getText().trim());
         }
         if (jDistCheck.isSelected()) {
-            return new GradleLocationDistribution(jUriEdit.getText().trim());
+            return GradleLocationDistribution.getLocationRef(jUriEdit.getText().trim());
         }
         if (jLocalDirCheck.isSelected()) {
-            return new GradleLocationDirectory(jFolderEdit.getText().trim());
+            return GradleLocationDirectory.getLocationRef(jFolderEdit.getText().trim());
         }
 
-        return GradleLocationDefault.INSTANCE;
+        return GradleLocationDefault.DEFAULT_REF;
     }
 
     /**

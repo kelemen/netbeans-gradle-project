@@ -33,6 +33,7 @@ import org.netbeans.gradle.project.api.entry.GradleProjectPlatformQuery;
 import org.netbeans.gradle.project.api.entry.ProjectPlatform;
 import org.netbeans.gradle.project.properties.GradleLocation;
 import org.netbeans.gradle.project.properties.GradleLocationDef;
+import org.netbeans.gradle.project.properties.GradleLocationRef;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PlatformSelectionMode;
 import org.netbeans.gradle.project.properties.ScriptPlatform;
@@ -40,6 +41,8 @@ import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.global.PlatformOrder;
 import org.netbeans.gradle.project.properties.standard.SourceEncodingProperty;
 import org.netbeans.gradle.project.properties.standard.UserInitScriptPath;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.netbeans.spi.project.ui.support.ProjectCustomizer;
@@ -166,9 +169,27 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         return selectByVersion ? PlatformSelectionMode.BY_VERSION : PlatformSelectionMode.BY_LOCATION;
     }
 
+    private StringResolver getLocationResolver() {
+        return StringResolvers.getDefaultResolverSelector().getProjectResolver(project, Lookup.EMPTY);
+    }
+
+    private GradleLocation tryGetLocation(GradleLocationDef locationDef) {
+        if (locationDef == null) {
+            return null;
+        }
+
+        StringResolver resolver = getLocationResolver();
+        return locationDef.getLocation(resolver);
+    }
+
+    private String getLocationStr(GradleLocationDef locationDef) {
+        GradleLocation location = tryGetLocation(locationDef);
+        return location != null ? location.toLocalizedString() : "";
+    }
+
     private void selectGradleLocation(GradleLocationDef newLocationDef) {
         selectedGradleLocation = newLocationDef;
-        jGradleHomeEdit.setText(newLocationDef != null ? newLocationDef.getLocation().toLocalizedString() : "");
+        jGradleHomeEdit.setText(getLocationStr(newLocationDef));
     }
 
     private void fillScriptPlatformCombo(boolean selectByVersion) {
@@ -706,14 +727,12 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         GradleLocationDef currentLocationDef = selectedGradleLocation != null
                 ? selectedGradleLocation
                 : currentValues.gradleLocationRef.getActiveValue();
-        GradleLocation currentLocation = currentLocationDef != null
-                ? currentLocationDef.getLocation()
-                : null;
+        GradleLocationRef currentLocationRef = currentLocationDef != null ? currentLocationDef.getLocationRef() : null;
 
-        GradleLocation newLocation = GradleLocationPanel.tryChooseLocation(this, currentLocation);
-        if (newLocation != null) {
+        GradleLocationRef newLocationRef = GradleLocationPanel.tryChooseLocation(this, getLocationResolver(), currentLocationRef);
+        if (newLocationRef != null) {
             boolean preferWrapper = currentValues.isCustomShouldPreferWrapper();
-            selectGradleLocation(new GradleLocationDef(newLocation, preferWrapper));
+            selectGradleLocation(new GradleLocationDef(newLocationRef, preferWrapper));
         }
     }//GEN-LAST:event_jGradleHomeChangeButtonActionPerformed
 

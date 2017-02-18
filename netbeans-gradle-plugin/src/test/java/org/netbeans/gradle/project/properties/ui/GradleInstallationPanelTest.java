@@ -46,7 +46,7 @@ public class GradleInstallationPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, false));
+                input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.DEFAULT_REF, false));
                 input.gradleUserHomeDir().setValue(new File("my-user-home3"));
             }
         });
@@ -57,7 +57,7 @@ public class GradleInstallationPanelTest {
         GlobalSettingsPanelTestUtils.testGlobalInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
             @Override
             public void accept(CommonGlobalSettings input) {
-                input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.INSTANCE, true));
+                input.gradleLocation().setValue(new GradleLocationDef(GradleLocationDefault.DEFAULT_REF, true));
                 input.gradleUserHomeDir().setValue(new File("my-user-home4"));
             }
         });

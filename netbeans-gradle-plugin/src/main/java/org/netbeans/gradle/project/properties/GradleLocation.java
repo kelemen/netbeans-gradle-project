@@ -12,7 +12,5 @@ public interface GradleLocation {
     }
 
     public void applyLocation(Applier applier);
-    public String getUniqueTypeName();
-    public String asString();
     public String toLocalizedString();
 }

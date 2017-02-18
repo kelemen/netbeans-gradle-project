@@ -62,11 +62,14 @@ import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
 import org.netbeans.gradle.project.tasks.GradleTasks;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.GradleVersions;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
+import org.openide.util.Lookup;
 
 public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel> {
     private static final Logger LOGGER = Logger.getLogger(DefaultGradleModelLoader.class.getName());
@@ -154,7 +157,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     }
 
     private static boolean shouldRelyOnWrapper(NbGradleProject project, GradleLocationDef locationDef) {
-        if (locationDef.getLocation() == GradleLocationDefault.INSTANCE) {
+        if (locationDef.getLocationRef() == GradleLocationDefault.DEFAULT_REF) {
             return true;
         }
 
@@ -182,9 +185,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         NbGradleCommonProperties commonProperties = gradleProject.getCommonProperties();
 
-        GradleLocationDef gradleLocation = commonProperties.gradleLocation().getActiveValue();
-        if (!shouldRelyOnWrapper(gradleProject, gradleLocation)) {
-            gradleLocation.getLocation().applyLocation(new GradleLocation.Applier() {
+        GradleLocationDef gradleLocationDef = commonProperties.gradleLocation().getActiveValue();
+        if (!shouldRelyOnWrapper(gradleProject, gradleLocationDef)) {
+            StringResolver resolver = StringResolvers.getDefaultResolverSelector().getProjectResolver(gradleProject, Lookup.EMPTY);
+            GradleLocation gradleLocation = gradleLocationDef.getLocation(resolver);
+            gradleLocation.applyLocation(new GradleLocation.Applier() {
                 @Override
                 public void applyVersion(String versionStr) {
                     result.useGradleVersion(versionStr);

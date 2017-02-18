@@ -6,6 +6,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
+import org.netbeans.gradle.project.properties.GradleLocation.Applier;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
 import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 
 public final class GradleLocationDistribution implements GradleLocation {
@@ -13,13 +15,42 @@ public final class GradleLocationDistribution implements GradleLocation {
 
     public static final String UNIQUE_TYPE_NAME = "DIST";
 
-    private final String rawLocation;
     private final URI location;
 
-    public GradleLocationDistribution(String location) {
+    public GradleLocationDistribution(URI location) {
         ExceptionHelper.checkNotNullArgument(location, "location");
-        this.rawLocation = location;
-        this.location = tryParseUri(location);
+        this.location = location;
+    }
+
+    public static GradleLocationRef getLocationRef(final String rawUri) {
+        ExceptionHelper.checkNotNullArgument(rawUri, "rawUri");
+
+        return new GradleLocationRef() {
+            @Override
+            public String getUniqueTypeName() {
+                return UNIQUE_TYPE_NAME;
+            }
+
+            @Override
+            public String asString() {
+                return rawUri;
+            }
+
+            @Override
+            public GradleLocation getLocation(StringResolver resolver) {
+                String resolvedUri = resolver.resolveStringIfValid(rawUri);
+                if (resolvedUri == null) {
+                    return GradleLocationDefault.DEFAULT;
+                }
+
+                URI uri = tryParseUri(resolvedUri);
+                if (uri == null) {
+                    return GradleLocationDefault.DEFAULT;
+                }
+
+                return new GradleLocationDistribution(uri);
+            }
+        };
     }
 
     private static URI tryParseUri(String uri) {
@@ -33,19 +64,7 @@ public final class GradleLocationDistribution implements GradleLocation {
 
     @Override
     public void applyLocation(Applier applier) {
-        if (location != null) {
-            applier.applyDistribution(location);
-        }
-    }
-
-    @Override
-    public String getUniqueTypeName() {
-        return UNIQUE_TYPE_NAME;
-    }
-
-    @Override
-    public String asString() {
-        return rawLocation;
+        applier.applyDistribution(location);
     }
 
     @Override
