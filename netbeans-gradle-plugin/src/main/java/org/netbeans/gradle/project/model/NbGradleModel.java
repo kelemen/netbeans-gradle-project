@@ -15,7 +15,8 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.VariableResolver;
+import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
 
@@ -149,7 +150,8 @@ public final class NbGradleModel {
     }
 
     public String getDisplayName(String namePattern) {
-        String rawName = StandardTaskVariable.replaceVars(namePattern, DisplayableTaskVariable.createVarReplaceMap(this));
+        VariableResolver resolver = VariableResolvers.getDefault();
+        String rawName = resolver.replaceVars(namePattern, DisplayableTaskVariable.createVarReplaceMap(this));
 
         if (isBuildSrc()) {
             return NbStrings.getBuildSrcMarker(rawName);

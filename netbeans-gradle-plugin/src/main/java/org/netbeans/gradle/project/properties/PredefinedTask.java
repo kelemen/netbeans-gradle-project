@@ -10,11 +10,10 @@ import org.netbeans.gradle.model.GradleTaskID;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
-import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.openide.util.Lookup;
 
 public final class PredefinedTask {
@@ -190,19 +189,21 @@ public final class PredefinedTask {
     }
 
     public boolean isTasksExistsIfRequired(NbGradleProject project, Lookup actionContext) {
-        TaskVariableMap varMap = TaskVariableMaps.createProjectActionVariableMap(project, actionContext);
-        return isTasksExistsIfRequired(project, varMap);
+        StringResolver taskNameResolver = StringResolvers
+                .getDefaultResolverSelector()
+                .getProjectResolver(project, actionContext);
+        return isTasksExistsIfRequired(project, taskNameResolver);
     }
 
-    public boolean isTasksExistsIfRequired(NbGradleProject project, TaskVariableMap varReplaceMap) {
+    public boolean isTasksExistsIfRequired(NbGradleProject project, StringResolver taskNameResolver) {
         NbGradleMultiProjectDef gradleProject = project.currentModel().getValue().getProjectDef();
-        return isTasksExistsIfRequired(gradleProject, varReplaceMap);
+        return isTasksExistsIfRequired(gradleProject, taskNameResolver);
     }
 
-    public boolean isTasksExistsIfRequired(NbGradleMultiProjectDef project, TaskVariableMap varReplaceMap) {
+    public boolean isTasksExistsIfRequired(NbGradleMultiProjectDef project, StringResolver taskNameResolver) {
         for (Name name: taskNames) {
             if (name.mustExist) {
-                String processedName = StandardTaskVariable.replaceVars(name.getName(), varReplaceMap);
+                String processedName = taskNameResolver.resolveString(name.getName());
                 if (!isTaskExists(project, processedName)) {
                     return false;
                 }

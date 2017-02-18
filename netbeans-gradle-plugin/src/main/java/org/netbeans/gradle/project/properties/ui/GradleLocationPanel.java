@@ -5,8 +5,6 @@ import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JTextField;
@@ -15,7 +13,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertySource;
 import org.jtrim.property.swing.SwingProperties;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.properties.GradleLocation;
@@ -23,9 +20,7 @@ import org.netbeans.gradle.project.properties.GradleLocationDefault;
 import org.netbeans.gradle.project.properties.GradleLocationDirectory;
 import org.netbeans.gradle.project.properties.GradleLocationDistribution;
 import org.netbeans.gradle.project.properties.GradleLocationVersion;
-import org.netbeans.gradle.project.tasks.vars.DisplayedTaskVariable;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
-import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.NbGuiUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -187,18 +182,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     }
 
     private static String replaceIfAllVarsValid(String str) {
-        List<DisplayedTaskVariable> variables = new ArrayList<>();
-
-        String resolved = StandardTaskVariable.replaceGlobalVars(str, variables);
-
-        TaskVariableMap varMap = TaskVariableMaps.getGlobalVariableMap();
-        for (DisplayedTaskVariable var: variables) {
-            if (varMap.tryGetValueForVariable(var.getVariable()) == null) {
-                return null;
-            }
-        }
-
-        return resolved;
+        return StringResolvers.getDefaultGlobalResolver().resolveStringIfValid(str);
     }
 
     private URI tryParseUri(String str) {

@@ -19,7 +19,6 @@ import org.netbeans.gradle.project.java.test.SpecificTestcase;
 import org.netbeans.gradle.project.java.test.TestTaskName;
 import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.ValueGetter;
 import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDef;
-import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDefMap;
 import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableValue;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.SingleMethod;
@@ -130,6 +129,10 @@ public enum StandardTaskVariable {
         }
     });
 
+    private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
+    private static final CachingVariableMap.VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
+            = createStandardMap();
+
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
                 .getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
@@ -148,10 +151,6 @@ public enum StandardTaskVariable {
 
         return new VariableValue(relFileName != null ? relFileName.replace('/', '.') : null);
     }
-
-    private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
-    private static final VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
-            = createStandardMap();
 
     private static VariableValue getMethodReplaceVariable(
             TaskVariableMap variables,
@@ -220,84 +219,9 @@ public enum StandardTaskVariable {
         return file.isFolder() ? null : file;
     }
 
-    private static VariableDefMap<NbGradleProject> createStandardMap() {
-        StandardTaskVariable[] variables = StandardTaskVariable.values();
-
-        final Map<TaskVariable, VariableDef<NbGradleProject>> result
-                = CollectionUtils.newHashMap(variables.length);
-
-        for (StandardTaskVariable variable: variables) {
-            result.put(variable.getVariable(), variable.asVariableDef());
-        }
-
-        return new VariableDefMap<NbGradleProject>() {
-            @Override
-            public VariableDef<NbGradleProject> tryGetDef(TaskVariable variable) {
-                return result.get(variable);
-            }
-        };
-    }
-
     public static TaskVariableMap createVarReplaceMap(
             NbGradleProject project, Lookup actionContext) {
         return new CachingVariableMap<>(TASK_VARIABLE_MAP, project, actionContext);
-    }
-
-    public static String replaceGlobalVars(String str) {
-        return replaceGlobalVars(str, null);
-    }
-
-    public static String replaceGlobalVars(String str, List<? super DisplayedTaskVariable> collectedVariables) {
-        return replaceVars(str, TaskVariableMaps.getGlobalVariableMap(), collectedVariables);
-    }
-
-    public static String replaceVars(String str, TaskVariableMap varReplaceMap) {
-        return replaceVars(str, varReplaceMap, null);
-    }
-
-    public static String replaceVars(
-            String str,
-            TaskVariableMap varReplaceMap,
-            List<? super DisplayedTaskVariable> collectedVariables) {
-
-        if (!str.contains("${")) {
-            // Fast path when there is no variable to replace.
-            return str;
-        }
-
-        StringBuilder result = new StringBuilder(str.length() * 2);
-
-        int index = 0;
-        while (index < str.length()) {
-            char ch = str.charAt(index);
-            if (ch == '$') {
-                int varStart = str.indexOf('{', index + 1);
-                int varEnd = varStart >= 0
-                        ? StringUtils.unescapedIndexOf(str, varStart + 1, '}')
-                        : -1;
-                if (varStart >= 0 && varEnd >= varStart) {
-                    String varDef = str.substring(varStart + 1, varEnd);
-                    DisplayedTaskVariable taskVar = DisplayedTaskVariable.tryParseTaskVariable(varDef);
-
-                    if (taskVar != null) {
-                        if (collectedVariables != null) {
-                            collectedVariables.add(taskVar);
-                        }
-
-                        String value = varReplaceMap.tryGetValueForVariable(taskVar.getVariable());
-                        if (value != null) {
-                            result.append(value);
-                            index = varEnd + 1;
-                            continue;
-                        }
-                    }
-                }
-            }
-
-            result.append(ch);
-            index++;
-        }
-        return result.toString();
     }
 
     private final TaskVariable variable;
@@ -306,10 +230,6 @@ public enum StandardTaskVariable {
     private StandardTaskVariable(String variableName, ValueGetter<NbGradleProject> valueGetter) {
         this.variable = new TaskVariable(variableName);
         this.valueGetter = valueGetter;
-    }
-
-    private CachingVariableMap.VariableDef<NbGradleProject> asVariableDef() {
-        return new CachingVariableMap.VariableDef<>(variable, valueGetter);
     }
 
     public TaskVariable getVariable() {
@@ -322,5 +242,27 @@ public enum StandardTaskVariable {
 
     public String getScriptReplaceConstant() {
         return variable.getScriptReplaceConstant();
+    }
+
+    private static CachingVariableMap.VariableDefMap<NbGradleProject> createStandardMap() {
+        StandardTaskVariable[] variables = StandardTaskVariable.values();
+
+        final Map<TaskVariable, CachingVariableMap.VariableDef<NbGradleProject>> result
+                = CollectionUtils.newHashMap(variables.length);
+
+        for (StandardTaskVariable variable: variables) {
+            result.put(variable.getVariable(), variable.asVariableDef());
+        }
+
+        return new CachingVariableMap.VariableDefMap<NbGradleProject>() {
+            @Override
+            public CachingVariableMap.VariableDef<NbGradleProject> tryGetDef(TaskVariable variable) {
+                return result.get(variable);
+            }
+        };
+    }
+
+    private VariableDef<NbGradleProject> asVariableDef() {
+        return new VariableDef<>(variable, valueGetter);
     }
 }

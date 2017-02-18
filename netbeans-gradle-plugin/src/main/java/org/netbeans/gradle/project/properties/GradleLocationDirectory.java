@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleLocationDirectory implements GradleLocation {
@@ -15,7 +15,7 @@ public final class GradleLocationDirectory implements GradleLocation {
     public GradleLocationDirectory(String gradleHome) {
         ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
         this.rawGradleHome = gradleHome;
-        this.gradleHome = FileUtil.normalizeFile(new File(StandardTaskVariable.replaceGlobalVars(gradleHome)));
+        this.gradleHome = FileUtil.normalizeFile(new File(StringResolvers.getDefaultGlobalResolver().resolveString(gradleHome)));
     }
 
     public File tryGetGradleHome() {

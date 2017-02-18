@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 
 public final class GradleLocationDistribution implements GradleLocation {
     private static final Logger LOGGER = Logger.getLogger(GradleLocationDistribution.class.getName());
@@ -24,7 +24,7 @@ public final class GradleLocationDistribution implements GradleLocation {
 
     private static URI tryParseUri(String uri) {
         try {
-            return new URI(StandardTaskVariable.replaceGlobalVars(uri));
+            return new URI(StringResolvers.getDefaultGlobalResolver().resolveString(uri));
         } catch (URISyntaxException ex) {
             LOGGER.log(Level.INFO, "Invalid URI for Gradle distribution: " + uri, ex);
             return null;

@@ -80,6 +80,8 @@ import org.netbeans.gradle.project.tasks.vars.DisplayedTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
 import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.TaskVariableQueryDialog;
+import org.netbeans.gradle.project.tasks.vars.VariableResolver;
+import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
 import org.netbeans.gradle.project.util.Closeables;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
@@ -543,8 +545,9 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static void collectTaskVars(String[] strings, List<DisplayedTaskVariable> taskVars) {
+        VariableResolver resolver = VariableResolvers.getDefault();
         for (String str: strings) {
-            StandardTaskVariable.replaceVars(str, EmptyTaskVarMap.INSTANCE, taskVars);
+            resolver.collectVars(str, EmptyTaskVarMap.INSTANCE, taskVars);
         }
     }
 
@@ -629,8 +632,9 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static void replaceAllVars(String[] strings, TaskVariableMap varMap) {
+        VariableResolver resolver = VariableResolvers.getDefault();
         for (int i = 0; i < strings.length; i++) {
-            strings[i] = StandardTaskVariable.replaceVars(strings[i], varMap);
+            strings[i] = resolver.replaceVars(strings[i], varMap);
         }
     }
 

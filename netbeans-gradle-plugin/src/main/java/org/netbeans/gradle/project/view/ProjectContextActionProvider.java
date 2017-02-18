@@ -29,14 +29,14 @@ import org.netbeans.gradle.project.api.nodes.GradleProjectAction;
 import org.netbeans.gradle.project.api.nodes.GradleProjectContextActions;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties.ui.AddNewTaskPanel;
-import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;
@@ -268,9 +268,11 @@ public final class ProjectContextActionProvider implements ContextActionProvider
             boolean hasCustomTasks = false;
             menu.removeAll();
 
-            TaskVariableMap varReplaceMap = TaskVariableMaps.createProjectActionVariableMap(project, Lookup.EMPTY);
+            StringResolver taskNameResolver = StringResolvers
+                    .getDefaultResolverSelector()
+                    .getProjectResolver(project, Lookup.EMPTY);
             for (final PredefinedTask task: commonTasksList) {
-                if (!task.isTasksExistsIfRequired(project, varReplaceMap)) {
+                if (!task.isTasksExistsIfRequired(project, taskNameResolver)) {
                     continue;
                 }
 

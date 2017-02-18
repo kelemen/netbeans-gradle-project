@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.tasks.vars;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,7 +12,7 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 
 import static org.junit.Assert.*;
 
-public class StandardTaskVariableTest {
+public final class VariableResolversTest {
     private static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
         return DisplayedTaskVariable.variableMap(map);
     }
@@ -24,22 +25,29 @@ public class StandardTaskVariableTest {
         return new DisplayedTaskVariable(new TaskVariable(name), displayName, VariableTypeDescription.DEFAULT_TYPE);
     }
 
-    /**
-     * Test of replaceVars method, of class StandardTaskVariable.
-     */
+    private static String replaceVars(
+            String str,
+            TaskVariableMap varReplaceMap) {
+        return VariableResolvers.getDefault().replaceVars(str, varReplaceMap);
+    }
+
+    public static String replaceVars(
+            String str,
+            TaskVariableMap varReplaceMap,
+            Collection<? super DisplayedTaskVariable> collectedVariables) {
+        return VariableResolvers.getDefault().replaceVars(str, varReplaceMap, collectedVariables);
+    }
+
     @Test
     public void testReplaceVars_String_TaskVariableMap() {
         DisplayedTaskVariable var1 = createVar("var1");
 
         String replaceStr = "testReplaceVars_String_TaskVariableMap";
         TaskVariableMap varMap = variableMap(Collections.singletonMap(var1, replaceStr));
-        String resultStr = StandardTaskVariable.replaceVars(var1.getScriptReplaceConstant(), varMap);
+        String resultStr = replaceVars(var1.getScriptReplaceConstant(), varMap);
         assertEquals(replaceStr, resultStr);
     }
 
-    /**
-     * Test of replaceVars method, of class StandardTaskVariable.
-     */
     @Test
     public void testReplaceVars_3args() {
         DisplayedTaskVariable var1 = createVar("var1");
@@ -62,7 +70,7 @@ public class StandardTaskVariableTest {
         valueMap.put(var4, "VALUE4");
 
         List<DisplayedTaskVariable> foundVars = new LinkedList<>();
-        String resultStr = StandardTaskVariable.replaceVars(str, variableMap(valueMap), foundVars);
+        String resultStr = replaceVars(str, variableMap(valueMap), foundVars);
         assertEquals("VALUE1 SEPARATOR1 ${unknown-var}${illegal-chars*-=\\}}}}}VALUE2VALUE3 SEPARATOR2 VALUE4",
                 resultStr);
     }

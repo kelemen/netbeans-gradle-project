@@ -31,8 +31,10 @@ import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.tasks.vars.CombinedTaskVariableMap;
 import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
+import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
 import org.openide.util.Lookup;
 import org.openide.windows.OutputWriter;
 
@@ -418,18 +420,22 @@ public final class GradleTaskDef {
         return commandFinalizer;
     }
 
-    public GradleTaskDef updateTaskVariables(TaskVariableMap varReplaceMap) {
+    public GradleTaskDef updateTaskVariables(TaskVariableMap taskVars) {
+        return updateTaskVariables(StringResolvers.bindVariableResolver(VariableResolvers.getDefault(), taskVars));
+    }
+
+    private GradleTaskDef updateTaskVariables(StringResolver strResolver) {
         Builder builder = new Builder(this);
-        builder.setTaskNames(processList(getTaskNames(), varReplaceMap));
-        builder.setArguments(processList(getArguments(), varReplaceMap));
-        builder.setJvmArguments(processList(getJvmArguments(), varReplaceMap));
+        builder.setTaskNames(processList(getTaskNames(), strResolver));
+        builder.setArguments(processList(getArguments(), strResolver));
+        builder.setJvmArguments(processList(getJvmArguments(), strResolver));
         return builder.create();
     }
 
-    private static List<String> processList(List<String> strings, TaskVariableMap varReplaceMap) {
+    private static List<String> processList(List<String> strings, StringResolver strResolver) {
         List<String> result = new ArrayList<>(strings.size());
         for (String str: strings) {
-            result.add(StandardTaskVariable.replaceVars(str, varReplaceMap));
+            result.add(strResolver.resolveString(str));
         }
         return result;
     }
@@ -437,15 +443,15 @@ public final class GradleTaskDef {
     public static GradleTaskDef.Builder createFromTemplate(
             TaskOutputDef outputDef,
             GradleCommandTemplate command,
-            TaskVariableMap varReplaceMap) {
+            StringResolver strResolver) {
         ExceptionHelper.checkNotNullArgument(outputDef, "outputDef");
         ExceptionHelper.checkNotNullArgument(command, "command");
-        ExceptionHelper.checkNotNullArgument(varReplaceMap, "varReplaceMap");
+        ExceptionHelper.checkNotNullArgument(strResolver, "strResolver");
 
-        GradleTaskDef.Builder builder = new Builder(outputDef, processList(command.getTasks(), varReplaceMap));
+        GradleTaskDef.Builder builder = new Builder(outputDef, processList(command.getTasks(), strResolver));
         builder.setCommandName(command.getDisplayName());
-        builder.setArguments(processList(command.getArguments(), varReplaceMap));
-        builder.setJvmArguments(processList(command.getJvmArguments(), varReplaceMap));
+        builder.setArguments(processList(command.getArguments(), strResolver));
+        builder.setJvmArguments(processList(command.getJvmArguments(), strResolver));
         builder.setNonBlocking(!command.isBlocking());
         builder.setCleanOutput(command.isBlocking());
         return builder;
@@ -570,7 +576,7 @@ public final class GradleTaskDef {
             NbGradleProject project,
             Lookup actionContext,
             CustomCommandActions customActions,
-            TaskVariableMap varReplaceMap,
+            StringResolver strResolver,
             GradleTaskDef.Builder builder) {
 
         ContextAwareCommandArguments additional = customActions.getContextAwareCommandArguments();
@@ -578,7 +584,7 @@ public final class GradleTaskDef {
             return;
         }
         List<String> argumentList = additional.getCommandArguments(project, actionContext);
-        builder.addArguments(processList(argumentList, varReplaceMap));
+        builder.addArguments(processList(argumentList, strResolver));
     }
 
     public static GradleTaskDef.Builder createFromTemplate(
@@ -587,10 +593,12 @@ public final class GradleTaskDef {
             CustomCommandActions customActions,
             Lookup actionContext) {
 
+        StringResolver strResolver = StringResolvers.getDefaultResolverSelector().getProjectResolver(project, actionContext);
+
         TaskVariableMap varReplaceMap = TaskVariableMaps.createProjectActionVariableMap(project, actionContext);
         TaskOutputDef caption = getOutputDef(project, customActions.getTaskKind(), command);
-        GradleTaskDef.Builder builder = createFromTemplate(caption, command, varReplaceMap);
-        addAdditionalArguments(project, actionContext, customActions, varReplaceMap, builder);
+        GradleTaskDef.Builder builder = createFromTemplate(caption, command, strResolver);
+        addAdditionalArguments(project, actionContext, customActions, strResolver, builder);
 
         builder.setCancelToken(customActions.getCancelToken());
         builder.setNonUserTaskVariables(varReplaceMap);

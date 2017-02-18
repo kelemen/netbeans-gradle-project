@@ -15,6 +15,9 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleMultiProjectDef;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.tasks.vars.StringResolver;
+import org.netbeans.gradle.project.tasks.vars.StringResolvers;
+import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
 
 import static org.junit.Assert.*;
 
@@ -178,12 +181,20 @@ public class PredefinedTaskTest {
                 true);
     }
 
+    private static boolean isTasksExistsIfRequired(
+            PredefinedTask task,
+            NbGradleMultiProjectDef project,
+            TaskVariableMap varMap) {
+        StringResolver resolver = StringResolvers.bindVariableResolver(VariableResolvers.getDefault(), varMap);
+        return task.isTasksExistsIfRequired(project, resolver);
+    }
+
     private void taskExistsInProject(
             NbGradleMultiProjectDef project,
             String taskName,
             TaskVariableMap varMap) {
         assertTrue(taskName + " should be found in the project",
-                createTestTask(taskName, true).isTasksExistsIfRequired(project, varMap));
+                isTasksExistsIfRequired(createTestTask(taskName, true), project, varMap));
     }
 
     private void taskExistsInProject(NbGradleMultiProjectDef project, String taskName) {
@@ -195,7 +206,7 @@ public class PredefinedTaskTest {
             String taskName,
             TaskVariableMap varMap) {
         assertFalse(taskName + " should not be found in the project",
-                createTestTask(taskName, true).isTasksExistsIfRequired(project, varMap));
+                isTasksExistsIfRequired(createTestTask(taskName, true), project, varMap));
     }
 
     private void taskDoesNotExistInProject(NbGradleMultiProjectDef project, String taskName) {
