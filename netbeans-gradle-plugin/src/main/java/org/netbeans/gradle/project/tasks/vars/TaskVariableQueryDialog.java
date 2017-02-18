@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.tasks.vars;
 
 import java.awt.FlowLayout;
 import java.awt.Frame;

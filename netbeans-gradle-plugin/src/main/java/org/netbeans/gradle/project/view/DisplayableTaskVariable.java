@@ -9,11 +9,11 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
-import org.netbeans.gradle.project.tasks.CachingVariableMap;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDefMap;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableValue;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.ValueGetter;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDef;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDefMap;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableValue;
 import org.openide.util.Lookup;
 
 public enum DisplayableTaskVariable {

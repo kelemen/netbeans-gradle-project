@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.properties;
 
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 
 public final class GradleLocationVersion implements GradleLocation {
     public static final String UNIQUE_TYPE_NAME = "VER";

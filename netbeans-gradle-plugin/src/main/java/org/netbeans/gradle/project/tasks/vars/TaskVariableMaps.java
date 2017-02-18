@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.tasks.vars;
 
 import java.util.ArrayList;
 import java.util.Collection;

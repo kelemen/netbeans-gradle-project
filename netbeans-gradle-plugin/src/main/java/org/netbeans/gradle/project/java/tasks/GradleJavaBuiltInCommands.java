@@ -47,7 +47,7 @@ import org.netbeans.gradle.project.java.test.TestXmlDisplayer;
 import org.netbeans.gradle.project.output.DebugTextListener;
 import org.netbeans.gradle.project.tasks.AttacherListener;
 import org.netbeans.gradle.project.tasks.DebugUtils;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.util.GradleVersions;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
 import org.netbeans.spi.project.ActionProvider;

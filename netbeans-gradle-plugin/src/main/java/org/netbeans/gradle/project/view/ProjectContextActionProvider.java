@@ -36,7 +36,7 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.properties.ui.AddNewTaskPanel;
-import org.netbeans.gradle.project.tasks.TaskVariableMaps;
+import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.spi.project.ui.support.CommonProjectActions;

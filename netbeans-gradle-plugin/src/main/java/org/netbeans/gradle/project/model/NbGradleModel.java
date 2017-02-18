@@ -15,7 +15,7 @@ import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.extensions.NbGradleExtensionRef;
 import org.netbeans.gradle.project.script.CommonScripts;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.view.DisplayableTaskVariable;
 import org.openide.filesystems.FileObject;
 

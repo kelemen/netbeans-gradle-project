@@ -2,7 +2,7 @@ package org.netbeans.gradle.project.api.task;
 
 import java.io.IOException;
 import javax.annotation.Nonnull;
-import org.netbeans.gradle.project.tasks.EmptyTaskVarMap;
+import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
 
 /**
  * Defines a running service which lives while an associated Gradle command

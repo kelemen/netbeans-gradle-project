@@ -3,7 +3,7 @@ package org.netbeans.gradle.project.properties;
 import java.io.File;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.openide.filesystems.FileUtil;
 
 public final class GradleLocationDirectory implements GradleLocation {

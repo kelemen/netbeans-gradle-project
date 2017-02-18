@@ -5,7 +5,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
-import org.netbeans.gradle.project.tasks.EmptyTaskVarMap;
+import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
 
 /**
  * Defines in what context has a particular Gradle command been executed.

@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.tasks.vars;
 
 import org.junit.Test;
 import org.netbeans.gradle.project.api.task.TaskVariable;

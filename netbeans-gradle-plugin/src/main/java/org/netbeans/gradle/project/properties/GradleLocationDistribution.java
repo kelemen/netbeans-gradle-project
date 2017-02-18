@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
-import org.netbeans.gradle.project.tasks.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 
 public final class GradleLocationDistribution implements GradleLocation {
     private static final Logger LOGGER = Logger.getLogger(GradleLocationDistribution.class.getName());

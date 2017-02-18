@@ -29,6 +29,10 @@ import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskKind;
 import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
+import org.netbeans.gradle.project.tasks.vars.CombinedTaskVariableMap;
+import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
+import org.netbeans.gradle.project.tasks.vars.TaskVariableMaps;
 import org.openide.util.Lookup;
 import org.openide.windows.OutputWriter;
 

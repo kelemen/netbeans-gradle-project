@@ -1,4 +1,4 @@
-package org.netbeans.gradle.project.tasks;
+package org.netbeans.gradle.project.tasks.vars;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -17,10 +17,10 @@ import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.test.SpecificTestClass;
 import org.netbeans.gradle.project.java.test.SpecificTestcase;
 import org.netbeans.gradle.project.java.test.TestTaskName;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.ValueGetter;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDef;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableDefMap;
-import org.netbeans.gradle.project.tasks.CachingVariableMap.VariableValue;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.ValueGetter;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDef;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableDefMap;
+import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableValue;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.spi.project.SingleMethod;
 import org.openide.filesystems.FileObject;

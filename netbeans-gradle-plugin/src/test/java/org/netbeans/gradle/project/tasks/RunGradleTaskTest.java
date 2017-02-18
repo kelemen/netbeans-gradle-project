@@ -18,6 +18,7 @@ import org.netbeans.gradle.project.api.entry.SampleProjectRule;
 import org.netbeans.gradle.project.properties.standard.CustomVariable;
 import org.netbeans.gradle.project.properties.standard.CustomVariables;
 import org.netbeans.gradle.project.properties.standard.MemCustomVariables;
+import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.spi.project.ActionProvider;
 import org.openide.filesystems.FileObject;
