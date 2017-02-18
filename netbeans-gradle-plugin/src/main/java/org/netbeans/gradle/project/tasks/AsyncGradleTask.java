@@ -78,7 +78,6 @@ import org.netbeans.gradle.project.properties.global.SelfMaintainedTasks;
 import org.netbeans.gradle.project.script.GroovyScripts;
 import org.netbeans.gradle.project.tasks.vars.DisplayedTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.EmptyTaskVarMap;
-import org.netbeans.gradle.project.tasks.vars.StandardTaskVariable;
 import org.netbeans.gradle.project.tasks.vars.TaskVariableQueryDialog;
 import org.netbeans.gradle.project.tasks.vars.VariableResolver;
 import org.netbeans.gradle.project.tasks.vars.VariableResolvers;
