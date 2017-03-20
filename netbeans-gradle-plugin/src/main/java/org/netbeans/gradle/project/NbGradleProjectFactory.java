@@ -164,13 +164,10 @@ public class NbGradleProjectFactory implements ProjectFactory2 {
     }
 
     private static boolean hasBuildFile(FileObject directory) {
-        File dirAsFile = FileUtil.toFile(directory);
-        if (dirAsFile == null) {
-            return false;
-        }
-
-        Path dirAsPath = dirAsFile.toPath();
-        return NbGenericModelInfo.tryGuessBuildFilePath(dirAsPath, DEFAULT_SCRIPT_FILE_PROVIDER) != null;
+        Path dirAsPath = NbFileUtils.asPath(directory);
+        return dirAsPath != null
+                ? NbGenericModelInfo.tryGuessBuildFilePath(dirAsPath, DEFAULT_SCRIPT_FILE_PROVIDER) != null
+                : false;
     }
 
     @Override
