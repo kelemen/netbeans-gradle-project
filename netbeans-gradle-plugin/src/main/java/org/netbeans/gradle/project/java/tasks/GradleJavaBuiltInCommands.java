@@ -190,7 +190,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             true,
             true,
             listenDebugger());
-    private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = blockingCommand(
+    private static final CommandWithActions DEFAULT_APPLY_CODE_CHANGES_TASK = nonBlockingCommand(
             TaskKind.BUILD,
             Arrays.asList(projectTask("classes")),
             Collections.<String>emptyList(),
