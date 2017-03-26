@@ -71,6 +71,7 @@ public final class DefaultBuiltInTasks implements BuiltInGradleCommandQuery {
         DISPLAY_NAME_MAP.put(JavaProjectConstants.COMMAND_DEBUG_FIX, NbStrings.getApplyCodeChangesCommandCaption());
         DISPLAY_NAME_MAP.put(SingleMethod.COMMAND_RUN_SINGLE_METHOD, NbStrings.getTestSingleMethodCommandCaption());
         DISPLAY_NAME_MAP.put(SingleMethod.COMMAND_DEBUG_SINGLE_METHOD, NbStrings.getDebugTestSingleMethodCommandCaption());
+        DISPLAY_NAME_MAP.put(ActionProvider.COMMAND_COMPILE_SINGLE, NbStrings.getCompileSingleCaption());
     }
 
     private static void addToDefaults(String command, CommandWithActions task) {

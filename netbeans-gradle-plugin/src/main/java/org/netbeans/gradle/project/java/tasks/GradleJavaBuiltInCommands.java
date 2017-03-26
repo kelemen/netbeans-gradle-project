@@ -195,6 +195,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             Arrays.asList(projectTask("classes")),
             Collections.<String>emptyList(),
             applyClassesActions());
+    private static final CommandWithActions DEFAULT_COMPILE_SINGLE_TASK = nonBlockingCommand(
+            TaskKind.BUILD,
+            Arrays.asList(projectTask("classes")),
+            Collections.<String>emptyList());
 
     private static final Map<String, CommandWithActionsRef> DEFAULT_TASKS;
 
@@ -209,6 +213,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         addToDefaults(SingleMethod.COMMAND_RUN_SINGLE_METHOD, DEFAULT_TEST_SINGLE_METHOD_TASK);
         addToDefaults(ActionProvider.COMMAND_RUN_SINGLE, DEFAULT_RUN_SINGLE_TASK);
         addToDefaults(JavaProjectConstants.COMMAND_DEBUG_FIX, DEFAULT_APPLY_CODE_CHANGES_TASK);
+        addToDefaults(ActionProvider.COMMAND_COMPILE_SINGLE, DEFAULT_COMPILE_SINGLE_TASK);
 
         addToDefaults(ActionProvider.COMMAND_TEST_SINGLE, newSingleTestArgSelector(), Arrays.asList(
                 new CommandChoice<>(false, DEFAULT_TEST_SINGLE_TASK_1),

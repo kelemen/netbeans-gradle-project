@@ -162,6 +162,10 @@ public final class NbStrings {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.DebugTestSingleMethodAgain");
     }
 
+    public static String getCompileSingleCaption() {
+        return NbBundle.getMessage(NbStrings.class, "NbStrings.CompileSingle");
+    }
+
     public static String getTestClassAgain() {
         return NbBundle.getMessage(NbStrings.class, "NbStrings.TestClassAgain");
     }
