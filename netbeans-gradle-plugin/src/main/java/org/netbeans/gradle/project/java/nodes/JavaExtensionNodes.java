@@ -1,5 +1,6 @@
 package org.netbeans.gradle.project.java.nodes;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -20,6 +21,7 @@ import org.netbeans.gradle.project.java.model.NbJavaModule;
 import org.netbeans.gradle.project.java.model.NbListedDir;
 import org.netbeans.gradle.project.java.query.GradleProjectSources;
 import org.netbeans.gradle.project.properties.global.JavaSourcesDisplayMode;
+import org.netbeans.gradle.project.util.FileSystemWatcher;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -29,7 +31,6 @@ import org.openide.nodes.Node;
 public final class JavaExtensionNodes
 implements
         GradleProjectExtensionNodes {
-
     private final JavaExtension javaExt;
 
     public JavaExtensionNodes(JavaExtension javaExt) {
@@ -42,12 +43,32 @@ implements
         return javaExt.getProjectProperties().javaSourcesDisplayMode().getActiveSource();
     }
 
+    private ListenerRef addDirectoryChangeListener(File dir, Runnable listener) {
+        return FileSystemWatcher.getDefault().watchPath(dir.toPath(), listener);
+    }
+
+    private ListenerRef addDirectoryChangeListener(Runnable listener) {
+        NbJavaModule mainModule = javaExt.getCurrentModel().getMainModule();
+
+        List<ListenerRef> refs = new ArrayList<>();
+        for (NamedSourceRoot namedRoot : mainModule.getNamedSourceRoots()) {
+            refs.add(addDirectoryChangeListener(namedRoot.getRoot(), listener));
+        }
+
+        for (NbListedDir listedDir : mainModule.getListedDirs()) {
+            refs.add(addDirectoryChangeListener(listedDir.getDirectory(), listener));
+        }
+
+        return ListenerRegistries.combineListenerRefs(refs);
+    }
+
     @Override
     public NbListenerRef addNodeChangeListener(Runnable listener) {
         ListenerRef ref1 = javaExt.addModelChangeListener(listener);
         ListenerRef ref2 = javaExt.getSourceDirsHandler().addDirsCreatedListener(listener);
         ListenerRef ref3 = javaSourcesDisplayMode().addChangeListener(listener);
-        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3));
+        ListenerRef ref4 = addDirectoryChangeListener(listener);
+        return NbListenerRefs.asNbRef(ListenerRegistries.combineListenerRefs(ref1, ref2, ref3, ref4));
     }
 
     private void addListedDirs(List<SingleNodeFactory> toPopulate) {
