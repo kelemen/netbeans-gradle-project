@@ -240,7 +240,7 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
         return projectDependencies;
     }
 
-    public MutableProperty<NbJavaModel> currentModel() {
+    public PropertySource<NbJavaModel> currentModel() {
         return currentModel;
     }
 
