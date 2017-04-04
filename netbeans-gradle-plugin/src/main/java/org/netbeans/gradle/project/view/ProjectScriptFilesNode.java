@@ -242,7 +242,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
             List<FileObject> gradleFiles = new ArrayList<>();
             for (FileObject file: project.getProjectDirectory().getChildren()) {
-                if (file.equals(buildGradle) || file.equals(settingsGradle)) {
+                if (file.equals(buildGradle) || file.equals(settingsGradle) || file.isFolder()) {
                     continue;
                 }
 
