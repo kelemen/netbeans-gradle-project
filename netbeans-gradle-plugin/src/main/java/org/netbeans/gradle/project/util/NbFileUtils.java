@@ -204,10 +204,12 @@ public final class NbFileUtils {
             return null;
         }
 
-        for (File dir: subDirs) {
-            File srcFileName = new File(dir, fileName);
-            if (srcFileName.isFile()) {
-                return asArchiveOrDir(FileUtil.toFileObject(srcFileName));
+        if (null != subDirs) {
+            for (File dir : subDirs) {
+                File srcFileName = new File(dir, fileName);
+                if (srcFileName.isFile()) {
+                    return asArchiveOrDir(FileUtil.toFileObject(srcFileName));
+                }
             }
         }
         return null;
