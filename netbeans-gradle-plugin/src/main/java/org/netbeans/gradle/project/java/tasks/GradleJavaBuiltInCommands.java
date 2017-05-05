@@ -60,6 +60,7 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static final String MAIN_CLASS_PROPERTY_NAME = "mainClass";
     private static final String CMD_LINE_ARGS_PROPERTY_NAME = "cmdLineArgs";
+    private static final String JVM_LINE_ARGS_PROPERTY_NAME = "jvmLineArgs";
     private static final String JPDA_PORT_PROPERTY_NAME = "debuggerJpdaPort";
     private static final String DEBUGGED_TASK_PROPERTY_NAME = "debuggedTaskName";
 
@@ -86,16 +87,16 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_RUN_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
-            Arrays.asList(cmdLineArg()));
+            Arrays.asList(cmdLineArg(), jvmLineArg()));
     private static final CommandWithActions DEFAULT_DEBUG_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("debug")),
-            Arrays.asList(cmdLineArg()),
+            Arrays.asList(cmdLineArg(), jvmLineArg()),
             attachDebugger());
     private static final CommandWithActions DEFAULT_DEBUG_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("run")),
-            debuggeeAttachesArguments(projectTask("run"), cmdLineArg()),
+            debuggeeAttachesArguments(projectTask("run"), cmdLineArg(), jvmLineArg()),
             listenDebugger());
     private static final CommandWithActions DEFAULT_JAVADOC_TASK = nonBlockingCommand(
             TaskKind.BUILD,
@@ -173,20 +174,20 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     private static final CommandWithActions DEFAULT_RUN_SINGLE_TASK = blockingCommand(
             TaskKind.RUN,
             Arrays.asList(projectTask("run")),
-            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg()),
+            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg(), jvmLineArg()),
             true,
             true);
     private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK_1 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("debug")),
-            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg()),
+            Arrays.asList(gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg(), jvmLineArg()),
             true,
             true,
             attachDebugger());
     private static final CommandWithActions DEFAULT_DEBUG_SINGLE_TASK_2 = blockingCommand(
             TaskKind.DEBUG,
             Arrays.asList(projectTask("run")),
-            debuggeeAttachesArguments(projectTask("run"), gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg()),
+            debuggeeAttachesArguments(projectTask("run"), gradlePropertyArg(MAIN_CLASS_PROPERTY_NAME, StandardTaskVariable.SELECTED_CLASS.getVariable()), cmdLineArg(), jvmLineArg()),
             true,
             true,
             listenDebugger());
@@ -243,6 +244,10 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
 
     private static String cmdLineArg() {
         return gradlePropertyArg(CMD_LINE_ARGS_PROPERTY_NAME, StandardTaskVariable.CMD_LINE_ARGS.getVariable());
+    }
+
+    private static String jvmLineArg() {
+        return gradlePropertyArg(JVM_LINE_ARGS_PROPERTY_NAME, StandardTaskVariable.JVM_LINE_ARGS.getVariable());
     }
 
     private static String gradlePropertyArg(String propertyName, TaskVariable taskVar) {

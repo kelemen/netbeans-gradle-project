@@ -33,12 +33,23 @@ void configureProject(def project) {
         definedMainClass = updateMainClass(project, definedMainClass)
 
         def cmdLineArgs = getCmdLineArgs(project)
+        def javaExecJvmArgs = getJavaExecJvmArgs(project)
+
+        project.logger.debug("[nb-init-script] javaExec minHeapSize=${javaExecJvmArgs.minHeapSize}")
+        project.logger.debug("[nb-init-script] javaExec maxHeapSize=${javaExecJvmArgs.maxHeapSize}")
+        project.logger.debug("[nb-init-script] javaExec systemProperties=${javaExecJvmArgs.systemProperties}")
+        project.logger.debug("[nb-init-script] javaExec jvmArgs=${javaExecJvmArgs.jvmArgs}")
+        project.logger.debug("[nb-init-script] javaExec cmdLineArgs=${cmdLineArgs}")
 
         def configJavaExec = { JavaExec task ->
             task.main = definedMainClass
             task.classpath = project.sourceSets.main.runtimeClasspath
             task.standardInput = System.in
             task.args = cmdLineArgs
+            task.minHeapSize = javaExecJvmArgs.minHeapSize
+            task.maxHeapSize = javaExecJvmArgs.maxHeapSize
+            task.systemProperties = javaExecJvmArgs.systemProperties
+            task.jvmArgs = javaExecJvmArgs.jvmArgs
         }
 
         if (!hasRun) {
@@ -55,6 +66,10 @@ void configureProject(def project) {
         }
         else if (!cmdLineArgs.isEmpty() && (runTask instanceof JavaExec)) {
             runTask.args = cmdLineArgs
+            runTask.minHeapSize = javaExecJvmArgs.minHeapSize
+            runTask.maxHeapSize = javaExecJvmArgs.maxHeapSize
+            runTask.systemProperties = javaExecJvmArgs.systemProperties
+            runTask.jvmArgs = javaExecJvmArgs.jvmArgs
         }
 
         if (!hasDebug) {
@@ -72,6 +87,10 @@ void configureProject(def project) {
         }
         else if (!cmdLineArgs.isEmpty() && (debugTask instanceof JavaExec)) {
             debugTask.args = getCmdLineArgs(project)
+            debugTask.minHeapSize = javaExecJvmArgs.minHeapSize
+            debugTask.maxHeapSize = javaExecJvmArgs.maxHeapSize
+            debugTask.systemProperties = javaExecJvmArgs.systemProperties
+            debugTask.jvmArgs = javaExecJvmArgs.jvmArgs
         }
     }
     else {
@@ -120,15 +139,23 @@ String updateMainClass(def project, String srcMainClass) {
     return srcMainClass
 }
 
-List<String> getCmdLineArgs(def project) {
-    def cmdLineArgs = project.hasProperty('cmdLineArgs') ? project.cmdLineArgs : ''
-    cmdLineArgs = cmdLineArgs?.toString()?.trim()
-    if (cmdLineArgs == null || cmdLineArgs == '') {
+List<String> splitProjectProperty(def project, def propertyName) {
+    def value = project.hasProperty(propertyName) ? project[propertyName] : ''
+    value = value?.toString()?.trim()
+    if (value == null || value == '') {
         return []
     }
     else {
-        return splitArgs(cmdLineArgs)
+        return splitArgs(value)
     }
+}
+
+List<String> getCmdLineArgs(def project) {
+    return splitProjectProperty(project, 'cmdLineArgs')
+}
+
+List<String> getJvmLineArgs(def project) {
+    return splitProjectProperty(project, 'jvmLineArgs')
 }
 
 void updateDebugTaskArgs(def project) {
@@ -200,6 +227,35 @@ void updateJvmArgs(def task, List additionalArgs) {
         additionalArgsSet.remove(arg?.toString())
     }
     task.jvmArgs(additionalArgsSet)
+}
+
+Map<String, String> getJavaExecJvmArgs(def project) {
+    def jvmLineArgsList = getJvmLineArgs(project)
+
+    def systemProperties = [:]
+    def minHeapSize = '128m'
+    def maxHeapSize = '128m'
+    def jvmArgs = []
+
+    for (def arg : jvmLineArgsList) {
+        if (arg.startsWith('-D')) {
+            def kv = arg.substring(2).split('=', 2)
+            systemProperties[kv[0]] = kv.length >= 2 ? kv[1] : true
+        }
+        else if (arg.startsWith('-Xms')) {
+            minHeapSize = arg.substring(4)
+        }
+        else if (arg.startsWith('-Xmx')) {
+            maxHeapSize = arg.substring(4)
+        }
+        else {
+            jvmArgs += arg
+        }
+    }
+    return ['minHeapSize': minHeapSize,
+            'maxHeapSize': maxHeapSize,
+            'systemProperties': systemProperties,
+            'jvmArgs': jvmArgs ]
 }
 
 List<String> splitArgs(String cmdLine) {

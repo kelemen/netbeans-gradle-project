@@ -120,9 +120,14 @@ public enum StandardTaskVariable {
                     ? StringUtils.capitalizeFirstCharacter(value)
                     : null);
         }
-    })
-    ,
+    }),
     CMD_LINE_ARGS("cmd-line-args", new ValueGetter<NbGradleProject>() {
+        @Override
+        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
+            return VariableValue.EMPTY_VALUE;
+        }
+    }),
+    JVM_LINE_ARGS("jvm-line-args", new ValueGetter<NbGradleProject>() {
         @Override
         public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
             return VariableValue.EMPTY_VALUE;
