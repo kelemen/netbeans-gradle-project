@@ -24,32 +24,36 @@ void configureProject(def project) {
 
     boolean hasRun = runTask != null
     boolean hasDebug = debugTask != null
+    boolean hasAppPlugin = project.plugins.hasPlugin("application")
 
     if (tasks.findByName('classes') != null && project.hasProperty('sourceSets')) {
         def definedMainClass = project.hasProperty('mainClass') ? project.mainClass : ''
         if (definedMainClass == null) definedMainClass = '';
         definedMainClass = definedMainClass.toString()
 
-        definedMainClass = updateMainClass(project, definedMainClass)
+        definedMainClass = updateMainClass(project, definedMainClass, hasAppPlugin)
 
+        def jvmLineArgs = getJvmLineArgs(project)
         def cmdLineArgs = getCmdLineArgs(project)
-        def javaExecJvmArgs = getJavaExecJvmArgs(project)
-
-        project.logger.debug("[nb-init-script] javaExec minHeapSize=${javaExecJvmArgs.minHeapSize}")
-        project.logger.debug("[nb-init-script] javaExec maxHeapSize=${javaExecJvmArgs.maxHeapSize}")
-        project.logger.debug("[nb-init-script] javaExec systemProperties=${javaExecJvmArgs.systemProperties}")
-        project.logger.debug("[nb-init-script] javaExec jvmArgs=${javaExecJvmArgs.jvmArgs}")
-        project.logger.debug("[nb-init-script] javaExec cmdLineArgs=${cmdLineArgs}")
 
         def configJavaExec = { JavaExec task ->
             task.main = definedMainClass
             task.classpath = project.sourceSets.main.runtimeClasspath
             task.standardInput = System.in
             task.args = cmdLineArgs
-            task.minHeapSize = javaExecJvmArgs.minHeapSize
-            task.maxHeapSize = javaExecJvmArgs.maxHeapSize
-            task.systemProperties = javaExecJvmArgs.systemProperties
-            task.jvmArgs = javaExecJvmArgs.jvmArgs
+            task.jvmArgs = jvmLineArgs
+        }
+
+        def updateJavaExec = { JavaExec task ->
+            if (!cmdLineArgs.isEmpty()) {
+                task.args = cmdLineArgs
+            }
+            if (!jvmLineArgs.isEmpty()) {
+                task.minHeapSize = null
+                task.maxHeapSize = null
+                task.systemProperties = [:]
+                task.jvmArgs = jvmLineArgs
+            }
         }
 
         if (!hasRun) {
@@ -64,12 +68,8 @@ void configureProject(def project) {
                 }
             }
         }
-        else if (!cmdLineArgs.isEmpty() && (runTask instanceof JavaExec)) {
-            runTask.args = cmdLineArgs
-            runTask.minHeapSize = javaExecJvmArgs.minHeapSize
-            runTask.maxHeapSize = javaExecJvmArgs.maxHeapSize
-            runTask.systemProperties = javaExecJvmArgs.systemProperties
-            runTask.jvmArgs = javaExecJvmArgs.jvmArgs
+        else if (runTask instanceof JavaExec) {
+            updateJavaExec(runTask)
         }
 
         if (!hasDebug) {
@@ -85,12 +85,8 @@ void configureProject(def project) {
                 }
             }
         }
-        else if (!cmdLineArgs.isEmpty() && (debugTask instanceof JavaExec)) {
-            debugTask.args = getCmdLineArgs(project)
-            debugTask.minHeapSize = javaExecJvmArgs.minHeapSize
-            debugTask.maxHeapSize = javaExecJvmArgs.maxHeapSize
-            debugTask.systemProperties = javaExecJvmArgs.systemProperties
-            debugTask.jvmArgs = javaExecJvmArgs.jvmArgs
+        else if (debugTask instanceof JavaExec) {
+            updateJavaExec(debugTask)
         }
     }
     else {
@@ -112,7 +108,7 @@ void configureProject(def project) {
         }
     }
 
-    updateDebugTaskArgs(project)
+    updateDebugTaskArgs(project, hasAppPlugin)
 }
 
 void createReportingRunTask(def project, String taskName) {
@@ -124,8 +120,7 @@ void createReportingRunTask(def project, String taskName) {
     })
 }
 
-String updateMainClass(def project, String srcMainClass) {
-    boolean hasAppPlugin = project.plugins.hasPlugin("application")
+String updateMainClass(def project, String srcMainClass, boolean hasAppPlugin) {
     if ('' != srcMainClass) {
         if (hasAppPlugin) {
             project.mainClassName = srcMainClass
@@ -158,7 +153,7 @@ List<String> getJvmLineArgs(def project) {
     return splitProjectProperty(project, 'jvmLineArgs')
 }
 
-void updateDebugTaskArgs(def project) {
+void updateDebugTaskArgs(def project, boolean hasAppPlugin) {
     List debuggerAttachArgs = null;
     if (project.hasProperty('debuggerJpdaPort')) {
         def debuggerPort = project.debuggerJpdaPort
@@ -190,6 +185,9 @@ void updateDebugTaskArgs(def project) {
         }
     }
     if ((task instanceof JavaExec) || (task instanceof Test)) {
+        if ((task instanceof JavaExec) && hasAppPlugin) {
+            task.jvmArgs(task.jvmArgs)
+        }
         updateJvmArgs(task, debuggerAttachArgs)
     }
 }
@@ -227,35 +225,6 @@ void updateJvmArgs(def task, List additionalArgs) {
         additionalArgsSet.remove(arg?.toString())
     }
     task.jvmArgs(additionalArgsSet)
-}
-
-Map<String, String> getJavaExecJvmArgs(def project) {
-    def jvmLineArgsList = getJvmLineArgs(project)
-
-    def systemProperties = [:]
-    def minHeapSize = '128m'
-    def maxHeapSize = '128m'
-    def jvmArgs = []
-
-    for (def arg : jvmLineArgsList) {
-        if (arg.startsWith('-D')) {
-            def kv = arg.substring(2).split('=', 2)
-            systemProperties[kv[0]] = kv.length >= 2 ? kv[1] : true
-        }
-        else if (arg.startsWith('-Xms')) {
-            minHeapSize = arg.substring(4)
-        }
-        else if (arg.startsWith('-Xmx')) {
-            maxHeapSize = arg.substring(4)
-        }
-        else {
-            jvmArgs += arg
-        }
-    }
-    return ['minHeapSize': minHeapSize,
-            'maxHeapSize': maxHeapSize,
-            'systemProperties': systemProperties,
-            'jvmArgs': jvmArgs ]
 }
 
 List<String> splitArgs(String cmdLine) {
