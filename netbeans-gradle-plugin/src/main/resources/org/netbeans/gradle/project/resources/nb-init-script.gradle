@@ -48,11 +48,11 @@ void configureProject(def project) {
             if (!cmdLineArgs.isEmpty()) {
                 task.args = cmdLineArgs
             }
+            if (hasAppPlugin) {
+                task.jvmArgs(task.jvmArgs)
+            }
             if (!jvmLineArgs.isEmpty()) {
-                task.minHeapSize = null
-                task.maxHeapSize = null
-                task.systemProperties = [:]
-                task.jvmArgs = jvmLineArgs
+                task.jvmArgs(jvmLineArgs)
             }
         }
 
@@ -108,7 +108,7 @@ void configureProject(def project) {
         }
     }
 
-    updateDebugTaskArgs(project, hasAppPlugin)
+    updateDebugTaskArgs(project)
 }
 
 void createReportingRunTask(def project, String taskName) {
@@ -153,7 +153,7 @@ List<String> getJvmLineArgs(def project) {
     return splitProjectProperty(project, 'jvmLineArgs')
 }
 
-void updateDebugTaskArgs(def project, boolean hasAppPlugin) {
+void updateDebugTaskArgs(def project) {
     List debuggerAttachArgs = null;
     if (project.hasProperty('debuggerJpdaPort')) {
         def debuggerPort = project.debuggerJpdaPort
@@ -185,9 +185,6 @@ void updateDebugTaskArgs(def project, boolean hasAppPlugin) {
         }
     }
     if ((task instanceof JavaExec) || (task instanceof Test)) {
-        if ((task instanceof JavaExec) && hasAppPlugin) {
-            task.jvmArgs(task.jvmArgs)
-        }
         updateJvmArgs(task, debuggerAttachArgs)
     }
 }
