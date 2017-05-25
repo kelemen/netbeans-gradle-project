@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +59,7 @@ import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
 import org.netbeans.gradle.project.model.DefaultModelBuilderSetup;
+import org.netbeans.gradle.project.model.NbGradleProjectTree;
 import org.netbeans.gradle.project.output.BuildErrorConsumer;
 import org.netbeans.gradle.project.output.FileLineConsumer;
 import org.netbeans.gradle.project.output.IOTabRef;
@@ -266,7 +268,20 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static OutputLinkFinder projectDirLinks(NbGradleProject project) {
-        return SubPathConsumer.pathLinks(Collections.singletonList(project.getProjectDirectoryAsPath()));
+        List<Path> roots = new ArrayList<>();
+        roots.add(project.currentModel().getValue().getSettingsDir());
+
+        NbGradleProjectTree tree = project.currentModel().getValue().getProjectDef().getRootProject();
+        addAllProjectRoots(tree, roots);
+
+        return SubPathConsumer.pathLinks(roots);
+    }
+
+    private static void addAllProjectRoots(NbGradleProjectTree tree, List<Path> roots) {
+        roots.add(tree.getProjectDir().toPath());
+        for (NbGradleProjectTree child: tree.getChildren()) {
+            addAllProjectRoots(child, roots);
+        }
     }
 
     private static OutputRef configureOutput(
