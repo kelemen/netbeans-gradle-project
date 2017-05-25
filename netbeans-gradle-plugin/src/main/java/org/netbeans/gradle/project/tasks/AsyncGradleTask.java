@@ -64,13 +64,14 @@ import org.netbeans.gradle.project.output.IOTabRef;
 import org.netbeans.gradle.project.output.IOTabs;
 import org.netbeans.gradle.project.output.InputOutputWrapper;
 import org.netbeans.gradle.project.output.LineOutputWriter;
+import org.netbeans.gradle.project.output.OutputLinkFinder;
 import org.netbeans.gradle.project.output.OutputLinkPrinter;
 import org.netbeans.gradle.project.output.OutputUrlConsumer;
-import org.netbeans.gradle.project.output.ProjectFileConsumer;
 import org.netbeans.gradle.project.output.ReaderInputStream;
 import org.netbeans.gradle.project.output.ReplaceLineFeedReader;
 import org.netbeans.gradle.project.output.SmartOutputHandler;
 import org.netbeans.gradle.project.output.StackTraceConsumer;
+import org.netbeans.gradle.project.output.SubPathConsumer;
 import org.netbeans.gradle.project.output.TaskIOTab;
 import org.netbeans.gradle.project.output.WriterOutputStream;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
@@ -264,6 +265,10 @@ public final class AsyncGradleTask implements Runnable {
         }
     }
 
+    private static OutputLinkFinder projectDirLinks(NbGradleProject project) {
+        return SubPathConsumer.pathLinks(project.getProjectDirectoryAsPath());
+    }
+
     private static OutputRef configureOutput(
             NbGradleProject project,
             GradleTaskDef taskDef,
@@ -274,14 +279,14 @@ public final class AsyncGradleTask implements Runnable {
         outputConsumers.add(new OutputLinkPrinter(
                 new StackTraceConsumer(project),
                 new OutputUrlConsumer(),
-                new ProjectFileConsumer(project)));
+                projectDirLinks(project)));
 
         List<SmartOutputHandler.Consumer> errorConsumers = new ArrayList<>();
         errorConsumers.add(new BuildErrorConsumer());
         errorConsumers.add(new OutputLinkPrinter(
                 new StackTraceConsumer(project),
                 new OutputUrlConsumer(),
-                new ProjectFileConsumer(project),
+                projectDirLinks(project),
                 new FileLineConsumer()));
 
         InputOutputWrapper io = tab.getIo();

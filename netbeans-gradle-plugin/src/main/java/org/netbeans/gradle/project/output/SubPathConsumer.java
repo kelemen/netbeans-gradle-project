@@ -3,20 +3,46 @@ package org.netbeans.gradle.project.output;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
-import org.netbeans.gradle.project.NbGradleProject;
+import java.util.Set;
 import org.netbeans.gradle.project.util.StringUtils;
-import org.openide.filesystems.FileObject;
 import org.openide.util.Utilities;
 
-public final class ProjectFileConsumer implements OutputLinkFinder {
+public final class SubPathConsumer implements OutputLinkFinder {
     private final String normalizedPath;
 
-    public ProjectFileConsumer(NbGradleProject project) {
-        FileObject projectDirectory = project.getProjectDirectory();
-        // In case the filesystem is not case-sesitive, otherwise it shouldn't
-        // hurt much, since we will check if the file exists anyway.
-        normalizedPath = projectDirectory.getPath().toLowerCase(Locale.ROOT);
+    public SubPathConsumer(Path root) {
+        this.normalizedPath = normalizePath(root.toString());
+    }
+
+    public static OutputLinkFinder pathLinks(Path... roots) {
+        Set<Path> uniqueDirs = new HashSet<>(Arrays.asList(roots));
+        final List<OutputLinkFinder> linkFinders = new ArrayList<>(uniqueDirs.size());
+        for (final Path root: roots) {
+            linkFinders.add(new SubPathConsumer(root));
+        }
+
+        if (linkFinders.size() == 1) {
+            return linkFinders.get(0);
+        }
+
+        return new OutputLinkFinder() {
+            @Override
+            public OutputLinkDef tryFindLink(String line) {
+                for (OutputLinkFinder linkFinder: linkFinders) {
+                    OutputLinkDef result = linkFinder.tryFindLink(line);
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                return null;
+            }
+        };
     }
 
     public static boolean isBrowserFile(String path) {
@@ -67,9 +93,15 @@ public final class ProjectFileConsumer implements OutputLinkFinder {
         }
     }
 
+    private static String normalizePath(String path) {
+        // In case the filesystem is not case-sesitive, otherwise it shouldn't
+        // hurt much, since we will check if the file exists anyway.
+        return path.replace(File.separatorChar, '/').toLowerCase(Locale.ROOT);
+    }
+
     @Override
     public OutputLinkDef tryFindLink(String line) {
-        String normalizedLine = line.replace(File.separatorChar, '/').toLowerCase(Locale.ROOT);
+        String normalizedLine = normalizePath(line);
         int startIndex = normalizedLine.indexOf(normalizedPath);
         if (startIndex < 0) {
             return null;
