@@ -266,7 +266,7 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static OutputLinkFinder projectDirLinks(NbGradleProject project) {
-        return SubPathConsumer.pathLinks(project.getProjectDirectoryAsPath());
+        return SubPathConsumer.pathLinks(Collections.singletonList(project.getProjectDirectoryAsPath()));
     }
 
     private static OutputRef configureOutput(

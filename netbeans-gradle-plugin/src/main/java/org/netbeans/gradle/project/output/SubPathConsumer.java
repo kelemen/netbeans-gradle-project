@@ -5,10 +5,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.openide.util.Utilities;
@@ -16,14 +17,38 @@ import org.openide.util.Utilities;
 public final class SubPathConsumer implements OutputLinkFinder {
     private final String normalizedPath;
 
-    public SubPathConsumer(Path root) {
-        this.normalizedPath = normalizePath(root.toString());
+    private SubPathConsumer(String normalizedPath) {
+        this.normalizedPath = Objects.requireNonNull(normalizedPath, "normalizedPath");
     }
 
-    public static OutputLinkFinder pathLinks(Path... roots) {
-        Set<Path> uniqueDirs = new HashSet<>(Arrays.asList(roots));
+    private static Set<String> filterRedundantDirs(Collection<Path> roots) {
+        Set<String> result = new HashSet<>();
+        for (Path root: roots) {
+            addNonRedundant(result, root);
+        }
+        return result;
+    }
+
+    private static void addNonRedundant(Set<String> roots, Path newRoot) {
+        String normNewRoot = normalizePath(newRoot.toString());
+        if (!isRedundant(roots, normNewRoot)) {
+            roots.add(normNewRoot);
+        }
+    }
+
+    private static boolean isRedundant(Set<String> roots, String newRoot) {
+        for (String currentRoot: roots) {
+            if (currentRoot.startsWith(newRoot) || newRoot.startsWith(currentRoot)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static OutputLinkFinder pathLinks(Collection<Path> roots) {
+        Set<String> uniqueDirs = filterRedundantDirs(roots);
         final List<OutputLinkFinder> linkFinders = new ArrayList<>(uniqueDirs.size());
-        for (final Path root: roots) {
+        for (final String root: uniqueDirs) {
             linkFinders.add(new SubPathConsumer(root));
         }
 
