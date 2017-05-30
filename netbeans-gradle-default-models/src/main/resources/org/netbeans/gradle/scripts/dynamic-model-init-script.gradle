@@ -1,4 +1,11 @@
 import org.gradle.tooling.provider.model.*
+import org.netbeans.gradle.model.internal.*
+
+initscript {
+    dependencies {
+        classpath files($NB_BOOT_CLASSPATH)
+    }
+}
 
 class DynamicGradleModelPlugin implements Plugin<Project> {
     private final ToolingModelBuilderRegistry registry
@@ -11,27 +18,17 @@ class DynamicGradleModelPlugin implements Plugin<Project> {
     public void apply(Project project) {
         def input = project.inputForDynamicGradleModelPlugin
         def classLoader = project.classLoaderForDynamicGradleModelPlugin
-        registry.register(project.modelClassForDynamicGradleModelPlugin.newInstance(input, classLoader))
+        registry.register(new DynamicModelLoader(input, classLoader))
     }
 }
 
-beforeProject { project ->
-    if (project.parent == null) {
-        ClassLoader scriptClassLoader = project.buildscript.classLoader
-        File nbBootClassPath = new File($NB_BOOT_CLASSPATH)
-        ClassLoader nbBootClassLoader = classLoaderFromClassPath(Collections.singleton(nbBootClassPath), scriptClassLoader)
+ClassLoader scriptClassLoader = DynamicModelLoader.class.getClassLoader()
+def modelQueryInput = deserialize(new File($INPUT_FILE), scriptClassLoader)
 
-        def modelQueryInput = deserialize(new File($INPUT_FILE), nbBootClassLoader)
-
-        Class modelClass = Class.forName('org.netbeans.gradle.model.internal.DynamicModelLoader', false, nbBootClassLoader)
-
-        allprojects {
-            ext.modelClassForDynamicGradleModelPlugin = modelClass
-            ext.inputForDynamicGradleModelPlugin = modelQueryInput
-            ext.classLoaderForDynamicGradleModelPlugin = nbBootClassLoader
-            apply plugin: DynamicGradleModelPlugin
-        }
-    }
+gradle.allprojects { project ->
+    project.ext.inputForDynamicGradleModelPlugin = modelQueryInput
+    project.ext.classLoaderForDynamicGradleModelPlugin = scriptClassLoader
+    project.apply plugin: DynamicGradleModelPlugin
 }
 
 private Object deserialize(File inputFile, ClassLoader classLoader) {
@@ -46,15 +43,6 @@ private Object deserialize(File inputFile, ClassLoader classLoader) {
     } finally {
         fileInputStream.close()
     }
-}
-
-private ClassLoader classLoaderFromClassPath(Collection<File> classPath, ClassLoader parent) {
-    List<URL> urls = new ArrayList<URL>(classPath.size());
-    for (File file: classPath) {
-        urls.add(file.toURI().toURL());
-    }
-
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]), parent);
 }
 
 class CustomClassObjectInputStream extends ObjectInputStream {
