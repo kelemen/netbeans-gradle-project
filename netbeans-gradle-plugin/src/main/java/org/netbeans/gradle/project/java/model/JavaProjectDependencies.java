@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,8 +32,7 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
+import org.openide.util.Utilities;
 
 public final class JavaProjectDependencies {
     private static final PropertySource<Map<File, JavaProjectDependencyDef>> NO_DEPENDENCIES
@@ -175,12 +175,8 @@ public final class JavaProjectDependencies {
     }
 
     private static ProjectDependencyCandidate tryTranslateDependency(File dependency) {
-        FileObject dependencyObj = FileUtil.toFileObject(dependency);
-        if (dependencyObj == null) {
-            return null;
-        }
-
-        Project owner = FileOwnerQuery.getOwner(dependencyObj);
+        URI dependencyUri = Utilities.toURI(dependency);
+        Project owner = FileOwnerQuery.getOwner(dependencyUri);
         if (owner == null) {
             return null;
         }
