@@ -1,5 +1,6 @@
 apply plugin: 'groovy'
 apply plugin: 'custom-java-compilers'
+apply plugin: 'nb-gradle-maven-publish'
 
 sourceCompatibility = '1.5'
 targetCompatibility = sourceCompatibility
