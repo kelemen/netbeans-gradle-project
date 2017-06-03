@@ -15,6 +15,7 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.NodeRefresher;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
+import org.netbeans.gradle.project.util.ContextUtils;
 import org.netbeans.gradle.project.util.RefreshableChildren;
 import org.netbeans.spi.java.project.support.ui.PackageView;
 import org.netbeans.spi.project.ui.PathFinder;
@@ -154,13 +155,7 @@ public final class NodeUtils {
 
         // Copied from the LogicalViewProvider implementation of the Maven plugin
 
-        FileObject xfo = folderNode.getLookup().lookup(FileObject.class);
-        if (xfo == null) {
-            DataObject dobj = folderNode.getLookup().lookup(DataObject.class);
-            if (dobj != null) {
-                xfo = dobj.getPrimaryFile();
-            }
-        }
+        FileObject xfo = ContextUtils.tryGetFileObjFromContext(folderNode.getLookup());
         if (xfo != null) {
             if ((xfo.equals(file))) {
                 return folderNode;
@@ -184,8 +179,8 @@ public final class NodeUtils {
                     else {
                         Node[] childs = parentNode.getChildren().getNodes(true);
                         for (Node child: childs) {
-                            DataObject dobj = child.getLookup().lookup(DataObject.class);
-                            if (dobj != null && dobj.getPrimaryFile().getNameExt().equals(file.getNameExt())) {
+                            FileObject childFile = ContextUtils.tryGetFileObjFromContextPreferData(child.getLookup());
+                            if (childFile != null && childFile.getNameExt().equals(file.getNameExt())) {
                                 return child;
                             }
                         }

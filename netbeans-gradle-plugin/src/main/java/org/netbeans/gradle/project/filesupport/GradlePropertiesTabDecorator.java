@@ -3,11 +3,11 @@ package org.netbeans.gradle.project.filesupport;
 import java.awt.Component;
 import org.netbeans.core.multitabs.TabDecorator;
 import org.netbeans.gradle.project.script.CommonScripts;
+import org.netbeans.gradle.project.util.ContextUtils;
 import org.netbeans.gradle.project.util.GradleFileUtils;
 import org.netbeans.swing.tabcontrol.TabData;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.TopComponent;
 
@@ -20,10 +20,7 @@ public class GradlePropertiesTabDecorator extends TabDecorator {
         Component component = tab.getComponent();
         if (component instanceof TopComponent) {
             TopComponent topComponent = (TopComponent)component;
-            DataObject dataObj = topComponent.getLookup().lookup(DataObject.class);
-            if (dataObj != null) {
-                return dataObj.getPrimaryFile();
-            }
+            return ContextUtils.tryGetFileObjFromContextPreferData(topComponent.getLookup());
         }
         return null;
     }
