@@ -568,7 +568,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
         jUserInitScriptInherit = new javax.swing.JCheckBox();
         jUserInitScriptBrowseButton = new javax.swing.JButton();
 
-        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8" }));
+        jSourceLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9" }));
 
         jGradleHomeEdit.setEditable(false);
         jGradleHomeEdit.setText(org.openide.util.NbBundle.getMessage(CommonProjectPropertiesPanel.class, "CommonProjectPropertiesPanel.jGradleHomeEdit.text")); // NOI18N
