@@ -19,11 +19,14 @@ ext.scriptFile = { String fileName ->
 sourceCompatibility = '1.8'
 targetCompatibility = sourceCompatibility
 
-String netbeansVersion = 'RELEASE81'
+String netbeansVersion = 'dev-SNAPSHOT';
 
 repositories {
     mavenCentral()
-    maven { url 'http://bits.netbeans.org/nexus/content/groups/netbeans' }
+    String nbRepo = netbeansVersion.endsWith('-SNAPSHOT')
+            ? 'http://bits.netbeans.org/netbeans/trunk/new-maven-snapshot'
+            : 'http://bits.netbeans.org/nexus/content/groups/netbeans'
+    maven { url nbRepo }
     jcenter()
     maven { url 'http://repo.gradle.org/gradle/libs-releases-local' }
 }
