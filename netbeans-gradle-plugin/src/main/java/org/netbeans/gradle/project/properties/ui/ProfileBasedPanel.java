@@ -69,7 +69,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
     private final NbGradleProject project;
     private final ProjectSettingsProvider.ExtensionSettings extensionSettings;
-    private final ProfileValuesEditorFactory2 snapshotCreator;
+    private final ProfileEditorFactory snapshotCreator;
     private final AtomicIntProperty profileLoadCounter;
     private final Map<ProfileItem, Snapshot> snapshots;
 
@@ -80,7 +80,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             final JComponent customPanel,
-            ProfileValuesEditorFactory2 snapshotCreator) {
+            ProfileEditorFactory snapshotCreator) {
 
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
@@ -152,7 +152,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                 extensionSettings,
                 settingsPage.getSettingsPanel(),
                 settingsPage.getAsyncPanelInitializer(),
-                convertFactory(settingsPage.getEditorFactory()));
+                settingsPage.getEditorFactory());
     }
 
     private static ProfileBasedPanel createPanel(
@@ -160,43 +160,10 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
             JComponent customPanel,
             CancelableFunction<? extends Runnable> asyncPanelInitializer,
-            ProfileValuesEditorFactory2 snapshotCreator) {
+            ProfileEditorFactory snapshotCreator) {
         ProfileBasedPanel result = new ProfileBasedPanel(project, extensionSettings, customPanel, snapshotCreator);
         result.fetchProfilesAndSelect(asyncPanelInitializer);
         return result;
-    }
-
-    private static ProfileValuesEditorFactory2 convertFactory(final ProfileEditorFactory factory) {
-        return new ProfileValuesEditorFactory2() {
-            @Override
-            public ProfileValuesEditor2 startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
-                ProfileEditor editor = factory.startEditingProfile(profileInfo, profileQuery);
-                return upgradeEditor(editor);
-            }
-        };
-    }
-
-    private static ProfileValuesEditor2 upgradeEditor(final ProfileEditor editor) {
-        StoredSettings initialSettings = editor.readFromSettings();
-        final AtomicReference<StoredSettings> currentSettingsRef = new AtomicReference<>(initialSettings);
-        return new ProfileValuesEditor2() {
-            @Override
-            public void displayValues() {
-                StoredSettings settings = currentSettingsRef.get();
-                settings.displaySettings();
-            }
-
-            @Override
-            public void readFromGui() {
-                currentSettingsRef.set(editor.readFromGui());
-            }
-
-            @Override
-            public void applyValues() {
-                StoredSettings settings = currentSettingsRef.get();
-                settings.saveSettings();
-            }
-        };
     }
 
     public void saveProperties() {
@@ -349,7 +316,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             public void onLoad(final ActiveSettingsQuery settings) {
                 String displayName = selected.toString();
                 ProfileInfo profileInfo = new ProfileInfo(profileKey, displayName);
-                ProfileValuesEditor2 editor = snapshotCreator.startEditingProfile(profileInfo, settings);
+                ProfileEditor editor = snapshotCreator.startEditingProfile(profileInfo, settings);
                 final Snapshot snapshot = new Snapshot(editor);
                 snapshots.put(selected, snapshot);
 
@@ -482,38 +449,27 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private static final class Snapshot {
-        private final ProfileValuesEditor2 editor;
+        private final ProfileEditor editor;
+        private final AtomicReference<StoredSettings> currentSettingsRef;
 
-        public Snapshot(ProfileValuesEditor2 editor) {
+        public Snapshot(ProfileEditor editor) {
             this.editor = editor;
+            this.currentSettingsRef = new AtomicReference<>(editor.readFromSettings());
         }
 
         private void displayValues() {
-            editor.displayValues();
+            StoredSettings settings = currentSettingsRef.get();
+            settings.displaySettings();
         }
 
         private void readFromGui() {
-            editor.readFromGui();
+            currentSettingsRef.set(editor.readFromGui());
         }
 
         private void applyValues() {
-            editor.applyValues();
+            StoredSettings settings = currentSettingsRef.get();
+            settings.saveSettings();
         }
-    }
-
-    // ProfileValuesEditorFactory2 and ProfileValuesEditor2 are provided because the original
-    // interfaces are considered obsolete.
-
-    private interface ProfileValuesEditorFactory2 {
-        public ProfileValuesEditor2 startEditingProfile(ProfileInfo info, ActiveSettingsQuery profileQuery);
-    }
-
-    private interface ProfileValuesEditor2 {
-        public void displayValues();
-
-        public void readFromGui();
-
-        public void applyValues();
     }
 
     /**
