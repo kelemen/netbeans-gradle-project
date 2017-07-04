@@ -37,9 +37,7 @@ import org.jtrim.property.PropertySource;
 import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
-import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbGradleProject;
-import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
@@ -157,25 +155,6 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                 convertFactory(settingsPage.getEditorFactory()));
     }
 
-    @SuppressWarnings("deprecation")
-    public static ProfileBasedPanel createPanel(
-            Project project,
-            ProjectSettingsProvider.ExtensionSettings extensionSettings,
-            JComponent customPanel,
-            org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory snapshotCreator) {
-
-        NbGradleProject gradleProject = NbGradleProjectFactory.getGradleProject(project);
-        CancelableFunction<? extends Runnable> asyncPanelInitializer = new CancelableFunction<Runnable>() {
-            @Override
-            public Runnable execute(CancellationToken cancelToken) throws Exception {
-                return null;
-            }
-        };
-        ProfileValuesEditorFactory2 editorFactory = convertFactory(snapshotCreator);
-
-        return createPanel(gradleProject, extensionSettings, customPanel, asyncPanelInitializer, editorFactory);
-    }
-
     private static ProfileBasedPanel createPanel(
             NbGradleProject project,
             ProjectSettingsProvider.ExtensionSettings extensionSettings,
@@ -216,40 +195,6 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             public void applyValues() {
                 StoredSettings settings = currentSettingsRef.get();
                 settings.saveSettings();
-            }
-        };
-    }
-
-    @SuppressWarnings("deprecation")
-    private static ProfileValuesEditorFactory2 convertFactory(
-            final org.netbeans.gradle.project.api.config.ui.ProfileValuesEditorFactory factory) {
-        return new ProfileValuesEditorFactory2() {
-            @Override
-            public ProfileValuesEditor2 startEditingProfile(ProfileInfo profileInfo, ActiveSettingsQuery profileQuery) {
-                org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor editor
-                        = factory.startEditingProfile(profileInfo.getDisplayName(), profileQuery);
-                return upgradeEditor(editor);
-            }
-        };
-    }
-
-    @SuppressWarnings("deprecation")
-    private static ProfileValuesEditor2 upgradeEditor(
-            final org.netbeans.gradle.project.api.config.ui.ProfileValuesEditor editor) {
-        return new ProfileValuesEditor2() {
-            @Override
-            public void displayValues() {
-                editor.displayValues();
-            }
-
-            @Override
-            public void readFromGui() {
-                editor.readFromGui();
-            }
-
-            @Override
-            public void applyValues() {
-                editor.applyValues();
             }
         };
     }

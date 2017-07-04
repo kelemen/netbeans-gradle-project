@@ -57,29 +57,6 @@ public final class GradleCommandTemplate {
          * Creates a new {@code Builder} with the given task names.
          * The default value for the other properties are the following:
          * <ul>
-         *  <li>{@link #getDisplayName() DisplayName}: Empty string.</li>
-         *  <li>{@link #getArguments() Arguments}: Empty list.</li>
-         *  <li>{@link #getJvmArguments() JvmArguments}: Empty list.</li>
-         *  <li>{@link #isBlocking() Blocking}: {@code true}.</li>
-         * </ul>
-         *
-         * @param tasks the list of tasks to be executed by Gradle. This list
-         *   cannot contain {@code null} elements nor can it be an empty list.
-         *
-         * @throws NullPointerException thrown if the specified list is
-         *   {@code null} or contains {@code null} elements
-         * @throws IllegalArgumentException thrown if the specified list is
-         *   empty
-         */
-        @Deprecated
-        public Builder(@Nonnull List<String> tasks) {
-            this("", tasks);
-        }
-
-        /**
-         * Creates a new {@code Builder} with the given task names.
-         * The default value for the other properties are the following:
-         * <ul>
          *  <li>{@link #getArguments() Arguments}: Empty list.</li>
          *  <li>{@link #getJvmArguments() JvmArguments}: Empty list.</li>
          *  <li>{@link #isBlocking() Blocking}: {@code true}.</li>

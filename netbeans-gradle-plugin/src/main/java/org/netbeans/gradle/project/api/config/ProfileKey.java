@@ -40,24 +40,6 @@ public final class ProfileKey {
     private final String fileName;
 
     /**
-     * @deprecated You should either use {@link ProfileDef#getProfileKey()} or
-     *   the {@link #fromProfileDef(ProfileDef) fromProfileDef} method.
-     * <P>
-     * Creates a {@code ProfileKey} from the
-     * {@link ProfileDef#getGroupName() group name} and the
-     * {@link ProfileDef#getFileName() file name} property of the given
-     * {@code ProfileDef}.
-     *
-     * @param profileDef the {@code ProfileDef} whose properties are used to
-     *   create the new {@code ProfileKey}. This argument cannot be
-     *   {@code null}.
-     */
-    @Deprecated
-    public ProfileKey(@Nonnull ProfileDef profileDef) {
-        this(profileDef.getGroupName(), profileDef.getFileName());
-    }
-
-    /**
      * Creates a new {@code ProfileKey} instance with the specified properties.
      *
      * @param groupName the group (or namespace) of the profile. This argument

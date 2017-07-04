@@ -24,50 +24,6 @@ public final class GenericProjectProperties implements Serializable {
     private final File buildDir;
 
     /**
-     * @deprecated This constructor has a poor logic of detecting the build file, you
-     *   should explicitly provide the build file instead.
-     * <P>
-     * Creates a new {@code GenericProjectProperties} with the specified
-     * properties and with a build script chosen by an implementation dependent
-     * heuristic.
-     *
-     * @param projectName the short name of the project as returned by
-     *   {@link org.gradle.api.Project.getName()}. This argument cannot be
-     *   {@code null}.
-     * @param projectFullName the fully-qualified name of the project as
-     *   returned by {@link org.gradle.api.Project.getPath()}. This argument
-     *   cannot be {@code null}.
-     * @param projectDir the project directory as returned by
-     *   {@link org.gradle.api.Project.getProjectDir()}. This argument cannot
-     *   be {@code null}.
-     *
-     * @throws NullPointerException thrown if any of the arguments is
-     *   {@code null}
-     */
-    @Deprecated
-    public GenericProjectProperties(
-            String projectName,
-            String projectFullName,
-            File projectDir) {
-
-        this(defaultProjectId(projectName), projectFullName, projectDir, findBuildFile(projectDir));
-    }
-
-    private static File findBuildFile(File projectDir) {
-        File defaultBuildFile = new File(projectDir, "build.gradle");
-        if (defaultBuildFile.isFile()) {
-            return defaultBuildFile;
-        }
-
-        File commonBuildFile = new File(projectDir, projectDir.getName() + ".gradle");
-        if (commonBuildFile.isFile()) {
-            return commonBuildFile;
-        }
-
-        return defaultBuildFile;
-    }
-
-    /**
      * Creates a new {@code GenericProjectProperties} with the specified
      * properties.
      *

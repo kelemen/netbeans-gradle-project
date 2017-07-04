@@ -16,7 +16,6 @@ import org.openide.nodes.Node;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("deprecation")
 public final class EmptyProjectTest extends SwingTestAware {
     private static final String RESOURCE_BASE = "/" + EmptyProjectTest.class.getPackage().getName().replace('.', '/');
     public static final String EMPTY_PROJECT_RESOURCE = RESOURCE_BASE + "/empty-project.zip";
@@ -32,13 +31,13 @@ public final class EmptyProjectTest extends SwingTestAware {
     public void setUp() throws Exception {
         rootProject = PROJECT_REF.loadAndWaitProject(EMPTY_PROJECT_NAME);
 
-        JavaDisablerExtension ext = rootProject.getLookup().lookup(JavaDisablerExtension.class);
+        GradleTestExtension ext = rootProject.getLookup().lookup(GradleTestExtension.class);
         assertNotNull(ext);
     }
 
     @Test
     public void testOldAPIFetchedModel() throws Exception {
-        SingleModelExtension extension = rootProject.getLookup().lookup(SingleModelExtension.class);
+        SingleModelExtension<?> extension = rootProject.getLookup().lookup(SingleModelExtension.class);
         assertNotNull(extension);
 
         Object model = extension.getModel(60, TimeUnit.SECONDS);

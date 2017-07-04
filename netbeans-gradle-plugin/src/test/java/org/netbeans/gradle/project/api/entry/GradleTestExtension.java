@@ -1,19 +1,10 @@
 package org.netbeans.gradle.project.api.entry;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
-/**
- * @deprecated
- */
-@Deprecated
-public class GradleTestExtension implements GradleProjectExtension {
+public class GradleTestExtension implements GradleProjectExtension2<Object> {
     private final AtomicReference<Lookup> lookupRef;
 
     public GradleTestExtension() {
@@ -21,12 +12,7 @@ public class GradleTestExtension implements GradleProjectExtension {
     }
 
     @Override
-    public Iterable<List<Class<?>>> getGradleModels() {
-        return Collections.<List<Class<?>>>singleton(Collections.<Class<?>>emptyList());
-    }
-
-    @Override
-    public Lookup getExtensionLookup() {
+    public Lookup getPermanentProjectLookup() {
         Lookup lookup = lookupRef.get();
         if (lookup == null) {
             lookupRef.compareAndSet(null, Lookups.fixed(this));
@@ -36,17 +22,20 @@ public class GradleTestExtension implements GradleProjectExtension {
     }
 
     @Override
-    public Set<String> modelsLoaded(Lookup modelLookup) {
-        return null;
+    public Lookup getProjectLookup() {
+        return Lookup.EMPTY;
     }
 
     @Override
-    public String getExtensionName() {
-        return getClass().getName();
+    public void activateExtension(Object parsedModel) {
     }
 
     @Override
-    public Map<File, Lookup> deduceModelsForProjects(Lookup modelLookup) {
-        return Collections.emptyMap();
+    public void deactivateExtension() {
+    }
+
+    @Override
+    public Lookup getExtensionLookup() {
+        return Lookup.EMPTY;
     }
 }

@@ -31,30 +31,6 @@ public final class ModelLoadResult {
     private final Map<File, Lookup> evaluatedProjectsModel;
 
     /**
-     * @deprecated Use the constructor accepting a {@link GradleTarget} argument. This
-     *   constructor will assume the Gradle version 1.0 and that the default JDK
-     *   was used.
-     * <P>
-     * Creates a {@code ModelLoadResult} with the specified main project
-     * (given by its project directory) and retrieved models for all evaluated
-     * projects.
-     *
-     * @param mainProjectDir the project directory of the main project.
-     *   This argument cannot be {@code null}.
-     * @param evaluatedProjectsModel the map mapping projects (specified by
-     *   their project directory) to retrieved models. This map must contain a
-     *   {@code Lookup} for the specified {@code mainProjectDir}. This argument
-     *   cannot be {@code null} and neither can its keys and values be
-     *   {@code null}.
-     */
-    @Deprecated
-    public ModelLoadResult(
-            @Nonnull File mainProjectDir,
-            @Nonnull Map<File, Lookup> evaluatedProjectsModel) {
-        this(getDefaultTarget(), mainProjectDir, evaluatedProjectsModel);
-    }
-
-    /**
      * Creates a {@code ModelLoadResult} with the specified main project
      * (given by its project directory) and retrieved models for all evaluated
      * projects.
@@ -83,31 +59,6 @@ public final class ModelLoadResult {
         this.mainProjectModels = this.evaluatedProjectsModel.get(mainProjectDir);
 
         Objects.requireNonNull(mainProjectModels, "evaluatedProjectsModel.get(mainProjectDir)");
-    }
-
-    /**
-     * @deprecated Use the constructor accepting a {@link GradleTarget} argument. This
-     *   constructor will assume the Gradle version 1.0 and that the default JDK
-     *   was used.
-     * <P>
-     * Creates a {@code ModelLoadResult} with the specified main project
-     * (given by its project directory) assuming a single evaluated project.
-     * The evaluated projects map will contain a single entry: The main project.
-     *
-     * @param mainProjectDir the project directory of the main project.
-     *   This argument cannot be {@code null}.
-     * @param mainProjectModels the models retrieved for the main project.
-     *   This argument cannot be {@code null}.
-     */
-    @Deprecated
-    public ModelLoadResult(
-            @Nonnull File mainProjectDir,
-            @Nonnull Lookup mainProjectModels) {
-
-        this(getDefaultTarget(),
-                mainProjectDir,
-                mainProjectModels,
-                Collections.singletonMap(mainProjectDir, mainProjectModels));
     }
 
     /**
