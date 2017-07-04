@@ -16,7 +16,7 @@ ext.scriptFile = { String fileName ->
     return new File(new File(rootDir, 'gradle'), fileName)
 }
 
-sourceCompatibility = '1.7'
+sourceCompatibility = '1.8'
 targetCompatibility = sourceCompatibility
 
 String netbeansVersion = 'RELEASE81'
