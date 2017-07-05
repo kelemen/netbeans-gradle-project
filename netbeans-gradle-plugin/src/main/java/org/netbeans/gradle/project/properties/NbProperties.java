@@ -6,17 +6,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.event.UnregisteredListenerRef;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
-import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.utils.ExceptionHelper;
@@ -24,7 +20,6 @@ import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.util.NbBiFunction;
 import org.netbeans.gradle.project.util.NbFunction;
 import org.openide.util.Lookup;
-import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
 
 public final class NbProperties {
@@ -32,16 +27,8 @@ public final class NbProperties {
         return new WeakListenerProperty<>(src);
     }
 
-    public static SimpleListenerRegistry<Runnable> asChangeListenerRegistry(
-            final PropertySource<?> property) {
-        ExceptionHelper.checkNotNullArgument(property, "property");
-
-        return new SimpleListenerRegistry<Runnable>() {
-            @Override
-            public ListenerRef registerListener(Runnable listener) {
-                return property.addChangeListener(listener);
-            }
-        };
+    public static SimpleListenerRegistry<Runnable> asChangeListenerRegistry(PropertySource<?> property) {
+        return property::addChangeListener;
     }
 
     public static <Value> PropertySource<Value> atomicValueView(
@@ -68,12 +55,9 @@ public final class NbProperties {
             final int minValue,
             final int maxValue) {
 
-        return PropertyFactory.convert(wrapped, new ValueConverter<Integer, Boolean>() {
-            @Override
-            public Boolean convert(Integer input) {
-                if (input == null) return null;
-                return input <= maxValue && input >= minValue;
-            }
+        return PropertyFactory.convert(wrapped, (Integer input) -> {
+            if (input == null) return null;
+            return input <= maxValue && input >= minValue;
         });
     }
 
@@ -96,12 +80,7 @@ public final class NbProperties {
     }
 
     public static PropertySource<Boolean> isNotNull(PropertySource<?> src) {
-        return PropertyFactory.convert(src, new ValueConverter<Object, Boolean>() {
-            @Override
-            public Boolean convert(Object input) {
-                return input != null;
-            }
-        });
+        return PropertyFactory.convert(src, input -> input != null);
     }
 
     public static <T, U, R> PropertySource<R> combine(
@@ -124,19 +103,11 @@ public final class NbProperties {
             public ListenerRef addChangeListener(final Runnable listener) {
                 ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                final ListSelectionListener swingListener = new ListSelectionListener() {
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        listener.run();
-                    }
-                };
+                ListSelectionListener swingListener = e -> listener.run();
 
                 list.addListSelectionListener(swingListener);
-                return NbListenerRefs.fromRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        list.removeListSelectionListener(swingListener);
-                    }
+                return NbListenerRefs.fromRunnable(() -> {
+                    list.removeListSelectionListener(swingListener);
                 });
             }
         };
@@ -153,11 +124,8 @@ public final class NbProperties {
         ExceptionHelper.checkNotNullArgument(property, "property");
         final ChangeEvent event = new ChangeEvent(src);
 
-        return SwingProperties.toSwingSource(property, new EventDispatcher<ChangeListener, Void>() {
-            @Override
-            public void onEvent(ChangeListener eventListener, Void arg) {
-                eventListener.stateChanged(event);
-            }
+        return SwingProperties.toSwingSource(property, (ChangeListener eventListener, Void arg) -> {
+            eventListener.stateChanged(event);
         });
     }
 
@@ -171,16 +139,8 @@ public final class NbProperties {
 
         Lookup.Result<? extends T> lookupResult = lookup.lookupResult(type);
         LookupResultProperty<T> oldProperty = new LookupResultProperty<>(lookupResult);
-        return SwingProperties.fromSwingSource(oldProperty, new SwingForwarderFactory<LookupListener>() {
-            @Override
-            public LookupListener createForwarder(final Runnable listener) {
-                return new LookupListener() {
-                    @Override
-                    public void resultChanged(LookupEvent ev) {
-                        listener.run();
-                    }
-                };
-            }
+        return SwingProperties.fromSwingSource(oldProperty, (Runnable listener) -> {
+            return ev -> listener.run();
         });
     }
 
@@ -301,17 +261,14 @@ public final class NbProperties {
         }
 
         @Override
-        public ListenerRef addChangeListener(final Runnable listener) {
+        public ListenerRef addChangeListener(Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
             final WeakReference<Runnable> listenerRef = new WeakReference<>(listener);
-            ListenerRef result = src.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    Runnable listener = listenerRef.get();
-                    if (listener != null) {
-                        listener.run();
-                    }
+            ListenerRef result = src.addChangeListener(() -> {
+                Runnable currentListener = listenerRef.get();
+                if (currentListener != null) {
+                    currentListener.run();
                 }
             });
 

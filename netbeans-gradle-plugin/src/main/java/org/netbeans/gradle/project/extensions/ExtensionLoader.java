@@ -50,12 +50,9 @@ public final class ExtensionLoader {
             GradleProjectExtensionDef<ModelType> def,
             GradleProjectExtension2<ModelType> extension) {
 
-        return new NbGradleExtensionRef(def, extension, new DeducedExtensionServicesProvider() {
-            @Override
-            public Lookup getDeducedLookup(NbGradleExtensionRef extensionRef, Lookup... lookups) {
-                String extensionName = extensionRef.getName();
-                return Lookups.fixed(new ExtensionProjectSettingsPageDefs(project, extensionName, lookups));
-            }
+        return new NbGradleExtensionRef(def, extension, (NbGradleExtensionRef extensionRef, Lookup... lookups) -> {
+            String extensionName = extensionRef.getName();
+            return Lookups.fixed(new ExtensionProjectSettingsPageDefs(project, extensionName, lookups));
         });
     }
 

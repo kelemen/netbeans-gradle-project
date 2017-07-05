@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.java;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +16,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
@@ -66,7 +64,6 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.CloseableAction;
 import org.netbeans.gradle.project.util.CloseableActionContainer;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.project.support.LookupProviderSupport;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
 import org.openide.filesystems.FileObject;
@@ -137,13 +134,10 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
     public static PropertySource<NbJavaModel> javaModelOfProject(Project project) {
         PropertySource<JavaExtension> extRef = extensionOfProject(project);
 
-        return NbProperties.propertyOfProperty(extRef, new NbFunction<JavaExtension, PropertySource<NbJavaModel>>() {
-            @Override
-            public PropertySource<NbJavaModel> apply(JavaExtension ext) {
-                return ext != null
-                        ? ext.currentModel
-                        : PropertyFactory.<NbJavaModel>constSource(null);
-            }
+        return NbProperties.propertyOfProperty(extRef, (JavaExtension ext) -> {
+            return ext != null
+                    ? ext.currentModel
+                    : PropertyFactory.constSource(null);
         });
     }
 
@@ -499,16 +493,8 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
             String... classPathTypes) {
         ClassPathProviderProperty src = new ClassPathProviderProperty(javaExt, classPathTypes);
 
-        return SwingProperties.fromSwingSource(src, new SwingForwarderFactory<PropertyChangeListener>() {
-            @Override
-            public PropertyChangeListener createForwarder(final Runnable listener) {
-                return new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        listener.run();
-                    }
-                };
-            }
+        return SwingProperties.fromSwingSource(src, (Runnable listener) -> {
+            return evt -> listener.run();
         });
     }
 
@@ -592,14 +578,11 @@ public final class JavaExtension implements GradleProjectExtension2<NbJavaModel>
                     new Object[]{type, javaExt.getProjectDirectoryAsFile()});
             registry.register(type, paths);
 
-            return new Ref() {
-                @Override
-                public void close() {
-                    registry.unregister(type, paths);
-                    LOGGER.log(Level.FINE,
-                            "Unregistered ClassPath ({0}) for project: {1}",
-                            new Object[]{type, javaExt.getProjectDirectoryAsFile()});
-                }
+            return () -> {
+                registry.unregister(type, paths);
+                LOGGER.log(Level.FINE,
+                        "Unregistered ClassPath ({0}) for project: {1}",
+                        new Object[]{type, javaExt.getProjectDirectoryAsFile()});
             };
         }
     }

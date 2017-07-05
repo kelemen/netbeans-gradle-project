@@ -20,12 +20,7 @@ public final class GradleHomeSourceForBinaryQuery extends AbstractSourceForBinar
     private final NbSupplier<? extends FileObject> gradleHomeProvider;
 
     public GradleHomeSourceForBinaryQuery() {
-        this(new NbSupplier<FileObject>() {
-            @Override
-            public FileObject get() {
-                return CommonGlobalSettings.getDefault().tryGetGradleInstallation();
-            }
-        });
+        this(() -> CommonGlobalSettings.getDefault().tryGetGradleInstallation());
     }
 
     public GradleHomeSourceForBinaryQuery(NbSupplier<? extends FileObject> gradleHomeProvider) {

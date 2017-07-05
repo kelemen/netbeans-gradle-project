@@ -51,16 +51,13 @@ public final class ModelNeeds {
             return queries.iterator().next();
         }
 
-        return new GradleModelDefQuery1() {
-            @Override
-            public Collection<Class<?>> getToolingModels(GradleTarget gradleTarget) {
-                List<Class<?>> result = new ArrayList<>();
-                for (GradleModelDefQuery1 query: queries) {
-                    Collection<Class<?>> models = safelyReturn(query.getToolingModels(gradleTarget), query);
-                    result.addAll(models);
-                }
-                return result;
+        return (GradleTarget gradleTarget) -> {
+            List<Class<?>> result = new ArrayList<>();
+            for (GradleModelDefQuery1 query: queries) {
+                Collection<Class<?>> models = safelyReturn(query.getToolingModels(gradleTarget), query);
+                result.addAll(models);
             }
+            return result;
         };
     }
 
@@ -69,18 +66,15 @@ public final class ModelNeeds {
     }
 
     private static GradleModelDefQuery2 query1AsQuery2(final GradleModelDefQuery1 query1) {
-        return new GradleModelDefQuery2() {
-            @Override
-            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                Collection<Class<?>> toolinModels = query1.getToolingModels(gradleTarget);
-                if (toolinModels.isEmpty()) {
-                    return GradleModelDef.EMPTY;
-                }
-
-                return GradleModelDef.create(
-                        toolinModels,
-                        Collections.<GradleProjectInfoQuery2<?>>emptyList());
+        return (GradleTarget gradleTarget) -> {
+            Collection<Class<?>> toolinModels = query1.getToolingModels(gradleTarget);
+            if (toolinModels.isEmpty()) {
+                return GradleModelDef.EMPTY;
             }
+
+            return GradleModelDef.create(
+                    toolinModels,
+                    Collections.<GradleProjectInfoQuery2<?>>emptyList());
         };
     }
 
@@ -98,20 +92,17 @@ public final class ModelNeeds {
             return queries.iterator().next();
         }
 
-        return new GradleModelDefQuery2() {
-            @Override
-            public GradleModelDef getModelDef(GradleTarget gradleTarget) {
-                List<GradleProjectInfoQuery2<?>> projectInfoQueries = new ArrayList<>();
-                List<Class<?>> toolingModels = new ArrayList<>();
+        return (GradleTarget gradleTarget) -> {
+            List<GradleProjectInfoQuery2<?>> projectInfoQueries = new ArrayList<>();
+            List<Class<?>> toolingModels = new ArrayList<>();
 
-                for (GradleModelDefQuery2 query: queries) {
-                    GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), query);
+            for (GradleModelDefQuery2 query: queries) {
+                GradleModelDef modelDef = safelyReturn(query.getModelDef(gradleTarget), query);
 
-                    projectInfoQueries.addAll(modelDef.getProjectInfoQueries2());
-                    toolingModels.addAll(modelDef.getToolingModels());
-                }
-                return GradleModelDef.create(toolingModels, projectInfoQueries);
+                projectInfoQueries.addAll(modelDef.getProjectInfoQueries2());
+                toolingModels.addAll(modelDef.getToolingModels());
             }
+            return GradleModelDef.create(toolingModels, projectInfoQueries);
         };
     }
 

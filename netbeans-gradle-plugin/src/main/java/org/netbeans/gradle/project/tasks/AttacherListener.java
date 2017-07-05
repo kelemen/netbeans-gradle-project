@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.tasks;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
@@ -16,7 +15,6 @@ import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.debugger.jpda.DebuggerStartException;
 import org.netbeans.api.debugger.jpda.JPDADebugger;
@@ -132,26 +130,20 @@ public final class AttacherListener implements DebugTextListener.DebugeeListener
         Map<String, Object> services = getJpdaServiceObjects(javaExt);
 
         final JPDADebugger debugger = JPDADebugger.attach("127.0.0.1", port, new Object[]{services});
-        debugger.addPropertyChangeListener("state", new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (debugger.getState() == JPDADebugger.STATE_DISCONNECTED) {
-                    buildCancel.cancel();
-                }
+        debugger.addPropertyChangeListener("state", (PropertyChangeEvent evt) -> {
+            if (debugger.getState() == JPDADebugger.STATE_DISCONNECTED) {
+                buildCancel.cancel();
             }
         });
     }
 
     @Override
     public void onDebugeeListening(final int port) {
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) {
-                try {
-                    doAttach(port);
-                } catch (DebuggerStartException ex) {
-                    LOGGER.log(Level.INFO, "Failed to attach to debugee.", ex);
-                }
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            try {
+                doAttach(port);
+            } catch (DebuggerStartException ex) {
+                LOGGER.log(Level.INFO, "Failed to attach to debugee.", ex);
             }
         }, null);
     }

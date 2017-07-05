@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
@@ -113,19 +112,13 @@ public final class SwingPropertyChangeForwarder {
         }
         else {
             if (addedAll) {
-                eventExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        fireListeners(changeEvent, toCall);
-                    }
+                eventExecutor.execute(() -> {
+                    fireListeners(changeEvent, toCall);
                 });
             }
             else {
-                eventExecutorSrc.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                    @Override
-                    public void execute(CancellationToken cancelToken) {
-                        fireListeners(changeEvent, toCall);
-                    }
+                eventExecutorSrc.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                    fireListeners(changeEvent, toCall);
                 }, null);
             }
         }
@@ -302,31 +295,16 @@ public final class SwingPropertyChangeForwarder {
                 return forwardNowTask;
             }
 
-            return new Runnable() {
-                @Override
-                public void run() {
-                    eventExecutor.execute(forwardNowTask);
-                }
-            };
+            return () -> eventExecutor.execute(forwardNowTask);
         }
 
         public Runnable directForwarderTask(final PropertyChangeListener listener) {
             if (forwardValue) {
-                return new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.propertyChange(getChangeEventWithValue());
-                    }
-                };
+                return () -> listener.propertyChange(getChangeEventWithValue());
             }
             else {
-                final PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, null);
-                return new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.propertyChange(event);
-                    }
-                };
+                PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, null);
+                return () -> listener.propertyChange(event);
             }
         }
     }

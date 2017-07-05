@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.properties.ui;
 
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -48,12 +47,8 @@ public final class EnumCombo<EnumType extends Enum<EnumType>> {
         for (EnumType value: values) {
             entries.add(new Item<>(value));
         }
-        Collections.sort(entries, new Comparator<Item<EnumType>>() {
-            @Override
-            public int compare(Item<EnumType> a, Item<EnumType> b) {
-                return STR_CMP.compare(a.toString(), b.toString());
-            }
-        });
+
+        entries.sort(Comparator.comparing(Object::toString, STR_CMP::compare));
 
         combo.removeAllItems();
         for (Item<EnumType> entry: entries) {

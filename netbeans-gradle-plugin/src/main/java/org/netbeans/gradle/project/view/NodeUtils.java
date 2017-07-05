@@ -39,12 +39,9 @@ public final class NodeUtils {
         ExceptionHelper.checkNotNullArgument(children, "children");
         ExceptionHelper.checkNotNullArgument(childrenRefresher, "childrenRefresher");
 
-        return new NodeRefresher() {
-            @Override
-            public void refreshNode() {
-                childrenRefresher.refreshChildren();
-                NodeUtils.refreshChildNodes(children);
-            }
+        return () -> {
+            childrenRefresher.refreshChildren();
+            NodeUtils.refreshChildNodes(children);
         };
     }
 

@@ -34,7 +34,6 @@ import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
@@ -363,11 +362,8 @@ public final class AsyncGradleTask implements Runnable {
     }
 
     private static void scheduleCancel(final DefaultCancellationTokenSource cancelSource) {
-        CANCEL_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                cancelSource.cancel();
-            }
+        CANCEL_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            cancelSource.cancel();
         }, null);
     }
 
@@ -378,11 +374,8 @@ public final class AsyncGradleTask implements Runnable {
         final DefaultCancellationTokenSource cancelSource = new DefaultCancellationTokenSource();
         buildLauncher.withCancellationToken(cancelSource.token());
 
-        ListenerRef cancelListenerRef = cancelToken.addCancellationListener(new Runnable() {
-            @Override
-            public void run() {
-                scheduleCancel(cancelSource);
-            }
+        ListenerRef cancelListenerRef = cancelToken.addCancellationListener(() -> {
+            scheduleCancel(cancelSource);
         });
         try {
             buildLauncher.run();
@@ -591,11 +584,8 @@ public final class AsyncGradleTask implements Runnable {
     private static TaskVariableMap queryVariables(final List<DisplayedTaskVariable> taskVars) {
         final AtomicReference<TaskVariableMap> result = new AtomicReference<>(null);
         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    result.set(queryVariablesNow(taskVars));
-                }
+            SwingUtilities.invokeAndWait(() -> {
+                result.set(queryVariablesNow(taskVars));
             });
             return result.get();
         } catch (InterruptedException ex) {
@@ -789,11 +779,8 @@ public final class AsyncGradleTask implements Runnable {
 
             String progressCaption = processedCommandSpec.getProgressCaption();
             boolean nonBlocking = processedCommandSpec.getProcessedTaskDef().isNonBlocking();
-            this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, new DaemonTask() {
-                @Override
-                public void run(CancellationToken cancelToken, ProgressHandle progress) {
-                    doGradleTasksWithProgress(cancelToken, progress, BuildExecutionItem.this);
-                }
+            this.daemonTaskDef = new DaemonTaskDef(progressCaption, nonBlocking, (cancelToken, progress) -> {
+                doGradleTasksWithProgress(cancelToken, progress, BuildExecutionItem.this);
             });
             this.running = true;
         }

@@ -45,12 +45,7 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
 
         this.jDestDirEdit.setText(getDisplayNameOfTargetDir(targetDir));
         this.fileNameStr = trimmedText(jFileNameEdit);
-        this.fileNameStr.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                updateDestFileEdit();
-            }
-        });
+        this.fileNameStr.addChangeListener(this::updateDestFileEdit);
         updateDestFileEdit();
     }
 
@@ -86,14 +81,11 @@ class GradleTemplateWizardPanel extends javax.swing.JPanel {
                 NewProjectStrings.getInvalidFileName());
         bckgValidator.addValidator(fileNameValidator, fileNameStr);
 
-        Validator<Object> hasTargetDirValidator = new Validator<Object>() {
-            @Override
-            public Problem validateInput(Object inputType) {
-                if (inputType != null) {
-                    return null;
-                }
-                return Problem.severe(NewProjectStrings.getTargetFolderNotAvailable());
+        Validator<Object> hasTargetDirValidator = (Object inputType) -> {
+            if (inputType != null) {
+                return null;
             }
+            return Problem.severe(NewProjectStrings.getTargetFolderNotAvailable());
         };
         bckgValidator.addValidator(hasTargetDirValidator, PropertyFactory.constSource(targetDir));
 

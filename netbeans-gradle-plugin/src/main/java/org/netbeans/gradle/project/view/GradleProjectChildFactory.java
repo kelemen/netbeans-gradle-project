@@ -68,12 +68,9 @@ implements
         this.createdOnce = false;
 
         this.refreshNotifier = new GenericChangeListenerManager(SwingTaskExecutor.getStrictExecutor(false));
-        this.refreshNotifier.registerListener(new Runnable() {
-            @Override
-            public void run() {
-                if (createdOnce) {
-                    refresh(false);
-                }
+        this.refreshNotifier.registerListener(() -> {
+            if (createdOnce) {
+                refresh(false);
             }
         });
     }
@@ -157,31 +154,20 @@ implements
 
     @Override
     protected void addNotify() {
-        final Runnable simpleChangeListener = new Runnable() {
-            @Override
-            public void run() {
-                refreshChildren();
-            }
-        };
+        Runnable simpleChangeListener = this::refreshChildren;
 
         annotationChildNodes.addNotify();
         listenerRefs.add(annotationChildNodes.nodeFactories().addChangeListener(simpleChangeListener));
 
-        listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                NodeExtensions newNodeExtensions
-                        = NodeExtensions.create(getExtensionNodes(), simpleChangeListener);
+        listenerRefs.add(project.currentModel().addChangeListener(() -> {
+            NodeExtensions newNodeExtensions
+                    = NodeExtensions.create(getExtensionNodes(), simpleChangeListener);
 
-                updateNodesIfNeeded(newNodeExtensions);
-            }
+            updateNodesIfNeeded(newNodeExtensions);
         }));
 
-        listenerRefs.add(NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                tryReplaceNodeExtensionAndClose(null);
-            }
+        listenerRefs.add(NbListenerRefs.fromRunnable(() -> {
+            tryReplaceNodeExtensionAndClose(null);
         }));
 
         listenerRefs.add(registerModelRefreshListener());
@@ -254,13 +240,10 @@ implements
         }
         final List<NbGradleProjectTree> children = getAllChildren(shownModule);
 
-        toPopulate.add(new SingleNodeFactory() {
-            @Override
-            public Node createNode() {
-                return new FilterNode(
-                        createSimpleNode(),
-                        createSubprojectsChild(),
-                        Lookups.singleton(shownModule.getMainProject())) {
+        toPopulate.add(() -> new FilterNode(
+                createSimpleNode(),
+                createSubprojectsChild(),
+                Lookups.singleton(shownModule.getMainProject())) {
                     @Override
                     public String getName() {
                         return "SubProjectsNode_" + getShownModule().getMainProject().getProjectFullName().replace(':', '_');
@@ -293,9 +276,7 @@ implements
                     public boolean canRename() {
                         return false;
                     }
-                };
-            }
-        });
+                });
     }
 
     private void readKeys(List<SingleNodeFactory> toPopulate) throws DataObjectNotFoundException {
@@ -357,12 +338,7 @@ implements
         }
 
         public static NodeExtensions createEmpty() {
-            return create(Collections.<GradleProjectExtensionNodes>emptyList(), new Runnable() {
-                @Override
-                public void run() {
-                    // Do nothing.
-                }
-            });
+            return create(Collections.emptyList(), () -> { });
         }
 
         public static NodeExtensions create(

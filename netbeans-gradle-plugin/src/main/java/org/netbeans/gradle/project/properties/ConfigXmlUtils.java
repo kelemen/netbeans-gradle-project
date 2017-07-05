@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -362,12 +361,7 @@ final class ConfigXmlUtils {
         // order, so that any sensible implementation will save them in the
         // same order every time (avoiding unnecessary differences in the
         // properties file).
-        Collections.sort(attributes, new Comparator<KeyValuePair>() {
-            @Override
-            public int compare(KeyValuePair o1, KeyValuePair o2) {
-                return nodeSorter.compare(o1.key, o1.key);
-            }
-        });
+        Collections.sort(attributes, (o1, o2) -> nodeSorter.compare(o1.key, o2.key));
 
         Set<String> result = CollectionsEx.newHashSet(attributes.size());
         for (KeyValuePair keyValue: attributes) {
@@ -426,12 +420,7 @@ final class ConfigXmlUtils {
             parent.setAttribute(KEYWORD_VALUE, value);
         }
 
-        Collections.sort(childEntries, new Comparator<NamedNode>() {
-            @Override
-            public int compare(NamedNode o1, NamedNode o2) {
-                return nodeProperties.compare(o1.name, o2.name);
-            }
-        });
+        Collections.sort(childEntries, (o1, o2) -> nodeProperties.compare(o1.name, o2.name));
 
         for (NamedNode child: childEntries) {
             String xmlKey = toElementName(child.name);
@@ -494,18 +483,15 @@ final class ConfigXmlUtils {
         }
 
         Element[] sortedAuxElements = auxElements.clone();
-        Arrays.sort(sortedAuxElements, new Comparator<Element>() {
-            @Override
-            public int compare(Element o1, Element o2) {
-                String uri1 = o1.getNamespaceURI();
-                String uri2 = o2.getNamespaceURI();
-                int uriCmp = nullSafeStrCmp(uri1, uri2);
-                if (uriCmp != 0) {
-                    return uriCmp;
-                }
-
-                return nullSafeStrCmp(o1.getNodeName(), o2.getNodeName());
+        Arrays.sort(sortedAuxElements, (Element o1, Element o2) -> {
+            String uri1 = o1.getNamespaceURI();
+            String uri2 = o2.getNamespaceURI();
+            int uriCmp = nullSafeStrCmp(uri1, uri2);
+            if (uriCmp != 0) {
+                return uriCmp;
             }
+
+            return nullSafeStrCmp(o1.getNodeName(), o2.getNodeName());
         });
 
         Element auxRoot = document.createElement(AUXILIARY_NODE_NAME);

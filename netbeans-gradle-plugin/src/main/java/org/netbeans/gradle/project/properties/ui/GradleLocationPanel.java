@@ -89,11 +89,8 @@ public class GradleLocationPanel extends javax.swing.JPanel {
         final PropertySource<Boolean> validLocation = panel.validLocation();
         dlgDescriptor.setValid(validLocation.getValue());
 
-        validLocation.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                dlgDescriptor.setValid(validLocation.getValue());
-            }
+        validLocation.addChangeListener(() -> {
+            dlgDescriptor.setValid(validLocation.getValue());
         });
 
         Dialog dlg = DialogDisplayer.getDefault().createDialog(dlgDescriptor);
@@ -109,12 +106,7 @@ public class GradleLocationPanel extends javax.swing.JPanel {
     }
 
     private void setupLocationChangeListeners() {
-        Runnable fireEventTask = new Runnable() {
-            @Override
-            public void run() {
-                fireLocationChangeEvent();
-            }
-        };
+        Runnable fireEventTask = this::fireLocationChangeEvent;
 
         SwingProperties.buttonSelected(jDefaultCheck).addChangeListener(fireEventTask);
         SwingProperties.buttonSelected(jDistCheck).addChangeListener(fireEventTask);

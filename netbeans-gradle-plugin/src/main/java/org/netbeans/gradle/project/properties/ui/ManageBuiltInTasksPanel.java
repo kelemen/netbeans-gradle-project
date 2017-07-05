@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.properties.ui;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,7 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.NbGradleProject;
@@ -30,7 +28,6 @@ import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -41,7 +38,6 @@ import org.netbeans.gradle.project.properties.standard.BuiltInTasks;
 import org.netbeans.gradle.project.properties.standard.BuiltInTasksProperty;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
 import org.netbeans.gradle.project.tasks.DefaultBuiltInTasks;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.StringUtils;
 import org.netbeans.gradle.project.view.CustomActionPanel;
 
@@ -68,20 +64,14 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
         initComponents();
         jActionPanel = new CustomActionPanel();
         jTaskConfigHolder.add(jActionPanel);
-        jInheritCheck.getModel().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                setEnabledDisabledState();
-            }
+        jInheritCheck.getModel().addChangeListener((ChangeEvent e) -> {
+            setEnabledDisabledState();
         });
 
         fillTaskCombo();
-        jTaskCombo.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    showSelectedItem();
-                }
+        jTaskCombo.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                showSelectedItem();
             }
         });
         showSelectedItem();
@@ -90,12 +80,7 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
     public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return ManageBuiltInTasksPanel.createSettingsPage(project);
-            }
-        });
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> ManageBuiltInTasksPanel.createSettingsPage(project));
     }
 
     public static ProfileBasedSettingsPage createSettingsPage(NbGradleProject project) {
@@ -137,12 +122,9 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
         for (String command: commands) {
             items.add(new BuiltInTaskItem(command, getDisplayNameOfCommand(command)));
         }
-        Collections.sort(items, new Comparator<BuiltInTaskItem>() {
-            @Override
-            public int compare(BuiltInTaskItem o1, BuiltInTaskItem o2) {
-                return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
-            }
-        });
+
+        items.sort(Comparator.comparing(BuiltInTaskItem::getDisplayName, StringUtils.STR_CMP::compare));
+
         jTaskCombo.setModel(new DefaultComboBoxModel<>(items.toArray(new BuiltInTaskItem[items.size()])));
         jTaskCombo.getModel().setSelectedItem(items.get(0));
     }
@@ -211,16 +193,13 @@ public class ManageBuiltInTasksPanel extends javax.swing.JPanel implements Profi
 
         final String command = lastShownItem.getCommand();
         jActionPanel.setTasksMustExist(false);
-        PredefinedTask resultTask = jActionPanel.tryGetPredefinedTask(command, new NbSupplier<List<PredefinedTask.Name>>() {
-            @Override
-            public List<PredefinedTask.Name> get() {
-                SavedTask lastValue = toSaveTasks.get(command);
-                if (lastValue == null) {
-                    return getCurrentValue(command).getTaskNames();
-                }
-                else {
-                    return lastValue.getTaskDef().getTaskNames();
-                }
+        PredefinedTask resultTask = jActionPanel.tryGetPredefinedTask(command, () -> {
+            SavedTask lastValue = toSaveTasks.get(command);
+            if (lastValue == null) {
+                return getCurrentValue(command).getTaskNames();
+            }
+            else {
+                return lastValue.getTaskDef().getTaskNames();
             }
         });
 

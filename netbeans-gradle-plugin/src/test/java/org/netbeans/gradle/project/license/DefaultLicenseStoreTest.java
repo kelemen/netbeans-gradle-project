@@ -21,11 +21,8 @@ public class DefaultLicenseStoreTest {
         final DefaultLicenseDef licenseDef = new DefaultLicenseDef(src, "TestLicense1", "TestDisplayName1");
         final DefaultLicenseStore store = new DefaultLicenseStore();
 
-        addAndRemove(store, licenseDef, new Runnable() {
-            @Override
-            public void run() {
-                assertTrue(store.containsLicense(licenseDef.getLicenseId()));
-            }
+        addAndRemove(store, licenseDef, () -> {
+            assertTrue(store.containsLicense(licenseDef.getLicenseId()));
         });
 
         assertFalse(store.containsLicense(licenseDef.getLicenseId()));
@@ -51,17 +48,14 @@ public class DefaultLicenseStoreTest {
         final DefaultLicenseDef licenseDef = new DefaultLicenseDef(src, "TestLicense1", "TestDisplayName1");
         final DefaultLicenseStore store = new DefaultLicenseStore();
 
-        addAndRemove(store, licenseDef, new Runnable() {
-            @Override
-            public void run() {
-                Collection<LicenseRef> licenses = store.getAllLicense();
-                LicenseRef found = findById(licenses, licenseDef.getLicenseId());
-                assertNotNull("License", found);
+        addAndRemove(store, licenseDef, () -> {
+            Collection<LicenseRef> licenses = store.getAllLicense();
+            LicenseRef found = findById(licenses, licenseDef.getLicenseId());
+            assertNotNull("License", found);
 
-                assertEquals("Dynamic", true, found.isDynamic());
-                assertEquals("DisplayName", licenseDef.getDisplayName(), found.getDisplayName());
-                assertEquals("Id", licenseDef.getLicenseId(), found.getId());
-            }
+            assertEquals("Dynamic", true, found.isDynamic());
+            assertEquals("DisplayName", licenseDef.getDisplayName(), found.getDisplayName());
+            assertEquals("Id", licenseDef.getLicenseId(), found.getId());
         });
 
         assertFalse(store.containsLicense(licenseDef.getLicenseId()));

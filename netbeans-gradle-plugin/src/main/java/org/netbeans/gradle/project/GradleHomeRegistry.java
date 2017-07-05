@@ -70,13 +70,7 @@ public final class GradleHomeRegistry {
 
     public static void requireGradlePaths() {
         if (USING_GLOBAL_PATHS.compareAndSet(false, true)) {
-            gradleLocation().addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    updateGradleHome();
-                }
-            });
-
+            gradleLocation().addChangeListener(GradleHomeRegistry::updateGradleHome);
             updateGradleHome();
         }
     }
@@ -91,31 +85,25 @@ public final class GradleHomeRegistry {
     private static void setGradleHome(final FileObject gradleHome) {
         ExceptionHelper.checkNotNullArgument(gradleHome, "gradleHome");
 
-        GRADLE_HOME_UPDATER.execute(new Runnable() {
-            @Override
-            public void run() {
-                URL[] urls = GradleHomeClassPathProvider.getAllGradleLibs(gradleHome);
-                if (urls.length == 0) {
-                    // Keep the previous classpaths if there are non found.
-                    return;
-                }
+        GRADLE_HOME_UPDATER.execute(() -> {
+            URL[] urls = GradleHomeClassPathProvider.getAllGradleLibs(gradleHome);
+            if (urls.length == 0) {
+                // Keep the previous classpaths if there are non found.
+                return;
+            }
 
-                if (gradleHome.equals(GRADLE_HOME_BINARIES.get().getHomePath())) {
-                    return;
-                }
+            if (gradleHome.equals(GRADLE_HOME_BINARIES.get().getHomePath())) {
+                return;
+            }
 
-                GRADLE_HOME_BINARIES.set(new GradleHomePaths(gradleHome, urls));
+            GRADLE_HOME_BINARIES.set(new GradleHomePaths(gradleHome, urls));
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        CHANGES.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
-                    }
-                });
+            SwingUtilities.invokeLater(() -> {
+                CHANGES.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+            });
 
-                if (REGISTERED_GLOBAL_PATH.compareAndSet(false, true)) {
-                    doRegisterGlobalClassPath();
-                }
+            if (REGISTERED_GLOBAL_PATH.compareAndSet(false, true)) {
+                doRegisterGlobalClassPath();
             }
         });
     }

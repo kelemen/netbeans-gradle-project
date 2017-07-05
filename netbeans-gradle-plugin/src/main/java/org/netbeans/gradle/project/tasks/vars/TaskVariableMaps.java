@@ -40,12 +40,7 @@ public final class TaskVariableMaps {
             return null;
         }
 
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                return vars.tryGetValue(variable.getVariableName());
-            }
-        };
+        return (TaskVariable variable) -> vars.tryGetValue(variable.getVariableName());
     }
 
     private static void addAsTaskVariableMap(

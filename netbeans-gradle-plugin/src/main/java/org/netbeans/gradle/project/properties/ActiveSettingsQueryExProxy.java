@@ -2,9 +2,9 @@ package org.netbeans.gradle.project.properties;
 
 import org.jtrim.property.PropertySource;
 import org.jtrim.utils.ExceptionHelper;
+import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.SingleProfileSettings;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.w3c.dom.Element;
 
 public final class ActiveSettingsQueryExProxy implements ActiveSettingsQueryEx {
@@ -18,18 +18,8 @@ public final class ActiveSettingsQueryExProxy implements ActiveSettingsQueryEx {
 
         this.wrappedRef = wrapped;
 
-        this.currentProfileSettingsEx = NbProperties.propertyOfProperty(wrapped, new NbFunction<ActiveSettingsQueryEx, PropertySource<SingleProfileSettingsEx>>() {
-            @Override
-            public PropertySource<SingleProfileSettingsEx> apply(ActiveSettingsQueryEx arg) {
-                return arg.currentProfileSettingsEx();
-            }
-        });
-        this.currentProfileSettings = NbProperties.propertyOfProperty(wrapped, new NbFunction<ActiveSettingsQueryEx, PropertySource<SingleProfileSettings>>() {
-            @Override
-            public PropertySource<SingleProfileSettings> apply(ActiveSettingsQueryEx arg) {
-                return arg.currentProfileSettings();
-            }
-        });
+        this.currentProfileSettingsEx = NbProperties.propertyOfProperty(wrapped, ActiveSettingsQueryEx::currentProfileSettingsEx);
+        this.currentProfileSettings = NbProperties.propertyOfProperty(wrapped, ActiveSettingsQuery::currentProfileSettings);
     }
 
     private ActiveSettingsQueryEx getWrapped() {
@@ -50,12 +40,7 @@ public final class ActiveSettingsQueryExProxy implements ActiveSettingsQueryEx {
     public <ValueType> PropertySource<ValueType> getProperty(final PropertyDef<?, ValueType> propertyDef) {
         ExceptionHelper.checkNotNullArgument(propertyDef, "propertyDef");
 
-        return NbProperties.propertyOfProperty(wrappedRef, new NbFunction<ActiveSettingsQueryEx, PropertySource<ValueType>>() {
-            @Override
-            public PropertySource<ValueType> apply(ActiveSettingsQueryEx arg) {
-                return arg.getProperty(propertyDef);
-            }
-        });
+        return NbProperties.propertyOfProperty(wrappedRef, arg -> arg.getProperty(propertyDef));
     }
 
     @Override

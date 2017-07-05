@@ -46,14 +46,9 @@ implements
     private final LazyChangeSupport changes;
 
     public GradleSourceForBinaryQuery(final JavaExtension javaExt) {
-        this(new NbSupplier<NbJavaModule>() {
-            @Override
-            public NbJavaModule get() {
-                return javaExt.getCurrentModel().getMainModule();
-            }
-        });
+        this(() -> javaExt.getCurrentModel().getMainModule());
 
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        Objects.requireNonNull(javaExt, "javaExt");
     }
 
     public GradleSourceForBinaryQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {

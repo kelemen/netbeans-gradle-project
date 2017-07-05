@@ -5,7 +5,6 @@ import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Test;
-import org.netbeans.gradle.project.util.NbFunction;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -112,12 +111,7 @@ public class PropertyOfPropertyTest {
 
         public TestProperty() {
             this.property = PropertyFactory.memProperty(PropertyFactory.memProperty(0));
-            this.wrapper = new PropertyOfProperty<>(property, new NbFunction<MutableProperty<Integer>, PropertySource<Integer>>() {
-                @Override
-                public PropertySource<Integer> apply(MutableProperty<Integer> arg) {
-                    return arg;
-                }
-            });
+            this.wrapper = new PropertyOfProperty<>(property, arg -> arg);
         }
 
         public MutableProperty<Integer> setSubProperty(int value) {

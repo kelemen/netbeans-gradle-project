@@ -7,7 +7,6 @@ import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceGroup;
@@ -129,11 +128,8 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
             return;
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                OpenEditorOutputListener.tryOpenFile(testFile, -1);
-            }
+        SwingUtilities.invokeLater(() -> {
+            OpenEditorOutputListener.tryOpenFile(testFile, -1);
         });
     }
 
@@ -145,11 +141,8 @@ public final class JavaTestsuiteNode extends TestsuiteNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) {
-                    jumpToSourcesNow();
-                }
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                jumpToSourcesNow();
             }, null);
         }
     }

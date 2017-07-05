@@ -8,7 +8,6 @@ import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.TaskExecutors;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.netbeans.gradle.project.util.NbConsumer;
 
 import static org.junit.Assert.*;
@@ -55,12 +54,9 @@ public class LazyProjectModelPersisterFactoryTest {
 
         @SuppressWarnings("unchecked")
         PersistentModelStore<Object> modelStore = (PersistentModelStore<Object>)mock(PersistentModelStore.class);
-        doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                modelStorePersistModel.accept(contextAwareExecutor.isExecutingInThis());
-                return null;
-            }
+        doAnswer((InvocationOnMock invocation) -> {
+            modelStorePersistModel.accept(contextAwareExecutor.isExecutingInThis());
+            return null;
         }).when(modelStore).persistModel(any(), any(Path.class));
 
         PersistentModelStore<Object> persister = createLazyStore(modelStore, contextAwareExecutor);

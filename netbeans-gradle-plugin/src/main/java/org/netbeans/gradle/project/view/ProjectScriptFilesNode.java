@@ -4,7 +4,6 @@ import java.awt.Image;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -169,12 +168,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            Runnable refreshChildrenTask = new Runnable() {
-                @Override
-                public void run() {
-                    refreshChildren();
-                }
-            };
+            Runnable refreshChildrenTask = this::refreshChildren;
 
             listenerRefs.add(project.currentModel().addChangeListener(refreshChildrenTask));
             listenerRefs.add(NbFileUtils.addDirectoryContentListener(project.getProjectDirectory(), refreshChildrenTask));
@@ -251,12 +245,7 @@ public final class ProjectScriptFilesNode extends AbstractNode {
                 }
             }
 
-            Collections.sort(gradleFiles, new Comparator<FileObject>() {
-                @Override
-                public int compare(FileObject o1, FileObject o2) {
-                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
-                }
-            });
+            gradleFiles.sort(Comparator.comparing(FileObject::getNameExt, StringUtils.STR_CMP::compare));
 
             for (FileObject file: gradleFiles) {
                 addGradleFile(file, toPopulate);

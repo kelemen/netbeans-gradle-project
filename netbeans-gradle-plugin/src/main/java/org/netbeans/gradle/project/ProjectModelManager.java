@@ -23,7 +23,6 @@ import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.query.GradleCacheBinaryForSourceQuery;
 import org.netbeans.gradle.project.query.GradleCacheByBinaryLookup;
 import org.netbeans.gradle.project.util.LazyValue;
-import org.netbeans.gradle.project.util.NbSupplier;
 
 final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel> {
     private static final Logger LOGGER = Logger.getLogger(ProjectModelManager.class.getName());
@@ -45,18 +44,8 @@ final class ProjectModelManager implements ModelRetrievedListener<NbGradleModel>
         this.currentModelRef = new AtomicReference<>(initialModel);
         this.currentModel = NbProperties.atomicValueView(currentModelRef, modelChangeListeners);
         this.modelUpdater = new SwingUpdateTaskExecutor(true);
-        this.modelUpdateDispatcher = new Runnable() {
-            @Override
-            public void run() {
-                onModelChange();
-            }
-        };
-        this.loadErrorRef = new LazyValue<>(new NbSupplier<ProjectIssueRef>() {
-            @Override
-            public ProjectIssueRef get() {
-                return project.getProjectIssueManager().createIssueRef();
-            }
-        });
+        this.modelUpdateDispatcher = this::onModelChange;
+        this.loadErrorRef = new LazyValue<>(() -> project.getProjectIssueManager().createIssueRef());
     }
 
     private void onModelChange() {

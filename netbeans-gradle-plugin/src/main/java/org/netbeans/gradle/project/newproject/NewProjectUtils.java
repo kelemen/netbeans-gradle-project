@@ -141,13 +141,10 @@ public final class NewProjectUtils {
                 createPatternValidator(RECOMMENDED_PROJECTNAME_PATTERN,
                     Problem.Level.WARNING,
                     NewProjectStrings.getNotRecommendedProjectName()));
-        Validator<String> notEmptyValidator = new Validator<String>() {
-            @Override
-            public Problem validateInput(String inputType) {
-                return inputType.isEmpty()
-                        ? Problem.severe(NewProjectStrings.getProjectNameMustNotBeEmpty())
-                        : null;
-            }
+        Validator<String> notEmptyValidator = (String inputType) -> {
+            return inputType.isEmpty()
+                    ? Problem.severe(NewProjectStrings.getProjectNameMustNotBeEmpty())
+                    : null;
         };
 
         return merge(notEmptyValidator, patternValidators);
@@ -168,92 +165,83 @@ public final class NewProjectUtils {
     }
 
     public static Validator<String> createNewFolderValidator() {
-        return new Validator<String>() {
-            @Override
-            public Problem validateInput(String inputType) {
-                String projectDirStr = inputType.trim();
-                if (projectDirStr.isEmpty()) {
-                    return Problem.severe(NewProjectStrings.getInvalidPath());
-                }
-
-                File projectDir = FileUtil.normalizeFile(new File(projectDirStr));
-                if (projectDir == null) {
-                    return Problem.severe(NewProjectStrings.getInvalidPath());
-                }
-
-                // This check is required because checking these kind of paths
-                // can be extremly slow.
-                if (Utilities.isWindows() && projectDir.getAbsolutePath().startsWith("\\\\")) {
-                    return Problem.severe(NewProjectStrings.getCannotCreateFolderHere());
-                }
-
-                if (projectDir.exists()) {
-                    return Problem.severe(NewProjectStrings.getDirectoryAlreadyExists());
-                }
-
-                File rootPath = projectDir;
-                while (rootPath != null && !rootPath.exists()) {
-                    rootPath = rootPath.getParentFile();
-                }
-
-                if (rootPath == null || !rootPath.canWrite() || !rootPath.isDirectory()) {
-                    return Problem.severe(NewProjectStrings.getCannotCreateFolderHere());
-                }
-                return null;
+        return (String inputType) -> {
+            String projectDirStr = inputType.trim();
+            if (projectDirStr.isEmpty()) {
+                return Problem.severe(NewProjectStrings.getInvalidPath());
             }
+
+            File projectDir = FileUtil.normalizeFile(new File(projectDirStr));
+            if (projectDir == null) {
+                return Problem.severe(NewProjectStrings.getInvalidPath());
+            }
+
+            // This check is required because checking these kind of paths
+            // can be extremly slow.
+            if (Utilities.isWindows() && projectDir.getAbsolutePath().startsWith("\\\\")) {
+                return Problem.severe(NewProjectStrings.getCannotCreateFolderHere());
+            }
+
+            if (projectDir.exists()) {
+                return Problem.severe(NewProjectStrings.getDirectoryAlreadyExists());
+            }
+
+            File rootPath = projectDir;
+            while (rootPath != null && !rootPath.exists()) {
+                rootPath = rootPath.getParentFile();
+            }
+
+            if (rootPath == null || !rootPath.canWrite() || !rootPath.isDirectory()) {
+                return Problem.severe(NewProjectStrings.getCannotCreateFolderHere());
+            }
+            return null;
         };
     }
 
     public static Validator<String> createVariableNameValidator() {
-        return new Validator<String>() {
-            @Override
-            public Problem validateInput(String inputType) {
-                if (inputType.isEmpty()) {
-                    return Problem.severe(NewProjectStrings.getIllegalIdentifier());
-                }
-
-                if (!Character.isJavaIdentifierStart(inputType.charAt(0))) {
-                    return Problem.severe(NewProjectStrings.getIllegalIdentifier());
-                }
-
-                for (int i = 1; i < inputType.length(); i++) {
-                    if (!Character.isJavaIdentifierPart(inputType.charAt(i))) {
-                        return Problem.severe(NewProjectStrings.getIllegalIdentifier());
-                    }
-                }
-                return null;
+        return (String inputType) -> {
+            if (inputType.isEmpty()) {
+                return Problem.severe(NewProjectStrings.getIllegalIdentifier());
             }
+
+            if (!Character.isJavaIdentifierStart(inputType.charAt(0))) {
+                return Problem.severe(NewProjectStrings.getIllegalIdentifier());
+            }
+
+            for (int i = 1; i < inputType.length(); i++) {
+                if (!Character.isJavaIdentifierPart(inputType.charAt(i))) {
+                    return Problem.severe(NewProjectStrings.getIllegalIdentifier());
+                }
+            }
+            return null;
         };
     }
 
     public static Validator<String> createClassNameValidator(final boolean optional) {
-        final Validator<String> varNameValidator = createVariableNameValidator();
+        Validator<String> varNameValidator = createVariableNameValidator();
 
-        return new Validator<String>() {
-            @Override
-            public Problem validateInput(String inputType) {
-                if (optional && inputType.isEmpty()) {
-                    return null;
-                }
-
-                if (inputType.endsWith(".")) {
-                    return Problem.severe(NewProjectStrings.getIllegalIdentifier());
-                }
-
-                String[] parts = inputType.split(Pattern.quote("."));
-                for (String part: parts) {
-                    Problem problem = varNameValidator.validateInput(part);
-                    if (problem != null) {
-                        assert problem.getLevel() == Problem.Level.SEVERE;
-                        return problem;
-                    }
-                }
-                if (parts.length == 1) {
-                    return Problem.warning(NewProjectStrings.getShouldNotUseDefaultPackage());
-                }
-
+        return (String inputType) -> {
+            if (optional && inputType.isEmpty()) {
                 return null;
             }
+
+            if (inputType.endsWith(".")) {
+                return Problem.severe(NewProjectStrings.getIllegalIdentifier());
+            }
+
+            String[] parts = inputType.split(Pattern.quote("."));
+            for (String part: parts) {
+                Problem problem = varNameValidator.validateInput(part);
+                if (problem != null) {
+                    assert problem.getLevel() == Problem.Level.SEVERE;
+                    return problem;
+                }
+            }
+            if (parts.length == 1) {
+                return Problem.warning(NewProjectStrings.getShouldNotUseDefaultPackage());
+            }
+
+            return null;
         };
     }
 
@@ -301,14 +289,11 @@ public final class NewProjectUtils {
                 NewProjectUtils.createNewFolderValidator(),
                 projectFolder));
 
-        Runnable projectFolderUpdater = new Runnable() {
-            @Override
-            public void run() {
-                File location = new File(
-                        jProjectLocationEdit.getText().trim(),
-                        jProjectNameEdit.getText().trim());
-                jProjectFolderEdit.setText(location.getPath());
-            }
+        Runnable projectFolderUpdater = () -> {
+            File location = new File(
+                    jProjectLocationEdit.getText().trim(),
+                    jProjectNameEdit.getText().trim());
+            jProjectFolderEdit.setText(location.getPath());
         };
 
         refs.add(projectName.addChangeListener(projectFolderUpdater));

@@ -28,8 +28,6 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.RefLinkedList;
 import org.jtrim.collections.RefList;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
@@ -192,44 +190,35 @@ public final class FileSystemWatcher {
     }
 
     private void startPolling(final WatchService watchService) {
-        pollExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                ListenerRef cancelRef = null;
-                try {
-                    cancelRef = cancelToken.addCancellationListener(new Runnable() {
-                        @Override
-                        public void run() {
-                            cancelWatchService(watchService);
-                        }
-                    });
+        pollExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            ListenerRef cancelRef = null;
+            try {
+                cancelRef = cancelToken.addCancellationListener(() -> {
+                    cancelWatchService(watchService);
+                });
 
-                    while (!cancelToken.isCanceled() && hasCheckedPaths()) {
-                        WatchKey key = watchService.take();
-                        Path keyContext = keyContext(key);
+                while (!cancelToken.isCanceled() && hasCheckedPaths()) {
+                    WatchKey key = watchService.take();
+                    Path keyContext = keyContext(key);
 
-                        List<WatchEvent<?>> events = key.pollEvents();
-                        for (WatchEvent<?> event : events) {
-                            notifyPath(keyContext, event);
-                        }
-
-                        resetWatchKey(watchService, key, events);
+                    List<WatchEvent<?>> events = key.pollEvents();
+                    for (WatchEvent<?> event : events) {
+                        notifyPath(keyContext, event);
                     }
-                } catch (ClosedWatchServiceException ex) {
-                    // Canceled
-                } finally {
-                    if (cancelRef != null) {
-                        cancelRef.unregister();
-                    }
-                    stopPolling(watchService);
+
+                    resetWatchKey(watchService, key, events);
                 }
+            } catch (ClosedWatchServiceException ex) {
+                // Canceled
+            } finally {
+                if (cancelRef != null) {
+                    cancelRef.unregister();
+                }
+                stopPolling(watchService);
             }
-        }, new CleanupTask() {
-            @Override
-            public void cleanup(boolean canceled, Throwable error) throws Exception {
-                NbTaskExecutors.defaultCleanup(canceled, error);
-                watchService.close();
-            }
+        }, (boolean canceled, Throwable error) -> {
+            NbTaskExecutors.defaultCleanup(canceled, error);
+            watchService.close();
         });
     }
 
@@ -278,11 +267,8 @@ public final class FileSystemWatcher {
 
         startWatching(currentWatchService, path, listeners);
 
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                unregisterPath(path, listenerRemover);
-            }
+        return NbListenerRefs.fromRunnable(() -> {
+            unregisterPath(path, listenerRemover);
         });
     }
 
@@ -496,16 +482,13 @@ public final class FileSystemWatcher {
                 listenersLock.unlock();
             }
 
-            return new ElementRemover() {
-                @Override
-                public int removeAndGetRemainingCount() {
-                    listenersLock.lock();
-                    try {
-                        elementRef.remove();
-                        return listeners.size();
-                    } finally {
-                        listenersLock.unlock();
-                    }
+            return () -> {
+                listenersLock.lock();
+                try {
+                    elementRef.remove();
+                    return listeners.size();
+                } finally {
+                    listenersLock.unlock();
                 }
             };
         }
@@ -531,15 +514,12 @@ public final class FileSystemWatcher {
                 return;
             }
 
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (Runnable listener: getListenersSnapshot()) {
-                        try {
-                            listener.run();
-                        } catch (Throwable ex) {
-                            LOGGER.log(Level.WARNING, "Path change listener has thrown an unexpected exception.", ex);
-                        }
+            executor.execute(() -> {
+                for (Runnable listener: getListenersSnapshot()) {
+                    try {
+                        listener.run();
+                    } catch (Throwable ex) {
+                        LOGGER.log(Level.WARNING, "Path change listener has thrown an unexpected exception.", ex);
                     }
                 }
             });

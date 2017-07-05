@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
@@ -21,7 +20,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
 import org.netbeans.gradle.project.properties.NbProperties;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileStateInvalidException;
@@ -56,13 +54,7 @@ public final class BadgeAwareNode extends FilterNode {
         this.fileObjs = lazilySetProperty(memProperty(new FileObjects()));
         this.fileUpdater = NbTaskExecutors.newDefaultUpdateExecutor();
         this.iconChangeNotifier = new SwingUpdateTaskExecutor(true);
-
-        this.statusProperty = NbProperties.propertyOfProperty(fileObjs, new NbFunction<FileObjects, PropertySource<ImageDecorator>>() {
-            @Override
-            public PropertySource<ImageDecorator> apply(FileObjects arg) {
-                return new FileSystemStatusProperty(arg).toStandard();
-            }
-        });
+        this.statusProperty = NbProperties.propertyOfProperty(fileObjs, arg -> new FileSystemStatusProperty(arg).toStandard());
     }
 
     public static Node makeBadgeAware(Node original, PropertySource<? extends Collection<File>> files) {
@@ -91,22 +83,14 @@ public final class BadgeAwareNode extends FilterNode {
     }
 
     private void updateFiles() {
-        fileUpdater.execute(new Runnable() {
-            @Override
-            public void run() {
-                Collection<File> currentFiles = files.getValue();
-                updateFilesNow(currentFiles != null ? currentFiles : Collections.<File>emptySet());
-            }
+        fileUpdater.execute(() -> {
+            Collection<File> currentFiles = files.getValue();
+            updateFilesNow(currentFiles != null ? currentFiles : Collections.<File>emptySet());
         });
     }
 
     private void updateIcons() {
-        iconChangeNotifier.execute(new Runnable() {
-            @Override
-            public void run() {
-                updateIconsNow();
-            }
-        });
+        iconChangeNotifier.execute(this::updateIconsNow);
     }
 
     private void updateIconsNow() {
@@ -115,20 +99,9 @@ public final class BadgeAwareNode extends FilterNode {
     }
 
     public void init() {
-        listenerRegs.add(NbProperties.weakListenerProperty(files).addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                updateFiles();
-            }
-        }));
+        listenerRegs.add(NbProperties.weakListenerProperty(files).addChangeListener(this::updateFiles));
         updateFiles();
-
-        listenerRegs.add(NbProperties.weakListenerProperty(statusProperty).addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                updateIcons();
-            }
-        }));
+        listenerRegs.add(NbProperties.weakListenerProperty(statusProperty).addChangeListener(this::updateIcons));
     }
 
     private Image annotate(Image src) {
@@ -202,20 +175,14 @@ public final class BadgeAwareNode extends FilterNode {
         }
 
         public PropertySource<ImageDecorator> toStandard() {
-            return SwingProperties.fromSwingSource(this, new SwingForwarderFactory<FileStatusListener>() {
-                @Override
-                public FileStatusListener createForwarder(final Runnable listener) {
-                    ExceptionHelper.checkNotNullArgument(listener, "listener");
+            return SwingProperties.fromSwingSource(this, (Runnable listener) -> {
+                ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-                    return new FileStatusListener() {
-                        @Override
-                        public void annotationChanged(FileStatusEvent ev) {
-                            if (anythingChanged(ev)) {
-                                listener.run();
-                            }
-                        }
-                    };
-                }
+                return (FileStatusEvent ev) -> {
+                    if (anythingChanged(ev)) {
+                        listener.run();
+                    }
+                };
             });
         }
 

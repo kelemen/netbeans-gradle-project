@@ -2,13 +2,10 @@ package org.netbeans.gradle.project.tasks.vars;
 
 import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,9 +46,9 @@ public final class TaskVariableQueryDialog extends JDialog {
     private static Map<String, UserVariableFactory> variableFactoryMap() {
         Map<String, UserVariableFactory> result = new HashMap<>();
 
-        result.put(VariableTypeDescription.TYPE_NAME_BOOL, BoolVariable.FACTORY);
-        result.put(VariableTypeDescription.TYPE_NAME_ENUM, EnumVariable.FACTORY);
-        result.put(VariableTypeDescription.TYPE_NAME_STRING, StringVariable.FACTORY);
+        result.put(VariableTypeDescription.TYPE_NAME_BOOL, BoolVariable::new);
+        result.put(VariableTypeDescription.TYPE_NAME_ENUM, EnumVariable::new);
+        result.put(VariableTypeDescription.TYPE_NAME_STRING, StringVariable::new);
 
         return Collections.unmodifiableMap(result);
     }
@@ -78,26 +75,23 @@ public final class TaskVariableQueryDialog extends JDialog {
 
             UserVariableFactory variableFactory = FACTORY_MAP.get(tpyeName);
             if (variableFactory == null) {
-                variableFactory = StringVariable.FACTORY;
+                variableFactory = StringVariable::new;
             }
 
             result.add(variableFactory.createVariable(variable));
         }
 
-        Collections.sort(result, new Comparator<UserVariable>() {
-            @Override
-            public int compare(UserVariable o1, UserVariable o2) {
-                DisplayedTaskVariable var1 = o1.getDisplayedVariable();
-                DisplayedTaskVariable var2 = o2.getDisplayedVariable();
+        result.sort((UserVariable o1, UserVariable o2) -> {
+            DisplayedTaskVariable var1 = o1.getDisplayedVariable();
+            DisplayedTaskVariable var2 = o2.getDisplayedVariable();
 
-                int typeOrder1 = getTypeOrder(var1);
-                int typeOrder2 = getTypeOrder(var2);
-                if (typeOrder1 != typeOrder2) {
-                    return typeOrder1 < typeOrder2 ? -1 : 1;
-                }
-
-                return StringUtils.STR_CMP.compare(var1.getDisplayName(), var2.getDisplayName());
+            int typeOrder1 = getTypeOrder(var1);
+            int typeOrder2 = getTypeOrder(var2);
+            if (typeOrder1 != typeOrder2) {
+                return typeOrder1 < typeOrder2 ? -1 : 1;
             }
+
+            return StringUtils.STR_CMP.compare(var1.getDisplayName(), var2.getDisplayName());
         });
 
         return result;
@@ -171,19 +165,11 @@ public final class TaskVariableQueryDialog extends JDialog {
         getRootPane().setDefaultButton(okButton);
 
         final AtomicBoolean okPressed = new AtomicBoolean(false);
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                okPressed.set(true);
-                dispose();
-            }
+        okButton.addActionListener(e -> {
+            okPressed.set(true);
+            dispose();
         });
-        cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
+        cancelButton.addActionListener(e -> dispose());
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -217,13 +203,6 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static final class BoolVariable implements UserVariable {
-        public static final UserVariableFactory FACTORY = new UserVariableFactory() {
-            @Override
-            public UserVariable createVariable(DisplayedTaskVariable variable) {
-                return new BoolVariable(variable);
-            }
-        };
-
         private final DisplayedTaskVariable variable;
         private final JCheckBox checkBox;
         private final String[] possibleValues;
@@ -279,13 +258,6 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static final class EnumVariable implements UserVariable {
-        public static final UserVariableFactory FACTORY = new UserVariableFactory() {
-            @Override
-            public UserVariable createVariable(DisplayedTaskVariable variable) {
-                return new EnumVariable(variable);
-            }
-        };
-
         private final DisplayedTaskVariable variable;
         private final JLabel label;
         private final JComboBox<ComboValue> value;
@@ -316,11 +288,8 @@ public final class TaskVariableQueryDialog extends JDialog {
             }
 
             ComboValue selected = comboValues[selectedIndex];
-            Arrays.sort(comboValues, new Comparator<ComboValue>() {
-                @Override
-                public int compare(ComboValue o1, ComboValue o2) {
-                    return StringUtils.STR_CMP.compare(o1.displayValue, o2.displayValue);
-                }
+            Arrays.sort(comboValues, (o1, o2) -> {
+                return StringUtils.STR_CMP.compare(o1.displayValue, o2.displayValue);
             });
 
             combo.setModel(new DefaultComboBoxModel<>(comboValues));
@@ -366,13 +335,6 @@ public final class TaskVariableQueryDialog extends JDialog {
     }
 
     private static final class StringVariable implements UserVariable {
-        public static final UserVariableFactory FACTORY = new UserVariableFactory() {
-            @Override
-            public UserVariable createVariable(DisplayedTaskVariable variable) {
-                return new StringVariable(variable);
-            }
-        };
-
         private final DisplayedTaskVariable variable;
         private final JLabel label;
         private final JTextField value;

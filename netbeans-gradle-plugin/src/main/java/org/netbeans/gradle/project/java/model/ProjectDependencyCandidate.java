@@ -4,13 +4,11 @@ import java.io.File;
 import java.util.List;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.model.java.JavaSourceSet;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.util.NbFunction;
 
 public final class ProjectDependencyCandidate {
     private static final PropertySource<JavaProjectDependencyDef> NO_DEPENDENCY
@@ -34,13 +32,10 @@ public final class ProjectDependencyCandidate {
             final File dependency,
             PropertySource<JavaExtension> extRef) {
 
-        return NbProperties.propertyOfProperty(extRef, new NbFunction<JavaExtension, PropertySource<JavaProjectDependencyDef>>() {
-            @Override
-            public PropertySource<JavaProjectDependencyDef> apply(JavaExtension ext) {
-                return ext != null
-                        ? asProjectDepedencyDef(dependency, ext, ext.currentModel())
-                        : NO_DEPENDENCY;
-            }
+        return NbProperties.propertyOfProperty(extRef, (JavaExtension ext) -> {
+            return ext != null
+                    ? asProjectDepedencyDef(dependency, ext, ext.currentModel())
+                    : NO_DEPENDENCY;
         });
     }
 
@@ -48,21 +43,18 @@ public final class ProjectDependencyCandidate {
             final File dependency,
             final JavaExtension ext,
             final PropertySource<NbJavaModel> modelRef) {
-        return PropertyFactory.convert(modelRef, new ValueConverter<NbJavaModel, JavaProjectDependencyDef>() {
-            @Override
-            public JavaProjectDependencyDef convert(NbJavaModel input) {
-                if (input == null) {
-                    return null;
-                }
-
-                NbJavaModule module = input.getMainModule();
-                List<JavaSourceSet> sourceSets = module.getSourceSetsForOutput(dependency);
-                if (sourceSets.isEmpty()) {
-                    return null;
-                }
-
-                return new JavaProjectDependencyDef(ext, sourceSets);
+        return PropertyFactory.convert(modelRef, (NbJavaModel input) -> {
+            if (input == null) {
+                return null;
             }
+
+            NbJavaModule module = input.getMainModule();
+            List<JavaSourceSet> sourceSets = module.getSourceSetsForOutput(dependency);
+            if (sourceSets.isEmpty()) {
+                return null;
+            }
+
+            return new JavaProjectDependencyDef(ext, sourceSets);
         });
     }
 

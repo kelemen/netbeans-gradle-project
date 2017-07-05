@@ -154,11 +154,8 @@ public final class ModelLoadIssueReporter {
         ExceptionHelper.checkNotNullElements(issues, "issues");
 
         final List<ModelLoadIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                reportAllIssuesNow(message, issuesCopy);
-            }
+        SwingUtilities.invokeLater(() -> {
+            reportAllIssuesNow(message, issuesCopy);
         });
     }
 
@@ -203,11 +200,8 @@ public final class ModelLoadIssueReporter {
         String extensionName = setToString(getExtensionNames(issuesCopy));
 
         final String message = NbStrings.getInternalExtensionErrorInProject(extensionName, projectName);
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                reportAllIssuesNow(message, issuesCopy);
-            }
+        SwingUtilities.invokeLater(() -> {
+            reportAllIssuesNow(message, issuesCopy);
         });
     }
 
@@ -237,11 +231,8 @@ public final class ModelLoadIssueReporter {
         ExceptionHelper.checkNotNullArgument(project, "project");
         ExceptionHelper.checkNotNullArgument(error, "error");
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                reportBuildScriptErrorNow(project, error);
-            }
+        SwingUtilities.invokeLater(() -> {
+            reportBuildScriptErrorNow(project, error);
         });
     }
 
@@ -318,11 +309,8 @@ public final class ModelLoadIssueReporter {
 
     public static void reportDependencyResolutionFailures(Collection<? extends DependencyResolutionIssue> issues) {
         final List<DependencyResolutionIssue> issuesCopy = CollectionUtils.copyNullSafeList(issues);
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                reportDependencyResolutionFailures(issuesCopy);
-            }
+        SwingUtilities.invokeLater(() -> {
+            reportDependencyResolutionFailures(issuesCopy);
         });
     }
 

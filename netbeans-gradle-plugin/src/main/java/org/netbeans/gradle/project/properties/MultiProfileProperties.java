@@ -10,13 +10,11 @@ import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.PropertyDef;
 import org.netbeans.gradle.project.api.config.SingleProfileSettings;
 import org.netbeans.gradle.project.api.config.ValueMerger;
-import org.netbeans.gradle.project.api.config.ValueReference;
 import org.netbeans.gradle.project.event.ChangeListenerManager;
 import org.netbeans.gradle.project.event.GenericChangeListenerManager;
 import org.netbeans.gradle.project.util.NbFunction;
@@ -47,12 +45,7 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
         };
 
         // Just for type safety. An unsafe cast would do because of type erasure.
-        this.currentProfileSettings = PropertyFactory.convert(currentProfileSettingsEx, new ValueConverter<SingleProfileSettingsEx, SingleProfileSettings>() {
-            @Override
-            public SingleProfileSettings convert(SingleProfileSettingsEx input) {
-                return input;
-            }
-        });
+        this.currentProfileSettings = PropertyFactory.convert(currentProfileSettingsEx, input -> input);
     }
 
     @Override
@@ -120,11 +113,8 @@ public final class MultiProfileProperties implements ActiveSettingsQueryEx {
             return childValue;
         }
 
-        return valueMerger.mergeValues(childValue, new ValueReference<ValueType>() {
-            @Override
-            public ValueType getValue() {
-                return mergePropertyValues(settingsIndex + 1, valueMerger, properties);
-            }
+        return valueMerger.mergeValues(childValue, () -> {
+            return mergePropertyValues(settingsIndex + 1, valueMerger, properties);
         });
     }
 

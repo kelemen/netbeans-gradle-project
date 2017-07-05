@@ -152,12 +152,7 @@ public class CustomActionPanel extends javax.swing.JPanel {
     }
 
     public PredefinedTask tryGetPredefinedTask(String displayName) {
-        return tryGetPredefinedTask(displayName, new NbSupplier<List<PredefinedTask.Name>>() {
-            @Override
-            public List<PredefinedTask.Name> get() {
-                return Collections.emptyList();
-            }
-        });
+        return tryGetPredefinedTask(displayName, Collections::emptyList);
     }
 
     public PredefinedTask tryGetPredefinedTask(

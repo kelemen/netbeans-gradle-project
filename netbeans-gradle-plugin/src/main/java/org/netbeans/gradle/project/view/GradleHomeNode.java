@@ -14,12 +14,8 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.event.EventListeners;
-import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ProxyListenerRegistry;
-import org.jtrim.event.SimpleListenerRegistry;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
@@ -241,11 +237,8 @@ public final class GradleHomeNode extends AbstractNode {
                 userHomeChangeListeners.replaceRegistry(NbListenerManagers.neverNotifingRegistry());
             }
             else {
-                userHomeChangeListeners.replaceRegistry(new SimpleListenerRegistry<Runnable>() {
-                    @Override
-                    public ListenerRef registerListener(Runnable listener) {
-                        return NbFileUtils.addDirectoryContentListener(userHome, true, listener);
-                    }
+                userHomeChangeListeners.replaceRegistry((Runnable listener) -> {
+                    return NbFileUtils.addDirectoryContentListener(userHome, true, listener);
                 });
             }
             userHomeChangeListeners.onEvent(EventListeners.runnableDispatcher(), null);
@@ -253,19 +246,9 @@ public final class GradleHomeNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            listenerRefs.add(GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    updateUserHome();
-                }
-            }));
+            listenerRefs.add(GradleFileUtils.GRADLE_USER_HOME.addChangeListener(this::updateUserHome));
             updateUserHome();
-            listenerRefs.add(userHomeChangeListeners.registerListener(new Runnable() {
-                @Override
-                public void run() {
-                    refresh(false);
-                }
-            }));
+            listenerRefs.add(userHomeChangeListeners.registerListener(() -> refresh(false)));
         }
 
         @Override
@@ -347,12 +330,7 @@ public final class GradleHomeNode extends AbstractNode {
                 }
             }
 
-            Collections.sort(gradleFiles, new Comparator<FileObject>() {
-                @Override
-                public int compare(FileObject o1, FileObject o2) {
-                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
-                }
-            });
+            Collections.sort(gradleFiles, Comparator.comparing(FileObject::getNameExt, StringUtils.STR_CMP::compare));
 
             for (FileObject file: gradleFiles) {
                 SingleNodeFactory node = NodeUtils.tryGetFileNode(
@@ -415,14 +393,11 @@ public final class GradleHomeNode extends AbstractNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    Path userHome = getGradleUserHome();
-                    if (userHome != null) {
-                        Path initDPath = userHome.resolve(INIT_D_NAME);
-                        Files.createDirectories(initDPath);
-                    }
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
+                Path userHome = getGradleUserHome();
+                if (userHome != null) {
+                    Path initDPath = userHome.resolve(INIT_D_NAME);
+                    Files.createDirectories(initDPath);
                 }
             }, null);
         }

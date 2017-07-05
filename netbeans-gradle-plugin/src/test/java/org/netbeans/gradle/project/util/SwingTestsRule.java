@@ -32,14 +32,11 @@ public final class SwingTestsRule implements TestRule {
 
                 try {
                     Thread.interrupted();
-                    SwingUtilities.invokeAndWait(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                base.evaluate();
-                            } catch (Throwable ex) {
-                                throw new TestExceptionWrapper(ex);
-                            }
+                    SwingUtilities.invokeAndWait(() -> {
+                        try {
+                            base.evaluate();
+                        } catch (Throwable ex) {
+                            throw new TestExceptionWrapper(ex);
                         }
                     });
                 } catch (InvocationTargetException ex) {

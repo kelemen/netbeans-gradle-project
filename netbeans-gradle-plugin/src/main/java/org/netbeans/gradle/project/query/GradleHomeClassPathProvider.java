@@ -94,21 +94,15 @@ public final class GradleHomeClassPathProvider implements ClassPathProvider {
     }
 
     public static URL[] getAllGradleLibs(FileObject gradleHomeObj) {
-        return getGradleLibs(gradleHomeObj, new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase(Locale.US).endsWith(".jar");
-            }
+        return getGradleLibs(gradleHomeObj, (File dir, String name) -> {
+            return name.toLowerCase(Locale.US).endsWith(".jar");
         });
     }
 
     public static URL[] getGradleBinaries(FileObject gradleHomeObj) {
-        return getGradleLibs(gradleHomeObj, new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                String lowerCaseName = name.toLowerCase(Locale.US);
-                return lowerCaseName.startsWith("gradle-") && lowerCaseName.endsWith(".jar");
-            }
+        return getGradleLibs(gradleHomeObj, (File dir, String name) -> {
+            String lowerCaseName = name.toLowerCase(Locale.US);
+            return lowerCaseName.startsWith("gradle-") && lowerCaseName.endsWith(".jar");
         });
     }
 

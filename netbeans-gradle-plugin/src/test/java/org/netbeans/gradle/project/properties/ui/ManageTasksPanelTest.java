@@ -9,17 +9,11 @@ import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.PredefinedTask;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.properties.standard.PredefinedTasks;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 
 public class ManageTasksPanelTest {
     private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory() {
-        return new NbSupplier<ProfileBasedSettingsPage>() {
-            @Override
-            public ProfileBasedSettingsPage get() {
-                return ManageTasksPanel.createSettingsPage();
-            }
-        };
+        return ManageTasksPanel::createSettingsPage;
     }
 
     private static PropertyReference<PredefinedTasks> customTasks(CommonGlobalSettings input) {
@@ -27,11 +21,8 @@ public class ManageTasksPanelTest {
     }
 
     private void testInitAndReadBack(final PredefinedTasks tasks) throws Exception {
-        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings input) {
-                customTasks(input).setValue(tasks);
-            }
+        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), (input) -> {
+            customTasks(input).setValue(tasks);
         });
     }
 

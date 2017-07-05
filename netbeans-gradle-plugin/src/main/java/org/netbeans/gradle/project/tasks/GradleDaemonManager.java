@@ -11,13 +11,10 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.gradle.project.api.task.CommandCompleteListener;
-import org.openide.util.Cancellable;
 
 public final class GradleDaemonManager {
     private static final Logger LOGGER = Logger.getLogger(GradleDaemonManager.class.getName());
@@ -85,63 +82,54 @@ public final class GradleDaemonManager {
         final ReplaceableProgressHandle progress = new ReplaceableProgressHandle(cancel.getController());
         final AtomicBoolean inProgress = new AtomicBoolean(false);
 
-        cancel.getToken().addCancellationListener(new Runnable() {
-            @Override
-            public void run() {
-                if (!inProgress.get()) {
-                    progress.finish();
-                }
+        cancel.getToken().addCancellationListener(() -> {
+            if (!inProgress.get()) {
+                progress.finish();
             }
         });
 
         progress.start(origDisplayName);
-        executor.execute(cancel.getToken(), new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                inProgress.set(true);
-                cancelToken.checkCanceled();
+        executor.execute(cancel.getToken(), (CancellationToken cancelToken) -> {
+            inProgress.set(true);
+            cancelToken.checkCanceled();
 
-                DaemonTaskDef taskDef;
-                try {
-                    taskDef = taskDefFactory.tryCreateTaskDef(cancelToken);
-                } catch (Exception ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to create DaemonTaskDef.", ex);
-                    return;
-                }
-
-                if (taskDef == null) {
-                    return;
-                }
-
-                String displayName = taskDef.getCaption();
-                boolean nonBlocking = taskDef.isNonBlocking();
-                DaemonTask task = taskDef.getTask();
-
-                if (!Objects.equals(displayName, origDisplayName)) {
-                    progress.start(displayName);
-                }
-
-                if (nonBlocking) {
-                    runNonBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
-                }
-                else {
-                    runBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
-                }
+            DaemonTaskDef taskDef;
+            try {
+                taskDef = taskDefFactory.tryCreateTaskDef(cancelToken);
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Failed to create DaemonTaskDef.", ex);
+                return;
             }
-        }, new CleanupTask() {
-            @Override
-            public void cleanup(boolean canceled, Throwable error) throws Exception {
-                try {
-                    if (!canceled) {
-                        listener.onComplete(error);
-                    }
-                } finally {
-                    progress.finish();
-                }
 
-                if (canceled) {
-                    LOGGER.log(Level.INFO, "Canceled task: {0}", origDisplayName);
+            if (taskDef == null) {
+                return;
+            }
+
+            String displayName = taskDef.getCaption();
+            boolean nonBlocking = taskDef.isNonBlocking();
+            DaemonTask task = taskDef.getTask();
+
+            if (!Objects.equals(displayName, origDisplayName)) {
+                progress.start(displayName);
+            }
+
+            if (nonBlocking) {
+                runNonBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
+            }
+            else {
+                runBlockingGradleTask(cancelToken, task, progress.getCurrentHandle());
+            }
+        }, (boolean canceled, Throwable error) -> {
+            try {
+                if (!canceled) {
+                    listener.onComplete(error);
                 }
+            } finally {
+                progress.finish();
+            }
+
+            if (canceled) {
+                LOGGER.log(Level.INFO, "Canceled task: {0}", origDisplayName);
             }
         });
     }
@@ -158,12 +146,9 @@ public final class GradleDaemonManager {
         }
 
         public void start(String displayName) {
-            ProgressHandle newHandle = ProgressHandle.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    cancelController.cancel();
-                    return true;
-                }
+            ProgressHandle newHandle = ProgressHandle.createHandle(displayName, () -> {
+                cancelController.cancel();
+                return true;
             });
 
             newHandle.start();

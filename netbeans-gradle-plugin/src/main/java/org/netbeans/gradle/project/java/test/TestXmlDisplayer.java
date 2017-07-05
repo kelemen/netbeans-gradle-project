@@ -1,7 +1,6 @@
 package org.netbeans.gradle.project.java.test;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -82,12 +81,9 @@ public final class TestXmlDisplayer {
             return NO_FILES;
         }
 
-        File[] result = reportDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                String normName = name.toLowerCase(Locale.ROOT);
-                return normName.startsWith("test-") && normName.endsWith(".xml");
-            }
+        File[] result = reportDir.listFiles((File dir, String name) -> {
+            String normName = name.toLowerCase(Locale.ROOT);
+            return normName.startsWith("test-") && normName.endsWith(".xml");
         });
 
         return result != null ? result : NO_FILES;

@@ -5,7 +5,6 @@ import java.net.URL;
 import javax.swing.event.ChangeListener;
 import org.netbeans.api.java.queries.JavadocForBinaryQuery;
 import org.netbeans.gradle.project.util.GradleFileUtils;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.java.queries.JavadocForBinaryQueryImplementation;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
@@ -26,13 +25,11 @@ public final class GradleCacheJavadocForBinaryQuery extends AbstractJavadocForBi
         this.sourceForBinary = new GradleCacheByBinaryLookup(
                 GradleFileUtils.SOURCE_DIR_NAME,
                 gradleUserHomeProvider,
-                GradleCacheSourceForBinaryQuery.binaryToSourceName());
-        this.javadocForBinary = new GradleCacheByBinaryLookup(GradleFileUtils.JAVADOC_DIR_NAME, gradleUserHomeProvider, new NbFunction<FileObject, String>() {
-            @Override
-            public String apply(FileObject arg) {
-                return GradleFileUtils.binaryToJavadocName(arg);
-            }
-        });
+                GradleFileUtils::binaryToSourceName);
+        this.javadocForBinary = new GradleCacheByBinaryLookup(
+                GradleFileUtils.JAVADOC_DIR_NAME,
+                gradleUserHomeProvider,
+                GradleFileUtils::binaryToJavadocName);
     }
 
     private boolean hasSources(File binaryRootFile) {

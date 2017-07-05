@@ -7,7 +7,6 @@ import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.NbStrings;
@@ -66,22 +65,16 @@ public final class JavaCallstackFrameNode extends CallstackFrameNode {
 
             final ActionListener action = tryGetOpenLocationAction(javaExt.getProject(), frameInfo);
             if (action != null) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        action.actionPerformed(e);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    action.actionPerformed(e);
                 });
             }
         }
 
         @Override
         public void actionPerformed(final ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) {
-                    doActionNow(e);
-                }
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                doActionNow(e);
             }, null);
         }
     }

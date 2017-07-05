@@ -35,31 +35,17 @@ public final class GenericChangeListenerManager implements PausableChangeListene
         this(wrapped, new GenericUpdateTaskExecutor(eventExecutor));
     }
 
-    private GenericChangeListenerManager(ChangeListenerManager wrapped, final UpdateTaskExecutor executor) {
+    private GenericChangeListenerManager(ChangeListenerManager wrapped, UpdateTaskExecutor executor) {
         ExceptionHelper.checkNotNullArgument(wrapped, "wrapped");
 
         this.wrapped = wrapped;
         this.pauseCount = new AtomicInteger(0);
         this.hasUnfired = new AtomicBoolean(false);
 
-        final Runnable forwarder = new Runnable() {
-            @Override
-            public void run() {
-                fireEventNow();
-            }
-        };
-
-        if (executor != null) {
-            dispatcher = new Runnable() {
-                @Override
-                public void run() {
-                    executor.execute(forwarder);
-                }
-            };
-        }
-        else {
-            dispatcher = forwarder;
-        }
+        Runnable forwarder = this::fireEventNow;
+        this.dispatcher = executor != null
+                ? () -> executor.execute(forwarder)
+                : forwarder;
     }
 
     private static ChangeListenerManager newDefaultListenerManager() {
@@ -88,24 +74,16 @@ public final class GenericChangeListenerManager implements PausableChangeListene
 
     @Override
     public PauseRef pauseManager() {
-        final Runnable unpauseTask = Tasks.runOnceTask(new Runnable() {
-            @Override
-            public void run() {
-                if (pauseCount.decrementAndGet() == 0) {
-                    if (hasUnfired.getAndSet(false)) {
-                        fireEventually();
-                    }
+        final Runnable unpauseTask = Tasks.runOnceTask(() -> {
+            if (pauseCount.decrementAndGet() == 0) {
+                if (hasUnfired.getAndSet(false)) {
+                    fireEventually();
                 }
             }
         }, false);
 
         pauseCount.incrementAndGet();
-        return new PauseRef() {
-            @Override
-            public void unpause() {
-                unpauseTask.run();
-            }
-        };
+        return unpauseTask::run;
     }
 
     private void fireEventNow() {

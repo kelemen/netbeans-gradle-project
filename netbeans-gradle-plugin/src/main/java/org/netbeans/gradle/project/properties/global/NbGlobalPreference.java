@@ -30,15 +30,12 @@ public enum NbGlobalPreference implements BasicPreference {
     }
 
     @Override
-    public ListenerRef addPreferenceChangeListener(final PreferenceChangeListener pcl) {
+    public ListenerRef addPreferenceChangeListener(PreferenceChangeListener pcl) {
         final Preferences preferences = getPreferences();
         // To be super safe, we could wrap the listener
         preferences.addPreferenceChangeListener(pcl);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                preferences.removePreferenceChangeListener(pcl);
-            }
+        return NbListenerRefs.fromRunnable(() -> {
+            preferences.removePreferenceChangeListener(pcl);
         });
     }
 }

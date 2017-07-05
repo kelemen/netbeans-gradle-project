@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.properties.standard;
 import java.util.Arrays;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.java.platform.JavaPlatform;
 import org.netbeans.gradle.project.api.config.ConfigPath;
@@ -60,11 +59,8 @@ public final class ScriptPlatformProperty {
             return PropertyFactory.constSource(null);
         }
 
-        return PropertyFactory.convert(installedPlatforms(), new ValueConverter<JavaPlatform[], ScriptPlatform>() {
-            @Override
-            public ScriptPlatform convert(JavaPlatform[] input) {
-                return selector.selectPlatform(Arrays.asList(input), orderRef.getValue());
-            }
+        return PropertyFactory.convert(installedPlatforms(), (JavaPlatform[] input) -> {
+            return selector.selectPlatform(Arrays.asList(input), orderRef.getValue());
         });
     }
 

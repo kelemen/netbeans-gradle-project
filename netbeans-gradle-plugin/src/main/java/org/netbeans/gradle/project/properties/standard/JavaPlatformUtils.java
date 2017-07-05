@@ -175,21 +175,15 @@ public final class JavaPlatformUtils {
         public ListenerRef addChangeListener(final Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
-                        listener.run();
-                    }
+            final PropertyChangeListener propertyChangeListener = (PropertyChangeEvent evt) -> {
+                if (JavaPlatformManager.PROP_INSTALLED_PLATFORMS.equals(evt.getPropertyName())) {
+                    listener.run();
                 }
             };
 
             JavaPlatformManager.getDefault().addPropertyChangeListener(propertyChangeListener);
-            return NbListenerRefs.fromRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    JavaPlatformManager.getDefault().removePropertyChangeListener(propertyChangeListener);
-                }
+            return NbListenerRefs.fromRunnable(() -> {
+                JavaPlatformManager.getDefault().removePropertyChangeListener(propertyChangeListener);
             });
         }
     }

@@ -64,12 +64,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
         this.hasScanned = new AtomicBoolean(false);
         this.scanSourcesExecutor = NbTaskExecutors.newDefaultUpdateExecutor();
 
-        javaExt.getSourceDirsHandler().addDirsCreatedListener(new Runnable() {
-            @Override
-            public void run() {
-                scanForSources();
-            }
-        });
+        javaExt.getSourceDirsHandler().addDirsCreatedListener(this::scanForSources);
     }
 
     public static SingleNodeFactory tryCreateSourceGroupNodeFactory(NamedSourceRoot root) {
@@ -164,12 +159,7 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
 
     @Override
     public void onModelChange() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                scanForSources();
-            }
-        });
+        SwingUtilities.invokeLater(this::scanForSources);
     }
 
     public void scanForSources() {
@@ -187,21 +177,13 @@ public final class GradleProjectSources implements Sources, JavaModelChangeListe
             }
         }
 
-        scanSourcesExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                Map<String, SourceGroup[]> groups = findSourceGroups(javaExt);
+        scanSourcesExecutor.execute(() -> {
+            Map<String, SourceGroup[]> groups = findSourceGroups(javaExt);
 
-                currentGroups = groups;
-                LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", javaExt.getName());
+            currentGroups = groups;
+            LOGGER.log(Level.FINE, "Location of the sources of {0} has been updated.", javaExt.getName());
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        changeSupport.fireChange();
-                    }
-                });
-            }
+            SwingUtilities.invokeLater(changeSupport::fireChange);
         });
     }
 

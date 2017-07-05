@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.properties.ui;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -14,35 +13,19 @@ import org.netbeans.gradle.project.license.LicenseRef;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbSupplier;
 
 public class LicenseHeaderPanelTest {
-    private static final NbSupplier<Path> NULL_PATH = new NbSupplier<Path>() {
-        @Override
-        public Path get() {
-            return null;
-        }
-    };
+    private static final NbSupplier<Path> NULL_PATH = () -> null;
 
     private static final LicenseSource EMPTY_LICENSE_SOURCE = licenseSource(Collections.<LicenseRef>emptyList());
 
     private static LicenseSource licenseSource(final Collection<LicenseRef> licenses) {
-        return new LicenseSource() {
-            @Override
-            public Collection<LicenseRef> getAllLicense() throws IOException {
-                return licenses;
-            }
-        };
+        return () -> licenses;
     }
 
     private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory(final LicenseSource licenseSource) {
-        return new NbSupplier<ProfileBasedSettingsPage>() {
-            @Override
-            public ProfileBasedSettingsPage get() {
-                return LicenseHeaderPanel.createSettingsPage(NULL_PATH, licenseSource);
-            }
-        };
+        return () -> LicenseHeaderPanel.createSettingsPage(NULL_PATH, licenseSource);
     }
 
     private static NbSupplier<ProfileBasedSettingsPage> settingsPageFactory() {
@@ -54,11 +37,8 @@ public class LicenseHeaderPanelTest {
     }
 
     private void testInitAndReadBack(final LicenseHeaderInfo headerInfo) throws Exception {
-        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings input) {
-                licenseHeaderInfo(input).setValue(headerInfo);
-            }
+        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), (input) -> {
+            licenseHeaderInfo(input).setValue(headerInfo);
         });
     }
 
@@ -89,15 +69,12 @@ public class LicenseHeaderPanelTest {
                 new LicenseRef("MyBuiltInLicense", "DisplayNameOfLicense", dynamic),
                 new LicenseRef("ZZZZ", "DisplayNameOfZZZZ", false)
         ));
-        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings input) {
-                LicenseHeaderInfo headerInfo = new LicenseHeaderInfo(
-                        "MyBuiltInLicense",
-                        Collections.singletonMap("organization", "MyTestOrg"),
-                        null);
-                licenseHeaderInfo(input).setValue(headerInfo);
-            }
+        GlobalSettingsPanelTestUtils.testGenericInitAndReadBack(settingsPageFactory(), (input) -> {
+            LicenseHeaderInfo headerInfo = new LicenseHeaderInfo(
+                    "MyBuiltInLicense",
+                    Collections.singletonMap("organization", "MyTestOrg"),
+                    null);
+            licenseHeaderInfo(input).setValue(headerInfo);
         });
     }
 

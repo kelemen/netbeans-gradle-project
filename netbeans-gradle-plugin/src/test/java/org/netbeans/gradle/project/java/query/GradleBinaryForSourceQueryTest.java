@@ -29,13 +29,8 @@ public class GradleBinaryForSourceQueryTest {
     public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     private NbSupplier<NbJavaModule> testModule(File rootDir) throws IOException {
-        final NbJavaModule module = JavaModelTestUtils.createModule(rootDir);
-        return new NbSupplier<NbJavaModule>() {
-            @Override
-            public NbJavaModule get() {
-                return module;
-            }
-        };
+        NbJavaModule module = JavaModelTestUtils.createModule(rootDir);
+        return () -> module;
     }
 
     private void verifyAllSourceDirsHaveClassesDir(BinaryForSourceQueryImplementation query, NbJavaModule module) throws IOException {

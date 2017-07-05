@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -159,21 +158,18 @@ public final class NamedSourceRoot {
 
     private static List<NamedSourceRoot> sortNamedSourceRoots(Collection<NamedSourceRoot> namedRoots) {
         NamedSourceRoot[] orderedRoots = namedRoots.toArray(new NamedSourceRoot[namedRoots.size()]);
-        Arrays.sort(orderedRoots, new Comparator<NamedSourceRoot>() {
-            @Override
-            public int compare(NamedSourceRoot root1, NamedSourceRoot root2) {
-                JavaSourceGroupID groupID1 = root1.getGroupID();
-                JavaSourceGroupID groupID2 = root2.getGroupID();
+        Arrays.sort(orderedRoots, (NamedSourceRoot root1, NamedSourceRoot root2) -> {
+            JavaSourceGroupID groupID1 = root1.getGroupID();
+            JavaSourceGroupID groupID2 = root2.getGroupID();
 
-                String sourceSetName1 = groupID1.getSourceSetName();
-                String sourceSetName2 = groupID2.getSourceSetName();
+            String sourceSetName1 = groupID1.getSourceSetName();
+            String sourceSetName2 = groupID2.getSourceSetName();
 
-                if (sourceSetName1.equals(sourceSetName2)) {
-                    return compareGroups(groupID1.getGroupName(), groupID2.getGroupName());
-                }
-
-                return compareSourceSetNames(sourceSetName1, sourceSetName2);
+            if (sourceSetName1.equals(sourceSetName2)) {
+                return compareGroups(groupID1.getGroupName(), groupID2.getGroupName());
             }
+
+            return compareSourceSetNames(sourceSetName1, sourceSetName2);
         });
 
         return Arrays.asList(orderedRoots);

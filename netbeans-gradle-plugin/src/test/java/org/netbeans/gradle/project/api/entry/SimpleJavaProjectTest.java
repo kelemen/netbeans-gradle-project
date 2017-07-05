@@ -1,6 +1,5 @@
 package org.netbeans.gradle.project.api.entry;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -140,12 +139,7 @@ public class SimpleJavaProjectTest extends SwingTestAware {
         for (final String entry: entries) {
             assertTrue(
                     "classpath " + classpath + " contains entry " + entry,
-                    Iterables.any(cpRoots, new Predicate<String>() {
-                @Override
-                public boolean apply(String t) {
-                    return t.endsWith(entry);
-                }
-            }));
+                    Iterables.any(cpRoots, t -> t.endsWith(entry)));
         }
     }
 

@@ -148,20 +148,17 @@ public final class BuiltInTasksProperty {
     }
 
     private static ValueMerger<BuiltInTasks> getValueMerger() {
-        return new ValueMerger<BuiltInTasks>() {
-            @Override
-            public BuiltInTasks mergeValues(BuiltInTasks child, ValueReference<BuiltInTasks> parent) {
-                if (child == null) {
-                    return parent.getValue();
-                }
-
-                BuiltInTasks parentValue = parent.getValue();
-                if (parentValue == null) {
-                    return child;
-                }
-
-                return new InheritingBuiltInTask(child, parentValue);
+        return (BuiltInTasks child, ValueReference<BuiltInTasks> parent) -> {
+            if (child == null) {
+                return parent.getValue();
             }
+
+            BuiltInTasks parentValue = parent.getValue();
+            if (parentValue == null) {
+                return child;
+            }
+
+            return new InheritingBuiltInTask(child, parentValue);
         };
     }
 

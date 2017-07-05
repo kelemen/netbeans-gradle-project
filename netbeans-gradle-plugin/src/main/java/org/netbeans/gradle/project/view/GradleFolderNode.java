@@ -12,7 +12,6 @@ import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbIcons;
@@ -121,24 +120,18 @@ public final class GradleFolderNode extends AbstractNode {
             template.setTargetFolder(targetFolder);
             template.setTemplatesFolder(DataFolder.findFolder(GradleTemplateConsts.getTemplateFolder()));
 
-            GRADLE_FOLDER_CREATOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    Set<DataObject> dataObjs = template.instantiate(DataFolder.find(GradleTemplateRegistration.getTemplateFileObj()));
-                    if (dataObjs == null) {
-                        return;
-                    }
+            GRADLE_FOLDER_CREATOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                Set<DataObject> dataObjs = template.instantiate(DataFolder.find(GradleTemplateRegistration.getTemplateFileObj()));
+                if (dataObjs == null) {
+                    return;
+                }
 
-                    for (DataObject dataObj: dataObjs) {
-                        final FileObject fileObj = dataObj.getPrimaryFile();
-                        if (fileObj != null) {
-                            SwingUtilities.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    OpenEditorOutputListener.tryOpenFile(fileObj, -1);
-                                }
-                            });
-                        }
+                for (DataObject dataObj: dataObjs) {
+                    final FileObject fileObj = dataObj.getPrimaryFile();
+                    if (fileObj != null) {
+                        SwingUtilities.invokeLater(() -> {
+                            OpenEditorOutputListener.tryOpenFile(fileObj, -1);
+                        });
                     }
                 }
             }, null);
@@ -174,12 +167,7 @@ public final class GradleFolderNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            listenerRegistrations.add(NbFileUtils.addDirectoryContentListener(dir, new Runnable() {
-                @Override
-                public void run() {
-                    refreshChildren();
-                }
-            }));
+            listenerRegistrations.add(NbFileUtils.addDirectoryContentListener(dir, this::refreshChildren));
         }
 
         @Override
@@ -193,12 +181,7 @@ public final class GradleFolderNode extends AbstractNode {
 
         private void readKeys(List<SingleNodeFactory> toPopulate) {
             FileObject[] children = dir.getChildren();
-            Arrays.sort(children, new Comparator<FileObject>() {
-                @Override
-                public int compare(FileObject o1, FileObject o2) {
-                    return StringUtils.STR_CMP.compare(o1.getNameExt(), o2.getNameExt());
-                }
-            });
+            Arrays.sort(children, Comparator.comparing(FileObject::getNameExt, StringUtils.STR_CMP::compare));
 
             for (FileObject child: children) {
                 if (scriptProvider.isScriptFileName(child.getNameExt())) {

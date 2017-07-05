@@ -3,12 +3,12 @@ package org.netbeans.gradle.project.license;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.TaskExecutors;
@@ -41,25 +41,16 @@ public final class LicenseManager<T> {
         ExceptionHelper.checkNotNullArgument(modelProperty, "modelProperty");
         ExceptionHelper.checkNotNullArgument(headerProperty, "headerProperty");
 
-        return NbProperties.combine(headerProperty, modelProperty, new NbBiFunction<LicenseHeaderInfo, T, CloseableAction>() {
-            @Override
-            public CloseableAction apply(LicenseHeaderInfo headerInfo, T model) {
-                return getRegisterListenerAction(model, headerInfo);
-            }
+        return NbProperties.combine(headerProperty, modelProperty, (LicenseHeaderInfo headerInfo, T model) -> {
+            return getRegisterListenerAction(model, headerInfo);
         });
     }
 
     private CloseableAction getRegisterListenerAction(
-            final T ownerModel,
-            final LicenseHeaderInfo header) {
-        ExceptionHelper.checkNotNullArgument(ownerModel, "ownerModel");
-
-        return new CloseableAction() {
-            @Override
-            public CloseableAction.Ref open() {
-                return impl.registerLicense(ownerModel, header);
-            }
-        };
+            T ownerModel,
+            LicenseHeaderInfo header) {
+        Objects.requireNonNull(ownerModel, "ownerModel");
+        return () -> impl.registerLicense(ownerModel, header);
     }
 
     private static final class Impl<T, LK, LD extends LicenseDef> {
@@ -116,36 +107,30 @@ public final class LicenseManager<T> {
         }
 
         private void doUnregister(final LK key) {
-            syncExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws IOException {
-                    RegisteredLicense<LD> registration = licenseRegistartions.get(key);
-                    if (registration == null) {
-                        LOGGER.log(Level.WARNING, "Too many unregister call to LicenseManager.", new Exception());
-                        return;
-                    }
+            syncExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                RegisteredLicense<LD> registration = licenseRegistartions.get(key);
+                if (registration == null) {
+                    LOGGER.log(Level.WARNING, "Too many unregister call to LicenseManager.", new Exception());
+                    return;
+                }
 
-                    if (registration.release()) {
-                        licenseRegistartions.remove(key);
-                        removeLicense(registration);
-                    }
+                if (registration.release()) {
+                    licenseRegistartions.remove(key);
+                    removeLicense(registration);
                 }
             }, null);
         }
 
         private void doRegister(final T ownerModel, final LK key) {
-            syncExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws IOException {
-                    RegisteredLicense<LD> registration = licenseRegistartions.get(key);
-                    if (registration == null) {
-                        registration = new RegisteredLicense<>(getLicenseDef(ownerModel, key));
-                        licenseRegistartions.put(key, registration);
-                        addLicense(registration);
-                    }
-                    else {
-                        registration.use();
-                    }
+            syncExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                RegisteredLicense<LD> registration = licenseRegistartions.get(key);
+                if (registration == null) {
+                    registration = new RegisteredLicense<>(getLicenseDef(ownerModel, key));
+                    licenseRegistartions.put(key, registration);
+                    addLicense(registration);
+                }
+                else {
+                    registration.use();
                 }
             }, null);
         }

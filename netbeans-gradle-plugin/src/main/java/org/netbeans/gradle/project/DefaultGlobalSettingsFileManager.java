@@ -117,12 +117,7 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
         ExceptionHelper.checkNotNullArgument(model, "model");
         setAllSettingsDef(model, getStamp());
 
-        settingsDefPersistor.execute(new Runnable() {
-            @Override
-            public void run() {
-                persistSettingsDefsNow();
-            }
-        });
+        settingsDefPersistor.execute(this::persistSettingsDefsNow);
     }
 
     private void persistSettingsDefsNow() {
@@ -146,33 +141,30 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
             outstandingDefsLock.unlock();
         }
 
-        getLocker().doWrite(new IoTask<Void>() {
-            @Override
-            public Void run() throws IOException {
-                MessageDigest hashCalculator = getNameHasher();
-                for (SettingsDef def: toSave) {
-                    Path savePath = tryGetProjectSaveFile(def.projectDir, hashCalculator);
-                    if (savePath == null) {
-                        LOGGER.log(Level.WARNING, "Cannot save settings.gradle location for projects.");
-                        break;
-                    }
-
-                    Path settingsGradle = def.settingsGradleDef.getSettingsGradle();
-
-                    Properties output = new Properties();
-                    output.put("projectDir", def.projectDir.toString());
-                    output.put("rootProjectDir", def.rootProjectDir.toString());
-                    output.put("maySearchUpwards", Boolean.toString(def.settingsGradleDef.isMaySearchUpwards()));
-                    output.put("settingsGradle", settingsGradle != null ? settingsGradle.toString() : "");
-                    output.put("stamp", def.stamp);
-
-                    Files.createDirectories(savePath.getParent());
-                    try (OutputStream outputStream = Files.newOutputStream(savePath)) {
-                        output.store(outputStream, null);
-                    }
+        getLocker().doWrite(() -> {
+            MessageDigest hashCalculator = getNameHasher();
+            for (SettingsDef def: toSave) {
+                Path savePath = tryGetProjectSaveFile(def.projectDir, hashCalculator);
+                if (savePath == null) {
+                    LOGGER.log(Level.WARNING, "Cannot save settings.gradle location for projects.");
+                    break;
                 }
-                return null;
+
+                Path settingsGradle = def.settingsGradleDef.getSettingsGradle();
+
+                Properties output = new Properties();
+                output.put("projectDir", def.projectDir.toString());
+                output.put("rootProjectDir", def.rootProjectDir.toString());
+                output.put("maySearchUpwards", Boolean.toString(def.settingsGradleDef.isMaySearchUpwards()));
+                output.put("settingsGradle", settingsGradle != null ? settingsGradle.toString() : "");
+                output.put("stamp", def.stamp);
+
+                Files.createDirectories(savePath.getParent());
+                try (OutputStream outputStream = Files.newOutputStream(savePath)) {
+                    output.store(outputStream, null);
+                }
             }
+            return null;
         });
 
         outstandingDefsLock.lock();
@@ -222,25 +214,22 @@ public final class DefaultGlobalSettingsFileManager implements GlobalSettingsFil
     }
 
     private SettingsDef tryGetStoredSettingsDef0(final File projectDir) throws IOException {
-        return getLocker().doRead(new IoTask<SettingsDef>() {
-            @Override
-            public SettingsDef run() throws IOException {
-                SettingsDef result = tryGetStoredSettingsDefUnsafe(projectDir);
-                if (result == null) {
-                    return null;
-                }
-
-                if (Objects.equals(projectDir, result.projectDir)) {
-                    return result;
-                }
-
-                SettingsDef rootDef = tryGetStoredSettingsDefUnsafe(projectDir);
-                if (rootDef == null) {
-                    return null;
-                }
-
-                return Objects.equals(result.stamp, rootDef.stamp) ? result : null;
+        return getLocker().doRead(() -> {
+            SettingsDef result = tryGetStoredSettingsDefUnsafe(projectDir);
+            if (result == null) {
+                return null;
             }
+
+            if (Objects.equals(projectDir, result.projectDir)) {
+                return result;
+            }
+
+            SettingsDef rootDef = tryGetStoredSettingsDefUnsafe(projectDir);
+            if (rootDef == null) {
+                return null;
+            }
+
+            return Objects.equals(result.stamp, rootDef.stamp) ? result : null;
         });
     }
 

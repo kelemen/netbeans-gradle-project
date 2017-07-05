@@ -48,85 +48,45 @@ public class FileSystemWatcherTest {
         watcher.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS);
     }
 
-    private static Modification createDirAction() {
-        return new Modification() {
-            @Override
-            public void doModification(Path watchedDir) throws IOException {
-                Files.createDirectory(watchedDir);
-            }
-        };
-    }
-
-    private static Modification createMultipleDirsAction() {
-        return new Modification() {
-            @Override
-            public void doModification(Path watchedDir) throws IOException {
-                Files.createDirectories(watchedDir);
-            }
-        };
-    }
-
-    private static Modification deleteDirAction() {
-        return new Modification() {
-            @Override
-            public void doModification(Path watchedDir) throws IOException {
-                Files.delete(watchedDir);
-            }
-        };
-    }
-
     @Test
     public void testMultiActionLevel1() throws IOException {
-        testModifications(new WatchSetup() {
-            @Override
-            public Path setupWatch(Path root) throws IOException {
-                return root.resolve("subdir");
-            }
-        }, createDirAction(), deleteDirAction(), createDirAction());
+        testModifications(
+                root -> root.resolve("subdir"),
+                Files::createDirectory,
+                Files::delete,
+                Files::createDirectory);
     }
 
     @Test
     public void testCreateLevel1() throws IOException {
-        testModifications(new WatchSetup() {
-            @Override
-            public Path setupWatch(Path root) throws IOException {
-                return root.resolve("subdir");
-            }
-        }, createDirAction());
+        testModifications(
+                root -> root.resolve("subdir"),
+                Files::createDirectory);
     }
 
     @Test
     public void testDeleteLevel1() throws IOException {
-        testModifications(new WatchSetup() {
-            @Override
-            public Path setupWatch(Path root) throws IOException {
-                Path watchedDir = root.resolve("subdir");
-                Files.createDirectory(watchedDir);
-                return watchedDir;
-            }
-        }, deleteDirAction());
+        testModifications((Path root) -> {
+            Path watchedDir = root.resolve("subdir");
+            Files.createDirectory(watchedDir);
+            return watchedDir;
+        }, Files::delete);
     }
 
     @Test
     public void testCreateLevel2() throws IOException {
-        testModifications(new WatchSetup() {
-            @Override
-            public Path setupWatch(Path root) throws IOException {
-                return root.resolve("subdir").resolve("subdir2");
-            }
-        }, createMultipleDirsAction());
+        testModifications(
+                root -> root.resolve("subdir").resolve("subdir2"),
+                Files::createDirectories);
     }
 
     @Test
     public void testDeleteLevel2() throws IOException {
-        testModifications(new WatchSetup() {
-            @Override
-            public Path setupWatch(Path root) throws IOException {
-                Path watchedDir = root.resolve("subdir").resolve("subdir2");
-                Files.createDirectories(watchedDir);
-                return watchedDir;
-            }
-        }, deleteDirAction());
+        testModifications((Path root) -> {
+            Path watchedDir = root.resolve("subdir").resolve("subdir2");
+            Files.createDirectories(watchedDir);
+            return watchedDir;
+        }, Files::delete);
     }
 
     private static final class TestListener implements Runnable {

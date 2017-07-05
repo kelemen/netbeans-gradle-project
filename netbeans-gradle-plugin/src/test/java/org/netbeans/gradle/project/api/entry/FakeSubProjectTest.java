@@ -11,11 +11,8 @@ import org.netbeans.gradle.project.util.NbConsumer;
 import static org.junit.Assert.*;
 
 public final class FakeSubProjectTest {
-    private static final NbConsumer<CommonGlobalSettings> EXTRA_SETTINGS = new NbConsumer<CommonGlobalSettings>() {
-        @Override
-        public void accept(CommonGlobalSettings settings) {
-            settings.loadRootProjectFirst().setValue(true);
-        }
+    private static final NbConsumer<CommonGlobalSettings> EXTRA_SETTINGS = (CommonGlobalSettings settings) -> {
+        settings.loadRootProjectFirst().setValue(true);
     };
 
     @ClassRule

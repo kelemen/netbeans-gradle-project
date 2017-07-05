@@ -19,12 +19,9 @@ import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class ModelCacheSizeAutoUpdater implements ProjectModelChangeListener {
-    private static final ModelCacheSizeAutoUpdater DEFAULT = new ModelCacheSizeAutoUpdater(NbTaskExecutors.newDefaultUpdateExecutor(), new NbConsumer<Integer>() {
-        @Override
-        public void accept(Integer requiredCacheSize) {
-            DefaultGradleModelLoader.ensureCacheSize(requiredCacheSize);
-        }
-    });
+    private static final ModelCacheSizeAutoUpdater DEFAULT = new ModelCacheSizeAutoUpdater(
+            NbTaskExecutors.newDefaultUpdateExecutor(),
+            DefaultGradleModelLoader::ensureCacheSize);
 
     private final UpdateTaskExecutor cacheSizeCheckExecutor;
     private final NbConsumer<? super Integer> cacheSizeUpdater;
@@ -47,12 +44,7 @@ public final class ModelCacheSizeAutoUpdater implements ProjectModelChangeListen
 
     @Override
     public void onModelChanged() {
-        cacheSizeCheckExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                checkCacheSize();
-            }
-        });
+        cacheSizeCheckExecutor.execute(this::checkCacheSize);
     }
 
     private void checkCacheSize() {

@@ -28,115 +28,76 @@ import org.openide.loaders.DataObject;
 import org.openide.util.Lookup;
 
 public enum StandardTaskVariable {
-    PROJECT_PATH_NOT_NORMALIZED("project-path", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
-            return new VariableValue(uniqueName);
-        }
+    PROJECT_PATH_NOT_NORMALIZED("project-path", (variables, project, actionContext) -> {
+        String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
+        return new VariableValue(uniqueName);
     }),
-    PROJECT_PATH_NORMALIZED("project", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
-            if (":".equals(uniqueName)) { // This is the root project.
-                uniqueName = "";
-            }
-            return new VariableValue(uniqueName);
+    PROJECT_PATH_NORMALIZED("project", (variables, project, actionContext) -> {
+        String uniqueName = project.currentModel().getValue().getMainProject().getProjectFullName();
+        if (":".equals(uniqueName)) { // This is the root project.
+            uniqueName = "";
         }
+        return new VariableValue(uniqueName);
     }),
-    SELECTED_CLASS("selected-class", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            SpecificTestClass testClass = actionContext.lookup(SpecificTestClass.class);
-            if (testClass != null) {
-                return new VariableValue(testClass.getTestClassName());
-            }
-
-            FileObject file = getFileOfContext(actionContext);
-            if (file == null) {
-                return VariableValue.NULL_VALUE;
-            }
-
-            return getClassNameForFile(project, file);
-        }
-    }),
-    SELECTED_FILE("selected-file", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            FileObject fileObject = getFileOfContext(actionContext);
-            if (fileObject == null) {
-                return VariableValue.NULL_VALUE;
-            }
-
-            File file = FileUtil.toFile(fileObject);
-            if (file == null) {
-                return VariableValue.NULL_VALUE;
-            }
-
-            return new VariableValue(file.getPath());
-        }
-    }),
-    TEST_FILE_PATH("test-file-path", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
-            return new VariableValue(deduceFromClass(selectedClass));
+    SELECTED_CLASS("selected-class", (variables, project, actionContext) -> {
+        SpecificTestClass testClass = actionContext.lookup(SpecificTestClass.class);
+        if (testClass != null) {
+            return new VariableValue(testClass.getTestClassName());
         }
 
-        private String deduceFromClass(String selectedClass) {
-            return selectedClass != null
-                    ? selectedClass.replace('.', '/')
-                    : null;
+        FileObject file = getFileOfContext(actionContext);
+        if (file == null) {
+            return VariableValue.NULL_VALUE;
         }
+
+        return getClassNameForFile(project, file);
     }),
-    TEST_METHOD("test-method", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            return getMethodReplaceVariable(variables, project, actionContext);
+    SELECTED_FILE("selected-file", (variables, project, actionContext) -> {
+        FileObject fileObject = getFileOfContext(actionContext);
+        if (fileObject == null) {
+            return VariableValue.NULL_VALUE;
         }
+
+        File file = FileUtil.toFile(fileObject);
+        if (file == null) {
+            return VariableValue.NULL_VALUE;
+        }
+
+        return new VariableValue(file.getPath());
     }),
-    PLATFORM_DIR("platform-dir", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            ProjectPlatform targetPlatform = project.getCommonProperties().targetPlatform().getActiveValue();
-            FileObject rootFolder = targetPlatform != null ? targetPlatform.getRootFolder() : null;
-            return new VariableValue(rootFolder != null
-                    ? FileUtil.getFileDisplayName(rootFolder)
-                    : null);
-        }
+    TEST_FILE_PATH("test-file-path", (variables, project, actionContext) -> {
+        String selectedClass = variables.tryGetValueForVariable(SELECTED_CLASS.getVariable());
+        return new VariableValue(deducePathFromClass(selectedClass));
     }),
-    TEST_TASK_NAME("test-task-name", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            return new VariableValue(TestTaskName.getTaskName(actionContext));
-        }
+    TEST_METHOD("test-method", StandardTaskVariable::getMethodReplaceVariable),
+    PLATFORM_DIR("platform-dir", (variables, project, actionContext) -> {
+        ProjectPlatform targetPlatform = project.getCommonProperties().targetPlatform().getActiveValue();
+        FileObject rootFolder = targetPlatform != null ? targetPlatform.getRootFolder() : null;
+        return new VariableValue(rootFolder != null
+                ? FileUtil.getFileDisplayName(rootFolder)
+                : null);
     }),
-    TEST_TASK_NAME_CAPITAL("test-task-name-capital", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            String value = variables.tryGetValueForVariable(TEST_TASK_NAME.getVariable());
-            return new VariableValue(value != null
-                    ? StringUtils.capitalizeFirstCharacter(value)
-                    : null);
-        }
+    TEST_TASK_NAME("test-task-name", (variables, project, actionContext) -> {
+        return new VariableValue(TestTaskName.getTaskName(actionContext));
     }),
-    CMD_LINE_ARGS("cmd-line-args", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            return VariableValue.EMPTY_VALUE;
-        }
+    TEST_TASK_NAME_CAPITAL("test-task-name-capital", (variables, project, actionContext) -> {
+        String value = variables.tryGetValueForVariable(TEST_TASK_NAME.getVariable());
+        return new VariableValue(value != null
+                ? StringUtils.capitalizeFirstCharacter(value)
+                : null);
     }),
-    JVM_LINE_ARGS("jvm-line-args", new ValueGetter<NbGradleProject>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleProject project, Lookup actionContext) {
-            return VariableValue.EMPTY_VALUE;
-        }
-    });
+    CMD_LINE_ARGS("cmd-line-args", (variables, project, actionContext) -> VariableValue.EMPTY_VALUE),
+    JVM_LINE_ARGS("jvm-line-args", (variables, project, actionContext) -> VariableValue.EMPTY_VALUE);
 
     private static final Logger LOGGER = Logger.getLogger(StandardTaskVariable.class.getName());
     private static final CachingVariableMap.VariableDefMap<NbGradleProject> TASK_VARIABLE_MAP
             = createStandardMap();
+
+    private static String deducePathFromClass(String selectedClass) {
+        return selectedClass != null
+                ? selectedClass.replace('.', '/')
+                : null;
+    }
 
     private static VariableValue getClassNameForFile(NbGradleProject project, FileObject file) {
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project)
@@ -252,19 +213,14 @@ public enum StandardTaskVariable {
     private static CachingVariableMap.VariableDefMap<NbGradleProject> createStandardMap() {
         StandardTaskVariable[] variables = StandardTaskVariable.values();
 
-        final Map<TaskVariable, CachingVariableMap.VariableDef<NbGradleProject>> result
+        Map<TaskVariable, CachingVariableMap.VariableDef<NbGradleProject>> result
                 = CollectionUtils.newHashMap(variables.length);
 
         for (StandardTaskVariable variable: variables) {
             result.put(variable.getVariable(), variable.asVariableDef());
         }
 
-        return new CachingVariableMap.VariableDefMap<NbGradleProject>() {
-            @Override
-            public CachingVariableMap.VariableDef<NbGradleProject> tryGetDef(TaskVariable variable) {
-                return result.get(variable);
-            }
-        };
+        return result::get;
     }
 
     private VariableDef<NbGradleProject> asVariableDef() {

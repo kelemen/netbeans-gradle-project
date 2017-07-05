@@ -33,15 +33,10 @@ implements
     private final NbSupplier<? extends NbJavaModule> moduleProvider;
     private final LazyChangeSupport changes;
 
-    public GradleBinaryForSourceQuery(final JavaExtension javaExt) {
-        this(new NbSupplier<NbJavaModule>() {
-            @Override
-            public NbJavaModule get() {
-                return javaExt.getCurrentModel().getMainModule();
-            }
-        });
+    public GradleBinaryForSourceQuery(JavaExtension javaExt) {
+        this(() -> javaExt.getCurrentModel().getMainModule());
 
-        ExceptionHelper.checkNotNullArgument(javaExt, "javaExt");
+        Objects.requireNonNull(javaExt, "javaExt");
     }
 
     public GradleBinaryForSourceQuery(NbSupplier<? extends NbJavaModule> moduleProvider) {

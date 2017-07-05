@@ -175,19 +175,9 @@ public final class GradleActionProvider implements ActionProvider {
 
         switch (command) {
             case COMMAND_RELOAD:
-                return new Runnable() {
-                    @Override
-                    public void run() {
-                        project.reloadProject();
-                    }
-                };
+                return project::reloadProject;
             case COMMAND_SET_AS_MAIN_PROJECT:
-                return new Runnable() {
-                    @Override
-                    public void run() {
-                        OpenProjects.getDefault().setMainProject(project);
-                    }
-                };
+                return () -> OpenProjects.getDefault().setMainProject(project);
         }
 
         final Lookup appliedContext = getAppliedContext(command, context);
@@ -251,21 +241,18 @@ public final class GradleActionProvider implements ActionProvider {
         Set<GradleActionProviderContext> actionContexts = EnumSet.noneOf(GradleActionProviderContext.class);
         actionContexts.addAll(appliedContext.lookupAll(GradleActionProviderContext.class));
 
-        return GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, new CommandCompleteListener() {
-            @Override
-            public void onComplete(Throwable error) {
-                try {
-                    CustomCommandActions customActions = customActionsRef.get();
-                    if (customActions != null) {
-                        CommandCompleteListener completeListener
-                                = customActions.getCommandCompleteListener();
-                        if (completeListener != null) {
-                            completeListener.onComplete(error);
-                        }
+        return GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, (Throwable error) -> {
+            try {
+                CustomCommandActions customActions = customActionsRef.get();
+                if (customActions != null) {
+                    CommandCompleteListener completeListener
+                            = customActions.getCommandCompleteListener();
+                    if (completeListener != null) {
+                        completeListener.onComplete(error);
                     }
-                } finally {
-                    GradleTasks.projectTaskCompleteListener(project).onComplete(error);
                 }
+            } finally {
+                GradleTasks.projectTaskCompleteListener(project).onComplete(error);
             }
         });
     }

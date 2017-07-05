@@ -69,12 +69,7 @@ public final class StackTraceConsumer implements OutputLinkFinder {
     public ActionListener tryGetOpenEditorAction(String line) {
         final OutputLinkDef linkDef = tryFindLink(line);
         if (linkDef != null) {
-            return new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    linkDef.getAction().run();
-                }
-            };
+            return (ActionEvent e) -> linkDef.getAction().run();
         }
         else {
             return null;

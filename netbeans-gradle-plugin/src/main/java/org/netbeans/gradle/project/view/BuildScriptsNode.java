@@ -16,8 +16,6 @@ import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbGradleProjectFactory;
@@ -154,12 +152,7 @@ public final class BuildScriptsNode extends AbstractNode {
 
         @Override
         protected void addNotify() {
-            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    refreshChildren();
-                }
-            }));
+            listenerRefs.add(project.currentModel().addChangeListener(this::refreshChildren));
         }
 
         @Override
@@ -275,12 +268,9 @@ public final class BuildScriptsNode extends AbstractNode {
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
             if (confirmed) {
-                NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                    @Override
-                    public void execute(CancellationToken cancelToken) throws Exception {
-                        createBuildSrc(buildSrcDir);
-                        openProjectNow(buildSrcDir);
-                    }
+                NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
+                    createBuildSrc(buildSrcDir);
+                    openProjectNow(buildSrcDir);
                 }, null);
             }
         }
@@ -290,22 +280,16 @@ public final class BuildScriptsNode extends AbstractNode {
                 openProjectNow(buildSrcDir);
             }
             else {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        confirmAndCreateProject(buildSrcDir);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    confirmAndCreateProject(buildSrcDir);
                 });
             }
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    doActionNow(getBuildSrcDir(project));
-                }
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
+                doActionNow(getBuildSrcDir(project));
             }, null);
         }
     }

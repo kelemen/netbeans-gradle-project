@@ -15,7 +15,6 @@ import org.jtrim.event.ListenerRef;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -26,7 +25,6 @@ import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.ProjectModelChangeListener;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.ui.CustomizerProvider;
 
@@ -57,27 +55,11 @@ implements
         this.commonConfigRef = PropertyFactory.memPropertyConcurrent(multiProjectProvider, SwingTaskExecutor.getStrictExecutor(false));
         this.extensionProfiles = Collections.emptySet();
 
-        this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, new NbFunction<NbGradleConfigProvider, PropertySource<NbGradleConfiguration>>() {
-            @Override
-            public PropertySource<NbGradleConfiguration> apply(NbGradleConfigProvider arg) {
-                return arg.activeConfiguration();
-            }
-        });
-
-        this.configs = NbProperties.propertyOfProperty(commonConfigRef, new NbFunction<NbGradleConfigProvider, PropertySource<Collection<NbGradleConfiguration>>>() {
-            @Override
-            public PropertySource<Collection<NbGradleConfiguration>> apply(NbGradleConfigProvider arg) {
-                return arg.configurations();
-            }
-        });
+        this.activeConfig = NbProperties.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::activeConfiguration);
+        this.configs = NbProperties.propertyOfProperty(commonConfigRef, NbGradleConfigProvider::configurations);
 
         PropertySource<ActiveSettingsQueryEx> activeSettingsQueryRef;
-        activeSettingsQueryRef = PropertyFactory.convert(commonConfigRef, new ValueConverter<NbGradleConfigProvider, ActiveSettingsQueryEx>() {
-            @Override
-            public ActiveSettingsQueryEx convert(NbGradleConfigProvider arg) {
-                return arg.getActiveSettingsQuery();
-            }
-        });
+        activeSettingsQueryRef = PropertyFactory.convert(commonConfigRef, NbGradleConfigProvider::getActiveSettingsQuery);
         this.activeSettingsQuery = new ActiveSettingsQueryExProxy(activeSettingsQueryRef);
 
         this.propertyChangeForwarder = createPropertyChanges();

@@ -33,13 +33,7 @@ public final class ProfileSettingsContainer {
                 if (!TestDetectUtils.isRunningTests()) {
                     // We must not add this shutdown hook when running tests because
                     // it would cause a dead-lock in NetBeans.
-                    final ProfileSettingsContainer toPersistBeforeTerminate = result;
-                    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            toPersistBeforeTerminate.saveAllProfilesNow();
-                        }
-                    }));
+                    Runtime.getRuntime().addShutdownHook(new Thread(result::saveAllProfilesNow));
                 }
             }
             else {
@@ -93,13 +87,10 @@ public final class ProfileSettingsContainer {
             final NbConsumer<? super SingleProfileSettingsEx> listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        final LoadableSingleProfileSettingsEx result = getUnloadedProfileSettings(key);
+        LoadableSingleProfileSettingsEx result = getUnloadedProfileSettings(key);
         result.ensureLoaded();
-        return result.notifyWhenLoaded(new Runnable() {
-            @Override
-            public void run() {
-                listener.accept(result);
-            }
+        return result.notifyWhenLoaded(() -> {
+            listener.accept(result);
         });
     }
 
@@ -119,12 +110,9 @@ public final class ProfileSettingsContainer {
         final AtomicInteger loadCount = new AtomicInteger(result.size());
         for (LoadableSingleProfileSettingsEx settings: result) {
             settings.ensureLoaded();
-            ListenerRef notifyRef = settings.notifyWhenLoaded(Tasks.runOnceTask(new Runnable() {
-                @Override
-                public void run() {
-                    if (loadCount.decrementAndGet() == 0) {
-                        listener.accept(new ArrayList<SingleProfileSettingsEx>(result));
-                    }
+            ListenerRef notifyRef = settings.notifyWhenLoaded(Tasks.runOnceTask(() -> {
+                if (loadCount.decrementAndGet() == 0) {
+                    listener.accept(new ArrayList<>(result));
                 }
             }, false));
             resultRefs.add(notifyRef);

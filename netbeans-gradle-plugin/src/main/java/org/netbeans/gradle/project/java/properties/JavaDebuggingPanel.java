@@ -8,8 +8,6 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -60,12 +58,7 @@ public class JavaDebuggingPanel extends javax.swing.JPanel implements ProfileEdi
     }
 
     public static ProfileBasedSettingsCategory createDebuggingCustomizer(final boolean allowInherit) {
-        return new ProfileBasedSettingsCategory(getCategoryId(), new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return JavaDebuggingPanel.createSettingsPage(allowInherit);
-            }
-        });
+        return new ProfileBasedSettingsCategory(getCategoryId(), () -> JavaDebuggingPanel.createSettingsPage(allowInherit));
     }
 
     public static GlobalSettingsPage createSettingsPage(boolean allowInherit) {

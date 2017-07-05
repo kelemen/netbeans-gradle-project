@@ -9,7 +9,6 @@ import javax.swing.ListModel;
 import org.jtrim.property.BoolProperties;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
@@ -68,19 +67,11 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
         jCategoriesList.setSelectedIndex(0);
 
         categorySelection = listSelection(jCategoriesList);
-        selectedHelpUrl = PropertyFactory.convert(categorySelection, new ValueConverter<CategoryItem, URL>() {
-            @Override
-            public URL convert(CategoryItem input) {
-                return input != null ? input.getHelpUrl() : null;
-            }
+        selectedHelpUrl = PropertyFactory.convert(categorySelection, (CategoryItem input) -> {
+            return input != null ? input.getHelpUrl() : null;
         });
 
-        categorySelection.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                showSelectedEditor();
-            }
-        });
+        categorySelection.addChangeListener(this::showSelectedEditor);
         showSelectedEditor();
 
         setupEnableDisable();
@@ -140,21 +131,11 @@ public class GlobalGradleSettingsPanel extends javax.swing.JPanel implements Pro
     }
 
     private StoredSettings readCombinedFromSettings(List<ProfileEditor> editors) {
-        return combineSettings(editors, new NbFunction<ProfileEditor, StoredSettings>() {
-            @Override
-            public StoredSettings apply(ProfileEditor editor) {
-                return editor.readFromSettings();
-            }
-        });
+        return combineSettings(editors, ProfileEditor::readFromSettings);
     }
 
     private StoredSettings readCombinedFromGui(List<ProfileEditor> editors) {
-        return combineSettings(editors, new NbFunction<ProfileEditor, StoredSettings>() {
-            @Override
-            public StoredSettings apply(ProfileEditor editor) {
-                return editor.readFromGui();
-            }
-        });
+        return combineSettings(editors, ProfileEditor::readFromGui);
     }
 
     @Override

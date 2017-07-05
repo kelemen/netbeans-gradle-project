@@ -15,7 +15,6 @@ import org.netbeans.gradle.project.properties.ProfileFileDef;
 import org.netbeans.gradle.project.properties.ProfileLocationProvider;
 import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.w3c.dom.Element;
 
 final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
@@ -82,12 +81,7 @@ final class GlobalProfileSettings implements LoadableSingleProfileSettingsEx {
         private final LazyValue<Path> outputPathRef;
 
         public GlobalProfileLocationProvider() {
-            this.outputPathRef = new LazyValue<>(new NbSupplier<Path>() {
-                @Override
-                public Path get() {
-                    return GlobalSettingsUtils.tryGetGlobalConfigPath(BASE_FILE_NAME);
-                }
-            });
+            this.outputPathRef = new LazyValue<>(() -> GlobalSettingsUtils.tryGetGlobalConfigPath(BASE_FILE_NAME));
         }
 
         @Override

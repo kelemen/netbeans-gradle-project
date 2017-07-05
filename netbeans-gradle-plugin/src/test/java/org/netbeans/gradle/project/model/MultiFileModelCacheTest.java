@@ -5,18 +5,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Test;
-import org.netbeans.gradle.project.util.NbFunction;
 
 import static org.junit.Assert.*;
 
 public class MultiFileModelCacheTest {
     private static MultiFileModelCache<TestModel> getTestCache(PersistentModelStore<TestModel> persister) {
-        return new MultiFileModelCache<>(persister, new NbFunction<TestModel, PersistentModelKey>() {
-            @Override
-            public PersistentModelKey apply(TestModel model) {
-                return model.getKey();
-            }
-        });
+        return new MultiFileModelCache<>(persister, TestModel::getKey);
     }
 
     private static PersistentModelKey getKey(String rootName, String subName) {

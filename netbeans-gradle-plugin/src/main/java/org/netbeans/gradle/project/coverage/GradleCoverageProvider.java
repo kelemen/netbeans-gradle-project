@@ -34,7 +34,6 @@ import org.openide.util.Pair;
 import org.openide.xml.XMLUtil;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -175,18 +174,17 @@ public class GradleCoverageProvider implements CoverageProvider {
             return null;
         }
         try {
-            org.w3c.dom.Document report = XMLUtil.parse(new InputSource(r.toURI().toString()), true, false, XMLUtil.defaultErrorHandler(), new EntityResolver() {
-                public @Override
-                InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-                    if (systemId.equals("http://cobertura.sourceforge.net/xml/coverage-04.dtd")) {
-                        return new InputSource(GradleCoverageProvider.class.getResourceAsStream("coverage-04.dtd")); // NOI18N
-                    }
-                    else if (publicId.equals("-//JACOCO//DTD Report 1.0//EN")) {
-                        return new InputSource(GradleCoverageProvider.class.getResourceAsStream("jacoco-1.0.dtd"));
-                    }
-                    else {
-                        return null;
-                    }
+            org.w3c.dom.Document report;
+            InputSource inputSource = new InputSource(r.toURI().toString());
+            report = XMLUtil.parse(inputSource, true, false, XMLUtil.defaultErrorHandler(), (publicId, systemId) -> {
+                if (systemId.equals("http://cobertura.sourceforge.net/xml/coverage-04.dtd")) {
+                    return new InputSource(GradleCoverageProvider.class.getResourceAsStream("coverage-04.dtd")); // NOI18N
+                }
+                else if (publicId.equals("-//JACOCO//DTD Report 1.0//EN")) {
+                    return new InputSource(GradleCoverageProvider.class.getResourceAsStream("jacoco-1.0.dtd"));
+                }
+                else {
+                    return null;
                 }
             });
             LOG.log(Level.FINE, "parsed {0}", r);

@@ -116,12 +116,7 @@ public final class JavaSourceSetNode extends AbstractNode {
         @Override
         protected void addNotify() {
             listenerRegs.unregisterAll();
-            listenerRegs.add(javaExt.addModelChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    refresh(false);
-                }
-            }));
+            listenerRegs.add(javaExt.addModelChangeListener(() -> refresh(false)));
         }
 
         @Override
@@ -155,12 +150,7 @@ public final class JavaSourceSetNode extends AbstractNode {
 
         private static JavaSourceGroup[] sortGroups(Collection<JavaSourceGroup> sourceGroups) {
             JavaSourceGroup[] result = sourceGroups.toArray(new JavaSourceGroup[sourceGroups.size()]);
-            Arrays.sort(result, new Comparator<JavaSourceGroup>() {
-                @Override
-                public int compare(JavaSourceGroup o1, JavaSourceGroup o2) {
-                    return compareGroupNames(o1.getGroupName(), o2.getGroupName());
-                }
-            });
+            Arrays.sort(result, Comparator.comparing(JavaSourceGroup::getGroupName, JavaSourceSetNodeChildFactory::compareGroupNames));
             return result;
         }
 

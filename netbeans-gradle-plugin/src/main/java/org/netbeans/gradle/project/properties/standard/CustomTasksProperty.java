@@ -146,23 +146,20 @@ public final class CustomTasksProperty {
     }
 
     private static ValueMerger<PredefinedTasks> getValueMerger() {
-        return new ValueMerger<PredefinedTasks>() {
-            @Override
-            public PredefinedTasks mergeValues(PredefinedTasks child, ValueReference<PredefinedTasks> parent) {
-                if (child == null) {
-                    return parent.getValue();
-                }
-
-                PredefinedTasks parentValue = parent.getValue();
-                if (parentValue == null) {
-                    return child;
-                }
-
-                List<PredefinedTask> tasks1 = child.getTasks();
-                List<PredefinedTask> tasks2 = parentValue.getTasks();
-
-                return new PredefinedTasks(CollectionsEx.viewConcatList(tasks1, tasks2));
+        return (PredefinedTasks child, ValueReference<PredefinedTasks> parent) -> {
+            if (child == null) {
+                return parent.getValue();
             }
+
+            PredefinedTasks parentValue = parent.getValue();
+            if (parentValue == null) {
+                return child;
+            }
+
+            List<PredefinedTask> tasks1 = child.getTasks();
+            List<PredefinedTask> tasks2 = parentValue.getTasks();
+
+            return new PredefinedTasks(CollectionsEx.viewConcatList(tasks1, tasks2));
         };
     }
 

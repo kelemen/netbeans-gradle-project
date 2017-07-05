@@ -47,33 +47,25 @@ final class PropertyOfProperty<RootValue, SubValue> implements PropertySource<Su
     @Override
     public ListenerRef addChangeListener(final Runnable listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
-        final AtomicReference<ListenerRef> subListenerRef
-                = new AtomicReference<ListenerRef>(UnregisteredListenerRef.INSTANCE);
+        AtomicReference<ListenerRef> subListenerRef = new AtomicReference<>(UnregisteredListenerRef.INSTANCE);
         // subListenerRef.get() == null means that the the client
         // unregistered its listener and therefore, we must no longer
         // register listeners. That is, once this property is null, we may
         // never set it.
 
-        final ListenerRef listenerRef = rootSrc.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                registerWithSubListener(listener, subListenerRef);
-                listener.run();
-            }
+        final ListenerRef listenerRef = rootSrc.addChangeListener(() -> {
+            registerWithSubListener(listener, subListenerRef);
+            listener.run();
         });
 
         registerWithSubListener(listener, subListenerRef);
 
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                listenerRef.unregister();
-                ListenerRef subRef = subListenerRef.getAndSet(null);
-                if (subRef != null) {
-                    subRef.unregister();
-                }
+        return NbListenerRefs.fromRunnable(() -> {
+            listenerRef.unregister();
+            ListenerRef subRef = subListenerRef.getAndSet(null);
+            if (subRef != null) {
+                subRef.unregister();
             }
         });
     }
-
 }

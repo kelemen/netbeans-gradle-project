@@ -2,7 +2,6 @@ package org.netbeans.gradle.project.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -149,11 +148,8 @@ public final class NbFileUtils {
             }
         };
         dir.addFileChangeListener(fileChangeListener);
-        return NbListenerRefs.fromRunnable(new Runnable() {
-            @Override
-            public void run() {
-                dir.removeFileChangeListener(fileChangeListener);
-            }
+        return NbListenerRefs.fromRunnable(() -> {
+            dir.removeFileChangeListener(fileChangeListener);
         });
     }
 
@@ -194,12 +190,7 @@ public final class NbFileUtils {
             return null;
         }
 
-        File[] subDirs = rootDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory();
-            }
-        });
+        File[] subDirs = rootDir.listFiles(File::isDirectory);
         if (subDirs == null) {
             return null;
         }

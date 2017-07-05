@@ -6,7 +6,6 @@ import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileKey;
-import org.netbeans.gradle.project.util.NbConsumer;
 
 public final class ProjectProfileLoader {
     private final NbGradleSingleProjectConfigProvider configProvider;
@@ -39,11 +38,8 @@ public final class ProjectProfileLoader {
         ProfileSettingsContainer settingsContainer = configProvider.getProfileSettingsContainer();
         List<ProfileSettingsKey> combinedKeys = keysWithFallbacks(profileKey);
 
-        return settingsContainer.loadAllProfileSettings(combinedKeys, new NbConsumer<List<SingleProfileSettingsEx>>() {
-            @Override
-            public void accept(List<SingleProfileSettingsEx> settings) {
-                listener.onLoad(new MultiProfileProperties(settings));
-            }
+        return settingsContainer.loadAllProfileSettings(combinedKeys, (List<SingleProfileSettingsEx> settings) -> {
+            listener.onLoad(new MultiProfileProperties(settings));
         });
     }
 

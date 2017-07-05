@@ -6,11 +6,11 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.ListeningConnector;
 import com.sun.jdi.connect.Transport;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.utils.ExceptionHelper;
@@ -74,24 +74,16 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
             final Map<String, Connector.Argument> defaultArgs) {
         final Map<String, Object> services = AttacherListener.getJpdaServiceObjects(javaExt);
 
-        DEBUGGER_ATTACH_LISTENER.execute(cancelToken, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                final Thread currentThread = Thread.currentThread();
-                ListenerRef cancelRef = cancelToken.addCancellationListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        currentThread.interrupt();
-                    }
-                });
-                try {
-                    JPDADebugger.startListening(connector, defaultArgs, new Object[]{services});
-                    LOGGER.log(Level.INFO, "JPDADebugger.startListening has successfully connected to the debugee.");
-                } catch (DebuggerStartException ex) {
-                    LOGGER.log(Level.INFO, "JPDADebugger.startListening failed.", ex);
-                 }finally {
-                    cancelRef.unregister();
-                }
+        DEBUGGER_ATTACH_LISTENER.execute(cancelToken, (CancellationToken taskCancelToken) -> {
+            Thread currentThread = Thread.currentThread();
+            ListenerRef cancelRef = taskCancelToken.addCancellationListener(currentThread::interrupt);
+            try {
+                JPDADebugger.startListening(connector, defaultArgs, new Object[]{services});
+                LOGGER.log(Level.INFO, "JPDADebugger.startListening has successfully connected to the debugee.");
+            } catch (DebuggerStartException ex) {
+                LOGGER.log(Level.INFO, "JPDADebugger.startListening failed.", ex);
+            }finally {
+                cancelRef.unregister();
             }
         }, null);
     }
@@ -143,16 +135,7 @@ public final class DebuggerServiceFactory implements GradleCommandServiceFactory
         return addr.substring(sepIndex + 1);
     }
 
-    private static TaskVariableMap singleVar(final TaskVariable mapVar, final String mapValue) {
-        // TODO: In Java 8 this could be:
-        //       return Collections.singletonMap(mapVar, mapValue)::get;
-
-        assert mapVar != null;
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                return mapVar.equals(variable) ? mapValue : null;
-            }
-        };
+    private static TaskVariableMap singleVar(TaskVariable mapVar, String mapValue) {
+        return Collections.singletonMap(mapVar, mapValue)::get;
     }
 }

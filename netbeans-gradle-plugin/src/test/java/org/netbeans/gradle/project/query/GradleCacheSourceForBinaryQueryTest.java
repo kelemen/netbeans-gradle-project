@@ -7,7 +7,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.util.BasicFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.gradle.project.util.TestBinaryUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
@@ -21,12 +20,7 @@ public class GradleCacheSourceForBinaryQueryTest {
     public static final SafeTmpFolder TMP_DIR_ROOT = new SafeTmpFolder();
 
     private static SourceForBinaryQueryImplementation2 createWithRoot(final File gradleHomeRoot) {
-        return new GradleCacheSourceForBinaryQuery(new NbSupplier<File>() {
-            @Override
-            public File get() {
-                return gradleHomeRoot;
-            }
-        });
+        return new GradleCacheSourceForBinaryQuery(() -> gradleHomeRoot);
     }
 
     private void verifySource(File gradleHome, URL binaryUrl, File srcFile) {

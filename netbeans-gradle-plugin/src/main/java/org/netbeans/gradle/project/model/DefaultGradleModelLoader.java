@@ -2,6 +2,7 @@ package org.netbeans.gradle.project.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,6 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.MonitorableTaskExecutorService;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.Tasks;
@@ -57,7 +57,6 @@ import org.netbeans.gradle.project.properties.ModelLoadingStrategy;
 import org.netbeans.gradle.project.properties.NbGradleCommonProperties;
 import org.netbeans.gradle.project.properties.global.CommonGlobalSettings;
 import org.netbeans.gradle.project.script.ScriptFileProvider;
-import org.netbeans.gradle.project.tasks.DaemonTask;
 import org.netbeans.gradle.project.tasks.GradleArguments;
 import org.netbeans.gradle.project.tasks.GradleDaemonFailures;
 import org.netbeans.gradle.project.tasks.GradleDaemonManager;
@@ -65,7 +64,6 @@ import org.netbeans.gradle.project.tasks.GradleTasks;
 import org.netbeans.gradle.project.tasks.vars.StringResolver;
 import org.netbeans.gradle.project.tasks.vars.StringResolvers;
 import org.netbeans.gradle.project.util.GradleVersions;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.gradle.project.view.GlobalErrorReporter;
@@ -122,19 +120,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             result = new GradleModelCache(cacheSize.getValue());
             if (DEFAULT_CACHE_REF.compareAndSet(null, result)) {
                 final GradleModelCache cache = result;
-                cacheSize.addChangeListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        cache.setMaxCapacity(cacheSize.getValue());
-                    }
+                cacheSize.addChangeListener(() -> {
+                    cache.setMaxCapacity(cacheSize.getValue());
                 });
                 cache.setMaxCapacity(cacheSize.getValue());
-                cache.addModelUpdateListener(new ProjectModelUpdatedListener() {
-                    @Override
-                    public void onUpdateProject(NbGradleModel newModel) {
-                        updateProjectFromCacheIfNeeded(newModel);
-                    }
-                });
+                cache.addModelUpdateListener(DefaultGradleModelLoader::updateProjectFromCacheIfNeeded);
             }
             else {
                 result = DEFAULT_CACHE_REF.get();
@@ -261,11 +251,8 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             listener.updateModel(model, error);
         }
         else {
-            modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) {
-                    listener.updateModel(model, error);
-                }
+            modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+                listener.updateModel(model, error);
             }, null);
         }
     }
@@ -316,26 +303,23 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             return;
         }
 
-        modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) {
-                NbGradleModel model = null;
-                boolean needLoadFromScripts = true;
+        modelLoadNotifier.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            NbGradleModel model = null;
+            boolean needLoadFromScripts = true;
 
-                try {
-                    ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
-                    model = mayFetchFromCache ? tryGetFromCache(projectLoadKey) : null;
-                    if (model == null || hasUnloadedExtension(model)) {
-                        model = tryGetFromPersistentCache(projectLoadKey);
-                    }
-                    else {
-                        needLoadFromScripts = false;
-                    }
-                } finally {
-                    onModelLoaded(model, null, listener);
-                    if (needLoadFromScripts) {
-                        fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
-                    }
+            try {
+                ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
+                model = mayFetchFromCache ? tryGetFromCache(projectLoadKey) : null;
+                if (model == null || hasUnloadedExtension(model)) {
+                    model = tryGetFromPersistentCache(projectLoadKey);
+                }
+                else {
+                    needLoadFromScripts = false;
+                }
+            } finally {
+                onModelLoaded(model, null, listener);
+                if (needLoadFromScripts) {
+                    fetchModelWithoutPersistentCache(mayFetchFromCache, listener, aboutToCompleteListener);
                 }
             }
         }, null);
@@ -410,14 +394,11 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
     }
 
     private CommandCompleteListener projectTaskCompleteListener(final Runnable loadCompletedListener) {
-        return new CommandCompleteListener() {
-            @Override
-            public void onComplete(Throwable error) {
-                try {
-                    GradleTasks.projectTaskCompleteListener(project).onComplete(error);
-                } finally {
-                    loadCompletedListener.run();
-                }
+        return (Throwable error) -> {
+            try {
+                GradleTasks.projectTaskCompleteListener(project).onComplete(error);
+            } finally {
+                loadCompletedListener.run();
             }
         };
     }
@@ -430,35 +411,32 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
         final Runnable safeCompleteListener = Tasks.runOnceTask(aboutToCompleteListener, false);
 
         String caption = NbStrings.getLoadingProjectText(project.getDisplayName());
-        GradleDaemonManager.submitGradleTask(projectLoader, caption, new DaemonTask() {
-            @Override
-            public void run(CancellationToken cancelToken, ProgressHandle progress) {
-                ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
+        GradleDaemonManager.submitGradleTask(projectLoader, caption, (CancellationToken cancelToken, ProgressHandle progress) -> {
+            ProjectLoadRequest projectLoadKey = getProjectLoadKey(project);
 
-                NbGradleModel model = null;
-                Throwable error = null;
-                try {
-                    ProjectLoadRequest fixedLoadKey = fixProjectLoadKey(cancelToken, projectLoadKey, progress);
-                    if (mayFetchFromCache) {
-                        model = tryGetFromCache(fixedLoadKey);
-                    }
-                    if (model == null || hasUnloadedExtension(model)) {
-                        model = loadModelWithProgress(cancelToken, fixedLoadKey, progress, model);
-                    }
-                } catch (IOException | BuildException ex) {
-                    error = ex;
-                } catch (GradleConnectionException ex) {
-                    error = ex;
-                } catch (GradleModelLoadError ex) {
-                    error = ex;
-                    reportModelLoadError(project, ex);
-                } finally {
-                    safeCompleteListener.run();
-                    onModelLoaded(model, error, listener);
+            NbGradleModel model = null;
+            Throwable error = null;
+            try {
+                ProjectLoadRequest fixedLoadKey = fixProjectLoadKey(cancelToken, projectLoadKey, progress);
+                if (mayFetchFromCache) {
+                    model = tryGetFromCache(fixedLoadKey);
+                }
+                if (model == null || hasUnloadedExtension(model)) {
+                    model = loadModelWithProgress(cancelToken, fixedLoadKey, progress, model);
+                }
+            } catch (IOException | BuildException ex) {
+                error = ex;
+            } catch (GradleConnectionException ex) {
+                error = ex;
+            } catch (GradleModelLoadError ex) {
+                error = ex;
+                reportModelLoadError(project, ex);
+            } finally {
+                safeCompleteListener.run();
+                onModelLoaded(model, error, listener);
 
-                    if (error != null) {
-                        GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
-                    }
+                if (error != null) {
+                    GradleDaemonFailures.getDefaultHandler().tryHandleFailure(error);
                 }
             }
         }, true, projectTaskCompleteListener(safeCompleteListener));
@@ -690,28 +668,15 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
             this.projectLoader = DEFAULT_PROJECT_LOADER;
             this.modelLoadNotifier = DEFAULT_MODEL_LOAD_NOTIFIER;
             this.loadedProjectManager = LoadedProjectManager.getDefault();
-            this.persistentCache = new MultiFileModelCache<>(defaultModelPersister(project), new NbFunction<NbGradleModel, PersistentModelKey>() {
-                @Override
-                public PersistentModelKey apply(NbGradleModel arg) {
-                    try {
-                        return new PersistentModelKey(arg).normalize();
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
+            this.persistentCache = new MultiFileModelCache<>(defaultModelPersister(project), (NbGradleModel model) -> {
+                try {
+                    return new PersistentModelKey(model).normalize();
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
                 }
             });
-            this.cacheRef = new NbSupplier<GradleModelCache>() {
-                @Override
-                public GradleModelCache get() {
-                    return getDefaultCache();
-                }
-            };
-            this.cacheSizeIncreaser = new CacheSizeIncreaser() {
-                @Override
-                public void requiresCacheSize(GradleModelCache cache, int minimumCacheSize) {
-                    ensureCacheSize(cache, minimumCacheSize);
-                }
-            };
+            this.cacheRef = DefaultGradleModelLoader::getDefaultCache;
+            this.cacheSizeIncreaser = DefaultGradleModelLoader::ensureCacheSize;
         }
 
         private static PersistentModelStore<NbGradleModel> defaultModelPersister(NbGradleProject project) {
@@ -740,12 +705,7 @@ public final class DefaultGradleModelLoader implements ModelLoader<NbGradleModel
 
         public void setCacheRef(final GradleModelCache cache) {
             ExceptionHelper.checkNotNullArgument(cache, "cache");
-            this.cacheRef = new NbSupplier<GradleModelCache>() {
-                @Override
-                public GradleModelCache get() {
-                    return cache;
-                }
-            };
+            this.cacheRef = () -> cache;
         }
 
         public DefaultGradleModelLoader create() {

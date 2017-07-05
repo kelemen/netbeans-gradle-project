@@ -8,8 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
@@ -17,7 +15,6 @@ import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -47,21 +44,11 @@ public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEdito
         currentlyShown = null;
 
         showSelected();
-        jDefinedTasks.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                showSelected();
-            }
-        });
+        jDefinedTasks.getSelectionModel().addListSelectionListener(e ->  showSelected());
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory() {
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return ManageTasksPanel.createSettingsPage();
-            }
-        });
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, ManageTasksPanel::createSettingsPage);
     }
 
     public static ProfileBasedSettingsPage createSettingsPage() {
@@ -83,14 +70,8 @@ public class ManageTasksPanel extends javax.swing.JPanel implements ProfileEdito
         for (int i = 0; i < elementCount; i++) {
             elements[i] = model.get(i);
         }
-        Arrays.sort(elements, new Comparator<PredefinedTaskItem>() {
-            @Override
-            public int compare(PredefinedTaskItem o1, PredefinedTaskItem o2) {
-                String name1 = o1.toString();
-                String name2 = o2.toString();
-                return StringUtils.STR_CMP.compare(name1, name2);
-            }
-        });
+        Arrays.sort(elements, Comparator.comparing(Object::toString, StringUtils.STR_CMP::compare));
+
         for (int i = 0; i < elementCount; i++) {
             model.set(i, elements[i]);
         }

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.netbeans.gradle.project.util.LazyValue;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.Places;
@@ -15,20 +14,12 @@ import org.openide.modules.Places;
 public final class GlobalSettingsUtils {
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsUtils.class.getName());
 
-    private static final LazyValue<Path> CONFIG_ROOT_REF = new LazyValue<>(new NbSupplier<Path>() {
-        @Override
-        public Path get() {
-            File rootFile = tryGetConfigRoot();
-            return rootFile != null ? rootFile.toPath() : null;
-        }
+    private static final LazyValue<Path> CONFIG_ROOT_REF = new LazyValue<>(() -> {
+        File rootFile = tryGetConfigRoot();
+        return rootFile != null ? rootFile.toPath() : null;
     });
 
-    private static final LazyValue<Path> CACHE_ROOT_REF = new LazyValue<>(new NbSupplier<Path>() {
-        @Override
-        public Path get() {
-            return tryGetCacheRoot();
-        }
-    });
+    private static final LazyValue<Path> CACHE_ROOT_REF = new LazyValue<>(GlobalSettingsUtils::tryGetCacheRoot);
 
     public static Path tryGetGlobalConfigPath(List<String> subPaths) {
         Path result = tryGetGlobalConfigPath0();

@@ -140,29 +140,18 @@ public final class JavaProjectContextActions implements GradleProjectContextActi
         @Override
         protected JMenu createMenu() {
             JMenu menu = new JMenu(NbStrings.getSourceDirsActionGroup());
-            menu.add(backgroundTaskMenuItem(NbStrings.getCreateSourceDirsAction(), new Runnable() {
-                @Override
-                public void run() {
-                    javaExt.getSourceDirsHandler().createDirectories();
-                }
+            menu.add(backgroundTaskMenuItem(NbStrings.getCreateSourceDirsAction(), () -> {
+                javaExt.getSourceDirsHandler().createDirectories();
             }));
-            menu.add(backgroundTaskMenuItem(NbStrings.getDeleteEmptySourceDirsAction(), new Runnable() {
-                @Override
-                public void run() {
-                    javaExt.getSourceDirsHandler().deleteEmptyDirectories();
-                }
+            menu.add(backgroundTaskMenuItem(NbStrings.getDeleteEmptySourceDirsAction(), () -> {
+                javaExt.getSourceDirsHandler().deleteEmptyDirectories();
             }));
             return menu;
         }
     }
 
     private static void sortTestActions(List<CustomTestAction> actions) {
-        Collections.sort(actions, new Comparator<CustomTestAction>() {
-            @Override
-            public int compare(CustomTestAction o1, CustomTestAction o2) {
-                return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
-            }
-        });
+        Collections.sort(actions, Comparator.comparing(CustomTestAction::getDisplayName, StringUtils.STR_CMP::compare));
     }
 
     @SuppressWarnings("serial") // don't care about serialization

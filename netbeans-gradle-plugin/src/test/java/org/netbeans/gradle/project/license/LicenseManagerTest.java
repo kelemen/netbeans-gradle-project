@@ -13,7 +13,6 @@ import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
 import org.junit.Test;
 import org.netbeans.gradle.project.util.CloseableAction;
-import org.netbeans.gradle.project.util.NbFunction;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -31,23 +30,8 @@ public class LicenseManagerTest {
     }
 
     private static LicenseManager<String> createTestManager(LicenseStore<DefaultLicenseDef> licenseStore) {
-        NbFunction<String, Path> licenseRootProvider = new NbFunction<String, Path>() {
-            @Override
-            public Path apply(String ownerModel) {
-                return Paths.get(ownerModel);
-            }
-        };
-
-        NbFunction<String, String> modelNameProvider = new NbFunction<String, String>() {
-            @Override
-            public String apply(String ownerModel) {
-                return toModelName(ownerModel);
-            }
-        };
-
         TaskExecutor executor = SyncTaskExecutor.getSimpleExecutor();
-
-        return LicenseManagers.createLicenseManager(executor, licenseStore, licenseRootProvider, modelNameProvider);
+        return LicenseManagers.createLicenseManager(executor, licenseStore, Paths::get, LicenseManagerTest::toModelName);
     }
 
     @Test

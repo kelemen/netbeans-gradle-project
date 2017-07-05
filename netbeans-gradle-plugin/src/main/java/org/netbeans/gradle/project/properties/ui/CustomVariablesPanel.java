@@ -11,7 +11,6 @@ import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -33,12 +32,7 @@ public class CustomVariablesPanel extends javax.swing.JPanel implements ProfileE
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory() {
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return CustomVariablesPanel.createSettingsPage();
-            }
-        });
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, CustomVariablesPanel::createSettingsPage);
     }
 
     public static ProfileBasedSettingsPage createSettingsPage() {

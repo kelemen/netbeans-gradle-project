@@ -8,7 +8,6 @@ import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
@@ -20,7 +19,6 @@ import org.netbeans.modules.gsf.testrunner.api.Testcase;
 import org.netbeans.modules.gsf.testrunner.api.Trouble;
 import org.netbeans.modules.gsf.testrunner.ui.api.TestMethodNode;
 import org.netbeans.spi.project.SingleMethod;
-import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
@@ -165,12 +163,9 @@ public final class JavaTestMethodNode extends TestMethodNode {
             if (!openTestMethod(cancelToken)) {
                 final ActionListener openInEditorAction = tryGetOpenEditorActionAtFailure();
                 if (openInEditorAction != null) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!cancelToken.isCanceled()) {
-                                openInEditorAction.actionPerformed(e);
-                            }
+                    SwingUtilities.invokeLater(() -> {
+                        if (!cancelToken.isCanceled()) {
+                            openInEditorAction.actionPerformed(e);
                         }
                     });
                 }
@@ -180,23 +175,17 @@ public final class JavaTestMethodNode extends TestMethodNode {
         @Override
         public void actionPerformed(final ActionEvent e) {
             final CancellationSource cancel = Cancellation.createCancellationSource();
-            final ProgressHandle progress = ProgressHandle.createHandle(NbStrings.getJumpToSource(), new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    cancel.getController().cancel();
-                    return true;
-                }
+            final ProgressHandle progress = ProgressHandle.createHandle(NbStrings.getJumpToSource(), () -> {
+                cancel.getController().cancel();
+                return true;
             });
 
-            NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) {
-                    progress.start();
-                    try {
-                        doActionNow(cancelToken, e);
-                    } finally {
-                        progress.finish();
-                    }
+            NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), (CancellationToken cancelToken) -> {
+                progress.start();
+                try {
+                    doActionNow(cancelToken, e);
+                } finally {
+                    progress.finish();
                 }
             }, null);
         }

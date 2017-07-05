@@ -7,12 +7,7 @@ import static org.junit.Assert.*;
 
 public class IOTabMaintainerTest {
     private static IOTabMaintainer<Integer, Tab> create() {
-        return new IOTabMaintainer<>(new IOTabFactory<Tab>() {
-            @Override
-            public Tab create(String caption) {
-                return new Tab(caption);
-            }
-        });
+        return new IOTabMaintainer<>(Tab::new);
     }
 
     @Test

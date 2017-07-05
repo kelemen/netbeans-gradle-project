@@ -26,7 +26,6 @@ import org.netbeans.gradle.project.license.LicenseManagers;
 import org.netbeans.gradle.project.license.LicenseSource;
 import org.netbeans.gradle.project.lookups.LookupsEx;
 import org.netbeans.gradle.project.model.DefaultGradleModelLoader;
-import org.netbeans.gradle.project.model.ModelRetrievedListener;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.SettingsGradleDef;
 import org.netbeans.gradle.project.model.issue.ModelLoadIssue;
@@ -325,17 +324,12 @@ public final class NbGradleProject implements Project {
 
             this.modelManager = new ProjectModelManager(project,
                     DefaultGradleModelLoader.createEmptyModel(projectDir, scriptFileProvider));
-            ModelRetrievedListener<NbGradleModel> modelUpdateListener = new ModelRetrievedListener<NbGradleModel>() {
-                @Override
-                public void updateModel(NbGradleModel model, Throwable error) {
-                    modelManager.updateModel(model, error);
-                    if (model != null && error == null) {
-                        SETTINGS_FILE_MANAGER.updateSettingsFile(model);
-                    }
+            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), (model, error) -> {
+                modelManager.updateModel(model, error);
+                if (model != null && error == null) {
+                    SETTINGS_FILE_MANAGER.updateSettingsFile(model);
                 }
-            };
-
-            this.modelUpdater = new ProjectModelUpdater<>(createModelLoader(project), modelUpdateListener);
+            });
             this.settingsFileManager = new SettingsFileManager(projectDirAsFile, SETTINGS_FILE_MANAGER);
             this.projectDisplayInfo = new ProjectDisplayInfo(
                     modelManager.currentModel(),
@@ -411,12 +405,7 @@ public final class NbGradleProject implements Project {
                     ROOT_PROJECT_REGISTRY.forProject(currentModel)
             );
 
-            return GenericOpenHook.create(actionProperties, new Runnable() {
-                @Override
-                public void run() {
-                    modelUpdater.reloadProjectMayUseCache();
-                }
-            });
+            return GenericOpenHook.create(actionProperties, modelUpdater::reloadProjectMayUseCache);
         }
     }
 }

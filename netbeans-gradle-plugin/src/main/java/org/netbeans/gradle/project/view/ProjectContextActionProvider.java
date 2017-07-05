@@ -2,11 +2,9 @@ package org.netbeans.gradle.project.view;
 
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
@@ -256,14 +254,7 @@ public final class ProjectContextActionProvider implements ContextActionProvider
             lastUsedModule = mainModule;
 
             List<PredefinedTask> commonTasksList = new ArrayList<>(commonTasks.getTasks());
-            Collections.sort(commonTasksList, new Comparator<PredefinedTask>() {
-                @Override
-                public int compare(PredefinedTask o1, PredefinedTask o2) {
-                    String name1 = o1.getDisplayName();
-                    String name2 = o2.getDisplayName();
-                    return StringUtils.STR_CMP.compare(name1, name2);
-                }
-            });
+            commonTasksList.sort(Comparator.comparing(PredefinedTask::getDisplayName, StringUtils.STR_CMP::compare));
 
             boolean hasCustomTasks = false;
             menu.removeAll();
@@ -277,11 +268,8 @@ public final class ProjectContextActionProvider implements ContextActionProvider
                 }
 
                 JMenuItem menuItem = new JMenuItem(task.getDisplayName());
-                menuItem.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        executeCommandTemplate(project, task.toCommandTemplate());
-                    }
+                menuItem.addActionListener((ActionEvent e) -> {
+                    executeCommandTemplate(project, task.toCommandTemplate());
                 });
                 menu.add(menuItem);
                 hasCustomTasks = true;
@@ -486,14 +474,11 @@ public final class ProjectContextActionProvider implements ContextActionProvider
 
                 final GradleTaskID taskID = root.getTaskID();
                 if (taskID != null) {
-                    toAdd.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            GradleCommandTemplate.Builder command
-                                    = new GradleCommandTemplate.Builder("", Arrays.asList(taskID.getFullName()));
+                    toAdd.addActionListener((ActionEvent e) -> {
+                        GradleCommandTemplate.Builder command
+                                = new GradleCommandTemplate.Builder("", Arrays.asList(taskID.getFullName()));
 
-                            executeCommandTemplate(project, command.create());
-                        }
+                        executeCommandTemplate(project, command.create());
                     });
                 }
 

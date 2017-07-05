@@ -1,7 +1,5 @@
 package org.netbeans.gradle.project.properties;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JComponent;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.properties.ui.ProfileBasedPanel;
@@ -14,12 +12,7 @@ public final class ProfileBasedCustomizer implements ProjectCustomizer.Composite
     private final PanelFactory panelFactory;
 
     public ProfileBasedCustomizer(String categoryName, String displayName, final ProfileBasedPanel panel) {
-        this(categoryName, displayName, new PanelFactory() {
-            @Override
-            public ProfileBasedPanel createPanel() {
-                return panel;
-            }
-        });
+        this(categoryName, displayName, () -> panel);
 
         ExceptionHelper.checkNotNullArgument(panel, "panel");
     }
@@ -41,13 +34,8 @@ public final class ProfileBasedCustomizer implements ProjectCustomizer.Composite
 
     @Override
     public JComponent createComponent(ProjectCustomizer.Category category, Lookup context) {
-        final ProfileBasedPanel panel = panelFactory.createPanel();
-        category.setOkButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                panel.saveProperties();
-            }
-        });
+        ProfileBasedPanel panel = panelFactory.createPanel();
+        category.setOkButtonListener(e -> panel.saveProperties());
         return panel;
     }
 

@@ -5,7 +5,6 @@ import java.awt.Dialog;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import org.netbeans.gradle.project.NbStrings;
 import org.openide.DialogDescriptor;
@@ -22,11 +21,8 @@ public class IssueDetailsPanel extends javax.swing.JPanel {
 
     public static JButton createShowStackTraceButton(final String caption, final String detailsContent) {
         JButton button = new JButton(NbStrings.getShowStackTrace());
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showModalDialog(caption, detailsContent);
-            }
+        button.addActionListener((ActionEvent e) -> {
+            showModalDialog(caption, detailsContent);
         });
         return button;
     }

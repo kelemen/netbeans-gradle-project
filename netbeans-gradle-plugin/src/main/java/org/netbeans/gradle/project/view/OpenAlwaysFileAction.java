@@ -8,8 +8,6 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
-import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.output.OpenEditorOutputListener;
@@ -30,12 +28,7 @@ public final class OpenAlwaysFileAction extends AbstractAction {
     }
 
     public OpenAlwaysFileAction(String name, final Path file) {
-        this(name, new NbSupplier<Path>() {
-            @Override
-            public Path get() {
-                return file;
-            }
-        });
+        this(name, () -> file);
 
         ExceptionHelper.checkNotNullArgument(file, "file");
     }
@@ -57,12 +50,7 @@ public final class OpenAlwaysFileAction extends AbstractAction {
 
         String caption = NbStrings.getOpenFileCaption(scriptBaseName + CommonScripts.DEFAULT_SCRIPT_EXTENSION);
         final CommonScripts commonScripts = new CommonScripts(scriptProvider);
-        return new OpenAlwaysFileAction(caption, new NbSupplier<Path>() {
-            @Override
-            public Path get() {
-                return commonScripts.getScriptFilePath(baseDir, scriptBaseName);
-            }
-        });
+        return new OpenAlwaysFileAction(caption, () -> commonScripts.getScriptFilePath(baseDir, scriptBaseName));
     }
 
     private FileObject tryGetFileObjectCreateIfNeeded() {
@@ -95,26 +83,20 @@ public final class OpenAlwaysFileAction extends AbstractAction {
 
     private void openFileNow() {
         final FileObject fileObj = tryGetFileObjectCreateIfNeeded();
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (fileObj != null) {
-                    OpenEditorOutputListener.tryOpenFile(fileObj, -1);
-                }
-                else {
-                    showCannotCreateFile();
-                }
+        SwingUtilities.invokeLater(() -> {
+            if (fileObj != null) {
+                OpenEditorOutputListener.tryOpenFile(fileObj, -1);
+            }
+            else {
+                showCannotCreateFile();
             }
         });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                openFileNow();
-            }
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (cancelToken) -> {
+            openFileNow();
         }, null);
     }
 }

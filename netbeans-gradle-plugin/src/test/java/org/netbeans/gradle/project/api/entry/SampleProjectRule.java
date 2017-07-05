@@ -51,15 +51,12 @@ public final class SampleProjectRule implements TestRule {
             final NbConsumer<CommonGlobalSettings> additionalConfig,
             Class<?>... services) {
 
-        NbConsumer<CommonGlobalSettings> settingsConfigurer = new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings settings) {
-                settings.gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
-                settings.gradleJvmArgs().setValue(Arrays.asList("-Xmx256m"));
-                settings.defaultJdk().setValue(ScriptPlatform.getDefault());
+        NbConsumer<CommonGlobalSettings> settingsConfigurer = (CommonGlobalSettings settings) -> {
+            settings.gradleLocation().setValue(SampleGradleProject.DEFAULT_GRADLE_TARGET);
+            settings.gradleJvmArgs().setValue(Arrays.asList("-Xmx256m"));
+            settings.defaultJdk().setValue(ScriptPlatform.getDefault());
 
-                additionalConfig.accept(settings);
-            }
+            additionalConfig.accept(settings);
         };
 
         return new SampleProjectRule(resourceName,
@@ -68,13 +65,7 @@ public final class SampleProjectRule implements TestRule {
     }
 
     public static SampleProjectRule getStandardRule(String resourceName, Class<?>... services) {
-        NbConsumer<CommonGlobalSettings> additionalConfig = new NbConsumer<CommonGlobalSettings>() {
-            @Override
-            public void accept(CommonGlobalSettings settings) {
-            }
-        };
-
-        return getStandardRule(resourceName, additionalConfig, services);
+        return getStandardRule(resourceName, settings -> { }, services);
     }
 
     private void introduceProject(Project project) {

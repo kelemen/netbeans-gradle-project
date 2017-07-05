@@ -17,57 +17,33 @@ import org.netbeans.gradle.project.tasks.vars.CachingVariableMap.VariableValue;
 import org.openide.util.Lookup;
 
 public enum DisplayableTaskVariable {
-    PROJECT_PATH("project.path", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            return new VariableValue(getSafeProjectPath(model));
-        }
+    PROJECT_PATH("project.path", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        return new VariableValue(getSafeProjectPath(model));
     }),
-    PROJECT_GROUP("project.group", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            ProjectId projectId = model.getProjectId();
-            return new VariableValue(projectId.getGroup());
-        }
+    PROJECT_GROUP("project.group", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        ProjectId projectId = model.getProjectId();
+        return new VariableValue(projectId.getGroup());
     }),
-    PROJECT_NAME("project.name", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            return new VariableValue(getSafeProjectName(model));
-        }
+    PROJECT_NAME("project.name", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        return new VariableValue(getSafeProjectName(model));
     }),
-    PROJECT_VERSION("project.version", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            ProjectId projectId = model.getProjectId();
-            return new VariableValue(projectId.getVersion());
-        }
+    PROJECT_VERSION("project.version", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        ProjectId projectId = model.getProjectId();
+        return new VariableValue(projectId.getVersion());
     }),
-    PARENT_PATH("parent.path", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            return new VariableValue(getProjectPath(parent(model)));
-        }
+    PARENT_PATH("parent.path", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        return new VariableValue(getProjectPath(parent(model)));
     }),
-    PARENT_GROUP("parent.group", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            ProjectId projectId = parentId(model);
-            return new VariableValue(projectId != null ? projectId.getGroup() : "");
-        }
+    PARENT_GROUP("parent.group", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        ProjectId projectId = parentId(model);
+        return new VariableValue(projectId != null ? projectId.getGroup() : "");
     }),
-    PARENT_NAME("parent.name", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            return new VariableValue(getProjectName(parent(model)));
-        }
+    PARENT_NAME("parent.name", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        return new VariableValue(getProjectName(parent(model)));
     }),
-    PARENT_VERSION("parent.version", new ValueGetter<NbGradleModel>() {
-        @Override
-        public VariableValue getValue(TaskVariableMap variables, NbGradleModel model, Lookup actionContext) {
-            ProjectId projectId = parentId(model);
-            return new VariableValue(projectId != null ? projectId.getVersion() : "");
-        }
+    PARENT_VERSION("parent.version", (TaskVariableMap variables, NbGradleModel model, Lookup actionContext) -> {
+        ProjectId projectId = parentId(model);
+        return new VariableValue(projectId != null ? projectId.getVersion() : "");
     });
 
     private static NbGradleProjectTree parent(NbGradleModel model) {
@@ -139,19 +115,12 @@ public enum DisplayableTaskVariable {
     private static VariableDefMap<NbGradleModel> createStandardMap() {
         DisplayableTaskVariable[] variables = DisplayableTaskVariable.values();
 
-        final Map<TaskVariable, VariableDef<NbGradleModel>> result
-                = CollectionUtils.newHashMap(variables.length);
-
+        Map<TaskVariable, VariableDef<NbGradleModel>> result = CollectionUtils.newHashMap(variables.length);
         for (DisplayableTaskVariable variable: variables) {
             result.put(variable.getVariable(), variable.asVariableDef());
         }
 
-        return new VariableDefMap<NbGradleModel>() {
-            @Override
-            public VariableDef<NbGradleModel> tryGetDef(TaskVariable variable) {
-                return result.get(variable);
-            }
-        };
+        return result::get;
     }
 
     public static TaskVariableMap createVarReplaceMap(NbGradleModel project) {

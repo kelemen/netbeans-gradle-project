@@ -74,12 +74,7 @@ public final class PropertyReference<ValueType> {
         assert fallback != null;
         assert valueMerger != null;
 
-        final ValueReference<ValueType> parentValueRef = new ValueReference<ValueType>() {
-            @Override
-            public ValueType getValue() {
-                return fallback.getValue();
-            }
-        };
+        final ValueReference<ValueType> parentValueRef = fallback::getValue;
 
         return new PropertySource<ValueType>() {
             @Override

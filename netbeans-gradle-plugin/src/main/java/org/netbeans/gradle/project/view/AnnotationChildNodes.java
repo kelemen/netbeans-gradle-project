@@ -12,7 +12,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
@@ -21,7 +20,6 @@ import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
@@ -32,14 +30,11 @@ import org.netbeans.gradle.project.api.entry.GradleProjectIDs;
 import org.netbeans.gradle.project.api.event.NbListenerRefs;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.util.NbBiFunction;
-import org.netbeans.gradle.project.util.NbFunction;
 import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.spi.project.ui.support.NodeFactory;
 import org.netbeans.spi.project.ui.support.NodeList;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
 import org.openide.util.lookup.Lookups;
 
@@ -59,12 +54,7 @@ public final class AnnotationChildNodes {
     private Set<NodeList<?>> currentNodeLists;
 
     public AnnotationChildNodes(Project project) {
-        this(project, new NbSupplier<Lookup>() {
-            @Override
-            public Lookup get() {
-                return Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Nodes");
-            }
-        });
+        this(project, () -> Lookups.forPath("Projects/" + GradleProjectIDs.MODULE_NAME + "/Nodes"));
     }
 
     public AnnotationChildNodes(Project project, NbSupplier<? extends Lookup> factoryLookupProvider) {
@@ -77,18 +67,11 @@ public final class AnnotationChildNodes {
         this.removeChildrenRef = new RemovedChildrenProperty();
         this.currentNodeLists = Collections.emptySet();
 
-        this.nodeFactories = NbProperties.combine(new NodeFactories(factoryLookupProvider), this.removeChildrenRef, new NbBiFunction<Collection<? extends NodeFactory>, Boolean, Collection<? extends NodeFactory>>() {
-            @Override
-            public Collection<? extends NodeFactory> apply(Collection<? extends NodeFactory> factories, Boolean removedChildren) {
-                return removedChildren ? null : factories;
-            }
-        });
-        this.singleNodeFactories = NbProperties.propertyOfProperty(nodeFactories, new NbFunction<Collection<? extends NodeFactory>, PropertySource<Collection<SingleNodeFactory>>>() {
-            @Override
-            public PropertySource<Collection<SingleNodeFactory>> apply(Collection<? extends NodeFactory> arg) {
-                return convertFactories(arg);
-            }
-        });
+        this.nodeFactories = NbProperties.combine(
+                new NodeFactories(factoryLookupProvider),
+                this.removeChildrenRef,
+                (factories, isRemovedChildren) -> isRemovedChildren ? null : factories);
+        this.singleNodeFactories = NbProperties.propertyOfProperty(nodeFactories, this::convertFactories);
     }
 
     private void createAll(
@@ -177,17 +160,9 @@ public final class AnnotationChildNodes {
             }
         };
 
-        final UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
-        return SwingProperties.fromSwingSource(result, new SwingForwarderFactory<ChangeListener>() {
-            @Override
-            public ChangeListener createForwarder(final Runnable listener) {
-                return new ChangeListener() {
-                    @Override
-                    public void stateChanged(ChangeEvent e) {
-                        listenerExecutor.execute(listener);
-                    }
-                };
-            }
+        UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
+        return SwingProperties.fromSwingSource(result, (Runnable listener) -> {
+            return e -> listenerExecutor.execute(listener);
         });
     }
 
@@ -254,11 +229,8 @@ public final class AnnotationChildNodes {
             this.changeListeners = new CopyOnTriggerListenerManager<>();
 
             final UpdateTaskExecutor listenerExecutor = new SwingUpdateTaskExecutor(false);
-            this.listenerDispatcher = new EventDispatcher<Runnable, Void>() {
-                @Override
-                public void onEvent(Runnable eventListener, Void arg) {
-                    listenerExecutor.execute(eventListener);
-                }
+            this.listenerDispatcher = (Runnable eventListener, Void arg) -> {
+                listenerExecutor.execute(eventListener);
             };
         }
 
@@ -314,20 +286,12 @@ public final class AnnotationChildNodes {
 
         @Override
         public ListenerRef addChangeListener(final Runnable listener) {
-            final LookupListener wrapper = new LookupListener() {
-                @Override
-                public void resultChanged(LookupEvent ev) {
-                    listenerExecutor.execute(listener);
-                }
-            };
+            LookupListener wrapper = ev -> listenerExecutor.execute(listener);
 
             final Lookup.Result<NodeFactory> nodeLists = getNodeListsResult();
             nodeLists.addLookupListener(wrapper);
-            return NbListenerRefs.fromRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    nodeLists.removeLookupListener(wrapper);
-                }
+            return NbListenerRefs.fromRunnable(() -> {
+                nodeLists.removeLookupListener(wrapper);
             });
         }
     }

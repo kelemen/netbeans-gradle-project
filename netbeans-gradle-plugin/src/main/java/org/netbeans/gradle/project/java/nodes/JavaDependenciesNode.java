@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +29,6 @@ import org.netbeans.gradle.project.NbGradleProjectFactory;
 import org.netbeans.gradle.project.NbIcons;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
-import org.netbeans.gradle.project.api.task.CommandCompleteListener;
 import org.netbeans.gradle.project.java.JavaExtension;
 import org.netbeans.gradle.project.java.model.JavaProjectDependencies;
 import org.netbeans.gradle.project.java.model.JavaProjectDependencyDef;
@@ -178,12 +176,7 @@ public final class JavaDependenciesNode extends AbstractNode {
             //   One way to do this is to calculate all the nodes in the background and then check if it is the
             //   same as the one currently being displayed.
             lastModule.set(javaExt.getCurrentModel().getMainModule());
-            listenerRefs.add(javaExt.addModelChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    modelChanged();
-                }
-            }));
+            listenerRefs.add(javaExt.addModelChangeListener(this::modelChanged));
         }
 
         @Override
@@ -326,12 +319,7 @@ public final class JavaDependenciesNode extends AbstractNode {
         private static List<SingleNodeFactory> sortDependencyNodes(List<SingleNodeFactory> nodes) {
             SingleNodeFactory[] nodesArray = nodes.toArray(new SingleNodeFactory[nodes.size()]);
 
-            Arrays.sort(nodesArray, new Comparator<SingleNodeFactory>() {
-                @Override
-                public int compare(SingleNodeFactory o1, SingleNodeFactory o2) {
-                    return compareDependencyNodes(o1, o2);
-                }
-            });
+            Arrays.sort(nodesArray, DependenciesChildFactory::compareDependencyNodes);
 
             return Arrays.asList(nodesArray);
         }
@@ -716,12 +704,9 @@ public final class JavaDependenciesNode extends AbstractNode {
         @Override
         public void actionPerformed(ActionEvent e) {
             DaemonTaskDef taskDef = DownloadSourcesTask.createTaskDef(project);
-            GradleDaemonManager.submitGradleTask(SOURCES_DOWNLOADER, taskDef, new CommandCompleteListener() {
-                @Override
-                public void onComplete(Throwable error) {
-                    if (error != null) {
-                        project.displayError(NbStrings.getDownloadSourcesFailure(), error);
-                    }
+            GradleDaemonManager.submitGradleTask(SOURCES_DOWNLOADER, taskDef, (Throwable error) -> {
+                if (error != null) {
+                    project.displayError(NbStrings.getDownloadSourcesFailure(), error);
                 }
             });
         }

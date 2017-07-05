@@ -256,15 +256,12 @@ public class PredefinedTaskTest {
     }
 
     private static TaskVariableMap singletonVarMap(final String name, final String value) {
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                if (variable.getVariableName().equals(name)) {
-                    return value;
-                }
-                else {
-                    return null;
-                }
+        return (TaskVariable variable) -> {
+            if (variable.getVariableName().equals(name)) {
+                return value;
+            }
+            else {
+                return null;
             }
         };
     }

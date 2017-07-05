@@ -71,12 +71,7 @@ extends
     }
 
     private static void sortModules(List<NbGradleProjectTree> modules) {
-        Collections.sort(modules, new Comparator<NbGradleProjectTree>(){
-            @Override
-            public int compare(NbGradleProjectTree o1, NbGradleProjectTree o2) {
-                return StringUtils.STR_CMP.compare(o1.getProjectName(), o2.getProjectName());
-            }
-        });
+        modules.sort(Comparator.comparing(NbGradleProjectTree::getProjectName, StringUtils.STR_CMP::compare));
     }
 
     private static boolean hasRelevantDifferences(NbGradleProjectTree tree1, NbGradleProjectTree tree2) {
@@ -136,12 +131,7 @@ extends
     @Override
     protected void addNotify() {
         if (root) {
-            listenerRefs.add(project.currentModel().addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    modelChanged();
-                }
-            }));
+            listenerRefs.add(project.currentModel().addChangeListener(this::modelChanged));
         }
     }
 
@@ -168,16 +158,13 @@ extends
 
     @Override
     protected boolean createKeys(List<SingleNodeFactory> toPopulate) {
-        for (final NbGradleProjectTree subProject: getSubProjects()) {
-            toPopulate.add(new SingleNodeFactory() {
-                @Override
-                public Node createNode() {
-                    if (subProject.getChildren().isEmpty()) {
-                        return new SubModuleNode(project, subProject);
-                    }
-                    else {
-                        return new SubModuleWithChildren(project, subProject);
-                    }
+        for (NbGradleProjectTree subProject: getSubProjects()) {
+            toPopulate.add(() -> {
+                if (subProject.getChildren().isEmpty()) {
+                    return new SubModuleNode(project, subProject);
+                }
+                else {
+                    return new SubModuleWithChildren(project, subProject);
                 }
             });
         }

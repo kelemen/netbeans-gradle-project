@@ -20,13 +20,7 @@ public final class GradleCacheBinaryForSourceQuery extends AbstractBinaryForSour
 
     static {
         CHANGES = LazyChangeSupport.createSwing(new EventSource());
-
-        GradleFileUtils.GRADLE_USER_HOME.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                notifyCacheChange();
-            }
-        });
+        GradleFileUtils.GRADLE_USER_HOME.addChangeListener(GradleCacheBinaryForSourceQuery::notifyCacheChange);
     }
 
     public GradleCacheBinaryForSourceQuery() {

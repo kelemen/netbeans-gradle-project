@@ -108,11 +108,8 @@ public final class DefaultProjectSettingsProvider implements ProjectSettingsProv
             ExceptionHelper.checkNotNullArgument(cancelToken, "cancelToken");
             ExceptionHelper.checkNotNullArgument(settingsQueryListener, "settingsQueryListener");
 
-            profileLoader.loadActiveSettingsForProfile(profile, new ActiveSettingsQueryListener() {
-                @Override
-                public void onLoad(ActiveSettingsQuery settings) {
-                    settingsQueryListener.onLoad(new ExtensionActiveSettingsQuery(settings, extensionName));
-                }
+            profileLoader.loadActiveSettingsForProfile(profile, (ActiveSettingsQuery settings) -> {
+                settingsQueryListener.onLoad(new ExtensionActiveSettingsQuery(settings, extensionName));
             });
         }
     }

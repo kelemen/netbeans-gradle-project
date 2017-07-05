@@ -24,7 +24,6 @@ import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -92,11 +91,8 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
         ExceptionHelper.checkNotNullArgument(defaultDirProvider, "defaultDirProvider");
         ExceptionHelper.checkNotNullArgument(licenseSource, "licenseSource");
 
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return LicenseHeaderPanel.createSettingsPage(defaultDirProvider, licenseSource);
-            }
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> {
+            return LicenseHeaderPanel.createSettingsPage(defaultDirProvider, licenseSource);
         });
     }
 
@@ -109,12 +105,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
 
     private static NbSupplier<? extends Path> toDefaultDirProvider(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
-        return new NbSupplier<Path>() {
-            @Override
-            public Path get() {
-                return project.currentModel().getValue().getSettingsDir();
-            }
-        };
+        return () -> project.currentModel().getValue().getSettingsDir();
     }
 
     @Override
@@ -129,28 +120,21 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
                 result.add(new LicenseComboItem(ref));
             }
         }
-        Collections.sort(result, new Comparator<LicenseComboItem>() {
-            @Override
-            public int compare(LicenseComboItem o1, LicenseComboItem o2) {
-                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
-            }
-        });
+
+        result.sort(Comparator.comparing(Object::toString, StringUtils.STR_CMP::compare));
         return result;
     }
 
     private CancelableFunction<Runnable> asyncInitTask() {
-        return new CancelableFunction<Runnable>() {
-            @Override
-            public Runnable execute(CancellationToken cancelToken) throws Exception {
-                List<LicenseComboItem> builtInLicenses = getAllNonDynamicLicenses();
+        return (CancellationToken cancelToken) -> {
+            List<LicenseComboItem> builtInLicenses = getAllNonDynamicLicenses();
 
-                List<LicenseComboItem> items = new ArrayList<>(builtInLicenses.size() + 2);
-                items.add(LicenseComboItem.NO_LICENSE);
-                items.add(LicenseComboItem.CUSTOM_LICENSE);
-                items.addAll(builtInLicenses);
+            List<LicenseComboItem> items = new ArrayList<>(builtInLicenses.size() + 2);
+            items.add(LicenseComboItem.NO_LICENSE);
+            items.add(LicenseComboItem.CUSTOM_LICENSE);
+            items.addAll(builtInLicenses);
 
-                return updateComboTask(items);
-            }
+            return updateComboTask(items);
         };
     }
 
@@ -167,12 +151,7 @@ public class LicenseHeaderPanel extends javax.swing.JPanel implements ProfileEdi
     }
 
     private Runnable updateComboTask(final List<LicenseComboItem> items) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                updateCombo(items);
-            }
-        };
+        return () -> updateCombo(items);
     }
 
     private void displayLicenseHeaderInfo(final LicenseHeaderInfo info) {

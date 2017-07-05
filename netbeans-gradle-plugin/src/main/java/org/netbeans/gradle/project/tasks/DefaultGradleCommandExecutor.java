@@ -41,17 +41,14 @@ public final class DefaultGradleCommandExecutor implements GradleCommandExecutor
 
         Set<GradleActionProviderContext> actionContexts = Collections.emptySet();
 
-        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, new CommandCompleteListener() {
-            @Override
-            public void onComplete(Throwable error) {
-                try {
-                    CommandCompleteListener completeListener = customActions.getCommandCompleteListener();
-                    if (completeListener != null) {
-                        completeListener.onComplete(error);
-                    }
-                } finally {
-                    GradleTasks.projectTaskCompleteListener(project).onComplete(error);
+        Runnable asyncTask = GradleTasks.createAsyncGradleTask(project, taskDefFactory, actionContexts, (Throwable error) -> {
+            try {
+                CommandCompleteListener completeListener = customActions.getCommandCompleteListener();
+                if (completeListener != null) {
+                    completeListener.onComplete(error);
                 }
+            } finally {
+                GradleTasks.projectTaskCompleteListener(project).onComplete(error);
             }
         });
         asyncTask.run();

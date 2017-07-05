@@ -59,13 +59,8 @@ public final class DefaultScriptFileProvider implements ScriptFileProvider {
             Path baseDir,
             NbPredicate<? super String> baseNameFilter) throws IOException {
 
-        final List<Path> result = new ArrayList<>();
-        findScriptFiles(baseDir, baseNameFilter, new NbConsumer<Path>() {
-            @Override
-            public void accept(Path script) {
-                result.add(script);
-            }
-        });
+        List<Path> result = new ArrayList<>();
+        findScriptFiles(baseDir, baseNameFilter, result::add);
         return result;
     }
 

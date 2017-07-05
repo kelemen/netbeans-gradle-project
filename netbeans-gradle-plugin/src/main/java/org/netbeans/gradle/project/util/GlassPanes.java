@@ -36,32 +36,29 @@ public final class GlassPanes {
 
         ExceptionHelper.checkNotNullArgument(loadingCaption, "loadingCaption");
 
-        return new GlassPaneFactory() {
-            @Override
-            public JPanel createGlassPane() {
-                JPanel result = new JPanel(new GridBagLayout());
-                registerInputBlockers(result);
+        return () -> {
+            JPanel result = new JPanel(new GridBagLayout());
+            registerInputBlockers(result);
 
-                result.setBackground(LOADING_PANEL_BCKG);
-                result.setOpaque(false);
+            result.setBackground(LOADING_PANEL_BCKG);
+            result.setOpaque(false);
 
-                TextWithCancelPanel panel = new TextWithCancelPanel(loadingCaption, cancelTask);
-                panel.setOpaque(true);
-                panel.setBackground(LOADING_PANEL_BASE_BCKG);
+            TextWithCancelPanel panel = new TextWithCancelPanel(loadingCaption, cancelTask);
+            panel.setOpaque(true);
+            panel.setBackground(LOADING_PANEL_BASE_BCKG);
 
-                JLabel loadingLabel = panel.getPanelTextComponent();
+            JLabel loadingLabel = panel.getPanelTextComponent();
 
-                Font font = loadingLabel.getFont().deriveFont(24.0f);
-                loadingLabel.setBackground(LOADING_PANEL_BCKG);
-                loadingLabel.setFont(font);
-                loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                loadingLabel.setHorizontalTextPosition(SwingConstants.CENTER);
-                loadingLabel.setVerticalTextPosition(SwingConstants.CENTER);
+            Font font = loadingLabel.getFont().deriveFont(24.0f);
+            loadingLabel.setBackground(LOADING_PANEL_BCKG);
+            loadingLabel.setFont(font);
+            loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            loadingLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+            loadingLabel.setVerticalTextPosition(SwingConstants.CENTER);
 
-                result.add(panel, new GridBagConstraints());
+            result.add(panel, new GridBagConstraints());
 
-                return result;
-            }
+            return result;
         };
     }
 

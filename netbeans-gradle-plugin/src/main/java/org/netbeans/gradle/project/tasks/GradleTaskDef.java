@@ -469,23 +469,15 @@ public final class GradleTaskDef {
             return nullSafeProcessorFactory;
         }
 
-        return new SingleExecutionOutputProcessor() {
-            @Override
-            public TaskOutputProcessor startExecution(Project project) {
-                return mergedOutputProcessor(
-                        processor,
-                        nullSafeProcessorFactory.startExecution(project));
-            }
+        return (Project project) -> {
+            return mergedOutputProcessor(processor, nullSafeProcessorFactory.startExecution(project));
         };
     }
 
     private static TaskOutputProcessor mergedOutputProcessor(TaskOutputProcessor... processors) {
         final TaskOutputProcessor[] wrappedProcessors = processors.clone();
-        return new TaskOutputProcessor() {
-            @Override
-            public void processLine(String line) {
-                processByAll(wrappedProcessors, line);
-            }
+        return (String line) -> {
+            processByAll(wrappedProcessors, line);
         };
     }
 
@@ -560,15 +552,9 @@ public final class GradleTaskDef {
         if (verifier1 == null) return verifier2;
         if (verifier2 == null) return verifier1;
 
-        return new GradleTargetVerifier() {
-            @Override
-            public boolean checkTaskExecutable(
-                    GradleTarget gradleTarget,
-                    OutputWriter output,
-                    OutputWriter errOutput) {
-                return verifier1.checkTaskExecutable(gradleTarget, output, errOutput)
-                        && verifier2.checkTaskExecutable(gradleTarget, output, errOutput);
-            }
+        return (GradleTarget gradleTarget, OutputWriter output, OutputWriter errOutput) -> {
+            return verifier1.checkTaskExecutable(gradleTarget, output, errOutput)
+                    && verifier2.checkTaskExecutable(gradleTarget, output, errOutput);
         };
     }
 

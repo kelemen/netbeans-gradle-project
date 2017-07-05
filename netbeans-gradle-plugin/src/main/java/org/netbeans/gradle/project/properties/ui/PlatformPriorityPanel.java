@@ -15,10 +15,8 @@ import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.swing.SwingForwarderFactory;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.netbeans.api.java.platform.JavaPlatform;
@@ -182,18 +180,9 @@ public class PlatformPriorityPanel extends javax.swing.JPanel implements Profile
                 selectionModel.removeListSelectionListener(listener);
             }
         };
-        SwingForwarderFactory<ListSelectionListener> listenerForwarder = new SwingForwarderFactory<ListSelectionListener>() {
-            @Override
-            public ListSelectionListener createForwarder(final Runnable listener) {
-                return new ListSelectionListener() {
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        listener.run();
-                    }
-                };
-            }
-        };
-        return SwingProperties.fromSwingSource(swingSource, listenerForwarder);
+        return SwingProperties.fromSwingSource(swingSource, (Runnable listener) -> {
+            return e -> listener.run();
+        });
     }
 
     private void closeWindow() {

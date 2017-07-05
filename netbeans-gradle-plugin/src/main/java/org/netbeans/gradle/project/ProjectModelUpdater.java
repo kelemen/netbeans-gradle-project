@@ -26,19 +26,17 @@ public final class ProjectModelUpdater<M> {
         ExceptionHelper.checkNotNullArgument(modelUpdater, "modelUpdater");
 
         this.modelLoader = modelLoader;
-        this.modelUpdaterWrapper = new ModelRetrievedListener<M>() {
-            @Override
-            public void updateModel(M model, Throwable error) {
-                try {
-                    modelUpdater.updateModel(model, error);
-                } finally {
-                    loadedAtLeastOnceSignal.signal();
-                }
+        this.loadedAtLeastOnceSignal = new WaitableSignal();
+
+        this.modelUpdaterWrapper = (M model, Throwable error) -> {
+            try {
+                modelUpdater.updateModel(model, error);
+            } finally {
+                loadedAtLeastOnceSignal.signal();
             }
         };
 
         this.hasModelBeenLoaded = new AtomicBoolean(false);
-        this.loadedAtLeastOnceSignal = new WaitableSignal();
         this.lastInProgressRef = new AtomicReference<>(null);
     }
 
@@ -82,11 +80,8 @@ public final class ProjectModelUpdater<M> {
             lastInProgressRef.set(progressRef);
         }
 
-        modelLoader.fetchModel(mayUseCache, modelUpdaterWrapper, new Runnable() {
-            @Override
-            public void run() {
-                lastInProgressRef.compareAndSet(progressRef, null);
-            }
+        modelLoader.fetchModel(mayUseCache, modelUpdaterWrapper, () -> {
+            lastInProgressRef.compareAndSet(progressRef, null);
         });
     }
 

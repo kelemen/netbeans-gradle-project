@@ -6,11 +6,7 @@ public interface CloseableAction {
         public void close();
     }
 
-    public static CloseableAction.Ref CLOSED_REF = new Ref() {
-        @Override
-        public void close() {
-        }
-    };
+    public static CloseableAction.Ref CLOSED_REF = () -> { };
 
     public Ref open();
 }

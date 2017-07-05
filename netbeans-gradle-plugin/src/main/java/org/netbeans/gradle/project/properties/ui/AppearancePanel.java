@@ -1,10 +1,7 @@
 package org.netbeans.gradle.project.properties.ui;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Objects;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -14,8 +11,6 @@ import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
 import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -64,22 +59,12 @@ public class AppearancePanel extends javax.swing.JPanel implements ProfileEditor
         setupInheritCheck(jSourcesDisplayModeInheritCheck, jSourcesDisplayMode);
         setupInheritCheck(jProjectNodeNameInheritCheck, jDisplayNameCombo, jCustomDisplayNameEdit);
 
-        jDisplayNameCombo.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                updateCustomEditVisibility();
-            }
-        });
+        jDisplayNameCombo.addItemListener(e -> updateCustomEditVisibility());
         updateCustomEditVisibility();
     }
 
     public static ProfileBasedSettingsCategory createSettingsCategory(final boolean allowInherit) {
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return AppearancePanel.createSettingsPage(allowInherit);
-            }
-        });
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> AppearancePanel.createSettingsPage(allowInherit));
     }
 
     public static GlobalSettingsPage createSettingsPage(boolean allowInherit) {
@@ -128,23 +113,20 @@ public class AppearancePanel extends javax.swing.JPanel implements ProfileEditor
             items[i] = new SourcesDisplayModeItem(displayModes[i]);
         }
 
-        Arrays.sort(items, new Comparator<SourcesDisplayModeItem>() {
-            @Override
-            public int compare(SourcesDisplayModeItem o1, SourcesDisplayModeItem o2) {
-                JavaSourcesDisplayMode mode1 = o1.displayMode;
-                JavaSourcesDisplayMode mode2 = o2.displayMode;
-                if (mode1 == mode2) {
-                    return 0;
-                }
-                if (mode1 == JavaSourcesDisplayMode.DEFAULT_MODE) {
-                    return -1;
-                }
-                if (mode2 == JavaSourcesDisplayMode.DEFAULT_MODE) {
-                    return 1;
-                }
-
-                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+        Arrays.sort(items, (SourcesDisplayModeItem o1, SourcesDisplayModeItem o2) -> {
+            JavaSourcesDisplayMode mode1 = o1.displayMode;
+            JavaSourcesDisplayMode mode2 = o2.displayMode;
+            if (mode1 == mode2) {
+                return 0;
             }
+            if (mode1 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                return -1;
+            }
+            if (mode2 == JavaSourcesDisplayMode.DEFAULT_MODE) {
+                return 1;
+            }
+
+            return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
         });
 
         for (SourcesDisplayModeItem item: items) {

@@ -52,13 +52,7 @@ public final class OutputUrlConsumer implements OutputLinkFinder {
 
     public static Runnable getUrlOpenTask(final URL url) {
         ExceptionHelper.checkNotNullArgument(url, "url");
-
-        return new Runnable() {
-            @Override
-            public void run() {
-                HtmlBrowser.URLDisplayer.getDefault().showURLExternal(url);
-            }
-        };
+        return () -> HtmlBrowser.URLDisplayer.getDefault().showURLExternal(url);
     }
 
     public static OutputListener getUrlListener(final URL url) {

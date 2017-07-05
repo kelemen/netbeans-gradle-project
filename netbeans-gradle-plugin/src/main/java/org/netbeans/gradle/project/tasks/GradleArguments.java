@@ -68,21 +68,11 @@ public final class GradleArguments {
     }
 
     private static void addExtensionArgs(DaemonTaskContext context, List<String> result) {
-        addExtensionArgs(context, result, new ArgGetter() {
-            @Override
-            public List<String> getArgs(GradleArgumentQuery query, DaemonTaskContext context) {
-                return query.getExtraArgs(context);
-            }
-        });
+        addExtensionArgs(context, result, GradleArgumentQuery::getExtraArgs);
     }
 
     private static void addExtensionJvmArgs(DaemonTaskContext context, List<String> result) {
-        addExtensionArgs(context, result, new ArgGetter() {
-            @Override
-            public List<String> getArgs(GradleArgumentQuery query, DaemonTaskContext context) {
-                return query.getExtraJvmArgs(context);
-            }
-        });
+        addExtensionArgs(context, result, GradleArgumentQuery::getExtraJvmArgs);
     }
 
     private static Path tryGetUserInitScript(Project project) {

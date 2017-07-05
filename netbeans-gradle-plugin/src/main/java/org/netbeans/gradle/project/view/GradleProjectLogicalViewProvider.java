@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.swing.concurrent.SwingUpdateTaskExecutor;
@@ -70,12 +69,9 @@ implements
     @Override
     public void startRefresh() {
         final List<ModelRefreshListener> listeners = new ArrayList<>();
-        childRefreshListeners.onEvent(new EventDispatcher<ModelRefreshListener, Void>() {
-            @Override
-            public void onEvent(ModelRefreshListener eventListener, Void arg) {
-                eventListener.startRefresh();
-                listeners.add(eventListener);
-            }
+        childRefreshListeners.onEvent((ModelRefreshListener eventListener, Void arg) -> {
+            eventListener.startRefresh();
+            listeners.add(eventListener);
         }, null);
 
         Collection<ModelRefreshListener> prevListeners = listenersToFinalize.getAndSet(listeners);
@@ -100,34 +96,13 @@ implements
     public Node createLogicalView() {
         DataFolder projectFolder = DataFolder.findFolder(project.getProjectDirectory());
 
-        final GradleProjectNode result = new GradleProjectNode(projectFolder, actionProvider);
-
+        GradleProjectNode result = new GradleProjectNode(projectFolder, actionProvider);
         ProjectDisplayInfo displayInfo = project.getDisplayInfo();
 
-        final ListenerRef displayNameRef = displayInfo.displayName().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                result.fireDisplayNameChange();
-            }
-        });
-        final ListenerRef descriptionRef = displayInfo.description().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                result.fireShortDescriptionChange();
-            }
-        });
-        final ListenerRef modelListenerRef = project.currentModel().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                result.fireModelChange();
-            }
-        });
-        final ListenerRef infoListenerRef = project.getProjectIssueManager().addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                result.fireInfoChangeEvent();
-            }
-        });
+        final ListenerRef displayNameRef = displayInfo.displayName().addChangeListener(result::fireDisplayNameChange);
+        final ListenerRef descriptionRef = displayInfo.description().addChangeListener(result::fireShortDescriptionChange);
+        final ListenerRef modelListenerRef = project.currentModel().addChangeListener(result::fireModelChange);
+        final ListenerRef infoListenerRef = project.getProjectIssueManager().addChangeListener(result::fireInfoChangeEvent);
         result.addNodeListener(new NodeAdapter(){
             @Override
             public void nodeDestroyed(NodeEvent ev) {
@@ -190,39 +165,21 @@ implements
         }
 
         public void fireDisplayNameChange() {
-            displayNameChanges.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fireDisplayNameChange(null, null);
-                }
-            });
+            displayNameChanges.execute(() -> fireDisplayNameChange(null, null));
         }
 
         public void fireShortDescriptionChange() {
-            descriptionChanges.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fireShortDescriptionChange(null, null);
-                }
-            });
+            descriptionChanges.execute(() -> fireShortDescriptionChange(null, null));
         }
 
         public void fireModelChange() {
-            modelChanges.execute(new Runnable() {
-                @Override
-                public void run() {
-                    updateActionsList();
-                }
-            });
+            modelChanges.execute(this::updateActionsList);
         }
 
         public void fireInfoChangeEvent() {
-            iconChanges.execute(new Runnable() {
-                @Override
-                public void run() {
-                    fireIconChange();
-                    fireOpenedIconChange();
-                }
+            iconChanges.execute(() -> {
+                fireIconChange();
+                fireOpenedIconChange();
             });
         }
 
@@ -258,7 +215,7 @@ implements
                         = new EnumMap<>(ProjectIssue.Kind.class);
 
                 for (ProjectIssue.Kind kind: ProjectIssue.Kind.values()) {
-                    infoMap.put(kind, new ArrayList<String>());
+                    infoMap.put(kind, new ArrayList<>());
                 }
 
                 Kind mostImportantKind = Kind.INFO;

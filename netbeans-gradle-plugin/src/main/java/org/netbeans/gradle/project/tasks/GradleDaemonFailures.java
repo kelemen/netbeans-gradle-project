@@ -19,12 +19,9 @@ public final class GradleDaemonFailures {
 
     private static DaemonFailureHandler failureDueToJarCachingHandler() {
         String pattern = "JAR entry .*BuildAction.*\\.class not found in .*\\.jar";
-        return new RootCauseMessagePatternHandler(pattern, new DaemonFailureHandler() {
-            @Override
-            public boolean tryHandleFailure(Throwable failure) {
-                GlobalErrorReporter.showIssue(NbStrings.getCachedJarIssueMessage());
-                return true;
-            }
+        return new RootCauseMessagePatternHandler(pattern, (Throwable failure) -> {
+            GlobalErrorReporter.showIssue(NbStrings.getCachedJarIssueMessage());
+            return true;
         });
     }
 

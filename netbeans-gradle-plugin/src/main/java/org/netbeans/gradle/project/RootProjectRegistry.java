@@ -17,7 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jtrim.property.PropertyFactory;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.model.NbGradleModel;
 import org.netbeans.gradle.project.model.NbGradleProjectTree;
@@ -51,22 +50,12 @@ public final class RootProjectRegistry {
         return registerRootProjectModel(input);
     }
 
-    private CloseableAction registerAsCloseableAction(final NbGradleModel input) {
-        return new CloseableAction() {
-            @Override
-            public CloseableAction.Ref open() {
-                return registerAndUpdateProjects(input);
-            }
-        };
+    private CloseableAction registerAsCloseableAction(NbGradleModel input) {
+        return () -> registerAndUpdateProjects(input);
     }
 
     public PropertySource<CloseableAction> forProject(PropertySource<? extends NbGradleModel> currentModel) {
-        return PropertyFactory.convert(currentModel, new ValueConverter<NbGradleModel, CloseableAction>() {
-            @Override
-            public CloseableAction convert(NbGradleModel input) {
-                return registerAsCloseableAction(input);
-            }
-        });
+        return PropertyFactory.convert(currentModel, this::registerAsCloseableAction);
     }
 
     public CloseableAction.Ref registerRootProjectModel(NbGradleModel model) {
@@ -82,20 +71,17 @@ public final class RootProjectRegistry {
         }
 
         final List<Closeable> safeRefs = new ArrayList<>();
-        CloseableAction.Ref result = new CloseableAction.Ref() {
-            @Override
-            public void close() {
-                mainLock.lock();
-                try {
-                    RegisteredProjects value = rootProjects.get(key);
-                    if (value != null && value.id == regId) {
-                        rootProjects.remove(key);
-                    }
-
-                    Closeables.closeAll(safeRefs);
-                } finally {
-                    mainLock.unlock();
+        CloseableAction.Ref result = () -> {
+            mainLock.lock();
+            try {
+                RegisteredProjects value = rootProjects.get(key);
+                if (value != null && value.id == regId) {
+                    rootProjects.remove(key);
                 }
+
+                Closeables.closeAll(safeRefs);
+            } finally {
+                mainLock.unlock();
             }
         };
 

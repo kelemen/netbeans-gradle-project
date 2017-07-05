@@ -15,23 +15,20 @@ public final class GlobalErrorReporter {
     public static void showIssue(final String message, final Icon icon) {
         ExceptionHelper.checkNotNullArgument(message, "message");
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                NotificationDisplayer displayer = NotificationDisplayer.getDefault();
-                JLabel messageLabel = new JLabel(
-                        message,
-                        icon,
-                        SwingConstants.LEADING);
-                JLabel lineLabel = new JLabel(message);
+        SwingUtilities.invokeLater(() -> {
+            NotificationDisplayer displayer = NotificationDisplayer.getDefault();
+            JLabel messageLabel = new JLabel(
+                    message,
+                    icon,
+                    SwingConstants.LEADING);
+            JLabel lineLabel = new JLabel(message);
 
-                displayer.notify(
-                        NbStrings.getGlobalErrorReporterTitle(),
-                        ERROR_ICON,
-                        messageLabel,
-                        lineLabel,
-                        NotificationDisplayer.Priority.HIGH);
-            }
+            displayer.notify(
+                    NbStrings.getGlobalErrorReporterTitle(),
+                    ERROR_ICON,
+                    messageLabel,
+                    lineLabel,
+                    NotificationDisplayer.Priority.HIGH);
         });
     }
 

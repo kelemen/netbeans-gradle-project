@@ -7,7 +7,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.netbeans.api.java.queries.SourceForBinaryQuery;
 import org.netbeans.gradle.model.util.BasicFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SafeTmpFolder;
 import org.netbeans.gradle.project.util.TestBinaryUtils;
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2;
@@ -24,12 +23,7 @@ public class GradleHomeSourceForBinaryQueryTest {
 
     private GradleHomeSourceForBinaryQuery createWithRoot(File rootDir) {
         final FileObject rootObj = rootDir != null ? FileUtil.toFileObject(rootDir) : null;
-        return new GradleHomeSourceForBinaryQuery(new NbSupplier<FileObject>() {
-            @Override
-            public FileObject get() {
-                return rootObj;
-            }
-        });
+        return new GradleHomeSourceForBinaryQuery(() -> rootObj);
     }
 
     private void doTestFindSourceOfStandardLibInSubDir(String... jarSubDir) throws IOException {

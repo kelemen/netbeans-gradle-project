@@ -14,18 +14,15 @@ import org.netbeans.spi.project.ProjectConfiguration;
 public final class NbGradleConfiguration implements ProjectConfiguration {
     public static final NbGradleConfiguration DEFAULT_CONFIG = new NbGradleConfiguration(null);
 
-    private static final Comparator<NbGradleConfiguration> ALPHABETICAL_ORDER = new Comparator<NbGradleConfiguration>() {
-        @Override
-        public int compare(NbGradleConfiguration o1, NbGradleConfiguration o2) {
-            if (DEFAULT_CONFIG.equals(o1)) {
-                return DEFAULT_CONFIG.equals(o2) ? 0 : -1;
-            }
-            if (DEFAULT_CONFIG.equals(o2)) {
-                return DEFAULT_CONFIG.equals(o1) ? 0 : 1;
-            }
-
-            return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
+    private static final Comparator<NbGradleConfiguration> ALPHABETICAL_ORDER = (o1, o2) -> {
+        if (DEFAULT_CONFIG.equals(o1)) {
+            return DEFAULT_CONFIG.equals(o2) ? 0 : -1;
         }
+        if (DEFAULT_CONFIG.equals(o2)) {
+            return DEFAULT_CONFIG.equals(o1) ? 0 : 1;
+        }
+
+        return StringUtils.STR_CMP.compare(o1.getDisplayName(), o2.getDisplayName());
     };
 
     private final ProfileDef profileDef;

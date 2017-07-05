@@ -11,23 +11,10 @@ import org.netbeans.gradle.project.util.NbTaskExecutors;
 
 public final class LicenseManagers {
     public static LicenseManager<NbGradleModel> createProjectLicenseManager(LicenseStore<DefaultLicenseDef> licenseStore) {
-        NbFunction<NbGradleModel, Path> licenseRootProvider = new NbFunction<NbGradleModel, Path>() {
-            @Override
-            public Path apply(NbGradleModel ownerModel) {
-                return ownerModel.getSettingsDir();
-            }
-        };
-
-        NbFunction<NbGradleModel, String> modelNameProvider = new NbFunction<NbGradleModel, String>() {
-            @Override
-            public String apply(NbGradleModel ownerModel) {
-                return NbFileUtils.getFileNameStr(ownerModel.getSettingsDir());
-            }
-        };
-
         TaskExecutor executor = NbTaskExecutors.DEFAULT_EXECUTOR;
-
-        return createLicenseManager(executor, licenseStore, licenseRootProvider, modelNameProvider);
+        return createLicenseManager(executor, licenseStore, NbGradleModel::getSettingsDir, (NbGradleModel ownerModel) -> {
+            return NbFileUtils.getFileNameStr(ownerModel.getSettingsDir());
+        });
     }
 
     public static <T> LicenseManager<T> createLicenseManager(
@@ -40,18 +27,12 @@ public final class LicenseManagers {
         ExceptionHelper.checkNotNullArgument(licenseRootProvider, "licenseRootProvider");
         ExceptionHelper.checkNotNullArgument(modelNameProvider, "modelNameProvider");
 
-        NbBiFunction<T, LicenseHeaderInfo, DefaultLicenseKey> licenseKeyFactory = new NbBiFunction<T, LicenseHeaderInfo, DefaultLicenseKey>() {
-            @Override
-            public DefaultLicenseKey apply(T ownerModel, LicenseHeaderInfo licenseHeader) {
-                return tryCreateLicenseKey(ownerModel, licenseHeader, licenseRootProvider);
-            }
+        NbBiFunction<T, LicenseHeaderInfo, DefaultLicenseKey> licenseKeyFactory = (T ownerModel, LicenseHeaderInfo licenseHeader) -> {
+            return tryCreateLicenseKey(ownerModel, licenseHeader, licenseRootProvider);
         };
 
-        NbBiFunction<T, DefaultLicenseKey, DefaultLicenseDef> licenseDefFactory = new NbBiFunction<T, DefaultLicenseKey, DefaultLicenseDef>() {
-            @Override
-            public DefaultLicenseDef apply(T ownerModel, DefaultLicenseKey licenseKey) {
-                return createLicenseDef(ownerModel, licenseKey, modelNameProvider);
-            }
+        NbBiFunction<T, DefaultLicenseKey, DefaultLicenseDef> licenseDefFactory = (T ownerModel, DefaultLicenseKey licenseKey) -> {
+            return createLicenseDef(ownerModel, licenseKey, modelNameProvider);
         };
 
         return new LicenseManager<>(executor, licenseStore, licenseKeyFactory, licenseDefFactory);

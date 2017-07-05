@@ -59,11 +59,6 @@ public abstract class TaskTabAction extends AbstractAction {
     }
 
     public final void setEnableAction(final boolean enabled) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setEnabled(enabled);
-            }
-        });
+        SwingUtilities.invokeLater(() -> setEnabled(enabled));
     }
 }

@@ -11,8 +11,6 @@ import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationController;
 import org.jtrim.cancel.CancellationSource;
 import org.jtrim.cancel.CancellationToken;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.project.Project;
@@ -23,7 +21,6 @@ import org.netbeans.gradle.project.util.NbFileUtils;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Cancellable;
 
 public final class DeleteProjectAction extends AbstractAction {
     private static final long serialVersionUID = -386797460711624644L;
@@ -69,12 +66,9 @@ public final class DeleteProjectAction extends AbstractAction {
 
     private ProgressHandle createProgress(final CancellationController cancelController) {
         String caption = NbStrings.getDeleteProjectProgress(project.getDisplayName());
-        return ProgressHandle.createHandle(caption, new Cancellable() {
-            @Override
-            public boolean cancel() {
-                cancelController.cancel();
-                return true;
-            }
+        return ProgressHandle.createHandle(caption, () -> {
+            cancelController.cancel();
+            return true;
         });
     }
 
@@ -91,17 +85,9 @@ public final class DeleteProjectAction extends AbstractAction {
         final ProgressHandle progress = createProgress(cancel.getController());
 
         progress.start();
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) {
-                doRemoveProject(cancelToken);
-            }
-        }, new CleanupTask() {
-            @Override
-            public void cleanup(boolean canceled, Throwable error) throws Exception {
-                NbTaskExecutors.defaultCleanup(canceled, error);
-                progress.finish();
-            }
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(cancel.getToken(), this::doRemoveProject, (canceled, error) -> {
+            NbTaskExecutors.defaultCleanup(canceled, error);
+            progress.finish();
         });
     }
 }

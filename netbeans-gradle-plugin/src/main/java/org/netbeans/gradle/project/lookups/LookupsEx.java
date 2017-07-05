@@ -10,12 +10,7 @@ public final class LookupsEx {
         ExceptionHelper.checkNotNullArgument(src, "src");
         ExceptionHelper.checkNotNullArgument(type, "type");
 
-        return new NbSupplier<Collection<? extends T>>() {
-            @Override
-            public Collection<? extends T> get() {
-                return src.lookupAll(type);
-            }
-        };
+        return () -> src.lookupAll(type);
     }
 
     private LookupsEx() {

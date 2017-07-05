@@ -43,28 +43,22 @@ public final class CloseableActionContainer {
         final CloseableAction[] actionsCopy = actions.clone();
         ExceptionHelper.checkNotNullElements(actionsCopy, "actions");
 
-        return new CloseableAction() {
-            @Override
-            public Ref open() {
-                Ref[] result = new Ref[actionsCopy.length];
-                for (int i = 0; i < result.length; i++) {
-                    result[i] = actionsCopy[i].open();
-                }
-                return mergeActionRefs(result);
+        return () -> {
+            CloseableAction.Ref[] result = new CloseableAction.Ref[actionsCopy.length];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = actionsCopy[i].open();
             }
+            return mergeActionRefs(result);
         };
     }
 
     private static CloseableAction.Ref mergeActionRefs(final CloseableAction.Ref[] refs) {
-        return new CloseableAction.Ref() {
-            @Override
-            public void close() {
-                for (CloseableAction.Ref ref: refs) {
-                    try {
-                        ref.close();
-                    } catch (Throwable ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected close exception.", ex);
-                    }
+        return () -> {
+            for (CloseableAction.Ref ref: refs) {
+                try {
+                    ref.close();
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected close exception.", ex);
                 }
             }
         };
@@ -101,23 +95,12 @@ public final class CloseableActionContainer {
         ExceptionHelper.checkNotNullArgument(listenerRegistry, "listenerRegistry");
         ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-        CloseableAction action = new CloseableAction() {
-            @Override
-            public CloseableAction.Ref open() {
-                return toActionRef(listenerRegistry.registerListener(listener));
-            }
-        };
+        CloseableAction action = () -> toActionRef(listenerRegistry.registerListener(listener));
         return defineAction(PropertyFactory.constSource(action), executor);
     }
 
-    private static CloseableAction.Ref toActionRef(final ListenerRef ref) {
-        ExceptionHelper.checkNotNullArgument(ref, "ref");
-        return new CloseableAction.Ref() {
-            @Override
-            public void close() {
-                ref.unregister();
-            }
-        };
+    private static CloseableAction.Ref toActionRef(ListenerRef ref) {
+        return ref::unregister;
     }
 
     public CloseableAction.Ref defineAction(CloseableAction action) {
@@ -144,27 +127,21 @@ public final class CloseableActionContainer {
             actionsLock.unlock();
         }
 
-        executeSync(new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                if (opened) {
-                    actionDef.open();
-                }
+        executeSync((CancellationToken cancelToken) -> {
+            if (opened) {
+                actionDef.open();
             }
         });
 
-        return new CloseableAction.Ref() {
-            @Override
-            public void close() {
-                actionsLock.lock();
-                try {
-                    elementRef.remove();
-                } finally {
-                    actionsLock.unlock();
-                }
-
-                actionDef.closeForGood();
+        return () -> {
+            actionsLock.lock();
+            try {
+                elementRef.remove();
+            } finally {
+                actionsLock.unlock();
             }
+
+            actionDef.closeForGood();
         };
     }
 
@@ -202,21 +179,15 @@ public final class CloseableActionContainer {
     }
 
     public void open() {
-        executeSync(new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                openNow();
-            }
+        executeSync((CancellationToken cancelToken) -> {
+            openNow();
         });
     }
 
     public void close() {
-        executeSync(new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                if (opened) {
-                    closeNow();
-                }
+        executeSync((CancellationToken cancelToken) -> {
+            if (opened) {
+                closeNow();
             }
         });
     }
@@ -253,12 +224,9 @@ public final class CloseableActionContainer {
         }
 
         public void replaceAction() {
-            executeSync(new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    closeNow();
-                    openNow();
-                }
+            executeSync((CancellationToken cancelToken) -> {
+                closeNow();
+                openNow();
             });
         }
 
@@ -274,24 +242,16 @@ public final class CloseableActionContainer {
                 prevActionChangeRef.unregister();
             }
 
-            actionChangeRef = actionProperty.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    replaceAction();
-                }
-            });
+            actionChangeRef = actionProperty.addChangeListener(this::replaceAction);
 
             CloseableAction action = actionProperty.getValue();
             openedActionRef = action != null ? action.open() : null;
         }
 
         public void open() {
-            executeSync(new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    if (openedActionRef == null) {
-                        openNow();
-                    }
+            executeSync((CancellationToken cancelToken) -> {
+                if (openedActionRef == null) {
+                    openNow();
                 }
             });
         }
@@ -313,21 +273,15 @@ public final class CloseableActionContainer {
         }
 
         public void close() {
-            executeSync(new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    closeNow();
-                }
+            executeSync((CancellationToken cancelToken) -> {
+                closeNow();
             });
         }
 
         public void closeForGood() {
-            executeSync(new CancelableTask() {
-                @Override
-                public void execute(CancellationToken cancelToken) throws Exception {
-                    closedForGood = true;
-                    closeNow();
-                }
+            executeSync((CancellationToken cancelToken) -> {
+                closedForGood = true;
+                closeNow();
             });
         }
     }

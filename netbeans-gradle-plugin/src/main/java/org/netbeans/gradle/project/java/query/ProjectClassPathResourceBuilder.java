@@ -264,7 +264,7 @@ public final class ProjectClassPathResourceBuilder {
 
         setClassPathResources(
                 SpecialClassPath.ALL_RUNTIME,
-                getPathResources(classPaths, new HashSet<File>()));
+                getPathResources(classPaths, new HashSet<>()));
     }
 
     private void loadRuntimeForGlobalClassPath(NbJavaModel projectModel) {
@@ -279,7 +279,7 @@ public final class ProjectClassPathResourceBuilder {
 
         setClassPathResources(
                 SpecialClassPath.RUNTIME_FOR_GLOBAL,
-                getPathResources(classPaths, new HashSet<File>()));
+                getPathResources(classPaths, new HashSet<>()));
     }
 
     private void loadCompileForGlobalClassPath(NbJavaModel projectModel) {
@@ -294,7 +294,7 @@ public final class ProjectClassPathResourceBuilder {
 
         setClassPathResources(
                 SpecialClassPath.COMPILE_FOR_GLOBAL,
-                getPathResources(classPaths, new HashSet<File>()));
+                getPathResources(classPaths, new HashSet<>()));
     }
 
     private void removeOtherBuildOutputDirs(NbJavaModel projectModel, Set<File> classPaths) {
@@ -320,7 +320,7 @@ public final class ProjectClassPathResourceBuilder {
 
         setClassPathResources(
                 SpecialClassPath.ALL_BUILD_OUTPUT,
-                getPathResources(classPaths, new HashSet<File>()));
+                getPathResources(classPaths, new HashSet<>()));
     }
 
     private void setClassPathResources(

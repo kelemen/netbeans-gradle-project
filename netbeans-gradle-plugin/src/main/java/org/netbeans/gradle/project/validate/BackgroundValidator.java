@@ -13,12 +13,10 @@ import org.jtrim.collections.RefList;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
 import org.jtrim.concurrent.UpdateTaskExecutor;
-import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
 import org.jtrim.property.MutableProperty;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.property.swing.SwingProperties;
 import org.jtrim.property.swing.SwingPropertySource;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
@@ -41,18 +39,10 @@ public final class BackgroundValidator {
         this.validator = new MostSevereValidator();
 
         this.currentProblem = lazilySetProperty(memProperty((Problem)null, true), Equality.<Problem>referenceEquality());
-        this.currentProblemForSwing = SwingProperties.toSwingSource(currentProblem, new EventDispatcher<ChangeListener, Void>() {
-            @Override
-            public void onEvent(ChangeListener eventListener, Void arg) {
-                eventListener.stateChanged(new ChangeEvent(BackgroundValidator.this));
-            }
+        this.currentProblemForSwing = SwingProperties.toSwingSource(currentProblem, (ChangeListener eventListener, Void arg) -> {
+            eventListener.stateChanged(new ChangeEvent(BackgroundValidator.this));
         });
-        this.valid = convert(currentProblem, new ValueConverter<Problem, Boolean>() {
-            @Override
-            public Boolean convert(Problem input) {
-                return input == null || input.getLevel() != Problem.Level.SEVERE;
-            }
-        });
+        this.valid = convert(currentProblem, input -> input == null || input.getLevel() != Problem.Level.SEVERE);
     }
 
     public <InputType> ListenerRef addValidator(
@@ -73,27 +63,16 @@ public final class BackgroundValidator {
 
         final UpdateTaskExecutor updateReader = new GenericUpdateTaskExecutor(inputReaderExecutor);
 
-        final AtomicReference<InputType> valueRef = new AtomicReference<>(input.getValue());
-        final Runnable updateValueTask = new Runnable() {
-            @Override
-            public void run() {
-                valueRef.set(input.getValue());
-                performValidation();
-            }
+        AtomicReference<InputType> valueRef = new AtomicReference<>(input.getValue());
+        Runnable updateValueTask = () -> {
+            valueRef.set(input.getValue());
+            performValidation();
         };
 
-        ListenerRef ref1 = input.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                updateReader.execute(updateValueTask);
-            }
+        ListenerRef ref1 = input.addChangeListener(() -> {
+            updateReader.execute(updateValueTask);
         });
-        ListenerRef ref2 = this.validator.addValidator(new Validator<Void>() {
-            @Override
-            public Problem validateInput(Void inputType) {
-                return validator.validateInput(valueRef.get());
-            }
-        });
+        ListenerRef ref2 = this.validator.addValidator((Void inputType) -> validator.validateInput(valueRef.get()));
 
         performValidation();
 
@@ -121,12 +100,9 @@ public final class BackgroundValidator {
     }
 
     private void performValidation() {
-        validationExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                Problem problem = validator.validateInput(null);
-                currentProblem.setValue(problem);
-            }
+        validationExecutor.execute(() -> {
+            Problem problem = validator.validateInput(null);
+            currentProblem.setValue(problem);
         });
     }
 

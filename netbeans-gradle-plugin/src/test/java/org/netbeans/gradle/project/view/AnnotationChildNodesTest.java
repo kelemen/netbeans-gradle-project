@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.netbeans.api.project.Project;
 import org.netbeans.gradle.project.api.nodes.SingleNodeFactory;
 import org.netbeans.gradle.project.properties.NbProperties;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.SwingTest;
 import org.netbeans.gradle.project.util.SwingTestAware;
 import org.netbeans.spi.project.ui.support.NodeFactory;
@@ -45,12 +44,7 @@ public class AnnotationChildNodesTest extends SwingTestAware {
     private AnnotationChildNodes testNodes(Object... factories) {
         final Lookup lookup = Lookups.fixed(factories);
         Project project = mockProject();
-        return new AnnotationChildNodes(project, new NbSupplier<Lookup>() {
-            @Override
-            public Lookup get() {
-                return lookup;
-            }
-        });
+        return new AnnotationChildNodes(project, () -> lookup);
     }
 
     private static NodeList<?> testNodeList(PropertySource<? extends TestNodeListSnapshot> nodeList) {
@@ -58,12 +52,9 @@ public class AnnotationChildNodesTest extends SwingTestAware {
     }
 
     private static NodeFactory testNodeFactory(final PropertySource<? extends TestNodeListSnapshot> nodeList) {
-        return new NodeFactory() {
-            @Override
-            public NodeList<?> createNodes(Project project) {
-                ExceptionHelper.checkNotNullArgument(project, "project");
-                return testNodeList(nodeList);
-            }
+        return (Project project) -> {
+            ExceptionHelper.checkNotNullArgument(project, "project");
+            return testNodeList(nodeList);
         };
     }
 

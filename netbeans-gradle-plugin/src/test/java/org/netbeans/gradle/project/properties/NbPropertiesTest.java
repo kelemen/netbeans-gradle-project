@@ -24,19 +24,14 @@ public class NbPropertiesTest {
 
     private static void addWeakListener(
             PropertySource<?> property,
-            final AtomicInteger listenerCallCount,
+            AtomicInteger listenerCallCount,
             AtomicReference<ListenerRef> resultRef) {
         // We do this in a separate method to decrease the chance that
         // some hidden local variable will keep a hard reference to the listener
         // or the ListenerRef.
 
         PropertySource<?> weakProperty = NbProperties.weakListenerProperty(property);
-        resultRef.set(weakProperty.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                listenerCallCount.incrementAndGet();
-            }
-        }));
+        resultRef.set(weakProperty.addChangeListener(listenerCallCount::incrementAndGet));
     }
 
     @Test

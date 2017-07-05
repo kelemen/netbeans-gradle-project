@@ -1,8 +1,6 @@
 package org.netbeans.gradle.project.properties;
 
 import java.awt.Dialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.model.util.CollectionUtils;
@@ -67,12 +64,9 @@ public final class GradleCustomizer implements CustomizerProvider {
         CustomizerCategoryId categoryId = settingsCategory.getCategoryId();
         final ProfileBasedSettingsPageFactory pageFactory = settingsCategory.getSettingsPageFactory();
 
-        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), new ProfileBasedCustomizer.PanelFactory() {
-            @Override
-            public ProfileBasedPanel createPanel() {
-                ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
-                return ProfileBasedPanel.createPanel(project, settingsPage);
-            }
+        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), () -> {
+            ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
+            return ProfileBasedPanel.createPanel(project, settingsPage);
         });
     }
 
@@ -156,37 +150,27 @@ public final class GradleCustomizer implements CustomizerProvider {
             }
         }
 
-        ProjectCustomizer.CategoryComponentProvider panelProvider = new ProjectCustomizer.CategoryComponentProvider() {
-            @Override
-            public JComponent create(ProjectCustomizer.Category category) {
-                String name = category.getName();
-                if (name == null) {
-                    LOGGER.log(Level.WARNING, "null category name.");
-                    return new JPanel();
-                }
-
-                ProjectCustomizer.CompositeCategoryProvider customizer = customizersByName.get(name);
-                if (customizer == null) {
-                    LOGGER.log(Level.WARNING, "Requested category cannot be found {0}.", name);
-                    return new JPanel();
-                }
-
-                return customizer.createComponent(category, lookup);
+        ProjectCustomizer.CategoryComponentProvider panelProvider = (ProjectCustomizer.Category category) -> {
+            String name = category.getName();
+            if (name == null) {
+                LOGGER.log(Level.WARNING, "null category name.");
+                return new JPanel();
             }
-        };
 
-        ActionListener okListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // no-op
+            ProjectCustomizer.CompositeCategoryProvider customizer = customizersByName.get(name);
+            if (customizer == null) {
+                LOGGER.log(Level.WARNING, "Requested category cannot be found {0}.", name);
+                return new JPanel();
             }
+
+            return customizer.createComponent(category, lookup);
         };
 
         Dialog dlg = ProjectCustomizer.createCustomizerDialog(
                 categories,
                 panelProvider,
                 CommonProjectPropertiesPanel.CATEGORY_ID.getCategoryName(),
-                okListener,
+                e -> { },
                 HelpCtx.DEFAULT_HELP);
 
         dlg.setTitle(NbStrings.getProjectPropertiesDlgTitle(project.getDisplayName()));

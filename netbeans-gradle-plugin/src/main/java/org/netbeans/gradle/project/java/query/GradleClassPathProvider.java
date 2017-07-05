@@ -52,9 +52,7 @@ import org.netbeans.gradle.project.script.ScriptFileProvider;
 import org.netbeans.gradle.project.util.ExcludeIncludeRules;
 import org.netbeans.gradle.project.util.LazyValue;
 import org.netbeans.gradle.project.util.ListenerRegistrations;
-import org.netbeans.gradle.project.util.NbConsumer;
 import org.netbeans.gradle.project.util.NbFileUtils;
-import org.netbeans.gradle.project.util.NbSupplier;
 import org.netbeans.gradle.project.util.NbTaskExecutors;
 import org.netbeans.spi.java.classpath.ClassPathFactory;
 import org.netbeans.spi.java.classpath.ClassPathImplementation;
@@ -97,12 +95,7 @@ implements
         this.currentPlatformRef = new AtomicReference<>(null);
         this.infoRefRef = new AtomicReference<>(null);
         this.loadedOnce = false;
-        this.scriptFileProviderRef = new LazyValue<>(new NbSupplier<ScriptFileProvider>() {
-            @Override
-            public ScriptFileProvider get() {
-                return javaExt.getProject().getLookup().lookup(ScriptFileProvider.class);
-            }
-        });
+        this.scriptFileProviderRef = new LazyValue<>(() -> javaExt.getProject().getLookup().lookup(ScriptFileProvider.class));
 
         this.classpathResourcesRef = new AtomicReference<>(Collections.<ClassPathKey, List<PathResourceImplementation>>emptyMap());
         this.classpaths = new ConcurrentHashMap<>();
@@ -171,11 +164,8 @@ implements
     }
 
     private void scheduleReloadPathResources() {
-        classpathUpdateExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                loadPathResources(javaExt.getCurrentModel());
-            }
+        classpathUpdateExecutor.execute(() -> {
+            loadPathResources(javaExt.getCurrentModel());
         });
     }
 
@@ -207,32 +197,17 @@ implements
     @Override
     public void onInitProject() {
         PropertySource<ProjectPlatform> platformProperty = NbProperties.weakListenerProperty(getPlatformProperty());
-        propertyListenerRefs.add(platformProperty.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                onPlatformChange();
-            }
-        }));
+        propertyListenerRefs.add(platformProperty.addChangeListener(this::onPlatformChange));
 
         PropertyReference<Boolean> detectProjectDependenciesByJarNameRef = CommonGlobalSettings.getDefault()
                 .detectProjectDependenciesByJarName();
         PropertySource<Boolean> detectProjectDependenciesByJarName
                 = NbProperties.weakListenerProperty(PropertyFactory.lazilyNotifiedProperty(detectProjectDependenciesByJarNameRef.getForActiveProfile()));
-        propertyListenerRefs.add(detectProjectDependenciesByJarName.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                scheduleReloadPathResources();
-            }
-        }));
+        propertyListenerRefs.add(detectProjectDependenciesByJarName.addChangeListener(this::scheduleReloadPathResources));
 
         PropertySource<?> translatedDependencies
                 = NbProperties.weakListenerProperty(javaExt.getProjectDependencies().translatedDependencies());
-        propertyListenerRefs.add(translatedDependencies.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                scheduleReloadPathResources();
-            }
-        }));
+        propertyListenerRefs.add(translatedDependencies.addChangeListener(this::scheduleReloadPathResources));
     }
 
     // These PropertyChangeListener methods are declared because
@@ -328,7 +303,7 @@ implements
                 ExcludeIncludeRules includeRules = ExcludeIncludeRules.create(sourceGroup);
                 Set<File> sourceRoots = sourceGroup.getSourceRoots();
 
-                result.addAll(getPathResources(sourceRoots, new HashSet<File>(), includeRules));
+                result.addAll(getPathResources(sourceRoots, new HashSet<>(), includeRules));
             }
         }
     }
@@ -358,13 +333,10 @@ implements
 
     private void loadPathResources(NbJavaModel projectModel) {
         JavaProjectDependencies projectDependencies = javaExt.getProjectDependencies();
-        projectDependencies.forAllCandidates(new NbConsumer<ProjectDependencyCandidate>() {
-            @Override
-            public void accept(ProjectDependencyCandidate candidate) {
-                NbGradleProject gradleProject = candidate.getProject().getLookup().lookup(NbGradleProject.class);
-                if (gradleProject != null) {
-                    gradleProject.ensureLoadRequested();
-                }
+        projectDependencies.forAllCandidates((ProjectDependencyCandidate candidate) -> {
+            NbGradleProject gradleProject = candidate.getProject().getLookup().lookup(NbGradleProject.class);
+            if (gradleProject != null) {
+                gradleProject.ensureLoadRequested();
             }
         });
 
@@ -400,11 +372,8 @@ implements
 
         boolean changed = !prevClasspathResources.equals(newClasspathResources);
         if (changed) {
-            changesNotifier.execute(new Runnable() {
-                @Override
-                public void run() {
-                    changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
-                }
+            changesNotifier.execute(() -> {
+                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
             });
         }
 

@@ -56,17 +56,14 @@ public final class SubPathConsumer implements OutputLinkFinder {
             return linkFinders.get(0);
         }
 
-        return new OutputLinkFinder() {
-            @Override
-            public OutputLinkDef tryFindLink(String line) {
-                for (OutputLinkFinder linkFinder: linkFinders) {
-                    OutputLinkDef result = linkFinder.tryFindLink(line);
-                    if (result != null) {
-                        return result;
-                    }
+        return (String line) -> {
+            for (OutputLinkFinder linkFinder: linkFinders) {
+                OutputLinkDef result = linkFinder.tryFindLink(line);
+                if (result != null) {
+                    return result;
                 }
-                return null;
             }
+            return null;
         };
     }
 

@@ -51,17 +51,14 @@ public final class GradleTasks {
     public static CommandCompleteListener projectTaskCompleteListener(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
 
-        return new CommandCompleteListener() {
-            @Override
-            public void onComplete(Throwable error) {
-                if (error != null) {
-                    LOGGER.log(error instanceof Exception ? Level.INFO : Level.SEVERE,
-                            "Gradle build failure.",
-                            error);
+        return (Throwable error) -> {
+            if (error != null) {
+                LOGGER.log(error instanceof Exception ? Level.INFO : Level.SEVERE,
+                        "Gradle build failure.",
+                        error);
 
-                    String buildFailureMessage = NbStrings.getGradleTaskFailure();
-                    project.displayError(buildFailureMessage, error);
-                }
+                String buildFailureMessage = NbStrings.getGradleTaskFailure();
+                project.displayError(buildFailureMessage, error);
             }
         };
     }

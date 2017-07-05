@@ -19,7 +19,6 @@ import javax.swing.SwingUtilities;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.collections.CollectionsEx;
-import org.jtrim.concurrent.CancelableTask;
 import org.jtrim.concurrent.GenericUpdateTaskExecutor;
 import org.jtrim.concurrent.MonitorableTaskExecutor;
 import org.jtrim.concurrent.TaskExecutor;
@@ -203,28 +202,21 @@ public final class NbGradleConfigProvider {
             return;
         }
 
-        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
-                removeFromConfig(config);
-                Path profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
-                if (!Files.deleteIfExists(profileFile)) {
-                    LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
-                }
-
-                fireConfigurationListChange();
-
+        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            removeFromConfig(config);
+            Path profileFile = SettingsFiles.getFilesForProfile(rootDirectory, config.getProfileDef())[0];
+            if (!Files.deleteIfExists(profileFile)) {
+                LOGGER.log(Level.INFO, "Profile was deleted but no profile file was found: {0}", profileFile);
             }
+
+            fireConfigurationListChange();
         }, null);
     }
 
     public void addConfiguration(final NbGradleConfiguration config) {
-        executeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                addToConfig(Collections.singleton(config));
-                fireConfigurationListChange();
-            }
+        executeOnEdt(() -> {
+            addToConfig(Collections.singleton(config));
+            fireConfigurationListChange();
         });
     }
 
@@ -317,11 +309,8 @@ public final class NbGradleConfigProvider {
     }
 
     private void saveActiveProfile() {
-        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws IOException {
-                saveActiveProfileNow();
-            }
+        profileIOExecutor.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            saveActiveProfileNow();
         }, null);
     }
 
@@ -361,12 +350,7 @@ public final class NbGradleConfigProvider {
     }
 
     private void updateByKey(final ProfileKey profileKey) {
-        profileApplierExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                updateByKeyNow(profileKey);
-            }
-        });
+        profileApplierExecutor.execute(() -> updateByKeyNow(profileKey));
     }
 
     public void setActiveConfiguration(final NbGradleConfiguration configuration) {

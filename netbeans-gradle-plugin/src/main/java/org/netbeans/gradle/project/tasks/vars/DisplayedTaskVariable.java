@@ -74,16 +74,11 @@ public final class DisplayedTaskVariable {
     }
 
     public static TaskVariableMap variableMap(Map<DisplayedTaskVariable, String> map) {
-        final Map<TaskVariable, String> appliedMap = new HashMap<>();
+        Map<TaskVariable, String> appliedMap = new HashMap<>();
         for (Map.Entry<DisplayedTaskVariable, String> entry: map.entrySet()) {
             appliedMap.put(entry.getKey().getVariable(), entry.getValue());
         }
 
-        return new TaskVariableMap() {
-            @Override
-            public String tryGetValueForVariable(TaskVariable variable) {
-                return appliedMap.get(variable);
-            }
-        };
+        return appliedMap::get;
     }
 }

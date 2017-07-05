@@ -39,11 +39,8 @@ public class PluginClassImplementationTest {
         Runnable2 wrapped = mock(Runnable2.class);
         final InvocationHandler run2Handler = mock(InvocationHandler.class);
 
-        InvocationHandlerFactory exceptionalCase = new InvocationHandlerFactory() {
-            @Override
-            public InvocationHandler tryGetInvocationHandler(Object proxy, Method method, Object[] args) {
-                return "run2".equals(method.getName()) ? run2Handler : null;
-            }
+        InvocationHandlerFactory exceptionalCase = (Object proxy, Method method, Object[] args) -> {
+            return "run2".equals(method.getName()) ? run2Handler : null;
         };
 
         PluginClassImplementation impl = new PluginClassImplementation(

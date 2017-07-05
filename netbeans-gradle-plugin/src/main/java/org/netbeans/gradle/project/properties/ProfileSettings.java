@@ -26,7 +26,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.jtrim.collections.EqualityComparator;
 import org.jtrim.concurrent.UpdateTaskExecutor;
 import org.jtrim.event.CopyOnTriggerListenerManager;
-import org.jtrim.event.EventDispatcher;
 import org.jtrim.event.ListenerManager;
 import org.jtrim.event.ListenerRef;
 import org.jtrim.event.ListenerRegistries;
@@ -53,7 +52,6 @@ public final class ProfileSettings {
     private static final Document EXPORT_DOCUMENT = tryCreateDocument();
 
     private final ListenerManager<ConfigUpdateListener> configUpdateListeners;
-    private final EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>> configUpdateDispatcher;
 
     private final ReentrantLock configLock;
     private volatile Object configStateKey;
@@ -75,28 +73,15 @@ public final class ProfileSettings {
         this.configUpdateListeners = new CopyOnTriggerListenerManager<>();
         this.configStateKey = new Object();
         this.auxConfigs = new HashMap<>();
-
-        this.configUpdateDispatcher = new EventDispatcher<ConfigUpdateListener, Collection<ConfigPath>>() {
-            @Override
-            public void onEvent(ConfigUpdateListener eventListener, Collection<ConfigPath> arg) {
-                eventListener.configUpdated(arg);
-            }
-        };
     }
 
     public static boolean isEventThread() {
         return SwingUtilities.isEventDispatchThread();
     }
 
-    ListenerRef addDocumentChangeListener(final Runnable listener) {
+    ListenerRef addDocumentChangeListener(Runnable listener) {
         ExceptionHelper.checkNotNullArgument(listener, "listener");
-
-        return configUpdateListeners.registerListener(new ConfigUpdateListener() {
-            @Override
-            public void configUpdated(Collection<ConfigPath> changedPaths) {
-                listener.run();
-            }
-        });
+        return configUpdateListeners.registerListener(changedPaths -> listener.run());
     }
 
     private static DocumentBuilder getDocumentBuilder() {
@@ -196,8 +181,8 @@ public final class ProfileSettings {
         ConfigXmlUtils.saveXmlTo(document, xmlFile, saveOptions);
     }
 
-    private void fireDocumentUpdate(final Collection<ConfigPath> path) {
-        configUpdateListeners.onEvent(configUpdateDispatcher, path);
+    private void fireDocumentUpdate(Collection<ConfigPath> path) {
+        configUpdateListeners.onEvent(ConfigUpdateListener::configUpdated, path);
     }
 
     private Object newConfigState() {
@@ -626,21 +611,13 @@ public final class ProfileSettings {
         public ListenerRef addChangeListener(final Runnable listener) {
             ExceptionHelper.checkNotNullArgument(listener, "listener");
 
-            ListenerRef ref1 = configUpdateListeners.registerListener(new ConfigUpdateListener() {
-                @Override
-                public void configUpdated(Collection<ConfigPath> changedPaths) {
-                    if (affectsThis(changedPaths)) {
-                        updateFromConfig();
-                    }
+            ListenerRef ref1 = configUpdateListeners.registerListener((Collection<ConfigPath> changedPaths) -> {
+                if (affectsThis(changedPaths)) {
+                    updateFromConfig();
                 }
             });
 
-            ListenerRef ref2 = source.addChangeListener(new Runnable() {
-                @Override
-                public void run() {
-                    eventThread.execute(listener);
-                }
-            });
+            ListenerRef ref2 = source.addChangeListener(() -> eventThread.execute(listener));
 
             return ListenerRegistries.combineListenerRefs(ref1, ref2);
         }

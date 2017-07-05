@@ -61,12 +61,7 @@ public final class LazyPersistentModelStoreFactory<T> {
                 queueLock.unlock();
             }
 
-            persisterExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    persistQueue();
-                }
-            });
+            persisterExecutor.execute(this::persistQueue);
         }
 
         private void fixEmptyQueue() {

@@ -27,16 +27,13 @@ public final class CustomGlobalSettingsRule implements TestRule {
     }
 
     private void withCleanMemorySettings(final Statement base) throws Throwable {
-        withCleanMemorySettings(new NbConsumer<GenericProfileSettings>() {
-            @Override
-            public void accept(GenericProfileSettings settings) {
-                settingsProvider.accept(CommonGlobalSettings.getDefault());
+        withCleanMemorySettings((GenericProfileSettings settings) -> {
+            settingsProvider.accept(CommonGlobalSettings.getDefault());
 
-                try {
-                    base.evaluate();
-                } catch (Throwable ex) {
-                    throw new TestExceptionWrapper(ex);
-                }
+            try {
+                base.evaluate();
+            } catch (Throwable ex) {
+                throw new TestExceptionWrapper(ex);
             }
         });
     }

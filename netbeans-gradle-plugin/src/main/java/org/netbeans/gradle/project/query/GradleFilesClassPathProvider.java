@@ -3,7 +3,6 @@ package org.netbeans.gradle.project.query;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,12 +87,9 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
             return new URL[0];
         }
 
-        return GradleHomeClassPathProvider.getGradleLibs(gradleHome, new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                String lowerCaseName = name.toLowerCase(Locale.US);
-                return !lowerCaseName.startsWith("groovy-") && lowerCaseName.endsWith(".jar");
-            }
+        return GradleHomeClassPathProvider.getGradleLibs(gradleHome, (File dir, String name) -> {
+            String lowerCaseName = name.toLowerCase(Locale.US);
+            return !lowerCaseName.startsWith("groovy-") && lowerCaseName.endsWith(".jar");
         });
     }
 
@@ -149,29 +145,18 @@ public final class GradleFilesClassPathProvider implements ClassPathProvider {
     }
 
     private void scheduleUpdateClassPath() {
-        classpathUpdateExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                updateClassPathResources();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
-                    }
-                });
-            }
+        classpathUpdateExecutor.execute(() -> {
+            updateClassPathResources();
+            SwingUtilities.invokeLater(() -> {
+                changes.firePropertyChange(ClassPathImplementation.PROP_RESOURCES, null, null);
+            });
         });
     }
 
     private void unsafeInit() {
         assert initLock.isHeldByCurrentThread();
 
-        Runnable changeListener = new Runnable() {
-            @Override
-            public void run() {
-                scheduleUpdateClassPath();
-            }
-        };
+        Runnable changeListener = this::scheduleUpdateClassPath;
 
         CommonGlobalSettings defaultSettings = CommonGlobalSettings.getDefault();
         defaultSettings.gradleLocation().getActiveSource().addChangeListener(changeListener);

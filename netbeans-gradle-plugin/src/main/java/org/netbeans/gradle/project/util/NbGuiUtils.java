@@ -16,13 +16,10 @@ public final class NbGuiUtils {
         final JComponent[] componentsSnapshot = components.clone();
         ExceptionHelper.checkNotNullElements(componentsSnapshot, "components");
 
-        ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                boolean enable = check.isSelected() == enableValue;
-                for (JComponent component: componentsSnapshot) {
-                    component.setEnabled(enable);
-                }
+        ChangeListener changeListener = (ChangeEvent e) -> {
+            boolean enable = check.isSelected() == enableValue;
+            for (JComponent component: componentsSnapshot) {
+                component.setEnabled(enable);
             }
         };
 

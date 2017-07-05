@@ -25,7 +25,6 @@ import org.netbeans.gradle.project.util.FileSystemWatcher;
 import org.netbeans.gradle.project.view.NodeUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.nodes.Node;
 
 @ManualRefreshedNodes
 public final class JavaExtensionNodes
@@ -90,12 +89,7 @@ implements
     }
 
     private void addDependencies(List<SingleNodeFactory> toPopulate) {
-        toPopulate.add(new SingleNodeFactory() {
-            @Override
-            public Node createNode() {
-                return new JavaDependenciesNode(javaExt);
-            }
-        });
+        toPopulate.add(() -> new JavaDependenciesNode(javaExt));
     }
 
     private NbJavaModule getCurrentModel() {
@@ -104,12 +98,7 @@ implements
 
     private static JavaSourceSet[] sortSourceSets(List<JavaSourceSet> sourceSets) {
         JavaSourceSet[] result = sourceSets.toArray(new JavaSourceSet[sourceSets.size()]);
-        Arrays.sort(result, new Comparator<JavaSourceSet>() {
-            @Override
-            public int compare(JavaSourceSet o1, JavaSourceSet o2) {
-                return NamedSourceRoot.compareSourceSetNames(o1.getName(), o2.getName());
-            }
-        });
+        Arrays.sort(result, Comparator.comparing(JavaSourceSet::getName, NamedSourceRoot::compareSourceSetNames));
         return result;
     }
 

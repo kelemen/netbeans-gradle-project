@@ -24,7 +24,6 @@ import org.netbeans.gradle.project.api.config.PropertyReference;
 import org.netbeans.gradle.project.api.config.ui.CustomizerCategoryId;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsCategory;
 import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPage;
-import org.netbeans.gradle.project.api.config.ui.ProfileBasedSettingsPageFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditor;
 import org.netbeans.gradle.project.api.config.ui.ProfileEditorFactory;
 import org.netbeans.gradle.project.api.config.ui.ProfileInfo;
@@ -79,13 +78,7 @@ public class CommonProjectPropertiesPanel extends JPanel implements ProfileEdito
 
     public static ProfileBasedSettingsCategory createSettingsCategory(final NbGradleProject project) {
         ExceptionHelper.checkNotNullArgument(project, "project");
-
-        return new ProfileBasedSettingsCategory(CATEGORY_ID, new ProfileBasedSettingsPageFactory() {
-            @Override
-            public ProfileBasedSettingsPage createSettingsPage() {
-                return CommonProjectPropertiesPanel.createSettingsPage(project);
-            }
-        });
+        return new ProfileBasedSettingsCategory(CATEGORY_ID, () -> CommonProjectPropertiesPanel.createSettingsPage(project));
     }
 
     public static ProfileBasedSettingsPage createSettingsPage(NbGradleProject project) {

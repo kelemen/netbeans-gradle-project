@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,16 +30,12 @@ import javax.swing.UIManager;
 import org.jtrim.cancel.Cancellation;
 import org.jtrim.cancel.CancellationToken;
 import org.jtrim.concurrent.CancelableFunction;
-import org.jtrim.concurrent.CancelableTask;
-import org.jtrim.concurrent.CleanupTask;
 import org.jtrim.property.PropertySource;
-import org.jtrim.property.ValueConverter;
 import org.jtrim.swing.concurrent.SwingTaskExecutor;
 import org.jtrim.utils.ExceptionHelper;
 import org.netbeans.gradle.project.NbGradleProject;
 import org.netbeans.gradle.project.NbStrings;
 import org.netbeans.gradle.project.api.config.ActiveSettingsQuery;
-import org.netbeans.gradle.project.api.config.ActiveSettingsQueryListener;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.config.ProfileKey;
 import org.netbeans.gradle.project.api.config.ProjectSettingsProvider;
@@ -98,22 +93,18 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         initComponents();
 
         final JScrollPane customPanelScroller = new JScrollPane(customPanelLayer);
-        final Runnable layerSizeUpdater = new Runnable() {
-            @Override
-            public void run() {
-                Dimension containerSize = customPanelScroller.getViewport().getExtentSize();
-                int containerWidth = containerSize.width;
-                int containerHeight = containerSize.height;
+        final Runnable layerSizeUpdater = () -> {
+            Dimension containerSize = customPanelScroller.getViewport().getExtentSize();
+            int containerWidth = containerSize.width;
+            int containerHeight = containerSize.height;
 
-                Dimension contentSize = customPanel.getMinimumSize();
-                int contentWidth = contentSize.width;
-                int contentHeight = contentSize.height;
+            Dimension contentSize = customPanel.getMinimumSize();
+            int contentWidth = contentSize.width;
+            int contentHeight = contentSize.height;
 
-                int width = Math.max(contentWidth, containerWidth);
-                int height = Math.max(contentHeight, containerHeight);
-
-                customPanelLayer.setPreferredSize(new Dimension(width, height));
-            }
+            int normWidth = Math.max(contentWidth, containerWidth);
+            int normHeight = Math.max(contentHeight, containerHeight);
+            customPanelLayer.setPreferredSize(new Dimension(normWidth, normHeight));
         };
         customPanelScroller.addComponentListener(new ComponentAdapter() {
             @Override
@@ -124,12 +115,9 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         layerSizeUpdater.run();
 
         jCustomPanelContainer.add(customPanelScroller);
-        jProfileCombo.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    loadSelectedProfile();
-                }
+        jProfileCombo.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                loadSelectedProfile();
             }
         });
 
@@ -175,12 +163,7 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private PropertySource<Boolean> selectedRemovable() {
-        return convert(comboBoxSelection(jProfileCombo), new ValueConverter<ProfileItem, Boolean>() {
-            @Override
-            public Boolean convert(ProfileItem input) {
-                return input != null && input.isRemovable();
-            }
-        });
+        return convert(comboBoxSelection(jProfileCombo), input -> input != null && input.isRemovable());
     }
 
     private void setupEnableDisable() {
@@ -202,33 +185,22 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
     }
 
     private CancelableFunction<Runnable> initProfileComboTask() {
-        return new CancelableFunction<Runnable>() {
-            @Override
-            public Runnable execute(CancellationToken cancelToken) throws Exception {
-                List<ProfileItem> profileItems = getProfileItems();
-                return fillProfileComboTask(profileItems);
-            }
+        return (CancellationToken cancelToken) -> {
+            List<ProfileItem> profileItems = getProfileItems();
+            return fillProfileComboTask(profileItems);
         };
     }
 
-    private Runnable fillProfileComboTask(final List<ProfileItem> profileItems) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                fillProfileCombo(profileItems);
-            }
-        };
+    private Runnable fillProfileComboTask(List<ProfileItem> profileItems) {
+        return () -> fillProfileCombo(profileItems);
     }
 
     private Runnable toReleaseTask(final PanelLockRef taskLock, final Runnable task) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    task.run();
-                } finally {
-                    taskLock.release();
-                }
+        return () -> {
+            try {
+                task.run();
+            } finally {
+                taskLock.release();
             }
         };
     }
@@ -239,23 +211,17 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
                 initProfileComboTask());
 
         final PanelLockRef mainLockRef = lockPanel();
-        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                for (CancelableFunction<? extends Runnable> initTask: initTasks) {
-                    Runnable uiUpdateTask = initTask.execute(cancelToken);
-                    if (uiUpdateTask != null) {
-                        PanelLockRef taskLock = lockPanel();
-                        SwingUtilities.invokeLater(toReleaseTask(taskLock, uiUpdateTask));
-                    }
+        NbTaskExecutors.DEFAULT_EXECUTOR.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken cancelToken) -> {
+            for (CancelableFunction<? extends Runnable> initTask: initTasks) {
+                Runnable uiUpdateTask = initTask.execute(cancelToken);
+                if (uiUpdateTask != null) {
+                    PanelLockRef taskLock = lockPanel();
+                    SwingUtilities.invokeLater(toReleaseTask(taskLock, uiUpdateTask));
                 }
             }
-        }, new CleanupTask() {
-            @Override
-            public void cleanup(boolean canceled, Throwable error) throws Exception {
-                NbTaskExecutors.defaultCleanup(canceled, error);
-                mainLockRef.release();
-            }
+        }, (boolean canceled, Throwable error) -> {
+            NbTaskExecutors.defaultCleanup(canceled, error);
+            mainLockRef.release();
         });
     }
 
@@ -311,27 +277,21 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
 
         final ProfileKey profileKey = selected.getProfileKey();
         final PanelLockRef lock = lockPanel();
-        extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, profileKey, new ActiveSettingsQueryListener() {
-            @Override
-            public void onLoad(final ActiveSettingsQuery settings) {
-                String displayName = selected.toString();
-                ProfileInfo profileInfo = new ProfileInfo(profileKey, displayName);
-                ProfileEditor editor = snapshotCreator.startEditingProfile(profileInfo, settings);
-                final Snapshot snapshot = new Snapshot(editor);
-                snapshots.put(selected, snapshot);
+        extensionSettings.loadSettingsForProfile(Cancellation.UNCANCELABLE_TOKEN, profileKey, (ActiveSettingsQuery settings) -> {
+            String displayName = selected.toString();
+            ProfileInfo profileInfo = new ProfileInfo(profileKey, displayName);
+            ProfileEditor editor = snapshotCreator.startEditingProfile(profileInfo, settings);
+            final Snapshot snapshot = new Snapshot(editor);
+            snapshots.put(selected, snapshot);
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            currentlyShownProfile = selected;
-                            snapshot.displayValues();
-                        } finally {
-                            lock.release();
-                        }
-                    }
-                });
-            }
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    currentlyShownProfile = selected;
+                    snapshot.displayValues();
+                } finally {
+                    lock.release();
+                }
+            });
         });
     }
 
@@ -385,25 +345,22 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
         private static final ProfileItem GLOBAL_DEFAULT
                 = new ProfileItem(new ProfileDef(ProfileKey.GLOBAL_PROFILE, NbStrings.getGlobalProfileName()));
 
-        private static final Comparator<ProfileItem> ALPHABETICAL_ORDER = new Comparator<ProfileItem>() {
-            @Override
-            public int compare(ProfileItem o1, ProfileItem o2) {
-                if (GLOBAL_DEFAULT.equals(o1)) {
-                    return GLOBAL_DEFAULT.equals(o2) ? 0 : -1;
-                }
-                if (GLOBAL_DEFAULT.equals(o2)) {
-                    return GLOBAL_DEFAULT.equals(o1) ? 0 : 1;
-                }
-
-                if (DEFAULT.equals(o1)) {
-                    return DEFAULT.equals(o2) ? 0 : -1;
-                }
-                if (DEFAULT.equals(o2)) {
-                    return DEFAULT.equals(o1) ? 0 : 1;
-                }
-
-                return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
+        private static final Comparator<ProfileItem> ALPHABETICAL_ORDER = (ProfileItem o1, ProfileItem o2) -> {
+            if (GLOBAL_DEFAULT.equals(o1)) {
+                return GLOBAL_DEFAULT.equals(o2) ? 0 : -1;
             }
+            if (GLOBAL_DEFAULT.equals(o2)) {
+                return GLOBAL_DEFAULT.equals(o1) ? 0 : 1;
+            }
+
+            if (DEFAULT.equals(o1)) {
+                return DEFAULT.equals(o2) ? 0 : -1;
+            }
+            if (DEFAULT.equals(o2)) {
+                return DEFAULT.equals(o1) ? 0 : 1;
+            }
+
+            return StringUtils.STR_CMP.compare(o1.toString(), o2.toString());
         };
 
         private final ProfileDef profileDef;
@@ -551,11 +508,8 @@ public class ProfileBasedPanel extends javax.swing.JPanel {
             null);
 
         final PropertySource<Boolean> validProfileName = panel.validProfileName();
-        validProfileName.addChangeListener(new Runnable() {
-            @Override
-            public void run() {
-                dlgDescriptor.setValid(validProfileName.getValue());
-            }
+        validProfileName.addChangeListener(() -> {
+            dlgDescriptor.setValid(validProfileName.getValue());
         });
         dlgDescriptor.setValid(validProfileName.getValue());
 

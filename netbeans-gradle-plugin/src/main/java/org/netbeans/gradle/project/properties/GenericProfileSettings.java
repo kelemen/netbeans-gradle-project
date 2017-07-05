@@ -96,12 +96,7 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
             return;
         }
 
-        loadExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                loadNowIfNotLoaded();
-            }
-        });
+        loadExecutor.execute(this::loadNowIfNotLoaded);
     }
 
     @Override
@@ -110,12 +105,7 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
     }
 
     public void loadEventually() {
-        loadExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                loadNowAlways();
-            }
-        });
+        loadExecutor.execute(this::loadNowAlways);
     }
 
     public void loadAndWait() {
@@ -171,12 +161,7 @@ public final class GenericProfileSettings implements LoadableSingleProfileSettin
             return;
         }
 
-        saveExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                saveAndWait();
-            }
-        });
+        saveExecutor.execute(this::saveAndWait);
     }
 
     @Override

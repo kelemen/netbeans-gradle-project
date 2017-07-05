@@ -25,18 +25,14 @@ import org.netbeans.gradle.project.api.config.GlobalConfig;
 import org.netbeans.gradle.project.api.config.ProfileDef;
 import org.netbeans.gradle.project.api.modelquery.GradleTarget;
 import org.netbeans.gradle.project.api.task.BuiltInGradleCommandQuery;
-import org.netbeans.gradle.project.api.task.CommandExceptionHider;
-import org.netbeans.gradle.project.api.task.ContextAwareCommandAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteAction;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandCompleteListener;
 import org.netbeans.gradle.project.api.task.ContextAwareCommandFinalizer;
 import org.netbeans.gradle.project.api.task.CustomCommandActions;
 import org.netbeans.gradle.project.api.task.ExecutedCommandContext;
 import org.netbeans.gradle.project.api.task.GradleCommandTemplate;
-import org.netbeans.gradle.project.api.task.GradleTargetVerifier;
 import org.netbeans.gradle.project.api.task.SingleExecutionOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskKind;
-import org.netbeans.gradle.project.api.task.TaskOutputProcessor;
 import org.netbeans.gradle.project.api.task.TaskVariable;
 import org.netbeans.gradle.project.api.task.TaskVariableMap;
 import org.netbeans.gradle.project.java.JavaExtension;
@@ -260,35 +256,24 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
     }
 
     private static CommandSelector<Boolean> newSingleTestArgSelector() {
-        return new CommandSelector<Boolean>() {
-            @Override
-            public Boolean choose(JavaExtension javaExt) {
-                GradleTarget env = javaExt.getCurrentModel().getEvaluationEnvironment();
-                env.getGradleVersion();
-                return GradleVersions.VERSION_2_3.compareTo(env.getGradleVersion()) <= 0;
-            }
+        return (JavaExtension javaExt) -> {
+            GradleTarget env = javaExt.getCurrentModel().getEvaluationEnvironment();
+            env.getGradleVersion();
+            return GradleVersions.VERSION_2_3.compareTo(env.getGradleVersion()) <= 0;
         };
     }
 
     private static CommandSelector<DebugTestMode> debugTestModeSelector() {
         final CommandSelector<DebugMode> debugModeSelector = debugModeSelector();
         final CommandSelector<Boolean> newSingleTestArgSelector = newSingleTestArgSelector();
-        return new CommandSelector<DebugTestMode>() {
-            @Override
-            public DebugTestMode choose(JavaExtension javaExt) {
-                return new DebugTestMode(
-                        newSingleTestArgSelector.choose(javaExt),
-                        debugModeSelector.choose(javaExt));
-            }
+        return (JavaExtension javaExt) -> {
+            return new DebugTestMode(newSingleTestArgSelector.choose(javaExt), debugModeSelector.choose(javaExt));
         };
     }
 
     private static CommandSelector<DebugMode> debugModeSelector() {
-        return new CommandSelector<DebugMode>() {
-            @Override
-            public DebugMode choose(JavaExtension javaExt) {
-                return javaExt.getProjectProperties().debugMode().getActiveValue();
-            }
+        return (JavaExtension javaExt) -> {
+            return javaExt.getProjectProperties().debugMode().getActiveValue();
         };
     }
 
@@ -300,27 +285,19 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         ExceptionHelper.checkNotNullArgument(selector, "selector");
         ExceptionHelper.checkNotNullElements(choicesCopy, "choices");
 
-        DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
-            @Override
-            public CommandWithActions get(JavaExtension javaExt) {
-                ChoiceType choice = selector.choose(javaExt);
-                for (CommandChoice<ChoiceType> candidate: choicesCopy) {
-                    if (Objects.equals(candidate.getChoice(), choice)) {
-                        return candidate.getCommandWithActions();
-                    }
+        DEFAULT_TASKS.put(command, (JavaExtension javaExt) -> {
+            ChoiceType choice = selector.choose(javaExt);
+            for (CommandChoice<ChoiceType> candidate: choicesCopy) {
+                if (Objects.equals(candidate.getChoice(), choice)) {
+                    return candidate.getCommandWithActions();
                 }
-                return choicesCopy.get(0).getCommandWithActions();
             }
+            return choicesCopy.get(0).getCommandWithActions();
         });
     }
 
-    private static void addToDefaults(String command, final CommandWithActions task) {
-        DEFAULT_TASKS.put(command, new CommandWithActionsRef() {
-            @Override
-            public CommandWithActions get(JavaExtension javaExt) {
-                return task;
-            }
-        });
+    private static void addToDefaults(String command, CommandWithActions task) {
+        DEFAULT_TASKS.put(command, javaExt -> task);
     }
 
     private static List<String> debuggeeAttachesArguments(String taskName, String... additionalArgs) {
@@ -430,21 +407,9 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         return message.contains("there were failing tests");
     }
 
-    private static CommandExceptionHider testFailureHider() {
-        return new CommandExceptionHider() {
-            @Override
-            public boolean hideException(Throwable taskError) {
-                return isTestFailureException(taskError);
-            }
-        };
-    }
-
     private static CustomCommandAdjuster hideTestFailures() {
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setCommandExceptionHider(testFailureHider());
-            }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setCommandExceptionHider(GradleJavaBuiltInCommands::isTestFailureException);
         };
     }
 
@@ -514,11 +479,8 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
             final Project project,
             final JavaExtension javaExt,
             final Lookup startContext) {
-        return new ContextAwareCommandCompleteListener() {
-            @Override
-            public void onComplete(ExecutedCommandContext executedCommandContext, Throwable error) {
-                displayTestReports(project, javaExt, executedCommandContext, startContext, error);
-            }
+        return (ExecutedCommandContext executedCommandContext, Throwable error) -> {
+            displayTestReports(project, javaExt, executedCommandContext, startContext, error);
         };
     }
 
@@ -549,45 +511,28 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         }
     }
 
-    private static ContextAwareCommandCompleteAction displayTestAction(final JavaExtension javaExt) {
-        return new ContextAwareCommandCompleteAction() {
-            @Override
-            public ContextAwareCommandCompleteListener startCommand(Project project, Lookup commandContext) {
-                return displayTestResults(project, javaExt, commandContext);
-            }
-        };
+    private static ContextAwareCommandCompleteAction displayTestAction(JavaExtension javaExt) {
+        return (Project project, Lookup commandContext) -> displayTestResults(project, javaExt, commandContext);
     }
 
     private static CustomCommandAdjuster displayTestResults() {
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setContextAwareFinalizer(displayTestAction(javaExt));
-            }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setContextAwareFinalizer(displayTestAction(javaExt));
         };
     }
 
     private static CustomCommandAdjuster needsGradle(String minGradleVersionStr) {
         final GradleVersion minGradleVersion = GradleVersion.version(minGradleVersionStr);
 
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setGradleTargetVerifier(new GradleTargetVerifier() {
-                    @Override
-                    public boolean checkTaskExecutable(
-                            GradleTarget gradleTarget,
-                            OutputWriter output,
-                            OutputWriter errOutput) {
-                        if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
-                            errOutput.println(NbStrings.getNeedsMinGradleVersion(minGradleVersion));
-                            return false;
-                        }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setGradleTargetVerifier((gradleTarget, output, errOutput) -> {
+                if (gradleTarget.getGradleVersion().compareTo(minGradleVersion) < 0) {
+                    errOutput.println(NbStrings.getNeedsMinGradleVersion(minGradleVersion));
+                    return false;
+                }
 
-                        return true;
-                    }
-                });
-            }
+                return true;
+            });
         };
     }
 
@@ -597,53 +542,33 @@ public final class GradleJavaBuiltInCommands implements BuiltInGradleCommandQuer
         final CancellationSource cancel = Cancellation.createCancellationSource();
         customActions.setCancelToken(cancel.getToken());
 
-        return new SingleExecutionOutputProcessor() {
-            @Override
-            public TaskOutputProcessor startExecution(Project project) {
-                return new DebugTextListener(new AttacherListener(javaExt, cancel.getController()));
-            }
-        };
+        return (project) -> new DebugTextListener(new AttacherListener(javaExt, cancel.getController()));
     }
 
     private static CustomCommandAdjuster listenDebugger() {
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setCommandServiceFactory(new DebuggerServiceFactory(javaExt));
-            }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setCommandServiceFactory(new DebuggerServiceFactory(javaExt));
         };
     }
 
     private static CustomCommandAdjuster attachDebugger() {
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setSingleExecutionStdOutProcessor(attachDebuggerListener(javaExt, customActions));
-            }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setSingleExecutionStdOutProcessor(attachDebuggerListener(javaExt, customActions));
         };
     }
 
     private static ContextAwareCommandFinalizer applyClassesFinalizer(final Project project, final String className) {
-        return new ContextAwareCommandFinalizer() {
-            @Override
-            public void finalizeSuccessfulCommand(OutputWriter output, OutputWriter errOutput) {
-                DebugUtils.applyChanges(project, output, className);
-            }
+        return (OutputWriter output, OutputWriter errOutput) -> {
+            DebugUtils.applyChanges(project, output, className);
         };
     }
 
     private static CustomCommandAdjuster applyClassesActions() {
-        return new CustomCommandAdjuster() {
-            @Override
-            public void adjust(JavaExtension javaExt, CustomCommandActions.Builder customActions) {
-                customActions.setContextAwareAction(new ContextAwareCommandAction() {
-                    @Override
-                    public ContextAwareCommandFinalizer startCommand(Project project, Lookup commandContext) {
-                        String className = DebugUtils.getActiveClassName(project, commandContext);
-                        return applyClassesFinalizer(project, className);
-                    }
-                });
-            }
+        return (JavaExtension javaExt, CustomCommandActions.Builder customActions) -> {
+            customActions.setContextAwareAction((Project project, Lookup commandContext) -> {
+                String className = DebugUtils.getActiveClassName(project, commandContext);
+                return applyClassesFinalizer(project, className);
+            });
         };
     }
 

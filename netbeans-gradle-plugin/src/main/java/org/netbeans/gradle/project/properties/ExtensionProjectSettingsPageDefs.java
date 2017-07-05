@@ -50,15 +50,10 @@ public final class ExtensionProjectSettingsPageDefs {
         ExceptionHelper.checkNotNullArgument(extensionSettings, "extensionSettings");
         ExceptionHelper.checkNotNullArgument(pageFactory, "pageFactory");
 
-        ProfileBasedCustomizer.PanelFactory panelFactory = new ProfileBasedCustomizer.PanelFactory() {
-            @Override
-            public ProfileBasedPanel createPanel() {
-                ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
-                return ProfileBasedPanel.createPanel(project, extensionSettings, settingsPage);
-            }
-        };
-
-        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), panelFactory);
+        return new ProfileBasedCustomizer(categoryId.getCategoryName(), categoryId.getDisplayName(), () -> {
+            ProfileBasedSettingsPage settingsPage = pageFactory.createSettingsPage();
+            return ProfileBasedPanel.createPanel(project, extensionSettings, settingsPage);
+        });
     }
 
     private ProjectSettingsProvider.ExtensionSettings getExtensionSettings() {

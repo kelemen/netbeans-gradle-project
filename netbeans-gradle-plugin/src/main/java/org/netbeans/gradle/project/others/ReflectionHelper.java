@@ -102,13 +102,8 @@ public final class ReflectionHelper {
         return null;
     }
 
-    public static ClassFinder constClassFinder(final Class<?> type) {
-        return new ClassFinder() {
-            @Override
-            public Class<?> tryGetClass() {
-                return type;
-            }
-        };
+    public static ClassFinder constClassFinder(Class<?> type) {
+        return () -> type;
     }
 
     public static ClassFinder[] constClassFinders(Class<?>... types) {

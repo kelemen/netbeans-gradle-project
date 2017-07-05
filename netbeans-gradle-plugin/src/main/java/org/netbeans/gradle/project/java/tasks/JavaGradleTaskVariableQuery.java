@@ -95,41 +95,26 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     }
 
     private static void defineVariables(Map<TaskVariable, VariableDef<JavaExtension>> varMap) {
-        addVariable(varMap, SOURCE_SET_NAME, new ValueGetter<JavaExtension>() {
-            @Override
-            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
-                return new VariableValue(getSourceSetName(project, actionContext));
-            }
+        addVariable(varMap, SOURCE_SET_NAME, (TaskVariableMap variables, JavaExtension project, Lookup actionContext) -> {
+            return new VariableValue(getSourceSetName(project, actionContext));
         });
 
-        addVariable(varMap, SOURCE_SET_NAME_CAPITAL, new ValueGetter<JavaExtension>() {
-            @Override
-            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
-                return getCapitalized(variables, SOURCE_SET_NAME);
-            }
+        addVariable(varMap, SOURCE_SET_NAME_CAPITAL, (TaskVariableMap variables, JavaExtension project, Lookup actionContext) -> {
+            return getCapitalized(variables, SOURCE_SET_NAME);
         });
 
-        addVariable(varMap, TEST_TASK_NAME, new ValueGetter<JavaExtension>() {
-            @Override
-            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
-                return new VariableValue(getTestTaskName(variables, project, actionContext));
-            }
+        addVariable(varMap, TEST_TASK_NAME, (TaskVariableMap variables, JavaExtension project, Lookup actionContext) -> {
+            return new VariableValue(getTestTaskName(variables, project, actionContext));
         });
 
-        addVariable(varMap, TEST_TASK_NAME_CAPITAL, new ValueGetter<JavaExtension>() {
-            @Override
-            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
-                return getCapitalized(variables, TEST_TASK_NAME);
-            }
+        addVariable(varMap, TEST_TASK_NAME_CAPITAL, (TaskVariableMap variables, JavaExtension project, Lookup actionContext) -> {
+            return getCapitalized(variables, TEST_TASK_NAME);
         });
 
-        addVariable(varMap, COVERAGE_REPORT_TASK_NAME, new ValueGetter<JavaExtension>() {
-            @Override
-            public VariableValue getValue(TaskVariableMap variables, JavaExtension project, Lookup actionContext) {
-                boolean hasCodeCoverage = project.getCurrentModel().getMainModule().getCodeCoverage().hasCodeCoverage();
-                // TODO: It should be somehow determined by the build script
-                return new VariableValue(hasCodeCoverage ? "jacocoTestReport" : "");
-            }
+        addVariable(varMap, COVERAGE_REPORT_TASK_NAME, (TaskVariableMap variables, JavaExtension project, Lookup actionContext) -> {
+            boolean hasCodeCoverage = project.getCurrentModel().getMainModule().getCodeCoverage().hasCodeCoverage();
+            // TODO: It should be somehow determined by the build script
+            return new VariableValue(hasCodeCoverage ? "jacocoTestReport" : "");
         });
     }
 
@@ -143,16 +128,9 @@ public final class JavaGradleTaskVariableQuery implements GradleTaskVariableQuer
     }
 
     private static VariableDefMap<JavaExtension> createVariableDefMap() {
-        final Map<TaskVariable, VariableDef<JavaExtension>> varMap
-                = new HashMap<>();
+        Map<TaskVariable, VariableDef<JavaExtension>> varMap = new HashMap<>();
         defineVariables(varMap);
-
-        return new VariableDefMap<JavaExtension>() {
-            @Override
-            public VariableDef<JavaExtension> tryGetDef(TaskVariable variable) {
-                return varMap.get(variable);
-            }
-        };
+        return varMap::get;
     }
 
     private static void addVariable(

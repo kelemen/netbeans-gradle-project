@@ -36,43 +36,31 @@ public final class PriorityAwareExecutor {
         RefCollection.ElementRef<?> queueRef = taskQueue.addTask(priority, taskDef);
         taskDef.init(queueRef);
 
-        final AtomicReference<TaskDef> taskDefRef = new AtomicReference<>(null);
-        CancelableTask forwarderTask = new CancelableTask() {
-            @Override
-            public void execute(CancellationToken cancelToken) throws Exception {
-                TaskDef task = taskQueue.pollTask();
-                taskDefRef.set(task);
-                task.doTask(cancelToken);
-            }
-        };
+        AtomicReference<TaskDef> taskDefRef = new AtomicReference<>(null);
 
-        CleanupTask forwarderCleanupTask = new CleanupTask() {
-            @Override
-            public void cleanup(boolean canceled, Throwable error) throws Exception {
-                TaskDef def = taskDefRef.get();
-                if (def != null) {
-                    def.cleanup(canceled, error);
-                }
-                else if (canceled) {
-                    // This means, that the executor has been terminated
-                    // so poll one cleanup task and execute it.
-                    TaskDef task = taskQueue.pollTask();
-                    if (task != null) {
-                        task.cleanup(canceled, error);
-                    }
+        wrapped.execute(Cancellation.UNCANCELABLE_TOKEN, (CancellationToken taskCancelToken) -> {
+            TaskDef nextTask = taskQueue.pollTask();
+            taskDefRef.set(nextTask);
+            nextTask.doTask(taskCancelToken);
+        }, (boolean canceled, Throwable error) -> {
+            TaskDef def = taskDefRef.get();
+            if (def != null) {
+                def.cleanup(canceled, error);
+            }
+            else if (canceled) {
+                // This means, that the executor has been terminated
+                // so poll one cleanup task and execute it.
+                TaskDef task1 = taskQueue.pollTask();
+                if (task1 != null) {
+                    task1.cleanup(canceled, error);
                 }
             }
-        };
-
-        wrapped.execute(Cancellation.UNCANCELABLE_TOKEN, forwarderTask, forwarderCleanupTask);
+        });
     }
 
     private TaskExecutor getExecutor(final Priority priority) {
-        return new TaskExecutor() {
-            @Override
-            public void execute(CancellationToken cancelToken, CancelableTask task, CleanupTask cleanupTask) {
-                executeForPriority(cancelToken, priority, task, cleanupTask);
-            }
+        return (CancellationToken cancelToken, CancelableTask task, CleanupTask cleanupTask) -> {
+            executeForPriority(cancelToken, priority, task, cleanupTask);
         };
     }
 
@@ -183,17 +171,14 @@ public final class PriorityAwareExecutor {
         public void init(final RefCollection.ElementRef<?> queueRef) {
             final InitLaterListenerRef cancelRefRef = new InitLaterListenerRef();
 
-            cancelRefRef.init(cancelToken.addCancellationListener(new Runnable() {
-                @Override
-                public void run() {
-                    removeTask();
+            cancelRefRef.init(cancelToken.addCancellationListener(() -> {
+                removeTask();
 
-                    if (cleanupTask == null) {
-                        queueRef.remove();
-                    }
-
-                    cancelRefRef.unregister();
+                if (cleanupTask == null) {
+                    queueRef.remove();
                 }
+
+                cancelRefRef.unregister();
             }));
 
             if (!this.cancelRef.compareAndSet(null, cancelRefRef)) {

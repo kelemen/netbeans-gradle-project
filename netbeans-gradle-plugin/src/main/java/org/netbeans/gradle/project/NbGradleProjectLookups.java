@@ -91,12 +91,7 @@ public final class NbGradleProjectLookups {
 
     private static LookupProvider moveToLookupProvider(final Lookup lookup) {
         ExceptionHelper.checkNotNullArgument(lookup, "lookup");
-        return new LookupProvider() {
-            @Override
-            public Lookup createAdditionalLookup(Lookup baseContext) {
-                return lookup;
-            }
-        };
+        return (baseContext) -> lookup;
     }
 
     private static List<Lookup> extractLookupsFromProviders(

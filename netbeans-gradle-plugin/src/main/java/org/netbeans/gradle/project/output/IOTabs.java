@@ -29,13 +29,10 @@ public final class IOTabs {
             = new IOTabMaintainer<>(createTaskIOTabFactory());
 
     private static IOTabFactory<TaskIOTab> createTaskIOTabFactory() {
-        return new IOTabFactory<TaskIOTab>() {
-            @Override
-            public TaskIOTab create(String caption) {
-                TaskTabAction[] actions = createActions(caption);
-                InputOutput io = IOProvider.getDefault().getIO(caption, actions);
-                return new TaskIOTab(io, actions);
-            }
+        return (String caption) -> {
+            TaskTabAction[] actions = createActions(caption);
+            InputOutput io = IOProvider.getDefault().getIO(caption, actions);
+            return new TaskIOTab(io, actions);
         };
     }
 
